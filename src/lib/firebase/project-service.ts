@@ -1989,7 +1989,7 @@ export const projectService = {
 
       // Dynamischer Import um circular dependencies zu vermeiden
       const { mediaService } = await import('./media-service');
-      const { companiesService } = await import('./crm-service');
+      const { companyServiceEnhanced } = await import('./company-service-enhanced');
       
       // Kunde/Company laden für Ordner-Namen
       let companyName = 'Unbekannt';
@@ -1998,7 +1998,7 @@ export const projectService = {
       if (project.customer?.id) {
         clientId = project.customer.id;
         try {
-          const company = await companiesService.getById(project.customer.id);
+          const company = await companyServiceEnhanced.getById(project.customer.id, organizationId);
           if (company) {
             companyName = company.name;
           }
