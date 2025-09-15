@@ -87,6 +87,7 @@ export default function ProjectDetailPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [projectTags, setProjectTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(true);
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -107,6 +108,24 @@ export default function ProjectDetailPage() {
     loadTeamMembers();
     loadTags();
   }, [projectId, currentOrganization?.id]);
+
+  // Lade spezifische Tags für das Projekt
+  useEffect(() => {
+    const loadProjectTags = async () => {
+      if (project?.tags && project.tags.length > 0) {
+        try {
+          // Versuche zuerst die Tags direkt über ihre IDs zu laden
+          const directTags = await tagsService.getByIds(project.tags);
+          setProjectTags(directTags);
+          console.log('Direkt geladene Tags:', directTags);
+        } catch (error) {
+          console.error('Fehler beim direkten Laden der Tags:', error);
+        }
+      }
+    };
+    
+    loadProjectTags();
+  }, [project?.tags]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
   useEffect(() => {
@@ -988,11 +1007,17 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Tags</Text>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {console.log('Debug - Project tags:', project.tags)}
-                      {console.log('Debug - Loaded tags from DB:', tags)}
+                      {console.log('Debug - All organization tags:', tags)}
+                      {console.log('Debug - Direct loaded project tags:', projectTags)}
                       {console.log('Debug - Current Organization:', currentOrganization?.id)}
                       {project.tags && project.tags.length > 0 ? (
                         project.tags.map((tagId, index) => {
-                          const tagInfo = tags.find(t => t.id === tagId);
+                          // Zuerst in direkt geladenen Projekt-Tags suchen
+                          let tagInfo = projectTags.find(t => t.id === tagId);
+                          // Falls nicht gefunden, in allen Organisation-Tags suchen
+                          if (!tagInfo) {
+                            tagInfo = tags.find(t => t.id === tagId);
+                          }
                           console.log(`Debug - Looking for tag ${tagId}, found:`, tagInfo);
                           return (
                             <Badge key={tagId} color={tagInfo?.color || (index % 2 === 0 ? 'blue' : 'purple')}>
