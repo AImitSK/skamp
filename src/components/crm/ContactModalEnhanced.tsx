@@ -283,9 +283,9 @@ export default function ContactModalEnhanced({
   }, [contact, companies]);
 
   const loadTags = async () => {
-    if (!userId) return;
+    if (!organizationId) return;
     try {
-      const userTags = await tagsService.getAll(userId);
+      const userTags = await tagsService.getAll(organizationId);
       setTags(userTags);
     } catch (error) {
       // Silent error handling
@@ -294,7 +294,7 @@ export default function ContactModalEnhanced({
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
-      const tagId = await tagsService.create({ name, color, userId });
+      const tagId = await tagsService.create({ name, color }, organizationId);
       await loadTags();
       return tagId;
     } catch (error) {

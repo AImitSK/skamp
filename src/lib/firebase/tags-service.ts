@@ -15,13 +15,13 @@ class TagsService {
   private collectionName = 'tags';
 
   /**
-   * Alle Tags für einen Benutzer abrufen
+   * Alle Tags für eine Organisation abrufen
    */
-  async getAll(userId: string): Promise<Tag[]> {
+  async getAll(organizationId: string): Promise<Tag[]> {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('userId', '==', userId)
+        where('organizationId', '==', organizationId)
       );
       
       const snapshot = await getDocs(q);
@@ -38,11 +38,11 @@ class TagsService {
   /**
    * Neues Tag erstellen
    */
-  async create(tag: { name: string; color: TagColor }, userId: string): Promise<string> {
+  async create(tag: { name: string; color: TagColor }, organizationId: string): Promise<string> {
     try {
       const docRef = await addDoc(collection(db, this.collectionName), {
         ...tag,
-        userId,
+        organizationId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });

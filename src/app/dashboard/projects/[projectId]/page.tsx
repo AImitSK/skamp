@@ -258,11 +258,11 @@ export default function ProjectDetailPage() {
   };
 
   const loadTags = async () => {
-    if (!user?.uid) return;
+    if (!currentOrganization?.id) return;
 
     try {
       setLoadingTags(true);
-      const allTags = await tagsService.getAll(user.uid);
+      const allTags = await tagsService.getAll(currentOrganization.id);
       setTags(allTags);
     } catch (error) {
       console.error('Error loading tags:', error);

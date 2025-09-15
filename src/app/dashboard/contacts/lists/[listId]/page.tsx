@@ -217,7 +217,7 @@ export default function ListDetailPage() {
     try {
       const [listData, userTags, allPublications] = await Promise.all([
         listsService.getById(listId),
-        tagsService.getAll(user.uid),
+        tagsService.getAll(currentOrganization?.id || user.uid),
         publicationService.getAll(user.uid)
       ]);
       

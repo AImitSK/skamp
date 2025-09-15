@@ -17,6 +17,7 @@ interface MediaSetupWizardProps {
   onClose: () => void;
   onComplete: () => void;
   userId: string;
+  organizationId: string;
 }
 
 interface SetupStep {
@@ -27,7 +28,7 @@ interface SetupStep {
   optional?: boolean;
 }
 
-export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaSetupWizardProps) {
+export default function MediaSetupWizard({ onClose, onComplete, userId, organizationId }: MediaSetupWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -99,10 +100,10 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
       // Schritt 1: Tags erstellen
       for (const tagData of STANDARD_PRESS_TAGS) {
         if (selectedTags.includes(tagData.name)) {
-          const tagId = await tagsService.create({
-            ...tagData,
-            userId
-          });
+          const tagId = await tagsService.create(
+            tagData,
+            organizationId
+          );
           createdTagIds.set(tagData.name, tagId);
         }
       }

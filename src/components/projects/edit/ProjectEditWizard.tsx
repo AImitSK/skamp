@@ -181,9 +181,9 @@ export function ProjectEditWizard({
   };
 
   const loadTags = async () => {
-    if (!user?.uid) return;
+    if (!organizationId) return;
     try {
-      const userTags = await tagsService.getAll(user.uid);
+      const userTags = await tagsService.getAll(organizationId);
       setTags(userTags);
     } catch (error) {
       console.error('Fehler beim Laden der Tags:', error);
@@ -191,12 +191,12 @@ export function ProjectEditWizard({
   };
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
-    if (!user?.uid) throw new Error('Benutzer nicht angemeldet');
+    if (!organizationId) throw new Error('Organisation nicht gefunden');
     
     try {
       const tagId = await tagsService.create(
         { name, color },
-        user.uid
+        organizationId
       );
       
       // Reload tags after creation
