@@ -6,6 +6,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
+import { smartUploadRouter } from "@/lib/firebase/smart-upload-router";
+import { mediaLibraryContextBuilder } from "./utils/context-builder";
+import { getMediaLibraryFeatureFlags, shouldUseSmartRouter } from "./config/feature-flags";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/ui/heading";
@@ -140,6 +143,10 @@ export default function MediathekPage() {
 
   // Upload-spezifische States
   const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>(undefined);
+  
+  // Smart Router Feature Flag aus Konfiguration
+  const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
+  const useSmartRouterEnabled = shouldUseSmartRouter();
 
   // Alert State
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
@@ -1322,6 +1329,18 @@ export default function MediathekPage() {
             </Button>
           </div>
         </nav>
+      )}
+
+      {/* Smart Router Status Badge (Development) */}
+      {process.env.NODE_ENV === 'development' && featureFlags.SMART_ROUTER_LOGGING && (
+        <div className="fixed bottom-4 left-4 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg z-50">
+          <div className="flex items-center gap-2 text-xs">
+            <div className={`w-2 h-2 rounded-full ${
+              useSmartRouterEnabled ? 'bg-green-400' : 'bg-red-400'
+            }`} />
+            <span>Smart Router: {useSmartRouterEnabled ? 'Aktiv' : 'Deaktiviert'}</span>
+          </div>
+        </div>
       )}
 
       {/* Modals - Only render when organizationId is available */}

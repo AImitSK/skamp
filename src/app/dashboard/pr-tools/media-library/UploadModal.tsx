@@ -10,13 +10,20 @@ import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
+import { smartUploadRouter, uploadToMediaLibrary } from "@/lib/firebase/smart-upload-router";
+import { mediaLibraryContextBuilder, UploadContextInfo } from "./utils/context-builder";
+import { getMediaLibraryFeatureFlags, shouldUseSmartRouter, getUIFeatureConfig } from "./config/feature-flags";
 import { 
   CloudArrowUpIcon, 
   DocumentTextIcon, 
   XMarkIcon, 
   FolderIcon, 
   BuildingOfficeIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  CogIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  TagIcon
 } from "@heroicons/react/24/outline";
 
 // Alert Component
@@ -77,11 +84,46 @@ export default function UploadModal({
   const [selectedClientId, setSelectedClientId] = useState<string>(preselectedClientId || '');
   const [alert, setAlert] = useState<{ type: 'info' | 'error'; message: string } | null>(null);
 
+  // Smart Upload Router Integration mit Feature Flags
+  const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
+  const [uiConfig] = useState(() => getUIFeatureConfig());
+  const useSmartRouterEnabled = shouldUseSmartRouter();
+  const [contextInfo, setContextInfo] = useState<UploadContextInfo | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'smart' | 'legacy'>(
+    useSmartRouterEnabled ? 'smart' : 'legacy'
+  );
+  const [uploadResults, setUploadResults] = useState<Array<{ fileName: string; method: string; path?: string; error?: string }>>([]);
+
   useEffect(() => {
     if (preselectedClientId) {
       setSelectedClientId(preselectedClientId);
     }
   }, [preselectedClientId]);
+
+  // Smart Router Context Info laden
+  useEffect(() => {
+    async function loadContextInfo() {
+      try {
+        const info = await mediaLibraryContextBuilder.buildContextInfo({
+          organizationId,
+          userId,
+          currentFolderId,
+          preselectedClientId: selectedClientId,
+          folderName,
+          uploadSource: 'dialog'
+        }, companies);
+        
+        setContextInfo(info);
+      } catch (error) {
+        // Failed to load context info - fallback to legacy mode
+        setUseSmartRouter(false);
+      }
+    }
+
+    if (useSmartRouterEnabled && uiConfig.showContextInfo && organizationId && userId) {
+      loadContextInfo();
+    }
+  }, [organizationId, userId, currentFolderId, selectedClientId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo, companies]);
 
   const showAlert = (type: 'info' | 'error', message: string) => {
     setAlert({ type, message });
@@ -120,40 +162,112 @@ export default function UploadModal({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
-
     setUploading(true);
     setUploadProgress({});
+    setUploadResults([]);
 
     try {
       const uploadPromises = selectedFiles.map(async (file, index) => {
         const fileKey = `${index}-${file.name}`;
+        const result = { fileName: file.name, method: 'legacy', error: undefined as string | undefined };
         
-        const uploadedAsset = await mediaService.uploadMedia(
-          file,
-          organizationId, // CHANGED: Use organizationId instead of user.uid
-          currentFolderId,
-          (progress) => {
-            setUploadProgress(prev => ({
-              ...prev,
-              [fileKey]: progress
-            }));
-          },
-          3, // retryCount
-          { userId } // NEW: Pass userId in context
-        );
-        
-
-        if (selectedClientId && uploadedAsset.id) {
-          await mediaService.updateAsset(uploadedAsset.id, {
-            clientId: selectedClientId
-          });
+        try {
+          if (useSmartRouterEnabled && uploadMethod === 'smart') {
+            // Smart Upload Router verwenden
+            const uploadResult = await uploadToMediaLibrary(
+              file,
+              organizationId,
+              userId,
+              currentFolderId,
+              (progress) => {
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileKey]: progress
+                }));
+              }
+            );
+            
+            result.method = uploadResult.uploadMethod;
+            result.path = uploadResult.path;
+            
+            // Client-ID nach Upload setzen falls erforderlich
+            if (selectedClientId && uploadResult.asset?.id) {
+              await mediaService.updateAsset(uploadResult.asset.id, {
+                clientId: selectedClientId
+              });
+            }
+          } else {
+            // Legacy Upload verwenden
+            const uploadedAsset = await mediaService.uploadMedia(
+              file,
+              organizationId,
+              currentFolderId,
+              (progress) => {
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [fileKey]: progress
+                }));
+              },
+              3, // retryCount
+              { userId } // Pass userId in context
+            );
+            
+            result.method = 'legacy';
+            result.path = `organizations/${organizationId}/media`;
+            
+            if (selectedClientId && uploadedAsset.id) {
+              await mediaService.updateAsset(uploadedAsset.id, {
+                clientId: selectedClientId
+              });
+            }
+          }
+        } catch (uploadError: any) {
+          // Bei Smart Router Fehler: Fallback auf Legacy (wenn Fallback aktiviert)
+          if (useSmartRouterEnabled && uploadMethod === 'smart' && featureFlags.SMART_ROUTER_FALLBACK) {
+            try {
+              const uploadedAsset = await mediaService.uploadMedia(
+                file,
+                organizationId,
+                currentFolderId,
+                (progress) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [fileKey]: progress
+                  }));
+                },
+                1, // Reduced retry for fallback
+                { userId }
+              );
+              
+              result.method = 'legacy-fallback';
+              result.path = `organizations/${organizationId}/media`;
+              
+              if (selectedClientId && uploadedAsset.id) {
+                await mediaService.updateAsset(uploadedAsset.id, {
+                  clientId: selectedClientId
+                });
+              }
+            } catch (fallbackError: any) {
+              result.error = fallbackError.message || 'Upload fehlgeschlagen';
+            }
+          } else {
+            result.error = uploadError.message || 'Upload fehlgeschlagen';
+          }
         }
+        
+        setUploadResults(prev => [...prev, result]);
+        return result;
       });
 
-      await Promise.all(uploadPromises);
+      const results = await Promise.all(uploadPromises);
+      const failedUploads = results.filter(r => r.error);
       
-      await onUploadSuccess();
-      onClose();
+      if (failedUploads.length === 0) {
+        await onUploadSuccess();
+        onClose();
+      } else {
+        showAlert('error', `${failedUploads.length} von ${results.length} Uploads fehlgeschlagen.`);
+      }
     } catch (error) {
       showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
@@ -203,6 +317,81 @@ export default function UploadModal({
                   </Text>
                   <Badge color="green">Vorausgewählt</Badge>
                 </div>
+              </div>
+            )}
+
+            {/* Smart Router Context Info */}
+            {contextInfo && useSmartRouterEnabled && uiConfig.showContextInfo && (
+              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <CogIcon className="h-4 w-4 text-gray-600" />
+                  <Text className="text-sm font-medium text-gray-900">
+                    Smart Upload Routing
+                  </Text>
+                  <Badge color={contextInfo.uploadMethod === 'smart' ? 'green' : 'gray'}>
+                    {contextInfo.uploadMethod === 'smart' ? 'Aktiviert' : 'Legacy'}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Routing:</span>
+                    <span>{contextInfo.routing.type === 'organized' ? '📁 Organisiert' : '📋 Standard'}</span>
+                    <span>({contextInfo.routing.reason})</span>
+                  </div>
+                  
+                  {contextInfo.clientInheritance?.source !== 'none' && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Kunde:</span>
+                      <span>
+                        {contextInfo.clientInheritance.clientName || 'Vererbung aktiv'}
+                        {contextInfo.clientInheritance.source === 'folder' && ' (aus Ordner)'}
+                        {contextInfo.clientInheritance.source === 'preselected' && ' (vorausgewählt)'}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {contextInfo.expectedTags.length > 0 && (
+                    <div className="flex items-start gap-2">
+                      <TagIcon className="h-3 w-3 mt-0.5 text-gray-500" />
+                      <span className="font-medium">Auto-Tags:</span>
+                      <span className="flex flex-wrap gap-1">
+                        {contextInfo.expectedTags.slice(0, 3).map((tag, index) => (
+                          <Badge key={index} color="gray" className="text-xs px-1 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {contextInfo.expectedTags.length > 3 && (
+                          <Badge color="gray" className="text-xs px-1 py-0">
+                            +{contextInfo.expectedTags.length - 3}
+                          </Badge>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Upload Method Toggle (nur wenn Feature aktiviert) */}
+                {uiConfig.allowMethodToggle && (
+                  <div className="mt-3 pt-2 border-t border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Text className="text-xs font-medium text-gray-700">Upload-Methode:</Text>
+                      <button
+                        type="button"
+                        onClick={() => setUploadMethod(uploadMethod === 'smart' ? 'legacy' : 'smart')}
+                        className="text-xs text-[#005fab] hover:text-[#004a8c] font-medium"
+                        disabled={!useSmartRouterEnabled}
+                      >
+                        {uploadMethod === 'smart' ? 'Legacy verwenden' : 'Smart Router verwenden'}
+                      </button>
+                      {!useSmartRouterEnabled && (
+                        <Badge color="gray" className="text-xs">
+                          Deaktiviert
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -327,13 +516,58 @@ export default function UploadModal({
                   <li><strong>Zielordner:</strong> {folderName || 'Root'}</li>
                   <li><strong>Kunde:</strong> {selectedCompany?.name || 'Nicht zugeordnet'}</li>
                   <li><strong>Gesamtgröße:</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
+                  {contextInfo && (
+                    <li><strong>Upload-Methode:</strong> {uploadMethod === 'smart' ? 'Smart Router' : 'Legacy'}</li>
+                  )}
                 </ul>
+              </div>
+            )}
+
+            {/* Upload Results (nur wenn Feature aktiviert) */}
+            {uiConfig.showUploadResults && uploadResults.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <Text className="text-sm font-medium text-blue-900 mb-2">Upload-Ergebnisse:</Text>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {uploadResults.map((result, index) => (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      {result.error ? (
+                        <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                      )}
+                      <span className="flex-1 truncate">{result.fileName}</span>
+                      <Badge 
+                        color={result.method === 'organized' ? 'green' : result.method === 'legacy-fallback' ? 'yellow' : 'gray'}
+                        className="text-xs px-1 py-0"
+                      >
+                        {result.method === 'organized' ? 'Smart' : 
+                         result.method === 'legacy-fallback' ? 'Fallback' : 
+                         result.method === 'unorganized' ? 'Standard' : 'Legacy'}
+                      </Badge>
+                      {result.error && (
+                        <span className="text-red-600 text-xs truncate max-w-32" title={result.error}>
+                          {result.error}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </FieldGroup>
         </DialogBody>
 
         <DialogActions className="mt-6">
+          <div className="flex items-center gap-2 flex-1">
+            {useSmartRouterEnabled && uiConfig.showContextInfo && contextInfo && (
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span>Smart Router:</span>
+                <Badge color={uploadMethod === 'smart' ? 'green' : 'gray'} className="text-xs">
+                  {uploadMethod === 'smart' ? 'Aktiv' : 'Deaktiviert'}
+                </Badge>
+              </div>
+            )}
+          </div>
           <Button plain onClick={onClose} disabled={uploading}>
             Abbrechen
           </Button>
@@ -342,7 +576,11 @@ export default function UploadModal({
             disabled={selectedFiles.length === 0 || uploading}
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
           >
-            {uploading ? 'Uploading...' : `${selectedFiles.length} Datei(en) hochladen`}
+            {uploading ? (
+              uploadMethod === 'smart' ? 'Smart Upload...' : 'Uploading...'
+            ) : (
+              `${selectedFiles.length} Datei(en) hochladen`
+            )}
           </Button>
         </DialogActions>
       </div>
