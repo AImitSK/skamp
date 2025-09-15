@@ -1109,13 +1109,48 @@ Da wir uns in der **Entwicklungsphase** befinden, verwenden wir eine **Clean-Sla
 - [ ] Profilbilder migrieren und validieren
 - [ ] Team-onboarding für neue Hybrid-Workflows
 
-## 📋 DETAILLIERTE TASK-LISTE
+## 📋 DETAILLIERTE TASK-LISTE MIT AGENT-WORKFLOW
+
+**🔐 SECURITY & MULTI-TENANCY STANDARD (für alle Phasen):**
+- Alle Asset-Attachments mit `organizationId` isoliert
+- Asset-Zugriff über bestehende Firebase Rules validiert  
+- Projekt-Asset-Sharing nur innerhalb Organization
+- Asset-History mit User-Tracking für Audit-Trail
+
+**📋 STANDARD IMPLEMENTATION-WORKFLOW (für jede Phase):**
+
+### SCHRITT 1: IMPLEMENTATION
+- **Agent:** `general-purpose`
+- **Aufgabe:** Code-Implementation der spezifizierten Features
+
+### SCHRITT 2: DOKUMENTATION  
+- **Agent:** `documentation-orchestrator`
+- **Aufgabe:** Synchronisation aller Dokumentations-Ebenen
+
+### SCHRITT 3: TYPESCRIPT VALIDATION
+- **Agent:** `general-purpose` 
+- **Aufgabe:** `npm run type-check` + Fehler-Behebung
+
+### SCHRITT 4: TEST-COVERAGE
+- **Agent:** `test-writer`
+- **Aufgabe:** 100% Test-Coverage mit Firebase-Mocking
+
+### SCHRITT 5: PLAN-ABSCHLUSS
+- **Agent:** `documentation-orchestrator`
+- **Aufgabe:** Phase als "✅ COMPLETED" markieren
+
+---
 
 ### PHASE 0 TASKS (FUNDAMENTAL - NEU)
 
 #### Task 0.1: Project-Context-Provider Implementation
 **Priorität:** 🚀 FUNDAMENTAL  
 **Geschätzte Zeit:** 2 Tage
+
+**🔐 MULTI-TENANCY REQUIREMENTS:**
+- Project-Context nur für aktuelle Organization
+- Strikte organizationId-Validierung in allen Context-Calls
+- Project-Selector filtert nach Organization-Membership
 
 **Dateien zu erstellen:**
 1. `src/context/ProjectContext.tsx`
@@ -1165,6 +1200,18 @@ Da wir uns in der **Entwicklungsphase** befinden, verwenden wir eine **Clean-Sla
 #### Task 1.1: Profile-Image-Service Elimination
 **Priorität:** 🚨 KRITISCH
 **Geschätzte Zeit:** 2 Tage
+
+**🔐 MULTI-TENANCY REQUIREMENTS:**
+- Profile-Images nur für Organization-Mitglieder
+- Upload-Pfad: `organizations/{orgId}/media/Unzugeordnet/Profile/{userId}/`
+- Strikte Isolation zwischen Organizations
+
+**📋 IMPLEMENTATION-WORKFLOW:**
+1. **IMPLEMENTATION** (`general-purpose`): Service-Migration durchführen
+2. **DOKUMENTATION** (`documentation-orchestrator`): API-Docs aktualisieren  
+3. **TYPESCRIPT** (`general-purpose`): Type-Safety validieren
+4. **TESTS** (`test-writer`): Service-Tests mit Multi-Tenancy-Isolation
+5. **ABSCHLUSS** (`documentation-orchestrator`): Task als ✅ COMPLETED markieren
 
 **Dateien zu ändern:**
 1. `src/lib/firebase/media-service.ts`
