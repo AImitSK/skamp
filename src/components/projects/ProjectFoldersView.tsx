@@ -696,7 +696,7 @@ function ProjectUploadModal({
             </div>
             <div className="max-h-40 overflow-y-auto space-y-2">
               {selectedFiles.map((file, index) => {
-                const recommendation = getFileRecommendation(file.name);
+                const recommendation = fileRecommendations[file.name];
                 return (
                   <div key={index} className="bg-gray-50 rounded-lg p-3">
                     <div className="flex items-center justify-between">
