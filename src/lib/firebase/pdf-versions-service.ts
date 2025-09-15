@@ -21,6 +21,7 @@ import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
 import { pdfTemplateService } from './pdf-template-service';
+import { smartUploadRouter } from './smart-upload-router';
 // NEW: Import für Enhanced Edit-Lock System
 // ENTFERNT: import { approvalWorkflowService } from './approval-workflow-service';
 import type { EditLockReason, UnlockRequest } from '@/types/pr';
@@ -141,7 +142,8 @@ class PDFVersionsService {
       }, 
       `pipeline_${campaignData.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`,
       context.organizationId,
-      context.userId
+      context.userId,
+      campaignId
       );
 
       // Campaign mit interner PDF-Info aktualisieren
@@ -236,7 +238,7 @@ class PDFVersionsService {
       const fileName = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_v${newVersionNumber}_${dateStr}.pdf`;
 
       // Echte PDF-Generation über neue Puppeteer-API Route
-      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, context.userId);
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, context.userId, campaignId);
 
       // Berechne Metadaten
       const wordCount = this.countWords(content.mainContent);
@@ -628,7 +630,8 @@ class PDFVersionsService {
     },
     fileName: string,
     organizationId: string,
-    userId: string
+    userId: string,
+    campaignId?: string
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
       // ========================================
@@ -747,17 +750,22 @@ class PDFVersionsService {
           // Erstelle File object für Upload
           const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
           
-          // Upload via mediaService (Client-Side mit Auth)
-          const uploadedAsset = await mediaService.uploadMedia(
-            pdfFile,
-            organizationId,
-            undefined, // kein Ordner
-            undefined, // kein Progress-Callback
-            3, // Retry Count
-            { userId: 'pdf-system' } // Context
-          );
+          // Upload via Smart Upload Router mit Campaign-Kontext für korrekte Ordner-Platzierung
+          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, {
+            organizationId: organizationId,
+            userId: userId,
+            uploadType: 'campaign',
+            campaignId: campaignId || 'temp_campaign',
+            phase: 'internal_approval', // PDF wird bei Approval generiert
+            category: 'pressemeldung_pdf',
+            autoTags: ['generated_pdf', 'approval_version']
+          });
           
-          finalPdfUrl = uploadedAsset.downloadUrl;
+          if (!uploadResult.asset) {
+            throw new Error('Upload-Ergebnis enthält kein Asset');
+          }
+          
+          finalPdfUrl = uploadResult.asset.downloadUrl;
           
         } catch (base64Error) {
           const errorMessage = base64Error instanceof Error ? base64Error.message : String(base64Error);

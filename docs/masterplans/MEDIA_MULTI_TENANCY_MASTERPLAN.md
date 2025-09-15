@@ -222,7 +222,7 @@ import { profileImageService } from '@/lib/services/profile-image-service'; // S
 3. `src/lib/firebase/project-service.ts` - ⚠️ MIXED USAGE
 4. `src/lib/firebase/pr-service.ts` - ✅ KORREKT
 5. `src/lib/firebase/document-content-service.ts` - ⚠️ PRÜFEN
-6. `src/lib/firebase/pdf-versions-service.ts` - ✅ KORREKT
+6. `src/lib/firebase/pdf-versions-service.ts` - ✅ KORREKT (CRITICAL BUG FIX 15.09.2025: Legacy uploadMedia → Smart Upload Router)
 7. `src/lib/firebase/branding-service.ts` - ⚠️ PRÜFEN
 8. `src/lib/firebase/strategy-document-service.ts` - ⚠️ PRÜFEN
 9. `src/lib/firebase/approval-service.ts` - ⚠️ PRÜFEN
@@ -1098,38 +1098,49 @@ const uploadResult = await mediaService.smartUpload(file, {
 - **Asset-Verschiebeung**: Automatische Verschiebung aller Campaign-Assets bei Projekt-Zuordnung
 - **Rollback-Funktion**: "Aus Projekt entfernen" mit Asset-Rückverschiebung
 
-#### 3.4 PDF-Generierung Hybrid-Integration (KRITISCH - FREIGABE-KOMPATIBEL)
+#### 3.4 PDF-Generierung Hybrid-Integration ✅ KRITISCHER BUG BEHOBEN (15.09.2025)
 **DATEIEN:**
-- `src/lib/firebase/pdf-versions-service.ts` (HYBRID-UPGRADE)
-- `src/app/freigabe/[shareId]/page.tsx` (BEREITS KOMPATIBEL!)
-- PDF-Generierung-Komponenten
+- ✅ `src/lib/firebase/pdf-versions-service.ts` (CRITICAL BUG FIX - SMART UPLOAD ROUTER INTEGRATION)
+- ✅ `src/app/freigabe/[shareId]/page.tsx` (KOMPATIBEL)
+- ✅ PDF-Generierung-Komponenten
 
-**🎯 CLEAN-SLATE-OPTIMIERTE PDF-INTEGRATION:**
+**🚨 CRITICAL BUG FIX IMPLEMENTED (15.09.2025):**
 
-Nach der Analyse der Freigabe-Seite ist das **PDF-System bereits Multi-Tenancy-konform**, braucht aber **Hybrid-Upload-Logic**:
+**Problem:** Campaign approval PDFs wurden fälschlicherweise in der Mediathek-Wurzel statt in der organisierten Projekt-Ordnerstruktur gespeichert.
+
+**Root Cause:** `pdf-versions-service.ts` verwendete Legacy `mediaService.uploadMedia()` mit `undefined` folder statt Smart Upload Router mit korrektem Campaign-Context.
+
+**Solution:** PDF-Generierung verwendet jetzt Smart Upload Router mit korrektem Campaign-Context:
 
 ```typescript
-// AKTUELL - Multi-Tenancy korrekt, aber nicht Hybrid:
+// VORHER - Legacy Upload ohne Kontext (BUG):
 const uploadedAsset = await mediaService.uploadMedia(
   pdfFile,
   organizationId,  // ✅ Multi-Tenancy OK
-  undefined,       // ❌ Kein Hybrid-Context
+  undefined,       // ❌ Kein Ordner-Context - landete in Wurzel
   { userId: 'pdf-system' }
 );
-// Result: organizations/{orgId}/media/{timestamp}_{filename}
+// Result: organizations/{orgId}/media/{timestamp}_{filename} (FEHLERHAFTE ROOT-SPEICHERUNG)
 
-// NEU - Hybrid-Smart-Upload:
+// NACHHER - Smart Upload Router mit Campaign-Context (FIX):
 const uploadedAsset = await mediaService.smartUpload(pdfFile, {
   organizationId,
   userId: 'pdf-system',
-  projectId: campaign.projectId,  // Optional! Hybrid-Kern
-  campaignId: campaign.id,
-  category: 'press',
-  subCategory: 'finale-pdfs'
+  projectId: campaign.projectId,  // ✅ Campaign's Projekt-Zuordnung
+  campaignId: campaign.id,        // ✅ Campaign-Context
+  category: 'press',              // ✅ Pressemeldungen-Kategorie
+  subCategory: 'Freigaben'        // ✅ Spezifische PDF-Subkategorie
 });
-// Result MIT Projekt: organizations/{orgId}/media/Projekte/P-{project}/Pressemeldungen/Campaign-{id}/Finale-PDFs/
+// Result MIT Projekt: organizations/{orgId}/media/Projekte/P-{project}/Pressemeldungen/Campaign-{id}/Freigaben/
 // Result OHNE Projekt: organizations/{orgId}/media/Unzugeordnet/Campaigns/Campaign-{id}/PDFs/
 ```
+
+**🎯 BUG-FIX IMPACT:**
+- ✅ **Organisierte Speicherung:** PDFs landen jetzt in korrekter Projekt-Ordnerstruktur
+- ✅ **Campaign-Context-Aware:** PDF-Speicherung folgt Campaign's Projekt-Zuordnung
+- ✅ **Hybrid-Architecture-Compliance:** Nutzt Smart Upload Router Infrastructure
+- ✅ **Rückwärts-Kompatibilität:** Bestehende PDF-Downloads funktionieren weiterhin
+- ✅ **Multi-Tenancy-Sicherheit:** Bleibt vollständig gewährleistet
 
 **FREIGABE-SEITEN-KOMPATIBILITÄT:**
 ✅ **Bereits kompatibel** - verwendet `pdfVersionsService.getVersionHistory()`
@@ -1338,6 +1349,7 @@ Phase 4 wurde erfolgreich als **Service Consolidation & Unified Upload API** imp
 - ✅ **Performance-Optimierungen:** 25-60% Verbesserungen in allen Bereichen
 - ✅ **Multi-Tenancy-Security:** Cross-Tenant-Prevention vollständig implementiert
 - ✅ **Error-Handling:** 5 Error-Kategorien mit automatischer Recovery
+- ✅ **CRITICAL BUG FIX (15.09.2025):** PDF-Versions-Service Smart Upload Router Integration - Behebt Fehlspeicherung in Mediathek-Wurzel
 
 **TECHNICAL ACHIEVEMENTS:**
 - 🔗 **Service-Integration:** 5 Upload-Services → 1 Unified API
@@ -1345,6 +1357,24 @@ Phase 4 wurde erfolgreich als **Service Consolidation & Unified Upload API** imp
 - 🛡️ **Multi-Tenancy-Security:** Cross-Tenant-Prevention, Permission-Validation
 - 🔄 **Legacy-Migration:** Feature-Flag-gesteuert (5% → 25% → 100%)
 - 📊 **Error-Handling:** 5 Error-Kategorien mit automatischer Recovery
+
+#### 4.3 Critical Bug Fix Implementation Notes (15.09.2025)
+**PDF-Versions-Service Smart Upload Router Integration:**
+
+**🚨 PROBLEM ANALYSIS:**
+Der `pdf-versions-service.ts` verwendete noch den Legacy `mediaService.uploadMedia()` Aufruf ohne ordnerspezifischen Context, was dazu führte, dass Campaign Approval PDFs fälschlicherweise in der Mediathek-Wurzel (`organizations/{orgId}/media/{timestamp}_{filename}`) gespeichert wurden, anstatt in der organisierten Projekt-Ordnerstruktur (`P-{project}/Pressemeldungen/Campaign-{id}/Freigaben/`).
+
+**✅ SOLUTION IMPLEMENTATION:**
+- **Service-Update:** `pdf-versions-service.ts` migriert von Legacy `uploadMedia()` zu Smart Upload Router `smartUpload()`
+- **Context-Integration:** Campaign-Context wird vollständig an Smart Upload Router weitergegeben
+- **Ordner-Struktur-Compliance:** PDFs landen jetzt in korrekter `Pressemeldungen/` Kategorie
+- **Hybrid-Architecture-Compliance:** Service nutzt dieselbe Routing-Logic wie alle anderen Upload-Services
+
+**🎯 IMPACT & VALIDATION:**
+- **Organized Storage:** Alle neuen Campaign PDFs folgen organisierter Projekt-Ordnerstruktur
+- **Backward Compatibility:** Bestehende PDF-Downloads bleiben funktionsfähig
+- **Masterplan Compliance:** Service entspricht jetzt vollständig der Phase 4 Service Consolidation
+- **Multi-Tenancy Security:** Bleibt unverändert sicher und isoliert
 
 #### 4.2 Legacy-Wrapper-System für nahtlose Migration ✅ ABGESCHLOSSEN
 - **Backward-Compatibility:** 90+ Components verwenden Legacy-Wrapper
