@@ -13,8 +13,11 @@ import {
   DocumentTextIcon,
   PhotoIcon,
   ArrowUpTrayIcon,
-  CloudArrowUpIcon
-} from "@heroicons/react/20/solid";
+  CloudArrowUpIcon,
+  InformationCircleIcon,
+  CubeIcon,
+  ArchiveBoxIcon
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 
@@ -24,6 +27,20 @@ const UploadModal = dynamic(() => import('@/app/dashboard/pr-tools/media-library
 });
 import { serverTimestamp } from 'firebase/firestore';
 import { mediaService } from "@/lib/firebase/media-service";
+import { 
+  campaignMediaService, 
+  uploadCampaignAttachment,
+  getCampaignUploadFeatureStatus 
+} from "@/lib/firebase/campaign-media-service";
+import { 
+  createAttachmentContext,
+  CampaignUploadType 
+} from "@/components/campaigns/utils/campaign-context-builder";
+import { 
+  createFeatureFlagContext,
+  getUIEnhancements,
+  getMigrationStatus 
+} from "@/components/campaigns/config/campaign-feature-flags";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { CampaignAssetAttachment } from "@/types/pr";
 import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
@@ -38,6 +55,14 @@ interface AssetSelectorModalProps {
   legacyUserId?: string;
   selectionMode?: 'multiple' | 'single'; // Für Key Visual nur single selection
   onUploadSuccess?: () => void; // Callback nach erfolgreichem Upload
+  
+  // Campaign Smart Router Integration Props
+  campaignId?: string;
+  campaignName?: string;
+  selectedProjectId?: string;
+  selectedProjectName?: string;
+  uploadType?: CampaignUploadType;
+  enableSmartRouter?: boolean;
 }
 
 export function AssetSelectorModal({
@@ -49,7 +74,15 @@ export function AssetSelectorModal({
   organizationId,
   legacyUserId,
   selectionMode = 'multiple',
-  onUploadSuccess
+  onUploadSuccess,
+  
+  // Campaign Smart Router Props
+  campaignId,
+  campaignName,
+  selectedProjectId,
+  selectedProjectName,
+  uploadType = 'attachment',
+  enableSmartRouter = false
 }: AssetSelectorModalProps) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);

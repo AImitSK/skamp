@@ -1,14 +1,24 @@
 // src/components/campaigns/KeyVisualSection.tsx
 "use client";
 
-import { useState, useRef } from 'react';
-import { PhotoIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useState, useRef, useMemo } from 'react';
+import { PhotoIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
 import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { 
+  campaignMediaService, 
+  uploadCampaignHeroImage,
+  getCampaignUploadFeatureStatus 
+} from '@/lib/firebase/campaign-media-service';
+import { 
+  createFeatureFlagContext,
+  getUIEnhancements,
+  isCampaignSmartRouterEnabled 
+} from '@/components/campaigns/config/campaign-feature-flags';
 
 interface KeyVisualData {
   assetId?: string;
@@ -23,6 +33,13 @@ interface KeyVisualSectionProps {
   clientName?: string;
   organizationId: string;
   userId: string;
+  
+  // Campaign Smart Router Integration Props
+  campaignId?: string;
+  campaignName?: string;
+  selectedProjectId?: string;
+  selectedProjectName?: string;
+  enableSmartRouter?: boolean;
 }
 
 export function KeyVisualSection({
@@ -31,13 +48,47 @@ export function KeyVisualSection({
   clientId,
   clientName,
   organizationId,
-  userId
+  userId,
+  
+  // Campaign Smart Router Props
+  campaignId,
+  campaignName,
+  selectedProjectId,
+  selectedProjectName,
+  enableSmartRouter = false
 }: KeyVisualSectionProps) {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadingWithSmartRouter, setUploadingWithSmartRouter] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Campaign Smart Router State
+  const featureFlagContext = useMemo(() => {
+    if (!enableSmartRouter || !campaignId) return null;
+    return createFeatureFlagContext({
+      organizationId,
+      userId,
+      campaignId,
+      projectId: selectedProjectId
+    });
+  }, [enableSmartRouter, campaignId, organizationId, userId, selectedProjectId]);
+  
+  const featureStatus = useMemo(() => {
+    if (!featureFlagContext) return null;
+    return getCampaignUploadFeatureStatus({
+      organizationId,
+      userId,
+      campaignId,
+      projectId: selectedProjectId
+    });
+  }, [featureFlagContext, organizationId, userId, campaignId, selectedProjectId]);
+  
+  const uiEnhancements = useMemo(() => {
+    if (!featureFlagContext) return { showStorageType: false, showUploadMethodBadges: false, showContextPreview: false, showPathSuggestions: false };
+    return getUIEnhancements(featureFlagContext);
+  }, [featureFlagContext]);
 
   // Direkter Upload Handler
   const handleDirectUpload = () => {
@@ -50,12 +101,12 @@ export function KeyVisualSection({
 
     // Validierung
     if (!file.type.startsWith('image/')) {
-      alert('Bitte wählen Sie eine Bilddatei aus.');
+      console.warn('Campaign KeyVisual: Nur Bilddateien sind erlaubt');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('Die Datei darf maximal 10MB groß sein.');
+      console.warn('Campaign KeyVisual: Datei zu groß (max 10MB)');
       return;
     }
 
@@ -78,14 +129,36 @@ export function KeyVisualSection({
   const handleCropComplete = async (croppedFile: File, cropData?: any) => {
     setIsProcessing(true);
     try {
-      // Upload zu Firebase Storage - verwende userId für Media Library Kompatibilität
-      const timestamp = Date.now();
-      const originalName = croppedFile.name.replace(/\.[^/.]+$/, ''); // Remove extension
-      const fileName = `organizations/${userId}/media/${timestamp}-${originalName}-key-visual.jpg`;
-      const storageRef = ref(storage, fileName);
+      let downloadUrl: string;
       
-      const snapshot = await uploadBytes(storageRef, croppedFile);
-      const downloadUrl = await getDownloadURL(snapshot.ref);
+      // Smart Router Upload wenn verfügbar
+      if (enableSmartRouter && featureStatus?.smartRouterAvailable && campaignId) {
+        setUploadingWithSmartRouter(true);
+        
+        const result = await uploadCampaignHeroImage({
+          organizationId,
+          userId,
+          campaignId,
+          campaignName,
+          selectedProjectId,
+          selectedProjectName,
+          clientId,
+          file: croppedFile
+        });
+        
+        downloadUrl = result.asset?.downloadUrl || result.path;
+        setUploadingWithSmartRouter(false);
+        
+      } else {
+        // Legacy Upload zu Firebase Storage
+        const timestamp = Date.now();
+        const originalName = croppedFile.name.replace(/\.[^/.]+$/, ''); // Remove extension
+        const fileName = `organizations/${userId}/media/${timestamp}-${originalName}-key-visual.jpg`;
+        const storageRef = ref(storage, fileName);
+        
+        const snapshot = await uploadBytes(storageRef, croppedFile);
+        downloadUrl = await getDownloadURL(snapshot.ref);
+      }
       
       // Key Visual setzen
       onChange({
@@ -96,7 +169,8 @@ export function KeyVisualSection({
       setShowCropper(false);
       setSelectedImageSrc('');
     } catch (error) {
-      alert('Fehler beim Hochladen des Bildes');
+      console.error('Campaign KeyVisual Upload-Fehler:', error);
+      setUploadingWithSmartRouter(false);
     } finally {
       setIsProcessing(false);
     }
@@ -130,7 +204,7 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
         
       } catch (error) {
-        alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
+        console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
       }
     }
   };
@@ -163,7 +237,7 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
         
       } catch (error) {
-        alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
+        console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
       }
     }
   };
@@ -173,6 +247,46 @@ export function KeyVisualSection({
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
       </div>
+      
+      {/* Campaign Smart Router Info Panel */}
+      {enableSmartRouter && uiEnhancements.showContextPreview && campaignId && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-start gap-3">
+            <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <Text className="font-medium text-blue-900">Smart Upload Router</Text>
+                {uiEnhancements.showUploadMethodBadges && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Hero Image Upload
+                  </span>
+                )}
+              </div>
+              
+              <div className="space-y-1 text-sm text-blue-700">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Kampagne:</span>
+                  <span>{campaignName || campaignId}</span>
+                </div>
+                
+                {selectedProjectId && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Projekt:</span>
+                    <span>{selectedProjectName || selectedProjectId}</span>
+                  </div>
+                )}
+                
+                {uiEnhancements.showStorageType && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Storage-Typ:</span>
+                    <span>{selectedProjectId ? 'Organisiert' : 'Unzugeordnet'}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!value ? (
         // Platzhalter wenn kein Key Visual - kompakte Höhe wie Medien-Platzhalter
@@ -228,7 +342,7 @@ export function KeyVisualSection({
         className="hidden"
       />
 
-      {/* Asset Selector Modal mit Upload-Option */}
+      {/* Asset Selector Modal mit Smart Router Integration */}
       {showAssetSelector && clientId && (
         <AssetSelectorModal
           isOpen={showAssetSelector}
@@ -242,6 +356,14 @@ export function KeyVisualSection({
           onUploadSuccess={() => {
             // Optional: Refresh or additional logic after upload
           }}
+          
+          // Campaign Smart Router Props
+          campaignId={campaignId}
+          campaignName={campaignName}
+          selectedProjectId={selectedProjectId}
+          selectedProjectName={selectedProjectName}
+          uploadType="hero-image"
+          enableSmartRouter={enableSmartRouter}
         />
       )}
 
@@ -279,8 +401,25 @@ export function KeyVisualSection({
             setShowCropper(false);
             setSelectedImageSrc('');
           }}
-          isProcessing={isProcessing}
+          isProcessing={isProcessing || uploadingWithSmartRouter}
         />
+      )}
+      
+      {/* Smart Router Upload Progress Overlay */}
+      {uploadingWithSmartRouter && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <Text className="font-medium text-gray-900 mb-2">
+                Smart Router Upload läuft...
+              </Text>
+              <Text className="text-sm text-gray-500">
+                Key Visual wird intelligent geroutet und hochgeladen
+              </Text>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
