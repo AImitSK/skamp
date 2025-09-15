@@ -25,6 +25,11 @@ import { mediaService } from '@/lib/firebase/media-service';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
+import { projectUploadService, ProjectUploadConfig } from '@/lib/firebase/project-upload-service';
+import { projectFolderContextBuilder, FolderRoutingRecommendation } from './utils/project-folder-context-builder';
+import { getUploadFeatureConfig } from './config/project-folder-feature-flags';
+import type { PipelineStage } from '@/types/project';
+import SmartUploadInfoPanel, { SmartUploadInfoBadge, DragDropStatusIndicator } from './components/SmartUploadInfoPanel';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -390,7 +395,7 @@ function CreateFolderModal({
   );
 }
 
-// Upload Modal Component
+// Smart Upload Modal Component with Router Integration
 function ProjectUploadModal({
   isOpen,
   onClose,
@@ -398,7 +403,10 @@ function ProjectUploadModal({
   currentFolderId,
   folderName,
   clientId,
-  organizationId
+  organizationId,
+  projectId,
+  project,
+  availableFolders
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -407,28 +415,62 @@ function ProjectUploadModal({
   folderName?: string;
   clientId: string;
   organizationId: string;
+  projectId: string;
+  project?: {
+    title: string;
+    currentStage: PipelineStage;
+    customer?: { name: string };
+  };
+  availableFolders: Array<{ id: string; name: string; type?: string }>;
 }) {
   const { user } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
+  
+  // Smart Router Integration
+  const [useSmartRouting, setUseSmartRouting] = useState(true);
+  const [fileRecommendations, setFileRecommendations] = useState<Record<string, FolderRoutingRecommendation>>({});
+  const [smartRouterEnabled, setSmartRouterEnabled] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  
+  // Feature Flags initialisieren
+  useEffect(() => {
+    if (user?.uid) {
+      const featureConfig = getUploadFeatureConfig(user.uid, organizationId);
+      setSmartRouterEnabled(featureConfig.useSmartRouter);
+      setShowRecommendations(featureConfig.showRecommendations);
+    }
+  }, [user?.uid, organizationId]);
 
   const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+      
+      // Generate Smart Recommendations
+      if (smartRouterEnabled && project && files.length > 0) {
+        await generateRecommendations(files);
+      }
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files) {
-      setSelectedFiles(Array.from(e.dataTransfer.files));
+      const files = Array.from(e.dataTransfer.files);
+      setSelectedFiles(files);
+      
+      // Generate Smart Recommendations
+      if (smartRouterEnabled && project && files.length > 0) {
+        await generateRecommendations(files);
+      }
     }
   };
 
@@ -437,7 +479,17 @@ function ProjectUploadModal({
   };
 
   const removeFile = (index: number) => {
+    const fileToRemove = selectedFiles[index];
     setSelectedFiles(files => files.filter((_, i) => i !== index));
+    
+    // Remove recommendation for deleted file
+    if (fileToRemove && fileRecommendations[fileToRemove.name]) {
+      setFileRecommendations(prev => {
+        const newRecs = { ...prev };
+        delete newRecs[fileToRemove.name];
+        return newRecs;
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -515,28 +567,82 @@ function ProjectUploadModal({
       <DialogBody className="space-y-6">
         {alert && <Alert type={alert.type} message={alert.message} />}
         
+        {/* Smart Router Status */}
+        {smartRouterEnabled && project && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <InformationCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+                <div>
+                  <Text className="text-sm font-medium text-green-700">
+                    Smart Upload Router aktiv
+                  </Text>
+                  <Text className="text-xs text-green-600">
+                    Pipeline-Phase: {project.currentStage} | Automatische Ordner-Empfehlungen
+                  </Text>
+                </div>
+              </div>
+              <button
+                onClick={() => setUseSmartRouting(!useSmartRouting)}
+                className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+              >
+                {useSmartRouting ? 'Aktiv' : 'Deaktiviert'}
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Kundeninformation */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center">
             <InformationCircleIcon className="w-5 h-5 text-blue-500 mr-2" />
             <Text className="text-sm text-blue-700">
               Dateien werden automatisch dem Projektkunden zugeordnet
+              {project?.customer?.name && ` (${project.customer.name})`}
             </Text>
           </div>
         </div>
 
-        {/* Drag & Drop Area */}
+        {/* Enhanced Drag & Drop Area with Smart Routing */}
         <div
-          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
+            smartRouterEnabled && useSmartRouting
+              ? 'border-green-300 bg-green-50 hover:border-green-400 hover:bg-green-100'
+              : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
+          }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            if (smartRouterEnabled) {
+              e.currentTarget.classList.add('ring-2', 'ring-green-300');
+            }
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('ring-2', 'ring-green-300');
+          }}
         >
-          <CloudArrowUpIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <CloudArrowUpIcon className={`w-12 h-12 mx-auto mb-4 ${
+            smartRouterEnabled && useSmartRouting ? 'text-green-400' : 'text-gray-400'
+          }`} />
           <Text className="text-lg font-medium text-gray-900 mb-2">
-            Dateien hier ablegen oder
+            {smartRouterEnabled && useSmartRouting 
+              ? 'Smart Upload: Dateien hier ablegen'
+              : 'Dateien hier ablegen oder'
+            }
           </Text>
+          {smartRouterEnabled && useSmartRouting && (
+            <Text className="text-sm text-green-600 mb-3">
+              Automatische Ordner-Erkennung aktiviert
+            </Text>
+          )}
           <label className="cursor-pointer">
-            <span className="text-blue-600 hover:text-blue-500 font-medium">
+            <span className={`font-medium ${
+              smartRouterEnabled && useSmartRouting 
+                ? 'text-green-600 hover:text-green-500'
+                : 'text-blue-600 hover:text-blue-500'
+            }`}>
               durchsuchen
             </span>
             <input
@@ -547,49 +653,114 @@ function ProjectUploadModal({
               disabled={uploading}
             />
           </label>
+          
+          {/* Smart Routing Info */}
+          {smartRouterEnabled && useSmartRouting && project && (
+            <div className="mt-4 pt-4 border-t border-green-200">
+              <div className="flex items-center justify-center space-x-4 text-xs text-green-600">
+                <span>Pipeline: {project.currentStage}</span>
+                <span>•</span>
+                <span>Aktueller Ordner: {folderName || 'Hauptordner'}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Selected Files */}
+        {/* Smart Recommendations Summary */}
+        {hasHighConfidenceRecommendations && showRecommendations && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <InformationCircleIcon className="w-5 h-5 text-purple-500 mr-2" />
+              <div>
+                <Text className="text-sm font-medium text-purple-700">
+                  Smart Routing Empfehlungen verfügbar
+                </Text>
+                <Text className="text-xs text-purple-600">
+                  {Object.values(fileRecommendations).filter(rec => rec.confidence > 80).length} Dateien mit hoher Konfidenz zugeordnet
+                </Text>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Selected Files with Recommendations */}
         {selectedFiles.length > 0 && (
           <div className="space-y-2">
-            <Text className="font-medium">Ausgewählte Dateien ({selectedFiles.length})</Text>
+            <div className="flex items-center justify-between">
+              <Text className="font-medium">Ausgewählte Dateien ({selectedFiles.length})</Text>
+              {showRecommendations && Object.keys(fileRecommendations).length > 0 && (
+                <Text className="text-xs text-gray-500">
+                  Smart Routing verfügbar
+                </Text>
+              )}
+            </div>
             <div className="max-h-40 overflow-y-auto space-y-2">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                  <div className="flex items-center space-x-3">
-                    {getFileIcon(file)}
-                    <div>
-                      <Text className="text-sm font-medium truncate max-w-xs">
-                        {file.name}
-                      </Text>
-                      <Text className="text-xs text-gray-500">
-                        {formatFileSize(file.size)}
-                      </Text>
+              {selectedFiles.map((file, index) => {
+                const recommendation = getFileRecommendation(file.name);
+                return (
+                  <div key={index} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        {getFileIcon(file)}
+                        <div className="min-w-0 flex-1">
+                          <Text className="text-sm font-medium truncate">
+                            {file.name}
+                          </Text>
+                          <div className="flex items-center space-x-2">
+                            <Text className="text-xs text-gray-500">
+                              {formatFileSize(file.size)}
+                            </Text>
+                            {recommendation && (
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                recommendation.confidence > 80 
+                                  ? 'bg-green-100 text-green-700'
+                                  : recommendation.confidence > 60
+                                  ? 'bg-yellow-100 text-yellow-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                → {recommendation.folderName} ({recommendation.confidence}%)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        {uploading && uploadProgress[file.name] !== undefined && (
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${uploadProgress[file.name]}%` }}
+                            />
+                          </div>
+                        )}
+                        
+                        {!uploading && (
+                          <Button
+                            plain
+                            onClick={() => removeFile(index)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {uploading && uploadProgress[file.name] !== undefined && (
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress[file.name]}%` }}
-                        />
+                    
+                    {/* Recommendation Details */}
+                    {recommendation && showRecommendations && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        <div className="font-medium mb-1">Routing-Begründung:</div>
+                        <ul className="list-disc list-inside space-y-0.5">
+                          {recommendation.reasoning.slice(0, 2).map((reason, i) => (
+                            <li key={i}>{reason}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                    
-                    {!uploading && (
-                      <Button
-                        plain
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <XMarkIcon className="w-4 h-4" />
-                      </Button>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -618,6 +789,12 @@ interface ProjectFoldersViewProps {
   foldersLoading: boolean;
   onRefresh: () => void;
   clientId: string;
+  // Smart Router Integration
+  project?: {
+    title: string;
+    currentStage: PipelineStage;
+    customer?: { name: string };
+  };
 }
 
 export default function ProjectFoldersView({
@@ -626,7 +803,8 @@ export default function ProjectFoldersView({
   projectFolders,
   foldersLoading,
   onRefresh,
-  clientId
+  clientId,
+  project
 }: ProjectFoldersViewProps) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [currentFolders, setCurrentFolders] = useState<any[]>([]);
@@ -649,6 +827,32 @@ export default function ProjectFoldersView({
   // Document Editor States
   const [showDocumentEditor, setShowDocumentEditor] = useState(false);
   const [editingDocument, setEditingDocument] = useState<InternalDocument | null>(null);
+  
+  // Enhanced Drag & Drop States
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const [draggedFiles, setDraggedFiles] = useState<File[]>([]);
+  const [dragPreview, setDragPreview] = useState<{
+    files: File[];
+    targetFolder?: string;
+    recommendations?: Record<string, FolderRoutingRecommendation>;
+  } | null>(null);
+  
+  // Pre-selected files for Upload Modal
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  
+  // Smart Router Integration States
+  const [smartRouterEnabled, setSmartRouterEnabled] = useState(false);
+  const [useSmartRouting, setUseSmartRouting] = useState(true);
+  const [fileRecommendations, setFileRecommendations] = useState<Record<string, FolderRoutingRecommendation>>({});
+  const [pipelineWarnings, setPipelineWarnings] = useState<string[]>([]);
+  
+  // Initialize Smart Router Feature Flags
+  useEffect(() => {
+    if (user?.uid) {
+      const featureConfig = getUploadFeatureConfig(user.uid, organizationId);
+      setSmartRouterEnabled(featureConfig.useSmartRouter);
+    }
+  }, [user?.uid, organizationId]);
 
   // Initial load - zeige die Unterordner des Hauptordners
   useEffect(() => {
@@ -805,6 +1009,139 @@ export default function ProjectFoldersView({
     }
   };
 
+  // Enhanced Drag & Drop Handlers
+  const handleMainDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+  
+  const handleMainDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverFolder(null);
+    setDragPreview(null);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      
+      // Trigger Upload Modal with pre-selected files
+      setSelectedFiles(files);
+      setShowUploadModal(true);
+      
+      // Generate Smart Recommendations if enabled
+      const featureConfig = getUploadFeatureConfig(user?.uid, organizationId);
+      if (featureConfig.useSmartRouter && project) {
+        await generateSmartRecommendationsForMainDrop(files);
+      }
+    }
+  };
+  
+  const generateSmartRecommendationsForMainDrop = async (files: File[]) => {
+    if (!project || !user?.uid) return;
+    
+    try {
+      const context = projectFolderContextBuilder.buildProjectFolderContext({
+        projectId,
+        projectTitle: project.title,
+        projectCompany: project.customer?.name,
+        currentStage: project.currentStage,
+        currentFolderId: selectedFolderId,
+        folderName: breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined,
+        organizationId,
+        clientId,
+        userId: user.uid
+      });
+      
+      const recommendations: Record<string, FolderRoutingRecommendation> = {};
+      const availableFolders = [...(projectFolders?.subfolders || []), ...(currentFolders || [])];
+      
+      for (const file of files) {
+        const recommendation = projectFolderContextBuilder.generateFolderRecommendation(
+          file,
+          context,
+          availableFolders
+        );
+        recommendations[file.name] = recommendation;
+      }
+      
+      setDragPreview({ files, recommendations });
+      
+    } catch (error) {
+      console.warn('Smart Recommendations für Drag & Drop fehlgeschlagen:', error);
+    }
+  };
+  
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(folderId);
+  };
+  
+  const handleFolderDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear if we're really leaving the folder
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragOverFolder(null);
+    }
+  };
+  
+  const handleFolderDrop = async (e: React.DragEvent, folderId: string, folderName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      
+      // Direct upload to specific folder with Smart Router
+      const featureConfig = getUploadFeatureConfig(user?.uid, organizationId);
+      
+      if (featureConfig.useSmartRouter && project) {
+        try {
+          const config: ProjectUploadConfig = {
+            projectId,
+            projectTitle: project.title,
+            projectCompany: project.customer?.name,
+            currentStage: project.currentStage,
+            organizationId,
+            clientId,
+            userId: user?.uid || '',
+            currentFolderId: folderId,
+            folderName,
+            availableFolders: [...(projectFolders?.subfolders || []), ...(currentFolders || [])],
+            useSmartRouting: true,
+            allowBatchOptimization: true
+          };
+          
+          showAlert('info', `Uploading ${files.length} files to ${folderName}...`);
+          
+          const batchResult = await projectUploadService.uploadBatchToProject(files, config);
+          
+          if (batchResult.failedUploads > 0) {
+            showAlert('error', `${batchResult.failedUploads} von ${batchResult.totalFiles} Uploads fehlgeschlagen.`);
+          } else {
+            showAlert('success', `${batchResult.successfulUploads} Dateien erfolgreich in ${folderName} hochgeladen.`);
+          }
+          
+          onRefresh();
+          
+        } catch (error) {
+          console.error('Drag & Drop Upload fehlgeschlagen:', error);
+          showAlert('error', 'Upload fehlgeschlagen. Bitte versuchen Sie es erneut.');
+        }
+      } else {
+        // Fallback: Standard Upload Modal
+        setSelectedFiles(files);
+        setSelectedFolderId(folderId);
+        setShowUploadModal(true);
+      }
+    }
+  };
+  
   const handleUploadSuccess = () => {
     // Refresh current view
     if (selectedFolderId) {
@@ -1131,6 +1468,34 @@ export default function ProjectFoldersView({
         </div>
       </div>
 
+      {/* Smart Upload Info Panel */}
+      {project && (
+        <div className="mb-4">
+          <SmartUploadInfoPanel
+            isEnabled={smartRouterEnabled || false}
+            currentStage={project.currentStage}
+            projectTitle={project.title}
+            customerName={project.customer?.name}
+            currentFolder={breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined}
+            recommendations={fileRecommendations}
+            warnings={pipelineWarnings}
+            pipelineLocked={project.currentStage === 'internal_approval' || project.currentStage === 'customer_approval'}
+            onToggleSmartRouting={() => setUseSmartRouting(!useSmartRouting)}
+          />
+        </div>
+      )}
+      
+      {/* Drag & Drop Status */}
+      {dragOverFolder && (
+        <div className="mb-4">
+          <DragDropStatusIndicator
+            isDragging={true}
+            targetFolder={currentFolders.find(f => f.id === dragOverFolder)?.name}
+            smartRoutingEnabled={smartRouterEnabled || false}
+          />
+        </div>
+      )}
+      
       {/* Alert anzeigen */}
       {alert && (
         <div className="mb-4">
@@ -1169,8 +1534,13 @@ export default function ProjectFoldersView({
       )}
 
       {/* Content */}
-      <div className="overflow-y-auto space-y-3" style={{ height: 'calc(100% - 80px)' }}>
-        {/* Ordner anzeigen */}
+      <div 
+        className="overflow-y-auto space-y-3" 
+        style={{ height: 'calc(100% - 80px)' }}
+        onDragOver={handleMainDragOver}
+        onDrop={handleMainDrop}
+      >
+        {/* Ordner anzeigen mit Enhanced Drag & Drop */}
         {currentFolders.map((folder: any, index: number) => {
           const colors = [
             { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' },
@@ -1178,19 +1548,64 @@ export default function ProjectFoldersView({
             { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', icon: 'text-green-600' }
           ];
           const color = colors[index % colors.length];
+          const isDragOver = dragOverFolder === folder.id;
           
           return (
-            <div key={folder.id} className={`${color.bg} ${color.border} border rounded-lg p-4 cursor-pointer hover:shadow-sm transition-shadow`}
-                 onClick={() => handleFolderClick(folder.id)}>
+            <div 
+              key={folder.id} 
+              className={`${color.bg} ${color.border} border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                isDragOver 
+                  ? 'ring-2 ring-blue-400 shadow-lg transform scale-105' 
+                  : 'hover:shadow-sm'
+              }`}
+              onClick={() => handleFolderClick(folder.id)}
+              onDragOver={(e) => handleFolderDragOver(e, folder.id)}
+              onDragLeave={handleFolderDragLeave}
+              onDrop={(e) => handleFolderDrop(e, folder.id, folder.name)}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <FolderIcon className={`h-5 w-5 ${color.icon} mr-3`} />
-                  <Text className={`font-medium ${color.text}`}>
-                    {folder.name}
-                  </Text>
+                  <FolderIcon className={`h-5 w-5 ${color.icon} mr-3 ${
+                    isDragOver ? 'animate-pulse' : ''
+                  }`} />
+                  <div>
+                    <Text className={`font-medium ${color.text}`}>
+                      {folder.name}
+                    </Text>
+                    {isDragOver && (
+                      <Text className="text-xs text-gray-600 mt-1">
+                        Drop files here to upload
+                      </Text>
+                    )}
+                  </div>
                 </div>
-                <div className="text-gray-400">→</div>
+                <div className={`text-gray-400 ${
+                  isDragOver ? 'text-blue-500' : ''
+                }`}>
+                  {isDragOver ? '⬇' : '→'}
+                </div>
               </div>
+              
+              {/* Smart Routing Preview for this folder */}
+              {isDragOver && dragPreview?.recommendations && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="text-xs text-gray-600">
+                    <div className="font-medium mb-1">Smart Routing Preview:</div>
+                    {Object.entries(dragPreview.recommendations).slice(0, 2).map(([fileName, rec]) => (
+                      <div key={fileName} className="flex items-center space-x-2">
+                        <span className="truncate max-w-32">{fileName}</span>
+                        <span className={`px-1 py-0.5 rounded text-xs ${
+                          rec.targetFolderId === folder.id
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {rec.targetFolderId === folder.id ? '✓ Empfohlen' : `→ ${rec.folderName}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -1275,6 +1690,12 @@ export default function ProjectFoldersView({
         folderName={breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined}
         clientId={clientId}
         organizationId={organizationId}
+        projectId={projectId}
+        project={project}
+        availableFolders={[
+          ...(projectFolders?.subfolders || []),
+          ...(currentFolders || [])
+        ]}
       />
 
       {/* Create Folder Modal */}
