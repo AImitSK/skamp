@@ -131,6 +131,13 @@ export function KeyVisualSection({
     try {
       let downloadUrl: string;
 
+      console.log('🔍 Campaign Upload Debug:', {
+        selectedProjectId,
+        campaignId,
+        campaignName,
+        hasProjectId: !!selectedProjectId
+      });
+
       if (selectedProjectId) {
         // ✅ Projekt Campaign Upload: Verwende Project Upload Service
         const { projectUploadService } = await import('@/lib/firebase/project-upload-service');
@@ -171,6 +178,7 @@ export function KeyVisualSection({
         }
       } else {
         // ✅ Fallback: Standard Smart Upload Router für unzugeordnete Campaigns
+        console.log('⚠️ Kein selectedProjectId - verwende Smart Upload Router Fallback');
         const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
 
         const uploadResult = await uploadWithContext(
