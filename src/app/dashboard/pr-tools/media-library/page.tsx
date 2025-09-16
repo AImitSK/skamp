@@ -239,31 +239,20 @@ export default function MediathekPage() {
 
   const loadData = async () => {
     if (!organizationId) {
-      console.log('🚫 Media Library loadData: Keine organizationId verfügbar');
       return;
     }
-
-    console.log('📁 Media Library loadData: Start', { organizationId, currentFolderId });
+    
     setLoading(true);
-
+    
     try {
-      console.log('📂 Lade Ordner und Assets für organizationId:', organizationId, 'currentFolderId:', currentFolderId);
-
       const [foldersData, assetsData] = await Promise.all([
         mediaService.getFolders(organizationId, currentFolderId),
         mediaService.getMediaAssets(organizationId, currentFolderId)
       ]);
-
-      console.log('📁 Geladene Daten:', {
-        ordnerAnzahl: foldersData.length,
-        assetsAnzahl: assetsData.length,
-        ordner: foldersData.map(f => ({ id: f.id, name: f.name, path: f.path })),
-        assets: assetsData.map(a => ({ id: a.id, fileName: a.fileName, path: a.path }))
-      });
-
+      
       setFolders(foldersData);
       setMediaAssets(assetsData);
-
+      
       let allFoldersWithParent = foldersData;
       if (currentFolderId) {
         const currentFolder = await mediaService.getFolder(currentFolderId);
@@ -272,7 +261,7 @@ export default function MediathekPage() {
         }
       }
       setAllFolders(allFoldersWithParent);
-
+      
       if (currentFolderId) {
         const breadcrumbsData = await mediaService.getBreadcrumbs(currentFolderId);
         setBreadcrumbs(breadcrumbsData);
@@ -280,7 +269,6 @@ export default function MediathekPage() {
         setBreadcrumbs([]);
       }
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Media Library:', error);
       showAlert('error', 'Fehler beim Laden', 'Die Mediathek konnte nicht geladen werden.');
     } finally {
       setLoading(false);
