@@ -1971,7 +1971,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           campaignId={campaignId}
           campaignName={campaignTitle}
           selectedProjectId={selectedProjectId}
-          selectedProjectName={selectedProject?.name}
+          selectedProjectName={selectedProject?.title}
           uploadType="attachment"
           enableSmartRouter={true}
         />
