@@ -131,34 +131,60 @@ export function KeyVisualSection({
     try {
       let downloadUrl: string;
 
-      console.log('🔍 Campaign Upload Debug:', {
-        selectedProjectId,
-        campaignId,
-        campaignName,
-        hasProjectId: !!selectedProjectId
-      });
+      if (selectedProjectId) {
+        console.log('🔍 Suche Medien-Ordner für Projekt:', selectedProjectId);
 
-      // ✅ Verwende Smart Upload Router - funktioniert bereits perfekt für Projekt-strukturierte Pfade
-      const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+        // ✅ RICHTIGE LÖSUNG: Finde den Medien-Ordner des Projekts und lade dort hoch
+        const { mediaService } = await import('@/lib/firebase/media-service');
 
-      console.log('🚀 Verwende Smart Upload Router für Campaign mit selectedProjectId:', selectedProjectId);
+        // 1. Alle Ordner der Organisation laden
+        const allFolders = await mediaService.getAllFolders(organizationId);
+        console.log('📁 Alle Ordner:', allFolders.length);
 
-      const uploadResult = await uploadWithContext(
-        croppedFile,
-        organizationId,
-        userId,
-        'campaign',
-        {
-          campaignId,
-          campaignName,
-          projectId: selectedProjectId,
-          projectName: selectedProjectName,
-          category: 'key-visuals',
-          clientId
+        // 2. Projekt-Hauptordner finden (P-20250916-SK Online Marketing-Dan dann)
+        const projectFolderPattern = `P-.*-.*-.*`;
+        const projectFolder = allFolders.find(folder =>
+          new RegExp(projectFolderPattern).test(folder.name) && folder.name.includes(selectedProjectName || 'Dan dann')
+        );
+        console.log('🎯 Projekt-Ordner gefunden:', projectFolder);
+
+        if (projectFolder) {
+          // 3. Medien-Unterordner finden
+          const medienFolder = allFolders.find(folder =>
+            folder.parentFolderId === projectFolder.id && folder.name === 'Medien'
+          );
+          console.log('🎯 Medien-Ordner gefunden:', medienFolder);
+
+          if (medienFolder) {
+            // 4. DIREKT in Media Library hochladen mit folderId
+            const uploadedAsset = await mediaService.uploadToFolder(croppedFile, {
+              folderId: medienFolder.id,
+              organizationId,
+              userId,
+              clientId,
+              description: `KeyVisual für Campaign ${campaignName || campaignId}`
+            });
+
+            downloadUrl = uploadedAsset.downloadUrl;
+            console.log('✅ Upload erfolgreich in Medien-Ordner:', downloadUrl);
+          } else {
+            throw new Error('Medien-Ordner nicht gefunden');
+          }
+        } else {
+          throw new Error('Projekt-Ordner nicht gefunden');
         }
-      );
-
-      downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
+      } else {
+        // Fallback für Campaigns ohne Projekt
+        const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+        const uploadResult = await uploadWithContext(
+          croppedFile,
+          organizationId,
+          userId,
+          'campaign',
+          { campaignId, campaignName, category: 'key-visuals', clientId }
+        );
+        downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
+      }
       
       // Key Visual setzen
       onChange({
