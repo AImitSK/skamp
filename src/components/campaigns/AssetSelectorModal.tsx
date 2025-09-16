@@ -107,7 +107,7 @@ export function AssetSelectorModal({
     setLoading(true);
     try {
       // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
-      if (selectedProjectId) {
+      if (selectedProjectId && selectedProjectName) {
         console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId);
 
         // 1. Alle Ordner der Organisation laden
