@@ -1526,14 +1526,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       </Text>
                     </div>
                     <Button
-                      onClick={() => {
-                        console.log('🧪 Test Button geklickt!', { selectedProjectId, selectedProject });
-                        if (selectedProjectId) {
-                          alert(`✅ PROJEKT ZUGEORDNET!\nProjekt: ${selectedProject?.title}\nID: ${selectedProjectId}\n\nErwarteter Pfad:\nProjekte/P-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${selectedProject?.customer?.name || 'Kunde'}-${selectedProject?.title}/Medien/`);
-                        } else {
-                          alert('❌ KEIN PROJEKT ZUGEORDNET!\n\nCampaign Upload würde in ROOT landen.\n\nBitte ordne der Campaign ein Projekt zu!');
-                        }
-                      }}
+                      onClick={() => setShowProjectMediaModal(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <FolderIcon className="h-4 w-4 mr-2" />
@@ -1985,18 +1978,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       )}
 
       {/* TEST MODAL: Projekt-Medienverzeichnis */}
-      <Dialog
-        open={showProjectMediaModal}
-        onClose={() => setShowProjectMediaModal(false)}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
+      {showProjectMediaModal && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-auto">
-            <DialogTitle className="px-6 py-4 border-b border-gray-200">
-              🧪 TEST: Projekt-Medienverzeichnis
-            </DialogTitle>
-            <DialogBody className="px-6 py-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">🧪 TEST: Projekt-Medienverzeichnis</h2>
+            </div>
+            <div className="px-6 py-4">
               {selectedProjectId ? (
                 <div>
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -2039,18 +2027,18 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   </Text>
                 </div>
               )}
-            </DialogBody>
-            <DialogActions className="px-6 py-4 border-t border-gray-200">
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
               <Button
                 onClick={() => setShowProjectMediaModal(false)}
                 className="bg-gray-600 hover:bg-gray-700 text-white"
               >
                 Schließen
               </Button>
-            </DialogActions>
+            </div>
           </div>
         </div>
-      </Dialog>
+      )}
 
       {/* CSS für Animationen */}
       <style jsx global>{`
