@@ -1526,7 +1526,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       </Text>
                     </div>
                     <Button
-                      onClick={() => setShowProjectMediaModal(true)}
+                      onClick={() => {
+                        console.log('🧪 Test Button geklickt!', { selectedProjectId, selectedProject });
+                        if (selectedProjectId) {
+                          alert(`✅ PROJEKT ZUGEORDNET!\nProjekt: ${selectedProject?.title}\nID: ${selectedProjectId}\n\nErwarteter Pfad:\nProjekte/P-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${selectedProject?.customer?.name || 'Kunde'}-${selectedProject?.title}/Medien/`);
+                        } else {
+                          alert('❌ KEIN PROJEKT ZUGEORDNET!\n\nCampaign Upload würde in ROOT landen.\n\nBitte ordne der Campaign ein Projekt zu!');
+                        }
+                      }}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <FolderIcon className="h-4 w-4 mr-2" />
