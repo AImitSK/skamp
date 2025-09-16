@@ -233,14 +233,8 @@ export default function UploadModal({
                 organizationId,
                 userId,
                 uploadType: 'campaign',
-                uploadContext: {
-                  campaignId: uploadContext.campaignId,
-                  projectId: uploadContext.projectId,
-                  category: uploadContext.category,
-                  clientId: uploadContext.clientId
-                }
+                uploadContext
               });
-              console.log('🔍 Full uploadContext object:', JSON.stringify(uploadContext, null, 2));
 
               uploadResult = await uploadWithContext(
                 file,
@@ -256,14 +250,7 @@ export default function UploadModal({
                 }
               );
 
-              console.log('🔍 Smart Upload Router Result:', {
-                path: uploadResult.path,
-                service: uploadResult.service,
-                uploadMethod: uploadResult.uploadMethod,
-                assetId: uploadResult.asset?.id,
-                storagePath: uploadResult.metadata?.storagePath
-              });
-              console.log('🔍 Full uploadResult object:', JSON.stringify(uploadResult, null, 2));
+              console.log('🔍 Smart Upload Router Result:', uploadResult);
             } else {
               // Fallback auf Standard Media Library Upload
               uploadResult = await uploadToMediaLibrary(

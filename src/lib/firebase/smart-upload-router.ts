@@ -88,11 +88,8 @@ class SmartUploadRouterService {
   ): Promise<UploadResult> {
     try {
       const mergedConfig = { ...this.DEFAULT_CONFIG, ...config };
-
+      
       // 1. Context Detection & Path Resolution
-      const detectedContext = await this.detectUploadContext(context);
-      SmartUploadLogger.logContextAnalysis(context, detectedContext.contextType);
-
       const pathConfig = await this.resolveStoragePath(file, context, mergedConfig);
       
       // 2. Folder Resolution (falls erforderlich)
@@ -105,9 +102,6 @@ class SmartUploadRouterService {
       const autoTags = await this.generateAutoTags(context, file, mergedConfig);
       
       // 5. Service Delegation - Weiterleitung an bestehende Services
-      const expectedPath = `${pathConfig.basePath}/${pathConfig.subPath}`;
-      SmartUploadLogger.logRoutingDecision(pathConfig.isOrganized ? 'organized' : 'unorganized', expectedPath);
-
       const uploadResult = await this.delegateUpload(
         file,
         context,
@@ -118,7 +112,7 @@ class SmartUploadRouterService {
         onProgress
       );
       
-      const finalResult = {
+      return {
         ...uploadResult,
         metadata: {
           resolvedFolder: resolvedFolderId,
@@ -127,12 +121,8 @@ class SmartUploadRouterService {
           storagePath: pathConfig.basePath + '/' + pathConfig.subPath + '/' + pathConfig.fileName
         }
       };
-
-      SmartUploadLogger.logUploadResult(finalResult);
-      return finalResult;
       
     } catch (error) {
-      console.error('🚫 Smart Upload Router - Error occurred, falling back to legacy upload:', error);
       // Fallback: Standard Upload ohne Routing
       return this.fallbackUpload(file, context, onProgress);
     }
@@ -409,36 +399,22 @@ class SmartUploadRouterService {
     tags: string[] = [],
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
-
+    
     // Erweiterte Kontext-Informationen für Upload
     const uploadContext = {
       userId: context.userId,
       clientId: clientId
     };
-
-    console.log('🔧 Smart Upload Router - Delegating to mediaService.uploadMedia:', {
-      fileName: file.name,
-      organizationId: context.organizationId,
-      folderId: folderId,
-      expectedPath: `${pathConfig.basePath}/${pathConfig.subPath}/${pathConfig.fileName}`,
-      isOrganized: pathConfig.isOrganized
-    });
-
+    
     try {
-      // Berechne vollständigen Storage-Pfad für mediaService
-      const fullStoragePath = `${pathConfig.basePath}/${pathConfig.subPath}/${pathConfig.fileName}`;
-
-      console.log('🔧 Smart Upload Router - Passing custom storage path to mediaService:', fullStoragePath);
-
-      // Delegation an mediaService.uploadMedia (bestehender Service) mit custom path
+      // Delegation an mediaService.uploadMedia (bestehender Service)
       const asset = await mediaService.uploadMedia(
         file,
         context.organizationId,
         folderId,
         onProgress,
         3, // retry count
-        uploadContext,
-        fullStoragePath // NEW: Pass the calculated path
+        uploadContext
       );
       
       // Asset-Metadaten erweitern falls erforderlich
@@ -448,7 +424,7 @@ class SmartUploadRouterService {
       
       return {
         path: pathConfig.basePath + '/' + pathConfig.subPath,
-        service: 'mediaService.uploadMedia (with custom path)',
+        service: 'mediaService.uploadMedia',
         asset,
         uploadMethod: pathConfig.isOrganized ? 'organized' : 'unorganized'
       };
@@ -466,7 +442,6 @@ class SmartUploadRouterService {
     context: UploadContext,
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
-    console.log('🚫 Smart Upload Router - Using fallback upload (legacy mode)');
     try {
       // Standard mediaService Upload ohne erweiterte Features
       const asset = await mediaService.uploadMedia(
@@ -814,28 +789,14 @@ export class SmartUploadError extends Error {
 
 export const SmartUploadLogger = {
   logContextAnalysis: (context: UploadContext, detectedType: string) => {
-    console.log('🔧 Smart Upload Router - Context Analysis:', {
-      detectedType,
-      campaignId: context.campaignId,
-      projectId: context.projectId,
-      uploadType: context.uploadType,
-      category: context.category
-    });
+    // Production: Console logs entfernt für bessere Performance
   },
 
   logRoutingDecision: (method: string, path: string) => {
-    console.log('🔧 Smart Upload Router - Routing Decision:', {
-      method,
-      path
-    });
+    // Production: Console logs entfernt für bessere Performance
   },
 
   logUploadResult: (result: UploadResult) => {
-    console.log('🔧 Smart Upload Router - Upload Result:', {
-      path: result.path,
-      service: result.service,
-      uploadMethod: result.uploadMethod,
-      storagePath: result.metadata?.storagePath
-    });
+    // Production: Console logs entfernt für bessere Performance
   }
 };
