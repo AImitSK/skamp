@@ -106,63 +106,46 @@ export function AssetSelectorModal({
   const loadClientMedia = async () => {
     setLoading(true);
     try {
-      console.log('🚀 loadClientMedia Start:', { selectedProjectId, selectedProjectName, showAllAssets });
       // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
       if (selectedProjectId && selectedProjectName) {
-        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId, selectedProjectName);
-
-        // ✅ NEUE LOGIK: Verwende Smart Router Struktur - Projekte/{projektId}/Medien
-        console.log('📂 Suche Smart Router Projekt-Struktur für:', selectedProjectId);
+        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId);
 
         // 1. Alle Ordner der Organisation laden
-        try {
-          console.log('🔄 Lade alle Ordner für Organisation:', organizationId);
-          const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
-          console.log('📂 Verfügbare Ordner:', allFolders.length, 'Ordner gefunden');
-          console.log('📂 Ordner-Namen:', allFolders.map(f => f.name));
+        const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-          // 2. Smart Router Projekt-Ordner finden: Projekte/{projektId}
-          const smartProjectFolder = allFolders.find(folder =>
-            folder.name === selectedProjectId && folder.parentFolderId // Hat einen Parent (ist in Projekte/)
+        // 2. Projekt-Hauptordner finden
+        const projectFolder = allFolders.find(folder =>
+          folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
+        );
+
+        if (projectFolder) {
+          // 3. Medien-Unterordner finden
+          const medienFolder = allFolders.find(folder =>
+            folder.parentFolderId === projectFolder.id && folder.name === 'Medien'
           );
-          console.log('🎯 Smart Router Projekt-Ordner gefunden:', smartProjectFolder);
 
-          if (smartProjectFolder) {
-            // 3. Medien-Unterordner finden
-            const medienFolder = allFolders.find(folder =>
-              folder.parentFolderId === smartProjectFolder.id && folder.name === 'Medien'
-            );
-            console.log('🎯 Smart Router Medien-Ordner gefunden:', medienFolder);
+          if (medienFolder) {
+            console.log('✅ Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
 
-            if (medienFolder) {
-              console.log('✅ Smart Router Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
+            // 4. Lade Assets und Unterordner aus dem Medien-Ordner (als neuer ROOT)
+            const [medienAssets, medienSubFolders] = await Promise.all([
+              mediaService.getMediaAssets(organizationId, medienFolder.id),
+              mediaService.getFolders(organizationId, medienFolder.id)
+            ]);
 
-              // 4. Lade Assets und Unterordner aus dem Smart Router Medien-Ordner
-              const [medienAssets, medienSubFolders] = await Promise.all([
-                mediaService.getMediaAssets(organizationId, medienFolder.id),
-                mediaService.getFolders(organizationId, medienFolder.id)
-              ]);
-
-              setAssets(medienAssets);
-              setFolders(medienSubFolders);
-              console.log('📁 Smart Router Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
-            } else {
-              console.log('⚠️ Smart Router Medien-Ordner nicht gefunden, verwende Fallback');
-              // Fallback: Standard Client-Medien
-              const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
-              setAssets(result.assets);
-              setFolders(result.folders);
-            }
+            setAssets(medienAssets);
+            setFolders(medienSubFolders);
+            console.log('📁 Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
           } else {
-            console.log('⚠️ Smart Router Projekt-Ordner nicht gefunden, verwende Fallback');
+            console.log('⚠️ Medien-Ordner nicht gefunden, verwende Fallback');
             // Fallback: Standard Client-Medien
             const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
             setAssets(result.assets);
             setFolders(result.folders);
           }
-        } catch (getAllFoldersError) {
-          console.error('❌ Fehler beim Laden der Ordner:', getAllFoldersError);
-          // Fallback bei Fehler
+        } else {
+          console.log('⚠️ Projekt-Ordner nicht gefunden, verwende Fallback');
+          // Fallback: Standard Client-Medien
           const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
           setAssets(result.assets);
           setFolders(result.folders);
