@@ -1657,7 +1657,7 @@ export const projectService = {
         .map(asset => ({
           id: asset.id!,
           name: asset.fileName,
-          type: asset.fileType.startsWith('image/') ? 'image' : 'document',
+          type: asset.fileType?.startsWith('image/') ? 'image' : 'document',
           size: String(asset.metadata?.fileSize || 'Unbekannt')
         }));
 

@@ -733,7 +733,9 @@ export default function MediathekPage() {
     return currentFolder?.name;
   };
 
-  const getFileIcon = (fileType: string) => {
+  const getFileIcon = (fileType: string | undefined) => {
+    if (!fileType) return DocumentTextIcon;
+
     if (fileType.startsWith('image/')) {
       return PhotoIcon;
     } else if (fileType.startsWith('video/')) {
@@ -748,7 +750,7 @@ export default function MediathekPage() {
   const getAssetTooltip = (asset: MediaAsset) => {
     let tooltip = asset.fileName;
     
-    const fileExt = asset.fileType.split('/')[1]?.toUpperCase() || 'Datei';
+    const fileExt = asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei';
     tooltip += `\n\nTyp: ${fileExt}`;
     
     if (asset.createdAt) {
@@ -848,7 +850,7 @@ export default function MediathekPage() {
 
             {/* Preview */}
             <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
-              {asset.fileType.startsWith('image/') ? (
+              {asset.fileType?.startsWith('image/') ? (
                 <img 
                   src={asset.downloadUrl} 
                   alt={asset.fileName}
@@ -1035,7 +1037,7 @@ export default function MediathekPage() {
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  {asset.fileType.startsWith('image/') ? (
+                  {asset.fileType?.startsWith('image/') ? (
                     <img src={asset.downloadUrl} alt={asset.fileName} className="h-10 w-10 object-cover rounded" />
                   ) : (
                     <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
@@ -1048,7 +1050,7 @@ export default function MediathekPage() {
                 </div>
               </TableCell>
               <TableCell>
-                <Text>{asset.fileType.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
+                <Text>{asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
               </TableCell>
               <TableCell>
                 <Text>—</Text>

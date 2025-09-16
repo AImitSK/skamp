@@ -104,7 +104,9 @@ export default function AssetDetailsModal({
     return `${getFolderPathString(parentFolder, allFolders)} > ${folder.name}`;
   }
 
-  const getFileIcon = (fileType: string) => {
+  const getFileIcon = (fileType: string | undefined) => {
+    if (!fileType) return DocumentTextIcon;
+
     if (fileType.startsWith('image/')) {
       return PhotoIcon;
     } else if (fileType.startsWith('video/')) {
@@ -175,7 +177,7 @@ export default function AssetDetailsModal({
             <div className="flex items-start gap-4">
               {/* Preview */}
               <div className="flex-shrink-0">
-                {asset.fileType.startsWith('image/') ? (
+                {asset.fileType?.startsWith('image/') ? (
                   <img 
                     src={asset.downloadUrl} 
                     alt={asset.fileName}
