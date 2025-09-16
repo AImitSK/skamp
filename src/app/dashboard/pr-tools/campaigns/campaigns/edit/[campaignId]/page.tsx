@@ -1501,7 +1501,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     onChange={handleKeyVisualChange}
                     clientId={selectedCompanyId}
                     clientName={selectedCompanyName}
-                    organizationId={user!.uid}
+                    organizationId={currentOrganization!.id}
                     userId={user!.uid}
                   />
                 </div>

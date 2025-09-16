@@ -1125,7 +1125,7 @@ export default function NewPRCampaignPage() {
                     onChange={handleKeyVisualChange}
                     clientId={selectedCompanyId}
                     clientName={selectedCompanyName}
-                    organizationId={user!.uid}
+                    organizationId={currentOrganization!.id}
                     userId={user!.uid}
                   />
                 </div>
@@ -1485,7 +1485,7 @@ export default function NewPRCampaignPage() {
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
-          organizationId={user.uid}
+          organizationId={currentOrganization!.id}
           legacyUserId={user.uid}
           selectionMode="multiple"
           onUploadSuccess={() => {

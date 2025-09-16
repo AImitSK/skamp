@@ -192,22 +192,27 @@ export default function MediathekPage() {
   useEffect(() => {
     async function initializeOrganization() {
       if (!user) return;
-      
+
       try {
         const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        
+
         if (orgs.length > 0) {
+          // ✅ Verwende echte OrganizationId
           setOrganizationId(orgs[0].organization.id);
           setCurrentUserId(user.uid);
+          console.log('🏢 Media Library verwendet OrganizationId:', orgs[0].organization.id);
         } else {
-          // Fallback für Legacy-User
+          // ⚠️ Fallback für Legacy-User - verwende user.uid als Organization
           setOrganizationId(user.uid);
           setCurrentUserId(user.uid);
+          console.log('👤 Media Library Fallback - User als Organization:', user.uid);
         }
       } catch (error) {
+        console.error('❌ Fehler beim Laden der Organizations:', error);
         // Fallback
         setOrganizationId(user.uid);
         setCurrentUserId(user.uid);
+        console.log('🔧 Media Library Fallback nach Fehler - User als Organization:', user.uid);
       }
     }
 
