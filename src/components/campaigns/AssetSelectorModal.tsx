@@ -108,7 +108,7 @@ export function AssetSelectorModal({
     try {
       // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
       if (selectedProjectId && selectedProjectName) {
-        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId);
+        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId, selectedProjectName);
 
         // 1. Alle Ordner der Organisation laden
         const allFolders = await mediaService.getAllFolders(organizationId);
