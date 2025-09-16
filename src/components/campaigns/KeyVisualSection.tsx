@@ -165,6 +165,9 @@ export function KeyVisualSection({
           allowBatchOptimization: false
         };
 
+        console.log('🔧 Upload Config:', uploadConfig);
+        console.log('📁 Project Details:', { project, selectedProjectName });
+
         // Campaign Ordner Name für bessere Organisation - Erstelle neues File mit korrektem Namen
         const renamedFile = new File([croppedFile], `KeyVisual-${campaignName || campaignId}-${croppedFile.name}`, {
           type: croppedFile.type,
@@ -177,8 +180,11 @@ export function KeyVisualSection({
         console.log('📦 Project Upload Result:', {
           result,
           successfulUploads: result.successfulUploads,
+          totalFiles: result.totalFiles,
+          failedUploads: result.failedUploads,
           uploads: result.uploads,
           firstUpload: result.uploads[0],
+          uploadError: result.uploads[0]?.error,
           hasAsset: !!result.uploads[0]?.asset,
           hasDownloadUrl: !!result.uploads[0]?.asset?.downloadUrl
         });
