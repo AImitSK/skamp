@@ -192,7 +192,9 @@ export function KeyVisualSection({
         if (result.successfulUploads === 1 && result.uploads[0]?.asset?.downloadUrl) {
           downloadUrl = result.uploads[0].asset.downloadUrl;
         } else {
-          throw new Error('Upload fehlgeschlagen');
+          const uploadError = result.uploads[0]?.error || 'Unbekannter Fehler';
+          console.error('💥 Project Upload Fehler Details:', uploadError);
+          throw new Error(`Project Upload fehlgeschlagen: ${uploadError}`);
         }
       } else {
         // ✅ Fallback: Standard Smart Upload Router für unzugeordnete Campaigns
