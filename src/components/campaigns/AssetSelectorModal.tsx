@@ -403,6 +403,14 @@ export function AssetSelectorModal({
         preselectedClientId={clientId}
         organizationId={organizationId}
         userId={legacyUserId || ''}
+
+        // Campaign Smart Router Integration
+        campaignId={campaignId}
+        campaignName={campaignName}
+        selectedProjectId={selectedProjectId}
+        selectedProjectName={selectedProjectName}
+        uploadType={uploadType}
+        enableSmartRouter={enableSmartRouter}
       />
     )}
     </>

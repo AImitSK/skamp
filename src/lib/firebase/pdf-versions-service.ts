@@ -750,16 +750,28 @@ class PDFVersionsService {
           // Erstelle File object für Upload
           const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
           
+          // Lade Campaign-Daten für Project-Context
+          const campaignDoc = campaignId ? await getDoc(doc(db, 'pr_campaigns', campaignId)) : null;
+          const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
+
           // Upload via Smart Upload Router mit Campaign-Kontext für korrekte Ordner-Platzierung
-          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, {
+          const uploadContext: any = {
             organizationId: organizationId,
             userId: userId,
             uploadType: 'campaign',
             campaignId: campaignId || 'temp_campaign',
             phase: 'internal_approval', // PDF wird bei Approval generiert
-            category: 'pressemeldung_pdf',
+            category: 'press', // press statt pressemeldung_pdf für korrekte Routing
             autoTags: ['generated_pdf', 'approval_version']
-          });
+          };
+
+          // Projekt-Context hinzufügen falls verfügbar
+          if (campaignData?.projectId) {
+            uploadContext.projectId = campaignData.projectId;
+            uploadContext.subFolder = 'Pressemeldungen';
+          }
+
+          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, uploadContext);
           
           if (!uploadResult.asset) {
             throw new Error('Upload-Ergebnis enthält kein Asset');

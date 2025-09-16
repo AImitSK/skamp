@@ -150,22 +150,23 @@ export function KeyVisualSection({
         setUploadingWithSmartRouter(false);
         
       } else {
-        // Verwende Media Library Upload Service für korrekte Firestore-Integration
-        const { mediaService } = await import('@/lib/firebase/media-service');
+        // Smart Upload Router für strukturierte Campaign-Uploads
+        const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
 
-        const uploadedAsset = await mediaService.uploadMedia(
+        const uploadResult = await uploadWithContext(
           croppedFile,
           organizationId,
-          undefined, // folderId - Root-Level
-          undefined, // onProgress
-          3, // retryCount
+          userId,
+          'campaign',
           {
-            userId,
+            campaignId,
+            projectId: selectedProjectId,
+            category: 'key-visuals',
             clientId
           }
         );
 
-        downloadUrl = uploadedAsset.downloadUrl;
+        downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
       }
       
       // Key Visual setzen
