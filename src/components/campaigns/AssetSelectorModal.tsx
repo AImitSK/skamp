@@ -459,13 +459,13 @@ export function AssetSelectorModal({
         organizationId={organizationId}
         userId={legacyUserId || ''}
 
-        // Campaign Smart Router Integration
+        // Campaign Smart Router Integration - DEAKTIVIERT wenn currentFolderId gesetzt
         campaignId={campaignId}
         campaignName={campaignName}
         selectedProjectId={selectedProjectId}
         selectedProjectName={selectedProjectName}
         uploadType={uploadType}
-        enableSmartRouter={enableSmartRouter}
+        enableSmartRouter={currentFolderId ? false : enableSmartRouter} // Deaktiviere Smart Router bei direktem Folder-Upload
       />
     )}
     </>
