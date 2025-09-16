@@ -761,17 +761,21 @@ class PDFVersionsService {
             // Projekt-basierter Upload: Finde Pressemeldungen-Ordner
             const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-            // Finde Projekt-Hauptordner
+            // Finde Projekt-Hauptordner (verwende gleiche Logik wie KeyVisual)
+            console.log('📂 PDF: Suche Projekt-Ordner für Campaign:', campaignData.title);
+            console.log('📂 PDF: Alle Ordner:', allFolders.length, 'gefunden');
+
             const projectFolder = allFolders.find(folder =>
-              folder.name.includes('P-') && campaignData.clientName &&
-              folder.name.includes(campaignData.clientName)
+              folder.name.includes('P-') && folder.name.includes(campaignData.clientName || campaignData.title || 'Dan dann')
             );
+            console.log('🎯 PDF: Projekt-Ordner gefunden:', projectFolder);
 
             if (projectFolder) {
               // Finde Pressemeldungen-Unterordner
               const pressemeldungenFolder = allFolders.find(folder =>
                 folder.parentFolderId === projectFolder.id && folder.name === 'Pressemeldungen'
               );
+              console.log('🎯 PDF: Pressemeldungen-Ordner gefunden:', pressemeldungenFolder);
 
               if (pressemeldungenFolder && campaignData.clientId) {
                 // DIREKTER UPLOAD in Pressemeldungen-Ordner
