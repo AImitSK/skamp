@@ -165,11 +165,14 @@ export function KeyVisualSection({
           allowBatchOptimization: false
         };
 
-        // Campaign Ordner Name für bessere Organisation
-        croppedFile.name = `KeyVisual-${campaignName || campaignId}-${croppedFile.name}`;
+        // Campaign Ordner Name für bessere Organisation - Erstelle neues File mit korrektem Namen
+        const renamedFile = new File([croppedFile], `KeyVisual-${campaignName || campaignId}-${croppedFile.name}`, {
+          type: croppedFile.type,
+          lastModified: croppedFile.lastModified
+        });
 
         // Upload über Project Service
-        const result = await projectUploadService.uploadBatchToProject([croppedFile], uploadConfig);
+        const result = await projectUploadService.uploadBatchToProject([renamedFile], uploadConfig);
 
         if (result.successfulUploads === 1 && result.uploads[0]?.asset?.downloadUrl) {
           downloadUrl = result.uploads[0].asset.downloadUrl;
