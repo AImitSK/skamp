@@ -767,15 +767,18 @@ class PDFVersionsService {
 
             try {
               if (campaignData.projectId) {
-                const { projectService } = await import('./project-service');
-                const project = await projectService.getById(campaignData.projectId, organizationId);
-                if (project && project.title) {
-                  projectName = project.title;
-                  console.log('📂 PDF: Verwende Projekt-Title:', projectName);
+                // Direkte Firestore-Abfrage statt Service-Import
+                const projectDoc = await getDoc(doc(db, 'projects', campaignData.projectId));
+                if (projectDoc.exists()) {
+                  const project = projectDoc.data();
+                  if (project && project.title) {
+                    projectName = project.title;
+                    console.log('📂 PDF: Verwende Projekt-Title:', projectName);
+                  }
                 }
               }
             } catch (error) {
-              console.warn('📂 PDF: Projekt-Daten konnten nicht geladen werden, verwende Fallback');
+              console.warn('📂 PDF: Projekt-Daten konnten nicht geladen werden, verwende Fallback:', error);
             }
 
             console.log('📂 PDF: Suche Projekt-Ordner für:', projectName);
