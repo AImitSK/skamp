@@ -154,6 +154,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // State für bisherigen Feedback-Verlauf
   const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
 
+  // TEST: Modal für Projekt-Medienverzeichnis
+  const [showProjectMediaModal, setShowProjectMediaModal] = useState(false);
+
   // Debug Logging für State-Änderungen
   useEffect(() => {
   }, [keyVisual]);
@@ -1512,6 +1515,25 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     enableSmartRouter={true}
                   />
                 </div>
+
+                {/* TEST BUTTON: Projekt-Medienverzeichnis anzeigen */}
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Text className="font-medium text-blue-900">🧪 TEST: Projekt-Medienverzeichnis</Text>
+                      <Text className="text-sm text-blue-700 mt-1">
+                        {selectedProjectId ? `Projekt: ${selectedProject?.title}` : 'Kein Projekt zugeordnet'}
+                      </Text>
+                    </div>
+                    <Button
+                      onClick={() => setShowProjectMediaModal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <FolderIcon className="h-4 w-4 mr-2" />
+                      Medienverzeichnis testen
+                    </Button>
+                  </div>
+                </div>
               </div>
             </FieldGroup>
           </div>
@@ -1955,6 +1977,73 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         />
       )}
 
+      {/* TEST MODAL: Projekt-Medienverzeichnis */}
+      <Dialog
+        open={showProjectMediaModal}
+        onClose={() => setShowProjectMediaModal(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-auto">
+            <DialogTitle className="px-6 py-4 border-b border-gray-200">
+              🧪 TEST: Projekt-Medienverzeichnis
+            </DialogTitle>
+            <DialogBody className="px-6 py-4">
+              {selectedProjectId ? (
+                <div>
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <Text className="font-medium text-green-900">✅ Projekt zugeordnet</Text>
+                    <Text className="text-sm text-green-700 mt-1">
+                      Projekt: {selectedProject?.title} (ID: {selectedProjectId})
+                    </Text>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Text className="font-medium">Erwartete Ordner-Struktur:</Text>
+                    <div className="bg-gray-50 p-3 rounded-lg font-mono text-sm">
+                      <div>📁 Projekte/</div>
+                      <div className="ml-4">📁 P-{new Date().toISOString().split('T')[0].replace(/-/g, '')}-{selectedProject?.customer?.name || 'Kunde'}-{selectedProject?.title}/</div>
+                      <div className="ml-8">📁 Medien/ ← HIER sollten Campaign Uploads landen</div>
+                      <div className="ml-12">📁 Campaign-{campaignId}/</div>
+                      <div className="ml-16">📁 Key-Visuals/</div>
+                      <div className="ml-16">📁 Anhänge/</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Text className="font-medium text-blue-900">💡 Nächster Schritt:</Text>
+                    <Text className="text-sm text-blue-700 mt-1">
+                      Campaign Upload sollte automatisch in den "Medien" Ordner des Projekts landen
+                    </Text>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <Text className="font-medium text-red-900">❌ Kein Projekt zugeordnet</Text>
+                    <Text className="text-sm text-red-700 mt-1">
+                      Campaign Upload würde in Root landen
+                    </Text>
+                  </div>
+
+                  <Text className="text-gray-600">
+                    Bitte ordne der Campaign ein Projekt zu, damit Uploads in die korrekte Projekt-Ordnerstruktur landen.
+                  </Text>
+                </div>
+              )}
+            </DialogBody>
+            <DialogActions className="px-6 py-4 border-t border-gray-200">
+              <Button
+                onClick={() => setShowProjectMediaModal(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white"
+              >
+                Schließen
+              </Button>
+            </DialogActions>
+          </div>
+        </div>
+      </Dialog>
 
       {/* CSS für Animationen */}
       <style jsx global>{`
@@ -1963,7 +2052,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
           20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
-        
+
         .animate-shake {
           animation: shake 0.5s ease-in-out;
         }
