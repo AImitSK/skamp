@@ -138,13 +138,12 @@ export function KeyVisualSection({
         const { mediaService } = await import('@/lib/firebase/media-service');
 
         // 1. Alle Ordner der Organisation laden
-        const allFolders = await mediaService.getAllFolders(organizationId);
+        const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
         console.log('📁 Alle Ordner:', allFolders.length);
 
-        // 2. Projekt-Hauptordner finden (P-20250916-SK Online Marketing-Dan dann)
-        const projectFolderPattern = `P-.*-.*-.*`;
+        // 2. Projekt-Hauptordner finden - verwende gleiche Logik wie AssetSelectorModal
         const projectFolder = allFolders.find(folder =>
-          new RegExp(projectFolderPattern).test(folder.name) && folder.name.includes(selectedProjectName || 'Dan dann')
+          folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
         );
         console.log('🎯 Projekt-Ordner gefunden:', projectFolder);
 
@@ -156,14 +155,15 @@ export function KeyVisualSection({
           console.log('🎯 Medien-Ordner gefunden:', medienFolder);
 
           if (medienFolder) {
-            // 4. DIREKT in Media Library hochladen mit folderId
-            const uploadedAsset = await mediaService.uploadToFolder(croppedFile, {
-              folderId: medienFolder.id,
+            // 4. DIREKTER UPLOAD mit mediaService.uploadClientMedia (wie SimpleProjectUploadModal)
+            const uploadedAsset = await mediaService.uploadClientMedia(
+              croppedFile,
               organizationId,
-              userId,
               clientId,
-              description: `KeyVisual für Campaign ${campaignName || campaignId}`
-            });
+              medienFolder.id, // Upload direkt in Medien-Ordner
+              undefined, // Kein Progress-Callback
+              { userId, description: `KeyVisual für Campaign ${campaignName || campaignId}` }
+            );
 
             downloadUrl = uploadedAsset.downloadUrl;
             console.log('✅ Upload erfolgreich in Medien-Ordner:', downloadUrl);
