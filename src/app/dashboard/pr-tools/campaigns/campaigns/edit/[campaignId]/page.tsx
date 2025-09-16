@@ -1931,7 +1931,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
-          organizationId={user.uid}
+          organizationId={currentOrganization!.id}
           legacyUserId={user.uid}
           selectionMode="multiple"
           onUploadSuccess={() => {
