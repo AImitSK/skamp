@@ -358,6 +358,7 @@ export const mediaService = {
 
   async getFolders(organizationId: string, parentFolderId?: string): Promise<MediaFolder[]> {
     try {
+      console.log('🔍 getFolders Query:', { organizationId, parentFolderId });
       let q;
 
       if (parentFolderId === undefined) {
@@ -374,6 +375,11 @@ export const mediaService = {
       }
 
       const snapshot = await getDocs(q);
+      console.log('📂 getFolders Raw Query Result:', {
+        anzahl: snapshot.docs.length,
+        docs: snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }))
+      });
+
       const folders = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -383,13 +389,19 @@ export const mediaService = {
           userId: data.createdBy || data.organizationId
         } as MediaFolder;
       });
-      
+
       const filteredFolders = folders
         .filter(folder => parentFolderId === undefined ? !folder.parentFolderId : folder.parentFolderId === parentFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
-      
+
+      console.log('📁 getFolders Processed Result:', {
+        anzahl: filteredFolders.length,
+        ordner: filteredFolders.map(f => ({ id: f.id, name: f.name, parentFolderId: f.parentFolderId, path: f.path }))
+      });
+
       return filteredFolders;
     } catch (error) {
+      console.error('❌ getFolders Error:', error);
       throw error;
     }
   },
@@ -754,8 +766,9 @@ export const mediaService = {
 
   async getMediaAssets(organizationId: string, folderId?: string): Promise<MediaAsset[]> {
     try {
+      console.log('🔍 getMediaAssets Query:', { organizationId, folderId });
       let q;
-      
+
       if (folderId === undefined) {
         q = query(
           collection(db, 'media_assets'),
@@ -770,6 +783,11 @@ export const mediaService = {
       }
 
       const snapshot = await getDocs(q);
+      console.log('📄 getMediaAssets Raw Query Result:', {
+        anzahl: snapshot.docs.length,
+        docs: snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }))
+      });
+
       const assets = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -779,7 +797,7 @@ export const mediaService = {
           userId: data.createdBy || data.organizationId
         } as MediaAsset;
       });
-      
+
       const filteredAssets = assets
         .filter(asset => {
           if (folderId === undefined) {
@@ -793,9 +811,15 @@ export const mediaService = {
           const bTime = b.createdAt?.seconds || 0;
           return bTime - aTime;
         });
-      
+
+      console.log('📁 getMediaAssets Processed Result:', {
+        anzahl: filteredAssets.length,
+        assets: filteredAssets.map(a => ({ id: a.id, fileName: a.fileName, folderId: a.folderId, path: a.path }))
+      });
+
       return filteredAssets;
     } catch (error) {
+      console.error('❌ getMediaAssets Error:', error);
       throw error;
     }
   },
