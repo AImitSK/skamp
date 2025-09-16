@@ -150,14 +150,22 @@ export function KeyVisualSection({
         setUploadingWithSmartRouter(false);
         
       } else {
-        // Legacy Upload zu Firebase Storage
-        const timestamp = Date.now();
-        const originalName = croppedFile.name.replace(/\.[^/.]+$/, ''); // Remove extension
-        const fileName = `organizations/${userId}/media/${timestamp}-${originalName}-key-visual.jpg`;
-        const storageRef = ref(storage, fileName);
-        
-        const snapshot = await uploadBytes(storageRef, croppedFile);
-        downloadUrl = await getDownloadURL(snapshot.ref);
+        // Verwende Media Library Upload Service für korrekte Firestore-Integration
+        const { mediaService } = await import('@/lib/firebase/media-service');
+
+        const uploadedAsset = await mediaService.uploadMedia(
+          croppedFile,
+          organizationId,
+          undefined, // folderId - Root-Level
+          undefined, // onProgress
+          3, // retryCount
+          {
+            userId,
+            clientId
+          }
+        );
+
+        downloadUrl = uploadedAsset.downloadUrl;
       }
       
       // Key Visual setzen
