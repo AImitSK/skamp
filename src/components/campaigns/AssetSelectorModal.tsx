@@ -92,18 +92,6 @@ export function AssetSelectorModal({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
 
-  // 🔍 DEBUG: Campaign/Project Context logging
-  console.log('🔍 AssetSelectorModal Context Debug:', {
-    campaignId,
-    campaignName,
-    selectedProjectId,
-    selectedProjectName,
-    uploadType,
-    enableSmartRouter,
-    clientId,
-    clientName
-  });
-
   useEffect(() => {
     if (isOpen && clientId) {
       loadClientMedia();

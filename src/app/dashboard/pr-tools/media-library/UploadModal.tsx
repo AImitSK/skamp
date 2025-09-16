@@ -141,22 +141,12 @@ export default function UploadModal({
           params.uploadType = uploadType;
         }
 
-        // 🔍 DEBUG: UploadModal Context Parameters
-        console.log('🔍 UploadModal Context Debug:', {
-          params,
-          enableSmartRouter,
-          useSmartRouterEnabled,
-          uploadMethod
-        });
-
         const info = await mediaLibraryContextBuilder.buildContextInfo(params, companies);
 
         setContextInfo(info);
-        console.log('🔍 UploadModal Context Info:', info);
       } catch (error) {
-        console.error('🚨 UploadModal Context Loading Error:', error);
         // Failed to load context info - fallback to legacy mode
-        setUploadMethod('legacy');
+        setUseSmartRouter(false);
       }
     }
 
@@ -219,29 +209,17 @@ export default function UploadModal({
             // Wenn Campaign-Context vorhanden, nutze spezifischen Upload-Pfad
             if (campaignId && projectId) {
               const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
-
-              const uploadContext = {
-                campaignId,
-                projectId,
-                category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
-                clientId: selectedClientId
-              };
-
-              // 🔍 DEBUG: Smart Upload Router Context
-              console.log('🔍 Smart Upload Router Called with:', {
-                file: file.name,
-                organizationId,
-                userId,
-                uploadType: 'campaign',
-                uploadContext
-              });
-
               uploadResult = await uploadWithContext(
                 file,
                 organizationId,
                 userId,
                 'campaign',
-                uploadContext,
+                {
+                  campaignId,
+                  projectId,
+                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
+                  clientId: selectedClientId
+                },
                 (progress) => {
                   setUploadProgress(prev => ({
                     ...prev,
@@ -249,8 +227,6 @@ export default function UploadModal({
                   }));
                 }
               );
-
-              console.log('🔍 Smart Upload Router Result:', uploadResult);
             } else {
               // Fallback auf Standard Media Library Upload
               uploadResult = await uploadToMediaLibrary(

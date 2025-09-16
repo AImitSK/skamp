@@ -1937,13 +1937,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           onUploadSuccess={() => {
             // Optional: Refresh or additional logic after upload
           }}
-          // 🔧 FIX: Campaign/Project Context für Smart Upload Router
-          campaignId={campaignId}
-          campaignName={campaignTitle}
-          selectedProjectId={selectedProjectId}
-          selectedProjectName={selectedProject?.name}
-          uploadType="attachment"
-          enableSmartRouter={true}
         />
       )}
 
