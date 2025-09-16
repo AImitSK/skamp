@@ -754,24 +754,58 @@ class PDFVersionsService {
           const campaignDoc = campaignId ? await getDoc(doc(db, 'pr_campaigns', campaignId)) : null;
           const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
 
-          // Upload via Smart Upload Router mit Campaign-Kontext für korrekte Ordner-Platzierung
-          const uploadContext: any = {
-            organizationId: organizationId,
-            userId: userId,
-            uploadType: 'campaign',
-            campaignId: campaignId || 'temp_campaign',
-            phase: 'internal_approval', // PDF wird bei Approval generiert
-            category: 'press', // press statt pressemeldung_pdf für korrekte Routing
-            autoTags: ['generated_pdf', 'approval_version']
-          };
+          // ✅ DIREKTER UPLOAD IN PRESSEMELDUNGEN-ORDNER (wie bei Medien-Uploads)
+          let uploadResult: any;
 
-          // Projekt-Context hinzufügen falls verfügbar
           if (campaignData?.projectId) {
-            uploadContext.projectId = campaignData.projectId;
-            uploadContext.subFolder = 'Pressemeldungen';
-          }
+            // Projekt-basierter Upload: Finde Pressemeldungen-Ordner
+            const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, uploadContext);
+            // Finde Projekt-Hauptordner
+            const projectFolder = allFolders.find(folder =>
+              folder.name.includes('P-') && campaignData.clientName &&
+              folder.name.includes(campaignData.clientName)
+            );
+
+            if (projectFolder) {
+              // Finde Pressemeldungen-Unterordner
+              const pressemeldungenFolder = allFolders.find(folder =>
+                folder.parentFolderId === projectFolder.id && folder.name === 'Pressemeldungen'
+              );
+
+              if (pressemeldungenFolder && campaignData.clientId) {
+                // DIREKTER UPLOAD in Pressemeldungen-Ordner
+                const uploadedAsset = await mediaService.uploadClientMedia(
+                  pdfFile,
+                  organizationId,
+                  campaignData.clientId,
+                  pressemeldungenFolder.id, // Upload direkt in Pressemeldungen-Ordner
+                  undefined, // Kein Progress-Callback
+                  { userId, description: `PDF für Campaign ${campaignData.title}` }
+                );
+
+                uploadResult = { asset: uploadedAsset };
+                console.log('✅ PDF erfolgreich in Pressemeldungen-Ordner hochgeladen:', uploadedAsset.downloadUrl);
+              } else {
+                throw new Error('Pressemeldungen-Ordner nicht gefunden');
+              }
+            } else {
+              throw new Error('Projekt-Ordner nicht gefunden');
+            }
+          } else {
+            // Fallback für Campaigns ohne Projekt - verwende Smart Router
+            const uploadContext: any = {
+              organizationId: organizationId,
+              userId: userId,
+              uploadType: 'campaign',
+              campaignId: campaignId || 'temp_campaign',
+              phase: 'internal_approval',
+              category: 'press',
+              autoTags: ['generated_pdf', 'approval_version']
+            };
+
+            uploadResult = await smartUploadRouter.smartUpload(pdfFile, uploadContext);
+          }
           
           if (!uploadResult.asset) {
             throw new Error('Upload-Ergebnis enthält kein Asset');
