@@ -196,15 +196,6 @@ export default function UploadModal({
               // Campaign-specific Upload mit strukturierten Pfaden
               const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
 
-              console.log('🔍 UploadModal Smart Upload Router Debug:', {
-                campaignId,
-                selectedProjectId,
-                uploadType,
-                organizationId,
-                userId,
-                selectedClientId
-              });
-
               uploadResult = await uploadWithContext(
                 file,
                 organizationId,
@@ -223,8 +214,6 @@ export default function UploadModal({
                   }));
                 }
               );
-
-              console.log('📁 UploadModal Campaign Upload Result:', uploadResult);
             } else {
               // Standard Media Library Upload
               uploadResult = await uploadToMediaLibrary(
