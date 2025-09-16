@@ -5,8 +5,7 @@ import { useState, useRef, useMemo } from 'react';
 import { PhotoIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-// Import neue Media Library UploadModal statt alte AssetSelectorModal
-import UploadModal from '@/app/dashboard/pr-tools/media-library/UploadModal';
+import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
 import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -351,19 +350,28 @@ export function KeyVisualSection({
         className="hidden"
       />
 
-      {/* Neue Media Library UploadModal */}
+      {/* Asset Selector Modal - zeigt vorhandene Dateien an */}
       {showAssetSelector && clientId && (
-        <UploadModal
+        <AssetSelectorModal
+          isOpen={showAssetSelector}
           onClose={() => setShowAssetSelector(false)}
-          onUploadSuccess={async () => {
-            // Refresh nach Upload - TODO: Implementiere Asset-Auswahl aus Media Library
-            setShowAssetSelector(false);
-          }}
-          currentFolderId={undefined}
-          folderName={undefined}
-          preselectedClientId={clientId}
+          clientId={clientId}
+          clientName={clientName}
+          onAssetsSelected={handleAssetSelected}
           organizationId={organizationId}
-          userId={userId}
+          legacyUserId={userId}
+          selectionMode="single"
+          onUploadSuccess={() => {
+            // Optional: Refresh or additional logic after upload
+          }}
+
+          // Campaign Smart Router Props
+          campaignId={campaignId}
+          campaignName={campaignName}
+          selectedProjectId={selectedProjectId}
+          selectedProjectName={selectedProjectName}
+          uploadType="hero-image"
+          enableSmartRouter={enableSmartRouter}
         />
       )}
 
