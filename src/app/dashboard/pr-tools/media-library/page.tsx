@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter } from "@/lib/firebase/smart-upload-router";
 import { mediaLibraryContextBuilder } from "./utils/context-builder";
@@ -116,9 +117,10 @@ function Alert({
 export default function MediathekPage() {
   const { user } = useAuth();
   const { companies } = useCrmData();
+  const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   // Multi-Tenancy State
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -190,34 +192,24 @@ export default function MediathekPage() {
 
   // === MULTI-TENANCY INITIALIZATION ===
   useEffect(() => {
-    async function initializeOrganization() {
-      if (!user) return;
-
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-
-        if (orgs.length > 0) {
-          // ✅ Verwende echte OrganizationId
-          setOrganizationId(orgs[0].organization.id);
-          setCurrentUserId(user.uid);
-          console.log('🏢 Media Library verwendet OrganizationId:', orgs[0].organization.id);
-        } else {
-          // ⚠️ Fallback für Legacy-User - verwende user.uid als Organization
-          setOrganizationId(user.uid);
-          setCurrentUserId(user.uid);
-          console.log('👤 Media Library Fallback - User als Organization:', user.uid);
-        }
-      } catch (error) {
-        console.error('❌ Fehler beim Laden der Organizations:', error);
-        // Fallback
-        setOrganizationId(user.uid);
-        setCurrentUserId(user.uid);
-        console.log('🔧 Media Library Fallback nach Fehler - User als Organization:', user.uid);
-      }
+    if (!user) {
+      setOrganizationId(null);
+      setCurrentUserId(null);
+      return;
     }
 
-    initializeOrganization();
-  }, [user]);
+    if (currentOrganization) {
+      // ✅ Verwende currentOrganization aus useOrganization Hook
+      setOrganizationId(currentOrganization.id);
+      setCurrentUserId(user.uid);
+      console.log('🏢 Media Library verwendet currentOrganization:', currentOrganization.id, currentOrganization.name);
+    } else {
+      // ⚠️ Fallback für Legacy-User - verwende user.uid als Organization
+      setOrganizationId(user.uid);
+      setCurrentUserId(user.uid);
+      console.log('👤 Media Library Fallback - User als Organization:', user.uid);
+    }
+  }, [user, currentOrganization]);
 
   // URL-Parameter Handler
   useEffect(() => {
