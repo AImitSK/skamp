@@ -239,25 +239,17 @@ export default function MediathekPage() {
 
   const loadData = async () => {
     if (!organizationId) {
-      console.log('🚨 [MEDIA-LIBRARY] No organizationId available');
       return;
     }
-
-    console.log('🚀 [MEDIA-LIBRARY] Loading data with:', { organizationId, currentFolderId, currentUserId });
-
+    
     setLoading(true);
-
+    
     try {
       const [foldersData, assetsData] = await Promise.all([
         mediaService.getFolders(organizationId, currentFolderId),
         mediaService.getMediaAssets(organizationId, currentFolderId)
       ]);
-
-      console.log('🚀 [MEDIA-LIBRARY] Data loaded:', {
-        foldersCount: foldersData.length,
-        assetsCount: assetsData.length
-      });
-
+      
       setFolders(foldersData);
       setMediaAssets(assetsData);
       
