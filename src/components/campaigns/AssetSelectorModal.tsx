@@ -21,10 +21,8 @@ import {
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 
-// Lazy load UploadModal to avoid circular dependencies
-const UploadModal = dynamic(() => import('@/app/dashboard/pr-tools/media-library/UploadModal'), {
-  ssr: false
-});
+// ✅ ERSETZT: Media Library UploadModal durch Project-Style Upload
+import SimpleProjectUploadModal from './SimpleProjectUploadModal';
 import { serverTimestamp } from 'firebase/firestore';
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
@@ -449,23 +447,16 @@ export function AssetSelectorModal({
       </DialogActions>
     </Dialog>
 
-    {/* Upload Modal */}
+    {/* ✅ NEUES UPLOAD MODAL: Verwendet Project-Upload-System */}
     {showUploadModal && (
-      <UploadModal
+      <SimpleProjectUploadModal
+        isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         onUploadSuccess={handleUploadSuccess}
-        currentFolderId={currentFolderId} // ✅ UPLOAD INTO PROJECT MEDIA FOLDER
-        preselectedClientId={clientId}
+        currentFolderId={currentFolderId} // ✅ UPLOAD DIREKT in Projekt-Medien-Ordner
+        folderName={currentFolderId ? 'Medien' : undefined}
+        clientId={clientId}
         organizationId={organizationId}
-        userId={legacyUserId || ''}
-
-        // Campaign Smart Router Integration - DEAKTIVIERT wenn currentFolderId gesetzt
-        campaignId={campaignId}
-        campaignName={campaignName}
-        selectedProjectId={selectedProjectId}
-        selectedProjectName={selectedProjectName}
-        uploadType={uploadType}
-        enableSmartRouter={currentFolderId ? false : enableSmartRouter} // Deaktiviere Smart Router bei direktem Folder-Upload
       />
     )}
     </>
