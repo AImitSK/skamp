@@ -153,6 +153,16 @@ export function KeyVisualSection({
         // Smart Upload Router für strukturierte Campaign-Uploads
         const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
 
+        console.log('🔍 KeyVisual Smart Upload Router Debug:', {
+          campaignId,
+          selectedProjectId,
+          organizationId,
+          userId,
+          clientId,
+          enableSmartRouter,
+          'featureStatus?.smartRouterAvailable': featureStatus?.smartRouterAvailable
+        });
+
         const uploadResult = await uploadWithContext(
           croppedFile,
           organizationId,
@@ -165,6 +175,8 @@ export function KeyVisualSection({
             clientId
           }
         );
+
+        console.log('📁 KeyVisual Upload Result:', uploadResult);
 
         downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
       }

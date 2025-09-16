@@ -1503,6 +1503,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     clientName={selectedCompanyName}
                     organizationId={currentOrganization!.id}
                     userId={user!.uid}
+
+                    // Campaign Smart Router Props für strukturierte Uploads
+                    campaignId={campaignId}
+                    campaignName={campaignTitle}
+                    selectedProjectId={selectedProjectId}
+                    selectedProjectName={selectedProject?.name}
+                    enableSmartRouter={true}
                   />
                 </div>
               </div>
@@ -1937,6 +1944,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           onUploadSuccess={() => {
             // Optional: Refresh or additional logic after upload
           }}
+
+          // Campaign Smart Router Props für strukturierte Uploads
+          campaignId={campaignId}
+          campaignName={campaignTitle}
+          selectedProjectId={selectedProjectId}
+          selectedProjectName={selectedProject?.name}
+          uploadType="attachment"
+          enableSmartRouter={true}
         />
       )}
 

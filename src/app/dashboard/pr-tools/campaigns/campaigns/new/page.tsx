@@ -1127,6 +1127,13 @@ export default function NewPRCampaignPage() {
                     clientName={selectedCompanyName}
                     organizationId={currentOrganization!.id}
                     userId={user!.uid}
+
+                    // Campaign Smart Router Props für strukturierte Uploads
+                    campaignId="" // Noch nicht verfügbar in new campaign
+                    campaignName={campaignTitle}
+                    selectedProjectId={selectedProjectId}
+                    selectedProjectName={selectedProject?.title}
+                    enableSmartRouter={true}
                   />
                 </div>
               </div>
@@ -1491,6 +1498,14 @@ export default function NewPRCampaignPage() {
           onUploadSuccess={() => {
             // Optional: Refresh or additional logic after upload
           }}
+
+          // Campaign Smart Router Props für strukturierte Uploads
+          campaignId="" // Noch nicht verfügbar in new campaign
+          campaignName={campaignTitle}
+          selectedProjectId={selectedProjectId}
+          selectedProjectName={selectedProject?.title}
+          uploadType="attachment"
+          enableSmartRouter={true}
         />
       )}
 
