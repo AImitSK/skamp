@@ -354,33 +354,80 @@ class SmartUploadRouterService {
     tags: string[] = [],
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
-    
+
     // Erweiterte Kontext-Informationen für Upload
     const uploadContext = {
       userId: context.userId,
       clientId: clientId
     };
-    
+
     try {
-      // Delegation an mediaService.uploadMedia (bestehender Service)
-      const asset = await mediaService.uploadMedia(
-        file,
-        context.organizationId,
-        folderId,
-        onProgress,
-        3, // retry count
-        uploadContext
-      );
-      
+      // KRITISCHER FIX: Verwende strukturierten Pfad für Upload
+      const structuredPath = `${pathConfig.basePath}/${pathConfig.subPath}/${pathConfig.fileName}`;
+      console.log('🚀 Smart Upload Router - Strukturierter Pfad:', {
+        fullPath: structuredPath,
+        basePath: pathConfig.basePath,
+        subPath: pathConfig.subPath,
+        fileName: pathConfig.fileName,
+        isOrganized: pathConfig.isOrganized
+      });
+
+      // Direct Upload zu Firebase Storage mit strukturiertem Pfad
+      const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
+      const { storage } = await import('./client-init');
+
+      const storageRef = ref(storage, structuredPath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      // Progress tracking
+      if (onProgress) {
+        uploadTask.on('state_changed', (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress(progress);
+        });
+      }
+
+      // Wait for upload completion
+      const snapshot = await uploadTask;
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+
+      // Create Firestore MediaAsset entry
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('./client-init');
+
+      const assetData = {
+        organizationId: context.organizationId,
+        createdBy: context.userId,
+        clientId: clientId || null,
+        folderId: folderId || null,
+        fileName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        path: structuredPath,
+        downloadUrl,
+        thumbnailUrl: downloadUrl,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        tags: tags || []
+      };
+
+      const assetRef = await addDoc(collection(db, 'media_assets'), assetData);
+
+      const asset = {
+        id: assetRef.id,
+        ...assetData,
+        downloadUrl
+      };
+
       // Asset-Metadaten erweitern falls erforderlich
       if (tags.length > 0 || pathConfig.isOrganized) {
         await this.enhanceAssetMetadata(asset.id!, tags, context, pathConfig);
       }
-      
+
       return {
-        path: pathConfig.basePath + '/' + pathConfig.subPath,
-        service: 'mediaService.uploadMedia',
-        asset,
+        path: structuredPath,
+        service: 'smartUploadRouter.directUpload',
+        asset: asset as any,
         uploadMethod: pathConfig.isOrganized ? 'organized' : 'unorganized'
       };
       
