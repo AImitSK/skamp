@@ -5,7 +5,8 @@ import { useState, useRef, useMemo } from 'react';
 import { PhotoIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
+// Import neue Media Library UploadModal statt alte AssetSelectorModal
+import UploadModal from '@/app/dashboard/pr-tools/media-library/UploadModal';
 import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -350,28 +351,19 @@ export function KeyVisualSection({
         className="hidden"
       />
 
-      {/* Asset Selector Modal mit Smart Router Integration */}
+      {/* Neue Media Library UploadModal */}
       {showAssetSelector && clientId && (
-        <AssetSelectorModal
-          isOpen={showAssetSelector}
+        <UploadModal
           onClose={() => setShowAssetSelector(false)}
-          clientId={clientId}
-          clientName={clientName}
-          onAssetsSelected={handleAssetSelected}
-          organizationId={userId}
-          legacyUserId={userId}
-          selectionMode="single"
-          onUploadSuccess={() => {
-            // Optional: Refresh or additional logic after upload
+          onUploadSuccess={async () => {
+            // Refresh nach Upload - TODO: Implementiere Asset-Auswahl aus Media Library
+            setShowAssetSelector(false);
           }}
-          
-          // Campaign Smart Router Props
-          campaignId={campaignId}
-          campaignName={campaignName}
-          selectedProjectId={selectedProjectId}
-          selectedProjectName={selectedProjectName}
-          uploadType="hero-image"
-          enableSmartRouter={enableSmartRouter}
+          currentFolderId={undefined}
+          folderName={undefined}
+          preselectedClientId={clientId}
+          organizationId={organizationId}
+          userId={userId}
         />
       )}
 
