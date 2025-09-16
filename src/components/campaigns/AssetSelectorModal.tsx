@@ -111,27 +111,30 @@ export function AssetSelectorModal({
       if (selectedProjectId && selectedProjectName) {
         console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId, selectedProjectName);
 
+        // ✅ NEUE LOGIK: Verwende Smart Router Struktur - Projekte/{projektId}/Medien
+        console.log('📂 Suche Smart Router Projekt-Struktur für:', selectedProjectId);
+
         // 1. Alle Ordner der Organisation laden
         const allFolders = await mediaService.getAllFolders(organizationId);
+        console.log('📂 Verfügbare Ordner:', allFolders.length, 'Ordner gefunden');
 
-        // 2. Projekt-Hauptordner finden
-        console.log('📂 Suche Projekt-Ordner für:', selectedProjectName);
-        console.log('📂 Verfügbare Ordner:', allFolders.map(f => f.name));
-        const projectFolder = allFolders.find(folder =>
-          folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
+        // 2. Smart Router Projekt-Ordner finden: Projekte/{projektId}
+        const smartProjectFolder = allFolders.find(folder =>
+          folder.name === selectedProjectId && folder.parentFolderId // Hat einen Parent (ist in Projekte/)
         );
-        console.log('🎯 Projekt-Ordner gefunden:', projectFolder);
+        console.log('🎯 Smart Router Projekt-Ordner gefunden:', smartProjectFolder);
 
-        if (projectFolder) {
+        if (smartProjectFolder) {
           // 3. Medien-Unterordner finden
           const medienFolder = allFolders.find(folder =>
-            folder.parentFolderId === projectFolder.id && folder.name === 'Medien'
+            folder.parentFolderId === smartProjectFolder.id && folder.name === 'Medien'
           );
+          console.log('🎯 Smart Router Medien-Ordner gefunden:', medienFolder);
 
           if (medienFolder) {
-            console.log('✅ Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
+            console.log('✅ Smart Router Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
 
-            // 4. Lade Assets und Unterordner aus dem Medien-Ordner (als neuer ROOT)
+            // 4. Lade Assets und Unterordner aus dem Smart Router Medien-Ordner
             const [medienAssets, medienSubFolders] = await Promise.all([
               mediaService.getMediaAssets(organizationId, medienFolder.id),
               mediaService.getFolders(organizationId, medienFolder.id)
@@ -139,16 +142,16 @@ export function AssetSelectorModal({
 
             setAssets(medienAssets);
             setFolders(medienSubFolders);
-            console.log('📁 Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
+            console.log('📁 Smart Router Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
           } else {
-            console.log('⚠️ Medien-Ordner nicht gefunden, verwende Fallback');
+            console.log('⚠️ Smart Router Medien-Ordner nicht gefunden, verwende Fallback');
             // Fallback: Standard Client-Medien
             const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
             setAssets(result.assets);
             setFolders(result.folders);
           }
         } else {
-          console.log('⚠️ Projekt-Ordner nicht gefunden, verwende Fallback');
+          console.log('⚠️ Smart Router Projekt-Ordner nicht gefunden, verwende Fallback');
           // Fallback: Standard Client-Medien
           const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
           setAssets(result.assets);
