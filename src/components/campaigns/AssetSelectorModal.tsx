@@ -117,7 +117,7 @@ export function AssetSelectorModal({
         // 1. Alle Ordner der Organisation laden
         try {
           console.log('🔄 Lade alle Ordner für Organisation:', organizationId);
-          const allFolders = await mediaService.getAllFolders(organizationId);
+          const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
           console.log('📂 Verfügbare Ordner:', allFolders.length, 'Ordner gefunden');
           console.log('📂 Ordner-Namen:', allFolders.map(f => f.name));
 
