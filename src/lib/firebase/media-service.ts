@@ -606,14 +606,19 @@ export const mediaService = {
     folderId?: string,
     onProgress?: (progress: number) => void,
     retryCount = 3,
-    context?: { userId: string; clientId?: string } // NEW: optional context for createdBy and clientId
+    context?: { userId: string; clientId?: string }, // NEW: optional context for createdBy and clientId
+    customStoragePath?: string // NEW: optional custom storage path from Smart Upload Router
   ): Promise<MediaAsset> {
     try {
       
       // Cleaner Dateiname für Firebase Storage
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const timestamp = Date.now();
-      const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`; // CHANGED path
+
+      // Use custom storage path from Smart Upload Router if provided, otherwise fallback to legacy path
+      const storagePath = customStoragePath || `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`;
+
+      console.log('💾 mediaService.uploadMedia - Using storage path:', storagePath);
       
       
       const storageRef = ref(storage, storagePath);
@@ -639,12 +644,12 @@ export const mediaService = {
             
             // Retry bei bestimmten Fehlern
             if (retryCount > 0 && (
-              error.code === 'storage/canceled' || 
+              error.code === 'storage/canceled' ||
               error.code === 'storage/unknown' ||
               error.message?.includes('network')
             )) {
               setTimeout(() => {
-                this.uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context)
+                this.uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context, customStoragePath)
                   .then(resolve)
                   .catch(reject);
               }, 1000);
