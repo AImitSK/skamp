@@ -1992,7 +1992,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 }
               </div>
             </div>
-            </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
               <Button
                 onClick={() => setShowProjectMediaModal(false)}
