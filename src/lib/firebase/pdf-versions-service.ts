@@ -761,12 +761,28 @@ class PDFVersionsService {
             // Projekt-basierter Upload: Finde Pressemeldungen-Ordner
             const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
 
-            // Finde Projekt-Hauptordner (verwende gleiche Logik wie KeyVisual)
-            console.log('📂 PDF: Suche Projekt-Ordner für Campaign:', campaignData.title);
+            // ✅ VERWENDE GLEICHE SUCHLOGIK WIE KEYVISUAL-UPLOAD
+            // Hole Projekt-Daten für korrekte Namenssuche
+            let projectName = 'Dan dann'; // Fallback
+
+            try {
+              if (campaignData.projectId) {
+                const { projectService } = await import('./project-service');
+                const project = await projectService.getById(campaignData.projectId, organizationId);
+                if (project && project.title) {
+                  projectName = project.title;
+                  console.log('📂 PDF: Verwende Projekt-Title:', projectName);
+                }
+              }
+            } catch (error) {
+              console.warn('📂 PDF: Projekt-Daten konnten nicht geladen werden, verwende Fallback');
+            }
+
+            console.log('📂 PDF: Suche Projekt-Ordner für:', projectName);
             console.log('📂 PDF: Alle Ordner:', allFolders.length, 'gefunden');
 
             const projectFolder = allFolders.find(folder =>
-              folder.name.includes('P-') && folder.name.includes(campaignData.clientName || campaignData.title || 'Dan dann')
+              folder.name.includes('P-') && folder.name.includes(projectName)
             );
             console.log('🎯 PDF: Projekt-Ordner gefunden:', projectFolder);
 
