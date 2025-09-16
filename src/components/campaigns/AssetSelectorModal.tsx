@@ -106,6 +106,7 @@ export function AssetSelectorModal({
   const loadClientMedia = async () => {
     setLoading(true);
     try {
+      console.log('🚀 loadClientMedia Start:', { selectedProjectId, selectedProjectName, showAllAssets });
       // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
       if (selectedProjectId && selectedProjectName) {
         console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId, selectedProjectName);
@@ -114,9 +115,12 @@ export function AssetSelectorModal({
         const allFolders = await mediaService.getAllFolders(organizationId);
 
         // 2. Projekt-Hauptordner finden
+        console.log('📂 Suche Projekt-Ordner für:', selectedProjectName);
+        console.log('📂 Verfügbare Ordner:', allFolders.map(f => f.name));
         const projectFolder = allFolders.find(folder =>
           folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
         );
+        console.log('🎯 Projekt-Ordner gefunden:', projectFolder);
 
         if (projectFolder) {
           // 3. Medien-Unterordner finden
