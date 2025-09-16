@@ -415,14 +415,13 @@ export function AssetSelectorModal({
                     Aktivieren Sie "Alle Bilder zeigen" oder laden Sie Medien für diesen Kunden hoch
                   </Text>
                 )}
-                <Link
-                  href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
-                  target="_blank"
-                  className="inline-flex items-center mt-4 text-primary hover:text-primary-hover"
+                <Button
+                  onClick={() => setShowUploadModal(true)}
+                  className="inline-flex items-center mt-4 text-primary hover:text-primary-hover bg-transparent border-0 p-0"
                 >
                   <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
                   Medien hochladen
-                </Link>
+                </Button>
               </div>
             )}
           </div>
