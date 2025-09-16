@@ -141,7 +141,9 @@ export function KeyVisualSection({
         'campaign',
         {
           campaignId,
+          campaignName,
           projectId: selectedProjectId,
+          projectName: selectedProjectName,
           category: 'key-visuals',
           clientId
         }

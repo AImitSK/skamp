@@ -17,10 +17,12 @@ export interface UploadContext {
   organizationId: string;
   userId: string;
   projectId?: string;
+  projectName?: string; // NEU: Projekt-Name für strukturierte Ordner
   campaignId?: string;
+  campaignName?: string; // NEU: Campaign-Name für strukturierte Ordner
   folderId?: string;
   uploadType: 'project' | 'campaign' | 'media-library' | 'profile' | 'branding';
-  
+
   // Erweiterte Kontext-Informationen
   clientId?: string;
   phase?: 'ideas_planning' | 'creation' | 'internal_approval' | 'customer_approval' | 'distribution' | 'monitoring';
@@ -198,12 +200,28 @@ class SmartUploadRouterService {
     let isOrganized: boolean;
     
     if (detectedContext.routing === 'organized' && config.preferOrganized) {
-      // Organisierte Uploads: organizations/{organizationId}/media/Projekte/
+      // Organisierte Uploads mit strukturierten Ordnernamen
       if (context.projectId) {
-        subPath = `Projekte/${context.projectId}`;
+        // Projekt-Ordner Format: P-{YYYYMMDD}-{Company}-{Title}
+        // Fallback auf projectId wenn kein Name verfügbar
+        const projectFolder = context.projectName || context.projectId;
+        subPath = `Projekte/${projectFolder}`;
+
         if (context.campaignId) {
-          subPath += `/Kampagnen/${context.campaignId}`;
+          // Campaign-Ordner mit Namen oder ID
+          const campaignFolder = context.campaignName ?
+            `Campaign-${context.campaignName.replace(/[^a-zA-Z0-9-_]/g, '_')}` :
+            `Campaign-${context.campaignId}`;
+          subPath += `/Medien/${campaignFolder}`;
+
+          // Kategorie-spezifische Unterordner
+          if (context.category === 'key-visuals') {
+            subPath += '/Key-Visuals';
+          } else if (context.category === 'attachments') {
+            subPath += '/Anhänge';
+          }
         }
+
         if (context.phase) {
           subPath += `/${this.getPhaseFolderName(context.phase)}`;
         }
@@ -212,7 +230,7 @@ class SmartUploadRouterService {
       } else {
         subPath = 'Kategorien';
       }
-      
+
       isOrganized = true;
     } else {
       // Unorganisierte Uploads: organizations/{organizationId}/media/Unzugeordnet/

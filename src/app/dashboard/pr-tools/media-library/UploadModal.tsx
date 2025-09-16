@@ -203,7 +203,9 @@ export default function UploadModal({
                 'campaign',
                 {
                   campaignId,
+                  campaignName,
                   projectId: selectedProjectId,
+                  projectName: selectedProjectName,
                   category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
                   clientId: selectedClientId
                 },
