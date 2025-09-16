@@ -781,8 +781,16 @@ class PDFVersionsService {
               console.warn('📂 PDF: Projekt-Daten konnten nicht geladen werden, verwende Fallback:', error);
             }
 
+            console.log('📂 PDF: DEBUG - Campaign ID:', campaignId);
+            console.log('📂 PDF: DEBUG - Project ID aus Campaign:', campaignData.projectId);
+            console.log('📂 PDF: DEBUG - Ermittelter Project Name:', projectName);
             console.log('📂 PDF: Suche Projekt-Ordner für:', projectName);
             console.log('📂 PDF: Alle Ordner:', allFolders.length, 'gefunden');
+            allFolders.forEach(folder => {
+              if (folder.name.includes('P-')) {
+                console.log('📁 P-Ordner gefunden:', folder.name, '- ID:', folder.id);
+              }
+            });
 
             const projectFolder = allFolders.find(folder =>
               folder.name.includes('P-') && folder.name.includes(projectName)
