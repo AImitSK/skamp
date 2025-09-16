@@ -106,34 +106,81 @@ export function AssetSelectorModal({
   const loadClientMedia = async () => {
     setLoading(true);
     try {
-      if (showAllAssets) {
-        // Zeige client-spezifische + nicht-zugeordnete Medien
-        const [clientResult, allResult] = await Promise.all([
-          mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId),
-          mediaService.getMediaAssets(organizationId)
-        ]);
-        
-        // Filtere nicht-zugeordnete Assets (ohne clientId)
-        const unassignedAssets = allResult.filter(asset => !asset.clientId);
-        
-        // Kombiniere client-spezifische + nicht-zugeordnete
-        const combinedAssets = [...clientResult.assets, ...unassignedAssets];
-        
-        // Deduplizierung
-        const seenIds = new Set<string>();
-        const uniqueAssets = combinedAssets.filter(asset => {
-          if (!asset.id || seenIds.has(asset.id)) return false;
-          seenIds.add(asset.id);
-          return true;
-        });
-        
-        setAssets(uniqueAssets);
-        setFolders(clientResult.folders);
+      // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
+      if (selectedProjectId) {
+        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId);
+
+        // 1. Alle Ordner der Organisation laden
+        const allFolders = await mediaService.getAllFolders(organizationId);
+
+        // 2. Projekt-Hauptordner finden
+        const projectFolder = allFolders.find(folder =>
+          folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
+        );
+
+        if (projectFolder) {
+          // 3. Medien-Unterordner finden
+          const medienFolder = allFolders.find(folder =>
+            folder.parentFolderId === projectFolder.id && folder.name === 'Medien'
+          );
+
+          if (medienFolder) {
+            console.log('✅ Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
+
+            // 4. Lade Assets und Unterordner aus dem Medien-Ordner (als neuer ROOT)
+            const [medienAssets, medienSubFolders] = await Promise.all([
+              mediaService.getMediaAssets(organizationId, medienFolder.id),
+              mediaService.getFolders(organizationId, medienFolder.id)
+            ]);
+
+            setAssets(medienAssets);
+            setFolders(medienSubFolders);
+            console.log('📁 Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
+          } else {
+            console.log('⚠️ Medien-Ordner nicht gefunden, verwende Fallback');
+            // Fallback: Standard Client-Medien
+            const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
+            setAssets(result.assets);
+            setFolders(result.folders);
+          }
+        } else {
+          console.log('⚠️ Projekt-Ordner nicht gefunden, verwende Fallback');
+          // Fallback: Standard Client-Medien
+          const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
+          setAssets(result.assets);
+          setFolders(result.folders);
+        }
       } else {
-        // Zeige nur client-spezifische Medien
-        const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
-        setAssets(result.assets);
-        setFolders(result.folders);
+        // ✅ ALTE LOGIK: Kein Projekt, verwende Standard Client-Filter
+        if (showAllAssets) {
+          // Zeige client-spezifische + nicht-zugeordnete Medien
+          const [clientResult, allResult] = await Promise.all([
+            mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId),
+            mediaService.getMediaAssets(organizationId)
+          ]);
+
+          // Filtere nicht-zugeordnete Assets (ohne clientId)
+          const unassignedAssets = allResult.filter(asset => !asset.clientId);
+
+          // Kombiniere client-spezifische + nicht-zugeordnete
+          const combinedAssets = [...clientResult.assets, ...unassignedAssets];
+
+          // Deduplizierung
+          const seenIds = new Set<string>();
+          const uniqueAssets = combinedAssets.filter(asset => {
+            if (!asset.id || seenIds.has(asset.id)) return false;
+            seenIds.add(asset.id);
+            return true;
+          });
+
+          setAssets(uniqueAssets);
+          setFolders(clientResult.folders);
+        } else {
+          // Zeige nur client-spezifische Medien
+          const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
+          setAssets(result.assets);
+          setFolders(result.folders);
+        }
       }
     } catch (error) {
       setAssets([]);
