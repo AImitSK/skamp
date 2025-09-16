@@ -66,16 +66,30 @@ interface UploadModalProps {
   preselectedClientId?: string;
   organizationId: string; // NEW: Required for multi-tenancy
   userId: string; // NEW: Required for tracking who uploads
+  // Campaign/Project Context für korrekte Pfad-Initialisierung
+  campaignId?: string;
+  campaignName?: string;
+  projectId?: string;
+  projectName?: string;
+  uploadType?: 'hero-image' | 'attachment' | 'document';
+  enableSmartRouter?: boolean;
 }
 
-export default function UploadModal({ 
-  onClose, 
-  onUploadSuccess, 
+export default function UploadModal({
+  onClose,
+  onUploadSuccess,
   currentFolderId,
   folderName,
   preselectedClientId,
   organizationId, // NEW
-  userId // NEW
+  userId, // NEW
+  // Campaign/Project Context
+  campaignId,
+  campaignName,
+  projectId,
+  projectName,
+  uploadType,
+  enableSmartRouter
 }: UploadModalProps) {
   const { companies } = useCrmData();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -100,19 +114,35 @@ export default function UploadModal({
     }
   }, [preselectedClientId]);
 
-  // Smart Router Context Info laden
+  // Smart Router Context Info laden mit Campaign/Project Support
   useEffect(() => {
     async function loadContextInfo() {
       try {
-        const info = await mediaLibraryContextBuilder.buildContextInfo({
+        // Erweiterte Parameter mit Campaign/Project Context
+        const params: any = {
           organizationId,
           userId,
           currentFolderId,
           preselectedClientId: selectedClientId,
           folderName,
           uploadSource: 'dialog'
-        }, companies);
-        
+        };
+
+        // Campaign/Project Context hinzufügen wenn vorhanden
+        if (campaignId) {
+          params.campaignId = campaignId;
+          params.campaignName = campaignName;
+        }
+        if (projectId) {
+          params.projectId = projectId;
+          params.projectName = projectName;
+        }
+        if (uploadType) {
+          params.uploadType = uploadType;
+        }
+
+        const info = await mediaLibraryContextBuilder.buildContextInfo(params, companies);
+
         setContextInfo(info);
       } catch (error) {
         // Failed to load context info - fallback to legacy mode
@@ -123,7 +153,7 @@ export default function UploadModal({
     if (useSmartRouterEnabled && uiConfig.showContextInfo && organizationId && userId) {
       loadContextInfo();
     }
-  }, [organizationId, userId, currentFolderId, selectedClientId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo, companies]);
+  }, [organizationId, userId, currentFolderId, selectedClientId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo, companies, campaignId, projectId]);
 
   const showAlert = (type: 'info' | 'error', message: string) => {
     setAlert({ type, message });
@@ -173,19 +203,45 @@ export default function UploadModal({
         
         try {
           if (useSmartRouterEnabled && uploadMethod === 'smart') {
-            // Smart Upload Router verwenden
-            const uploadResult = await uploadToMediaLibrary(
-              file,
-              organizationId,
-              userId,
-              currentFolderId,
-              (progress) => {
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileKey]: progress
-                }));
-              }
-            );
+            // Smart Upload Router mit Campaign/Project Context verwenden
+            let uploadResult;
+
+            // Wenn Campaign-Context vorhanden, nutze spezifischen Upload-Pfad
+            if (campaignId && projectId) {
+              const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+              uploadResult = await uploadWithContext(
+                file,
+                organizationId,
+                userId,
+                'campaign',
+                {
+                  campaignId,
+                  projectId,
+                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
+                  clientId: selectedClientId
+                },
+                (progress) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [fileKey]: progress
+                  }));
+                }
+              );
+            } else {
+              // Fallback auf Standard Media Library Upload
+              uploadResult = await uploadToMediaLibrary(
+                file,
+                organizationId,
+                userId,
+                currentFolderId,
+                (progress) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [fileKey]: progress
+                  }));
+                }
+              );
+            }
             
             result.method = uploadResult.uploadMethod;
             result.path = uploadResult.path;

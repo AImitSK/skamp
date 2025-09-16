@@ -395,7 +395,7 @@ export function AssetSelectorModal({
       </DialogActions>
     </Dialog>
 
-    {/* Upload Modal */}
+    {/* Upload Modal mit Campaign/Project Context */}
     {showUploadModal && (
       <UploadModal
         onClose={() => setShowUploadModal(false)}
@@ -403,6 +403,13 @@ export function AssetSelectorModal({
         preselectedClientId={clientId}
         organizationId={organizationId}
         userId={legacyUserId || ''}
+        // Campaign/Project Context für korrekte Pfad-Initialisierung
+        campaignId={campaignId}
+        campaignName={campaignName}
+        projectId={selectedProjectId}
+        projectName={selectedProjectName}
+        uploadType={uploadType}
+        enableSmartRouter={enableSmartRouter}
       />
     )}
     </>

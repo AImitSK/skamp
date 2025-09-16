@@ -200,11 +200,31 @@ class SmartUploadRouterService {
     if (detectedContext.routing === 'organized' && config.preferOrganized) {
       // Organisierte Uploads: organizations/{organizationId}/media/Projekte/
       if (context.projectId) {
-        subPath = `Projekte/${context.projectId}`;
-        if (context.campaignId) {
-          subPath += `/Kampagnen/${context.campaignId}`;
-        }
-        if (context.phase) {
+        // Projekt-spezifischer Pfad - Verwende Projekt-Namen wenn möglich
+        const projectName = (context as any).projectName || context.projectId;
+        subPath = `Projekte/${projectName}`;
+
+        // Spezielle Behandlung für PDFs
+        if (context.category === 'pdf' || (context as any).subFolder === 'Pressemeldungen') {
+          subPath += `/Pressemeldungen`;
+          if (context.campaignId) {
+            subPath += `/Campaign-${context.campaignId}`;
+            // Unterordner je nach PDF-Status
+            if (context.phase === 'internal_approval') {
+              subPath += `/Freigaben`;
+            } else {
+              subPath += `/Entwürfe`;
+            }
+          }
+        } else if (context.campaignId) {
+          // Andere Campaign-Medien (Bilder, Anhänge)
+          subPath += `/Medien/Campaign-${context.campaignId}`;
+          if (context.category === 'key-visuals') {
+            subPath += `/Key-Visuals`;
+          } else if (context.category === 'attachments') {
+            subPath += `/Anhänge`;
+          }
+        } else if (context.phase) {
           subPath += `/${this.getPhaseFolderName(context.phase)}`;
         }
       } else if (context.folderId) {
@@ -216,7 +236,32 @@ class SmartUploadRouterService {
       isOrganized = true;
     } else {
       // Unorganisierte Uploads: organizations/{organizationId}/media/Unzugeordnet/
-      subPath = 'Unzugeordnet';
+
+      // Spezielle Behandlung für Campaigns ohne Projekt
+      if (context.campaignId && !context.projectId) {
+        subPath = `Unzugeordnet/Campaigns/Campaign-${context.campaignId}`;
+
+        // PDFs in separatem Ordner
+        if (context.category === 'pdf') {
+          subPath += `/PDFs`;
+          if (context.phase === 'internal_approval') {
+            subPath += `/Freigaben`;
+          } else {
+            subPath += `/Entwürfe`;
+          }
+        } else {
+          // Medien-Organisation
+          subPath += `/Medien`;
+          if (context.category === 'key-visuals') {
+            subPath += `/Key-Visuals`;
+          } else if (context.category === 'attachments') {
+            subPath += `/Anhänge`;
+          }
+        }
+      } else {
+        subPath = 'Unzugeordnet';
+      }
+
       isOrganized = false;
     }
     
