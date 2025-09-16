@@ -66,16 +66,30 @@ interface UploadModalProps {
   preselectedClientId?: string;
   organizationId: string; // NEW: Required for multi-tenancy
   userId: string; // NEW: Required for tracking who uploads
+  // Campaign/Project Context für korrekte Pfad-Initialisierung
+  campaignId?: string;
+  campaignName?: string;
+  projectId?: string;
+  projectName?: string;
+  uploadType?: 'hero-image' | 'attachment' | 'document';
+  enableSmartRouter?: boolean;
 }
 
-export default function UploadModal({ 
-  onClose, 
-  onUploadSuccess, 
+export default function UploadModal({
+  onClose,
+  onUploadSuccess,
   currentFolderId,
   folderName,
   preselectedClientId,
   organizationId, // NEW
-  userId // NEW
+  userId, // NEW
+  // Campaign/Project Context
+  campaignId,
+  campaignName,
+  projectId,
+  projectName,
+  uploadType,
+  enableSmartRouter
 }: UploadModalProps) {
   const { companies } = useCrmData();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -173,19 +187,45 @@ export default function UploadModal({
         
         try {
           if (useSmartRouterEnabled && uploadMethod === 'smart') {
-            // Smart Upload Router verwenden
-            const uploadResult = await uploadToMediaLibrary(
-              file,
-              organizationId,
-              userId,
-              currentFolderId,
-              (progress) => {
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileKey]: progress
-                }));
-              }
-            );
+            // Smart Upload Router mit Campaign/Project Context verwenden
+            let uploadResult;
+
+            // Wenn Campaign-Context vorhanden, nutze spezifischen Upload-Pfad
+            if (campaignId && projectId) {
+              const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+              uploadResult = await uploadWithContext(
+                file,
+                organizationId,
+                userId,
+                'campaign',
+                {
+                  campaignId,
+                  projectId,
+                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
+                  clientId: selectedClientId
+                },
+                (progress) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [fileKey]: progress
+                  }));
+                }
+              );
+            } else {
+              // Fallback auf Standard Media Library Upload
+              uploadResult = await uploadToMediaLibrary(
+                file,
+                organizationId,
+                userId,
+                currentFolderId,
+                (progress) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [fileKey]: progress
+                  }));
+                }
+              );
+            }
             
             result.method = uploadResult.uploadMethod;
             result.path = uploadResult.path;
