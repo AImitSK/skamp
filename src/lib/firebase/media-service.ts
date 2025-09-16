@@ -358,38 +358,106 @@ export const mediaService = {
 
   async getFolders(organizationId: string, parentFolderId?: string): Promise<MediaFolder[]> {
     try {
-      let q;
+      console.log('📁 [DEBUG] getFolders called with:', { organizationId, parentFolderId });
 
-      if (parentFolderId === undefined) {
-        q = query(
-          collection(db, 'media_folders'),
-          where('organizationId', '==', organizationId) // CHANGED
-        );
-      } else {
-        q = query(
-          collection(db, 'media_folders'),
-          where('organizationId', '==', organizationId), // CHANGED
-          where('parentFolderId', '==', parentFolderId)
-        );
+      // BACKWARDS COMPATIBILITY: Try organizationId first, then fallback to userId
+      let folders: MediaFolder[] = [];
+      let foundWithOrgId = false;
+
+      // 1. Try with organizationId (new structure)
+      try {
+        let q;
+        if (parentFolderId === undefined) {
+          q = query(
+            collection(db, 'media_folders'),
+            where('organizationId', '==', organizationId)
+          );
+        } else {
+          q = query(
+            collection(db, 'media_folders'),
+            where('organizationId', '==', organizationId),
+            where('parentFolderId', '==', parentFolderId)
+          );
+        }
+
+        const snapshot = await getDocs(q);
+        console.log('📁 [DEBUG] organizationId query result:', {
+          totalDocs: snapshot.size,
+          docIds: snapshot.docs.map(doc => doc.id).slice(0, 5)
+        });
+
+        if (snapshot.size > 0) {
+          foundWithOrgId = true;
+          folders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              // Map back for compatibility
+              userId: data.createdBy || data.organizationId
+            } as MediaFolder;
+          });
+        }
+      } catch (orgError) {
+        console.warn('😳 [DEBUG] organizationId folders query failed:', orgError);
       }
 
-      const snapshot = await getDocs(q);
-      const folders = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Map back for compatibility
-          userId: data.createdBy || data.organizationId
-        } as MediaFolder;
-      });
-      
+      // 2. Fallback to userId (legacy structure) if no results with organizationId
+      if (!foundWithOrgId) {
+        console.log('🔄 [DEBUG] Falling back to userId query for folders backwards compatibility');
+        try {
+          let q;
+          if (parentFolderId === undefined) {
+            q = query(
+              collection(db, 'media_folders'),
+              where('userId', '==', organizationId)
+            );
+          } else {
+            q = query(
+              collection(db, 'media_folders'),
+              where('userId', '==', organizationId),
+              where('parentFolderId', '==', parentFolderId)
+            );
+          }
+
+          const snapshot = await getDocs(q);
+          console.log('🔄 [DEBUG] userId fallback folders query result:', {
+            totalDocs: snapshot.size,
+            docIds: snapshot.docs.map(doc => doc.id).slice(0, 5)
+          });
+
+          folders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              // Map back for compatibility
+              userId: data.createdBy || data.userId
+            } as MediaFolder;
+          });
+        } catch (userError) {
+          console.error('🚨 [DEBUG] userId fallback folders query also failed:', userError);
+        }
+      }
+
       const filteredFolders = folders
         .filter(folder => parentFolderId === undefined ? !folder.parentFolderId : folder.parentFolderId === parentFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
-      
+
+      console.log('📁 [DEBUG] Filtered folders result:', {
+        filteredCount: filteredFolders.length,
+        foundWithOrgId,
+        sampleFolders: filteredFolders.slice(0, 3).map(f => ({
+          id: f.id,
+          name: f.name,
+          parentFolderId: f.parentFolderId,
+          organizationId: f.organizationId || (f as any).userId
+        }))
+      });
+
       return filteredFolders;
     } catch (error) {
+      console.error('🚨 [DEBUG] getFolders error:', error);
       throw error;
     }
   },
@@ -759,32 +827,100 @@ export const mediaService = {
 
   async getMediaAssets(organizationId: string, folderId?: string): Promise<MediaAsset[]> {
     try {
-      let q;
-      
-      if (folderId === undefined) {
-        q = query(
-          collection(db, 'media_assets'),
-          where('organizationId', '==', organizationId) // CHANGED
-        );
-      } else {
-        q = query(
-          collection(db, 'media_assets'),
-          where('organizationId', '==', organizationId), // CHANGED
-          where('folderId', '==', folderId)
-        );
+      console.log('🔍 [DEBUG] getMediaAssets called with:', { organizationId, folderId });
+
+      // BACKWARDS COMPATIBILITY: Try organizationId first, then fallback to userId
+      let assets: MediaAsset[] = [];
+      let foundWithOrgId = false;
+
+      // 1. Try with organizationId (new structure)
+      try {
+        let q;
+        if (folderId === undefined) {
+          q = query(
+            collection(db, 'media_assets'),
+            where('organizationId', '==', organizationId)
+          );
+        } else {
+          q = query(
+            collection(db, 'media_assets'),
+            where('organizationId', '==', organizationId),
+            where('folderId', '==', folderId)
+          );
+        }
+
+        const snapshot = await getDocs(q);
+        console.log('🔍 [DEBUG] organizationId query result:', {
+          totalDocs: snapshot.size,
+          docIds: snapshot.docs.map(doc => doc.id).slice(0, 5)
+        });
+
+        if (snapshot.size > 0) {
+          foundWithOrgId = true;
+          assets = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              // Map back for compatibility
+              userId: data.createdBy || data.organizationId
+            } as MediaAsset;
+          });
+        }
+      } catch (orgError) {
+        console.warn('😳 [DEBUG] organizationId query failed:', orgError);
       }
 
-      const snapshot = await getDocs(q);
-      const assets = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Map back for compatibility
-          userId: data.createdBy || data.organizationId
-        } as MediaAsset;
+      // 2. Fallback to userId (legacy structure) if no results with organizationId
+      if (!foundWithOrgId) {
+        console.log('🔄 [DEBUG] Falling back to userId query for backwards compatibility');
+        try {
+          let q;
+          if (folderId === undefined) {
+            q = query(
+              collection(db, 'media_assets'),
+              where('userId', '==', organizationId)
+            );
+          } else {
+            q = query(
+              collection(db, 'media_assets'),
+              where('userId', '==', organizationId),
+              where('folderId', '==', folderId)
+            );
+          }
+
+          const snapshot = await getDocs(q);
+          console.log('🔄 [DEBUG] userId fallback query result:', {
+            totalDocs: snapshot.size,
+            docIds: snapshot.docs.map(doc => doc.id).slice(0, 5)
+          });
+
+          assets = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              // Map back for compatibility
+              userId: data.createdBy || data.userId
+            } as MediaAsset;
+          });
+        } catch (userError) {
+          console.error('🚨 [DEBUG] userId fallback query also failed:', userError);
+        }
+      }
+
+      console.log('🔍 [DEBUG] Raw assets before filtering:', {
+        count: assets.length,
+        foundWithOrgId,
+        sampleAssets: assets.slice(0, 3).map(a => ({
+          id: a.id,
+          fileName: a.fileName,
+          folderId: a.folderId,
+          storagePath: a.storagePath,
+          organizationId: a.organizationId || (a as any).userId
+        }))
       });
-      
+
       const filteredAssets = assets
         .filter(asset => {
           if (folderId === undefined) {
@@ -798,9 +934,20 @@ export const mediaService = {
           const bTime = b.createdAt?.seconds || 0;
           return bTime - aTime;
         });
-      
+
+      console.log('🔍 [DEBUG] Filtered assets result:', {
+        filteredCount: filteredAssets.length,
+        sampleFiltered: filteredAssets.slice(0, 3).map(a => ({
+          id: a.id,
+          fileName: a.fileName,
+          folderId: a.folderId,
+          organizationId: a.organizationId || (a as any).userId
+        }))
+      });
+
       return filteredAssets;
     } catch (error) {
+      console.error('🚨 [DEBUG] getMediaAssets error:', error);
       throw error;
     }
   },
