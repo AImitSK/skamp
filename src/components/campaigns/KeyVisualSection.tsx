@@ -174,6 +174,15 @@ export function KeyVisualSection({
         // Upload über Project Service
         const result = await projectUploadService.uploadBatchToProject([renamedFile], uploadConfig);
 
+        console.log('📦 Project Upload Result:', {
+          result,
+          successfulUploads: result.successfulUploads,
+          uploads: result.uploads,
+          firstUpload: result.uploads[0],
+          hasAsset: !!result.uploads[0]?.asset,
+          hasDownloadUrl: !!result.uploads[0]?.asset?.downloadUrl
+        });
+
         if (result.successfulUploads === 1 && result.uploads[0]?.asset?.downloadUrl) {
           downloadUrl = result.uploads[0].asset.downloadUrl;
         } else {
