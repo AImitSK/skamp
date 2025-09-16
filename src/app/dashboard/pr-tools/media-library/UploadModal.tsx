@@ -189,12 +189,22 @@ export default function UploadModal({
         
         try {
           if (useSmartRouterEnabled && uploadMethod === 'smart') {
-            // Smart Upload Router mit Campaign-Context
+            // ✅ IMMER Smart Upload Router verwenden
             let uploadResult;
 
-            if (campaignId && enableSmartRouter) {
+            if (campaignId) {
               // Campaign-specific Upload mit strukturierten Pfaden
               const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+
+              console.log('🔍 UploadModal Smart Upload Router Debug:', {
+                campaignId,
+                selectedProjectId,
+                uploadType,
+                organizationId,
+                userId,
+                selectedClientId
+              });
+
               uploadResult = await uploadWithContext(
                 file,
                 organizationId,
@@ -213,6 +223,8 @@ export default function UploadModal({
                   }));
                 }
               );
+
+              console.log('📁 UploadModal Campaign Upload Result:', uploadResult);
             } else {
               // Standard Media Library Upload
               uploadResult = await uploadToMediaLibrary(

@@ -131,55 +131,34 @@ export function KeyVisualSection({
     try {
       let downloadUrl: string;
       
-      // Smart Router Upload wenn verfügbar
-      if (enableSmartRouter && featureStatus?.smartRouterAvailable && campaignId) {
-        setUploadingWithSmartRouter(true);
-        
-        const result = await uploadCampaignHeroImage({
-          organizationId,
-          userId,
+      // ✅ IMMER Smart Upload Router verwenden für strukturierte Campaign-Uploads
+      const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+
+      console.log('🔍 KeyVisual Smart Upload Router Debug:', {
+        campaignId,
+        selectedProjectId,
+        organizationId,
+        userId,
+        clientId,
+        enableSmartRouter
+      });
+
+      const uploadResult = await uploadWithContext(
+        croppedFile,
+        organizationId,
+        userId,
+        'campaign',
+        {
           campaignId,
-          campaignName,
-          selectedProjectId,
-          selectedProjectName,
-          clientId,
-          file: croppedFile
-        });
-        
-        downloadUrl = result.asset?.downloadUrl || result.path;
-        setUploadingWithSmartRouter(false);
-        
-      } else {
-        // Smart Upload Router für strukturierte Campaign-Uploads
-        const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+          projectId: selectedProjectId,
+          category: 'key-visuals',
+          clientId
+        }
+      );
 
-        console.log('🔍 KeyVisual Smart Upload Router Debug:', {
-          campaignId,
-          selectedProjectId,
-          organizationId,
-          userId,
-          clientId,
-          enableSmartRouter,
-          'featureStatus?.smartRouterAvailable': featureStatus?.smartRouterAvailable
-        });
+      console.log('📁 KeyVisual Upload Result:', uploadResult);
 
-        const uploadResult = await uploadWithContext(
-          croppedFile,
-          organizationId,
-          userId,
-          'campaign',
-          {
-            campaignId,
-            projectId: selectedProjectId,
-            category: 'key-visuals',
-            clientId
-          }
-        );
-
-        console.log('📁 KeyVisual Upload Result:', uploadResult);
-
-        downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
-      }
+      downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
       
       // Key Visual setzen
       onChange({
