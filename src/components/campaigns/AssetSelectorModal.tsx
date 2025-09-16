@@ -91,6 +91,7 @@ export function AssetSelectorModal({
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
+  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (isOpen && clientId) {
@@ -100,6 +101,7 @@ export function AssetSelectorModal({
       setSelectedItems(new Set());
       setSearchTerm('');
       setShowAllAssets(false);
+      setCurrentFolderId(undefined);
     }
   }, [isOpen, clientId, showAllAssets]);
 
@@ -135,6 +137,7 @@ export function AssetSelectorModal({
 
             setAssets(medienAssets);
             setFolders(medienSubFolders);
+            setCurrentFolderId(medienFolder.id); // ✅ SET UPLOAD TARGET FOLDER
             console.log('📁 Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
           } else {
             console.log('⚠️ Medien-Ordner nicht gefunden, verwende Fallback');
@@ -142,6 +145,7 @@ export function AssetSelectorModal({
             const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
             setAssets(result.assets);
             setFolders(result.folders);
+            setCurrentFolderId(undefined); // No specific folder for fallback
           }
         } else {
           console.log('⚠️ Projekt-Ordner nicht gefunden, verwende Fallback');
@@ -149,6 +153,7 @@ export function AssetSelectorModal({
           const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
           setAssets(result.assets);
           setFolders(result.folders);
+          setCurrentFolderId(undefined); // No specific folder for fallback
         }
       } else {
         // ✅ ALTE LOGIK: Kein Projekt, verwende Standard Client-Filter
@@ -175,16 +180,19 @@ export function AssetSelectorModal({
 
           setAssets(uniqueAssets);
           setFolders(clientResult.folders);
+          setCurrentFolderId(undefined); // No specific folder when showing all assets
         } else {
           // Zeige nur client-spezifische Medien
           const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
           setAssets(result.assets);
           setFolders(result.folders);
+          setCurrentFolderId(undefined); // No specific folder for client-only view
         }
       }
     } catch (error) {
       setAssets([]);
       setFolders([]);
+      setCurrentFolderId(undefined); // Reset on error
     } finally {
       setLoading(false);
     }
@@ -446,6 +454,7 @@ export function AssetSelectorModal({
       <UploadModal
         onClose={() => setShowUploadModal(false)}
         onUploadSuccess={handleUploadSuccess}
+        currentFolderId={currentFolderId} // ✅ UPLOAD INTO PROJECT MEDIA FOLDER
         preselectedClientId={clientId}
         organizationId={organizationId}
         userId={legacyUserId || ''}
