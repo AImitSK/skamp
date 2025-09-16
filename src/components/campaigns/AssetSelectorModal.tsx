@@ -55,13 +55,13 @@ interface AssetSelectorModalProps {
   legacyUserId?: string;
   selectionMode?: 'multiple' | 'single'; // Für Key Visual nur single selection
   onUploadSuccess?: () => void; // Callback nach erfolgreichem Upload
-
+  
   // Campaign Smart Router Integration Props
   campaignId?: string;
   campaignName?: string;
   selectedProjectId?: string;
   selectedProjectName?: string;
-  uploadType?: 'hero-image' | 'attachment' | 'document';
+  uploadType?: CampaignUploadType;
   enableSmartRouter?: boolean;
 }
 
@@ -75,7 +75,7 @@ export function AssetSelectorModal({
   legacyUserId,
   selectionMode = 'multiple',
   onUploadSuccess,
-
+  
   // Campaign Smart Router Props
   campaignId,
   campaignName,
@@ -395,7 +395,7 @@ export function AssetSelectorModal({
       </DialogActions>
     </Dialog>
 
-    {/* Upload Modal mit Campaign/Project Context */}
+    {/* Upload Modal */}
     {showUploadModal && (
       <UploadModal
         onClose={() => setShowUploadModal(false)}
@@ -403,13 +403,6 @@ export function AssetSelectorModal({
         preselectedClientId={clientId}
         organizationId={organizationId}
         userId={legacyUserId || ''}
-        // Campaign/Project Context für korrekte Pfad-Initialisierung
-        campaignId={campaignId}
-        campaignName={campaignName}
-        projectId={selectedProjectId}
-        projectName={selectedProjectName}
-        uploadType={uploadType}
-        enableSmartRouter={enableSmartRouter}
       />
     )}
     </>

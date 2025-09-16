@@ -751,30 +751,15 @@ class PDFVersionsService {
           const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
           
           // Upload via Smart Upload Router mit Campaign-Kontext für korrekte Ordner-Platzierung
-          // Hole Campaign-Daten für Projekt-Zuordnung
-          const { getDoc, doc } = await import('firebase/firestore');
-          const { db } = await import('./client-init');
-
-          const campaignDoc = campaignId ? await getDoc(doc(db, 'pr_campaigns', campaignId)) : null;
-          const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
-
-          const uploadContext: any = {
+          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, {
             organizationId: organizationId,
             userId: userId,
             uploadType: 'campaign',
             campaignId: campaignId || 'temp_campaign',
-            category: 'pdf', // Verwende 'pdf' statt 'pressemeldung_pdf'
+            phase: 'internal_approval', // PDF wird bei Approval generiert
+            category: 'pressemeldung_pdf',
             autoTags: ['generated_pdf', 'approval_version']
-          };
-
-          // Füge Projekt-ID hinzu wenn Campaign einem Projekt zugeordnet ist
-          if (campaignData?.projectId) {
-            uploadContext.projectId = campaignData.projectId;
-            // Für Projekt-zugeordnete Campaigns: PDFs gehen in Pressemeldungen-Ordner
-            uploadContext.subFolder = 'Pressemeldungen';
-          }
-
-          const uploadResult = await smartUploadRouter.smartUpload(pdfFile, uploadContext);
+          });
           
           if (!uploadResult.asset) {
             throw new Error('Upload-Ergebnis enthält kein Asset');
