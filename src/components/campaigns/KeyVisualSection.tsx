@@ -130,26 +130,64 @@ export function KeyVisualSection({
     setIsProcessing(true);
     try {
       let downloadUrl: string;
-      
-      // ✅ IMMER Smart Upload Router verwenden für strukturierte Campaign-Uploads
-      const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
 
-      const uploadResult = await uploadWithContext(
-        croppedFile,
-        organizationId,
-        userId,
-        'campaign',
-        {
-          campaignId,
-          campaignName,
-          projectId: selectedProjectId,
-          projectName: selectedProjectName,
-          category: 'key-visuals',
-          clientId
+      if (selectedProjectId) {
+        // ✅ Projekt Campaign Upload: Verwende Project Upload Service
+        const { projectUploadService } = await import('@/lib/firebase/project-upload-service');
+        const { projectService } = await import('@/lib/firebase/project-service');
+
+        // Projekt laden für Details
+        const project = await projectService.getById(selectedProjectId, { organizationId, userId });
+        if (!project) {
+          throw new Error('Projekt nicht gefunden');
         }
-      );
 
-      downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
+        // Project Upload Config erstellen
+        const uploadConfig = {
+          projectId: selectedProjectId,
+          projectTitle: project.title,
+          projectCompany: selectedProjectName,
+          currentStage: project.status,
+          organizationId,
+          clientId,
+          userId,
+          currentFolderId: undefined, // Automatische Ordner-Erkennung
+          folderName: 'Medien',
+          availableFolders: [],
+          useSmartRouting: true,
+          allowBatchOptimization: false
+        };
+
+        // Campaign Ordner Name für bessere Organisation
+        croppedFile.name = `KeyVisual-${campaignName || campaignId}-${croppedFile.name}`;
+
+        // Upload über Project Service
+        const result = await projectUploadService.uploadBatchToProject([croppedFile], uploadConfig);
+
+        if (result.successfulUploads === 1 && result.uploads[0]?.asset?.downloadUrl) {
+          downloadUrl = result.uploads[0].asset.downloadUrl;
+        } else {
+          throw new Error('Upload fehlgeschlagen');
+        }
+      } else {
+        // ✅ Fallback: Standard Smart Upload Router für unzugeordnete Campaigns
+        const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+
+        const uploadResult = await uploadWithContext(
+          croppedFile,
+          organizationId,
+          userId,
+          'campaign',
+          {
+            campaignId,
+            campaignName,
+            category: 'key-visuals',
+            clientId
+          }
+        );
+
+        downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
+      }
       
       // Key Visual setzen
       onChange({
