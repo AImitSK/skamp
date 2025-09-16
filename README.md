@@ -1,5 +1,7 @@
 # SKAMP - Die Online Suite für Pressemeldungen
 
+<!-- Deployment Trigger: 2025-09-16 - Media Library Revert -->
+
 SKAMP ist eine moderne und leistungsstarke Online-Suite, die speziell für PR-Agenturen und Marketingabteilungen entwickelt wurde, um den gesamten Prozess der Erstellung und Verteilung von Pressemeldungen zu optimieren. Die Plattform bietet ein integriertes CRM-System, eine intelligente Verwaltung von Verteilerlisten und eine fortschrittliche Mediathek, um deine PR-Arbeit effizienter und erfolgreicher zu gestalten.
 
 ## 🎯 Projekt-Fokus
