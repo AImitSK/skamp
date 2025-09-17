@@ -11,7 +11,8 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase/client-init';
+import { db } from '@/lib/firebase/config';
+import { storage } from '@/lib/firebase/client-init';
 import { mediaService } from '@/lib/firebase/media-service';
 
 interface MigrationAsset {
