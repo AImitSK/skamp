@@ -181,19 +181,16 @@ class AssetMigrationService {
       try {
         console.log(`Migriere Asset ${asset.assetId} (${asset.type})...`);
 
-        // 1. Download Original-Datei
-        if (!asset.downloadUrl) {
-          throw new Error(`Keine Download-URL für Asset ${asset.assetId}`);
+        // 1. Hole Original-Asset aus Firestore
+        const originalAssetDoc = await getDoc(doc(db, 'media_assets', asset.assetId));
+        if (!originalAssetDoc.exists()) {
+          throw new Error(`Asset ${asset.assetId} nicht in Firestore gefunden`);
         }
 
-        const response = await fetch(asset.downloadUrl);
-        if (!response.ok) {
-          throw new Error(`Fehler beim Download der Datei: ${response.statusText}`);
-        }
+        const originalAssetData = originalAssetDoc.data();
+        const fileName = asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`;
 
-        const blob = await response.blob();
-        const fileName = asset.fileName || `asset_${asset.assetId}`;
-        const file = new File([blob], fileName, { type: blob.type });
+        // Statt Download: Erstelle nur Referenz in Firestore mit gleicher Storage-URL
 
         // 2. Ziel-Ordner finden oder erstellen
         let targetFolder: any;
@@ -227,17 +224,32 @@ class AssetMigrationService {
           targetFolder = { id: targetFolderRef.id, ...targetFolderData };
         }
 
-        // 3. Upload in Projekt-Ordner
-        const newAsset = await mediaService.uploadClientMedia(
-          file,
+        // 3. Erstelle neuen Media Asset Eintrag mit gleicher Storage-URL (Referenz statt Kopie)
+        const newAssetRef = doc(collection(db, 'media_assets'));
+        const newAssetData = {
+          ...originalAssetData,
+          id: newAssetRef.id,
+          folderId: targetFolder.id,
           organizationId,
-          campaign.clientId || '',
-          targetFolder.id,
-          undefined,
-          {
-            userId
-          }
-        );
+          clientId: campaign.clientId || '',
+          createdBy: userId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          migratedFrom: asset.assetId,
+          isMigrated: true,
+          // Behalte die Original Storage URL - keine neue Datei hochladen
+          downloadUrl: originalAssetData.downloadUrl,
+          storageRef: originalAssetData.storageRef
+        };
+
+        await setDoc(newAssetRef, newAssetData);
+
+        const newAsset = {
+          id: newAssetRef.id,
+          downloadUrl: originalAssetData.downloadUrl,
+          fileName,
+          ...newAssetData
+        };
 
         // 4. Firestore-Referenzen aktualisieren
         await this.updateFirestoreReferences(

@@ -63,12 +63,12 @@ export function ProjectAssignmentMigrationDialog({
                 <div className="flex-1">
                   <p className="text-sm text-gray-700">
                     Durch die Zuweisung zum Projekt <span className="font-semibold">{projectName}</span> werden
-                    alle verknüpften Medien in die entsprechenden Projekt-Ordner organisiert.
+                    alle verknüpften Medien in die entsprechenden Projekt-Ordner umorganisiert.
                   </p>
 
                   <div className="mt-3 bg-white rounded-md p-3 border border-blue-100">
                     <p className="text-sm font-medium text-gray-900">
-                      {assetCount} {assetCount === 1 ? 'Datei wird' : 'Dateien werden'} dupliziert:
+                      {assetCount} {assetCount === 1 ? 'Datei wird' : 'Dateien werden'} neu verknüpft:
                     </p>
                     <ul className="mt-2 text-xs text-gray-600 space-y-1">
                       <li>• Key Visuals → Projekt/Medien</li>
@@ -78,8 +78,8 @@ export function ProjectAssignmentMigrationDialog({
                   </div>
 
                   <p className="text-xs text-gray-500 mt-3">
-                    <span className="font-medium">Hinweis:</span> Original-Dateien bleiben im Root-Verzeichnis erhalten
-                    und können später manuell gelöscht werden.
+                    <span className="font-medium">Hinweis:</span> Die Dateien werden neu organisiert, ohne zusätzlichen
+                    Speicherplatz zu verbrauchen. Die originalen Verknüpfungen werden aktualisiert.
                   </p>
                 </div>
               </div>
