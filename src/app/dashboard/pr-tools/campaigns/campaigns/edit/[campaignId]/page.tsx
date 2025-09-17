@@ -2133,7 +2133,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             // Jetzt die echten Frontend-Uploads durchführen
             console.log('🚀 [FRONTEND-UPLOADS] Starte Frontend-Uploads mit User-Auth...');
 
-            if (result.migrationAssets && result.migrationAssets.length > 0) {
+            if (result.preparedAssets && result.preparedAssets.length > 0) {
               const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
               const { storage } = await import('@/lib/firebase/config');
               const { doc, updateDoc, setDoc, collection, addDoc, serverTimestamp } = await import('firebase/firestore');
@@ -2142,15 +2142,15 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               let successCount = 0;
               const errors: string[] = [];
 
-              for (const migrationAsset of result.migrationAssets) {
+              for (const preparedAsset of result.preparedAssets) {
                 try {
-                  console.log(`📤 [UPLOAD] Starte Upload: ${migrationAsset.fileName}`);
+                  console.log(`📤 [UPLOAD] Starte Upload: ${preparedAsset.fileName}`);
 
                   // Verwende Base64-Daten von der API (CORS-Umgehung)
-                  const base64Data = migrationAsset.fileData;
-                  const contentType = migrationAsset.contentType;
+                  const base64Data = preparedAsset.base64Data;
+                  const contentType = preparedAsset.contentType;
 
-                  // Konvertiere Base64 zu ArrayBuffer
+                  // Konvertiere Base64 zu Blob (für mediaService)
                   const binaryString = atob(base64Data);
                   const arrayBuffer = new ArrayBuffer(binaryString.length);
                   const uint8Array = new Uint8Array(arrayBuffer);
@@ -2158,67 +2158,63 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     uint8Array[i] = binaryString.charCodeAt(i);
                   }
 
-                  // Firebase Storage Upload mit User-Auth
-                  const storageRef = ref(storage, migrationAsset.storagePath);
-                  const uploadMetadata = {
-                    contentType: contentType,
-                    customMetadata: migrationAsset.metadata
-                  };
+                  const blob = new Blob([uint8Array], { type: contentType });
+                  const file = new File([blob], preparedAsset.fileName, { type: contentType });
 
-                  const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
-                  const newDownloadUrl = await getDownloadURL(snapshot.ref);
+                  // Verwende mediaService für Upload (hat User-Auth)
+                  const { mediaService } = await import('@/lib/firebase/media-service');
+                  const uploadedAsset = await mediaService.uploadClientMedia(
+                    file,
+                    currentOrganization.id,
+                    existingCampaign.clientId,
+                    preparedAsset.targetFolderId,
+                    undefined,
+                    {
+                      userId: user.uid,
+                      description: `Migriert von Campaign ${existingCampaign.id}`,
+                      originalAssetId: preparedAsset.id
+                    }
+                  );
 
-                  console.log(`✅ [UPLOAD-SUCCESS] ${migrationAsset.fileName} erfolgreich hochgeladen`);
+                  console.log(`✅ [UPLOAD-SUCCESS] ${preparedAsset.fileName} erfolgreich hochgeladen`);
 
                   // Firestore Updates je nach Asset-Typ
-                  if (migrationAsset.type === 'pdf') {
+                  if (preparedAsset.type === 'pdf') {
                     // PDF Version aktualisieren
-                    await updateDoc(doc(db, 'pdf_versions', migrationAsset.assetId), {
-                      downloadUrl: newDownloadUrl,
-                      storagePath: migrationAsset.storagePath,
-                      storageRef: migrationAsset.storagePath,
-                      folderId: migrationAsset.targetFolderId,
-                      migratedAt: serverTimestamp(),
-                      isMigrated: true,
-                      originalDownloadUrl: migrationAsset.downloadUrl
-                    });
-                  } else {
-                    // Neues Media Asset erstellen (MATCHING mediaService structure)
-                    const assetData = {
-                      organizationId: currentOrganization.id,
-                      createdBy: user.uid,
-                      fileName: migrationAsset.fileName,
-                      fileType: contentType,
-                      storagePath: migrationAsset.storagePath,
-                      downloadUrl: newDownloadUrl,
-                      folderId: migrationAsset.targetFolderId,
-                      createdAt: serverTimestamp(),
-                      updatedAt: serverTimestamp(),
-                      // Migration metadata
-                      migratedFrom: migrationAsset.assetId,
+                    await updateDoc(doc(db, 'pdf_versions', preparedAsset.id), {
+                      downloadUrl: uploadedAsset.downloadUrl,
+                      storagePath: uploadedAsset.storagePath,
+                      storageRef: uploadedAsset.storageRef,
+                      folderId: preparedAsset.targetFolderId,
                       migratedAt: serverTimestamp(),
                       isMigrated: true
-                    };
-
-                    const docRef = await addDoc(collection(db, 'media_assets'), assetData);
-
-                    // Original Asset als deprecated markieren
-                    await updateDoc(doc(db, 'media_assets', migrationAsset.assetId), {
-                      isDeprecated: true,
-                      deprecatedAt: serverTimestamp(),
-                      migratedTo: docRef.id,
-                      originalDownloadUrl: migrationAsset.downloadUrl
                     });
+                  } else if (preparedAsset.type === 'keyVisual') {
+                    // Key Visual in Campaign aktualisieren
+                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id), {
+                      'keyVisual.assetId': uploadedAsset.id,
+                      'keyVisual.url': uploadedAsset.downloadUrl
+                    });
+                  } else if (preparedAsset.type === 'attachment') {
+                    // Attached Assets aktualisieren
+                    const attachedAssets = existingCampaign.attachedAssets || [];
+                    const updatedAssets = attachedAssets.map((att: any) =>
+                      att.assetId === preparedAsset.id
+                        ? { ...att, assetId: uploadedAsset.id }
+                        : att
+                    );
+                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id), {
+                      attachedAssets: updatedAssets
                   }
 
                   successCount++;
                 } catch (error) {
-                  console.error(`❌ [UPLOAD-ERROR] Fehler bei ${migrationAsset.fileName}:`, error);
-                  errors.push(`${migrationAsset.fileName}: ${error}`);
+                  console.error(`❌ [UPLOAD-ERROR] Fehler bei ${preparedAsset.fileName}:`, error);
+                  errors.push(`${preparedAsset.fileName}: ${error}`);
                 }
               }
 
-              console.log(`🎉 [MIGRATION-COMPLETE] ${successCount}/${result.migrationAssets.length} Assets migriert`);
+              console.log(`🎉 [MIGRATION-COMPLETE] ${successCount}/${result.preparedAssets.length} Assets migriert`);
 
               if (errors.length > 0) {
                 throw new Error(`Migration teilweise fehlgeschlagen: ${errors.join(', ')}`);

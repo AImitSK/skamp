@@ -21,9 +21,19 @@ interface MigrationAsset {
   targetFolder: 'Medien' | 'Pressemeldungen';
 }
 
+interface PreparedAsset {
+  id: string;
+  type: 'keyVisual' | 'attachment' | 'pdf';
+  fileName: string;
+  targetFolderId: string;
+  contentType: string;
+  base64Data: string;
+  fileSize: number;
+}
+
 interface MigrationResult {
   success: boolean;
-  migratedAssets: number;
+  preparedAssets: PreparedAsset[];
   errors: string[];
   logs: string[];
 }
@@ -227,9 +237,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       log(`✅ Pressemeldungen-Ordner gefunden: ${pressemeldungenFolder.id}`);
     }
 
-    // 4. Assets migrieren
-    log('🔄 Starte Asset-Migration...');
-    let migratedCount = 0;
+    // 4. Assets vorbereiten für Client-Upload
+    log('🔄 Bereite Assets für Client-Upload vor...');
+    const preparedAssets: PreparedAsset[] = [];
 
     for (const asset of assets) {
       try {
@@ -261,69 +271,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
         log(`✅ Datei geladen: ${arrayBuffer.byteLength} bytes, ${contentType}`);
 
-        // Konvertiere ArrayBuffer zu Blob für mediaService
-        const blob = new Blob([arrayBuffer], { type: contentType });
+        // Server kann nicht zu Storage uploaden (keine Auth)
+        // Gebe Daten zur Client-seitigen Verarbeitung zurück
+        log(`📦 Asset vorbereitet für Client-Upload`);
 
-        // Erstelle File-Objekt aus Blob
-        const file = new File([blob], asset.fileName, { type: contentType });
+        // Base64 encode für Transfer zum Client
+        const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
-        log(`📤 Upload via mediaService in Ordner: ${targetFolderId}`);
+        const preparedAsset = {
+          id: asset.id,
+          type: asset.type,
+          fileName: asset.fileName,
+          targetFolderId,
+          contentType,
+          base64Data,
+          fileSize: arrayBuffer.byteLength
+        };
 
-        // Verwende mediaService.uploadClientMedia (wie dokumentiert in .md)
-        const uploadedAsset = await mediaService.uploadClientMedia(
-          file,
-          organizationId,
-          campaignData.clientId || projectData.customer?.id,
-          targetFolderId,  // Medien oder Pressemeldungen Ordner
-          undefined,  // Progress callback
-          {
-            userId,
-            description: `Migriert von Campaign ${campaignId}`,
-            originalAssetId: asset.id
-          }
-        );
-
-        log(`✅ Upload erfolgreich: ${uploadedAsset.downloadUrl}`);
-
-        // Firestore Updates (EXAKTE LOGIK aus .md Datei)
-        log(`🔄 Aktualisiere Firestore-Referenzen...`);
-
-        if (asset.type === 'keyVisual') {
-          await updateDoc(doc(db, 'pr_campaigns', campaignId), {
-            'keyVisual.assetId': uploadedAsset.id,
-            'keyVisual.url': uploadedAsset.downloadUrl
-          });
-          log(`✅ Key Visual Referenz aktualisiert`);
-        }
-
-        if (asset.type === 'attachment') {
-          const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
-          const attachedAssets = campaignDoc.data()?.attachedAssets || [];
-
-          const updatedAssets = attachedAssets.map((att: any) =>
-            att.assetId === asset.id
-              ? { ...att, assetId: uploadedAsset.id }
-              : att
-          );
-
-          await updateDoc(doc(db, 'pr_campaigns', campaignId), {
-            attachedAssets: updatedAssets
-          });
-          log(`✅ Attached Asset Referenz aktualisiert`);
-        }
-
-        if (asset.type === 'pdf') {
-          await updateDoc(doc(db, 'pdf_versions', asset.id), {
-            downloadUrl: uploadedAsset.downloadUrl,
-            storageRef: uploadedAsset.storageRef,
-            folderId: uploadedAsset.folderId,
-            migratedAt: serverTimestamp()
-          });
-          log(`✅ PDF Version Referenz aktualisiert`);
-        }
-
-        migratedCount++;
-        log(`✅ Asset erfolgreich migriert: ${asset.fileName}`);
+        // Speichere für Client-Upload
+        preparedAssets.push(preparedAsset);
+        log(`✅ Asset vorbereitet: ${asset.fileName}`);
 
       } catch (error) {
         const errorMsg = `Fehler bei Asset ${asset.fileName}: ${error}`;
@@ -332,11 +299,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       }
     }
 
-    log(`🎉 Migration abgeschlossen: ${migratedCount}/${assets.length} Assets migriert`);
+    log(`🎉 Vorbereitung abgeschlossen: ${preparedAssets.length}/${assets.length} Assets bereit für Upload`);
 
     return NextResponse.json({
       success: true,
-      migratedAssets: migratedCount,
+      preparedAssets,
       errors,
       logs
     });
@@ -347,7 +314,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
 
     return NextResponse.json({
       success: false,
-      migratedAssets: 0,
+      preparedAssets: [],
       errors: [errorMsg],
       logs
     }, { status: 500 });
