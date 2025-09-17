@@ -348,8 +348,8 @@ export function ProjectTaskManager({
 
                   {/* Zweite Zeile: Avatar + breiter Balken links, 3 Werte rechts aligned */}
                   <div className="grid grid-cols-4 gap-4 items-center">
-                    {/* Avatar + breiter Progress-Balken (spans 2 Spalten für mehr Platz) */}
-                    <div className="col-span-2 flex items-center gap-3">
+                    {/* Avatar + Progress-Balken (nur erste Spalte) */}
+                    <div className="flex items-center gap-3">
                       {assignedMember && (
                         <Avatar
                           className="size-6 flex-shrink-0"
