@@ -287,11 +287,11 @@ export function ProjectTaskManager({
               <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Task
               </div>
-              <div className="w-16 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Zuständig
+              <div className="w-16 px-4">
+                {/* Kein Header für Avatar */}
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Fortschritt
+              <div className="w-32 px-4">
+                {/* Kein Header für Fortschritt */}
               </div>
               <div className="w-28 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Fälligkeit
