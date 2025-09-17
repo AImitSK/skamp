@@ -1466,11 +1466,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                                 setShowMigrationDialog(true);
                               } else {
                                 // Keine Assets - direkt in Firestore updaten
-                                await prService.updateCampaign(campaignId, {
-                                  projectId: projectId
-                                }, {
-                                  userId: user!.uid,
-                                  organizationId: currentOrganization!.id
+                                const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+                                const { db } = await import('@/lib/firebase/config');
+
+                                await updateDoc(doc(db, 'pr_campaigns', campaignId), {
+                                  projectId: projectId,
+                                  updatedAt: serverTimestamp()
                                 });
 
                                 setSelectedProjectId(projectId);
@@ -1487,11 +1488,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                           } else {
                             // Erste Zuweisung oder keine Änderung - speichere in Firestore
                             if (projectId && projectId !== existingCampaign?.projectId) {
-                              await prService.updateCampaign(campaignId, {
-                                projectId: projectId
-                              }, {
-                                userId: user!.uid,
-                                organizationId: currentOrganization!.id
+                              const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+                              const { db } = await import('@/lib/firebase/config');
+
+                              await updateDoc(doc(db, 'pr_campaigns', campaignId), {
+                                projectId: projectId,
+                                updatedAt: serverTimestamp()
                               });
 
                               toast.success('Projekt erfolgreich zugewiesen');
@@ -2060,11 +2062,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             );
 
             // Update Campaign in Firestore mit neuer Projekt-ID
-            await prService.updateCampaign(campaignId, {
-              projectId: pendingProjectId
-            }, {
-              userId: user!.uid,
-              organizationId: currentOrganization!.id
+            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+            const { db } = await import('@/lib/firebase/config');
+
+            await updateDoc(doc(db, 'pr_campaigns', campaignId), {
+              projectId: pendingProjectId,
+              updatedAt: serverTimestamp()
             });
 
             // Update lokale State
