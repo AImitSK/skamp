@@ -79,20 +79,49 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
     log('🔍 Sammle Campaign-Assets...');
     const assets: MigrationAsset[] = [];
 
-    // Attachments sammeln
-    if (campaignData.attachments && campaignData.attachments.length > 0) {
-      log(`📎 Prüfe ${campaignData.attachments.length} Attachments...`);
-
-      for (const attachment of campaignData.attachments) {
-        if (attachment.downloadUrl && attachment.fileName) {
+    // Key Visual sammeln
+    if (campaignData.keyVisual?.assetId) {
+      log(`🖼️ Prüfe Key Visual: ${campaignData.keyVisual.assetId}`);
+      try {
+        const keyVisualDoc = await getDoc(doc(db, 'media_assets', campaignData.keyVisual.assetId));
+        if (keyVisualDoc.exists()) {
+          const data = keyVisualDoc.data();
           assets.push({
-            assetId: attachment.id,
+            assetId: campaignData.keyVisual.assetId,
             type: 'attachment',
-            fileName: attachment.fileName,
-            downloadUrl: attachment.downloadUrl,
+            fileName: data.fileName || 'keyvisual.jpg',
+            downloadUrl: data.downloadUrl,
             targetFolder: 'Medien'
           });
-          log(`✅ Attachment gefunden: ${attachment.fileName}`);
+          log(`✅ Key Visual gefunden: ${data.fileName}`);
+        }
+      } catch (error) {
+        log(`❌ Fehler beim Laden des Key Visuals: ${error}`);
+      }
+    }
+
+    // Attached Assets sammeln
+    if (campaignData.attachedAssets && campaignData.attachedAssets.length > 0) {
+      log(`📎 Prüfe ${campaignData.attachedAssets.length} Attached Assets...`);
+
+      for (const attachment of campaignData.attachedAssets) {
+        if (attachment.assetId) {
+          try {
+            const attachmentDoc = await getDoc(doc(db, 'media_assets', attachment.assetId));
+            if (attachmentDoc.exists()) {
+              const data = attachmentDoc.data();
+              assets.push({
+                assetId: attachment.assetId,
+                type: 'attachment',
+                fileName: data.fileName || 'attachment.jpg',
+                downloadUrl: data.downloadUrl,
+                targetFolder: 'Medien'
+              });
+              log(`✅ Attached Asset gefunden: ${data.fileName}`);
+            }
+          } catch (error) {
+            log(`❌ Fehler beim Laden des Attachments ${attachment.assetId}: ${error}`);
+          }
         }
       }
     }
