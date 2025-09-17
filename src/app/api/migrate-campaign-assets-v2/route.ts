@@ -172,13 +172,35 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
     log(`📂 Alle Ordner geladen: ${allFolders.length}`);
 
     // Projekt-Hauptordner finden: P-{Datum}-{Company}-{Title}
-    const projectFolder = allFolders.find(folder => {
+    let projectFolder = allFolders.find(folder => {
       const name = folder.name;
       return name.startsWith('P-') && name.includes(companyName) && name.includes(projectData.title);
     });
 
+    // Fallback 1: Nur nach Projekt-Titel suchen (wenn keine Company)
+    if (!projectFolder && companyName === 'Unbekannt') {
+      log(`⚠️ Kein Company-Name gefunden, suche nur nach Projekt-Titel...`);
+      projectFolder = allFolders.find(folder => {
+        const name = folder.name;
+        return name.startsWith('P-') && name.includes(projectData.title);
+      });
+    }
+
+    // Fallback 2: Suche nach Projekt-ID in assetFolders
+    if (!projectFolder && projectData.assetFolders?.length > 0) {
+      log(`⚠️ Verwende assetFolders aus Projekt-Document...`);
+      const mainFolderId = projectData.assetFolders.find((f: any) => f.type === 'main')?.id;
+      if (mainFolderId) {
+        projectFolder = allFolders.find(folder => folder.id === mainFolderId);
+      }
+    }
+
     if (!projectFolder) {
-      throw new Error(`Projekt-Ordner nicht gefunden. Erwartet: P-{Datum}-${companyName}-${projectData.title}`);
+      // Debug: Zeige alle P- Ordner
+      const projectFolders = allFolders.filter(f => f.name.startsWith('P-'));
+      log(`🔍 Verfügbare P- Ordner: ${projectFolders.map(f => f.name).join(', ')}`);
+
+      throw new Error(`Projekt-Ordner nicht gefunden. Gesucht: P-*-*-${projectData.title}`);
     }
     log(`✅ Projekt-Ordner gefunden: ${projectFolder.name}`);
 
