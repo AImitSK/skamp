@@ -163,23 +163,23 @@ export function ProjectCreationWizard({
   };
 
   const loadTags = async () => {
-    if (!currentOrganization?.id) return;
+    if (!organizationId) return;
     try {
-      const userTags = await tagsService.getAll(currentOrganization.id, user?.uid);
+      const userTags = await tagsService.getAll(organizationId, user?.uid);
       setTags(userTags);
     } catch (error) {
     }
   };
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
-    if (!currentOrganization?.id) throw new Error('Organisation nicht gefunden');
-    
+    if (!organizationId) throw new Error('Organisation nicht gefunden');
+
     try {
       const tagId = await tagsService.create(
         { name, color },
-        currentOrganization.id
+        organizationId
       );
-      
+
       // Reload tags after creation
       await loadTags();
       return tagId;
