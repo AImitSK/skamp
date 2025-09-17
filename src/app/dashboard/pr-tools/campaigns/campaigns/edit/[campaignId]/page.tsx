@@ -2184,7 +2184,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     });
                   } else {
                     // Neues Media Asset erstellen
-                    const newAssetRef = doc(db, 'media_assets');
+                    const newAssetRef = doc(collection(db, 'media_assets'));
                     const newAssetData = {
                       id: newAssetRef.id,
                       fileName: migrationAsset.fileName,
