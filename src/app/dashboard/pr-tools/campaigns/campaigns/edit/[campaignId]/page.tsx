@@ -1509,13 +1509,39 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                           } else {
                             // Erste Zuweisung oder keine Änderung - speichere in Firestore
                             if (projectId && projectId !== existingCampaign?.projectId) {
-                              const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+                              console.log('🔄 [NORMAL-ASSIGNMENT] Weise Campaign zu Projekt zu (ohne Assets)...');
+                              const { doc, updateDoc, serverTimestamp, getDoc } = await import('firebase/firestore');
                               const { db } = await import('@/lib/firebase/config');
 
+                              // 1. Campaign updaten
                               await updateDoc(doc(db, 'pr_campaigns', campaignId), {
                                 projectId: projectId,
                                 updatedAt: serverTimestamp()
                               });
+
+                              // 2. WICHTIG: Projekt-Collection mit Campaign-Referenz aktualisieren
+                              try {
+                                const projectRef = doc(db, 'projects', projectId);
+                                const projectDoc = await getDoc(projectRef);
+
+                                if (projectDoc.exists()) {
+                                  const projectData = projectDoc.data();
+                                  const currentLinkedCampaigns = projectData.linkedCampaigns || [];
+
+                                  if (!currentLinkedCampaigns.includes(campaignId)) {
+                                    currentLinkedCampaigns.push(campaignId);
+
+                                    await updateDoc(projectRef, {
+                                      linkedCampaigns: currentLinkedCampaigns,
+                                      updatedAt: serverTimestamp()
+                                    });
+
+                                    console.log('✅ [NORMAL-ASSIGNMENT] Campaign zu Projekt linkedCampaigns hinzugefügt');
+                                  }
+                                }
+                              } catch (projectUpdateError) {
+                                console.warn('⚠️ [NORMAL-ASSIGNMENT] Projekt-Update Fehler:', projectUpdateError);
+                              }
 
                               toast.success('Projekt erfolgreich zugewiesen');
                             }

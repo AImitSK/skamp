@@ -434,7 +434,40 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       }
     }
 
-    log(`🎉 Migration abgeschlossen: ${successCount}/${assets.length} erfolgreich`);
+    log(`🎉 Asset-Migration abgeschlossen: ${successCount}/${assets.length} erfolgreich`);
+
+    // 6. KRITISCH: Projekt-Collection mit Campaign-Referenz aktualisieren
+    log(`🔗 Aktualisiere Projekt-Collection mit Campaign-Referenz...`);
+    try {
+      const projectRef = doc(db, 'projects', projectId);
+      const projectDoc = await getDoc(projectRef);
+
+      if (projectDoc.exists()) {
+        const projectData = projectDoc.data();
+        const currentLinkedCampaigns = projectData.linkedCampaigns || [];
+
+        // Campaign-ID hinzufügen, falls noch nicht vorhanden
+        if (!currentLinkedCampaigns.includes(campaignId)) {
+          currentLinkedCampaigns.push(campaignId);
+
+          await updateDoc(projectRef, {
+            linkedCampaigns: currentLinkedCampaigns,
+            updatedAt: serverTimestamp()
+          });
+
+          log(`✅ Campaign ${campaignId} zu Projekt linkedCampaigns hinzugefügt`);
+        } else {
+          log(`ℹ️ Campaign ${campaignId} bereits in linkedCampaigns vorhanden`);
+        }
+      } else {
+        log(`⚠️ Projekt ${projectId} nicht gefunden - linkedCampaigns Update übersprungen`);
+      }
+    } catch (projectUpdateError) {
+      log(`❌ Fehler beim Update der Projekt-Collection: ${projectUpdateError}`);
+      // Nicht kritisch - Asset-Migration war erfolgreich
+    }
+
+    log(`🎯 Migration komplett abgeschlossen - Campaign ist jetzt mit Projekt verknüpft`);
 
     return NextResponse.json({
       success: errors.length === 0,
