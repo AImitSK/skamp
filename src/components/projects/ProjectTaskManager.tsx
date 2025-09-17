@@ -306,9 +306,9 @@ export function ProjectTaskManager({
 
               return (
                 <div key={task.id} className="px-8 py-4 hover:bg-zinc-50 transition-colors">
-                  {/* Erste Zeile: Task Title */}
-                  <div className="grid grid-cols-4 gap-4 items-center mb-3">
-                    <div className="flex items-center gap-3">
+                  {/* Erste Zeile: Task Title - läuft komplett durch */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3 flex-1">
                       <div className="flex-shrink-0">
                         {task.status === 'completed' ? (
                           <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -322,41 +322,37 @@ export function ProjectTaskManager({
                         {task.title}
                       </Text>
                     </div>
-                    <div></div>
-                    <div></div>
-                    <div className="flex justify-end">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          <DropdownItem onClick={() => setEditingTask(task)}>
-                            <PencilIcon className="h-4 w-4" />
-                            Bearbeiten
+                    <Dropdown>
+                      <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
+                      </DropdownButton>
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem onClick={() => setEditingTask(task)}>
+                          <PencilIcon className="h-4 w-4" />
+                          Bearbeiten
+                        </DropdownItem>
+                        {task.status !== 'completed' && (
+                          <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
+                            <CheckCircleIcon className="h-4 w-4" />
+                            Als erledigt markieren
                           </DropdownItem>
-                          {task.status !== 'completed' && (
-                            <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
-                              <CheckCircleIcon className="h-4 w-4" />
-                              Als erledigt markieren
-                            </DropdownItem>
-                          )}
-                          <DropdownDivider />
-                          <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">Löschen</span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
+                        )}
+                        <DropdownDivider />
+                        <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
+                          <TrashIcon className="h-4 w-4" />
+                          <span className="text-red-600">Löschen</span>
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
                   </div>
 
-                  {/* Zweite Zeile: Details - PERFEKT aligned mit Header */}
+                  {/* Zweite Zeile: Avatar + breiter Balken links, 3 Werte rechts aligned */}
                   <div className="grid grid-cols-4 gap-4 items-center">
-                    {/* Fortschrittsbalken (erste Spalte - aligned mit "Task") */}
-                    <div className="flex items-center gap-2">
+                    {/* Avatar + breiter Progress-Balken (spans 2 Spalten für mehr Platz) */}
+                    <div className="col-span-2 flex items-center gap-3">
                       {assignedMember && (
                         <Avatar
-                          className="size-6"
+                          className="size-6 flex-shrink-0"
                           src={assignedMember.photoUrl}
                           initials={assignedMember.displayName
                             .split(' ')
@@ -384,24 +380,24 @@ export function ProjectTaskManager({
                           />
                         </div>
                       </div>
-                      <span className="text-xs text-zinc-500 ml-2">
+                      <span className="text-xs text-zinc-500 ml-2 flex-shrink-0">
                         {task.progress || 0}%
                       </span>
                     </div>
 
-                    {/* Fälligkeit (zweite Spalte - aligned mit "Fälligkeit") */}
+                    {/* Fälligkeit - aligned mit Header */}
                     <div className="text-sm text-zinc-700">
                       {formatDate(task.dueDate)}
                     </div>
 
-                    {/* Priorität (dritte Spalte - aligned mit "Priorität") */}
+                    {/* Priorität - aligned mit Header */}
                     <div>
                       <Badge color={getPriorityColor(task.priority)}>
                         {getPriorityLabel(task.priority)}
                       </Badge>
                     </div>
 
-                    {/* Status (vierte Spalte - aligned mit "Status") */}
+                    {/* Status - aligned mit Header */}
                     <div>
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
