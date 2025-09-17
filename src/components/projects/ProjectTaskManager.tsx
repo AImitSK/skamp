@@ -185,7 +185,7 @@ export function ProjectTaskManager({
   // Get status label
   const getStatusLabel = (task: ProjectTask) => {
     if (task.status === 'completed') return 'Erledigt';
-    if (task.isOverdue) return `${task.overdueBy}T überfällig`;
+    if (task.isOverdue) return `+${task.overdueBy}T`;
     if (task.daysUntilDue === 0) return 'Heute';
     if (task.daysUntilDue === 1) return 'Morgen';
     if (task.daysUntilDue && task.daysUntilDue <= 7) return `${task.daysUntilDue}T`;
