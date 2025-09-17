@@ -2136,7 +2136,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             if (result.migrationAssets && result.migrationAssets.length > 0) {
               const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
               const { storage } = await import('@/lib/firebase/config');
-              const { doc, updateDoc, setDoc, collection, serverTimestamp } = await import('firebase/firestore');
+              const { doc, updateDoc, setDoc, collection, addDoc, serverTimestamp } = await import('firebase/firestore');
               const { db } = await import('@/lib/firebase/config');
 
               let successCount = 0;
@@ -2183,34 +2183,30 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       originalDownloadUrl: migrationAsset.downloadUrl
                     });
                   } else {
-                    // Neues Media Asset erstellen
-                    const newAssetRef = doc(collection(db, 'media_assets'));
-                    const newAssetData = {
-                      id: newAssetRef.id,
-                      fileName: migrationAsset.fileName,
-                      originalName: migrationAsset.fileName,
-                      fileType: contentType,
-                      fileSize: arrayBuffer.byteLength,
-                      downloadUrl: newDownloadUrl,
-                      storagePath: migrationAsset.storagePath,
-                      storageRef: migrationAsset.storagePath,
+                    // Neues Media Asset erstellen (MATCHING mediaService structure)
+                    const assetData = {
                       organizationId: currentOrganization.id,
-                      folderId: migrationAsset.targetFolderId,
                       createdBy: user.uid,
+                      fileName: migrationAsset.fileName,
+                      fileType: contentType,
+                      storagePath: migrationAsset.storagePath,
+                      downloadUrl: newDownloadUrl,
+                      folderId: migrationAsset.targetFolderId,
                       createdAt: serverTimestamp(),
                       updatedAt: serverTimestamp(),
+                      // Migration metadata
                       migratedFrom: migrationAsset.assetId,
                       migratedAt: serverTimestamp(),
                       isMigrated: true
                     };
 
-                    await setDoc(newAssetRef, newAssetData);
+                    const docRef = await addDoc(collection(db, 'media_assets'), assetData);
 
                     // Original Asset als deprecated markieren
                     await updateDoc(doc(db, 'media_assets', migrationAsset.assetId), {
                       isDeprecated: true,
                       deprecatedAt: serverTimestamp(),
-                      migratedTo: newAssetRef.id,
+                      migratedTo: docRef.id,
                       originalDownloadUrl: migrationAsset.downloadUrl
                     });
                   }
