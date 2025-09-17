@@ -2205,6 +2205,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     );
                     await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id), {
                       attachedAssets: updatedAssets
+                    });
                   }
 
                   successCount++;
