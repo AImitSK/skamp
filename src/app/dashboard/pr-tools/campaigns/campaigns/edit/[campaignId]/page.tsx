@@ -2136,7 +2136,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             if (result.migrationAssets && result.migrationAssets.length > 0) {
               const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
               const { storage } = await import('@/lib/firebase/config');
-              const { doc, updateDoc, setDoc, serverTimestamp } = await import('firebase/firestore');
+              const { doc, updateDoc, setDoc, collection, serverTimestamp } = await import('firebase/firestore');
               const { db } = await import('@/lib/firebase/config');
 
               let successCount = 0;
