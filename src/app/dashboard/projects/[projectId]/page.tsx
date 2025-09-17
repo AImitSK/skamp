@@ -76,7 +76,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'planning' | 'tasks' | 'communication' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'communication' | 'monitoring'>('overview');
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
@@ -127,9 +127,9 @@ export default function ProjectDetailPage() {
     loadProjectTags();
   }, [project?.tags]);
 
-  // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
+  // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab aktiviert wird
   useEffect(() => {
-    if (activeTab === 'planning' && project && currentOrganization?.id) {
+    if (activeTab === 'daten' && project && currentOrganization?.id) {
       loadProjectFolders();
       loadStrategyDocuments();
     }
@@ -628,16 +628,16 @@ export default function ProjectDetailPage() {
                 <DocumentTextIcon className="w-4 h-4 mr-2" />
                 Übersicht
               </button>
-              <button 
-                onClick={() => setActiveTab('planning')}
+              <button
+                onClick={() => setActiveTab('daten')}
                 className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'planning' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'daten'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <LightBulbIcon className="w-4 h-4 mr-2" />
-                Planung
+                Daten
               </button>
               <button 
                 onClick={() => setActiveTab('tasks')}
@@ -725,61 +725,54 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Tasks & Workflow Tab */}
+          {/* Tasks Tab */}
           {activeTab === 'tasks' && (
             <div className="space-y-6">
-              {project && (
-                <>
-                  {/* Task Dependencies Visualizer */}
-                  <div>
-                    <Subheading className="mb-4">Task-Abhängigkeiten</Subheading>
-                    <TaskDependenciesVisualizer
-                      projectId={project?.id || ''}
-                      tasks={[]} // Mock empty array for now
-                      onTaskUpdate={async (taskId, updates) => {
-                        console.log('Task update:', taskId, updates);
-                      }}
-                    />
+              {/* Planungs-Checkliste */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
+                  <Subheading>Planungs-Checkliste</Subheading>
+                </div>
+                <Text className="text-gray-600 mb-4">
+                  Standard-Aufgaben für eine vollständige Projektplanung.
+                </Text>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" checked className="rounded text-green-600" />
+                    <Text className="text-sm">Projekt-Briefing erstellt</Text>
                   </div>
-                  
-                  {/* Workflow Automation Manager */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <Subheading className="mb-4">Workflow-Automatisierung</Subheading>
-                    <WorkflowAutomationManager
-                      projectId={project?.id || ''}
-                      currentConfig={{
-                        autoStageTransition: true,
-                        requireAllCriticalTasks: true,
-                        enableTaskDependencies: true,
-                        notifyOnStageTransition: true,
-                        customTransitionRules: []
-                      }}
-                      availableUsers={[
-                        { id: '1', name: 'Team Member 1', email: 'member1@example.com' },
-                        { id: '2', name: 'Team Member 2', email: 'member2@example.com' }
-                      ]}
-                      onConfigUpdate={async (config) => {
-                        console.log('Config updated:', config);
-                      }}
-                    />
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded text-green-600" />
+                    <Text className="text-sm">Zielgruppen definiert</Text>
                   </div>
-                  
-                  {/* Quick Actions */}
-                  <div className="border-t border-gray-200 pt-6 text-center">
-                    <Subheading className="mb-4">Task-Verwaltung</Subheading>
-                    <div className="flex justify-center space-x-4">
-                      <Button plain onClick={() => console.log('Neue Task erstellen')}>
-                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                        Neue Task
-                      </Button>
-                      <Button plain onClick={() => console.log('Workflow bearbeiten')}>
-                        <CogIcon className="w-4 h-4 mr-2" />
-                        Workflow bearbeiten
-                      </Button>
-                    </div>
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded text-green-600" />
+                    <Text className="text-sm">Budget und Timeline festgelegt</Text>
                   </div>
-                </>
-              )}
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded text-green-600" />
+                    <Text className="text-sm">Team-Rollen zugewiesen</Text>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded text-green-600" />
+                    <Text className="text-sm">Strategiedokument finalisiert</Text>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded text-green-600" />
+                    <Text className="text-sm">Ressourcen allokiert</Text>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    plain
+                    className="w-full"
+                  >
+                    <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                    Checkliste verwalten
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -787,6 +780,54 @@ export default function ProjectDetailPage() {
           {/* Kommunikation Tab */}
           {activeTab === 'communication' && (
             <div className="space-y-6">
+              {/* Team-Kommunikation */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
+                  <Subheading>Team-Kommunikation</Subheading>
+                </div>
+                <Text className="text-gray-600 mb-4">
+                  Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
+                </Text>
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Text className="text-xs font-medium text-blue-600">MB</Text>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Text className="text-sm font-medium">Maria Bauer</Text>
+                      <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
+                      <Text className="text-sm text-gray-700 mt-1">
+                        Kann das Briefing bis morgen finalisiert werden?
+                      </Text>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Text className="text-xs font-medium text-green-600">TK</Text>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Text className="text-sm font-medium">Thomas Klein</Text>
+                      <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
+                      <Text className="text-sm text-gray-700 mt-1">
+                        Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
+                      </Text>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    plain
+                    className="w-full"
+                    onClick={handleOpenCommunicationFeed}
+                  >
+                    <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                    Chat öffnen
+                  </Button>
+                </div>
+              </div>
+
+              {/* Projekt-Kommunikation Feed */}
               <div className="text-center py-12 bg-blue-50 rounded-lg">
                 <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
                 <Subheading className="mb-2">Projekt-Kommunikation</Subheading>
@@ -852,8 +893,8 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Planung & Strategie Tab */}
-          {activeTab === 'planning' && (
+          {/* Daten & Strategie Tab */}
+          {activeTab === 'daten' && (
             <div className="space-y-6">
               {/* Projekt-Ordner */}
               <ProjectFoldersView
@@ -868,52 +909,6 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </div>
-          
-          {/* Planungs-Checkliste Box */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
-              <Subheading>Planungs-Checkliste</Subheading>
-            </div>
-            <Text className="text-gray-600 mb-4">
-              Standard-Aufgaben für eine vollständige Projektplanung.
-            </Text>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" checked className="rounded text-green-600" />
-                <Text className="text-sm">Projekt-Briefing erstellt</Text>
-              </div>
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="rounded text-green-600" />
-                <Text className="text-sm">Zielgruppen definiert</Text>
-              </div>
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="rounded text-green-600" />
-                <Text className="text-sm">Budget und Timeline festgelegt</Text>
-              </div>
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="rounded text-green-600" />
-                <Text className="text-sm">Team-Rollen zugewiesen</Text>
-              </div>
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="rounded text-green-600" />
-                <Text className="text-sm">Strategiedokument finalisiert</Text>
-              </div>
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="rounded text-green-600" />
-                <Text className="text-sm">Ressourcen allokiert</Text>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Button 
-                plain 
-                className="w-full"
-              >
-                <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                Checkliste verwalten
-              </Button>
-            </div>
-          </div>
         </div>
 
         {/* Right Column - 1/3 width */}
@@ -1311,52 +1306,6 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {/* Team-Kommunikation Box */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
-              <Subheading>Team-Kommunikation</Subheading>
-            </div>
-            <Text className="text-gray-600 mb-4">
-              Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
-            </Text>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Text className="text-xs font-medium text-blue-600">MB</Text>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Text className="text-sm font-medium">Maria Bauer</Text>
-                  <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
-                  <Text className="text-sm text-gray-700 mt-1">
-                    Kann das Briefing bis morgen finalisiert werden?
-                  </Text>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Text className="text-xs font-medium text-green-600">TK</Text>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Text className="text-sm font-medium">Thomas Klein</Text>
-                  <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
-                  <Text className="text-sm text-gray-700 mt-1">
-                    Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
-                  </Text>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Button 
-                plain 
-                className="w-full"
-                onClick={handleOpenCommunicationFeed}
-              >
-                <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                Chat öffnen
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
       
