@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
 
     // 1. Campaign-Daten laden
     log('📋 Lade Campaign-Daten...');
-    const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
+    const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
     if (!campaignDoc.exists()) {
       throw new Error(`Campaign ${campaignId} nicht gefunden`);
     }
