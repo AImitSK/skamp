@@ -10,9 +10,7 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '@/lib/firebase/config';
-import { storage } from '@/lib/firebase/client-init';
 import { mediaService } from '@/lib/firebase/media-service';
 
 interface MigrationAsset {
@@ -263,49 +261,37 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
         log(`✅ Datei geladen: ${arrayBuffer.byteLength} bytes, ${contentType}`);
 
-        // Client SDK Upload (EXAKTE LOGIK wie dokumentiert)
-        const timestamp = Date.now();
-        const cleanFileName = asset.fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`;
+        // Konvertiere ArrayBuffer zu Blob für mediaService
+        const blob = new Blob([arrayBuffer], { type: contentType });
 
-        const storageRef = ref(storage, storagePath);
-        const uploadMetadata = {
-          contentType,
-          customMetadata: {
-            migratedFrom: asset.id,
-            organizationId: organizationId,
-            uploaded: new Date().toISOString()
+        // Erstelle File-Objekt aus Blob
+        const file = new File([blob], asset.fileName, { type: contentType });
+
+        log(`📤 Upload via mediaService in Ordner: ${targetFolderId}`);
+
+        // Verwende mediaService.uploadClientMedia (wie dokumentiert in .md)
+        const uploadedAsset = await mediaService.uploadClientMedia(
+          file,
+          organizationId,
+          campaignData.clientId || projectData.customer?.id,
+          targetFolderId,  // Medien oder Pressemeldungen Ordner
+          undefined,  // Progress callback
+          {
+            userId,
+            description: `Migriert von Campaign ${campaignId}`,
+            originalAssetId: asset.id
           }
-        };
+        );
 
-        log(`📤 Upload nach Firebase Storage: ${storagePath}`);
-        const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
-        const newDownloadUrl = await getDownloadURL(snapshot.ref);
-        log(`✅ Upload erfolgreich: ${newDownloadUrl}`);
-
-        // mediaService.uploadClientMedia simulieren (nur Firestore Entry)
-        const newAsset = {
-          id: snapshot.ref.name,
-          fileName: cleanFileName,
-          downloadUrl: newDownloadUrl,
-          storageRef: storagePath,
-          folderId: targetFolderId,
-          clientId: campaignData.clientId,
-          organizationId: organizationId,
-          fileType: contentType,
-          fileSize: arrayBuffer.byteLength,
-          uploadedBy: userId,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
+        log(`✅ Upload erfolgreich: ${uploadedAsset.downloadUrl}`);
 
         // Firestore Updates (EXAKTE LOGIK aus .md Datei)
         log(`🔄 Aktualisiere Firestore-Referenzen...`);
 
         if (asset.type === 'keyVisual') {
           await updateDoc(doc(db, 'pr_campaigns', campaignId), {
-            'keyVisual.assetId': newAsset.id,
-            'keyVisual.url': newAsset.downloadUrl
+            'keyVisual.assetId': uploadedAsset.id,
+            'keyVisual.url': uploadedAsset.downloadUrl
           });
           log(`✅ Key Visual Referenz aktualisiert`);
         }
@@ -316,7 +302,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
 
           const updatedAssets = attachedAssets.map((att: any) =>
             att.assetId === asset.id
-              ? { ...att, assetId: newAsset.id }
+              ? { ...att, assetId: uploadedAsset.id }
               : att
           );
 
@@ -328,9 +314,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
 
         if (asset.type === 'pdf') {
           await updateDoc(doc(db, 'pdf_versions', asset.id), {
-            downloadUrl: newAsset.downloadUrl,
-            storageRef: newAsset.storageRef,
-            folderId: newAsset.folderId,
+            downloadUrl: uploadedAsset.downloadUrl,
+            storageRef: uploadedAsset.storageRef,
+            folderId: uploadedAsset.folderId,
             migratedAt: serverTimestamp()
           });
           log(`✅ PDF Version Referenz aktualisiert`);
