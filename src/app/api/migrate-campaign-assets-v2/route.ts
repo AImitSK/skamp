@@ -61,6 +61,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
     const campaignData = campaignDoc.data();
     log(`✅ Campaign geladen: ${campaignData.title}`);
 
+    // Debug: Campaign-Struktur anzeigen
+    log(`🔍 Campaign-Struktur: keyVisual=${JSON.stringify(campaignData.keyVisual)}, attachedAssets=${campaignData.attachedAssets?.length || 0}`);
+
     // 2. Assets sammeln
     log('📦 Sammle Campaign-Assets...');
     const assets: MigrationAsset[] = [];
@@ -116,13 +119,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       log('📚 Suche PDF-Versionen...');
       const pdfQuery = query(
         collection(db, 'pdf_versions'),
-        where('campaignId', '==', campaignId),
-        where('isDeleted', '==', false)
+        where('campaignId', '==', campaignId)
       );
       const pdfSnapshot = await getDocs(pdfQuery);
+      log(`📊 PDF Query ergab ${pdfSnapshot.size} Dokumente`);
 
       pdfSnapshot.forEach((pdfDoc) => {
         const pdfData = pdfDoc.data();
+        log(`📄 PDF-Dokument: ${pdfDoc.id}, Daten: ${JSON.stringify(pdfData)}`);
+
         if (pdfData.downloadUrl && pdfData.fileName) {
           assets.push({
             id: pdfDoc.id,
@@ -132,6 +137,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
             targetFolder: 'Pressemeldungen'
           });
           log(`📋 PDF gefunden: ${pdfData.fileName}`);
+        } else {
+          log(`⚠️ PDF übersprungen - fehlende Daten: downloadUrl=${pdfData.downloadUrl}, fileName=${pdfData.fileName}`);
         }
       });
     } catch (error) {
