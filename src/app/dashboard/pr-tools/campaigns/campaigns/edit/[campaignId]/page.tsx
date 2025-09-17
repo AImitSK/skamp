@@ -2098,8 +2098,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
           try {
             // Führe Migration über neue API durch
-            console.log('📞 [API-CALL] Rufe /api/migrate-campaign-assets auf...');
-            const response = await fetch('/api/migrate-campaign-assets', {
+            console.log('📞 [API-CALL] Rufe /api/migrate-campaign-assets-v2 auf...');
+            const response = await fetch('/api/migrate-campaign-assets-v2', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

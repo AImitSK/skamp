@@ -167,88 +167,127 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       });
     }
 
-    // 3. Projekt-Ordner finden oder erstellen
-    log('📁 Suche/Erstelle Projekt-Ordner...');
+    // 3. Projekt-Ordner finden (verwende ECHTE project-service.ts Logik)
+    log('📁 Suche Projekt-Ordner mit project-service.ts Pattern...');
     let projectFolder: any;
+    let medienFolder: any;
 
     try {
-      // Suche nach dem Projekt-Ordner anhand des Project Docs
+      // Projekt-Daten laden
       const projectDoc = await getDoc(doc(db, 'projects', projectId));
       if (!projectDoc.exists()) {
         throw new Error(`Project ${projectId} nicht gefunden`);
       }
       const projectData = projectDoc.data();
+      log(`📝 Projekt-Daten: ${projectData.title}, Customer: ${projectData.customer?.name}`);
 
-      const foldersQuery = query(
+      // Company/Client-Name laden wenn verfügbar
+      let companyName = 'Unbekannt';
+      if (projectData.customer?.id) {
+        try {
+          const companyDoc = await getDoc(doc(db, 'companies', projectData.customer.id));
+          if (companyDoc.exists()) {
+            companyName = companyDoc.data().name;
+            log(`📝 Company geladen: ${companyName}`);
+          }
+        } catch (error) {
+          log(`⚠️ Company konnte nicht geladen werden: ${error}`);
+        }
+      }
+
+      // ✅ ECHTE LOGIK: Projekt-Ordner-Pattern aus project-service.ts
+      // Pattern: P-{Datum}-{Company}-{Projekt}
+      // Alle Ordner der Organisation laden
+      const allFoldersQuery = query(
         collection(db, 'media_folders'),
         where('organizationId', '==', organizationId),
-        where('name', '==', projectData.title),
         where('isDeleted', '==', false)
       );
-      const foldersSnapshot = await getDocs(foldersQuery);
+      const allFoldersSnapshot = await getDocs(allFoldersQuery);
+      const allFolders = allFoldersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      log(`📁 Alle Ordner geladen: ${allFolders.length}`);
 
-      if (!foldersSnapshot.empty) {
-        projectFolder = { id: foldersSnapshot.docs[0].id, ...foldersSnapshot.docs[0].data() };
-        log(`✅ Projekt-Ordner gefunden: ${projectFolder.id}`);
+      // 2. Projekt-Hauptordner finden - ECHTE project-service Logik
+      // Suche nach Pattern P-{Datum}-{Company}-{Title}
+      projectFolder = allFolders.find(folder => {
+        const name = folder.name;
+        const hasPattern = name.startsWith('P-') && name.includes(companyName) && name.includes(projectData.title);
+        const hasClientId = projectData.customer?.id ? folder.clientId === projectData.customer.id : true;
+        return hasPattern && hasClientId;
+      });
+
+      if (!projectFolder) {
+        // Fallback: Suche nur nach Company und Title (ohne Datum-Validierung)
+        projectFolder = allFolders.find(folder => {
+          const name = folder.name;
+          return name.startsWith('P-') && name.includes(companyName) && name.includes(projectData.title);
+        });
+      }
+
+      if (projectFolder) {
+        log(`✅ Projekt-Ordner gefunden: ${projectFolder.name} (${projectFolder.id})`);
+
+        // 3. Medien-Unterordner finden - ECHTE project-service Logik
+        medienFolder = allFolders.find(folder =>
+          folder.parentFolderId === projectFolder.id &&
+          folder.name === 'Medien' &&
+          (projectData.customer?.id ? folder.clientId === projectData.customer.id : true)
+        );
+
+        if (medienFolder) {
+          log(`✅ Medien-Ordner gefunden: ${medienFolder.name} (${medienFolder.id})`);
+        } else {
+          log(`⚠️ Medien-Ordner nicht gefunden, suche andere Unterordner...`);
+
+          // Debug: Zeige alle Unterordner des Projekt-Ordners
+          const subfolders = allFolders.filter(folder => folder.parentFolderId === projectFolder.id);
+          log(`📂 Verfügbare Unterordner: ${subfolders.map(f => f.name).join(', ')}`);
+
+          throw new Error(`Medien-Ordner nicht gefunden in Projekt ${projectFolder.name}`);
+        }
       } else {
-        // Erstelle Projekt-Ordner
-        log('📁 Erstelle neuen Projekt-Ordner...');
-        const projectFolderRef = doc(collection(db, 'media_folders'));
-        const projectFolderData = {
-          organizationId,
-          name: projectData.title,
-          parentFolderId: null,
-          isDeleted: false,
-          createdBy: userId,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-        await setDoc(projectFolderRef, projectFolderData);
-        projectFolder = { id: projectFolderRef.id, ...projectFolderData };
-        log(`✅ Projekt-Ordner erstellt: ${projectFolderRef.id} (${projectData.title})`);
+        log(`❌ Kein Projekt-Ordner gefunden mit Pattern P-{Datum}-${companyName}-${projectData.title}`);
+
+        // Debug: Zeige alle P- Ordner
+        const projectFolders = allFolders.filter(f => f.name.startsWith('P-'));
+        log(`🔍 Verfügbare P- Ordner: ${projectFolders.map(f => f.name).join(', ')}`);
+
+        throw new Error(`Projekt-Ordner nicht gefunden. Erwartet: P-{Datum}-${companyName}-${projectData.title}`);
       }
     } catch (error) {
-      throw new Error(`Fehler beim Erstellen des Projekt-Ordners: ${error}`);
+      throw new Error(`Fehler beim Finden der Projekt-Ordner: ${error}`);
     }
 
-    // 4. Ziel-Ordner für Assets erstellen/finden und Migration-Daten vorbereiten
-    log('🔄 Bereite Asset-Migration vor...');
+    // 4. Asset-Migration direkt in Medien-Ordner
+    log('🔄 Bereite Asset-Migration vor - alle Assets gehen in Medien-Ordner...');
     const migrationAssets: MigrationData[] = [];
 
     for (const asset of assets) {
       try {
         log(`🔄 Bereite Asset ${asset.assetId} (${asset.type}) vor...`);
 
-        // Ziel-Ordner finden/erstellen
-        log(`📁 Suche/Erstelle Ziel-Ordner: ${asset.targetFolder}`);
-        let targetFolder: any;
+        // ✅ VEREINFACHT: Alle Assets in Medien-Ordner (wie Dokumentation spezifiziert)
+        const targetFolder = medienFolder;
+        log(`📁 Verwende Medien-Ordner: ${targetFolder.name} (${targetFolder.id})`);
 
-        const targetFoldersQuery = query(
-          collection(db, 'media_folders'),
-          where('organizationId', '==', organizationId),
-          where('name', '==', asset.targetFolder),
-          where('parentFolderId', '==', projectFolder.id),
-          where('isDeleted', '==', false)
-        );
-        const targetFoldersSnapshot = await getDocs(targetFoldersQuery);
+        // Spezielle Behandlung für PDFs - könnten in Pressemeldungen-Ordner
+        if (asset.type === 'pdf') {
+          // Suche Pressemeldungen-Ordner
+          const allFoldersQuery = query(
+            collection(db, 'media_folders'),
+            where('organizationId', '==', organizationId),
+            where('parentFolderId', '==', projectFolder.id),
+            where('name', '==', 'Pressemeldungen'),
+            where('isDeleted', '==', false)
+          );
+          const presseFoldersSnapshot = await getDocs(allFoldersQuery);
 
-        if (!targetFoldersSnapshot.empty) {
-          targetFolder = { id: targetFoldersSnapshot.docs[0].id, ...targetFoldersSnapshot.docs[0].data() };
-          log(`✅ Ziel-Ordner gefunden: ${targetFolder.id}`);
-        } else {
-          const targetFolderRef = doc(collection(db, 'media_folders'));
-          const targetFolderData = {
-            organizationId,
-            name: asset.targetFolder,
-            parentFolderId: projectFolder.id,
-            isDeleted: false,
-            createdBy: userId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          await setDoc(targetFolderRef, targetFolderData);
-          targetFolder = { id: targetFolderRef.id, ...targetFolderData };
-          log(`✅ Ziel-Ordner erstellt: ${targetFolderRef.id} (${asset.targetFolder})`);
+          if (!presseFoldersSnapshot.empty) {
+            const presseFolder = { id: presseFoldersSnapshot.docs[0].id, ...presseFoldersSnapshot.docs[0].data() };
+            log(`📄 PDF geht in Pressemeldungen-Ordner: ${presseFolder.name} (${presseFolder.id})`);
+            // Aber laut Dokumentation sollen alle Assets dupliziert werden - also auch PDFs in Medien
+            // targetFolder = presseFolder;
+          }
         }
 
         // Server-seitiger Download für CORS-Umgehung
