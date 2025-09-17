@@ -8,6 +8,7 @@ import {
   query,
   where,
   updateDoc,
+  setDoc,
   DocumentData
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -164,7 +165,7 @@ class AssetMigrationService {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           };
-          await updateDoc(folderRef, folderData);
+          await setDoc(folderRef, folderData);
           projectFolder = { id: folderRef.id, ...folderData };
         } else {
           throw new Error(`Projekt ${projectId} nicht gefunden`);
@@ -222,7 +223,7 @@ class AssetMigrationService {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           };
-          await updateDoc(targetFolderRef, targetFolderData);
+          await setDoc(targetFolderRef, targetFolderData);
           targetFolder = { id: targetFolderRef.id, ...targetFolderData };
         }
 
