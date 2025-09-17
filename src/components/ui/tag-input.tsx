@@ -79,6 +79,26 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.stopPropagation(); // Verhindere Form-Submit
+
+              // Wenn es einen gefilterten Tag gibt, wähle den ersten aus
+              if (filteredTags.length > 0) {
+                handleAddTag(filteredTags[0].id!);
+              }
+              // Wenn searchTerm existiert und noch kein Tag mit dem Namen existiert, erstelle neuen Tag
+              else if (searchTerm.trim() && !availableTags.some(tag =>
+                tag.name.toLowerCase() === searchTerm.toLowerCase()
+              )) {
+                handleCreateTag();
+              }
+            } else if (e.key === 'Escape') {
+              setIsOpen(false);
+              setSearchTerm("");
+            }
+          }}
           placeholder="Tags hinzufügen..."
           className="w-full rounded-md border border-zinc-300 py-2 px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />

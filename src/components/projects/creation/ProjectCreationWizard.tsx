@@ -316,10 +316,12 @@ export function ProjectCreationWizard({
             // Prevent form submission on Enter key except for:
             // - Submit button
             // - Textarea (for line breaks)
+            // - TagInput fields (have their own Enter handling)
             const target = e.target as HTMLElement;
-            if (e.key === 'Enter' && 
-                target.tagName !== 'BUTTON' && 
-                target.tagName !== 'TEXTAREA') {
+            if (e.key === 'Enter' &&
+                target.tagName !== 'BUTTON' &&
+                target.tagName !== 'TEXTAREA' &&
+                !target.closest('[placeholder*="Tags"]')) { // TagInput hat "Tags hinzufügen..." placeholder
               e.preventDefault();
             }
           }}
