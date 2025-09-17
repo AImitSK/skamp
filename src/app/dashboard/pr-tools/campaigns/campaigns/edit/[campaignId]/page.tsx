@@ -2184,7 +2184,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     await updateDoc(doc(db, 'pdf_versions', preparedAsset.id), {
                       downloadUrl: uploadedAsset.downloadUrl,
                       storagePath: uploadedAsset.storagePath,
-                      storageRef: uploadedAsset.storageRef,
                       folderId: preparedAsset.targetFolderId,
                       migratedAt: serverTimestamp(),
                       isMigrated: true

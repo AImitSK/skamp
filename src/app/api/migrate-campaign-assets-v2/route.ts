@@ -68,20 +68,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
     log('📦 Sammle Campaign-Assets...');
     const assets: MigrationAsset[] = [];
 
-    // Key Visual sammeln
-    if (campaignData.keyVisual?.assetId) {
+    // Key Visual sammeln (kann URL oder assetId haben)
+    if (campaignData.keyVisual) {
       try {
-        const keyVisualDoc = await getDoc(doc(db, 'media_assets', campaignData.keyVisual.assetId));
-        if (keyVisualDoc.exists()) {
-          const data = keyVisualDoc.data();
+        if (campaignData.keyVisual.url) {
+          // Key Visual hat direkte URL (neue Struktur)
+          const fileName = campaignData.keyVisual.url.split('/').pop()?.split('?')[0] || 'key-visual.jpg';
           assets.push({
-            id: campaignData.keyVisual.assetId,
+            id: 'keyVisual-direct-url',
             type: 'keyVisual',
-            downloadUrl: data.downloadUrl,
-            fileName: data.fileName || 'keyvisual.jpg',
+            downloadUrl: campaignData.keyVisual.url,
+            fileName: fileName,
             targetFolder: 'Medien'
           });
-          log(`🖼️ Key Visual gefunden: ${data.fileName}`);
+          log(`🖼️ Key Visual gefunden (URL): ${fileName}`);
+        } else if (campaignData.keyVisual.assetId) {
+          // Key Visual mit Asset ID (alte Struktur)
+          const keyVisualDoc = await getDoc(doc(db, 'media_assets', campaignData.keyVisual.assetId));
+          if (keyVisualDoc.exists()) {
+            const data = keyVisualDoc.data();
+            assets.push({
+              id: campaignData.keyVisual.assetId,
+              type: 'keyVisual',
+              downloadUrl: data.downloadUrl,
+              fileName: data.fileName || 'keyvisual.jpg',
+              targetFolder: 'Medien'
+            });
+            log(`🖼️ Key Visual gefunden (Asset): ${data.fileName}`);
+          }
         }
       } catch (error) {
         log(`⚠️ Key Visual konnte nicht geladen werden: ${error}`);
@@ -151,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       log('ℹ️ Keine Assets zum Migrieren gefunden');
       return NextResponse.json({
         success: true,
-        migratedAssets: 0,
+        preparedAssets: [],
         errors: [],
         logs
       });
@@ -255,10 +269,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         // Ziel-Ordner bestimmen
         let targetFolderId: string;
         if (asset.type === 'pdf' && pressemeldungenFolder) {
-          targetFolderId = pressemeldungenFolder.id;
+          targetFolderId = pressemeldungenFolder.id!;
           log(`📋 PDF geht in Pressemeldungen-Ordner`);
         } else {
-          targetFolderId = medienFolder.id;
+          targetFolderId = medienFolder.id!;
           log(`📄 Asset geht in Medien-Ordner`);
         }
 
