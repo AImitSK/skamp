@@ -181,14 +181,27 @@ class AssetMigrationService {
       try {
         console.log(`Migriere Asset ${asset.assetId} (${asset.type})...`);
 
-        // 1. Hole Original-Asset aus Firestore
-        const originalAssetDoc = await getDoc(doc(db, 'media_assets', asset.assetId));
-        if (!originalAssetDoc.exists()) {
-          throw new Error(`Asset ${asset.assetId} nicht in Firestore gefunden`);
-        }
+        // 1. Hole Original-Asset aus Firestore (unterschiedliche Collections je nach Typ)
+        let originalAssetData: any;
+        let fileName: string;
 
-        const originalAssetData = originalAssetDoc.data();
-        const fileName = asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`;
+        if (asset.type === 'pdf') {
+          // PDFs sind in pdf_versions collection
+          const pdfDoc = await getDoc(doc(db, 'pdf_versions', asset.assetId));
+          if (!pdfDoc.exists()) {
+            throw new Error(`PDF ${asset.assetId} nicht in Firestore gefunden`);
+          }
+          originalAssetData = pdfDoc.data();
+          fileName = asset.fileName || originalAssetData.fileName || `document_${asset.assetId}.pdf`;
+        } else {
+          // Key Visuals und Attachments sind in media_assets collection
+          const originalAssetDoc = await getDoc(doc(db, 'media_assets', asset.assetId));
+          if (!originalAssetDoc.exists()) {
+            throw new Error(`Asset ${asset.assetId} nicht in Firestore gefunden`);
+          }
+          originalAssetData = originalAssetDoc.data();
+          fileName = asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`;
+        }
 
         // Statt Download: Erstelle nur Referenz in Firestore mit gleicher Storage-URL
 
@@ -224,51 +237,101 @@ class AssetMigrationService {
           targetFolder = { id: targetFolderRef.id, ...targetFolderData };
         }
 
-        // 3. Erstelle neuen Media Asset Eintrag mit gleicher Storage-URL (Referenz statt Kopie)
-        const newAssetRef = doc(collection(db, 'media_assets'));
-        const newAssetData = {
-          ...originalAssetData,
-          id: newAssetRef.id,
-          folderId: targetFolder.id,
-          organizationId,
-          clientId: campaign.clientId || '',
-          createdBy: userId,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          migratedFrom: asset.assetId,
-          isMigrated: true,
-          // Behalte die Original Storage URL - keine neue Datei hochladen
-          downloadUrl: originalAssetData.downloadUrl,
-          storageRef: originalAssetData.storageRef
-        };
+        // 3. Migration basierend auf Asset-Typ
+        let newAssetId: string;
 
-        await setDoc(newAssetRef, newAssetData);
+        if (asset.type === 'pdf') {
+          // PDFs bleiben wo sie sind, wir updaten nur die Referenz
+          newAssetId = asset.assetId;
 
-        const newAsset = {
-          id: newAssetRef.id,
-          downloadUrl: originalAssetData.downloadUrl,
-          fileName,
-          ...newAssetData
-        };
+          const newAsset = {
+            id: asset.assetId,
+            downloadUrl: originalAssetData.downloadUrl,
+            fileName
+          };
 
-        // 4. Firestore-Referenzen aktualisieren
-        await this.updateFirestoreReferences(
-          campaignId,
-          campaign,
-          asset.type,
-          asset.assetId,
-          newAsset,
-          targetFolder.id
-        );
+          // Update PDF Version mit neuer Ordner-Info
+          await updateDoc(doc(db, 'pdf_versions', asset.assetId), {
+            folderId: targetFolder.id,
+            migratedAt: serverTimestamp(),
+            isMigrated: true
+          });
+
+          // Firestore-Referenzen aktualisieren (bleibt gleich)
+          await this.updateFirestoreReferences(
+            campaignId,
+            campaign,
+            asset.type,
+            asset.assetId,
+            newAsset,
+            targetFolder.id
+          );
+        } else {
+          // Für Media Assets: Erstelle neue Referenz
+          const newAssetRef = doc(collection(db, 'media_assets'));
+          newAssetId = newAssetRef.id;
+
+          // Bereite Daten vor und filtere undefined Werte
+          const newAssetData: any = {
+            id: newAssetRef.id,
+            fileName,
+            fileType: originalAssetData.fileType || '',
+            folderId: targetFolder.id,
+            organizationId,
+            clientId: campaign.clientId || '',
+            createdBy: userId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            migratedFrom: asset.assetId,
+            isMigrated: true,
+            downloadUrl: originalAssetData.downloadUrl
+          };
+
+          // Füge nur existierende Felder hinzu
+          if (originalAssetData.storageRef) {
+            newAssetData.storageRef = originalAssetData.storageRef;
+          }
+          if (originalAssetData.storagePath) {
+            newAssetData.storagePath = originalAssetData.storagePath;
+          }
+          if (originalAssetData.description) {
+            newAssetData.description = originalAssetData.description;
+          }
+          if (originalAssetData.tags) {
+            newAssetData.tags = originalAssetData.tags;
+          }
+          if (originalAssetData.metadata) {
+            newAssetData.metadata = originalAssetData.metadata;
+          }
+
+          await setDoc(newAssetRef, newAssetData);
+
+          const newAsset = {
+            id: newAssetRef.id,
+            downloadUrl: originalAssetData.downloadUrl,
+            fileName,
+            ...newAssetData
+          };
+
+          // 4. Firestore-Referenzen aktualisieren
+          await this.updateFirestoreReferences(
+            campaignId,
+            campaign,
+            asset.type,
+            asset.assetId,
+            newAsset,
+            targetFolder.id
+          );
+        }
 
         successCount++;
         migratedAssets.push({
           originalId: asset.assetId,
-          newId: newAsset.id || '',
+          newId: newAssetId,
           type: asset.type
         });
 
-        console.log(`Asset ${asset.assetId} erfolgreich migriert zu ${newAsset.id}`);
+        console.log(`Asset ${asset.assetId} erfolgreich migriert zu ${newAssetId}`);
       } catch (error) {
         console.error(`Fehler bei Migration von Asset ${asset.assetId}:`, error);
         errors.push({
