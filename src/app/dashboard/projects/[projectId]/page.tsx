@@ -47,6 +47,7 @@ import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatu
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
+import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project } from '@/types/project';
@@ -728,7 +729,18 @@ export default function ProjectDetailPage() {
           {/* Tasks Tab */}
           {activeTab === 'tasks' && (
             <div className="space-y-6">
-              {/* Planungs-Checkliste */}
+              {/* Project Task Manager */}
+              {project && teamMembers.length > 0 && (
+                <ProjectTaskManager
+                  projectId={project.id!}
+                  organizationId={currentOrganization!.id}
+                  projectManagerId={project.managerId || currentOrganization!.ownerId}
+                  teamMembers={teamMembers}
+                  projectTitle={project.title}
+                />
+              )}
+
+              {/* Planungs-Checkliste (moved below task manager) */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="flex items-center mb-4">
                   <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />

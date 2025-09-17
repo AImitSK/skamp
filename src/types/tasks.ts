@@ -31,6 +31,11 @@ export interface Task {
   linkedClientId?: string;
   linkedContactId?: string;
   linkedProjectId?: string;
+
+  // Projekt-spezifische Felder (NEU)
+  projectId?: string;          // Required für Projekt-Tasks
+  progress?: number;           // 0-100 Prozent
+  assignedUserId?: string;     // Standard: Projekt-Manager
   
   // Checkliste
   checklist?: ChecklistItem[];
@@ -86,4 +91,33 @@ export interface PipelineAwareTask extends Task {
     daysAfterStageEntry: number;        // Tage nach Stage-Beginn
     cascadeDelay: boolean;              // Verzögerung weiterleiten
   };
+}
+
+// ========================================
+// PROJECT TASK MANAGEMENT
+// ========================================
+
+// Erweiterte Interface für Projekt-Tasks
+export interface ProjectTask extends Task {
+  projectId: string;              // Required für Projekt-Tasks
+  progress: number;               // 0-100 Prozent
+  assignedUserId: string;         // Standard: Projekt-Manager
+  projectTitle?: string;          // Für projektübergreifende Ansicht
+
+  // Computed fields (für UI)
+  isOverdue?: boolean;            // Computed field für UI-Highlighting
+  daysUntilDue?: number;          // Computed: Tage bis Fälligkeit
+  overdueBy?: number;             // Computed: Tage überfällig
+}
+
+// Filter-Interface für Task-Management
+export interface TaskFilters {
+  assignedToMe?: boolean;         // Nur meine Tasks
+  assignedUserId?: string;        // User ID für "assignedToMe" Filter
+  teamTasks?: boolean;            // Alle Team-Tasks
+  today?: boolean;                // Heute fällig
+  overdue?: boolean;              // Überfällige Tasks
+  projectIds?: string[];          // Spezifische Projekte
+  status?: TaskStatus[];          // Task-Status Filter
+  priority?: TaskPriority[];      // Prioritäts-Filter
 }

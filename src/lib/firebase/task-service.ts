@@ -14,7 +14,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { Task, PipelineAwareTask, TaskPriority } from '@/types/tasks';
+import { Task, PipelineAwareTask, TaskPriority, ProjectTask, TaskFilters } from '@/types/tasks';
 
 // Export PipelineAwareTask für Tests
 export type { PipelineAwareTask };
@@ -574,3 +574,217 @@ export interface TaskIntegrityReport {
   issues: string[];
   lastChecked: Timestamp;
 }
+
+// ========================================
+// PROJECT TASK MANAGEMENT METHODS
+// ========================================
+
+// Erweitere den bestehenden taskService
+Object.assign(taskService, {
+  /**
+   * Holt alle Tasks für ein spezifisches Projekt
+   */
+  async getByProject(projectId: string, organizationId: string): Promise<ProjectTask[]> {
+    try {
+      const q = query(
+        collection(db, 'tasks'),
+        where('organizationId', '==', organizationId),
+        where('projectId', '==', projectId),
+        orderBy('dueDate', 'asc')
+      );
+
+      const snapshot = await getDocs(q);
+      const tasks = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as ProjectTask));
+
+      // Computed fields hinzufügen
+      return this.addComputedFields(tasks);
+    } catch (error: any) {
+      // Fallback ohne orderBy falls Index fehlt
+      if (error.code === 'failed-precondition') {
+        const q = query(
+          collection(db, 'tasks'),
+          where('organizationId', '==', organizationId),
+          where('projectId', '==', projectId)
+        );
+        const snapshot = await getDocs(q);
+        const tasks = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as ProjectTask));
+
+        // Client-seitige Sortierung nach Fälligkeit
+        const sortedTasks = tasks.sort((a, b) => {
+          if (!a.dueDate || !b.dueDate) return 0;
+          return a.dueDate.toMillis() - b.dueDate.toMillis();
+        });
+
+        return this.addComputedFields(sortedTasks);
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Holt alle heute fälligen Tasks (optional für spezifische Projekte)
+   */
+  async getTodayTasks(userId: string, organizationId: string, projectIds?: string[]): Promise<ProjectTask[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('assignedUserId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+    let tasks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ProjectTask));
+
+    // Client-seitige Filterung
+    tasks = tasks.filter(task => {
+      if (!task.dueDate) return false;
+      const dueDate = task.dueDate.toDate();
+      dueDate.setHours(0, 0, 0, 0);
+
+      const isDueToday = dueDate.getTime() === today.getTime();
+      const matchesProject = !projectIds || projectIds.includes(task.projectId || '');
+
+      return isDueToday && matchesProject;
+    });
+
+    return this.addComputedFields(tasks);
+  },
+
+  /**
+   * Holt überfällige Tasks für ein Projekt
+   */
+  async getOverdueTasks(projectId: string, organizationId: string): Promise<ProjectTask[]> {
+    const tasks = await this.getByProject(projectId, organizationId);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    return tasks.filter(task => {
+      if (!task.dueDate || task.status === 'completed') return false;
+      const dueDate = task.dueDate.toDate();
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < now;
+    });
+  },
+
+  /**
+   * Update Task Progress
+   */
+  async updateProgress(taskId: string, progress: number): Promise<void> {
+    const docRef = doc(db, 'tasks', taskId);
+    await updateDoc(docRef, {
+      progress: Math.max(0, Math.min(100, progress)), // 0-100 Clamp
+      updatedAt: serverTimestamp(),
+    });
+  },
+
+  /**
+   * Holt Tasks mit Filtern
+   */
+  async getTasksWithFilters(organizationId: string, filters: TaskFilters): Promise<ProjectTask[]> {
+    let q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId)
+    );
+
+    const snapshot = await getDocs(q);
+    let tasks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ProjectTask));
+
+    // Client-seitige Filterung
+    tasks = tasks.filter(task => {
+      // Assigned Filter
+      if (filters.assignedToMe && filters.assignedUserId && task.assignedUserId !== filters.assignedUserId) return false;
+      if (filters.teamTasks === false && filters.assignedToMe && filters.assignedUserId) return task.assignedUserId === filters.assignedUserId;
+
+      // Projekt Filter
+      if (filters.projectIds && filters.projectIds.length > 0) {
+        if (!task.projectId || !filters.projectIds.includes(task.projectId)) return false;
+      }
+
+      // Status Filter
+      if (filters.status && filters.status.length > 0) {
+        if (!filters.status.includes(task.status)) return false;
+      }
+
+      // Priorität Filter
+      if (filters.priority && filters.priority.length > 0) {
+        if (!filters.priority.includes(task.priority)) return false;
+      }
+
+      // Heute Filter
+      if (filters.today) {
+        if (!task.dueDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dueDate = task.dueDate.toDate();
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate.getTime() !== today.getTime()) return false;
+      }
+
+      // Überfällig Filter
+      if (filters.overdue) {
+        if (!task.dueDate || task.status === 'completed') return false;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const dueDate = task.dueDate.toDate();
+        dueDate.setHours(0, 0, 0, 0);
+        if (dueDate >= now) return false;
+      }
+
+      return true;
+    });
+
+    // Sortierung nach Fälligkeit
+    tasks.sort((a, b) => {
+      if (!a.dueDate || !b.dueDate) return 0;
+      return a.dueDate.toMillis() - b.dueDate.toMillis();
+    });
+
+    return this.addComputedFields(tasks);
+  },
+
+  /**
+   * Fügt computed fields zu Tasks hinzu
+   */
+  addComputedFields(tasks: ProjectTask[]): ProjectTask[] {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    return tasks.map(task => {
+      const computedTask = { ...task };
+
+      if (task.dueDate) {
+        const dueDate = task.dueDate.toDate();
+        dueDate.setHours(0, 0, 0, 0);
+
+        const diffTime = dueDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        computedTask.isOverdue = diffDays < 0 && task.status !== 'completed';
+        computedTask.daysUntilDue = diffDays >= 0 ? diffDays : 0;
+        computedTask.overdueBy = diffDays < 0 ? Math.abs(diffDays) : 0;
+      } else {
+        computedTask.isOverdue = false;
+        computedTask.daysUntilDue = 0;
+        computedTask.overdueBy = 0;
+      }
+
+      return computedTask;
+    });
+  },
+});
