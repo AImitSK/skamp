@@ -3,179 +3,122 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   collection,
   doc,
-  writeBatch,
-  serverTimestamp,
-  getDoc,
   getDocs,
+  getDoc,
   query,
   where,
-  updateDoc,
   setDoc,
+  updateDoc,
+  serverTimestamp,
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
-interface MigrateAssetsRequest {
-  campaignId: string;
-  projectId: string;
-  organizationId: string;
-  userId: string;
+interface MigrationAsset {
+  assetId: string;
+  type: 'attachment' | 'pdf';
+  fileName: string;
+  downloadUrl: string;
+  targetFolder: string;
 }
 
-interface AssetToMigrate {
-  type: 'keyVisual' | 'attachment' | 'pdf';
+interface MigrationData {
   assetId: string;
-  targetFolder: 'Medien' | 'Pressemeldungen';
-  downloadUrl?: string;
-  fileName?: string;
+  type: 'attachment' | 'pdf';
+  downloadUrl: string;
+  fileName: string;
+  storagePath: string;
+  targetFolderId: string;
+  metadata: {
+    organizationId: string;
+    folderId: string;
+    migratedFrom: string;
+    uploaded: string;
+  };
 }
 
 interface MigrationResult {
   success: boolean;
-  successCount: number;
-  errors: Array<{
-    assetId: string;
-    error: string;
-  }>;
-  migratedAssets: Array<{
-    originalId: string;
-    newId: string;
-    type: string;
-  }>;
+  projectFolderId: string;
+  migrationAssets: MigrationData[];
   logs: string[];
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<MigrationResult>> {
   const logs: string[] = [];
   const log = (message: string) => {
-    console.log(`🔄 [MIGRATION] ${message}`);
+    console.log(message);
     logs.push(message);
   };
 
   try {
     log('🚀 Asset-Migration API gestartet');
 
-    // Request-Body parsen
-    let requestData: MigrateAssetsRequest;
-    try {
-      requestData = await request.json();
-      log(`📥 Request erhalten: ${JSON.stringify(requestData)}`);
-    } catch (parseError) {
-      log(`❌ JSON-Parsing fehlgeschlagen: ${parseError}`);
-      return NextResponse.json({
-        success: false,
-        successCount: 0,
-        errors: [{ assetId: 'request', error: 'Ungültiges JSON-Format' }],
-        migratedAssets: [],
-        logs
-      }, { status: 400 });
-    }
+    const body = await request.json();
+    const { campaignId, projectId, organizationId, userId } = body;
 
-    const { campaignId, projectId, organizationId, userId } = requestData;
+    log(`📥 Request erhalten: ${JSON.stringify(body)}`);
 
     // Validierung
     if (!campaignId || !projectId || !organizationId || !userId) {
-      log('❌ Pflichtfelder fehlen');
-      return NextResponse.json({
-        success: false,
-        successCount: 0,
-        errors: [{ assetId: 'validation', error: 'Pflichtfelder fehlen' }],
-        migratedAssets: [],
-        logs
-      }, { status: 400 });
+      throw new Error('Fehlende Parameter: campaignId, projectId, organizationId, userId sind erforderlich');
     }
 
     log(`✅ Validierung erfolgreich: Campaign=${campaignId}, Project=${projectId}`);
 
     // 1. Campaign-Daten laden
     log('📋 Lade Campaign-Daten...');
-    const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
+    const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
     if (!campaignDoc.exists()) {
-      log(`❌ Campaign ${campaignId} nicht gefunden`);
-      return NextResponse.json({
-        success: false,
-        successCount: 0,
-        errors: [{ assetId: campaignId, error: 'Campaign nicht gefunden' }],
-        migratedAssets: [],
-        logs
-      }, { status: 404 });
+      throw new Error(`Campaign ${campaignId} nicht gefunden`);
     }
-
-    const campaign = { id: campaignDoc.id, ...campaignDoc.data() };
-    log(`✅ Campaign geladen: ${campaign.title || campaign.id}`);
+    const campaignData = campaignDoc.data();
+    log(`✅ Campaign geladen: ${campaignData.title}`);
 
     // 2. Assets sammeln
     log('🔍 Sammle Campaign-Assets...');
-    const assets: AssetToMigrate[] = [];
+    const assets: MigrationAsset[] = [];
 
-    // Key Visual sammeln
-    if (campaign.keyVisual?.assetId) {
-      log(`🖼️ Prüfe Key Visual: ${campaign.keyVisual.assetId}`);
-      try {
-        const keyVisualDoc = await getDoc(doc(db, 'media_assets', campaign.keyVisual.assetId));
-        if (keyVisualDoc.exists()) {
-          const data = keyVisualDoc.data();
+    // Attachments sammeln
+    if (campaignData.attachments && campaignData.attachments.length > 0) {
+      log(`📎 Prüfe ${campaignData.attachments.length} Attachments...`);
+
+      for (const attachment of campaignData.attachments) {
+        if (attachment.downloadUrl && attachment.fileName) {
           assets.push({
-            type: 'keyVisual',
-            assetId: campaign.keyVisual.assetId,
-            targetFolder: 'Medien',
-            downloadUrl: data.downloadUrl,
-            fileName: data.fileName
+            assetId: attachment.id,
+            type: 'attachment',
+            fileName: attachment.fileName,
+            downloadUrl: attachment.downloadUrl,
+            targetFolder: 'Medien'
           });
-          log(`✅ Key Visual Asset gefunden: ${data.fileName}`);
-        } else {
-          log(`⚠️ Key Visual Asset ${campaign.keyVisual.assetId} nicht in Firestore gefunden`);
-        }
-      } catch (error) {
-        log(`❌ Fehler beim Laden des Key Visuals: ${error}`);
-      }
-    }
-
-    // Media Attachments sammeln
-    if (campaign.attachedAssets && campaign.attachedAssets.length > 0) {
-      log(`📎 Prüfe ${campaign.attachedAssets.length} Attachments...`);
-      for (const attachment of campaign.attachedAssets) {
-        if (attachment.assetId) {
-          try {
-            const attachmentDoc = await getDoc(doc(db, 'media_assets', attachment.assetId));
-            if (attachmentDoc.exists()) {
-              const data = attachmentDoc.data();
-              assets.push({
-                type: 'attachment',
-                assetId: attachment.assetId,
-                targetFolder: 'Medien',
-                downloadUrl: data.downloadUrl,
-                fileName: data.fileName
-              });
-              log(`✅ Attachment gefunden: ${data.fileName}`);
-            } else {
-              log(`⚠️ Attachment ${attachment.assetId} nicht in Firestore gefunden`);
-            }
-          } catch (error) {
-            log(`❌ Fehler beim Laden des Attachments ${attachment.assetId}: ${error}`);
-          }
+          log(`✅ Attachment gefunden: ${attachment.fileName}`);
         }
       }
     }
 
     // PDF Versionen sammeln
-    log('📄 Suche PDF-Versionen...');
     try {
+      log('📄 Suche PDF-Versionen...');
       const pdfQuery = query(
         collection(db, 'pdf_versions'),
-        where('campaignId', '==', campaignId)
+        where('campaignId', '==', campaignId),
+        where('isDeleted', '==', false)
       );
       const pdfSnapshot = await getDocs(pdfQuery);
 
       pdfSnapshot.forEach((pdfDoc) => {
         const pdfData = pdfDoc.data();
-        assets.push({
-          type: 'pdf',
-          assetId: pdfDoc.id,
-          targetFolder: 'Pressemeldungen',
-          downloadUrl: pdfData.downloadUrl,
-          fileName: pdfData.fileName || `${campaign.title}.pdf`
-        });
-        log(`✅ PDF gefunden: ${pdfData.fileName || pdfDoc.id}`);
+        if (pdfData.downloadUrl && pdfData.fileName) {
+          assets.push({
+            assetId: pdfDoc.id,
+            type: 'pdf',
+            fileName: pdfData.fileName,
+            downloadUrl: pdfData.downloadUrl,
+            targetFolder: 'Pressemeldungen'
+          });
+          log(`✅ PDF gefunden: ${pdfData.fileName}`);
+        }
       });
     } catch (error) {
       log(`❌ Fehler beim Laden der PDF-Versionen: ${error}`);
@@ -186,9 +129,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       log('ℹ️ Keine Assets zum Migrieren gefunden');
       return NextResponse.json({
         success: true,
-        successCount: 0,
-        errors: [],
-        migratedAssets: [],
+        projectFolderId: '',
+        migrationAssets: [],
         logs
       });
     }
@@ -198,85 +140,70 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
     let projectFolder: any;
 
     try {
-      // Suche nach dem Projekt-Ordner
+      // Suche nach dem Projekt-Ordner anhand des Project Docs
+      const projectDoc = await getDoc(doc(db, 'projects', projectId));
+      if (!projectDoc.exists()) {
+        throw new Error(`Project ${projectId} nicht gefunden`);
+      }
+      const projectData = projectDoc.data();
+
       const foldersQuery = query(
         collection(db, 'folders'),
         where('organizationId', '==', organizationId),
-        where('name', '==', projectId),
+        where('name', '==', projectData.title),
         where('isDeleted', '==', false)
       );
       const foldersSnapshot = await getDocs(foldersQuery);
 
       if (!foldersSnapshot.empty) {
-        projectFolder = {
-          id: foldersSnapshot.docs[0].id,
-          ...foldersSnapshot.docs[0].data()
-        };
+        projectFolder = { id: foldersSnapshot.docs[0].id, ...foldersSnapshot.docs[0].data() };
         log(`✅ Projekt-Ordner gefunden: ${projectFolder.id}`);
       } else {
-        // Projekt-Ordner erstellen
+        // Erstelle Projekt-Ordner
         log('📁 Erstelle neuen Projekt-Ordner...');
-        const projectDoc = await getDoc(doc(db, 'projects', projectId));
-        if (projectDoc.exists()) {
-          const projectName = projectDoc.data().title || projectId;
-          const folderRef = doc(collection(db, 'folders'));
-          const folderData = {
-            organizationId,
-            name: projectName,
-            parentId: null,
-            isDeleted: false,
-            createdBy: userId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          await setDoc(folderRef, folderData);
-          projectFolder = { id: folderRef.id, ...folderData };
-          log(`✅ Projekt-Ordner erstellt: ${folderRef.id} (${projectName})`);
-        } else {
-          throw new Error(`Projekt ${projectId} nicht gefunden`);
-        }
+        const projectFolderRef = doc(collection(db, 'folders'));
+        const projectFolderData = {
+          organizationId,
+          name: projectData.title,
+          parentId: null,
+          isDeleted: false,
+          createdBy: userId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await setDoc(projectFolderRef, projectFolderData);
+        projectFolder = { id: projectFolderRef.id, ...projectFolderData };
+        log(`✅ Projekt-Ordner erstellt: ${projectFolderRef.id} (${projectData.title})`);
       }
     } catch (error) {
-      log(`❌ Fehler beim Projekt-Ordner: ${error}`);
-      return NextResponse.json({
-        success: false,
-        successCount: 0,
-        errors: [{ assetId: projectId, error: `Projekt-Ordner Fehler: ${error}` }],
-        migratedAssets: [],
-        logs
-      }, { status: 500 });
+      throw new Error(`Fehler beim Erstellen des Projekt-Ordners: ${error}`);
     }
 
-    // 4. Assets migrieren
-    log('🔄 Starte Asset-Migration...');
-    let successCount = 0;
-    const errors: Array<{ assetId: string; error: string }> = [];
-    const migratedAssets: Array<{ originalId: string; newId: string; type: string }> = [];
+    // 4. Ziel-Ordner für Assets erstellen/finden und Migration-Daten vorbereiten
+    log('🔄 Bereite Asset-Migration vor...');
+    const migrationAssets: MigrationData[] = [];
 
     for (const asset of assets) {
       try {
-        log(`🔄 Migriere Asset ${asset.assetId} (${asset.type})...`);
+        log(`🔄 Bereite Asset ${asset.assetId} (${asset.type}) vor...`);
 
-        // Ziel-Ordner finden oder erstellen
+        // Ziel-Ordner finden/erstellen
         log(`📁 Suche/Erstelle Ziel-Ordner: ${asset.targetFolder}`);
         let targetFolder: any;
+
         const targetFoldersQuery = query(
           collection(db, 'folders'),
           where('organizationId', '==', organizationId),
-          where('parentId', '==', projectFolder.id),
           where('name', '==', asset.targetFolder),
+          where('parentId', '==', projectFolder.id),
           where('isDeleted', '==', false)
         );
         const targetFoldersSnapshot = await getDocs(targetFoldersQuery);
 
         if (!targetFoldersSnapshot.empty) {
-          targetFolder = {
-            id: targetFoldersSnapshot.docs[0].id,
-            ...targetFoldersSnapshot.docs[0].data()
-          };
+          targetFolder = { id: targetFoldersSnapshot.docs[0].id, ...targetFoldersSnapshot.docs[0].data() };
           log(`✅ Ziel-Ordner gefunden: ${targetFolder.id}`);
         } else {
-          // Erstelle Ziel-Ordner
           const targetFolderRef = doc(collection(db, 'folders'));
           const targetFolderData = {
             organizationId,
@@ -292,275 +219,79 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           log(`✅ Ziel-Ordner erstellt: ${targetFolderRef.id} (${asset.targetFolder})`);
         }
 
-        // Server-seitiger Download der Datei
-        if (!asset.downloadUrl) {
-          throw new Error(`Keine Download-URL für Asset ${asset.assetId}`);
-        }
+        // Migration-Daten vorbereiten
+        const cleanFileName = asset.fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const timestamp = Date.now();
 
-        log(`📥 Lade Datei server-seitig: ${asset.downloadUrl}`);
-
-        // Validierung: Nur Firebase Storage URLs erlauben
-        if (!asset.downloadUrl.includes('firebasestorage.googleapis.com')) {
-          throw new Error(`Ungültige URL (nur Firebase Storage erlaubt): ${asset.downloadUrl}`);
-        }
-
-        const response = await fetch(asset.downloadUrl);
-        if (!response.ok) {
-          throw new Error(`Download fehlgeschlagen: ${response.statusText} (${response.status})`);
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        const contentType = response.headers.get('content-type') || 'application/octet-stream';
-        const base64Data = Buffer.from(arrayBuffer).toString('base64');
-        const fileSize = arrayBuffer.byteLength;
-
-        log(`✅ Datei geladen: ${fileSize} bytes, Content-Type: ${contentType}`);
-
-        // Asset-spezifische Migration
-        let newAssetId: string;
-
+        let storagePath: string;
         if (asset.type === 'pdf') {
-          // PDFs: ECHTE FIREBASE STORAGE MIGRATION
-          newAssetId = asset.assetId;
-
-          log(`📄 Migriere PDF zu echtem Firebase Storage: ${asset.assetId}`);
-
-          // KRITISCH: Echter Firebase Storage Upload für PDF
-          const cleanFileName = (asset.fileName || `document_${asset.assetId}.pdf`).replace(/[^a-zA-Z0-9.-]/g, '_');
-          const timestamp = Date.now();
-          const storagePath = `organizations/${organizationId}/media/Kategorien/${timestamp}_${cleanFileName}`;
-
-          const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-          const { storage } = await import('@/lib/firebase/config');
-
-          const storageRef = ref(storage, storagePath);
-
-          // Upload mit echten Bytes
-          const uploadMetadata = {
-            contentType: contentType,
-            customMetadata: {
-              'organizationId': organizationId,
-              'folderId': targetFolder.id,
-              'migratedFrom': asset.assetId,
-              'uploaded': new Date().toISOString()
-            }
-          };
-
-          const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
-          const newDownloadUrl = await getDownloadURL(snapshot.ref);
-
-          log(`✅ PDF Firebase Storage Upload erfolgreich: ${newDownloadUrl.substring(0, 100)}...`);
-
-          // Update PDF Version mit neuer Storage-Daten
-          await updateDoc(doc(db, 'pdf_versions', asset.assetId), {
-            downloadUrl: newDownloadUrl,
-            storagePath: storagePath,
-            storageRef: storagePath,
-            folderId: targetFolder.id,
-            migratedAt: serverTimestamp(),
-            isMigrated: true,
-            fileSize: fileSize,
-            contentType: contentType,
-            originalDownloadUrl: asset.downloadUrl // Backup für Rollback
-          });
-
-          log(`✅ PDF-Version mit echtem Storage aktualisiert: ${asset.assetId}`);
-
+          storagePath = `organizations/${organizationId}/media/Kategorien/${timestamp}_${cleanFileName}`;
         } else {
-          // Media Assets: ECHTE FIREBASE STORAGE MIGRATION
-          const newAssetRef = doc(collection(db, 'media_assets'));
-          newAssetId = newAssetRef.id;
-
-          log(`🖼️ Migriere Asset zu echtem Firebase Storage: ${newAssetId}`);
-
-          // Lade Original-Asset Daten
-          const originalAssetDoc = await getDoc(doc(db, 'media_assets', asset.assetId));
-          if (!originalAssetDoc.exists()) {
-            throw new Error(`Original Asset ${asset.assetId} nicht gefunden`);
-          }
-          const originalAssetData = originalAssetDoc.data();
-
-          // KRITISCH: Echter Firebase Storage Upload
-          log(`📤 Starte echten Firebase Storage Upload...`);
-
-          const cleanFileName = (asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`).replace(/[^a-zA-Z0-9.-]/g, '_');
-          const timestamp = Date.now();
-          const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`;
-
-          const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-          const { storage } = await import('@/lib/firebase/config');
-
-          const storageRef = ref(storage, storagePath);
-
-          // Upload mit echten Bytes
-          const uploadMetadata = {
-            contentType: contentType,
-            customMetadata: {
-              'organizationId': organizationId,
-              'folderId': targetFolder.id,
-              'migratedFrom': asset.assetId,
-              'uploaded': new Date().toISOString()
-            }
-          };
-
-          const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
-          const newDownloadUrl = await getDownloadURL(snapshot.ref);
-
-          log(`✅ Firebase Storage Upload erfolgreich: ${newDownloadUrl.substring(0, 100)}...`);
-
-          // Erstelle echtes Media Asset mit Storage-Daten
-          const newAssetData = {
-            id: newAssetRef.id,
-            fileName: cleanFileName,
-            originalName: asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`,
-            fileType: originalAssetData.fileType || contentType,
-            fileSize: fileSize,
-            downloadUrl: newDownloadUrl,
-            storagePath: storagePath,
-            storageRef: storagePath,
-            folderId: targetFolder.id,
-            organizationId,
-            clientId: campaign.clientId || '',
-            userId: userId,
-            createdBy: userId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            migratedFrom: asset.assetId,
-            isMigrated: true,
-            tags: originalAssetData.tags || []
-          };
-
-          // Füge optionale Felder hinzu
-          if (originalAssetData.description) newAssetData.description = originalAssetData.description;
-          if (originalAssetData.metadata) newAssetData.metadata = originalAssetData.metadata;
-
-          await setDoc(newAssetRef, newAssetData);
-          log(`✅ Echtes Media Asset mit Storage erstellt: ${newAssetId}`);
-
-          // Campaign-Referenzen aktualisieren
-          log(`🔗 Aktualisiere Campaign-Referenzen für ${asset.type}...`);
-          const batch = writeBatch(db);
-
-          if (asset.type === 'keyVisual') {
-            const campaignRef = doc(db, 'pr_campaigns', campaignId);
-            batch.update(campaignRef, {
-              keyVisual: {
-                assetId: newAssetId,
-                url: newDownloadUrl
-              },
-              updatedAt: serverTimestamp()
-            });
-            log(`✅ Key Visual Referenz aktualisiert`);
-
-          } else if (asset.type === 'attachment') {
-            const updatedAttachments = campaign.attachedAssets?.map((att: any) =>
-              att.assetId === asset.assetId
-                ? { ...att, assetId: newAssetId }
-                : att
-            ) || [];
-
-            batch.update(doc(db, 'pr_campaigns', campaignId), {
-              attachedAssets: updatedAttachments,
-              updatedAt: serverTimestamp()
-            });
-            log(`✅ Attachment Referenz aktualisiert`);
-          }
-
-          // Original Asset als migriert markieren
-          const oldAssetRef = doc(db, 'media_assets', asset.assetId);
-          batch.update(oldAssetRef, {
-            migratedToId: newAssetId,
-            migratedAt: serverTimestamp()
-          });
-
-          await batch.commit();
-          log(`✅ Firestore-Referenzen committed`);
+          storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`;
         }
 
-        successCount++;
-        migratedAssets.push({
-          originalId: asset.assetId,
-          newId: newAssetId,
-          type: asset.type
-        });
+        const migrationData: MigrationData = {
+          assetId: asset.assetId,
+          type: asset.type,
+          downloadUrl: asset.downloadUrl,
+          fileName: cleanFileName,
+          storagePath: storagePath,
+          targetFolderId: targetFolder.id,
+          metadata: {
+            organizationId: organizationId,
+            folderId: targetFolder.id,
+            migratedFrom: asset.assetId,
+            uploaded: new Date().toISOString()
+          }
+        };
 
-        log(`✅ Asset ${asset.assetId} erfolgreich migriert zu ${newAssetId}`);
+        migrationAssets.push(migrationData);
+        log(`✅ Asset-Migration-Daten vorbereitet: ${asset.assetId}`);
 
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        log(`❌ Fehler bei Asset ${asset.assetId}: ${errorMessage}`);
-        errors.push({
-          assetId: asset.assetId,
-          error: errorMessage
+        log(`❌ Fehler bei Asset ${asset.assetId}: ${error}`);
+        throw error;
+      }
+    }
+
+    // 5. Project-Campaign Linking (falls noch nicht vorhanden)
+    log('🔗 Aktualisiere Projekt-Collection mit Campaign-Referenz...');
+    const projectRef = doc(db, 'projects', projectId);
+    const projectDoc = await getDoc(projectRef);
+
+    if (projectDoc.exists()) {
+      const projectData = projectDoc.data();
+      const linkedCampaigns = projectData.linkedCampaigns || [];
+
+      if (!linkedCampaigns.includes(campaignId)) {
+        await updateDoc(projectRef, {
+          linkedCampaigns: arrayUnion(campaignId),
+          updatedAt: serverTimestamp()
         });
-      }
-    }
-
-    log(`🎉 Asset-Migration abgeschlossen: ${successCount}/${assets.length} erfolgreich`);
-
-    // 6. KRITISCH: Projekt-Collection mit Campaign-Referenz aktualisieren
-    log(`🔗 Aktualisiere Projekt-Collection mit Campaign-Referenz...`);
-    try {
-      const projectRef = doc(db, 'projects', projectId);
-      const projectDoc = await getDoc(projectRef);
-
-      if (projectDoc.exists()) {
-        const projectData = projectDoc.data();
-        const currentLinkedCampaigns = projectData.linkedCampaigns || [];
-
-        // Campaign-ID hinzufügen, falls noch nicht vorhanden
-        if (!currentLinkedCampaigns.includes(campaignId)) {
-          currentLinkedCampaigns.push(campaignId);
-
-          await updateDoc(projectRef, {
-            linkedCampaigns: currentLinkedCampaigns,
-            updatedAt: serverTimestamp()
-          });
-
-          log(`✅ Campaign ${campaignId} zu Projekt linkedCampaigns hinzugefügt`);
-        } else {
-          log(`ℹ️ Campaign ${campaignId} bereits in linkedCampaigns vorhanden`);
-        }
+        log(`✅ Campaign ${campaignId} zu Project linkedCampaigns hinzugefügt`);
       } else {
-        log(`⚠️ Projekt ${projectId} nicht gefunden - linkedCampaigns Update übersprungen`);
+        log(`ℹ️ Campaign ${campaignId} bereits in linkedCampaigns vorhanden`);
       }
-    } catch (projectUpdateError) {
-      log(`❌ Fehler beim Update der Projekt-Collection: ${projectUpdateError}`);
-      // Nicht kritisch - Asset-Migration war erfolgreich
     }
 
-    log(`🎯 Migration komplett abgeschlossen - Campaign ist jetzt mit Projekt verknüpft`);
+    log(`🎉 Asset-Migration-Vorbereitung abgeschlossen: ${migrationAssets.length} Assets bereit`);
 
     return NextResponse.json({
-      success: errors.length === 0,
-      successCount,
-      errors,
-      migratedAssets,
+      success: true,
+      projectFolderId: projectFolder.id,
+      migrationAssets,
       logs
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`💥 Unerwarteter Fehler: ${errorMessage}`);
+    log(`💥 Kritischer Fehler: ${error}`);
+    console.error('Migration API Fehler:', error);
 
     return NextResponse.json({
       success: false,
-      successCount: 0,
-      errors: [{ assetId: 'api', error: errorMessage }],
-      migratedAssets: [],
-      logs
+      projectFolderId: '',
+      migrationAssets: [],
+      logs: [...logs, `Fehler: ${error}`]
     }, { status: 500 });
   }
-}
-
-// OPTIONS handler für CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }

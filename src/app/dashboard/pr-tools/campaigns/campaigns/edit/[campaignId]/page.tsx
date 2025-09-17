@@ -2113,7 +2113,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             });
 
             const result = await response.json();
-            console.log('📥 [API-RESPONSE] Migration-Ergebnis:', result);
+            console.log('📥 [API-RESPONSE] Migration-Daten erhalten:', result);
 
             // Logs anzeigen wenn vorhanden
             if (result.logs && result.logs.length > 0) {
@@ -2127,7 +2127,103 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             }
 
             if (!result.success) {
-              throw new Error(`Migration fehlgeschlagen: ${result.errors?.[0]?.error || 'Unbekannter Fehler'}`);
+              throw new Error(`Migration-Vorbereitung fehlgeschlagen: ${result.errors?.[0]?.error || 'Unbekannter Fehler'}`);
+            }
+
+            // Jetzt die echten Frontend-Uploads durchführen
+            console.log('🚀 [FRONTEND-UPLOADS] Starte Frontend-Uploads mit User-Auth...');
+
+            if (result.migrationAssets && result.migrationAssets.length > 0) {
+              const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+              const { storage } = await import('@/lib/firebase/config');
+              const { doc, updateDoc, setDoc, serverTimestamp } = await import('firebase/firestore');
+              const { db } = await import('@/lib/firebase/config');
+
+              let successCount = 0;
+              const errors: string[] = [];
+
+              for (const migrationAsset of result.migrationAssets) {
+                try {
+                  console.log(`📤 [UPLOAD] Starte Upload: ${migrationAsset.fileName}`);
+
+                  // Download der Datei client-seitig
+                  const downloadResponse = await fetch(migrationAsset.downloadUrl);
+                  if (!downloadResponse.ok) {
+                    throw new Error(`Download fehlgeschlagen: ${downloadResponse.statusText}`);
+                  }
+
+                  const arrayBuffer = await downloadResponse.arrayBuffer();
+                  const contentType = downloadResponse.headers.get('content-type') || 'application/octet-stream';
+
+                  // Firebase Storage Upload mit User-Auth
+                  const storageRef = ref(storage, migrationAsset.storagePath);
+                  const uploadMetadata = {
+                    contentType: contentType,
+                    customMetadata: migrationAsset.metadata
+                  };
+
+                  const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
+                  const newDownloadUrl = await getDownloadURL(snapshot.ref);
+
+                  console.log(`✅ [UPLOAD-SUCCESS] ${migrationAsset.fileName} erfolgreich hochgeladen`);
+
+                  // Firestore Updates je nach Asset-Typ
+                  if (migrationAsset.type === 'pdf') {
+                    // PDF Version aktualisieren
+                    await updateDoc(doc(db, 'pdf_versions', migrationAsset.assetId), {
+                      downloadUrl: newDownloadUrl,
+                      storagePath: migrationAsset.storagePath,
+                      storageRef: migrationAsset.storagePath,
+                      folderId: migrationAsset.targetFolderId,
+                      migratedAt: serverTimestamp(),
+                      isMigrated: true,
+                      originalDownloadUrl: migrationAsset.downloadUrl
+                    });
+                  } else {
+                    // Neues Media Asset erstellen
+                    const newAssetRef = doc(db, 'media_assets');
+                    const newAssetData = {
+                      id: newAssetRef.id,
+                      fileName: migrationAsset.fileName,
+                      originalName: migrationAsset.fileName,
+                      fileType: contentType,
+                      fileSize: arrayBuffer.byteLength,
+                      downloadUrl: newDownloadUrl,
+                      storagePath: migrationAsset.storagePath,
+                      storageRef: migrationAsset.storagePath,
+                      organizationId: currentOrganization.id,
+                      folderId: migrationAsset.targetFolderId,
+                      createdBy: user.uid,
+                      createdAt: serverTimestamp(),
+                      updatedAt: serverTimestamp(),
+                      migratedFrom: migrationAsset.assetId,
+                      migratedAt: serverTimestamp(),
+                      isMigrated: true
+                    };
+
+                    await setDoc(newAssetRef, newAssetData);
+
+                    // Original Asset als deprecated markieren
+                    await updateDoc(doc(db, 'media_assets', migrationAsset.assetId), {
+                      isDeprecated: true,
+                      deprecatedAt: serverTimestamp(),
+                      migratedTo: newAssetRef.id,
+                      originalDownloadUrl: migrationAsset.downloadUrl
+                    });
+                  }
+
+                  successCount++;
+                } catch (error) {
+                  console.error(`❌ [UPLOAD-ERROR] Fehler bei ${migrationAsset.fileName}:`, error);
+                  errors.push(`${migrationAsset.fileName}: ${error}`);
+                }
+              }
+
+              console.log(`🎉 [MIGRATION-COMPLETE] ${successCount}/${result.migrationAssets.length} Assets migriert`);
+
+              if (errors.length > 0) {
+                throw new Error(`Migration teilweise fehlgeschlagen: ${errors.join(', ')}`);
+              }
             }
 
             // Update Campaign in Firestore mit neuer Projekt-ID
