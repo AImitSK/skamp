@@ -203,7 +203,28 @@ class AssetMigrationService {
           fileName = asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`;
         }
 
-        // Statt Download: Erstelle nur Referenz in Firestore mit gleicher Storage-URL
+        // 1.5. Download und re-upload der Datei für echte Migration
+        if (!asset.downloadUrl) {
+          throw new Error(`Keine Download-URL für Asset ${asset.assetId}`);
+        }
+
+        console.log(`Lade Datei herunter: ${asset.downloadUrl}`);
+
+        // Fetch mit CORS-freundlichen Optionen
+        const response = await fetch(asset.downloadUrl, {
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'omit'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Fehler beim Download der Datei: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: blob.type });
+
+        console.log(`Datei geladen: ${fileName}, Größe: ${blob.size} bytes`);
 
         // 2. Ziel-Ordner finden oder erstellen
         let targetFolder: any;

@@ -72,7 +72,6 @@ import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 import { ProjectSelector } from "@/components/projects/ProjectSelector";
 import { Project } from "@/types/project";
 import { ProjectAssignmentMigrationDialog } from '@/components/campaigns/ProjectAssignmentMigrationDialog';
-import { assetMigrationService } from '@/lib/services/asset-migration-service';
 import { toast } from 'react-hot-toast';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
@@ -1455,17 +1454,39 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                           // Prüfe ob Projekt wechselt und Campaign Assets hat
                           if (existingCampaign && projectId && projectId !== existingCampaign.projectId) {
                             try {
-                              // Sammle alle Assets der Campaign
-                              const assets = await assetMigrationService.collectCampaignAssets(existingCampaign);
+                              console.log('🔍 [PROJECT-CHANGE] Prüfe Asset-Migration für Campaign:', existingCampaign.id);
 
-                              if (assets.length > 0) {
+                              // Schnelle Asset-Zählung basierend auf Campaign-Daten
+                              let assetCount = 0;
+                              if (existingCampaign.keyVisual?.assetId) assetCount++;
+                              if (existingCampaign.attachedAssets?.length) assetCount += existingCampaign.attachedAssets.length;
+
+                              // PDF-Versionen zählen (vereinfacht)
+                              try {
+                                const { collection, query, where, getDocs } = await import('firebase/firestore');
+                                const { db } = await import('@/lib/firebase/config');
+                                const pdfQuery = query(
+                                  collection(db, 'pdf_versions'),
+                                  where('campaignId', '==', existingCampaign.id)
+                                );
+                                const pdfSnapshot = await getDocs(pdfQuery);
+                                assetCount += pdfSnapshot.size;
+                              } catch (pdfError) {
+                                console.warn('⚠️ Konnte PDFs nicht zählen:', pdfError);
+                              }
+
+                              console.log(`📊 [ASSET-COUNT] Gefundene Assets: ${assetCount}`);
+
+                              if (assetCount > 0) {
                                 // Zeige Migration-Dialog
-                                setMigrationAssetCount(assets.length);
+                                setMigrationAssetCount(assetCount);
                                 setPendingProjectId(projectId);
                                 setPendingProject(project);
                                 setShowMigrationDialog(true);
+                                console.log('💬 [MIGRATION-DIALOG] Dialog wird angezeigt');
                               } else {
                                 // Keine Assets - direkt in Firestore updaten
+                                console.log('✅ [NO-ASSETS] Keine Assets, direktes Update');
                                 const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
                                 const { db } = await import('@/lib/firebase/config');
 
@@ -1480,7 +1501,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                                 toast.success('Projekt erfolgreich zugewiesen');
                               }
                             } catch (error) {
-                              console.error('Fehler beim Sammeln der Assets:', error);
+                              console.error('❌ [PROJECT-CHANGE] Fehler beim Prüfen der Assets:', error);
                               // Bei Fehler: Projekt trotzdem setzen
                               setSelectedProjectId(projectId);
                               setSelectedProject(project);
@@ -2046,22 +2067,45 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         onConfirm={async () => {
           if (!existingCampaign || !pendingProjectId || !currentOrganization || !user) return;
 
+          console.log('🚀 [MIGRATION-START] Starte Asset-Migration über API...');
           setIsMigrating(true);
-          try {
-            // Sammle Assets nochmal für die Migration
-            const assets = await assetMigrationService.collectCampaignAssets(existingCampaign);
 
-            // Führe Migration durch
-            const result = await assetMigrationService.migrateAssets(
-              existingCampaign.id,
-              existingCampaign,
-              pendingProjectId,
-              assets,
-              currentOrganization.id,
-              user.uid
-            );
+          try {
+            // Führe Migration über neue API durch
+            console.log('📞 [API-CALL] Rufe /api/migrate-campaign-assets auf...');
+            const response = await fetch('/api/migrate-campaign-assets', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                campaignId: existingCampaign.id,
+                projectId: pendingProjectId,
+                organizationId: currentOrganization.id,
+                userId: user.uid
+              })
+            });
+
+            const result = await response.json();
+            console.log('📥 [API-RESPONSE] Migration-Ergebnis:', result);
+
+            // Logs anzeigen wenn vorhanden
+            if (result.logs && result.logs.length > 0) {
+              console.group('📋 [MIGRATION-LOGS]');
+              result.logs.forEach((log: string) => console.log(log));
+              console.groupEnd();
+            }
+
+            if (!response.ok) {
+              throw new Error(`API-Fehler: ${result.errors?.[0]?.error || response.statusText}`);
+            }
+
+            if (!result.success) {
+              throw new Error(`Migration fehlgeschlagen: ${result.errors?.[0]?.error || 'Unbekannter Fehler'}`);
+            }
 
             // Update Campaign in Firestore mit neuer Projekt-ID
+            console.log('🔄 [FIRESTORE] Aktualisiere Campaign-Projekt-Referenz...');
             const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
             const { db } = await import('@/lib/firebase/config');
 
@@ -2074,17 +2118,20 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             setSelectedProjectId(pendingProjectId);
             setSelectedProject(pendingProject);
 
+            console.log('✅ [SUCCESS] Asset-Migration erfolgreich abgeschlossen');
+
             // Zeige Erfolgs-Message
             if (result.successCount > 0) {
               toast.success(
-                `✅ ${result.successCount} ${result.successCount === 1 ? 'Datei' : 'Dateien'} erfolgreich in Projekt-Ordner organisiert`,
+                `✅ ${result.successCount} ${result.successCount === 1 ? 'Asset' : 'Assets'} erfolgreich in Projekt-Ordner migriert`,
                 { duration: 5000 }
               );
             }
 
-            if (result.errors.length > 0) {
+            if (result.errors && result.errors.length > 0) {
+              console.warn('⚠️ [PARTIAL-ERRORS] Einige Assets konnten nicht migriert werden:', result.errors);
               toast.error(
-                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Datei konnte' : 'Dateien konnten'} nicht migriert werden`,
+                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Asset konnte' : 'Assets konnten'} nicht migriert werden`,
                 { duration: 5000 }
               );
             }
@@ -2093,8 +2140,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             await loadData();
 
           } catch (error) {
-            console.error('Fehler bei Asset-Migration:', error);
-            toast.error('Fehler bei der Asset-Migration. Bitte versuchen Sie es erneut.');
+            console.error('💥 [MIGRATION-ERROR] Fehler bei Asset-Migration:', error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            toast.error(`❌ Migration fehlgeschlagen: ${errorMessage}`);
           } finally {
             setIsMigrating(false);
             setShowMigrationDialog(false);
