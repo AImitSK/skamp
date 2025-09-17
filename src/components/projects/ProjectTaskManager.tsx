@@ -185,11 +185,11 @@ export function ProjectTaskManager({
   // Get status label
   const getStatusLabel = (task: ProjectTask) => {
     if (task.status === 'completed') return 'Erledigt';
-    if (task.isOverdue) return `${task.overdueBy} Tage überfällig`;
-    if (task.daysUntilDue === 0) return 'Heute fällig';
-    if (task.daysUntilDue === 1) return 'Morgen fällig';
-    if (task.daysUntilDue && task.daysUntilDue <= 7) return `In ${task.daysUntilDue} Tagen`;
-    return 'Ausstehend';
+    if (task.isOverdue) return `${task.overdueBy}T überfällig`;
+    if (task.daysUntilDue === 0) return 'Heute';
+    if (task.daysUntilDue === 1) return 'Morgen';
+    if (task.daysUntilDue && task.daysUntilDue <= 7) return `${task.daysUntilDue}T`;
+    return 'Offen';
   };
 
   // Format date
@@ -299,7 +299,7 @@ export function ProjectTaskManager({
               <div className="w-20 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Priorität
               </div>
-              <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Status
               </div>
               <div className="w-12"></div>
@@ -426,7 +426,7 @@ export function ProjectTaskManager({
                     </div>
 
                     {/* Status */}
-                    <div className="w-24 px-4">
+                    <div className="w-32 px-4">
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
                       </Badge>
