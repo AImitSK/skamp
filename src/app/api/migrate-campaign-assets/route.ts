@@ -180,7 +180,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       const projectData = projectDoc.data();
 
       const foldersQuery = query(
-        collection(db, 'folders'),
+        collection(db, 'media_folders'),
         where('organizationId', '==', organizationId),
         where('name', '==', projectData.title),
         where('isDeleted', '==', false)
@@ -193,11 +193,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
       } else {
         // Erstelle Projekt-Ordner
         log('📁 Erstelle neuen Projekt-Ordner...');
-        const projectFolderRef = doc(collection(db, 'folders'));
+        const projectFolderRef = doc(collection(db, 'media_folders'));
         const projectFolderData = {
           organizationId,
           name: projectData.title,
-          parentId: null,
+          parentFolderId: null,
           isDeleted: false,
           createdBy: userId,
           createdAt: serverTimestamp(),
@@ -224,10 +224,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         let targetFolder: any;
 
         const targetFoldersQuery = query(
-          collection(db, 'folders'),
+          collection(db, 'media_folders'),
           where('organizationId', '==', organizationId),
           where('name', '==', asset.targetFolder),
-          where('parentId', '==', projectFolder.id),
+          where('parentFolderId', '==', projectFolder.id),
           where('isDeleted', '==', false)
         );
         const targetFoldersSnapshot = await getDocs(targetFoldersQuery);
@@ -236,11 +236,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           targetFolder = { id: targetFoldersSnapshot.docs[0].id, ...targetFoldersSnapshot.docs[0].data() };
           log(`✅ Ziel-Ordner gefunden: ${targetFolder.id}`);
         } else {
-          const targetFolderRef = doc(collection(db, 'folders'));
+          const targetFolderRef = doc(collection(db, 'media_folders'));
           const targetFolderData = {
             organizationId,
             name: asset.targetFolder,
-            parentId: projectFolder.id,
+            parentFolderId: projectFolder.id,
             isDeleted: false,
             createdBy: userId,
             createdAt: serverTimestamp(),
