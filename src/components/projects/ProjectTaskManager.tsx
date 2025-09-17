@@ -361,12 +361,10 @@ export function ProjectTaskManager({
                     </div>
                   </div>
 
-                  {/* Zweite Zeile: Details */}
-                  <div className="flex items-center">
-                    <div className="flex-1 px-4"></div>
-
+                  {/* Zweite Zeile: Details - über ganze Breite verteilt */}
+                  <div className="flex items-center px-4">
                     {/* Zuständig - nur Avatar */}
-                    <div className="w-16 px-4 flex justify-center">
+                    <div className="flex-shrink-0 mr-6">
                       {assignedMember ? (
                         <Avatar
                           className="size-8"
@@ -385,7 +383,7 @@ export function ProjectTaskManager({
                     </div>
 
                     {/* Fortschritt */}
-                    <div className="w-32 px-4">
+                    <div className="flex-1 mr-6">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-zinc-700">
@@ -412,28 +410,25 @@ export function ProjectTaskManager({
                     </div>
 
                     {/* Fälligkeit */}
-                    <div className="w-28 px-4">
+                    <div className="flex-shrink-0 mr-4 min-w-0">
                       <div className="text-sm text-zinc-700">
                         {formatDate(task.dueDate)}
                       </div>
                     </div>
 
                     {/* Priorität */}
-                    <div className="w-20 px-4">
+                    <div className="flex-shrink-0 mr-4">
                       <Badge color={getPriorityColor(task.priority)}>
                         {getPriorityLabel(task.priority)}
                       </Badge>
                     </div>
 
                     {/* Status */}
-                    <div className="w-32 px-4">
+                    <div className="flex-shrink-0">
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
                       </Badge>
                     </div>
-
-                    {/* Leerer Platz für Actions-Alignment */}
-                    <div className="w-12"></div>
                   </div>
                 </div>
               );
