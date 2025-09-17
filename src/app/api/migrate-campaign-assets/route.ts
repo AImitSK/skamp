@@ -320,26 +320,58 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         let newAssetId: string;
 
         if (asset.type === 'pdf') {
-          // PDFs: Update existing document
+          // PDFs: ECHTE FIREBASE STORAGE MIGRATION
           newAssetId = asset.assetId;
 
-          log(`📄 Aktualisiere PDF-Version: ${asset.assetId}`);
+          log(`📄 Migriere PDF zu echtem Firebase Storage: ${asset.assetId}`);
+
+          // KRITISCH: Echter Firebase Storage Upload für PDF
+          const cleanFileName = (asset.fileName || `document_${asset.assetId}.pdf`).replace(/[^a-zA-Z0-9.-]/g, '_');
+          const timestamp = Date.now();
+          const storagePath = `organizations/${organizationId}/media/Kategorien/${timestamp}_${cleanFileName}`;
+
+          const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+          const { storage } = await import('@/lib/firebase/config');
+
+          const storageRef = ref(storage, storagePath);
+
+          // Upload mit echten Bytes
+          const uploadMetadata = {
+            contentType: contentType,
+            customMetadata: {
+              'organizationId': organizationId,
+              'folderId': targetFolder.id,
+              'migratedFrom': asset.assetId,
+              'uploaded': new Date().toISOString()
+            }
+          };
+
+          const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
+          const newDownloadUrl = await getDownloadURL(snapshot.ref);
+
+          log(`✅ PDF Firebase Storage Upload erfolgreich: ${newDownloadUrl.substring(0, 100)}...`);
+
+          // Update PDF Version mit neuer Storage-Daten
           await updateDoc(doc(db, 'pdf_versions', asset.assetId), {
+            downloadUrl: newDownloadUrl,
+            storagePath: storagePath,
+            storageRef: storagePath,
             folderId: targetFolder.id,
             migratedAt: serverTimestamp(),
             isMigrated: true,
             fileSize: fileSize,
-            contentType: contentType
+            contentType: contentType,
+            originalDownloadUrl: asset.downloadUrl // Backup für Rollback
           });
 
-          log(`✅ PDF-Version aktualisiert: ${asset.assetId}`);
+          log(`✅ PDF-Version mit echtem Storage aktualisiert: ${asset.assetId}`);
 
         } else {
-          // Media Assets: Create new document
+          // Media Assets: ECHTE FIREBASE STORAGE MIGRATION
           const newAssetRef = doc(collection(db, 'media_assets'));
           newAssetId = newAssetRef.id;
 
-          log(`🖼️ Erstelle neues Media Asset: ${newAssetId}`);
+          log(`🖼️ Migriere Asset zu echtem Firebase Storage: ${newAssetId}`);
 
           // Lade Original-Asset Daten
           const originalAssetDoc = await getDoc(doc(db, 'media_assets', asset.assetId));
@@ -348,32 +380,62 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           }
           const originalAssetData = originalAssetDoc.data();
 
+          // KRITISCH: Echter Firebase Storage Upload
+          log(`📤 Starte echten Firebase Storage Upload...`);
+
+          const cleanFileName = (asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`).replace(/[^a-zA-Z0-9.-]/g, '_');
+          const timestamp = Date.now();
+          const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`;
+
+          const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+          const { storage } = await import('@/lib/firebase/config');
+
+          const storageRef = ref(storage, storagePath);
+
+          // Upload mit echten Bytes
+          const uploadMetadata = {
+            contentType: contentType,
+            customMetadata: {
+              'organizationId': organizationId,
+              'folderId': targetFolder.id,
+              'migratedFrom': asset.assetId,
+              'uploaded': new Date().toISOString()
+            }
+          };
+
+          const snapshot = await uploadBytes(storageRef, arrayBuffer, uploadMetadata);
+          const newDownloadUrl = await getDownloadURL(snapshot.ref);
+
+          log(`✅ Firebase Storage Upload erfolgreich: ${newDownloadUrl.substring(0, 100)}...`);
+
+          // Erstelle echtes Media Asset mit Storage-Daten
           const newAssetData = {
             id: newAssetRef.id,
-            fileName: asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`,
+            fileName: cleanFileName,
+            originalName: asset.fileName || originalAssetData.fileName || `asset_${asset.assetId}`,
             fileType: originalAssetData.fileType || contentType,
+            fileSize: fileSize,
+            downloadUrl: newDownloadUrl,
+            storagePath: storagePath,
+            storageRef: storagePath,
             folderId: targetFolder.id,
             organizationId,
             clientId: campaign.clientId || '',
+            userId: userId,
             createdBy: userId,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             migratedFrom: asset.assetId,
             isMigrated: true,
-            downloadUrl: asset.downloadUrl, // Temporär - wird durch Upload ersetzt
-            fileSize: fileSize,
-            contentType: contentType,
-            base64Data: base64Data, // Für Client-Upload
-            needsClientUpload: true
+            tags: originalAssetData.tags || []
           };
 
           // Füge optionale Felder hinzu
           if (originalAssetData.description) newAssetData.description = originalAssetData.description;
-          if (originalAssetData.tags) newAssetData.tags = originalAssetData.tags;
           if (originalAssetData.metadata) newAssetData.metadata = originalAssetData.metadata;
 
           await setDoc(newAssetRef, newAssetData);
-          log(`✅ Neues Media Asset erstellt: ${newAssetId}`);
+          log(`✅ Echtes Media Asset mit Storage erstellt: ${newAssetId}`);
 
           // Campaign-Referenzen aktualisieren
           log(`🔗 Aktualisiere Campaign-Referenzen für ${asset.type}...`);
@@ -384,7 +446,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
             batch.update(campaignRef, {
               keyVisual: {
                 assetId: newAssetId,
-                url: asset.downloadUrl
+                url: newDownloadUrl
               },
               updatedAt: serverTimestamp()
             });
