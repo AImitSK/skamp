@@ -287,19 +287,19 @@ export function ProjectTaskManager({
               <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Task
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-16 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Zuständig
               </div>
-              <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Fortschritt
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-28 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Fälligkeit
               </div>
-              <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-20 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Priorität
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Status
               </div>
               <div className="w-12"></div>
@@ -312,12 +312,12 @@ export function ProjectTaskManager({
               const assignedMember = getTeamMember(task.assignedUserId || '');
 
               return (
-                <div key={task.id} className="px-8 py-5 hover:bg-zinc-50 transition-colors">
-                  <div className="flex items-center">
-                    {/* Task Title */}
+                <div key={task.id} className="px-8 py-4 hover:bg-zinc-50 transition-colors">
+                  {/* Erste Zeile: Task Title (größer) */}
+                  <div className="flex items-center mb-3">
                     <div className="flex-1 px-4 min-w-0">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-1">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
                           {task.status === 'completed' ? (
                             <CheckCircleIcon className="h-5 w-5 text-green-600" />
                           ) : task.isOverdue ? (
@@ -327,47 +327,65 @@ export function ProjectTaskManager({
                           )}
                         </div>
                         <div className="flex-1">
-                          <Text className="text-sm font-medium text-zinc-900">
+                          <Text className="text-base font-semibold text-zinc-900">
                             {task.title}
                           </Text>
-                          {task.description && (
-                            <Text className="text-sm text-zinc-600 mt-1 line-clamp-2">
-                              {task.description}
-                            </Text>
-                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Zuständig */}
-                    <div className="w-32 px-4">
+                    {/* Actions in erster Zeile */}
+                    <div className="w-12 flex justify-end">
+                      <Dropdown>
+                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem onClick={() => setEditingTask(task)}>
+                            <PencilIcon className="h-4 w-4" />
+                            Bearbeiten
+                          </DropdownItem>
+                          {task.status !== 'completed' && (
+                            <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
+                              <CheckCircleIcon className="h-4 w-4" />
+                              Als erledigt markieren
+                            </DropdownItem>
+                          )}
+                          <DropdownDivider />
+                          <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
+                            <TrashIcon className="h-4 w-4" />
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+                  </div>
+
+                  {/* Zweite Zeile: Details */}
+                  <div className="flex items-center">
+                    <div className="flex-1 px-4"></div>
+
+                    {/* Zuständig - nur Avatar */}
+                    <div className="w-16 px-4 flex justify-center">
                       {assignedMember ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar
-                            className="size-6"
-                            src={assignedMember.photoUrl}
-                            initials={assignedMember.displayName
-                              .split(' ')
-                              .map(n => n[0])
-                              .join('')
-                              .toUpperCase()
-                              .slice(0, 2)}
-                            title={assignedMember.displayName}
-                          />
-                          <span className="text-sm text-zinc-700 truncate">
-                            {assignedMember.displayName.split(' ')[0]}
-                          </span>
-                        </div>
+                        <Avatar
+                          className="size-8"
+                          src={assignedMember.photoUrl}
+                          initials={assignedMember.displayName
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                          title={assignedMember.displayName}
+                        />
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="h-5 w-5 text-gray-400" />
-                          <span className="text-sm text-gray-500">Unbekannt</span>
-                        </div>
+                        <UserIcon className="h-8 w-8 text-gray-400" />
                       )}
                     </div>
 
                     {/* Fortschritt */}
-                    <div className="w-40 px-4">
+                    <div className="w-32 px-4">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-zinc-700">
@@ -394,51 +412,28 @@ export function ProjectTaskManager({
                     </div>
 
                     {/* Fälligkeit */}
-                    <div className="w-32 px-4">
+                    <div className="w-28 px-4">
                       <div className="text-sm text-zinc-700">
                         {formatDate(task.dueDate)}
                       </div>
                     </div>
 
                     {/* Priorität */}
-                    <div className="w-24 px-4">
+                    <div className="w-20 px-4">
                       <Badge color={getPriorityColor(task.priority)}>
                         {getPriorityLabel(task.priority)}
                       </Badge>
                     </div>
 
                     {/* Status */}
-                    <div className="w-32 px-4">
+                    <div className="w-24 px-4">
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
                       </Badge>
                     </div>
 
-                    {/* Actions */}
-                    <div className="w-12 flex justify-end">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          <DropdownItem onClick={() => setEditingTask(task)}>
-                            <PencilIcon className="h-4 w-4" />
-                            Bearbeiten
-                          </DropdownItem>
-                          {task.status !== 'completed' && (
-                            <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
-                              <CheckCircleIcon className="h-4 w-4" />
-                              Als erledigt markieren
-                            </DropdownItem>
-                          )}
-                          <DropdownDivider />
-                          <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">Löschen</span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
+                    {/* Leerer Platz für Actions-Alignment */}
+                    <div className="w-12"></div>
                   </div>
                 </div>
               );
