@@ -283,26 +283,19 @@ export function ProjectTaskManager({
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Table Header */}
           <div className="px-8 py-4 border-b border-zinc-200 bg-zinc-50">
-            <div className="flex items-center">
-              <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Task
               </div>
-              <div className="w-16 px-4">
-                {/* Kein Header für Avatar */}
-              </div>
-              <div className="w-32 px-4">
-                {/* Kein Header für Fortschritt */}
-              </div>
-              <div className="w-28 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Fälligkeit
               </div>
-              <div className="w-20 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Priorität
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                 Status
               </div>
-              <div className="w-12"></div>
             </div>
           </div>
 
@@ -313,29 +306,25 @@ export function ProjectTaskManager({
 
               return (
                 <div key={task.id} className="px-8 py-4 hover:bg-zinc-50 transition-colors">
-                  {/* Erste Zeile: Task Title (größer) */}
-                  <div className="flex items-center mb-3">
-                    <div className="flex-1 px-4 min-w-0">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          {task.status === 'completed' ? (
-                            <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                          ) : task.isOverdue ? (
-                            <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-                          ) : (
-                            <ClockIcon className="h-5 w-5 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <Text className="text-base font-semibold text-zinc-900">
-                            {task.title}
-                          </Text>
-                        </div>
+                  {/* Erste Zeile: Task Title */}
+                  <div className="grid grid-cols-4 gap-4 items-center mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        {task.status === 'completed' ? (
+                          <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                        ) : task.isOverdue ? (
+                          <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                        ) : (
+                          <ClockIcon className="h-5 w-5 text-gray-400" />
+                        )}
                       </div>
+                      <Text className="text-base font-semibold text-zinc-900">
+                        {task.title}
+                      </Text>
                     </div>
-
-                    {/* Actions in erster Zeile */}
-                    <div className="w-12 flex justify-end">
+                    <div></div>
+                    <div></div>
+                    <div className="flex justify-end">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
                           <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
@@ -361,13 +350,13 @@ export function ProjectTaskManager({
                     </div>
                   </div>
 
-                  {/* Zweite Zeile: Details - mit festen Spaltenbreiten */}
-                  <div className="flex items-center">
-                    {/* Zuständig - nur Avatar */}
-                    <div className="w-16 px-4 flex justify-center">
-                      {assignedMember ? (
+                  {/* Zweite Zeile: Details - PERFEKT aligned mit Header */}
+                  <div className="grid grid-cols-4 gap-4 items-center">
+                    {/* Fortschrittsbalken (erste Spalte - aligned mit "Task") */}
+                    <div className="flex items-center gap-2">
+                      {assignedMember && (
                         <Avatar
-                          className="size-8"
+                          className="size-6"
                           src={assignedMember.photoUrl}
                           initials={assignedMember.displayName
                             .split(' ')
@@ -377,22 +366,10 @@ export function ProjectTaskManager({
                             .slice(0, 2)}
                           title={assignedMember.displayName}
                         />
-                      ) : (
-                        <UserIcon className="h-8 w-8 text-gray-400" />
                       )}
-                    </div>
-
-                    {/* Fortschritt - feste Breite */}
-                    <div className="w-32 px-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-zinc-700">
-                            {task.progress || 0}%
-                          </span>
-                          <ChartBarIcon className="h-4 w-4 text-zinc-400" />
-                        </div>
+                      <div className="flex-1">
                         <div
-                          className="w-20 bg-gray-200 rounded-full h-2 cursor-pointer"
+                          className="bg-gray-200 rounded-full h-2 cursor-pointer"
                           onClick={(e) => handleProgressClick(task, e)}
                           title="Klicken um Fortschritt zu ändern"
                         >
@@ -407,31 +384,29 @@ export function ProjectTaskManager({
                           />
                         </div>
                       </div>
+                      <span className="text-xs text-zinc-500 ml-2">
+                        {task.progress || 0}%
+                      </span>
                     </div>
 
-                    {/* Fälligkeit */}
-                    <div className="w-28 px-4">
-                      <div className="text-sm text-zinc-700">
-                        {formatDate(task.dueDate)}
-                      </div>
+                    {/* Fälligkeit (zweite Spalte - aligned mit "Fälligkeit") */}
+                    <div className="text-sm text-zinc-700">
+                      {formatDate(task.dueDate)}
                     </div>
 
-                    {/* Priorität */}
-                    <div className="w-20 px-4">
+                    {/* Priorität (dritte Spalte - aligned mit "Priorität") */}
+                    <div>
                       <Badge color={getPriorityColor(task.priority)}>
                         {getPriorityLabel(task.priority)}
                       </Badge>
                     </div>
 
-                    {/* Status */}
-                    <div className="w-32 px-4">
+                    {/* Status (vierte Spalte - aligned mit "Status") */}
+                    <div>
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
                       </Badge>
                     </div>
-
-                    {/* Leerer Platz für Actions-Alignment */}
-                    <div className="w-12"></div>
                   </div>
                 </div>
               );
