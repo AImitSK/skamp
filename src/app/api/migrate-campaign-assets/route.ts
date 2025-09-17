@@ -29,6 +29,9 @@ interface MigrationData {
   fileName: string;
   storagePath: string;
   targetFolderId: string;
+  fileData: string; // Base64 encoded file data
+  contentType: string;
+  fileSize: number;
   metadata: {
     organizationId: string;
     folderId: string;
@@ -248,6 +251,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           log(`✅ Ziel-Ordner erstellt: ${targetFolderRef.id} (${asset.targetFolder})`);
         }
 
+        // Server-seitiger Download für CORS-Umgehung
+        log(`📥 Lade Datei server-seitig: ${asset.downloadUrl}`);
+
+        if (!asset.downloadUrl.includes('firebasestorage.googleapis.com')) {
+          throw new Error(`Ungültige URL (nur Firebase Storage erlaubt): ${asset.downloadUrl}`);
+        }
+
+        const response = await fetch(asset.downloadUrl);
+        if (!response.ok) {
+          throw new Error(`Download fehlgeschlagen: ${response.statusText} (${response.status})`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const contentType = response.headers.get('content-type') || 'application/octet-stream';
+        const base64Data = Buffer.from(arrayBuffer).toString('base64');
+        const fileSize = arrayBuffer.byteLength;
+
+        log(`✅ Datei geladen: ${fileSize} bytes, Content-Type: ${contentType}`);
+
         // Migration-Daten vorbereiten
         const cleanFileName = asset.fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
         const timestamp = Date.now();
@@ -266,6 +288,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           fileName: cleanFileName,
           storagePath: storagePath,
           targetFolderId: targetFolder.id,
+          fileData: base64Data,
+          contentType: contentType,
+          fileSize: fileSize,
           metadata: {
             organizationId: organizationId,
             folderId: targetFolder.id,

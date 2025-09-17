@@ -2146,14 +2146,17 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 try {
                   console.log(`📤 [UPLOAD] Starte Upload: ${migrationAsset.fileName}`);
 
-                  // Download der Datei client-seitig
-                  const downloadResponse = await fetch(migrationAsset.downloadUrl);
-                  if (!downloadResponse.ok) {
-                    throw new Error(`Download fehlgeschlagen: ${downloadResponse.statusText}`);
-                  }
+                  // Verwende Base64-Daten von der API (CORS-Umgehung)
+                  const base64Data = migrationAsset.fileData;
+                  const contentType = migrationAsset.contentType;
 
-                  const arrayBuffer = await downloadResponse.arrayBuffer();
-                  const contentType = downloadResponse.headers.get('content-type') || 'application/octet-stream';
+                  // Konvertiere Base64 zu ArrayBuffer
+                  const binaryString = atob(base64Data);
+                  const arrayBuffer = new ArrayBuffer(binaryString.length);
+                  const uint8Array = new Uint8Array(arrayBuffer);
+                  for (let i = 0; i < binaryString.length; i++) {
+                    uint8Array[i] = binaryString.charCodeAt(i);
+                  }
 
                   // Firebase Storage Upload mit User-Auth
                   const storageRef = ref(storage, migrationAsset.storagePath);
