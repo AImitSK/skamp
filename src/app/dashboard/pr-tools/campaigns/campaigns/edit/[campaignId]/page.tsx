@@ -71,6 +71,9 @@ import { ProjectLinkBanner } from '@/components/campaigns/ProjectLinkBanner';
 import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 import { ProjectSelector } from "@/components/projects/ProjectSelector";
 import { Project } from "@/types/project";
+import { ProjectAssignmentMigrationDialog } from '@/components/campaigns/ProjectAssignmentMigrationDialog';
+import { assetMigrationService } from '@/lib/services/asset-migration-service';
+import { toast } from 'react-hot-toast';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 
@@ -156,6 +159,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
   // TEST: Modal für Projekt-Medienverzeichnis
   const [showProjectMediaModal, setShowProjectMediaModal] = useState(false);
+
+  // Asset-Migration State
+  const [showMigrationDialog, setShowMigrationDialog] = useState(false);
+  const [migrationAssetCount, setMigrationAssetCount] = useState(0);
+  const [pendingProjectId, setPendingProjectId] = useState<string>('');
+  const [pendingProject, setPendingProject] = useState<Project | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   // Debug Logging für State-Änderungen
   useEffect(() => {
@@ -1441,9 +1451,35 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     <div className="pt-3 border-t border-gray-200">
                       <ProjectSelector
                         selectedProjectId={selectedProjectId}
-                        onProjectSelect={(projectId, project) => {
-                          setSelectedProjectId(projectId);
-                          setSelectedProject(project);
+                        onProjectSelect={async (projectId, project) => {
+                          // Prüfe ob Projekt wechselt und Campaign Assets hat
+                          if (existingCampaign && projectId && projectId !== existingCampaign.projectId) {
+                            try {
+                              // Sammle alle Assets der Campaign
+                              const assets = await assetMigrationService.collectCampaignAssets(existingCampaign);
+
+                              if (assets.length > 0) {
+                                // Zeige Migration-Dialog
+                                setMigrationAssetCount(assets.length);
+                                setPendingProjectId(projectId);
+                                setPendingProject(project);
+                                setShowMigrationDialog(true);
+                              } else {
+                                // Keine Assets - direkt updaten
+                                setSelectedProjectId(projectId);
+                                setSelectedProject(project);
+                              }
+                            } catch (error) {
+                              console.error('Fehler beim Sammeln der Assets:', error);
+                              // Bei Fehler: Projekt trotzdem setzen
+                              setSelectedProjectId(projectId);
+                              setSelectedProject(project);
+                            }
+                          } else {
+                            // Erste Zuweisung oder keine Änderung
+                            setSelectedProjectId(projectId);
+                            setSelectedProject(project);
+                          }
                         }}
                         organizationId={currentOrganization!.id}
                         clientId={selectedCompanyId}
@@ -1976,6 +2012,69 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           enableSmartRouter={true}
         />
       )}
+
+      {/* Asset-Migration Dialog */}
+      <ProjectAssignmentMigrationDialog
+        isOpen={showMigrationDialog}
+        onClose={() => {
+          setShowMigrationDialog(false);
+          setPendingProjectId('');
+          setPendingProject(null);
+        }}
+        onConfirm={async () => {
+          if (!existingCampaign || !pendingProjectId || !currentOrganization || !user) return;
+
+          setIsMigrating(true);
+          try {
+            // Sammle Assets nochmal für die Migration
+            const assets = await assetMigrationService.collectCampaignAssets(existingCampaign);
+
+            // Führe Migration durch
+            const result = await assetMigrationService.migrateAssets(
+              existingCampaign.id,
+              existingCampaign,
+              pendingProjectId,
+              assets,
+              currentOrganization.id,
+              user.uid
+            );
+
+            // Update Projekt-Zuweisung
+            setSelectedProjectId(pendingProjectId);
+            setSelectedProject(pendingProject);
+
+            // Zeige Erfolgs-Message
+            if (result.successCount > 0) {
+              toast.success(
+                `✅ ${result.successCount} ${result.successCount === 1 ? 'Datei' : 'Dateien'} erfolgreich in Projekt-Ordner organisiert`,
+                { duration: 5000 }
+              );
+            }
+
+            if (result.errors.length > 0) {
+              toast.error(
+                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Datei konnte' : 'Dateien konnten'} nicht migriert werden`,
+                { duration: 5000 }
+              );
+            }
+
+            // Lade Campaign neu um aktualisierte Asset-IDs zu bekommen
+            await loadData();
+
+          } catch (error) {
+            console.error('Fehler bei Asset-Migration:', error);
+            toast.error('Fehler bei der Asset-Migration. Bitte versuchen Sie es erneut.');
+          } finally {
+            setIsMigrating(false);
+            setShowMigrationDialog(false);
+            setPendingProjectId('');
+            setPendingProject(null);
+          }
+        }}
+        assetCount={migrationAssetCount}
+        projectName={pendingProject?.title || ''}
+        isProcessing={isMigrating}
+      />
 
       {/* TEST MODAL: Projekt-Medienverzeichnis */}
       {showProjectMediaModal && (
