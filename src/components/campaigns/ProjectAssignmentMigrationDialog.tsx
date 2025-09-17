@@ -8,7 +8,6 @@ import {
   Description
 } from '@headlessui/react';
 import { InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface ProjectAssignmentMigrationDialogProps {
   isOpen: boolean;
@@ -103,7 +102,7 @@ export function ProjectAssignmentMigrationDialog({
             >
               {(isProcessing || isConfirming) ? (
                 <>
-                  <LoadingSpinner size="small" color="white" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Dateien werden organisiert...</span>
                 </>
               ) : (

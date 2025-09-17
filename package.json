@@ -68,6 +68,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dnd-touch-backend": "^16.0.1",
     "react-dom": "^18",
+    "react-hot-toast": "^2.6.0",
     "react-image-crop": "^11.0.10",
     "recharts": "^2.15.4",
     "swagger-ui-react": "^5.27.1",
