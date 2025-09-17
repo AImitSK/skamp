@@ -35,7 +35,7 @@ export function TaskCreateModal({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignedUserId: projectManagerId, // Default: Projekt-Manager
+    assignedUserId: projectManagerId || (teamMembers.length > 0 ? teamMembers[0].userId : ''), // Default: Projekt-Manager oder erstes Teammitglied
     dueDate: '',
     priority: 'medium' as TaskPriority,
     progress: 0
@@ -51,10 +51,22 @@ export function TaskCreateModal({
       return;
     }
 
+    if (!formData.assignedUserId) {
+      setError('Zuständige Person ist erforderlich');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      // Debug-Ausgabe für Troubleshooting
+      console.log('TaskCreate Debug:', {
+        assignedUserId: formData.assignedUserId,
+        projectManagerId,
+        teamMembers: teamMembers.map(m => ({ id: m.id, userId: m.userId, name: m.displayName }))
+      });
+
       const taskData: Omit<ProjectTask, 'id' | 'createdAt' | 'updatedAt' | 'isOverdue' | 'daysUntilDue' | 'overdueBy'> = {
         userId: formData.assignedUserId,
         organizationId,
@@ -75,7 +87,7 @@ export function TaskCreateModal({
       setFormData({
         title: '',
         description: '',
-        assignedUserId: projectManagerId,
+        assignedUserId: projectManagerId || (teamMembers.length > 0 ? teamMembers[0].userId : ''),
         dueDate: '',
         priority: 'medium',
         progress: 0
@@ -95,7 +107,7 @@ export function TaskCreateModal({
       setFormData({
         title: '',
         description: '',
-        assignedUserId: projectManagerId,
+        assignedUserId: projectManagerId || (teamMembers.length > 0 ? teamMembers[0].userId : ''),
         dueDate: '',
         priority: 'medium',
         progress: 0
@@ -159,6 +171,9 @@ export function TaskCreateModal({
                       {member.userId === projectManagerId && ' (Projekt-Manager)'}
                     </option>
                   ))}
+                  {teamMembers.length === 0 && (
+                    <option value="">Keine Teammitglieder verfügbar</option>
+                  )}
                 </Select>
               </Field>
 
