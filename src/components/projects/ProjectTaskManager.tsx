@@ -361,10 +361,10 @@ export function ProjectTaskManager({
                     </div>
                   </div>
 
-                  {/* Zweite Zeile: Details - über ganze Breite verteilt */}
-                  <div className="flex items-center px-4">
+                  {/* Zweite Zeile: Details - mit festen Spaltenbreiten */}
+                  <div className="flex items-center">
                     {/* Zuständig - nur Avatar */}
-                    <div className="flex-shrink-0 mr-6">
+                    <div className="w-16 px-4 flex justify-center">
                       {assignedMember ? (
                         <Avatar
                           className="size-8"
@@ -382,8 +382,8 @@ export function ProjectTaskManager({
                       )}
                     </div>
 
-                    {/* Fortschritt */}
-                    <div className="flex-1 mr-6">
+                    {/* Fortschritt - feste Breite */}
+                    <div className="w-32 px-4">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-zinc-700">
@@ -392,7 +392,7 @@ export function ProjectTaskManager({
                           <ChartBarIcon className="h-4 w-4 text-zinc-400" />
                         </div>
                         <div
-                          className="w-full bg-gray-200 rounded-full h-2 cursor-pointer"
+                          className="w-20 bg-gray-200 rounded-full h-2 cursor-pointer"
                           onClick={(e) => handleProgressClick(task, e)}
                           title="Klicken um Fortschritt zu ändern"
                         >
@@ -410,25 +410,28 @@ export function ProjectTaskManager({
                     </div>
 
                     {/* Fälligkeit */}
-                    <div className="flex-shrink-0 mr-4 min-w-0">
+                    <div className="w-28 px-4">
                       <div className="text-sm text-zinc-700">
                         {formatDate(task.dueDate)}
                       </div>
                     </div>
 
                     {/* Priorität */}
-                    <div className="flex-shrink-0 mr-4">
+                    <div className="w-20 px-4">
                       <Badge color={getPriorityColor(task.priority)}>
                         {getPriorityLabel(task.priority)}
                       </Badge>
                     </div>
 
                     {/* Status */}
-                    <div className="flex-shrink-0">
+                    <div className="w-32 px-4">
                       <Badge color={getStatusColor(task)}>
                         {getStatusLabel(task)}
                       </Badge>
                     </div>
+
+                    {/* Leerer Platz für Actions-Alignment */}
+                    <div className="w-12"></div>
                   </div>
                 </div>
               );
