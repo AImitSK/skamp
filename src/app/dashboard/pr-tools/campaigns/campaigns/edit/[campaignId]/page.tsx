@@ -1465,9 +1465,18 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                                 setPendingProject(project);
                                 setShowMigrationDialog(true);
                               } else {
-                                // Keine Assets - direkt updaten
+                                // Keine Assets - direkt in Firestore updaten
+                                await prService.updateCampaign(campaignId, {
+                                  projectId: projectId
+                                }, {
+                                  userId: user!.uid,
+                                  organizationId: currentOrganization!.id
+                                });
+
                                 setSelectedProjectId(projectId);
                                 setSelectedProject(project);
+
+                                toast.success('Projekt erfolgreich zugewiesen');
                               }
                             } catch (error) {
                               console.error('Fehler beim Sammeln der Assets:', error);
@@ -1476,7 +1485,18 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                               setSelectedProject(project);
                             }
                           } else {
-                            // Erste Zuweisung oder keine Änderung
+                            // Erste Zuweisung oder keine Änderung - speichere in Firestore
+                            if (projectId && projectId !== existingCampaign?.projectId) {
+                              await prService.updateCampaign(campaignId, {
+                                projectId: projectId
+                              }, {
+                                userId: user!.uid,
+                                organizationId: currentOrganization!.id
+                              });
+
+                              toast.success('Projekt erfolgreich zugewiesen');
+                            }
+
                             setSelectedProjectId(projectId);
                             setSelectedProject(project);
                           }
@@ -2039,7 +2059,15 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               user.uid
             );
 
-            // Update Projekt-Zuweisung
+            // Update Campaign in Firestore mit neuer Projekt-ID
+            await prService.updateCampaign(campaignId, {
+              projectId: pendingProjectId
+            }, {
+              userId: user!.uid,
+              organizationId: currentOrganization!.id
+            });
+
+            // Update lokale State
             setSelectedProjectId(pendingProjectId);
             setSelectedProject(pendingProject);
 
