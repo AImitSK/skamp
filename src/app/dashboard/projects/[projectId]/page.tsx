@@ -736,55 +736,11 @@ export default function ProjectDetailPage() {
                   organizationId={currentOrganization!.id}
                   projectManagerId={project.managerId || currentOrganization!.ownerId}
                   teamMembers={teamMembers}
+                  projectTeamMemberIds={project.assignedTo}
                   projectTitle={project.title}
                 />
               )}
 
-              {/* Planungs-Checkliste (moved below task manager) */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
-                  <Subheading>Planungs-Checkliste</Subheading>
-                </div>
-                <Text className="text-gray-600 mb-4">
-                  Standard-Aufgaben für eine vollständige Projektplanung.
-                </Text>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" checked className="rounded text-green-600" />
-                    <Text className="text-sm">Projekt-Briefing erstellt</Text>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-green-600" />
-                    <Text className="text-sm">Zielgruppen definiert</Text>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-green-600" />
-                    <Text className="text-sm">Budget und Timeline festgelegt</Text>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-green-600" />
-                    <Text className="text-sm">Team-Rollen zugewiesen</Text>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-green-600" />
-                    <Text className="text-sm">Strategiedokument finalisiert</Text>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input type="checkbox" className="rounded text-green-600" />
-                    <Text className="text-sm">Ressourcen allokiert</Text>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    plain
-                    className="w-full"
-                  >
-                    <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                    Checkliste verwalten
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
 

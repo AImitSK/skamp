@@ -70,12 +70,12 @@ export function TaskEditModal({
     try {
       const updateData: Partial<ProjectTask> = {
         title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
         assignedUserId: formData.assignedUserId,
         priority: formData.priority,
         status: formData.status,
         progress: formData.progress,
-        dueDate: formData.dueDate ? Timestamp.fromDate(new Date(formData.dueDate)) : undefined
+        ...(formData.description.trim() && { description: formData.description.trim() }),
+        ...(formData.dueDate && { dueDate: Timestamp.fromDate(new Date(formData.dueDate)) })
       };
 
       // If marking as completed, add completedAt timestamp
@@ -156,7 +156,9 @@ export function TaskEditModal({
                   onChange={(e) => setFormData({ ...formData, assignedUserId: e.target.value })}
                   disabled={loading}
                 >
-                  {teamMembers.map(member => (
+                  {teamMembers
+                    .filter(member => member.userId) // Nur Mitglieder mit gültiger userId
+                    .map(member => (
                     <option key={member.id} value={member.userId}>
                       {member.displayName}
                     </option>

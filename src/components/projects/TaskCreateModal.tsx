@@ -61,12 +61,12 @@ export function TaskCreateModal({
         projectId,
         assignedUserId: formData.assignedUserId,
         title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
         status: 'pending',
         priority: formData.priority,
         progress: formData.progress,
-        dueDate: formData.dueDate ? Timestamp.fromDate(new Date(formData.dueDate)) : undefined,
-        isAllDay: true
+        isAllDay: true,
+        ...(formData.description.trim() && { description: formData.description.trim() }),
+        ...(formData.dueDate && { dueDate: Timestamp.fromDate(new Date(formData.dueDate)) })
       };
 
       await taskService.create(taskData);
@@ -151,7 +151,9 @@ export function TaskCreateModal({
                   onChange={(e) => setFormData({ ...formData, assignedUserId: e.target.value })}
                   disabled={loading}
                 >
-                  {teamMembers.map(member => (
+                  {teamMembers
+                    .filter(member => member.userId) // Nur Mitglieder mit gültiger userId
+                    .map(member => (
                     <option key={member.id} value={member.userId}>
                       {member.displayName}
                       {member.userId === projectManagerId && ' (Projekt-Manager)'}

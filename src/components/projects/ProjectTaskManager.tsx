@@ -34,6 +34,7 @@ interface ProjectTaskManagerProps {
   organizationId: string;
   projectManagerId: string;
   teamMembers: TeamMember[];
+  projectTeamMemberIds?: string[]; // Nur die dem Projekt zugewiesenen Team-Mitglieder
   projectTitle?: string;
 }
 
@@ -42,6 +43,7 @@ export function ProjectTaskManager({
   organizationId,
   projectManagerId,
   teamMembers,
+  projectTeamMemberIds,
   projectTitle
 }: ProjectTaskManagerProps) {
   const { user } = useAuth();
@@ -92,6 +94,23 @@ export function ProjectTaskManager({
   // Get team member info
   const getTeamMember = (userId: string) => {
     return teamMembers.find(member => member.userId === userId || member.id === userId);
+  };
+
+  // Get only project team members for task assignment
+  const getProjectTeamMembers = () => {
+    if (!projectTeamMemberIds || projectTeamMemberIds.length === 0) {
+      // Fallback: include project manager at minimum
+      return teamMembers.filter(member =>
+        member.userId === projectManagerId || member.id === projectManagerId
+      );
+    }
+
+    return teamMembers.filter(member =>
+      projectTeamMemberIds.includes(member.userId || '') ||
+      projectTeamMemberIds.includes(member.id || '') ||
+      member.userId === projectManagerId || // Always include project manager
+      member.id === projectManagerId
+    );
   };
 
   // Handle task completion
@@ -456,7 +475,7 @@ export function ProjectTaskManager({
         projectId={projectId}
         organizationId={organizationId}
         projectManagerId={projectManagerId}
-        teamMembers={teamMembers}
+        teamMembers={getProjectTeamMembers()}
       />
 
       {/* Task Edit Modal */}
@@ -466,7 +485,7 @@ export function ProjectTaskManager({
           onClose={() => setEditingTask(null)}
           onSuccess={loadTasks}
           task={editingTask}
-          teamMembers={teamMembers}
+          teamMembers={getProjectTeamMembers()}
         />
       )}
     </div>
