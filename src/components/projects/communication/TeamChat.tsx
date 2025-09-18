@@ -67,16 +67,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
             // Prüfe Team-Mitgliedschaft mit allen möglichen ID-Varianten
             const memberUserId = currentMember.userId || currentMember.id;
-            const isMember =
+            const isMember = Boolean(
               // Check mit Member-ID in assignedTo Array
-              project.assignedTo?.includes(memberUserId) ||
+              (project.assignedTo && project.assignedTo.includes(memberUserId)) ||
               // Check mit direkter userId in assignedTo Array
-              project.assignedTo?.includes(userId) ||
+              (project.assignedTo && project.assignedTo.includes(userId)) ||
               // Check ob User der Projekt-Admin ist
               project.userId === memberUserId ||
               project.userId === userId ||
               // Check ob User der Projekt-Manager ist
-              (project.managerId && (project.managerId === memberUserId || project.managerId === userId));
+              (project.managerId && (project.managerId === memberUserId || project.managerId === userId))
+            );
 
             console.log('Team-Mitgliedschaft Check:', {
               currentUserId: userId,
@@ -90,10 +91,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({
             setIsTeamMember(isMember);
           } else {
             // Wenn kein Member gefunden wurde, prüfe direkt mit userId
-            const isMember =
-              project.assignedTo?.includes(userId) ||
+            const isMember = Boolean(
+              (project.assignedTo && project.assignedTo.includes(userId)) ||
               project.userId === userId ||
-              (project.managerId && project.managerId === userId);
+              (project.managerId && project.managerId === userId)
+            );
 
             console.log('Direkte Team-Mitgliedschaft Check (kein Member gefunden):', {
               userId,
