@@ -2,7 +2,7 @@
 
 import { Timestamp } from "firebase/firestore";
 
-export type NotificationType = 
+export type NotificationType =
   | 'APPROVAL_GRANTED'
   | 'CHANGES_REQUESTED'
   | 'FIRST_VIEW'
@@ -13,7 +13,8 @@ export type NotificationType =
   | 'MEDIA_FIRST_ACCESS'
   | 'MEDIA_DOWNLOADED'
   | 'MEDIA_LINK_EXPIRED'
-  | 'project_assignment';
+  | 'project_assignment'
+  | 'TEAM_CHAT_MENTION';
 
 export type LinkType = 'campaign' | 'approval' | 'media' | 'task';
 
@@ -27,6 +28,12 @@ export interface NotificationMetadata {
   recipientCount?: number;
   daysOverdue?: number;
   bouncedEmail?: string;
+  // Team Chat Mentions
+  projectId?: string;
+  projectTitle?: string;
+  messageContent?: string;
+  mentionedBy?: string;
+  mentionedByName?: string;
 }
 
 export interface Notification {

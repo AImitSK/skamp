@@ -14,6 +14,8 @@ import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { Timestamp } from 'firebase/firestore';
+import { MentionDropdown } from './MentionDropdown';
+import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
 
 interface TeamChatProps {
   projectId: string;
@@ -39,6 +41,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const [currentUserPhoto, setCurrentUserPhoto] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // @-Mention State
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearchTerm, setMentionSearchTerm] = useState('');
+  const [mentionDropdownPosition, setMentionDropdownPosition] = useState({ top: 0, left: 0 });
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Prüfe Team-Mitgliedschaft und lade Team-Daten
   useEffect(() => {
@@ -189,7 +199,34 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         organizationId
       });
 
+      // Push-Notifications für @-Mentions senden
+      if (mentions.length > 0) {
+        try {
+          const mentionedUserIds = teamChatNotificationsService.extractMentionedUserIds(
+            newMessage,
+            teamMembers
+          );
+
+          if (mentionedUserIds.length > 0) {
+            await teamChatNotificationsService.sendMentionNotifications({
+              mentionedUserIds,
+              messageContent: newMessage,
+              authorId: userId,
+              authorName: userDisplayName,
+              projectId,
+              projectTitle,
+              organizationId
+            });
+          }
+        } catch (error) {
+          console.error('Fehler beim Senden der Mention-Notifications:', error);
+          // Fehler bei Notifications soll Nachricht nicht blockieren
+        }
+      }
+
       setNewMessage('');
+      setCursorPosition(0);
+      setShowMentionDropdown(false);
       // Scrolle nach unten nach dem Senden
       setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
@@ -219,6 +256,103 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // @-Mention Handler
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+
+    setNewMessage(value);
+    setCursorPosition(cursorPos);
+
+    // Prüfe auf @-Mention
+    const beforeCursor = value.substring(0, cursorPos);
+    const mentionMatch = beforeCursor.match(/@([\w]*)$/);
+
+    if (mentionMatch) {
+      const searchTerm = mentionMatch[1];
+      setMentionSearchTerm(searchTerm);
+      setSelectedMentionIndex(0);
+
+      // Berechne Position des Dropdowns
+      if (textareaRef.current) {
+        const rect = textareaRef.current.getBoundingClientRect();
+        const lines = beforeCursor.split('\n');
+        const currentLine = lines[lines.length - 1];
+        const charWidth = 8; // Geschätzte Zeichen-Breite
+
+        setMentionDropdownPosition({
+          top: rect.top - 200, // Über der Textarea
+          left: rect.left + (currentLine.length * charWidth)
+        });
+      }
+
+      setShowMentionDropdown(true);
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentionDropdown) {
+      const filteredMembers = teamMembers.filter(member =>
+        member.displayName.toLowerCase().includes(mentionSearchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(mentionSearchTerm.toLowerCase())
+      );
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev =>
+          prev < filteredMembers.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev =>
+          prev > 0 ? prev - 1 : filteredMembers.length - 1
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredMembers[selectedMentionIndex]) {
+          selectMention(filteredMembers[selectedMentionIndex]);
+        }
+        return;
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentionDropdown(false);
+        return;
+      }
+    }
+
+    // Normale Enter-Behandlung
+    if (e.key === 'Enter' && !e.shiftKey && !showMentionDropdown) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const selectMention = (member: TeamMember) => {
+    const beforeCursor = newMessage.substring(0, cursorPosition);
+    const afterCursor = newMessage.substring(cursorPosition);
+
+    // Finde das @ und ersetze es mit dem Namen
+    const mentionMatch = beforeCursor.match(/@([\w]*)$/);
+    if (mentionMatch) {
+      const beforeMention = beforeCursor.substring(0, mentionMatch.index);
+      const newText = beforeMention + `@${member.displayName} ` + afterCursor;
+      const newCursorPos = beforeMention.length + member.displayName.length + 2;
+
+      setNewMessage(newText);
+      setShowMentionDropdown(false);
+
+      // Setze Cursor-Position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          textareaRef.current.focus();
+        }
+      }, 0);
+    }
   };
 
   const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
@@ -253,7 +387,26 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ height: 'calc(100vh - 400px)' }}>
+    <>
+      {/* CSS für Mention-Highlights */}
+      <style jsx>{`
+        .mention-highlight {
+          background-color: #dbeafe;
+          color: #1e40af;
+          padding: 1px 4px;
+          border-radius: 4px;
+          font-weight: 500;
+        }
+        .mention-highlight-self {
+          background-color: #fef3c7;
+          color: #92400e;
+          padding: 1px 4px;
+          border-radius: 4px;
+          font-weight: 600;
+        }
+      `}</style>
+
+      <div className="flex flex-col h-full" style={{ height: 'calc(100vh - 400px)' }}>
       {/* Warnung wenn kein Team-Mitglied */}
       {!isTeamMember && (
         <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
@@ -323,7 +476,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     <div className={`text-sm break-words whitespace-pre-wrap ${
                       isOwnMessage ? 'text-white' : 'text-gray-800'
                     }`}>
-                      {message.content}
+                      {/* Prüfe ob aktueller User erwähnt wurde */}
+                      {teamChatNotificationsService.isUserMentioned(message.content, userDisplayName) ? (
+                        <div className="bg-yellow-200 bg-opacity-20 px-1 rounded">
+                          {message.content}
+                        </div>
+                      ) : (
+                        <span>{message.content}</span>
+                      )}
                     </div>
 
                     {/* Mentions */}
@@ -378,21 +538,28 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         <div className="border-t border-gray-200 px-4 py-4 bg-white">
           <div className="space-y-3">
             {/* Nachrichteneingabe */}
-            <div className="flex items-end space-x-2">
-              <div className="flex-1">
+            <div className="flex items-end space-x-2 relative">
+              <div className="flex-1 relative">
                 <textarea
+                  ref={textareaRef}
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
+                  onChange={handleTextChange}
+                  onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben... (@name für Erwähnungen)"
                   rows={2}
                   className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   disabled={sending}
+                />
+
+                {/* @-Mention Dropdown */}
+                <MentionDropdown
+                  isVisible={showMentionDropdown}
+                  position={mentionDropdownPosition}
+                  searchTerm={mentionSearchTerm}
+                  teamMembers={teamMembers}
+                  selectedIndex={selectedMentionIndex}
+                  onSelect={selectMention}
+                  onClose={() => setShowMentionDropdown(false)}
                 />
               </div>
               <Button
@@ -416,7 +583,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
