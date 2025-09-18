@@ -275,42 +275,88 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           </div>
         ) : messages.length > 0 ? (
           <>
-            {messages.map((message) => {
+            {messages.map((message, index) => {
               const authorInfo = message.authorPhotoUrl
                 ? { name: message.authorName, photoUrl: message.authorPhotoUrl }
                 : getAuthorInfo(message.authorId, message.authorName);
 
+              const isOwnMessage = message.authorId === userId;
+              const previousMessage = index > 0 ? messages[index - 1] : null;
+              const isFirstInGroup = !previousMessage || previousMessage.authorId !== message.authorId;
+
               return (
-                <div key={message.id} className="flex items-start space-x-3">
-                  <Avatar
-                    className="size-8 flex-shrink-0"
-                    src={authorInfo.photoUrl}
-                    initials={getInitials(authorInfo.name || message.authorName)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline space-x-2">
-                      <Text className="text-sm font-medium text-gray-900">
-                        {message.authorName}
-                      </Text>
-                      <Text className="text-xs text-gray-500">
-                        {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
-                      </Text>
-                      {message.edited && (
-                        <Text className="text-xs text-gray-400">(bearbeitet)</Text>
-                      )}
-                    </div>
-                    <Text className="text-sm text-gray-700 mt-1 break-words whitespace-pre-wrap">
+                <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
+                  {!isOwnMessage && (
+                    <Avatar
+                      className="size-8 flex-shrink-0 mr-3 self-end"
+                      src={authorInfo.photoUrl}
+                      initials={getInitials(authorInfo.name || message.authorName)}
+                    />
+                  )}
+
+                  <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
+                    isOwnMessage
+                      ? 'bg-blue-600 text-white rounded-l-lg rounded-tr-lg'
+                      : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
+                  } px-4 py-2 shadow-sm`}>
+                    {/* Name und Zeit Badge - nur bei erstem in Gruppe oder eigenem */}
+                    {(isFirstInGroup || isOwnMessage) && (
+                      <div className={`flex items-center justify-between mb-1 ${
+                        isOwnMessage ? 'flex-row-reverse' : 'flex-row'
+                      }`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          isOwnMessage
+                            ? 'bg-blue-500 text-blue-100'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          {message.authorName}
+                        </span>
+                        <span className={`text-xs ${
+                          isOwnMessage ? 'text-blue-200' : 'text-gray-500'
+                        } ml-2`}>
+                          {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Nachrichteninhalt */}
+                    <div className={`text-sm break-words whitespace-pre-wrap ${
+                      isOwnMessage ? 'text-white' : 'text-gray-800'
+                    }`}>
                       {message.content}
-                    </Text>
+                    </div>
+
+                    {/* Mentions */}
                     {message.mentions && message.mentions.length > 0 && (
-                      <div className="flex items-center mt-1 space-x-1">
-                        <AtSymbolIcon className="h-3 w-3 text-gray-400" />
-                        <Text className="text-xs text-gray-500">
+                      <div className="flex items-center mt-2 space-x-1">
+                        <AtSymbolIcon className={`h-3 w-3 ${
+                          isOwnMessage ? 'text-blue-200' : 'text-gray-400'
+                        }`} />
+                        <span className={`text-xs ${
+                          isOwnMessage ? 'text-blue-200' : 'text-gray-500'
+                        }`}>
                           {message.mentions.join(', ')}
-                        </Text>
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Bearbeitet-Hinweis */}
+                    {message.edited && (
+                      <div className={`text-xs mt-1 ${
+                        isOwnMessage ? 'text-blue-200' : 'text-gray-400'
+                      }`}>
+                        (bearbeitet)
                       </div>
                     )}
                   </div>
+
+                  {isOwnMessage && (
+                    <Avatar
+                      className="size-8 flex-shrink-0 ml-3 self-end"
+                      src={currentUserPhoto}
+                      initials={getInitials(userDisplayName)}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -318,9 +364,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           </>
         ) : (
           <div className="text-center py-12">
-            <Text className="text-gray-500">
-              Noch keine Nachrichten. {isTeamMember ? 'Starten Sie die Unterhaltung!' : 'Nur Team-Mitglieder können Nachrichten senden.'}
-            </Text>
+            <div className="bg-gray-50 rounded-lg p-8 mx-4">
+              <Text className="text-gray-500 text-center">
+                Noch keine Nachrichten. {isTeamMember ? 'Starten Sie die Unterhaltung!' : 'Nur Team-Mitglieder können Nachrichten senden.'}
+              </Text>
+            </div>
           </div>
         )}
       </div>
