@@ -75,8 +75,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
             // Prüfe Team-Mitgliedschaft mit allen möglichen ID-Varianten
             const memberUserId = currentMember.userId || currentMember.id;
+            const memberId = currentMember.id;
+
             const isMember = Boolean(
-              // Check mit Member-ID in assignedTo Array
+              // Check mit Member-ID (currentMember.id) in assignedTo Array - DAS IST DER WICHTIGE CHECK!
+              (project.assignedTo && project.assignedTo.includes(memberId)) ||
+              // Check mit Member-userId in assignedTo Array
               (project.assignedTo && project.assignedTo.includes(memberUserId)) ||
               // Check mit direkter userId in assignedTo Array
               (project.assignedTo && project.assignedTo.includes(userId)) ||
@@ -90,22 +94,19 @@ export const TeamChat: React.FC<TeamChatProps> = ({
             console.log('Team-Mitgliedschaft Check:', {
               currentUserId: userId,
               memberUserId,
+              memberId, // Die wichtige ID!
               projectUserId: project.userId,
               projectManagerId: project.managerId,
               assignedTo: project.assignedTo,
               isMember,
-              // Debug: Welche TeamMember IDs sind in assignedTo?
-              assignedToMembers: project.assignedTo?.map(assignedId => {
-                const member = members.find(m => m.id === assignedId || m.userId === assignedId);
-                return {
-                  assignedId,
-                  foundMember: member ? {
-                    id: member.id,
-                    userId: member.userId,
-                    displayName: member.displayName
-                  } : null
-                };
-              })
+              // Debug: Prüfungen einzeln
+              checks: {
+                memberIdInAssigned: project.assignedTo && project.assignedTo.includes(memberId),
+                memberUserIdInAssigned: project.assignedTo && project.assignedTo.includes(memberUserId),
+                userIdInAssigned: project.assignedTo && project.assignedTo.includes(userId),
+                isProjectAdmin: project.userId === memberUserId || project.userId === userId,
+                isProjectManager: project.managerId && (project.managerId === memberUserId || project.managerId === userId)
+              }
             });
 
             setIsTeamMember(isMember);
