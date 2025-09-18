@@ -46,23 +46,64 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       if (!projectId || !userId || !organizationId) return;
 
       try {
-        // Lade Projekt und prüfe Team-Mitgliedschaft
-        const project = await projectService.getById(projectId, { organizationId });
-        if (project) {
-          const isMember = project.assignedTo?.includes(userId) ||
-                           project.userId === userId ||
-                           project.managerId === userId;
-          setIsTeamMember(isMember);
-        }
+        // Lade Projekt und Team-Mitglieder parallel
+        const [project, members] = await Promise.all([
+          projectService.getById(projectId, { organizationId }),
+          teamMemberService.getByOrganization(organizationId)
+        ]);
 
-        // Lade Team-Mitglieder für Avatare
-        const members = await teamMemberService.getByOrganization(organizationId);
         setTeamMembers(members);
 
-        // Finde aktuellen User für Avatar
-        const currentMember = members.find(m => m.userId === userId || m.id === userId);
-        if (currentMember) {
-          setCurrentUserPhoto(currentMember.photoUrl);
+        if (project) {
+          // Finde das aktuelle User Member-Objekt
+          const currentMember = members.find(m =>
+            m.userId === userId ||
+            m.id === userId ||
+            m.email === userDisplayName // Fallback auf Email
+          );
+
+          if (currentMember) {
+            setCurrentUserPhoto(currentMember.photoUrl);
+
+            // Prüfe Team-Mitgliedschaft mit allen möglichen ID-Varianten
+            const memberUserId = currentMember.userId || currentMember.id;
+            const isMember =
+              // Check mit Member-ID in assignedTo Array
+              project.assignedTo?.includes(memberUserId) ||
+              // Check mit direkter userId in assignedTo Array
+              project.assignedTo?.includes(userId) ||
+              // Check ob User der Projekt-Admin ist
+              project.userId === memberUserId ||
+              project.userId === userId ||
+              // Check ob User der Projekt-Manager ist
+              (project.managerId && (project.managerId === memberUserId || project.managerId === userId));
+
+            console.log('Team-Mitgliedschaft Check:', {
+              currentUserId: userId,
+              memberUserId,
+              projectUserId: project.userId,
+              projectManagerId: project.managerId,
+              assignedTo: project.assignedTo,
+              isMember
+            });
+
+            setIsTeamMember(isMember);
+          } else {
+            // Wenn kein Member gefunden wurde, prüfe direkt mit userId
+            const isMember =
+              project.assignedTo?.includes(userId) ||
+              project.userId === userId ||
+              (project.managerId && project.managerId === userId);
+
+            console.log('Direkte Team-Mitgliedschaft Check (kein Member gefunden):', {
+              userId,
+              projectUserId: project.userId,
+              assignedTo: project.assignedTo,
+              isMember
+            });
+
+            setIsTeamMember(isMember);
+          }
         }
       } catch (error) {
         console.error('Fehler beim Prüfen der Team-Mitgliedschaft:', error);
@@ -70,7 +111,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     };
 
     checkTeamMembership();
-  }, [projectId, userId, organizationId]);
+  }, [projectId, userId, organizationId, userDisplayName]);
 
   // Abonniere Nachrichten
   useEffect(() => {
@@ -157,17 +198,24 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     });
   };
 
-  const getAuthorInfo = (authorId: string): { name: string; photoUrl?: string } => {
-    const member = teamMembers.find(m => m.userId === authorId || m.id === authorId);
+  const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
+    // Suche in teamMembers mit beiden ID-Varianten
+    const member = teamMembers.find(m =>
+      m.userId === authorId ||
+      m.id === authorId ||
+      (authorName && m.displayName === authorName)
+    );
+
     if (member) {
       return {
         name: member.displayName,
         photoUrl: member.photoUrl
       };
     }
+
     // Fallback für unbekannte Mitglieder
     return {
-      name: 'Unbekannter User',
+      name: authorName || 'Unbekannter User',
       photoUrl: undefined
     };
   };
@@ -207,7 +255,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
             {messages.map((message) => {
               const authorInfo = message.authorPhotoUrl
                 ? { name: message.authorName, photoUrl: message.authorPhotoUrl }
-                : getAuthorInfo(message.authorId);
+                : getAuthorInfo(message.authorId, message.authorName);
 
               return (
                 <div key={message.id} className="flex items-start space-x-3">
