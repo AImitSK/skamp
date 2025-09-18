@@ -54,6 +54,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
         setTeamMembers(members);
 
+        // Debug: Alle Team-Mitglieder ausgeben
+        console.log('Alle Team-Mitglieder:', members.map(m => ({
+          id: m.id,
+          userId: m.userId,
+          displayName: m.displayName,
+          email: m.email
+        })));
+
         if (project) {
           // Finde das aktuelle User Member-Objekt
           const currentMember = members.find(m =>
@@ -85,7 +93,19 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               projectUserId: project.userId,
               projectManagerId: project.managerId,
               assignedTo: project.assignedTo,
-              isMember
+              isMember,
+              // Debug: Welche TeamMember IDs sind in assignedTo?
+              assignedToMembers: project.assignedTo?.map(assignedId => {
+                const member = members.find(m => m.id === assignedId || m.userId === assignedId);
+                return {
+                  assignedId,
+                  foundMember: member ? {
+                    id: member.id,
+                    userId: member.userId,
+                    displayName: member.displayName
+                  } : null
+                };
+              })
             });
 
             setIsTeamMember(isMember);
