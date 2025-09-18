@@ -378,7 +378,11 @@ class NotificationsService {
       case 'MEDIA_LINK_EXPIRED':
         // System-generated, always valid in service context
         return true;
-        
+
+      case 'TEAM_CHAT_MENTION':
+        // Validiere Team-Chat Mention Kontext
+        return metadata?.projectId && metadata?.mentionedBy && metadata?.messageContent;
+
       default:
         return false;
     }
@@ -408,6 +412,9 @@ class NotificationsService {
         return settings.mediaDownloaded;
       case 'MEDIA_LINK_EXPIRED':
         return settings.mediaLinkExpired;
+      case 'TEAM_CHAT_MENTION':
+        // Team-Chat Mentions standardmäßig aktiviert
+        return true;
       default:
         return true;
     }

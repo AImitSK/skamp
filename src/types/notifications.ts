@@ -109,6 +109,7 @@ export const NOTIFICATION_TEMPLATES = {
   MEDIA_FIRST_ACCESS: 'Ihr geteilter Link für "{mediaAssetName}" wurde zum ersten Mal aufgerufen.',
   MEDIA_DOWNLOADED: 'Ihre Datei "{mediaAssetName}" wurde von einem Besucher heruntergeladen.',
   MEDIA_LINK_EXPIRED: 'Der geteilte Link für "{mediaAssetName}" ist heute abgelaufen.',
+  TEAM_CHAT_MENTION: '{mentionedByName} hat Sie in {projectTitle} erwähnt: "{messageContent}"',
   project_assignment: 'Du wurdest dem Projekt "{projectTitle}" zugewiesen.'
 } as const;
 
