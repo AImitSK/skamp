@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   PaperAirplaneIcon,
   AtSymbolIcon,
-  PaperClipIcon,
-  FaceSmileIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
-import { projectCommunicationService } from '@/lib/firebase/project-communication-service';
+import { teamChatService, TeamMessage as FirebaseTeamMessage } from '@/lib/firebase/team-chat-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
+import { projectService } from '@/lib/firebase/project-service';
+import { TeamMember } from '@/types/international';
+import { Timestamp } from 'firebase/firestore';
 
 interface TeamChatProps {
   projectId: string;
@@ -20,20 +23,6 @@ interface TeamChatProps {
   userDisplayName: string;
 }
 
-interface ProjectMessage {
-  id: string;
-  projectId: string;
-  messageType: 'general' | 'planning' | 'feedback' | 'file_upload';
-  planningContext?: 'strategy' | 'briefing' | 'inspiration' | 'research';
-  content: string;
-  author: string;
-  authorName: string;
-  mentions: string[];
-  attachments: { id: string; name: string; url?: string }[];
-  timestamp: Date;
-  organizationId: string;
-}
-
 export const TeamChat: React.FC<TeamChatProps> = ({
   projectId,
   projectTitle,
@@ -41,154 +30,146 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   userId,
   userDisplayName
 }) => {
-  const [projectMessages, setProjectMessages] = useState<ProjectMessage[]>([]);
+  const [messages, setMessages] = useState<FirebaseTeamMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [messageType, setMessageType] = useState<'general' | 'planning' | 'feedback' | 'file_upload'>('general');
-  const [planningContext, setPlanningContext] = useState<'strategy' | 'briefing' | 'inspiration' | 'research' | ''>('');
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [isTeamMember, setIsTeamMember] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [currentUserPhoto, setCurrentUserPhoto] = useState<string | undefined>();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
+  // Prüfe Team-Mitgliedschaft und lade Team-Daten
   useEffect(() => {
-    if (projectId && organizationId) {
-      loadMessages();
-    }
-  }, [projectId, organizationId]);
+    const checkTeamMembership = async () => {
+      if (!projectId || !userId || !organizationId) return;
 
-  const loadMessages = async () => {
-    if (!organizationId) return;
+      try {
+        // Lade Projekt und prüfe Team-Mitgliedschaft
+        const project = await projectService.getById(projectId, { organizationId });
+        if (project) {
+          const isMember = project.assignedTo?.includes(userId) ||
+                           project.userId === userId ||
+                           project.managerId === userId;
+          setIsTeamMember(isMember);
+        }
+
+        // Lade Team-Mitglieder für Avatare
+        const members = await teamMemberService.getByOrganization(organizationId);
+        setTeamMembers(members);
+
+        // Finde aktuellen User für Avatar
+        const currentMember = members.find(m => m.userId === userId || m.id === userId);
+        if (currentMember) {
+          setCurrentUserPhoto(currentMember.photoUrl);
+        }
+      } catch (error) {
+        console.error('Fehler beim Prüfen der Team-Mitgliedschaft:', error);
+      }
+    };
+
+    checkTeamMembership();
+  }, [projectId, userId, organizationId]);
+
+  // Abonniere Nachrichten
+  useEffect(() => {
+    if (!projectId || !organizationId) return;
 
     setLoading(true);
-    try {
-      // Mock-Daten für Team-Nachrichten
-      setProjectMessages([
-        {
-          id: '1',
-          projectId,
-          messageType: 'planning',
-          planningContext: 'strategy',
-          content: 'Das Briefing ist jetzt finalisiert. @maria bitte einmal drüberschauen.',
-          author: 'user1',
-          authorName: 'Thomas Klein',
-          mentions: ['maria'],
-          attachments: [],
-          timestamp: new Date(Date.now() - 45 * 60 * 1000), // 45 Minuten
-          organizationId
-        },
-        {
-          id: '2',
-          projectId,
-          messageType: 'general',
-          content: 'Kann das Briefing bis morgen finalisiert werden?',
-          author: 'user2',
-          authorName: 'Maria Bauer',
-          mentions: [],
-          attachments: [],
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 Stunden
-          organizationId
-        },
-        {
-          id: '3',
-          projectId,
-          messageType: 'feedback',
-          content: 'Die Zielgruppenanalyse sieht sehr gut aus! Ein paar kleine Anmerkungen habe ich direkt im Dokument hinterlassen.',
-          author: 'user3',
-          authorName: 'Stefan Schmidt',
-          mentions: [],
-          attachments: [
-            { id: 'att1', name: 'Zielgruppenanalyse_v2.pdf', url: '#' }
-          ],
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 Tag
-          organizationId
-        }
-      ]);
-    } catch (error) {
-      console.error('Fehler beim Laden der Nachrichten:', error);
-    } finally {
-      setLoading(false);
+
+    // Beende vorheriges Abonnement
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
     }
+
+    // Abonniere neue Nachrichten
+    unsubscribeRef.current = teamChatService.subscribeToMessages(
+      projectId,
+      (newMessages) => {
+        setMessages(newMessages);
+        setLoading(false);
+        // Scrolle zu neuen Nachrichten
+        setTimeout(() => scrollToBottom(), 100);
+      },
+      100 // Lade bis zu 100 Nachrichten
+    );
+
+    // Cleanup beim Unmount
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, [projectId, organizationId]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !userId || !organizationId) return;
+    if (!newMessage.trim() || !userId || !organizationId || !isTeamMember || sending) return;
 
-    setLoading(true);
+    setSending(true);
     try {
-      // Temporär: Mock-Nachricht hinzufügen
-      const newMsg: ProjectMessage = {
-        id: String(Date.now()),
-        projectId,
-        messageType,
-        planningContext: messageType === 'planning' ? planningContext : undefined,
+      // Extrahiere Mentions
+      const mentions = teamChatService.extractMentions(newMessage);
+
+      // Sende Nachricht
+      await teamChatService.sendMessage(projectId, {
         content: newMessage,
-        author: userId,
+        authorId: userId,
         authorName: userDisplayName,
-        mentions: extractMentions(newMessage),
-        attachments: [],
-        timestamp: new Date(),
+        authorPhotoUrl: currentUserPhoto,
+        mentions,
         organizationId
-      };
+      });
 
-      setProjectMessages(prev => [newMsg, ...prev]);
       setNewMessage('');
-      setMessageType('general');
-      setPlanningContext('');
-
-      // Später: Firebase-Integration
-      // await projectCommunicationService.createInternalNote(...)
+      // Scrolle nach unten nach dem Senden
+      setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht:', error);
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
-  const extractMentions = (text: string): string[] => {
-    const mentionPattern = /@(\w+)/g;
-    const matches = text.match(mentionPattern);
-    return matches ? matches.map(m => m.substring(1)) : [];
-  };
-
-  const formatTimestamp = (timestamp: Date): string => {
+  const formatTimestamp = (timestamp: Timestamp | Date): string => {
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 60) return `vor ${minutes} Minuten`;
-    if (hours < 24) return `vor ${hours} Stunden`;
-    if (days < 7) return `vor ${days} Tagen`;
+    if (minutes < 1) return 'gerade eben';
+    if (minutes < 60) return `vor ${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}`;
+    if (hours < 24) return `vor ${hours} ${hours === 1 ? 'Stunde' : 'Stunden'}`;
+    if (days < 7) return `vor ${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
 
-    return timestamp.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
-  const getMessageTypeColor = (type: string) => {
-    switch (type) {
-      case 'planning': return 'bg-yellow-100 text-yellow-800';
-      case 'feedback': return 'bg-green-100 text-green-800';
-      case 'file_upload': return 'bg-blue-100 text-blue-800';
-      default: return '';
+  const getAuthorInfo = (authorId: string): { name: string; photoUrl?: string } => {
+    const member = teamMembers.find(m => m.userId === authorId || m.id === authorId);
+    if (member) {
+      return {
+        name: member.displayName,
+        photoUrl: member.photoUrl
+      };
     }
-  };
-
-  const getMessageTypeLabel = (type: string, context?: string) => {
-    if (type === 'planning' && context) {
-      switch (context) {
-        case 'strategy': return 'Strategie';
-        case 'briefing': return 'Briefing';
-        case 'inspiration': return 'Inspiration';
-        case 'research': return 'Recherche';
-      }
-    }
-    switch (type) {
-      case 'planning': return 'Planung';
-      case 'feedback': return 'Feedback';
-      case 'file_upload': return 'Datei';
-      default: return '';
-    }
+    // Fallback für unbekannte Mitglieder
+    return {
+      name: 'Unbekannter User',
+      photoUrl: undefined
+    };
   };
 
   const getInitials = (name: string): string => {
@@ -202,145 +183,120 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   return (
     <div className="flex flex-col h-full" style={{ height: 'calc(100vh - 400px)' }}>
+      {/* Warnung wenn kein Team-Mitglied */}
+      {!isTeamMember && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+            <Text className="text-sm text-yellow-800">
+              Sie sind kein Mitglied dieses Projekt-Teams. Sie können die Nachrichten lesen, aber nicht schreiben.
+            </Text>
+          </div>
+        </div>
+      )}
+
       {/* Nachrichten-Bereich */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {projectMessages.length > 0 ? (
-          projectMessages.map((message) => (
-            <div key={message.id} className="flex items-start space-x-3">
-              <Avatar
-                className="size-8 flex-shrink-0"
-                initials={getInitials(message.authorName)}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline space-x-2">
-                  <Text className="text-sm font-medium text-gray-900">
-                    {message.authorName}
-                  </Text>
-                  <Text className="text-xs text-gray-500">
-                    {formatTimestamp(message.timestamp)}
-                  </Text>
-                  {message.messageType !== 'general' && (
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getMessageTypeColor(message.messageType)}`}>
-                      {getMessageTypeLabel(message.messageType, message.planningContext)}
-                    </span>
-                  )}
-                </div>
-                <Text className="text-sm text-gray-700 mt-1 break-words">
-                  {message.content}
-                </Text>
-                {message.mentions.length > 0 && (
-                  <div className="flex items-center mt-1 space-x-1">
-                    <AtSymbolIcon className="h-3 w-3 text-gray-400" />
-                    <Text className="text-xs text-gray-500">
-                      {message.mentions.join(', ')}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <Text className="text-gray-500 mt-2">Lade Nachrichten...</Text>
+          </div>
+        ) : messages.length > 0 ? (
+          <>
+            {messages.map((message) => {
+              const authorInfo = message.authorPhotoUrl
+                ? { name: message.authorName, photoUrl: message.authorPhotoUrl }
+                : getAuthorInfo(message.authorId);
+
+              return (
+                <div key={message.id} className="flex items-start space-x-3">
+                  <Avatar
+                    className="size-8 flex-shrink-0"
+                    src={authorInfo.photoUrl}
+                    initials={getInitials(authorInfo.name || message.authorName)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline space-x-2">
+                      <Text className="text-sm font-medium text-gray-900">
+                        {message.authorName}
+                      </Text>
+                      <Text className="text-xs text-gray-500">
+                        {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
+                      </Text>
+                      {message.edited && (
+                        <Text className="text-xs text-gray-400">(bearbeitet)</Text>
+                      )}
+                    </div>
+                    <Text className="text-sm text-gray-700 mt-1 break-words whitespace-pre-wrap">
+                      {message.content}
                     </Text>
+                    {message.mentions && message.mentions.length > 0 && (
+                      <div className="flex items-center mt-1 space-x-1">
+                        <AtSymbolIcon className="h-3 w-3 text-gray-400" />
+                        <Text className="text-xs text-gray-500">
+                          {message.mentions.join(', ')}
+                        </Text>
+                      </div>
+                    )}
                   </div>
-                )}
-                {message.attachments.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {message.attachments.map((attachment) => (
-                      <a
-                        key={attachment.id}
-                        href={attachment.url}
-                        className="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        <PaperClipIcon className="h-3 w-3" />
-                        <span>{attachment.name}</span>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </>
         ) : (
           <div className="text-center py-12">
             <Text className="text-gray-500">
-              Noch keine Nachrichten. Starten Sie die Unterhaltung!
+              Noch keine Nachrichten. {isTeamMember ? 'Starten Sie die Unterhaltung!' : 'Nur Team-Mitglieder können Nachrichten senden.'}
             </Text>
           </div>
         )}
       </div>
 
-      {/* Eingabebereich */}
-      <div className="border-t border-gray-200 px-4 py-4 bg-white">
-        <div className="space-y-3">
-          {/* Nachrichtentyp-Auswahl */}
-          <div className="flex items-center space-x-2">
-            <select
-              value={messageType}
-              onChange={(e) => setMessageType(e.target.value as any)}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="general">Allgemein</option>
-              <option value="planning">Planung</option>
-              <option value="feedback">Feedback</option>
-            </select>
-
-            {messageType === 'planning' && (
-              <select
-                value={planningContext}
-                onChange={(e) => setPlanningContext(e.target.value as any)}
-                className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Kontext wählen...</option>
-                <option value="strategy">Strategie</option>
-                <option value="briefing">Briefing</option>
-                <option value="inspiration">Inspiration</option>
-                <option value="research">Recherche</option>
-              </select>
-            )}
-          </div>
-
-          {/* Nachrichteneingabe */}
-          <div className="flex items-end space-x-2">
-            <div className="flex-1">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Nachricht eingeben... (@name für Erwähnungen)"
-                rows={2}
-                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                title="Datei anhängen"
-              >
-                <PaperClipIcon className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-                title="Emoji"
-              >
-                <FaceSmileIcon className="h-5 w-5" />
-              </button>
+      {/* Eingabebereich - nur für Team-Mitglieder */}
+      {isTeamMember && (
+        <div className="border-t border-gray-200 px-4 py-4 bg-white">
+          <div className="space-y-3">
+            {/* Nachrichteneingabe */}
+            <div className="flex items-end space-x-2">
+              <div className="flex-1">
+                <textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Nachricht eingeben... (@name für Erwähnungen)"
+                  rows={2}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  disabled={sending}
+                />
+              </div>
               <Button
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim() || loading}
+                disabled={!newMessage.trim() || sending}
                 className="px-4 py-2"
               >
-                <PaperAirplaneIcon className="h-4 w-4" />
+                {sending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <PaperAirplaneIcon className="h-4 w-4" />
+                )}
               </Button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <Text className="text-xs text-gray-500">
-              Verwenden Sie @ für Erwähnungen • Shift+Enter für neue Zeile
-            </Text>
+            <div className="flex items-center justify-between">
+              <Text className="text-xs text-gray-500">
+                Verwenden Sie @ für Erwähnungen • Shift+Enter für neue Zeile
+              </Text>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
