@@ -46,8 +46,8 @@ import ProjectAssetGallery from '@/components/projects/assets/ProjectAssetGaller
 import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatus';
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
-import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
+import { TeamChat } from '@/components/projects/communication/TeamChat';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project } from '@/types/project';
@@ -77,8 +77,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'communication' | 'monitoring'>('overview');
-  const [showCommunicationModal, setShowCommunicationModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'teamchat' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
@@ -431,14 +430,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  // Handle Communication Feed
-  const handleOpenCommunicationFeed = () => {
-    setShowCommunicationModal(true);
-  };
-
-  const handleCloseCommunicationFeed = () => {
-    setShowCommunicationModal(false);
-  };
 
   const handleDeleteProject = () => {
     if (!project?.id || !currentOrganization?.id) return;
@@ -651,16 +642,16 @@ export default function ProjectDetailPage() {
                 <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
                 Tasks
               </button>
-              <button 
-                onClick={() => setActiveTab('communication')}
+              <button
+                onClick={() => setActiveTab('teamchat')}
                 className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'communication' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'teamchat'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                Kommunikation
+                Team-Chat
               </button>
               <button 
                 onClick={() => setActiveTab('monitoring')}
@@ -745,69 +736,15 @@ export default function ProjectDetailPage() {
           )}
 
 
-          {/* Kommunikation Tab */}
-          {activeTab === 'communication' && (
-            <div className="space-y-6">
-              {/* Team-Kommunikation */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
-                  <Subheading>Team-Kommunikation</Subheading>
-                </div>
-                <Text className="text-gray-600 mb-4">
-                  Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
-                </Text>
-                <div className="space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Text className="text-xs font-medium text-blue-600">MB</Text>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <Text className="text-sm font-medium">Maria Bauer</Text>
-                      <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
-                      <Text className="text-sm text-gray-700 mt-1">
-                        Kann das Briefing bis morgen finalisiert werden?
-                      </Text>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Text className="text-xs font-medium text-green-600">TK</Text>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <Text className="text-sm font-medium">Thomas Klein</Text>
-                      <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
-                      <Text className="text-sm text-gray-700 mt-1">
-                        Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
-                      </Text>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    plain
-                    className="w-full"
-                    onClick={handleOpenCommunicationFeed}
-                  >
-                    <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                    Chat öffnen
-                  </Button>
-                </div>
-              </div>
-
-              {/* Projekt-Kommunikation Feed */}
-              <div className="text-center py-12 bg-blue-50 rounded-lg">
-                <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
-                <Subheading className="mb-2">Projekt-Kommunikation</Subheading>
-                <Text className="text-gray-600 mb-4">
-                  Hier werden alle projekt-bezogenen E-Mails und Kommunikation automatisch erkannt und zugeordnet.
-                </Text>
-                <Button plain onClick={handleOpenCommunicationFeed}>
-                  <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                  Kommunikations-Feed öffnen
-                </Button>
-              </div>
-            </div>
+          {/* Team-Chat Tab */}
+          {activeTab === 'teamchat' && project && currentOrganization && (
+            <TeamChat
+              projectId={project.id!}
+              projectTitle={project.title}
+              organizationId={currentOrganization.id}
+              userId={user?.uid || ''}
+              userDisplayName={user?.displayName || 'Unbekannter User'}
+            />
           )}
 
           {/* Monitoring & Analytics Tab */}
@@ -1288,15 +1225,6 @@ export default function ProjectDetailPage() {
         />
       )}
 
-      {/* Communication Modal */}
-      {showCommunicationModal && (
-        <CommunicationModal
-          isOpen={showCommunicationModal}
-          onClose={handleCloseCommunicationFeed}
-          projectId={project?.id || ''}
-          projectTitle={project?.title || ''}
-        />
-      )}
 
       {/* Feedback History Modal */}
       {showFeedbackModal && selectedApproval && (
