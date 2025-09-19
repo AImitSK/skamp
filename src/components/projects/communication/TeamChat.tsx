@@ -448,25 +448,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   // Funktion zur Erkennung und Formatierung von Links, Assets + Emojis
   const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
-    console.log('🔍 Debug - formatMessageWithLinksAndEmojis input:', content);
-
-    // Erst Emojis ersetzen
-    const contentWithEmojis = replaceEmojis(content);
-
+    // WICHTIG: Asset-Links ZUERST parsen, DANN Emojis ersetzen!
     // Asset-Links Pattern: 📎 [Filename.jpg](asset://projectId/assetId) oder 📁 [Ordner: Name](folder://projectId/folderId)
     // Pattern muss lange IDs unterstützen: [a-zA-Z0-9_-]+ für Firebase IDs
     const assetRegex = /([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
 
-    console.log('🔍 Debug - Testing asset regex on:', contentWithEmojis);
-    const assetMatches = contentWithEmojis.match(assetRegex);
-    console.log('🔍 Debug - Asset matches found:', assetMatches);
-
     // Standard-Links Pattern
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
 
-    // Kombiniere beide Patterns
+    // Kombiniere beide Patterns - verwende ORIGINAL content, nicht emoji-processed
     const combinedRegex = new RegExp(`${assetRegex.source}|${urlRegex.source}`, 'g');
-    const parts = contentWithEmojis.split(combinedRegex);
+    const parts = content.split(combinedRegex);
 
     let partIndex = 0;
     return (
@@ -519,7 +511,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
             );
           }
 
-          return <span key={index}>{part}</span>;
+          // Normale Text-Teile: Emojis ersetzen
+          return <span key={index}>{replaceEmojis(part)}</span>;
         })}
       </>
     );
