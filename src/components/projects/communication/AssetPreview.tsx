@@ -170,7 +170,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       <div className="relative inline-block group cursor-pointer" onClick={() => setShowPreviewModal(true)}>
         {isImage && asset.downloadUrl ? (
           /* Bild Asset mit eigenem Overlay */
-          <div className="relative inline-block">
+          <div className="relative inline-block overflow-hidden rounded-lg">
             <img
               src={asset.downloadUrl}
               alt={asset.fileName}
@@ -190,7 +190,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
           </div>
         ) : (
           /* Icon für andere Dateitypen */
-          <div className="relative w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
             <FileIcon className="h-12 w-12 text-gray-400" />
             {/* Auge-Overlay für Icons */}
             <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
