@@ -60,7 +60,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reaction States
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [showReactionTooltip, setShowReactionTooltip] = useState<string | null>(null);
 
   // Prüfe Team-Mitgliedschaft und lade Team-Daten
@@ -720,9 +719,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               return (
                 <div
                   key={message.id}
-                  className={`relative flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
-                  onMouseEnter={() => setHoveredMessageId(message.id || null)}
-                  onMouseLeave={() => setHoveredMessageId(null)}
+                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
                 >
                   {!isOwnMessage && (
                     <Avatar
@@ -795,55 +792,40 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     )}
 
 
-                    {/* Reaction Buttons Overlay - relativ zur Sprechblase */}
-                    {hoveredMessageId === message.id && (
-                      <div className="absolute bottom-0 left-0 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1 -mb-2 -ml-2">
-                        {['👍', '👎', '🤚'].map((emoji) => (
+                    {/* Fixe Reaction Buttons - immer sichtbar */}
+                    <div className="flex items-center gap-1 mt-2">
+                      {['👍', '👎', '🤚'].map((emoji) => {
+                        // Finde die Reaction für dieses Emoji
+                        const reaction = message.reactions?.find(r => r.emoji === emoji);
+                        const hasUserReacted = reaction ? reaction.userIds.includes(userId) : false;
+                        const count = reaction ? reaction.count : 0;
+
+                        return (
                           <button
                             key={emoji}
                             onClick={() => handleReaction(message.id!, emoji)}
-                            className="text-lg px-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
-                            title={`Mit ${emoji} reagieren`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Existing Reactions - rechts neben der Sprechblase */}
-                  {message.reactions && message.reactions.length > 0 && (
-                    <div className={`flex items-center gap-1 mt-1 ${
-                      isOwnMessage ? 'justify-end mr-16' : 'justify-start ml-16'
-                    }`}>
-                      {message.reactions.map((reaction, reactionIndex) => {
-                        const hasUserReacted = reaction.userIds.includes(userId);
-                        return (
-                          <button
-                            key={`${reaction.emoji}-${reactionIndex}`}
-                            onClick={() => handleReaction(message.id!, reaction.emoji)}
-                            onMouseEnter={() => setShowReactionTooltip(`${message.id}-${reaction.emoji}`)}
+                            onMouseEnter={() => count > 0 ? setShowReactionTooltip(`${message.id}-${emoji}`) : null}
                             onMouseLeave={() => setShowReactionTooltip(null)}
-                            className={`relative text-xs px-2 py-1 rounded-full border transition-colors ${
+                            className={`relative text-sm px-2 py-1 rounded-full border transition-colors ${
                               hasUserReacted
                                 ? 'bg-blue-100 border-blue-300 text-blue-800'
-                                : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                                : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
                             }`}
+                            title={`Mit ${emoji} reagieren`}
                           >
-                            {reaction.emoji} {reaction.count}
+                            {emoji} {count > 0 && count}
 
-                            {/* Tooltip */}
-                            {showReactionTooltip === `${message.id}-${reaction.emoji}` && (
+                            {/* Tooltip nur bei Count > 0 */}
+                            {showReactionTooltip === `${message.id}-${emoji}` && count > 0 && (
                               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap z-10">
-                                {reaction.userNames.join(', ')}
+                                {reaction?.userNames.join(', ')}
                               </div>
                             )}
                           </button>
                         );
                       })}
                     </div>
-                  )}
+                  </div>
 
                   {isOwnMessage && (
                     <Avatar
