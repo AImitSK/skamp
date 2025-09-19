@@ -386,6 +386,100 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       .slice(0, 2);
   };
 
+  // Emoji-Mapping für Text-Smileys
+  const emojiMap: { [key: string]: string } = {
+    ':)': '😊',
+    ':-)': '😊',
+    ';)': '😉',
+    ';-)': '😉',
+    ':D': '😃',
+    ':-D': '😃',
+    ':d': '😃',
+    ':(': '😢',
+    ':-(': '😢',
+    ':P': '😛',
+    ':-P': '😛',
+    ':p': '😛',
+    ':o': '😮',
+    ':O': '😮',
+    ':-o': '😮',
+    ':-O': '😮',
+    ':|': '😐',
+    ':-|': '😐',
+    ':*': '😘',
+    ':-*': '😘',
+    '<3': '❤️',
+    '</3': '💔',
+    ':s': '😕',
+    ':-s': '😕',
+    ':S': '😕',
+    ':-S': '😕',
+    ':\\': '😕',
+    ':-\\': '😕',
+    ':/')': '😕',
+    ':-/)': '😕',
+    '>:(': '😠',
+    '>:-(': '😠',
+    ':x': '😵',
+    ':-x': '😵',
+    ':X': '😵',
+    ':-X': '😵'
+  };
+
+  // Funktion zur Ersetzung von Text-Smileys durch Emojis
+  const replaceEmojis = (text: string): string => {
+    let result = text;
+    Object.entries(emojiMap).forEach(([textEmoji, emoji]) => {
+      // Escape spezielle Regex-Zeichen
+      const escapedTextEmoji = textEmoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Verwende Wort-Grenzen für bessere Erkennung
+      const regex = new RegExp(`\\b${escapedTextEmoji}\\b|(?<=\\s|^)${escapedTextEmoji}(?=\\s|$)`, 'g');
+      result = result.replace(regex, emoji);
+    });
+    return result;
+  };
+
+  // Funktion zur Erkennung und Formatierung von Links + Emojis
+  const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
+    // Erst Emojis ersetzen
+    const contentWithEmojis = replaceEmojis(content);
+
+    // Dann Links erkennen
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+    const parts = contentWithEmojis.split(urlRegex);
+
+    return (
+      <>
+        {parts.map((part, index) => {
+          if (urlRegex.test(part)) {
+            // Stelle sicher, dass die URL ein Protokoll hat
+            let url = part;
+            if (!part.startsWith('http://') && !part.startsWith('https://')) {
+              url = 'https://' + part;
+            }
+
+            return (
+              <a
+                key={index}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`underline hover:no-underline ${
+                  isOwnMessage
+                    ? 'text-blue-100 hover:text-white'
+                    : 'text-blue-600 hover:text-blue-800'
+                }`}
+              >
+                {part}
+              </a>
+            );
+          }
+          return <span key={index}>{part}</span>;
+        })}
+      </>
+    );
+  };
+
   return (
     <>
       {/* CSS für Mention-Highlights */}
@@ -479,10 +573,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       {/* Prüfe ob aktueller User erwähnt wurde */}
                       {teamChatNotificationsService.isUserMentioned(message.content, userDisplayName) ? (
                         <div className="bg-yellow-200 bg-opacity-20 px-1 rounded">
-                          {message.content}
+                          {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
                         </div>
                       ) : (
-                        <span>{message.content}</span>
+                        formatMessageWithLinksAndEmojis(message.content, isOwnMessage)
                       )}
                     </div>
 
