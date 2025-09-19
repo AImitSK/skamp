@@ -153,9 +153,10 @@ export class TeamChatService {
   }
 
   extractMentions(text: string): string[] {
-    const mentionPattern = /@(\w+)/g;
+    // Erweiterte Pattern für vollständige Namen mit Leerzeichen
+    const mentionPattern = /@([\w\s]+?)(?=\s{2,}|$|[,.!?]|\n)/g;
     const matches = text.match(mentionPattern);
-    return matches ? matches.map(m => m.substring(1)) : [];
+    return matches ? matches.map(m => m.substring(1).trim()) : [];
   }
 
   async searchMessages(

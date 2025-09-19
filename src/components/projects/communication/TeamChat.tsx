@@ -268,7 +268,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
     // Prüfe auf @-Mention
     const beforeCursor = value.substring(0, cursorPos);
-    const mentionMatch = beforeCursor.match(/@([\w]*)$/);
+    const mentionMatch = beforeCursor.match(/@([\w\s]*)$/);
 
     if (mentionMatch) {
       const searchTerm = mentionMatch[1];
@@ -336,7 +336,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     const afterCursor = newMessage.substring(cursorPosition);
 
     // Finde das @ und ersetze es mit dem Namen
-    const mentionMatch = beforeCursor.match(/@([\w]*)$/);
+    const mentionMatch = beforeCursor.match(/@([\w\s]*)$/);
     if (mentionMatch) {
       const beforeMention = beforeCursor.substring(0, mentionMatch.index);
       const newText = beforeMention + `@${member.displayName} ` + afterCursor;

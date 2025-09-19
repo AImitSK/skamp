@@ -125,7 +125,8 @@ export class TeamChatNotificationsService {
     messageContent: string,
     teamMembers: TeamMember[]
   ): string[] {
-    const mentionPattern = /@([^\s]+)/g;
+    // Pattern für vollständige Namen mit Leerzeichen
+    const mentionPattern = /@([\w\s]+?)(?=\s{2,}|$|[,.!?]|\n)/g;
     const mentions = messageContent.match(mentionPattern);
 
     console.log('\n🔍 Debug - extractMentionedUserIds:');
@@ -143,38 +144,34 @@ export class TeamChatNotificationsService {
       const mentionText = mention.substring(1); // Entferne @
       console.log(`\n🔎 Suche Member für Mention: "${mentionText}"`);
 
-      // WICHTIG: Bei Duplikaten (gleicher displayName) ALLE benachrichtigen!
-      const matchingMembers = teamMembers.filter(m => {
-        // Exakter Treffer nach displayName
-        if (m.displayName.toLowerCase() === mentionText.toLowerCase()) return true;
-        // Teil-Treffer nach displayName
-        if (m.displayName.toLowerCase().includes(mentionText.toLowerCase())) return true;
-        // Vollständiger Name wurde erwähnt (z.B. "@Stefan Kühne")
-        const fullNameMention = mentionText.replace(/_/g, ' ');
-        if (m.displayName.toLowerCase() === fullNameMention.toLowerCase()) return true;
-        // Email-Treffer
-        if (m.email.toLowerCase().includes(mentionText.toLowerCase())) return true;
-        return false;
-      });
+      // Suche nach exaktem Treffer des displayName
+      let member = teamMembers.find(m =>
+        m.displayName === mentionText // Exakter Match mit dem, was eingefügt wurde
+      );
 
-      console.log(`Gefundene Members (${matchingMembers.length}):`, matchingMembers.map(m => ({
-        id: m.id,
-        userId: m.userId,
-        displayName: m.displayName,
-        email: m.email
-      })));
+      if (!member) {
+        // Fallback: Suche nach Teil-Übereinstimmungen
+        member = teamMembers.find(m =>
+          m.displayName.toLowerCase().includes(mentionText.toLowerCase())
+        );
+      }
 
-      // Füge ALLE gefundenen Member hinzu (wichtig bei Duplikaten!)
-      matchingMembers.forEach(member => {
+      console.log('Gefundenes Member:', member ? {
+        id: member.id,
+        userId: member.userId,
+        displayName: member.displayName,
+        email: member.email
+      } : 'NICHT GEFUNDEN');
+
+      if (member) {
+        // Präferiere userId, falls verfügbar
         const userId = member.userId || member.id;
         console.log(`Verwende User-ID: ${userId} für ${member.displayName}`);
 
         if (userId && !mentionedUserIds.includes(userId)) {
           mentionedUserIds.push(userId);
         }
-      });
-
-      if (matchingMembers.length === 0) {
+      } else {
         console.warn(`❌ Kein Team-Mitglied gefunden für Mention: "${mentionText}"`);
       }
     });

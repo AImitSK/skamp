@@ -31,15 +31,6 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sortiere: Owner/Admin zuerst
-  filteredMembers.sort((a, b) => {
-    if (a.role === 'owner' && b.role !== 'owner') return -1;
-    if (b.role === 'owner' && a.role !== 'owner') return 1;
-    if (a.role === 'admin' && b.role !== 'admin') return -1;
-    if (b.role === 'admin' && a.role !== 'admin') return 1;
-    return a.displayName.localeCompare(b.displayName);
-  });
-
   // Schließe Dropdown wenn außerhalb geklickt wird
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
