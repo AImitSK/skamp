@@ -54,13 +54,15 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
   organizationId
 }) => {
   const [loading, setLoading] = useState(false);
-  const [folderStructure, setFolderStructure] = useState<FolderStructure | null>(null);
-  const [currentFolder, setCurrentFolder] = useState<any>(null);
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
-  const [folderPath, setFolderPath] = useState<any[]>([]);
+  // Exakt wie im funktionierenden ProjectFoldersView
+  const [projectFolders, setProjectFolders] = useState<FolderStructure | null>(null);
+  const [currentFolders, setCurrentFolders] = useState<any[]>([]);
+  const [currentAssets, setCurrentAssets] = useState<MediaAsset[]>([]);
+  const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<{id: string, name: string}[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Lade Projekt-Ordner-Struktur beim Öffnen
+  // Lade Projekt-Ordner-Struktur beim Öffnen - genau wie im Daten-Tab
   useEffect(() => {
     if (isOpen && projectId && organizationId) {
       loadProjectFolders();
@@ -71,17 +73,16 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const structure = await projectService.getProjectFolderStructure(projectId, {
+      const folderStructure = await projectService.getProjectFolderStructure(projectId, {
         organizationId
       });
-      setFolderStructure(structure);
-      setCurrentFolder(structure.mainFolder);
-      setFolderPath([structure.mainFolder]);
+      setProjectFolders(folderStructure);
 
-      // Lade Assets für Haupt-Ordner
-      if (structure.mainFolder?.id) {
-        await loadAssetsForFolder(structure.mainFolder.id);
-      }
+      // Starte mit den Unterordnern des Projekts (genau wie ProjectFoldersView)
+      setCurrentFolders(folderStructure?.subfolders || []);
+      setCurrentAssets([]);
+      setBreadcrumbs([]);
+      setNavigationStack([]);
     } catch (error) {
       console.error('Fehler beim Laden der Projekt-Ordner:', error);
       setError('Fehler beim Laden der Ordner-Struktur');
@@ -90,28 +91,54 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
     }
   };
 
-  const loadAssetsForFolder = async (folderId: string) => {
+  // Exakt kopiert aus ProjectFoldersView
+  const loadFolderContent = async (folderId?: string) => {
+    setLoading(true);
     try {
-      const folderAssets = await mediaService.getMediaAssets(organizationId, folderId);
-      setAssets(folderAssets);
+      if (folderId) {
+        // Lade Inhalte des spezifischen Ordners
+        const [folders, assets] = await Promise.all([
+          mediaService.getFolders(organizationId, folderId),
+          mediaService.getMediaAssets(organizationId, folderId)
+        ]);
+        setCurrentFolders(folders);
+        setCurrentAssets(assets);
+
+        // Breadcrumbs immer aus navigationStack setzen
+        setBreadcrumbs([...navigationStack]);
+      } else {
+        // Zurück zur Hauptansicht (Unterordner des Projektordners)
+        setCurrentFolders(projectFolders?.subfolders || []);
+        setCurrentAssets([]);
+        setBreadcrumbs([]);
+        setNavigationStack([]);
+      }
     } catch (error) {
-      console.error('Fehler beim Laden der Assets:', error);
-      setAssets([]);
+      console.error('Fehler beim Laden der Ordnerinhalte:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFolderClick = async (folder: any) => {
-    setCurrentFolder(folder);
-    setFolderPath([...folderPath, folder]);
-    await loadAssetsForFolder(folder.id);
+    // Navigation in Ordner - genau wie ProjectFoldersView
+    const newStack = [...navigationStack, { id: folder.id, name: folder.name }];
+    setNavigationStack(newStack);
+    await loadFolderContent(folder.id);
   };
 
-  const handleBackClick = () => {
-    if (folderPath.length > 1) {
-      const newPath = folderPath.slice(0, -1);
-      setFolderPath(newPath);
-      setCurrentFolder(newPath[newPath.length - 1]);
-      loadAssetsForFolder(newPath[newPath.length - 1].id);
+  const handleBackClick = async () => {
+    if (navigationStack.length === 0) return;
+
+    if (navigationStack.length === 1) {
+      // Zurück zur Hauptansicht
+      await loadFolderContent();
+    } else {
+      // Zurück zum vorherigen Ordner
+      const newStack = navigationStack.slice(0, -1);
+      setNavigationStack(newStack);
+      const parentFolder = newStack[newStack.length - 1];
+      await loadFolderContent(parentFolder.id);
     }
   };
 
@@ -157,17 +184,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
     return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
   };
 
-  const getSubfolders = () => {
-    if (!folderStructure) return [];
-
-    // Wenn wir im Haupt-Ordner sind, zeige Unterordner
-    if (currentFolder?.id === folderStructure.mainFolder?.id) {
-      return folderStructure.subfolders || [];
-    }
-
-    // Sonst keine weiteren Unterordner (vereinfacht)
-    return [];
-  };
+  // Entfernt - wir verwenden jetzt currentFolders direkt
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
@@ -177,7 +194,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
 
       <DialogBody className="space-y-4">
         {/* Breadcrumb Navigation */}
-        {folderPath.length > 1 && (
+        {navigationStack.length > 0 && (
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Button
               outline
@@ -187,14 +204,13 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
               <ArrowLeftIcon className="size-4" />
             </Button>
             <div className="flex items-center space-x-1">
-              {folderPath.map((folder, index) => (
+              <span>Projekt-Ordner</span>
+              {breadcrumbs.map((folder, index) => (
                 <React.Fragment key={folder.id}>
-                  <span className={index === folderPath.length - 1 ? 'font-medium text-gray-900' : ''}>
+                  <ChevronRightIcon className="size-4 text-gray-400" />
+                  <span className={index === breadcrumbs.length - 1 ? 'font-medium text-gray-900' : ''}>
                     {folder.name}
                   </span>
-                  {index < folderPath.length - 1 && (
-                    <ChevronRightIcon className="size-4 text-gray-400" />
-                  )}
                 </React.Fragment>
               ))}
             </div>
@@ -213,11 +229,11 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {/* Unterordner */}
-            {getSubfolders().length > 0 && (
+            {currentFolders.length > 0 && (
               <div>
                 <Subheading className="mb-2">Ordner</Subheading>
                 <div className="grid grid-cols-1 gap-2">
-                  {getSubfolders().map((folder) => (
+                  {currentFolders.map((folder) => (
                     <div
                       key={folder.id}
                       className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer group"
@@ -230,7 +246,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
                         <div>
                           <Text className="font-medium">{folder.name}</Text>
                           <Text className="text-sm text-gray-500">
-                            {folderStructure?.statistics.folderSizes[folder.id] || 0} Dateien
+                            Ordner
                           </Text>
                         </div>
                       </div>
@@ -254,11 +270,11 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
             )}
 
             {/* Assets */}
-            {assets.length > 0 ? (
+            {currentAssets.length > 0 ? (
               <div>
                 <Subheading className="mb-2">Dateien</Subheading>
                 <div className="grid grid-cols-1 gap-2">
-                  {assets.map((asset) => {
+                  {currentAssets.map((asset) => {
                     const FileIcon = getFileIcon(asset.fileType);
                     return (
                       <div
@@ -284,7 +300,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
                   })}
                 </div>
               </div>
-            ) : !loading && getSubfolders().length === 0 && (
+            ) : !loading && currentFolders.length === 0 && currentAssets.length === 0 && (
               <div className="text-center py-8">
                 <Text className="text-gray-500">Keine Assets in diesem Ordner gefunden</Text>
               </div>
