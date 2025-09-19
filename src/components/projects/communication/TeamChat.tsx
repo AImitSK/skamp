@@ -807,11 +807,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                             className={`relative text-sm px-2 py-1 rounded-full transition-colors ${
                               hasUserReacted
                                 ? isOwnMessage
-                                  ? 'bg-blue-200 text-blue-900'        // Geklickt: Helles Blau
-                                  : 'bg-gray-200 text-gray-900'        // Geklickt: Helles Grau
+                                  ? 'bg-blue-200 text-blue-900'           // Geklickt: Helles Blau
+                                  : 'bg-gray-300 text-gray-900'           // Geklickt: Helles Grau
                                 : isOwnMessage
-                                  ? 'bg-blue-500 bg-opacity-80 text-white'  // Ungeklickt: 80% Blau
-                                  : 'bg-gray-500 bg-opacity-80 text-white'  // Ungeklickt: 80% Grau
+                                  ? 'bg-blue-600 bg-opacity-80 text-white'  // Ungeklickt: 80% vom Blasen-Blau
+                                  : 'bg-gray-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Grau
                             }`}
                             title={`Mit ${emoji} reagieren`}
                           >
