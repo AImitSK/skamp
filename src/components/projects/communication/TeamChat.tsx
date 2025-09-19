@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   PaperAirplaneIcon,
   AtSymbolIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PaperClipIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -12,9 +13,12 @@ import { Avatar } from '@/components/ui/avatar';
 import { teamChatService, TeamMessage as FirebaseTeamMessage } from '@/lib/firebase/team-chat-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
+import { mediaService } from '@/lib/firebase/media-service';
 import { TeamMember } from '@/types/international';
 import { Timestamp } from 'firebase/firestore';
 import { MentionDropdown } from './MentionDropdown';
+import { AssetPickerModal, SelectedAsset } from './AssetPickerModal';
+import { AssetPreview } from './AssetPreview';
 import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
 
 interface TeamChatProps {
@@ -48,6 +52,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const [mentionDropdownPosition, setMentionDropdownPosition] = useState({ top: 0, left: 0 });
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+
+  // Asset Picker States
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Prüfe Team-Mitgliedschaft und lade Team-Daten
@@ -439,18 +446,48 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     return result;
   };
 
-  // Funktion zur Erkennung und Formatierung von Links + Emojis
+  // Funktion zur Erkennung und Formatierung von Links, Assets + Emojis
   const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
     // Erst Emojis ersetzen
     const contentWithEmojis = replaceEmojis(content);
 
-    // Dann Links erkennen
-    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
-    const parts = contentWithEmojis.split(urlRegex);
+    // Asset-Links Pattern: 📎 [Filename.jpg](asset://projectId/assetId) oder 📁 [Ordner: Name](folder://projectId/folderId)
+    const assetRegex = /([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([^\/]+)\/([^)]+)\)/g;
 
+    // Standard-Links Pattern
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+
+    // Kombiniere beide Patterns
+    const combinedRegex = new RegExp(`${assetRegex.source}|${urlRegex.source}`, 'g');
+    const parts = contentWithEmojis.split(combinedRegex);
+
+    let partIndex = 0;
     return (
       <>
         {parts.map((part, index) => {
+          if (!part) return null;
+
+          // Prüfe auf Asset-Links
+          const assetMatch = part.match(/([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([^\/]+)\/([^)]+)\)/);
+          if (assetMatch) {
+            const [, emoji, linkText, type, projectIdFromLink, assetId] = assetMatch;
+
+            return (
+              <div key={index} className="my-2">
+                <AssetPreview
+                  assetId={assetId}
+                  assetType={type as 'asset' | 'folder'}
+                  linkText={linkText}
+                  projectId={projectIdFromLink}
+                  organizationId={organizationId}
+                  isOwnMessage={isOwnMessage}
+                  onAssetClick={() => handleAssetLinkClick(type, projectIdFromLink, assetId)}
+                />
+              </div>
+            );
+          }
+
+          // Prüfe auf Standard-URLs
           if (urlRegex.test(part)) {
             // Stelle sicher, dass die URL ein Protokoll hat
             let url = part;
@@ -474,10 +511,80 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               </a>
             );
           }
+
           return <span key={index}>{part}</span>;
         })}
       </>
     );
+  };
+
+  // Handler für Asset-Link-Clicks
+  const handleAssetLinkClick = async (type: string, projectIdFromLink: string, assetId: string) => {
+    // Sicherheitsprüfung: nur Assets aus dem aktuellen Projekt
+    if (projectIdFromLink !== projectId) {
+      console.warn('Asset gehört nicht zu diesem Projekt');
+      return;
+    }
+
+    try {
+      if (type === 'asset') {
+        // Asset direkt öffnen/downloaden
+        const asset = await mediaService.getById(assetId, { organizationId });
+        if (asset && asset.downloadUrl) {
+          window.open(asset.downloadUrl, '_blank');
+        }
+      } else if (type === 'folder') {
+        // Zur Daten-Tab wechseln und Ordner anzeigen
+        // TODO: Implementiere Navigation zum Daten-Tab mit spezifischem Ordner
+        console.log('Navigiere zu Ordner:', assetId);
+      }
+    } catch (error) {
+      console.error('Fehler beim Öffnen des Assets:', error);
+    }
+  };
+
+  // Asset Selection Handler
+  const handleAssetSelect = (asset: SelectedAsset) => {
+    let assetText = '';
+
+    if (asset.type === 'asset') {
+      // Format: 📎 [Filename.jpg](asset://projectId/assetId)
+      assetText = `📎 [${asset.name}](asset://${projectId}/${asset.id})`;
+    } else if (asset.type === 'folder') {
+      // Format: 📁 [Ordner: FolderName](folder://projectId/folderId)
+      assetText = `📁 [Ordner: ${asset.name}](folder://${projectId}/${asset.id})`;
+    }
+
+    // Füge Asset-Link zur aktuellen Nachricht hinzu
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      const currentValue = textarea.value;
+      const cursorPos = textarea.selectionStart;
+
+      // Füge Asset am Cursor ein (mit Leerzeichen wenn nötig)
+      const before = currentValue.substring(0, cursorPos);
+      const after = currentValue.substring(cursorPos);
+      const needsSpaceBefore = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+      const needsSpaceAfter = after.length > 0 && !after.startsWith(' ') && !after.startsWith('\n');
+
+      const finalText = before +
+        (needsSpaceBefore ? ' ' : '') +
+        assetText +
+        (needsSpaceAfter ? ' ' : '') +
+        after;
+
+      setNewMessage(finalText);
+
+      // Setze Cursor nach dem Asset-Link
+      setTimeout(() => {
+        const newCursorPos = before.length +
+          (needsSpaceBefore ? 1 : 0) +
+          assetText.length +
+          (needsSpaceAfter ? 1 : 0);
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+      }, 0);
+    }
   };
 
   return (
@@ -641,9 +748,20 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben... (@name für Erwähnungen)"
                   rows={2}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-12 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   disabled={sending}
                 />
+
+                {/* Asset-Button im Textarea */}
+                <button
+                  type="button"
+                  onClick={() => setShowAssetPicker(true)}
+                  className="absolute right-2 bottom-2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  title="Asset anhängen"
+                  disabled={sending}
+                >
+                  <PaperClipIcon className="h-4 w-4" />
+                </button>
 
                 {/* @-Mention Dropdown */}
                 <MentionDropdown
@@ -677,6 +795,15 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           </div>
         </div>
       )}
+
+      {/* Asset Picker Modal */}
+      <AssetPickerModal
+        isOpen={showAssetPicker}
+        onClose={() => setShowAssetPicker(false)}
+        onSelectAsset={handleAssetSelect}
+        projectId={projectId}
+        organizationId={organizationId}
+      />
       </div>
     </>
   );
