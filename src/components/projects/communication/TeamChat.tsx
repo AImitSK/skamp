@@ -529,7 +529,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     try {
       if (type === 'asset') {
         // Asset direkt öffnen/downloaden
-        const asset = await mediaService.getById(assetId, { organizationId });
+        const asset = await mediaService.getMediaAssetById(assetId);
         if (asset && asset.downloadUrl) {
           window.open(asset.downloadUrl, '_blank');
         }

@@ -93,9 +93,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
 
   const loadAssetsForFolder = async (folderId: string) => {
     try {
-      const folderAssets = await mediaService.getByFolder(folderId, {
-        organizationId
-      });
+      const folderAssets = await mediaService.getMediaAssets(organizationId, folderId);
       setAssets(folderAssets);
     } catch (error) {
       console.error('Fehler beim Laden der Assets:', error);

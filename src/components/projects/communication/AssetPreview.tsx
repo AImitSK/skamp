@@ -49,7 +49,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   const loadAsset = async () => {
     try {
       setLoading(true);
-      const assetData = await mediaService.getById(assetId, { organizationId });
+      const assetData = await mediaService.getMediaAssetById(assetId);
       setAsset(assetData);
     } catch (error) {
       console.error('Fehler beim Laden des Assets:', error);
