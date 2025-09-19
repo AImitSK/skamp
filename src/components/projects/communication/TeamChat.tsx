@@ -795,45 +795,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     )}
 
 
-                  </div>
-
-                  {/* Existing Reactions - außerhalb der Sprechblase */}
-                  {message.reactions && message.reactions.length > 0 && (
-                    <div className={`flex items-center gap-1 mt-1 ${
-                      isOwnMessage ? 'mr-16' : 'ml-16'
-                    }`}>
-                        {message.reactions.map((reaction, reactionIndex) => {
-                          const hasUserReacted = reaction.userIds.includes(userId);
-                          return (
-                            <button
-                              key={`${reaction.emoji}-${reactionIndex}`}
-                              onClick={() => handleReaction(message.id!, reaction.emoji)}
-                              onMouseEnter={() => setShowReactionTooltip(`${message.id}-${reaction.emoji}`)}
-                              onMouseLeave={() => setShowReactionTooltip(null)}
-                              className={`relative text-xs px-2 py-1 rounded-full border transition-colors ${
-                                hasUserReacted
-                                  ? isOwnMessage
-                                    ? 'bg-blue-400 border-blue-300 text-white'
-                                    : 'bg-blue-100 border-blue-300 text-blue-800'
-                                  : isOwnMessage
-                                    ? 'bg-blue-600 border-blue-400 text-blue-100 hover:bg-blue-500'
-                                    : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
-                              }`}
-                            >
-                              {reaction.emoji} {reaction.count}
-
-                              {/* Tooltip */}
-                              {showReactionTooltip === `${message.id}-${reaction.emoji}` && (
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap z-10">
-                                  {reaction.userNames.join(', ')}
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
                     {/* Reaction Buttons Overlay - relativ zur Sprechblase */}
                     {hoveredMessageId === message.id && (
                       <div className="absolute bottom-0 left-0 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1 -mb-2 -ml-2">
@@ -850,6 +811,39 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Existing Reactions - rechts neben der Sprechblase */}
+                  {message.reactions && message.reactions.length > 0 && (
+                    <div className={`flex items-center gap-1 mt-1 ${
+                      isOwnMessage ? 'justify-end mr-16' : 'justify-start ml-16'
+                    }`}>
+                      {message.reactions.map((reaction, reactionIndex) => {
+                        const hasUserReacted = reaction.userIds.includes(userId);
+                        return (
+                          <button
+                            key={`${reaction.emoji}-${reactionIndex}`}
+                            onClick={() => handleReaction(message.id!, reaction.emoji)}
+                            onMouseEnter={() => setShowReactionTooltip(`${message.id}-${reaction.emoji}`)}
+                            onMouseLeave={() => setShowReactionTooltip(null)}
+                            className={`relative text-xs px-2 py-1 rounded-full border transition-colors ${
+                              hasUserReacted
+                                ? 'bg-blue-100 border-blue-300 text-blue-800'
+                                : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {reaction.emoji} {reaction.count}
+
+                            {/* Tooltip */}
+                            {showReactionTooltip === `${message.id}-${reaction.emoji}` && (
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap z-10">
+                                {reaction.userNames.join(', ')}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {isOwnMessage && (
                     <Avatar
