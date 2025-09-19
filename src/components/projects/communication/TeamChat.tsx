@@ -460,6 +460,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     const combinedRegex = new RegExp(`${assetRegex.source}|${urlRegex.source}`, 'g');
     const parts = content.split(combinedRegex);
 
+    console.log('🔍 Debug - parts after split:', parts);
+
     let partIndex = 0;
     return (
       <>
