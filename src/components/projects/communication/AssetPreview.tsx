@@ -163,92 +163,97 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   const FileIcon = getFileIcon(asset.fileType);
   const isImage = asset.fileType?.startsWith('image/');
 
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
   return (
-    <div
-      className={`inline-block max-w-sm rounded-lg border overflow-hidden transition-all ${
-        isOwnMessage
-          ? 'bg-blue-500 border-blue-400'
-          : 'bg-white border-gray-200'
-      }`}
-    >
-      {/* Thumbnail für Bilder */}
-      {isImage && asset.downloadUrl && (
-        <div className="aspect-video bg-gray-100 overflow-hidden">
+    <>
+      {/* Minimales Asset - nur Bild/Icon mit Hover-Overlay */}
+      <div className="relative inline-block group cursor-pointer" onClick={() => setShowPreviewModal(true)}>
+        {isImage && asset.downloadUrl ? (
+          /* Bild Asset */
           <img
             src={asset.downloadUrl}
             alt={asset.fileName}
-            className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={handleView}
+            className="w-24 h-24 object-cover rounded-lg transition-transform group-hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
+        ) : (
+          /* Icon für andere Dateitypen */
+          <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+            <FileIcon className="h-12 w-12 text-gray-400" />
+          </div>
+        )}
+
+        {/* Auge-Overlay bei Hover */}
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <EyeIcon
+            className="h-8 w-8 text-white"
+            title={asset.fileName}
+          />
         </div>
-      )}
+      </div>
 
-      {/* Asset Info */}
-      <div className="p-3">
-        <div className="flex items-start space-x-2">
-          <FileIcon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-            isOwnMessage ? 'text-blue-200' : 'text-gray-600'
-          }`} />
+      {/* Zoom-Preview Modal */}
+      {showPreviewModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setShowPreviewModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-full p-4">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPreviewModal(false)}
+              className="absolute top-2 right-2 text-white hover:text-gray-300 z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
 
-          <div className="flex-1 min-w-0">
-            <Text className={`text-sm font-medium truncate ${
-              isOwnMessage ? 'text-white' : 'text-gray-900'
-            }`}>
-              {asset.fileName}
-            </Text>
+            {/* Asset Content */}
+            {isImage && asset.downloadUrl ? (
+              <img
+                src={asset.downloadUrl}
+                alt={asset.fileName}
+                className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="bg-white rounded-lg p-8 text-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FileIcon className="h-24 w-24 text-gray-400 mx-auto mb-4" />
+                <Text className="text-lg font-medium mb-2">{asset.fileName}</Text>
+                <Text className="text-gray-600 mb-4">{getFileTypeLabel(asset.fileType)}</Text>
+                {asset.metadata?.fileSize && (
+                  <Text className="text-sm text-gray-500 mb-4">{formatFileSize(asset.metadata.fileSize)}</Text>
+                )}
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={handleView} className="flex items-center gap-2">
+                    <EyeIcon className="h-4 w-4" />
+                    Öffnen
+                  </Button>
+                  <Button onClick={handleDownload} outline className="flex items-center gap-2">
+                    <ArrowDownTrayIcon className="h-4 w-4" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            )}
 
-            <div className={`flex items-center space-x-2 mt-1 text-xs ${
-              isOwnMessage ? 'text-blue-200' : 'text-gray-500'
-            }`}>
-              <span>{getFileTypeLabel(asset.fileType)}</span>
-              {asset.metadata?.fileSize && (
-                <>
-                  <span>•</span>
-                  <span>{formatFileSize(asset.metadata.fileSize)}</span>
-                </>
-              )}
-            </div>
-
-            {/* Beschreibung falls vorhanden */}
-            {asset.description && (
-              <Text className={`text-xs mt-1 line-clamp-2 ${
-                isOwnMessage ? 'text-blue-100' : 'text-gray-600'
-              }`}>
-                {asset.description}
-              </Text>
+            {/* Filename Overlay für Bilder */}
+            {isImage && (
+              <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded">
+                {asset.fileName}
+              </div>
             )}
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-2 mt-3">
-          <Button
-            size="sm"
-            outline={!isOwnMessage}
-            color={isOwnMessage ? "white" : "gray"}
-            onClick={handleView}
-            className="flex-1"
-          >
-            <EyeIcon className="h-3 w-3 mr-1" />
-            Öffnen
-          </Button>
-
-          <Button
-            size="sm"
-            outline={!isOwnMessage}
-            color={isOwnMessage ? "white" : "gray"}
-            onClick={handleDownload}
-            className="flex-1"
-          >
-            <ArrowDownTrayIcon className="h-3 w-3 mr-1" />
-            Download
-          </Button>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
