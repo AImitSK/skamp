@@ -150,7 +150,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
       url: asset.downloadUrl,
       fileType: asset.fileType,
       folderId: asset.folderId,
-      folderPath: folderPath.map(f => f.name)
+      folderPath: breadcrumbs.map(f => f.name)
     };
     onSelectAsset(selectedAsset);
     onClose();
@@ -162,7 +162,7 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
       type: 'folder',
       name: folder.name,
       folderId: folder.id,
-      folderPath: folderPath.map(f => f.name)
+      folderPath: breadcrumbs.map(f => f.name)
     };
     onSelectAsset(selectedAsset);
     onClose();
