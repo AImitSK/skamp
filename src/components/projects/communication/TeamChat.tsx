@@ -448,12 +448,18 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   // Funktion zur Erkennung und Formatierung von Links, Assets + Emojis
   const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
+    console.log('🔍 Debug - formatMessageWithLinksAndEmojis input:', content);
+
     // Erst Emojis ersetzen
     const contentWithEmojis = replaceEmojis(content);
 
     // Asset-Links Pattern: 📎 [Filename.jpg](asset://projectId/assetId) oder 📁 [Ordner: Name](folder://projectId/folderId)
     // Pattern muss lange IDs unterstützen: [a-zA-Z0-9_-]+ für Firebase IDs
     const assetRegex = /([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
+
+    console.log('🔍 Debug - Testing asset regex on:', contentWithEmojis);
+    const assetMatches = contentWithEmojis.match(assetRegex);
+    console.log('🔍 Debug - Asset matches found:', assetMatches);
 
     // Standard-Links Pattern
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
@@ -548,6 +554,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const handleAssetSelect = (asset: SelectedAsset) => {
     let assetText = '';
 
+    console.log('🔍 Debug - handleAssetSelect:', { asset, projectId });
+
     if (asset.type === 'asset') {
       // Format: 📎 [Filename.jpg](asset://projectId/assetId)
       assetText = `📎 [${asset.name}](asset://${projectId}/${asset.id})`;
@@ -555,6 +563,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       // Format: 📁 [Ordner: FolderName](folder://projectId/folderId)
       assetText = `📁 [${asset.name}](folder://${projectId}/${asset.id})`;
     }
+
+    console.log('🔍 Debug - Generated assetText:', assetText);
 
     // Füge Asset-Link zur aktuellen Nachricht hinzu
     if (textareaRef.current) {
