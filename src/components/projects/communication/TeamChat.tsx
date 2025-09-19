@@ -732,7 +732,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     />
                   )}
 
-                  <div className={`max-w-xs lg:max-w-md xl:max-w-lg ${
+                  <div className={`relative max-w-xs lg:max-w-md xl:max-w-lg ${
                     isOwnMessage
                       ? 'bg-blue-600 text-white rounded-l-lg rounded-tr-lg'
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
@@ -795,11 +795,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     )}
 
 
-                    {/* Existing Reactions */}
-                    {message.reactions && message.reactions.length > 0 && (
-                      <div className={`flex items-center gap-1 mt-2 ${
-                        isOwnMessage ? 'justify-end' : 'justify-start'
-                      }`}>
+                  </div>
+
+                  {/* Existing Reactions - außerhalb der Sprechblase */}
+                  {message.reactions && message.reactions.length > 0 && (
+                    <div className={`flex items-center gap-1 mt-1 ${
+                      isOwnMessage ? 'mr-16' : 'ml-16'
+                    }`}>
                         {message.reactions.map((reaction, reactionIndex) => {
                           const hasUserReacted = reaction.userIds.includes(userId);
                           return (
@@ -831,6 +833,22 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                         })}
                       </div>
                     )}
+
+                    {/* Reaction Buttons Overlay - relativ zur Sprechblase */}
+                    {hoveredMessageId === message.id && (
+                      <div className="absolute bottom-0 left-0 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1 -mb-2 -ml-2">
+                        {['👍', '👎', '🤚'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(message.id!, emoji)}
+                            className="text-lg px-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
+                            title={`Mit ${emoji} reagieren`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {isOwnMessage && (
@@ -839,22 +857,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       src={currentUserPhoto}
                       initials={getInitials(userDisplayName)}
                     />
-                  )}
-
-                  {/* Reaction Buttons Overlay */}
-                  {hoveredMessageId === message.id && (
-                    <div className="absolute bottom-0 left-12 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1">
-                      {['👍', '👎', '🤚'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleReaction(message.id!, emoji)}
-                          className="text-lg px-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
-                          title={`Mit ${emoji} reagieren`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
                   )}
                 </div>
               );
