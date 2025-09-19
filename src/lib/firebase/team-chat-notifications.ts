@@ -31,8 +31,20 @@ export class TeamChatNotificationsService {
       // Lade alle Team-Mitglieder um Namen zu resolven
       const teamMembers = await teamMemberService.getByOrganization(organizationId);
 
+      // Debug: Zeige alle Team-Mitglieder
+      console.log('🔍 Debug - Alle Team-Mitglieder für Notifications:', teamMembers.map(m => ({
+        id: m.id,
+        userId: m.userId,
+        displayName: m.displayName,
+        email: m.email
+      })));
+
+      console.log('🎯 Debug - Erwähnte User IDs:', mentionedUserIds);
+
       // Erstelle Notifications für alle erwähnten User
       const notificationPromises = mentionedUserIds.map(async (mentionedUserId) => {
+        console.log(`\n🔎 Debug - Verarbeite Mention für: ${mentionedUserId}`);
+
         // Finde das erwähnte Team-Mitglied
         const mentionedMember = teamMembers.find(m =>
           m.userId === mentionedUserId ||
@@ -40,13 +52,21 @@ export class TeamChatNotificationsService {
           m.displayName.toLowerCase() === mentionedUserId.toLowerCase()
         );
 
+        console.log('👤 Debug - Gefundenes Member:', mentionedMember ? {
+          id: mentionedMember.id,
+          userId: mentionedMember.userId,
+          displayName: mentionedMember.displayName,
+          email: mentionedMember.email
+        } : null);
+
         if (!mentionedMember) {
-          console.warn(`Team-Mitglied nicht gefunden für: ${mentionedUserId}`);
+          console.warn(`❌ Team-Mitglied nicht gefunden für: ${mentionedUserId}`);
           return;
         }
 
         // Verwende die richtige userId für die Notification
         const targetUserId = mentionedMember.userId || mentionedMember.id;
+        console.log('🎯 Debug - Target User ID für Notification:', targetUserId);
 
         // Kürze die Nachricht für die Notification
         const truncatedMessage = messageContent.length > 100
@@ -54,25 +74,39 @@ export class TeamChatNotificationsService {
           : messageContent;
 
         // Erstelle Notification
-        await notificationsService.create({
-          userId: targetUserId,
+        console.log('📤 Debug - Erstelle Notification mit:', {
+          targetUserId,
           organizationId,
           type: 'TEAM_CHAT_MENTION',
-          title: `${authorName} hat Sie erwähnt`,
-          message: `In ${projectTitle}: "${truncatedMessage}"`,
-          linkUrl: `/dashboard/projects/${projectId}?tab=teamchat`,
-          linkType: 'project' as any, // Erweitere LinkType später
-          linkId: projectId,
-          metadata: {
-            projectId,
-            projectTitle,
-            messageContent: truncatedMessage,
-            mentionedBy: authorId,
-            mentionedByName: authorName
-          }
+          authorName,
+          projectTitle,
+          truncatedMessage
         });
 
-        console.log(`Mention-Notification gesendet an ${mentionedMember.displayName} (${targetUserId})`);
+        try {
+          const notificationId = await notificationsService.create({
+            userId: targetUserId,
+            organizationId,
+            type: 'TEAM_CHAT_MENTION',
+            title: `${authorName} hat Sie erwähnt`,
+            message: `In ${projectTitle}: "${truncatedMessage}"`,
+            linkUrl: `/dashboard/projects/${projectId}?tab=teamchat`,
+            linkType: 'project' as any, // Erweitere LinkType später
+            linkId: projectId,
+            metadata: {
+              projectId,
+              projectTitle,
+              messageContent: truncatedMessage,
+              mentionedBy: authorId,
+              mentionedByName: authorName
+            }
+          });
+
+          console.log(`✅ Mention-Notification gesendet an ${mentionedMember.displayName} (${targetUserId}) - ID: ${notificationId}`);
+        } catch (error) {
+          console.error(`❌ Fehler beim Senden der Notification an ${mentionedMember.displayName} (${targetUserId}):`, error);
+          throw error;
+        }
       });
 
       await Promise.all(notificationPromises);
@@ -94,6 +128,11 @@ export class TeamChatNotificationsService {
     const mentionPattern = /@([^\s]+)/g;
     const mentions = messageContent.match(mentionPattern);
 
+    console.log('\n🔍 Debug - extractMentionedUserIds:');
+    console.log('Message:', messageContent);
+    console.log('Gefundene Mentions:', mentions);
+    console.log('Verfügbare Team-Mitglieder:', teamMembers.map(m => m.displayName));
+
     if (!mentions) {
       return [];
     }
@@ -102,21 +141,50 @@ export class TeamChatNotificationsService {
 
     mentions.forEach(mention => {
       const mentionText = mention.substring(1); // Entferne @
+      console.log(`\n🔎 Suche Member für Mention: "${mentionText}"`);
 
-      // Finde Team-Mitglied by displayName
-      const member = teamMembers.find(m =>
-        m.displayName.toLowerCase() === mentionText.toLowerCase() ||
-        m.displayName.toLowerCase().includes(mentionText.toLowerCase())
+      // Verbesserte Suche - exakte Treffer bevorzugen
+      let member = teamMembers.find(m =>
+        m.displayName.toLowerCase() === mentionText.toLowerCase()
       );
 
+      // Falls kein exakter Treffer, suche mit "enthält"
+      if (!member) {
+        member = teamMembers.find(m =>
+          m.displayName.toLowerCase().includes(mentionText.toLowerCase())
+        );
+      }
+
+      // Zusätzliche Suche: Prüfe auch email/userId
+      if (!member) {
+        member = teamMembers.find(m =>
+          m.email.toLowerCase().includes(mentionText.toLowerCase()) ||
+          (m.userId && m.userId.includes(mentionText)) ||
+          (m.id && m.id.includes(mentionText))
+        );
+      }
+
+      console.log('Gefundenes Member:', member ? {
+        id: member.id,
+        userId: member.userId,
+        displayName: member.displayName,
+        email: member.email
+      } : 'NICHT GEFUNDEN');
+
       if (member) {
+        // Präferiere userId, falls verfügbar
         const userId = member.userId || member.id;
+        console.log(`Verwende User-ID: ${userId} für ${member.displayName}`);
+
         if (userId && !mentionedUserIds.includes(userId)) {
           mentionedUserIds.push(userId);
         }
+      } else {
+        console.warn(`❌ Kein Team-Mitglied gefunden für Mention: "${mentionText}"`);
       }
     });
 
+    console.log('Final mentionedUserIds:', mentionedUserIds);
     return mentionedUserIds;
   }
 
