@@ -451,10 +451,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     console.log('🔍 Debug - formatMessageWithLinksAndEmojis received:', JSON.stringify(content));
 
     // WICHTIG: Asset-Links ZUERST parsen, DANN Emojis ersetzen!
-    // Asset-Links Pattern: 📎 [Filename.jpg](asset://projectId/assetId) oder 📁 [Ordner: Name](folder://projectId/folderId)
+    // Asset-Links Pattern: [Filename.jpg](asset://projectId/assetId) oder [Ordner: Name](folder://projectId/folderId)
     // Pattern muss lange IDs unterstützen: [a-zA-Z0-9_-]+ für Firebase IDs
-    // WICHTIG: Emoji kann als Unicode-Escape oder echtes Emoji ankommen
-    const assetRegex = /([\uDCCE\uDCC1📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
+    const assetRegex = /\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
 
     console.log('🔍 Debug - Testing asset regex on content:', content);
     const assetMatches = content.match(assetRegex);
@@ -474,9 +473,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           if (!part) return null;
 
           // Prüfe auf Asset-Links mit korrektem Pattern für Firebase IDs
-          const assetMatch = part.match(/([\uDCCE\uDCC1📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/);
+          const assetMatch = part.match(/\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/);
           if (assetMatch) {
-            const [, emoji, linkText, type, projectIdFromLink, assetId] = assetMatch;
+            const [, linkText, type, projectIdFromLink, assetId] = assetMatch;
 
             return (
               <div key={index} className="my-2">
@@ -557,11 +556,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     console.log('🔍 Debug - handleAssetSelect:', { asset, projectId });
 
     if (asset.type === 'asset') {
-      // Format: 📎 [Filename.jpg](asset://projectId/assetId)
-      assetText = `📎 [${asset.name}](asset://${projectId}/${asset.id})`;
+      // Format: [Filename.jpg](asset://projectId/assetId)
+      assetText = `[${asset.name}](asset://${projectId}/${asset.id})`;
     } else if (asset.type === 'folder') {
-      // Format: 📁 [Ordner: FolderName](folder://projectId/folderId)
-      assetText = `📁 [${asset.name}](folder://${projectId}/${asset.id})`;
+      // Format: [Ordner: FolderName](folder://projectId/folderId)
+      assetText = `[Ordner: ${asset.name}](folder://${projectId}/${asset.id})`;
     }
 
     console.log('🔍 Debug - Generated assetText:', assetText);
