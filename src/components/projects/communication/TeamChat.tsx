@@ -740,7 +740,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         <div className="border-t border-gray-200 px-4 py-4 bg-white">
           <div className="space-y-3">
             {/* Nachrichteneingabe */}
-            <div className="flex items-end space-x-2 relative">
+            <div className="flex items-center space-x-3">
               <div className="flex-1 relative">
                 <textarea
                   ref={textareaRef}
@@ -749,7 +749,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben... (@name für Erwähnungen)"
                   rows={2}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-12 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px]"
                   disabled={sending}
                 />
 
@@ -757,7 +757,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAssetPicker(true)}
-                  className="absolute right-2 bottom-2 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  className="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                   title="Asset anhängen"
                   disabled={sending}
                 >
@@ -775,10 +775,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onClose={() => setShowMentionDropdown(false)}
                 />
               </div>
+
               <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="px-4 py-2"
+                className="h-[44px] px-4 flex-shrink-0"
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -790,7 +791,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
             <div className="flex items-center justify-between">
               <Text className="text-xs text-gray-500">
-                Verwenden Sie @ für Erwähnungen • Shift+Enter für neue Zeile
+                📎 für Assets • @ für Erwähnungen • Shift+Enter für neue Zeile
               </Text>
             </div>
           </div>
