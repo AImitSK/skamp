@@ -734,25 +734,23 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       ? 'bg-blue-600 text-white rounded-l-lg rounded-tr-lg'
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
                   } px-4 py-2 shadow-sm`}>
-                    {/* Name und Zeit Badge - nur bei erstem in Gruppe oder eigenem */}
-                    {(isFirstInGroup || isOwnMessage) && (
-                      <div className={`flex items-center justify-between mb-1 ${
-                        isOwnMessage ? 'flex-row-reverse' : 'flex-row'
+                    {/* Name und Zeit Badge - bei jeder Nachricht */}
+                    <div className={`flex items-center justify-between mb-1 ${
+                      isOwnMessage ? 'flex-row-reverse' : 'flex-row'
+                    }`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        isOwnMessage
+                          ? 'bg-blue-500 text-blue-100'
+                          : 'bg-gray-200 text-gray-700'
                       }`}>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          isOwnMessage
-                            ? 'bg-blue-500 text-blue-100'
-                            : 'bg-gray-200 text-gray-700'
-                        }`}>
-                          {message.authorName}
-                        </span>
-                        <span className={`text-xs ${
-                          isOwnMessage ? 'text-blue-200' : 'text-gray-500'
-                        } ml-2`}>
-                          {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
-                        </span>
-                      </div>
-                    )}
+                        {message.authorName}
+                      </span>
+                      <span className={`text-xs ${
+                        isOwnMessage ? 'text-blue-200' : 'text-gray-500'
+                      } ml-2`}>
+                        {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
+                      </span>
+                    </div>
 
                     {/* Nachrichteninhalt */}
                     <div className={`text-sm break-words whitespace-pre-wrap ${
