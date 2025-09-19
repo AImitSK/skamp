@@ -224,48 +224,38 @@ export class TeamChatService {
       const currentMessage = messageDoc.docs[0].data() as TeamMessage;
       const currentReactions = currentMessage.reactions || [];
 
-      // Finde existierende Reaction für dieses Emoji
-      const existingReactionIndex = currentReactions.findIndex(r => r.emoji === emoji);
+      // WICHTIG: User kann nur EINE Reaction haben
+      // 1. Entferne alle existierenden Reactions des Users
+      let updatedReactions = currentReactions.map(reaction => ({
+        ...reaction,
+        userIds: reaction.userIds.filter(id => id !== userId),
+        userNames: reaction.userNames.filter((_, index) => reaction.userIds[index] !== userId),
+        count: reaction.userIds.filter(id => id !== userId).length
+      })).filter(reaction => reaction.count > 0); // Entferne leere Reactions
 
-      let updatedReactions: MessageReaction[];
+      // 2. Prüfe ob User bereits diese Reaction hatte
+      const hadThisReaction = currentReactions.some(r =>
+        r.emoji === emoji && r.userIds.includes(userId)
+      );
 
-      if (existingReactionIndex >= 0) {
-        // Reaction existiert bereits
-        const existingReaction = currentReactions[existingReactionIndex];
-        const userIndex = existingReaction.userIds.indexOf(userId);
+      if (!hadThisReaction) {
+        // 3. Füge neue Reaction hinzu (nur wenn User diese nicht bereits hatte)
+        const existingReactionIndex = updatedReactions.findIndex(r => r.emoji === emoji);
 
-        if (userIndex >= 0) {
-          // User hat bereits reagiert - entferne Reaction
-          existingReaction.userIds.splice(userIndex, 1);
-          existingReaction.userNames.splice(userIndex, 1);
-          existingReaction.count = existingReaction.userIds.length;
-
-          if (existingReaction.count === 0) {
-            // Entferne die gesamte Reaction wenn niemand mehr reagiert hat
-            updatedReactions = currentReactions.filter((_, index) => index !== existingReactionIndex);
-          } else {
-            updatedReactions = [...currentReactions];
-            updatedReactions[existingReactionIndex] = existingReaction;
-          }
+        if (existingReactionIndex >= 0) {
+          // Reaction existiert bereits - füge User hinzu
+          updatedReactions[existingReactionIndex].userIds.push(userId);
+          updatedReactions[existingReactionIndex].userNames.push(userName);
+          updatedReactions[existingReactionIndex].count++;
         } else {
-          // User hat noch nicht reagiert - füge hinzu
-          existingReaction.userIds.push(userId);
-          existingReaction.userNames.push(userName);
-          existingReaction.count = existingReaction.userIds.length;
-
-          updatedReactions = [...currentReactions];
-          updatedReactions[existingReactionIndex] = existingReaction;
+          // Neue Reaction
+          updatedReactions.push({
+            emoji,
+            userIds: [userId],
+            userNames: [userName],
+            count: 1
+          });
         }
-      } else {
-        // Neue Reaction
-        const newReaction: MessageReaction = {
-          emoji,
-          userIds: [userId],
-          userNames: [userName],
-          count: 1
-        };
-
-        updatedReactions = [...currentReactions, newReaction];
       }
 
       // Update in Firestore

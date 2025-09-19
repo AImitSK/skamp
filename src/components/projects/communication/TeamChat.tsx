@@ -843,9 +843,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
                   {/* Reaction Buttons Overlay */}
                   {hoveredMessageId === message.id && (
-                    <div className={`absolute -top-2 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1 ${
-                      isOwnMessage ? 'right-12' : 'left-12'
-                    }`}>
+                    <div className="absolute bottom-0 left-12 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1">
                       {['👍', '👎', '🤚'].map((emoji) => (
                         <button
                           key={emoji}
