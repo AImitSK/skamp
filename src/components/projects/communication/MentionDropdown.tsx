@@ -31,6 +31,15 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Sortiere: Owner/Admin zuerst
+  filteredMembers.sort((a, b) => {
+    if (a.role === 'owner' && b.role !== 'owner') return -1;
+    if (b.role === 'owner' && a.role !== 'owner') return 1;
+    if (a.role === 'admin' && b.role !== 'admin') return -1;
+    if (b.role === 'admin' && a.role !== 'admin') return 1;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
   // Schließe Dropdown wenn außerhalb geklickt wird
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -100,8 +109,20 @@ export const MentionDropdown: React.FC<MentionDropdownProps> = ({
               initials={getInitials(member.displayName)}
             />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-gray-900 truncate">
-                {member.displayName}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900 truncate">
+                  {member.displayName}
+                </span>
+                {member.role === 'owner' && (
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+                    Owner
+                  </span>
+                )}
+                {member.role === 'admin' && (
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                    Admin
+                  </span>
+                )}
               </div>
               <div className="text-xs text-gray-500 truncate">
                 {member.email}

@@ -143,43 +143,38 @@ export class TeamChatNotificationsService {
       const mentionText = mention.substring(1); // Entferne @
       console.log(`\n🔎 Suche Member für Mention: "${mentionText}"`);
 
-      // Verbesserte Suche - exakte Treffer bevorzugen
-      let member = teamMembers.find(m =>
-        m.displayName.toLowerCase() === mentionText.toLowerCase()
-      );
+      // WICHTIG: Bei Duplikaten (gleicher displayName) ALLE benachrichtigen!
+      const matchingMembers = teamMembers.filter(m => {
+        // Exakter Treffer nach displayName
+        if (m.displayName.toLowerCase() === mentionText.toLowerCase()) return true;
+        // Teil-Treffer nach displayName
+        if (m.displayName.toLowerCase().includes(mentionText.toLowerCase())) return true;
+        // Vollständiger Name wurde erwähnt (z.B. "@Stefan Kühne")
+        const fullNameMention = mentionText.replace(/_/g, ' ');
+        if (m.displayName.toLowerCase() === fullNameMention.toLowerCase()) return true;
+        // Email-Treffer
+        if (m.email.toLowerCase().includes(mentionText.toLowerCase())) return true;
+        return false;
+      });
 
-      // Falls kein exakter Treffer, suche mit "enthält"
-      if (!member) {
-        member = teamMembers.find(m =>
-          m.displayName.toLowerCase().includes(mentionText.toLowerCase())
-        );
-      }
+      console.log(`Gefundene Members (${matchingMembers.length}):`, matchingMembers.map(m => ({
+        id: m.id,
+        userId: m.userId,
+        displayName: m.displayName,
+        email: m.email
+      })));
 
-      // Zusätzliche Suche: Prüfe auch email/userId
-      if (!member) {
-        member = teamMembers.find(m =>
-          m.email.toLowerCase().includes(mentionText.toLowerCase()) ||
-          (m.userId && m.userId.includes(mentionText)) ||
-          (m.id && m.id.includes(mentionText))
-        );
-      }
-
-      console.log('Gefundenes Member:', member ? {
-        id: member.id,
-        userId: member.userId,
-        displayName: member.displayName,
-        email: member.email
-      } : 'NICHT GEFUNDEN');
-
-      if (member) {
-        // Präferiere userId, falls verfügbar
+      // Füge ALLE gefundenen Member hinzu (wichtig bei Duplikaten!)
+      matchingMembers.forEach(member => {
         const userId = member.userId || member.id;
         console.log(`Verwende User-ID: ${userId} für ${member.displayName}`);
 
         if (userId && !mentionedUserIds.includes(userId)) {
           mentionedUserIds.push(userId);
         }
-      } else {
+      });
+
+      if (matchingMembers.length === 0) {
         console.warn(`❌ Kein Team-Mitglied gefunden für Mention: "${mentionText}"`);
       }
     });
