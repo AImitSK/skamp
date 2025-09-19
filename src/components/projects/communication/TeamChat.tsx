@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
-import { teamChatService, TeamMessage as FirebaseTeamMessage } from '@/lib/firebase/team-chat-service';
+import { teamChatService, TeamMessage as FirebaseTeamMessage, MessageReaction } from '@/lib/firebase/team-chat-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { mediaService } from '@/lib/firebase/media-service';
@@ -58,6 +58,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Reaction States
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [showReactionTooltip, setShowReactionTooltip] = useState<string | null>(null);
 
   // Prüfe Team-Mitgliedschaft und lade Team-Daten
   useEffect(() => {
@@ -642,6 +646,26 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     setShowEmojiPicker(false);
   };
 
+  // Reaction Handler
+  const handleReaction = async (messageId: string, emoji: string) => {
+    if (!currentUser || !currentUser.displayName) {
+      console.error('Kein gültiger User für Reaction');
+      return;
+    }
+
+    try {
+      await teamChatService.toggleReaction(
+        projectId,
+        messageId,
+        emoji,
+        currentUser.uid,
+        currentUser.displayName
+      );
+    } catch (error) {
+      console.error('Fehler beim Reagieren:', error);
+    }
+  };
+
   return (
     <>
       {/* CSS für Mention-Highlights */}
@@ -694,7 +718,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               const isFirstInGroup = !previousMessage || previousMessage.authorId !== message.authorId;
 
               return (
-                <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}>
+                <div
+                  key={message.id}
+                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
+                  onMouseEnter={() => setHoveredMessageId(message.id || null)}
+                  onMouseLeave={() => setHoveredMessageId(null)}
+                >
                   {!isOwnMessage && (
                     <Avatar
                       className="size-8 flex-shrink-0 mr-3 self-end"
@@ -762,6 +791,65 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                         isOwnMessage ? 'text-blue-200' : 'text-gray-400'
                       }`}>
                         (bearbeitet)
+                      </div>
+                    )}
+
+                    {/* Reaction Buttons (nur bei Hover) */}
+                    {hoveredMessageId === message.id && (
+                      <div className={`flex items-center gap-1 mt-2 ${
+                        isOwnMessage ? 'justify-end' : 'justify-start'
+                      }`}>
+                        {['👍', '👎', '🤚'].map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(message.id!, emoji)}
+                            className={`text-sm px-2 py-1 rounded-full transition-colors ${
+                              isOwnMessage
+                                ? 'hover:bg-blue-500 text-blue-100'
+                                : 'hover:bg-gray-200 text-gray-600'
+                            }`}
+                            title={`Mit ${emoji} reagieren`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Existing Reactions */}
+                    {message.reactions && message.reactions.length > 0 && (
+                      <div className={`flex items-center gap-1 mt-2 ${
+                        isOwnMessage ? 'justify-end' : 'justify-start'
+                      }`}>
+                        {message.reactions.map((reaction, reactionIndex) => {
+                          const hasUserReacted = reaction.userIds.includes(userId);
+                          return (
+                            <button
+                              key={`${reaction.emoji}-${reactionIndex}`}
+                              onClick={() => handleReaction(message.id!, reaction.emoji)}
+                              onMouseEnter={() => setShowReactionTooltip(`${message.id}-${reaction.emoji}`)}
+                              onMouseLeave={() => setShowReactionTooltip(null)}
+                              className={`relative text-xs px-2 py-1 rounded-full border transition-colors ${
+                                hasUserReacted
+                                  ? isOwnMessage
+                                    ? 'bg-blue-400 border-blue-300 text-white'
+                                    : 'bg-blue-100 border-blue-300 text-blue-800'
+                                  : isOwnMessage
+                                    ? 'bg-blue-600 border-blue-400 text-blue-100 hover:bg-blue-500'
+                                    : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {reaction.emoji} {reaction.count}
+
+                              {/* Tooltip */}
+                              {showReactionTooltip === `${message.id}-${reaction.emoji}` && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap z-10">
+                                  {reaction.userNames.join(', ')}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
