@@ -448,73 +448,99 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   // Funktion zur Erkennung und Formatierung von Links, Assets + Emojis
   const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
-    // WICHTIG: Asset-Links ZUERST parsen, DANN Emojis ersetzen!
-    // Asset-Links Pattern: [Filename.jpg](asset://projectId/assetId) oder [Ordner: Name](folder://projectId/folderId)
-    // Pattern muss lange IDs unterstützen: [a-zA-Z0-9_-]+ für Firebase IDs
+    const parts = [];
+    let lastIndex = 0;
+
+    // Asset-Links Pattern
     const assetRegex = /\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
 
     // Standard-Links Pattern
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
 
-    // Kombiniere beide Patterns - verwende ORIGINAL content, nicht emoji-processed
-    const combinedRegex = new RegExp(`${assetRegex.source}|${urlRegex.source}`, 'g');
-    const parts = content.split(combinedRegex);
+    // Finde alle Asset-Links
+    let match;
+    while ((match = assetRegex.exec(content)) !== null) {
+      // Text vor dem Asset-Link
+      if (match.index > lastIndex) {
+        const beforeText = content.substring(lastIndex, match.index);
+        if (beforeText) {
+          parts.push({ type: 'text', content: beforeText });
+        }
+      }
 
-    console.log('🔍 Debug - parts after split:', parts);
+      // Asset-Link
+      parts.push({
+        type: 'asset',
+        linkText: match[1],
+        assetType: match[2],
+        projectId: match[3],
+        assetId: match[4]
+      });
 
-    let partIndex = 0;
+      lastIndex = assetRegex.lastIndex;
+    }
+
+    // Text nach dem letzten Asset-Link
+    if (lastIndex < content.length) {
+      const remainingText = content.substring(lastIndex);
+      if (remainingText) {
+        parts.push({ type: 'text', content: remainingText });
+      }
+    }
+
+    // Wenn keine Asset-Links gefunden, behandle als normalen Text
+    if (parts.length === 0) {
+      parts.push({ type: 'text', content });
+    }
+
     return (
       <>
         {parts.map((part, index) => {
-          if (!part) return null;
-
-          // Prüfe auf Asset-Links mit korrektem Pattern für Firebase IDs
-          const assetMatch = part.match(/\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/);
-          if (assetMatch) {
-            const [, linkText, type, projectIdFromLink, assetId] = assetMatch;
-
+          if (part.type === 'asset') {
             return (
               <div key={index} className="my-2">
                 <AssetPreview
-                  assetId={assetId}
-                  assetType={type as 'asset' | 'folder'}
-                  linkText={linkText}
-                  projectId={projectIdFromLink}
+                  assetId={part.assetId}
+                  assetType={part.assetType as 'asset' | 'folder'}
+                  linkText={part.linkText}
+                  projectId={part.projectId}
                   organizationId={organizationId}
                   isOwnMessage={isOwnMessage}
-                  onAssetClick={() => handleAssetLinkClick(type, projectIdFromLink, assetId)}
+                  onAssetClick={() => handleAssetLinkClick(part.assetType, part.projectId, part.assetId)}
                 />
               </div>
             );
           }
 
-          // Prüfe auf Standard-URLs
-          if (urlRegex.test(part)) {
-            // Stelle sicher, dass die URL ein Protokoll hat
-            let url = part;
-            if (!part.startsWith('http://') && !part.startsWith('https://')) {
-              url = 'https://' + part;
-            }
+          // Text-Teil: Prüfe auf Standard-URLs und verarbeite Emojis
+          let textContent = part.content;
 
-            return (
-              <a
-                key={index}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`underline hover:no-underline ${
-                  isOwnMessage
-                    ? 'text-blue-100 hover:text-white'
-                    : 'text-blue-600 hover:text-blue-800'
-                }`}
-              >
-                {part}
-              </a>
-            );
+          // URL-Links verarbeiten
+          const urlMatches = textContent.match(urlRegex);
+          if (urlMatches) {
+            urlMatches.forEach(urlMatch => {
+              let url = urlMatch;
+              if (!urlMatch.startsWith('http://') && !urlMatch.startsWith('https://')) {
+                url = 'https://' + urlMatch;
+              }
+
+              const linkElement = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline ${
+                isOwnMessage ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-800'
+              }">${urlMatch}</a>`;
+
+              textContent = textContent.replace(urlMatch, linkElement);
+            });
           }
 
-          // Normale Text-Teile: Emojis ersetzen
-          return <span key={index}>{replaceEmojis(part)}</span>;
+          // Emojis ersetzen
+          textContent = replaceEmojis(textContent);
+
+          return (
+            <span
+              key={index}
+              dangerouslySetInnerHTML={{ __html: textContent }}
+            />
+          );
         })}
       </>
     );
