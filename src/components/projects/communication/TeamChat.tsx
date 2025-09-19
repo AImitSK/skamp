@@ -804,10 +804,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                             onClick={() => handleReaction(message.id!, emoji)}
                             onMouseEnter={() => count > 0 ? setShowReactionTooltip(`${message.id}-${emoji}`) : null}
                             onMouseLeave={() => setShowReactionTooltip(null)}
-                            className={`relative text-sm px-2 py-1 rounded-full border transition-colors ${
+                            className={`relative text-sm px-2 py-1 rounded-full transition-colors ${
                               hasUserReacted
-                                ? 'bg-blue-100 border-blue-300 text-blue-800'
-                                : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                                ? isOwnMessage
+                                  ? 'bg-blue-200 text-blue-900'        // Geklickt: Helles Blau
+                                  : 'bg-gray-200 text-gray-900'        // Geklickt: Helles Grau
+                                : isOwnMessage
+                                  ? 'bg-blue-500 bg-opacity-80 text-white'  // Ungeklickt: 80% Blau
+                                  : 'bg-gray-500 bg-opacity-80 text-white'  // Ungeklickt: 80% Grau
                             }`}
                             title={`Mit ${emoji} reagieren`}
                           >
