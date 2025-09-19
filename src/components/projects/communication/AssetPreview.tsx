@@ -169,30 +169,38 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       {/* Minimales Asset - nur Bild/Icon mit Hover-Overlay */}
       <div className="relative inline-block group cursor-pointer" onClick={() => setShowPreviewModal(true)}>
         {isImage && asset.downloadUrl ? (
-          /* Bild Asset */
-          <img
-            src={asset.downloadUrl}
-            alt={asset.fileName}
-            className="max-w-80 max-h-80 object-contain rounded-lg transition-transform group-hover:scale-105"
-            style={{ width: 'auto', height: 'auto' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+          /* Bild Asset mit eigenem Overlay */
+          <div className="relative inline-block">
+            <img
+              src={asset.downloadUrl}
+              alt={asset.fileName}
+              className="max-w-[450px] max-h-[450px] object-contain rounded-lg transition-transform group-hover:scale-105"
+              style={{ width: 'auto', height: 'auto' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+            {/* Auge-Overlay für Bilder */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <EyeIcon
+                className="h-8 w-8 text-white"
+                title={asset.fileName}
+              />
+            </div>
+          </div>
         ) : (
           /* Icon für andere Dateitypen */
-          <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
             <FileIcon className="h-12 w-12 text-gray-400" />
+            {/* Auge-Overlay für Icons */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <EyeIcon
+                className="h-8 w-8 text-white"
+                title={asset.fileName}
+              />
+            </div>
           </div>
         )}
-
-        {/* Auge-Overlay bei Hover */}
-        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <EyeIcon
-            className="h-8 w-8 text-white"
-            title={asset.fileName}
-          />
-        </div>
       </div>
 
       {/* Zoom-Preview Modal */}
