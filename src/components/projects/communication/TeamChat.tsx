@@ -453,7 +453,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     // WICHTIG: Asset-Links ZUERST parsen, DANN Emojis ersetzen!
     // Asset-Links Pattern: 📎 [Filename.jpg](asset://projectId/assetId) oder 📁 [Ordner: Name](folder://projectId/folderId)
     // Pattern muss lange IDs unterstützen: [a-zA-Z0-9_-]+ für Firebase IDs
-    const assetRegex = /([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
+    // WICHTIG: Emoji kann als Unicode-Escape oder echtes Emoji ankommen
+    const assetRegex = /([\uDCCE\uDCC1📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
 
     console.log('🔍 Debug - Testing asset regex on content:', content);
     const assetMatches = content.match(assetRegex);
@@ -473,7 +474,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           if (!part) return null;
 
           // Prüfe auf Asset-Links mit korrektem Pattern für Firebase IDs
-          const assetMatch = part.match(/([📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/);
+          const assetMatch = part.match(/([\uDCCE\uDCC1📎📁])\s*\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/);
           if (assetMatch) {
             const [, emoji, linkText, type, projectIdFromLink, assetId] = assetMatch;
 
