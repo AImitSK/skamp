@@ -37,6 +37,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   const [asset, setAsset] = useState<MediaAsset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     if (assetType === 'asset') {
@@ -159,8 +160,6 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
       </div>
     );
   }
-
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const FileIcon = getFileIcon(asset.fileType);
   const isImage = asset.fileType?.startsWith('image/');
