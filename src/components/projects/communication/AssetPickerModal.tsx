@@ -11,7 +11,6 @@ import {
   PhotoIcon,
   VideoCameraIcon,
   DocumentIcon,
-  XMarkIcon,
   ChevronRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
@@ -172,14 +171,8 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
-      <DialogTitle className="flex items-center justify-between">
-        <span>Asset auswählen</span>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <XMarkIcon className="size-6" />
-        </button>
+      <DialogTitle>
+        Asset auswählen
       </DialogTitle>
 
       <DialogBody className="space-y-4">
