@@ -5,7 +5,8 @@ import {
   PaperAirplaneIcon,
   AtSymbolIcon,
   ExclamationTriangleIcon,
-  PaperClipIcon
+  PaperClipIcon,
+  FaceSmileIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -55,6 +56,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   // Asset Picker States
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Prüfe Team-Mitgliedschaft und lade Team-Daten
@@ -615,6 +617,31 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
   };
 
+  // Emoji Selection Handler
+  const handleEmojiSelect = (emoji: string) => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      const currentValue = textarea.value;
+      const cursorPos = textarea.selectionStart;
+
+      // Füge Emoji am Cursor ein
+      const before = currentValue.substring(0, cursorPos);
+      const after = currentValue.substring(cursorPos);
+      const finalText = before + emoji + after;
+
+      setNewMessage(finalText);
+
+      // Setze Cursor nach dem Emoji
+      setTimeout(() => {
+        const newCursorPos = before.length + emoji.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+      }, 0);
+    }
+
+    setShowEmojiPicker(false);
+  };
+
   return (
     <>
       {/* CSS für Mention-Highlights */}
@@ -776,7 +803,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben... (@name für Erwähnungen)"
                   rows={2}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px]"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-18 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px]"
                   disabled={sending}
                 />
 
@@ -784,11 +811,22 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAssetPicker(true)}
-                  className="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  className="absolute right-10 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                   title="Asset anhängen"
                   disabled={sending}
                 >
                   <PaperClipIcon className="h-4 w-4" />
+                </button>
+
+                {/* Emoji-Button im Textarea */}
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(true)}
+                  className="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  title="Emoji einfügen"
+                  disabled={sending}
+                >
+                  <FaceSmileIcon className="h-4 w-4" />
                 </button>
 
                 {/* @-Mention Dropdown */}
@@ -833,6 +871,48 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         projectId={projectId}
         organizationId={organizationId}
       />
+
+      {/* Emoji Picker Panel */}
+      {showEmojiPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Emoji auswählen</h3>
+              <button
+                onClick={() => setShowEmojiPicker(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-8 gap-2">
+              {/* Häufig verwendete Emojis */}
+              {[
+                '😀', '😂', '😍', '🥰', '😎', '🤔', '😅', '😊',
+                '👍', '👎', '👏', '🙌', '💯', '🔥', '❤️', '💪',
+                '🎉', '🎊', '✨', '⭐', '💡', '✅', '❌', '⚡',
+                '👌', '✌️', '🤝', '🙏', '💖', '😴', '🤷', '🎯'
+              ].map((emoji, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleEmojiSelect(emoji)}
+                  className="text-2xl p-2 hover:bg-gray-100 rounded transition-colors"
+                  title={emoji}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-sm text-gray-500">
+                Oder verwende Text-Emojis wie :) :( :D :P &lt;3
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );
