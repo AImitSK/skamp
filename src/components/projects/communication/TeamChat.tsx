@@ -648,7 +648,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
   // Reaction Handler
   const handleReaction = async (messageId: string, emoji: string) => {
-    if (!currentUser || !currentUser.displayName) {
+    if (!userId || !userDisplayName) {
       console.error('Kein gültiger User für Reaction');
       return;
     }
@@ -658,8 +658,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         projectId,
         messageId,
         emoji,
-        currentUser.uid,
-        currentUser.displayName
+        userId,
+        userDisplayName
       );
     } catch (error) {
       console.error('Fehler beim Reagieren:', error);
@@ -720,7 +720,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
+                  className={`relative flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
                   onMouseEnter={() => setHoveredMessageId(message.id || null)}
                   onMouseLeave={() => setHoveredMessageId(null)}
                 >
@@ -794,27 +794,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       </div>
                     )}
 
-                    {/* Reaction Buttons (nur bei Hover) */}
-                    {hoveredMessageId === message.id && (
-                      <div className={`flex items-center gap-1 mt-2 ${
-                        isOwnMessage ? 'justify-end' : 'justify-start'
-                      }`}>
-                        {['👍', '👎', '🤚'].map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReaction(message.id!, emoji)}
-                            className={`text-sm px-2 py-1 rounded-full transition-colors ${
-                              isOwnMessage
-                                ? 'hover:bg-blue-500 text-blue-100'
-                                : 'hover:bg-gray-200 text-gray-600'
-                            }`}
-                            title={`Mit ${emoji} reagieren`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
 
                     {/* Existing Reactions */}
                     {message.reactions && message.reactions.length > 0 && (
@@ -860,6 +839,24 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       src={currentUserPhoto}
                       initials={getInitials(userDisplayName)}
                     />
+                  )}
+
+                  {/* Reaction Buttons Overlay */}
+                  {hoveredMessageId === message.id && (
+                    <div className={`absolute -top-2 z-10 flex items-center gap-1 bg-white shadow-lg border rounded-full px-2 py-1 ${
+                      isOwnMessage ? 'right-12' : 'left-12'
+                    }`}>
+                      {['👍', '👎', '🤚'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleReaction(message.id!, emoji)}
+                          className="text-lg px-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
+                          title={`Mit ${emoji} reagieren`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
               );
