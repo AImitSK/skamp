@@ -160,10 +160,10 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
     );
   }
 
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
   const FileIcon = getFileIcon(asset.fileType);
   const isImage = asset.fileType?.startsWith('image/');
-
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   return (
     <>
