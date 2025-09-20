@@ -48,6 +48,7 @@ import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAu
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { TeamChat } from '@/components/projects/communication/TeamChat';
+import { FloatingChat } from '@/components/projects/communication/FloatingChat';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project } from '@/types/project';
@@ -1364,6 +1365,17 @@ export default function ProjectDetailPage() {
             // Reload team members to refresh display
             loadTeamMembers();
           }}
+        />
+      )}
+
+      {/* Floating Chat - nur anzeigen wenn Projekt geladen und User eingeloggt */}
+      {project && currentOrganization && user && (
+        <FloatingChat
+          projectId={project.id!}
+          projectTitle={project.title}
+          organizationId={currentOrganization.id}
+          userId={user.uid}
+          userDisplayName={user.displayName || 'Unbekannter User'}
         />
       )}
     </div>
