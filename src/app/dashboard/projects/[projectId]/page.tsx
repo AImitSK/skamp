@@ -33,7 +33,8 @@ import {
   TrashIcon,
   PaperAirplaneIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -612,12 +613,13 @@ export default function ProjectDetailPage() {
               </div>
 
               {/* Trennlinie */}
-              <div className="border-t border-gray-200 mt-12 mb-5"></div>
+              <div className="border-t border-gray-200 mt-8 mb-3"></div>
 
               {/* Kompakte Info-Zeile */}
               <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
                 {/* Aktuelle Phase */}
                 <div className="flex items-center gap-1.5">
+                  <Squares2X2Icon className="w-4 h-4 text-gray-400" />
                   <span className="font-medium">Phase:</span>
                   <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
                 </div>
@@ -626,6 +628,7 @@ export default function ProjectDetailPage() {
                 {/* Kunde */}
                 {project.customer && (
                   <div className="flex items-center gap-1.5">
+                    <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Kunde:</span>
                     <button
                       className="text-primary hover:text-primary-hover hover:underline text-sm"
@@ -639,6 +642,7 @@ export default function ProjectDetailPage() {
 
                 {/* Priorität */}
                 <div className="flex items-center gap-1.5">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
                   <span className="font-medium">Priorität:</span>
                   <Badge
                     color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
@@ -651,6 +655,7 @@ export default function ProjectDetailPage() {
                 {/* Deadline wenn vorhanden */}
                 {project.deadline && (
                   <div className="flex items-center gap-1.5">
+                    <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Deadline:</span>
                     <span className="text-gray-900">
                       {new Date(project.deadline).toLocaleDateString('de-DE', {
@@ -665,6 +670,7 @@ export default function ProjectDetailPage() {
                 {/* Tags - ans Ende und nur wenn vorhanden */}
                 {projectTags.length > 0 && (
                   <div className="flex items-center gap-1.5">
+                    <TagIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Tags:</span>
                     <div className="flex items-center gap-1">
                       {projectTags.slice(0, 3).map(tag => (
