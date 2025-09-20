@@ -854,8 +854,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
       {/* Eingabebereich - nur für Team-Mitglieder */}
       {isTeamMember && (
-        <div className="border-t border-gray-200 px-4 py-4 bg-white">
-          <div className="space-y-3">
+        <div className="border-t border-gray-200 px-4 py-3 bg-white">
+          <div>
             {/* Nachrichteneingabe */}
             <div className="flex items-center space-x-3">
               <div className="flex-1 relative">
@@ -915,12 +915,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   <PaperAirplaneIcon className="h-4 w-4" />
                 )}
               </Button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Text className="text-xs text-gray-500">
-                📎 für Assets • @ für Erwähnungen • Shift+Enter für neue Zeile
-              </Text>
             </div>
           </div>
         </div>
