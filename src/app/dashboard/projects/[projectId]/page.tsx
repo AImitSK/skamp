@@ -641,11 +641,17 @@ export default function ProjectDetailPage() {
                 )}
 
                 {/* Kunde */}
-                {project.client && (
+                {project.customer && (
                   <div className="flex items-center gap-1.5">
                     <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Kunde:</span>
-                    <span className="text-gray-900">{project.client}</span>
+                    <button
+                      className="text-indigo-600 hover:text-indigo-700 hover:underline text-sm"
+                      onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
+                      title="Kunde anzeigen"
+                    >
+                      {project.customer.name}
+                    </button>
                   </div>
                 )}
 
@@ -676,14 +682,6 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                {/* Team-Größe */}
-                {project.assignedTo && project.assignedTo.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <UserGroupIcon className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">Team:</span>
-                    <span className="text-gray-900">{project.assignedTo.length} Mitglieder</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
