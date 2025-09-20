@@ -646,7 +646,7 @@ export default function ProjectDetailPage() {
                     <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Kunde:</span>
                     <button
-                      className="text-indigo-600 hover:text-indigo-700 hover:underline text-sm"
+                      className="text-primary hover:text-primary-hover hover:underline text-sm"
                       onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
                       title="Kunde anzeigen"
                     >

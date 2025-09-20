@@ -120,7 +120,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
         {!isOpen && (
           <button
             onClick={toggleChat}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200 group relative"
+            className="bg-primary hover:bg-primary-hover text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-200 group relative"
             title="Team-Chat öffnen"
           >
             <ChatBubbleLeftRightIcon className="h-6 w-6" />
@@ -145,12 +145,12 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
         <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
-            <div className="bg-indigo-600 text-white px-4 py-3 rounded-t-lg flex items-center justify-between">
+            <div className="bg-primary text-white px-4 py-3 rounded-t-lg flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
                 <ChatBubbleLeftRightIcon className="h-5 w-5 flex-shrink-0" />
                 <div className="flex-shrink-0">
                   <h3 className="font-medium">Team-Chat</h3>
-                  <p className="text-xs text-indigo-100">{projectTitle}</p>
+                  <p className="text-xs text-primary-100">{projectTitle}</p>
                 </div>
 
                 {/* Team-Avatare */}
@@ -166,7 +166,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                     return (
                       <Avatar
                         key={member.id}
-                        className="size-7 ring-2 ring-indigo-600 hover:z-10 transition-all"
+                        className="size-7 ring-2 ring-primary hover:z-10 transition-all"
                         src={member.photoUrl}
                         initials={initials}
                         style={{ zIndex: 5 - index }}
@@ -176,7 +176,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                   })}
                   {assignedMembers.length > 5 && (
                     <div
-                      className="size-7 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-medium ring-2 ring-indigo-600"
+                      className="size-7 rounded-full bg-primary-500 flex items-center justify-center text-xs font-medium ring-2 ring-primary"
                       title={`${assignedMembers.length - 5} weitere Mitglieder`}
                     >
                       +{assignedMembers.length - 5}
@@ -188,7 +188,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <button
                   onClick={toggleChat}
-                  className="hover:bg-indigo-700 p-1 rounded transition-colors"
+                  className="hover:bg-primary-hover p-1 rounded transition-colors"
                   title="Minimieren"
                 >
                   <ChevronDownIcon className="h-5 w-5" />
@@ -198,7 +198,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                     setIsOpen(false);
                     localStorage.setItem(`chat_open_${projectId}`, 'false');
                   }}
-                  className="hover:bg-indigo-700 p-1 rounded transition-colors"
+                  className="hover:bg-primary-hover p-1 rounded transition-colors"
                   title="Schließen"
                 >
                   <XMarkIcon className="h-5 w-5" />
