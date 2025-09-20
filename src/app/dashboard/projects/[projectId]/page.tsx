@@ -611,6 +611,9 @@ export default function ProjectDetailPage() {
                 </span>
               </div>
 
+              {/* Trennlinie */}
+              <div className="border-t border-gray-200 mt-12 mb-5"></div>
+
               {/* Kompakte Info-Zeile */}
               <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
                 {/* Aktuelle Phase */}
@@ -688,32 +691,91 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Button onClick={() => setShowEditWizard(true)} outline className="!py-1.5">
-              <PencilSquareIcon className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Bearbeiten</span>
-            </Button>
+          <div className="flex items-center space-x-4">
+            {/* Team-Mitglieder Avatare */}
+            {project.assignedTo && project.assignedTo.length > 0 && (
+              <div className="flex items-center -space-x-2">
+                {(() => {
+                  // Sammle alle zugewiesenen User-IDs inklusive Admin und Manager
+                  const allUserIds = [
+                    ...(project.assignedTo || []),
+                    project.userId,
+                    project.managerId
+                  ].filter(Boolean);
 
-            {/* Mehr-Optionen Dropdown */}
-            <Dropdown>
-              <DropdownButton outline className="!py-1.5 !px-2">
-                <EllipsisVerticalIcon className="w-5 h-5" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end">
-                <DropdownItem onClick={() => setShowTeamModal(true)}>
-                  <UserGroupIcon className="w-4 h-4 mr-2" />
-                  Team verwalten
-                </DropdownItem>
-                <DropdownItem onClick={() => router.push(`/dashboard/strategy-documents?projectId=${projectId}`)}>
-                  <DocumentTextIcon className="w-4 h-4 mr-2" />
-                  Dokumente
-                </DropdownItem>
-                <DropdownItem onClick={handleDeleteProject} className="text-red-600">
-                  <TrashIcon className="w-4 h-4 mr-2" />
-                  Projekt löschen
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+                  // Eindeutige User-IDs sammeln und Member finden
+                  const uniqueMembers: Array<{userId: string, member: TeamMember | null}> = [];
+                  for (const userId of allUserIds) {
+                    if (!uniqueMembers.find(u => u.userId === userId)) {
+                      const member = teamMembers.find(m =>
+                        m.userId === userId ||
+                        m.id === userId
+                      );
+                      uniqueMembers.push({ userId, member });
+                    }
+                  }
+
+                  return uniqueMembers.slice(0, 5).map(({ userId, member }, index) => {
+                    if (member) {
+                      const initials = member.displayName
+                        ?.split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2) || '??';
+
+                      return (
+                        <Avatar
+                          key={userId}
+                          className="size-8 ring-2 ring-white hover:z-10 transition-all"
+                          src={member.photoUrl}
+                          initials={initials}
+                          style={{ zIndex: 5 - index }}
+                          title={member.displayName}
+                        />
+                      );
+                    }
+                    return null;
+                  });
+                })()}
+                {project.assignedTo && project.assignedTo.length > 5 && (
+                  <div
+                    className="size-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium ring-2 ring-white"
+                    title={`${project.assignedTo.length - 5} weitere Mitglieder`}
+                  >
+                    +{project.assignedTo.length - 5}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Button onClick={() => setShowEditWizard(true)} outline className="!py-1.5">
+                <PencilSquareIcon className="w-4 h-4" />
+                <span className="hidden sm:inline ml-2">Bearbeiten</span>
+              </Button>
+
+              {/* Mehr-Optionen Dropdown */}
+              <Dropdown>
+                <DropdownButton outline className="!py-1.5 !px-2">
+                  <EllipsisVerticalIcon className="w-5 h-5" />
+                </DropdownButton>
+                <DropdownMenu anchor="bottom end">
+                  <DropdownItem onClick={() => setShowTeamModal(true)}>
+                    <UserGroupIcon className="w-4 h-4 mr-2" />
+                    Team verwalten
+                  </DropdownItem>
+                  <DropdownItem onClick={() => router.push(`/dashboard/strategy-documents?projectId=${projectId}`)}>
+                    <DocumentTextIcon className="w-4 h-4 mr-2" />
+                    Dokumente
+                  </DropdownItem>
+                  <DropdownItem onClick={handleDeleteProject} className="text-red-600">
+                    <TrashIcon className="w-4 h-4 mr-2" />
+                    Projekt löschen
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
           </div>
         </div>
       </div>
@@ -1062,156 +1124,6 @@ export default function ProjectDetailPage() {
               </div>
               )}
 
-              {/* Team Section */}
-              <div>
-                <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-                  <div className="flex items-center">
-                    <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <Subheading>Team</Subheading>
-                  </div>
-                  <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => setShowTeamModal(true)}>
-                        <UserGroupIcon className="h-4 w-4" />
-                        Team verwalten
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-
-                <div className="px-6 py-4 space-y-4">
-                  {/* Projekt-Admin */}
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600 mb-2">Projekt-Admin</Text>
-                    <div className="flex items-center space-x-3">
-                      {(() => {
-                        const adminMember = teamMembers.find(m => m.userId === project.userId || m.id === project.userId);
-
-                        if (adminMember) {
-                          const initials = adminMember.displayName
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2);
-
-                          return (
-                            <>
-                              <Avatar
-                                className="size-8"
-                                src={adminMember.photoUrl}
-                                initials={initials}
-                              />
-                              <div>
-                                <Text className="text-sm font-medium text-gray-900">{adminMember.displayName}</Text>
-                                <Text className="text-xs text-gray-500">{adminMember.email}</Text>
-                              </div>
-                            </>
-                          );
-                        } else {
-                          return (
-                            <>
-                              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                                <Text className="text-xs font-medium text-gray-600">?</Text>
-                              </div>
-                              <Text className="text-sm text-gray-500">Nicht zugeordnet</Text>
-                            </>
-                          );
-                        }
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Team-Mitglieder */}
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600 mb-2">Team-Mitglieder</Text>
-                  {project.assignedTo && project.assignedTo.length > 0 ? (
-                    <div className="flex -space-x-2">
-                      {/* Entferne Duplikate und zeige nur eindeutige Team-Members */}
-                      {(() => {
-                        const uniqueMembers = [];
-                        const seenMemberIds = new Set();
-
-                        for (const userId of project.assignedTo) {
-                          const member = teamMembers.find(m => m.userId === userId || m.id === userId);
-                          if (member && !seenMemberIds.has(member.id)) {
-                            uniqueMembers.push({ userId, member });
-                            seenMemberIds.add(member.id);
-                          } else if (!member) {
-                            // Unbekannter Member - auch hinzufügen
-                            uniqueMembers.push({ userId, member: null });
-                          }
-                        }
-
-                        return uniqueMembers;
-                      })().slice(0, 4).map(({ userId, member }, index) => {
-
-                        if (!member || loadingTeam) {
-                          // Fallback für unbekannte Member
-                          return (
-                            <div
-                              key={userId}
-                              className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white"
-                              title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
-                            >
-                              {loadingTeam ? "..." : "?"}
-                            </div>
-                          );
-                        }
-
-                        // Generate initials as fallback
-                        const initials = member.displayName
-                          .split(' ')
-                          .map(n => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2);
-
-                        return (
-                          <Avatar
-                            key={userId}
-                            className="size-8 ring-2 ring-white"
-                            src={member.photoUrl}
-                            initials={initials}
-                            title={member.displayName}
-                          />
-                        );
-                      })}
-                      {(() => {
-                        const uniqueMembers = [];
-                        const seenMemberIds = new Set();
-
-                        for (const userId of project.assignedTo) {
-                          const member = teamMembers.find(m => m.userId === userId || m.id === userId);
-                          if (member && !seenMemberIds.has(member.id)) {
-                            uniqueMembers.push({ userId, member });
-                            seenMemberIds.add(member.id);
-                          } else if (!member) {
-                            uniqueMembers.push({ userId, member: null });
-                          }
-                        }
-
-                        return uniqueMembers.length > 4 ? (
-                          <div
-                            className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
-                            title={`+${uniqueMembers.length - 4} weitere Mitglieder`}
-                          >
-                            +{uniqueMembers.length - 4}
-                          </div>
-                        ) : null;
-                      })()}
-                    </div>
-                  ) : (
-                    <div className="flex items-center text-gray-500">
-                      <Text className="text-sm">Keine Team-Mitglieder zugewiesen</Text>
-                    </div>
-                  )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
