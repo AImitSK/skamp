@@ -853,29 +853,12 @@ export default function ProjectDetailPage() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Pipeline Progress Dashboard */}
-              {project && (
+              {project && currentOrganization && (
                 <PipelineProgressDashboard
-                  projectId={project?.id || ''}
-                  progress={{
-                    overallPercent: 65,
-                    stageProgress: {
-                      'ideas_planning': 100,
-                      'creation': 80,
-                      'internal_approval': 60,
-                      'customer_approval': 0,
-                      'distribution': 0,
-                      'monitoring': 0,
-                      'completed': 0
-                    },
-                    taskCompletion: 12,
-                    criticalTasksRemaining: 3,
-                    lastUpdated: new Date(),
-                    milestones: [
-                      { percent: 25, achievedAt: new Date(), notificationSent: true },
-                      { percent: 50, notificationSent: false }
-                    ]
-                  }}
+                  projectId={project.id || ''}
+                  organizationId={currentOrganization.id}
                   currentStage={project.currentStage}
+                  onNavigateToTasks={() => setActiveTab('tasks')}
                 />
               )}
               

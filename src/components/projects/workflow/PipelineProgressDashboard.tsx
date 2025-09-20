@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PipelineStage } from '@/types/project';
-import { 
-  CheckCircleIcon, 
-  ClockIcon, 
+import { taskService } from '@/lib/firebase/task-service';
+import { ProjectTask } from '@/types/tasks';
+import {
+  CheckCircleIcon,
+  ClockIcon,
   ExclamationTriangleIcon,
   TrophyIcon,
   ChartBarIcon
@@ -12,27 +14,67 @@ import {
 
 interface PipelineProgressDashboardProps {
   projectId: string;
-  progress: {
-    overallPercent: number;
-    stageProgress: Record<PipelineStage, number>;
-    taskCompletion: number;
-    criticalTasksRemaining: number;
-    lastUpdated: Date;
-    milestones: Array<{
-      percent: number;
-      achievedAt?: Date;
-      notificationSent: boolean;
-    }>;
-  };
+  organizationId: string;
   currentStage: PipelineStage;
+  onNavigateToTasks?: () => void;
 }
 
 export default function PipelineProgressDashboard({
   projectId,
-  progress,
-  currentStage
+  organizationId,
+  currentStage,
+  onNavigateToTasks
 }: PipelineProgressDashboardProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('month');
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState({
+    overallPercent: 0,
+    taskCompletion: 0,
+    criticalTasksRemaining: 0,
+    lastUpdated: new Date()
+  });
+
+  // Lade Tasks und berechne Fortschritt
+  useEffect(() => {
+    const loadTasksAndCalculateProgress = async () => {
+      if (!projectId || !organizationId) return;
+
+      try {
+        setLoading(true);
+        const projectTasks = await taskService.getByProject(projectId, organizationId);
+        setTasks(projectTasks);
+
+        // Berechne Fortschritt
+        const totalTasks = projectTasks.length;
+        const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
+        const criticalTasks = projectTasks.filter(task =>
+          (task.priority === 'urgent' || task.priority === 'high') &&
+          task.status !== 'completed'
+        ).length;
+
+        // Wenn keine Tasks vorhanden, setze Fortschritt auf 100%
+        const taskCompletionPercent = totalTasks === 0 ? 100 : Math.round((completedTasks / totalTasks) * 100);
+
+        // Pipeline-Fortschritt basierend auf aktueller Phase (7 Phasen)
+        const stageIndex = stageOrder.indexOf(currentStage);
+        const pipelinePercent = Math.round(((stageIndex + 1) / 7) * 100);
+
+        setProgress({
+          overallPercent: pipelinePercent,
+          taskCompletion: taskCompletionPercent,
+          criticalTasksRemaining: criticalTasks,
+          lastUpdated: new Date()
+        });
+      } catch (error) {
+        console.error('Fehler beim Laden der Tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTasksAndCalculateProgress();
+  }, [projectId, organizationId, currentStage]);
 
   const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
@@ -46,7 +88,7 @@ export default function PipelineProgressDashboard({
 
   const stageOrder: PipelineStage[] = [
     'ideas_planning',
-    'creation', 
+    'creation',
     'internal_approval',
     'customer_approval',
     'distribution',
@@ -81,7 +123,7 @@ export default function PipelineProgressDashboard({
   return (
     <div className="space-y-6">
       {/* Gesamt-Progress Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      <div className="bg-primary rounded-lg p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold">
             Pipeline-Fortschritt
@@ -120,6 +162,14 @@ export default function PipelineProgressDashboard({
                 ></div>
               </div>
             </div>
+            {tasks.length === 0 && (
+              <button
+                onClick={onNavigateToTasks}
+                className="text-xs text-blue-100 hover:text-white mt-1 underline"
+              >
+                Tasks erstellen
+              </button>
+            )}
           </div>
 
           {/* Kritische Tasks */}
@@ -147,19 +197,20 @@ export default function PipelineProgressDashboard({
 
         <div className="mt-4 text-xs text-blue-100">
           Letztes Update: {progress.lastUpdated.toLocaleString('de-DE')}
+          {loading && <span className="ml-2">(Wird geladen...)</span>}
         </div>
       </div>
 
       {/* Stage-spezifischer Progress */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h4 className="text-lg font-medium text-gray-900 mb-4">
-          Fortschritt nach Stage
+          Fortschritt nach Phase
         </h4>
 
         <div className="space-y-4">
           {stageOrder.map(stage => {
-            const stageProgress = progress.stageProgress[stage] || 0;
             const status = getStageStatus(stage);
+            const stageProgress = status === 'completed' ? 100 : status === 'current' ? 50 : 0;
             const progressColor = getProgressColor(stageProgress);
 
             return (
@@ -170,14 +221,14 @@ export default function PipelineProgressDashboard({
                       <CheckCircleIcon className="w-5 h-5 text-green-500" />
                     )}
                     {status === 'current' && (
-                      <ClockIcon className="w-5 h-5 text-blue-500" />
+                      <ClockIcon className="w-5 h-5 text-primary" />
                     )}
                     {status === 'upcoming' && (
                       <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
                     )}
-                    
+
                     <span className={`font-medium ${
-                      status === 'current' ? 'text-blue-600' : 
+                      status === 'current' ? 'text-primary' :
                       status === 'completed' ? 'text-green-600' : 'text-gray-500'
                     }`}>
                       {stageLabels[stage]}
@@ -196,9 +247,9 @@ export default function PipelineProgressDashboard({
                       style={{ width: `${stageProgress}%` }}
                     ></div>
                   </div>
-                  
+
                   {status === 'current' && (
-                    <div className="absolute inset-0 bg-blue-200 rounded-full opacity-50 animate-pulse"></div>
+                    <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
                   )}
                 </div>
               </div>
@@ -207,51 +258,63 @@ export default function PipelineProgressDashboard({
         </div>
       </div>
 
-      {/* Milestone Achievement */}
+      {/* Task-Übersicht Box */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h4 className="text-lg font-medium text-gray-900 mb-4">
-          Meilenstein-Errungenschaften
-        </h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-medium text-gray-900">
+            Task-Übersicht
+          </h4>
+          {onNavigateToTasks && (
+            <button
+              onClick={onNavigateToTasks}
+              className="text-primary hover:text-primary-hover text-sm font-medium"
+            >
+              Zum Tasks Tab →
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[25, 50, 75, 90].map(milestone => {
-            const achieved = progress.overallPercent >= milestone;
-            const milestoneData = progress.milestones.find(m => m.percent === milestone);
-            
-            return (
-              <div
-                key={milestone}
-                className={`
-                  p-4 rounded-lg border-2 transition-all
-                  ${achieved 
-                    ? 'border-yellow-300 bg-yellow-50' 
-                    : 'border-gray-200 bg-gray-50'
-                  }
-                `}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  {getMilestoneIcon(achieved)}
-                  <span className={`text-sm font-medium ${
-                    achieved ? 'text-yellow-700' : 'text-gray-500'
-                  }`}>
-                    {milestone}%
-                  </span>
-                </div>
-                
-                <p className={`text-xs ${
-                  achieved ? 'text-yellow-600' : 'text-gray-400'
-                }`}>
-                  {achieved 
-                    ? milestoneData?.achievedAt 
-                      ? `Erreicht am ${milestoneData.achievedAt.toLocaleDateString('de-DE')}`
-                      : 'Erreicht!'
-                    : 'Noch nicht erreicht'
-                  }
-                </p>
-              </div>
-            );
-          })}
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900">{tasks.length}</div>
+            <p className="text-sm text-gray-600">Gesamt Tasks</p>
+          </div>
+
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">
+              {tasks.filter(t => t.status === 'completed').length}
+            </div>
+            <p className="text-sm text-gray-600">Erledigt</p>
+          </div>
+
+          <div className="text-center p-4 bg-orange-50 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600">
+              {tasks.filter(t => t.status !== 'completed').length}
+            </div>
+            <p className="text-sm text-gray-600">Offen</p>
+          </div>
+
+          <div className="text-center p-4 bg-red-50 rounded-lg">
+            <div className="text-2xl font-bold text-red-600">
+              {progress.criticalTasksRemaining}
+            </div>
+            <p className="text-sm text-gray-600">Kritisch</p>
+          </div>
         </div>
+
+        {tasks.length === 0 && (
+          <div className="mt-4 text-center text-gray-500">
+            <p className="text-sm">Noch keine Tasks vorhanden.</p>
+            {onNavigateToTasks && (
+              <button
+                onClick={onNavigateToTasks}
+                className="mt-2 text-primary hover:text-primary-hover text-sm font-medium underline"
+              >
+                Erste Task erstellen
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Critical Task Warnings */}
@@ -264,44 +327,11 @@ export default function PipelineProgressDashboard({
             </h4>
           </div>
           <p className="mt-2 text-sm text-amber-700">
-            Es sind noch {progress.criticalTasksRemaining} kritische Tasks offen, 
+            Es sind noch {progress.criticalTasksRemaining} kritische Tasks offen,
             die für den nächsten Stage-Übergang erforderlich sind.
           </p>
         </div>
       )}
-
-      {/* Trend Chart Placeholder */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-gray-900">
-            Fortschritts-Trend
-          </h4>
-          
-          <select
-            value={selectedTimeframe}
-            onChange={(e) => setSelectedTimeframe(e.target.value as any)}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-          >
-            <option value="week">Letzte Woche</option>
-            <option value="month">Letzter Monat</option>
-            <option value="all">Gesamt</option>
-          </select>
-        </div>
-
-        {/* Vereinfachter Trend-Indikator */}
-        <div className="flex items-center justify-center h-32 bg-gray-50 rounded-lg">
-          <div className="text-center">
-            <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">
-              Trend-Chart für {selectedTimeframe === 'week' ? 'letzte Woche' : 
-                               selectedTimeframe === 'month' ? 'letzten Monat' : 'gesamten Zeitraum'}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Detaillierte Charts werden in einer zukünftigen Version implementiert
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
