@@ -174,7 +174,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
             <img
               src={asset.downloadUrl}
               alt={asset.fileName}
-              className="max-w-[450px] max-h-[450px] object-contain rounded-lg transition-transform group-hover:scale-105"
+              className="max-w-[350px] max-h-[350px] object-contain rounded-lg transition-transform group-hover:scale-105"
               style={{ width: 'auto', height: 'auto' }}
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';

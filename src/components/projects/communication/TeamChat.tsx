@@ -699,7 +699,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       )}
 
       {/* Nachrichten-Bereich */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-4 space-y-4">
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

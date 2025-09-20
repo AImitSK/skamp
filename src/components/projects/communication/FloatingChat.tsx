@@ -143,7 +143,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       {/* Chat Panel - nur sichtbar wenn isOpen */}
       {isOpen && (
         <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
-          <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: '66.67vh', maxHeight: '85vh' }}>
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
             <div className="bg-blue-600 text-white px-4 py-3 rounded-t-lg flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
