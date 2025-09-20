@@ -611,7 +611,7 @@ export default function ProjectDetailPage() {
               </div>
 
               {/* Kompakte Info-Zeile */}
-              <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600">
+              <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
                 {/* Aktuelle Phase */}
                 <div className="flex items-center gap-1.5">
                   <Squares2X2Icon className="w-4 h-4 text-gray-400" />
