@@ -716,12 +716,10 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Content Tabs Box */}
-          <div className="bg-white rounded-lg border border-gray-200">
+      {/* Main Content Area */}
+      <div className="space-y-6 mb-8">
+        {/* Content Tabs Box - Full Width */}
+        <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex space-x-6">
@@ -929,125 +927,13 @@ export default function ProjectDetailPage() {
             </div>
           )}
         </div>
-      </div>
         </div>
 
-        {/* Right Column - 1/3 width */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Rest der Detailbox - jetzt unter Tab-Box */}
+        <div className="space-y-6">
           {/* Enhanced Project Info Box */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="space-y-0">
-              {/* Projektdetails Section */}
-              <div>
-                <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-                  <div className="flex items-center">
-                    <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <Subheading>Projektdetails</Subheading>
-                  </div>
-                  <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => setShowEditWizard(true)}>
-                        <PencilSquareIcon className="h-4 w-4" />
-                        Projekt bearbeiten
-                      </DropdownItem>
-                      <DropdownItem onClick={() => handleDeleteProject()}>
-                        <TrashIcon className="h-4 w-4" />
-                        Projekt löschen
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-
-                <div className="space-y-3 px-6 py-4">
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
-                    <div className="flex items-center mt-1">
-                      <ArrowPathIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <span className="text-base text-gray-900">{getCurrentStageLabel(project.currentStage)}</span>
-                    </div>
-                  </div>
-                  
-                  {project.customer && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-600">Kunde</Text>
-                      <div className="flex items-center mt-1">
-                        <BuildingOfficeIcon className="h-4 w-4 text-gray-400 mr-1" />
-                        <button
-                          className="text-blue-600 hover:text-blue-700 hover:underline text-left text-base"
-                          onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
-                          title="Kunde anzeigen"
-                        >
-                          {project.customer.name}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
-                    <div className="flex items-center mt-1">
-                      <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <span className="text-base text-gray-900">{formatProjectDate(project.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Priorität</Text>
-                    <div className="mt-1">
-                      {(() => {
-                        console.log('Debug - Priorität:', project.priority, typeof project.priority);
-                        return project.priority;
-                      })() ? (
-                        <Badge color={
-                          project.priority === 'urgent' ? 'red' :
-                          project.priority === 'high' ? 'red' :
-                          project.priority === 'medium' ? 'yellow' :
-                          project.priority === 'low' ? 'green' : 'gray'
-                        }>
-                          {project.priority === 'urgent' ? 'Dringend' :
-                           project.priority === 'high' ? 'Hoch' :
-                           project.priority === 'medium' ? 'Mittel' :
-                           project.priority === 'low' ? 'Niedrig' :
-                           project.priority}
-                        </Badge>
-                      ) : (
-                        <span className="text-base text-gray-500">-</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Tags</Text>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {console.log('Debug - Project tags:', project.tags)}
-                      {console.log('Debug - All organization tags:', tags)}
-                      {console.log('Debug - Direct loaded project tags:', projectTags)}
-                      {console.log('Debug - Current Organization:', currentOrganization?.id)}
-                      {project.tags && project.tags.length > 0 ? (
-                        project.tags.map((tagId, index) => {
-                          // Zuerst in direkt geladenen Projekt-Tags suchen
-                          let tagInfo = projectTags.find(t => t.id === tagId);
-                          // Falls nicht gefunden, in allen Organisation-Tags suchen
-                          if (!tagInfo) {
-                            tagInfo = tags.find(t => t.id === tagId);
-                          }
-                          console.log(`Debug - Looking for tag ${tagId}, found:`, tagInfo);
-                          return (
-                            <Badge key={tagId} color={tagInfo?.color || (index % 2 === 0 ? 'blue' : 'purple')}>
-                              {tagInfo?.name || tagId}
-                            </Badge>
-                          );
-                        })
-                      ) : (
-                        <span className="text-base text-gray-500">-</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Pressemeldung Section - Nur anzeigen wenn Kampagne verknüpft */}
               {linkedCampaigns.length > 0 && (
