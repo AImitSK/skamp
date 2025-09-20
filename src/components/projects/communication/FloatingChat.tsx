@@ -8,6 +8,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { TeamChat } from './TeamChat';
 import { teamChatService } from '@/lib/firebase/team-chat-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
+import { projectService } from '@/lib/firebase/project-service';
+import { TeamMember } from '@/types/international';
+import { Avatar } from '@/components/ui/avatar';
 
 interface FloatingChatProps {
   projectId: string;
@@ -24,9 +28,45 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   userId,
   userDisplayName
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true); // Default: ausgeklappt
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<Date | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
+
+  // Lade Team-Mitglieder
+  useEffect(() => {
+    const loadTeamData = async () => {
+      if (!projectId || !organizationId) return;
+
+      try {
+        // Lade Projekt und Team-Mitglieder
+        const [project, members] = await Promise.all([
+          projectService.getById(projectId, { organizationId }),
+          teamMemberService.getByOrganization(organizationId)
+        ]);
+
+        setTeamMembers(members);
+
+        // Filtere nur zugewiesene Mitglieder
+        if (project && project.assignedTo) {
+          const assigned = members.filter(member =>
+            project.assignedTo?.includes(member.id) ||
+            project.assignedTo?.includes(member.userId || '') ||
+            project.userId === member.id ||
+            project.userId === member.userId ||
+            project.managerId === member.id ||
+            project.managerId === member.userId
+          );
+          setAssignedMembers(assigned);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Team-Daten:', error);
+      }
+    };
+
+    loadTeamData();
+  }, [projectId, organizationId]);
 
   // Überwache ungelesene Nachrichten
   useEffect(() => {
@@ -103,18 +143,49 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       {/* Chat Panel - nur sichtbar wenn isOpen */}
       {isOpen && (
         <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
-          <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '400px', height: '600px' }}>
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: '66.67vh', maxHeight: '85vh' }}>
             {/* Chat Header */}
             <div className="bg-blue-600 text-white px-4 py-3 rounded-t-lg flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <ChatBubbleLeftRightIcon className="h-5 w-5" />
-                <div>
+              <div className="flex items-center space-x-3 flex-1">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 flex-shrink-0" />
+                <div className="flex-shrink-0">
                   <h3 className="font-medium">Team-Chat</h3>
                   <p className="text-xs text-blue-100">{projectTitle}</p>
                 </div>
+
+                {/* Team-Avatare */}
+                <div className="flex items-center -space-x-2 ml-4">
+                  {assignedMembers.slice(0, 5).map((member, index) => {
+                    const initials = member.displayName
+                      ?.split(' ')
+                      .map(n => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2) || '??';
+
+                    return (
+                      <Avatar
+                        key={member.id}
+                        className="size-7 ring-2 ring-blue-600 hover:z-10 transition-all"
+                        src={member.photoUrl}
+                        initials={initials}
+                        style={{ zIndex: 5 - index }}
+                        title={member.displayName}
+                      />
+                    );
+                  })}
+                  {assignedMembers.length > 5 && (
+                    <div
+                      className="size-7 rounded-full bg-blue-500 flex items-center justify-center text-xs font-medium ring-2 ring-blue-600"
+                      title={`${assignedMembers.length - 5} weitere Mitglieder`}
+                    >
+                      +{assignedMembers.length - 5}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <button
                   onClick={toggleChat}
                   className="hover:bg-blue-700 p-1 rounded transition-colors"
@@ -136,7 +207,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
             </div>
 
             {/* Chat Content */}
-            <div className="h-[calc(600px-60px)] overflow-hidden">
+            <div className="h-[calc(100%-60px)] overflow-hidden">
               <TeamChat
                 projectId={projectId}
                 projectTitle={projectTitle}
