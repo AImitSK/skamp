@@ -729,7 +729,7 @@ export default function ProjectDetailPage() {
                       return (
                         <Avatar
                           key={userId}
-                          className="size-8 ring-2 ring-white hover:z-10 transition-all"
+                          className="size-8 ring-2 ring-gray-50 hover:z-10 transition-all"
                           src={member.photoUrl}
                           initials={initials}
                           style={{ zIndex: 5 - index }}
@@ -742,7 +742,7 @@ export default function ProjectDetailPage() {
                 })()}
                 {project.assignedTo && project.assignedTo.length > 5 && (
                   <div
-                    className="size-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium ring-2 ring-white"
+                    className="size-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium ring-2 ring-gray-50"
                     title={`${project.assignedTo.length - 5} weitere Mitglieder`}
                   >
                     +{project.assignedTo.length - 5}
