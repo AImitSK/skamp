@@ -359,6 +359,19 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const getStageLabel = (stage: string) => {
+    switch (stage) {
+      case 'planning': return 'Planung';
+      case 'content_creation': return 'Content-Erstellung';
+      case 'internal_review': return 'Interne Prüfung';
+      case 'customer_approval': return 'Kundenfreigabe';
+      case 'distribution': return 'Verteilung';
+      case 'monitoring': return 'Monitoring';
+      case 'completed': return 'Abgeschlossen';
+      default: return stage;
+    }
+  };
+
   const formatProjectDate = (date: any): string => {
     try {
       if (!date) return '-';
@@ -574,29 +587,125 @@ export default function ProjectDetailPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      {/* Kompakter Header mit allen Projektinfos */}
+      <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 -mx-8 -mt-8 px-8 pt-6 pb-4 mb-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-4">
             <Link href="/dashboard/projects">
-              <Button plain className="p-2">
+              <Button plain className="p-2 mt-1">
                 <ArrowLeftIcon className="w-5 h-5" />
               </Button>
             </Link>
-            <div>
-              <Heading>{project.title}</Heading>
-              <Text className="mt-1">{project.description || '-'}</Text>
+            <div className="flex-1">
+              {/* Titel und Status in einer Zeile */}
+              <div className="flex items-center gap-3 mb-2">
+                <Heading className="!text-2xl">{project.title}</Heading>
+                <Badge color={getProjectStatusColor(project.status)}>
+                  {getProjectStatusLabel(project.status)}
+                </Badge>
+              </div>
+
+              {/* Kompakte Info-Zeile */}
+              <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600">
+                {/* Aktuelle Phase */}
+                <div className="flex items-center gap-1.5">
+                  <Squares2X2Icon className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">Phase:</span>
+                  <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
+                </div>
+
+                {/* Kunde */}
+                {project.client && (
+                  <div className="flex items-center gap-1.5">
+                    <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">Kunde:</span>
+                    <span className="text-gray-900">{project.client}</span>
+                  </div>
+                )}
+
+                {/* Priorität */}
+                <div className="flex items-center gap-1.5">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">Priorität:</span>
+                  <Badge
+                    color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
+                    className="!py-0.5 !text-xs"
+                  >
+                    {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                  </Badge>
+                </div>
+
+                {/* Deadline wenn vorhanden */}
+                {project.deadline && (
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">Deadline:</span>
+                    <span className="text-gray-900">
+                      {new Date(project.deadline).toLocaleDateString('de-DE', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Team-Größe */}
+                {project.assignedTo && project.assignedTo.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <UserGroupIcon className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">Team:</span>
+                    <span className="text-gray-900">{project.assignedTo.length} Mitglieder</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags wenn vorhanden */}
+              {projectTags.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  {projectTags.slice(0, 5).map(tag => (
+                    <Badge
+                      key={tag.id}
+                      color={tag.color || 'zinc'}
+                      className="!py-0.5 !text-xs"
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
+                  {projectTags.length > 5 && (
+                    <span className="text-xs text-gray-500">+{projectTags.length - 5} weitere</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <Badge color={getProjectStatusColor(project.status)}>
-              {getProjectStatusLabel(project.status)}
-            </Badge>
-            <Button onClick={() => setShowEditWizard(true)}>
-              <PencilSquareIcon className="w-4 h-4 mr-2" />
-              Bearbeiten
+
+          <div className="flex items-center space-x-2">
+            <Button onClick={() => setShowEditWizard(true)} outline className="!py-1.5">
+              <PencilSquareIcon className="w-4 h-4" />
+              <span className="hidden sm:inline ml-2">Bearbeiten</span>
             </Button>
+
+            {/* Mehr-Optionen Dropdown */}
+            <Dropdown>
+              <DropdownButton outline className="!py-1.5 !px-2">
+                <EllipsisVerticalIcon className="w-5 h-5" />
+              </DropdownButton>
+              <DropdownMenu anchor="bottom end">
+                <DropdownItem onClick={() => setShowTeamModal(true)}>
+                  <UserGroupIcon className="w-4 h-4 mr-2" />
+                  Team verwalten
+                </DropdownItem>
+                <DropdownItem onClick={() => router.push(`/dashboard/strategy-documents?projectId=${projectId}`)}>
+                  <DocumentTextIcon className="w-4 h-4 mr-2" />
+                  Dokumente
+                </DropdownItem>
+                <DropdownItem onClick={handleDeleteProject} className="text-red-600">
+                  <TrashIcon className="w-4 h-4 mr-2" />
+                  Projekt löschen
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
         </div>
       </div>
