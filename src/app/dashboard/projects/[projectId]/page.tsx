@@ -618,7 +618,6 @@ export default function ProjectDetailPage() {
               <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
                 {/* Aktuelle Phase */}
                 <div className="flex items-center gap-1.5">
-                  <Squares2X2Icon className="w-4 h-4 text-gray-400" />
                   <span className="font-medium">Phase:</span>
                   <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
                 </div>
@@ -627,7 +626,6 @@ export default function ProjectDetailPage() {
                 {/* Kunde */}
                 {project.customer && (
                   <div className="flex items-center gap-1.5">
-                    <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Kunde:</span>
                     <button
                       className="text-primary hover:text-primary-hover hover:underline text-sm"
@@ -641,7 +639,6 @@ export default function ProjectDetailPage() {
 
                 {/* Priorität */}
                 <div className="flex items-center gap-1.5">
-                  <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
                   <span className="font-medium">Priorität:</span>
                   <Badge
                     color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
@@ -654,7 +651,6 @@ export default function ProjectDetailPage() {
                 {/* Deadline wenn vorhanden */}
                 {project.deadline && (
                   <div className="flex items-center gap-1.5">
-                    <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Deadline:</span>
                     <span className="text-gray-900">
                       {new Date(project.deadline).toLocaleDateString('de-DE', {
