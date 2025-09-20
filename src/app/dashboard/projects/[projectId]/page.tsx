@@ -361,6 +361,7 @@ export default function ProjectDetailPage() {
 
   const getStageLabel = (stage: string) => {
     switch (stage) {
+      case 'ideas_planning': return 'Ideenplanung';
       case 'planning': return 'Planung';
       case 'content_creation': return 'Content-Erstellung';
       case 'internal_review': return 'Interne Prüfung';
@@ -619,26 +620,6 @@ export default function ProjectDetailPage() {
                   <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
                 </div>
 
-                {/* Tags */}
-                {projectTags.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-medium">Tags:</span>
-                    <div className="flex items-center gap-1">
-                      {projectTags.slice(0, 3).map(tag => (
-                        <Badge
-                          key={tag.id}
-                          color={tag.color || 'zinc'}
-                          className="!py-0.5 !text-xs"
-                        >
-                          {tag.name}
-                        </Badge>
-                      ))}
-                      {projectTags.length > 3 && (
-                        <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* Kunde */}
                 {project.customer && (
@@ -679,6 +660,27 @@ export default function ProjectDetailPage() {
                         year: 'numeric'
                       })}
                     </span>
+                  </div>
+                )}
+
+                {/* Tags - ans Ende und nur wenn vorhanden */}
+                {projectTags.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium">Tags:</span>
+                    <div className="flex items-center gap-1">
+                      {projectTags.slice(0, 3).map(tag => (
+                        <Badge
+                          key={tag.id}
+                          color={tag.color || 'zinc'}
+                          className="!py-0.5 !text-xs"
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                      {projectTags.length > 3 && (
+                        <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
+                      )}
+                    </div>
                   </div>
                 )}
 
