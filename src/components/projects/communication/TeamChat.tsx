@@ -685,7 +685,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         }
       `}</style>
 
-      <div className="flex flex-col h-full" style={{ height: 'calc(100vh - 400px)' }}>
+      <div className="flex flex-col h-full">
       {/* Warnung wenn kein Team-Mitglied */}
       {!isTeamMember && (
         <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
@@ -854,7 +854,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
       {/* Eingabebereich - nur für Team-Mitglieder */}
       {isTeamMember && (
-        <div className="border-t border-gray-200 px-4 py-3 bg-white">
+        <div className="border-t border-gray-200 px-4 py-2 bg-white">
           <div>
             {/* Nachrichteneingabe */}
             <div className="flex items-center space-x-3">
@@ -865,8 +865,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
                   placeholder="Nachricht eingeben... (@name für Erwähnungen)"
-                  rows={2}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 pr-18 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px]"
+                  rows={1}
+                  className="w-full text-sm border border-gray-300 rounded-lg px-2 py-2 pr-18 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[36px]"
                   disabled={sending}
                 />
 
@@ -907,7 +907,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="h-[44px] px-4 flex-shrink-0"
+                className="h-[36px] px-3 flex-shrink-0"
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
