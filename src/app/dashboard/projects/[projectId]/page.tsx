@@ -364,6 +364,7 @@ export default function ProjectDetailPage() {
       case 'planning': return 'Planung';
       case 'content_creation': return 'Content-Erstellung';
       case 'internal_review': return 'Interne Prüfung';
+      case 'internal_approval': return 'Interne Freigabe';
       case 'customer_approval': return 'Kundenfreigabe';
       case 'distribution': return 'Verteilung';
       case 'monitoring': return 'Monitoring';
@@ -588,7 +589,7 @@ export default function ProjectDetailPage() {
   return (
     <div>
       {/* Kompakter Header mit allen Projektinfos */}
-      <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 -mx-8 -mt-8 px-8 pt-6 pb-4 mb-6">
+      <div className="bg-gray-50 border-b border-gray-200 -mx-8 -mt-8 px-8 pt-6 pb-4 mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <Link href="/dashboard/projects">
@@ -603,6 +604,10 @@ export default function ProjectDetailPage() {
                 <Badge color={getProjectStatusColor(project.status)}>
                   {getProjectStatusLabel(project.status)}
                 </Badge>
+                {/* Erstellt-Datum */}
+                <span className="text-sm text-gray-500">
+                  Erstellt: {formatProjectDate(project.createdAt)}
+                </span>
               </div>
 
               {/* Kompakte Info-Zeile */}
@@ -613,6 +618,27 @@ export default function ProjectDetailPage() {
                   <span className="font-medium">Phase:</span>
                   <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
                 </div>
+
+                {/* Tags */}
+                {projectTags.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium">Tags:</span>
+                    <div className="flex items-center gap-1">
+                      {projectTags.slice(0, 3).map(tag => (
+                        <Badge
+                          key={tag.id}
+                          color={tag.color || 'zinc'}
+                          className="!py-0.5 !text-xs"
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                      {projectTags.length > 3 && (
+                        <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Kunde */}
                 {project.client && (
@@ -659,24 +685,6 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
-
-              {/* Tags wenn vorhanden */}
-              {projectTags.length > 0 && (
-                <div className="flex items-center gap-2 mt-2">
-                  {projectTags.slice(0, 5).map(tag => (
-                    <Badge
-                      key={tag.id}
-                      color={tag.color || 'zinc'}
-                      className="!py-0.5 !text-xs"
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                  {projectTags.length > 5 && (
-                    <span className="text-xs text-gray-500">+{projectTags.length - 5} weitere</span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
