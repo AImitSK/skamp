@@ -589,7 +589,7 @@ export default function ProjectDetailPage() {
   return (
     <div>
       {/* Kompakter Header mit allen Projektinfos */}
-      <div className="bg-gray-50 border-b border-gray-200 -mx-8 -mt-8 px-8 pt-6 pb-4 mb-6">
+      <div className="mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <Link href="/dashboard/projects">
