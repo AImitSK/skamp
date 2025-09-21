@@ -591,13 +591,7 @@ export default function ProjectDetailPage() {
       {/* Kompakter Header mit allen Projektinfos */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <Link href="/dashboard/projects">
-              <Button plain className="p-2 mt-1">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div className="flex-1">
+          <div className="flex-1">
               {/* Titel und Status in einer Zeile */}
               <div className="flex items-center gap-3 mb-2">
                 <Heading className="!text-2xl">{project.title}</Heading>
@@ -692,6 +686,13 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Zurück-Button */}
+            <Link href="/dashboard/projects">
+              <Button plain className="!h-9 !w-9 !p-0 flex items-center justify-center">
+                <ArrowLeftIcon className="w-4 h-4" />
+              </Button>
+            </Link>
+
             {/* Team-Mitglieder Avatare */}
             {project.assignedTo && project.assignedTo.length > 0 && (
               <div className="flex items-center -space-x-2">
@@ -750,15 +751,15 @@ export default function ProjectDetailPage() {
             )}
 
             <div className="flex items-center space-x-2">
-              <Button onClick={() => setShowEditWizard(true)} outline className="!py-1.5">
+              <Button onClick={() => setShowEditWizard(true)} outline className="!h-9">
                 <PencilSquareIcon className="w-4 h-4" />
                 <span className="hidden sm:inline ml-2">Bearbeiten</span>
               </Button>
 
               {/* Mehr-Optionen Dropdown */}
               <Dropdown>
-                <DropdownButton outline className="!py-1.5 !px-2">
-                  <EllipsisVerticalIcon className="w-5 h-5" />
+                <DropdownButton outline className="!h-9 !w-9 !p-0 flex items-center justify-center">
+                  <EllipsisVerticalIcon className="w-4 h-4" />
                 </DropdownButton>
                 <DropdownMenu anchor="bottom end">
                   <DropdownItem onClick={() => setShowTeamModal(true)}>
