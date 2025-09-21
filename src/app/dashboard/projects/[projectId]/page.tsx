@@ -70,6 +70,7 @@ import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
+  console.log('🔄 ProjectDetailPage MOUNT/RENDER');
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -109,16 +110,22 @@ export default function ProjectDetailPage() {
   const [showDeleteErrorDialog, setShowDeleteErrorDialog] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
+  // Basis-Daten laden (nur einmal pro Projekt)
   useEffect(() => {
     if (!currentOrganization?.id) return; // Warte bis Organisation geladen ist
-
+    console.log('📊 Loading project base data...');
     loadProject();
     loadTeamMembers();
     loadTags();
-    if (activeTab === 'overview') {
+  }, [projectId, currentOrganization?.id]);
+
+  // Tasks nur für Overview Tab laden
+  useEffect(() => {
+    if (activeTab === 'overview' && currentOrganization?.id) {
+      console.log('📋 Loading today tasks for overview tab...');
       loadTodayTasks();
     }
-  }, [projectId, currentOrganization?.id, activeTab]);
+  }, [activeTab, projectId, currentOrganization?.id]);
 
   // Lade spezifische Tags für das Projekt
   useEffect(() => {
@@ -855,7 +862,10 @@ export default function ProjectDetailPage() {
             <div className="flex space-x-6">
               <button
                 type="button"
-                onClick={() => setActiveTab('overview')}
+                onClick={() => {
+                  console.log('🎯 Tab Click: overview');
+                  setActiveTab('overview');
+                }}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'overview'
                     ? 'text-blue-600 border-b-2 border-blue-600'
@@ -867,7 +877,10 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('daten')}
+                onClick={() => {
+                  console.log('🎯 Tab Click: daten');
+                  setActiveTab('daten');
+                }}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'daten'
                     ? 'text-blue-600 border-b-2 border-blue-600'
@@ -879,7 +892,10 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('tasks')}
+                onClick={() => {
+                  console.log('🎯 Tab Click: tasks');
+                  setActiveTab('tasks');
+                }}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'tasks' 
                     ? 'text-blue-600 border-b-2 border-blue-600' 
@@ -891,7 +907,10 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('monitoring')}
+                onClick={() => {
+                  console.log('🎯 Tab Click: monitoring');
+                  setActiveTab('monitoring');
+                }}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'monitoring' 
                     ? 'text-blue-600 border-b-2 border-blue-600' 
