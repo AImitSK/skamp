@@ -121,16 +121,29 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       // Füge padding-right hinzu um Jump zu verhindern
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = 'hidden';
+      // Wichtig: Fixed Elemente auch anpassen
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
       // Reset wenn Dialog geschlossen
       document.body.style.paddingRight = '';
       document.body.style.overflow = '';
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = '';
+      }
     }
 
     // Cleanup
     return () => {
       document.body.style.paddingRight = '';
       document.body.style.overflow = '';
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = '';
+      }
     };
   }, [showClearChatDialog]);
 
@@ -185,7 +198,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
       {/* Chat Panel - nur sichtbar wenn isOpen */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-up" data-floating-chat>
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
             <div className="bg-primary text-white px-2 py-2 rounded-t-lg flex items-center justify-between">

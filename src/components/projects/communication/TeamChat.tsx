@@ -168,16 +168,29 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       // Füge padding-right hinzu um Jump zu verhindern
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = 'hidden';
+      // Wichtig: Fixed Elemente auch anpassen
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = `${scrollbarWidth}px`;
+      }
     } else {
       // Reset wenn Modals geschlossen
       document.body.style.paddingRight = '';
       document.body.style.overflow = '';
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = '';
+      }
     }
 
     // Cleanup
     return () => {
       document.body.style.paddingRight = '';
       document.body.style.overflow = '';
+      const chatElement = document.querySelector('[data-floating-chat]');
+      if (chatElement instanceof HTMLElement) {
+        chatElement.style.paddingRight = '';
+      }
     };
   }, [showAssetPicker, showEmojiPicker]);
 
@@ -894,7 +907,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 />
 
                 {/* Icons Container mit weißem Hintergrund */}
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white rounded-md flex items-center space-x-1 px-1" style={{ marginTop: '-1px' }}>
+                <div className="absolute right-3 bg-white rounded-md flex items-center space-x-1 px-1" style={{ top: 'calc(50% - 10px)', transform: 'translateY(-50%)' }}>
                   {/* Asset-Button */}
                   <button
                     type="button"
