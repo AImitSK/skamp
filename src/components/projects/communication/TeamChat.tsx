@@ -819,7 +819,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
                   } px-4 py-2 shadow-sm`}>
                     {/* Nachrichteninhalt zuerst */}
-                    <div className={`text-sm break-words whitespace-pre-wrap leading-relaxed mb-2 ${
+                    <div className={`text-base break-words whitespace-pre-wrap leading-relaxed mb-2 ${
                       isOwnMessage ? 'text-gray-900' : 'text-gray-800'
                     }`}>
                       {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
