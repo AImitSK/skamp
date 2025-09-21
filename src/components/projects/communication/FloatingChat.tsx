@@ -71,6 +71,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
   const [showClearChatDialog, setShowClearChatDialog] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   // Chat-Zustand in LocalStorage speichern (globaler Key)
   useEffect(() => {
@@ -78,6 +79,15 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
       localStorage.setItem('chat-open-state', isOpen.toString());
     }
   }, [isOpen]);
+
+  // Animation nur beim ersten Mount triggern, wenn Chat bereits offen ist
+  useEffect(() => {
+    if (isOpen) {
+      setShouldAnimate(true);
+      const timer = setTimeout(() => setShouldAnimate(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Nur beim ersten Mount
 
   // Lade Team-Mitglieder
   useEffect(() => {
@@ -181,6 +191,11 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
   const toggleChat = () => {
     const newState = !isOpen;
+    if (newState) {
+      // Nur animieren wenn Chat geöffnet wird
+      setShouldAnimate(true);
+      setTimeout(() => setShouldAnimate(false), 300); // Animation-Dauer
+    }
     setIsOpen(newState);
     // Globaler localStorage-Key wird automatisch im useEffect gespeichert
   };
@@ -235,7 +250,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
 
       {/* Chat Panel - nur sichtbar wenn isOpen */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-50 animate-slide-up" data-floating-chat>
+        <div className={`fixed bottom-4 right-4 z-50 ${shouldAnimate ? 'animate-slide-up' : ''}`} data-floating-chat>
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
             <div className="bg-primary text-white px-2 py-2 rounded-t-lg flex items-center justify-between">

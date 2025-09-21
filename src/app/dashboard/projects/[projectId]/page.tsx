@@ -38,6 +38,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import type { Task } from '@/types/tasks';
 
 // Pipeline-Komponenten importieren
 import PipelineProgressDashboard from '@/components/projects/workflow/PipelineProgressDashboard';
@@ -215,7 +216,7 @@ export default function ProjectDetailPage() {
 
     try {
       setLoadingTodayTasks(true);
-      const projectTasks = await taskService.getByProject(projectId, currentOrganization.id);
+      const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
 
       // Filter für heute fällige oder überfällige Tasks des aktuellen Users
       const today = new Date();
@@ -223,7 +224,7 @@ export default function ProjectDetailPage() {
 
       const userTodayTasks = projectTasks
         // .filter(task => task.projectId === projectId) // Nicht nötig, schon im Service gefiltert
-        .filter(task => {
+        .filter((task: Task) => {
           // Nur Tasks des aktuellen Users
           if (task.assignedUserId !== user.uid) return false;
 
@@ -907,7 +908,7 @@ export default function ProjectDetailPage() {
               {/* BLAUE BOX - Pipeline-Fortschritt [1/1] - Volle Breite oben */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center mb-4">
-                  <Squares2X2Icon className="h-5 w-5 text-blue-500 mr-2" />
+                  <Squares2X2Icon className="h-5 w-5 text-primary mr-2" />
                   <Subheading>Pipeline-Übersicht</Subheading>
                 </div>
                 {/* Pipeline-Fortschritt Dashboard hier */}
@@ -926,7 +927,7 @@ export default function ProjectDetailPage() {
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
-                      <CalendarDaysIcon className="h-5 w-5 text-orange-500 mr-2" />
+                      <CalendarDaysIcon className="h-5 w-5 text-primary mr-2" />
                       <Subheading>Meine fälligen Tasks</Subheading>
                     </div>
                     {/* User Avatar oben rechts */}
@@ -1010,7 +1011,7 @@ export default function ProjectDetailPage() {
                 {project && currentOrganization && (
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center mb-4">
-                      <ChartBarIcon className="h-5 w-5 text-green-500 mr-2" />
+                      <ChartBarIcon className="h-5 w-5 text-primary mr-2" />
                       <Subheading>Fortschritt nach Phase</Subheading>
                     </div>
                     {/* Nur den Phase-spezifischen Teil der Pipeline-Komponente */}
@@ -1113,7 +1114,7 @@ export default function ProjectDetailPage() {
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
-                        <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                        <DocumentTextIcon className="h-5 w-5 text-primary mr-2" />
                         <Subheading>Pressemeldung</Subheading>
                       </div>
                       <Dropdown>
