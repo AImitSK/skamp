@@ -208,16 +208,12 @@ export default function ProjectDetailPage() {
 
   const loadTodayTasks = async () => {
     if (!projectId || !currentOrganization?.id || !user?.uid) {
-      console.log('loadTodayTasks abgebrochen - fehlende Parameter:', { projectId, organizationId: currentOrganization?.id, userId: user?.uid });
       return;
     }
-
-    console.log('loadTodayTasks gestartet für User:', user.uid);
 
     try {
       setLoadingTodayTasks(true);
       const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
-      console.log('Alle Projekt-Tasks geladen:', projectTasks.length);
 
       // Filter für heute fällige oder überfällige Tasks des aktuellen Users
       const today = new Date();
@@ -250,11 +246,6 @@ export default function ProjectDetailPage() {
 
           return isToday || isOverdue;
         }) as ProjectTask[];
-
-      console.log('Gefilterte Tasks (heute fällig/überfällig):', userTodayTasks.length);
-      userTodayTasks.forEach(task => {
-        console.log('Task:', task.title, 'Due:', task.dueDate?.toDate(), 'Status:', task.status);
-      });
 
       setTodayTasks(userTodayTasks);
     } catch (error) {

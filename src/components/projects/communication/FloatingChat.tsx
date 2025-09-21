@@ -33,12 +33,26 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   userId,
   userDisplayName
 }) => {
-  const [isOpen, setIsOpen] = useState(true); // Default: ausgeklappt
+  // Chat-Zustand aus LocalStorage laden oder Default verwenden
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem(`chat-open-${projectId}`);
+      return savedState !== null ? savedState === 'true' : false; // Default: geschlossen
+    }
+    return false;
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<Date | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
   const [showClearChatDialog, setShowClearChatDialog] = useState(false);
+
+  // Chat-Zustand in LocalStorage speichern
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`chat-open-${projectId}`, isOpen.toString());
+    }
+  }, [isOpen, projectId]);
 
   // Lade Team-Mitglieder
   useEffect(() => {
