@@ -765,18 +765,18 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     />
                   )}
 
-                  <div className={`relative max-w-xs lg:max-w-md xl:max-w-lg ${
+                  <div className={`relative min-w-[200px] max-w-xs lg:max-w-md xl:max-w-lg ${
                     isOwnMessage
-                      ? 'bg-primary-100 text-gray-900 rounded-l-lg rounded-tr-lg'
+                      ? 'bg-primary-50 text-gray-900 rounded-l-lg rounded-tr-lg'
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
                   } px-4 py-2 shadow-sm`}>
                     {/* Name und Zeit Badge - bei jeder Nachricht */}
-                    <div className={`flex items-center justify-between mb-1 ${
+                    <div className={`flex items-center justify-between mb-2 min-h-[20px] ${
                       isOwnMessage ? 'flex-row-reverse' : 'flex-row'
                     }`}>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                         isOwnMessage
-                          ? 'bg-primary-200 text-gray-800'
+                          ? 'bg-primary-100 text-gray-800'
                           : 'bg-gray-200 text-gray-700'
                       }`}>
                         {message.authorName}
@@ -789,8 +789,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     </div>
 
                     {/* Nachrichteninhalt */}
-                    <div className={`text-sm break-words whitespace-pre-wrap ${
-                      isOwnMessage ? 'text-white' : 'text-gray-800'
+                    <div className={`text-sm break-words whitespace-pre-wrap leading-relaxed ${
+                      isOwnMessage ? 'text-gray-900' : 'text-gray-800'
                     }`}>
                       {/* Prüfe ob aktueller User erwähnt wurde */}
                       {teamChatNotificationsService.isUserMentioned(message.content, userDisplayName) ? (
@@ -843,10 +843,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                             className={`relative text-sm px-2 py-1 rounded-full transition-colors ${
                               hasUserReacted
                                 ? isOwnMessage
-                                  ? 'bg-primary-200 text-gray-800'             // Geklickt: Wie Namens-Badge (hellblau)
+                                  ? 'bg-primary-100 text-gray-800'             // Geklickt: Wie Namens-Badge (hellblau)
                                   : 'bg-gray-200 text-gray-700'             // Geklickt: Wie Namens-Badge (grau)
                                 : isOwnMessage
-                                  ? 'bg-primary-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Hellblau
+                                  ? 'bg-primary-50 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Hellblau
                                   : 'bg-gray-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Grau
                             }`}
                             title={`Mit ${emoji} reagieren`}
