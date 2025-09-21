@@ -21,7 +21,6 @@ import {
   Squares2X2Icon,
   CogIcon,
   PhotoIcon,
-  ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   FolderIcon,
   LightBulbIcon,
@@ -48,7 +47,6 @@ import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatu
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
-import { TeamChat } from '@/components/projects/communication/TeamChat';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
@@ -79,7 +77,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'teamchat' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
@@ -822,17 +820,6 @@ export default function ProjectDetailPage() {
                 <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
                 Tasks
               </button>
-              <button
-                onClick={() => setActiveTab('teamchat')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'teamchat'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                Team-Chat
-              </button>
               <button 
                 onClick={() => setActiveTab('monitoring')}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -899,16 +886,6 @@ export default function ProjectDetailPage() {
           )}
 
 
-          {/* Team-Chat Tab */}
-          {activeTab === 'teamchat' && project && currentOrganization && (
-            <TeamChat
-              projectId={project.id!}
-              projectTitle={project.title}
-              organizationId={currentOrganization.id}
-              userId={user?.uid || ''}
-              userDisplayName={user?.displayName || 'Unbekannter User'}
-            />
-          )}
 
           {/* Monitoring & Analytics Tab */}
           {activeTab === 'monitoring' && (
