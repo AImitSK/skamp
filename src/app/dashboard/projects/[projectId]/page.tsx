@@ -592,11 +592,6 @@ export default function ProjectDetailPage() {
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
-            <Link href="/dashboard/projects">
-              <Button plain className="p-2 mt-1">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </Button>
-            </Link>
             <div className="flex-1">
               {/* Titel und Status in einer Zeile */}
               <div className="flex items-center gap-3 mb-2">
@@ -656,7 +651,7 @@ export default function ProjectDetailPage() {
                     <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">Deadline:</span>
                     <span className="text-gray-900">
-                      {new Date(project.deadline).toLocaleDateString('de-DE', {
+                      {project.deadline?.toDate().toLocaleDateString('de-DE', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
@@ -706,12 +701,12 @@ export default function ProjectDetailPage() {
                   // Eindeutige User-IDs sammeln und Member finden
                   const uniqueMembers: Array<{userId: string, member: TeamMember | null}> = [];
                   for (const userId of allUserIds) {
-                    if (!uniqueMembers.find(u => u.userId === userId)) {
+                    if (userId && !uniqueMembers.find(u => u.userId === userId)) {
                       const member = teamMembers.find(m =>
                         m.userId === userId ||
                         m.id === userId
                       );
-                      uniqueMembers.push({ userId, member });
+                      uniqueMembers.push({ userId, member: member || null });
                     }
                   }
 
@@ -750,14 +745,14 @@ export default function ProjectDetailPage() {
             )}
 
             <div className="flex items-center space-x-2">
-              <Button onClick={() => setShowEditWizard(true)} outline className="!py-1.5">
+              <Button onClick={() => setShowEditWizard(true)} color="secondary" className="!py-1.5">
                 <PencilSquareIcon className="w-4 h-4" />
                 <span className="hidden sm:inline ml-2">Bearbeiten</span>
               </Button>
 
               {/* Mehr-Optionen Dropdown */}
               <Dropdown>
-                <DropdownButton outline className="!py-1.5 !px-2">
+                <DropdownButton plain className="!py-1.5 !px-2">
                   <EllipsisVerticalIcon className="w-5 h-5" />
                 </DropdownButton>
                 <DropdownMenu anchor="bottom end">
@@ -871,11 +866,11 @@ export default function ProjectDetailPage() {
           {activeTab === 'tasks' && (
             <div className="space-y-6">
               {/* Project Task Manager */}
-              {project && teamMembers.length > 0 && (
+              {project && teamMembers.length > 0 && currentOrganization && (
                 <ProjectTaskManager
                   projectId={project.id!}
-                  organizationId={currentOrganization!.id}
-                  projectManagerId={project.managerId || currentOrganization!.ownerId}
+                  organizationId={currentOrganization.id}
+                  projectManagerId={project.managerId || project.userId}
                   teamMembers={teamMembers}
                   projectTeamMemberIds={project.assignedTo}
                   projectTitle={project.title}
@@ -942,14 +937,16 @@ export default function ProjectDetailPage() {
           {activeTab === 'daten' && (
             <div className="space-y-6">
               {/* Projekt-Ordner */}
-              <ProjectFoldersView
-                projectId={project.id!}
-                organizationId={currentOrganization.id}
-                projectFolders={projectFolders}
-                foldersLoading={foldersLoading}
-                onRefresh={loadProjectFolders}
-                clientId={project.customer?.id || ''}
-              />
+              {currentOrganization && (
+                <ProjectFoldersView
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                  projectFolders={projectFolders}
+                  foldersLoading={foldersLoading}
+                  onRefresh={loadProjectFolders}
+                  clientId={project.customer?.id || ''}
+                />
+              )}
             </div>
           )}
         </div>
@@ -1035,7 +1032,7 @@ export default function ProjectDetailPage() {
                         <Badge color={
                           linkedCampaigns[0].status === 'approved' ? 'green' :
                           linkedCampaigns[0].status === 'in_review' ? 'blue' :
-                          linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'gray'
+                          linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'zinc'
                         }>
                           {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
                            linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
@@ -1099,7 +1096,7 @@ export default function ProjectDetailPage() {
           onClose={() => setShowEditWizard(false)}
           onSuccess={handleEditSuccess}
           project={project}
-          organizationId={currentOrganization.id}
+          organizationId={currentOrganization?.id || ''}
         />
       )}
 
@@ -1138,7 +1135,7 @@ export default function ProjectDetailPage() {
           <Button plain onClick={() => setShowDeleteDialog(false)}>
             Abbrechen
           </Button>
-          <Button color="red" onClick={confirmDeleteProject}>
+          <Button onClick={confirmDeleteProject} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
             Projekt löschen
           </Button>
         </DialogActions>
@@ -1231,12 +1228,12 @@ export default function ProjectDetailPage() {
       </Dialog>
 
       {/* Team Management Modal */}
-      {project && (
+      {project && currentOrganization && (
         <TeamManagementModal
           isOpen={showTeamModal}
           onClose={() => setShowTeamModal(false)}
           project={project}
-          organizationId={currentOrganization?.id || ''}
+          organizationId={currentOrganization.id}
           onSuccess={(updatedProject) => {
             setProject(updatedProject);
             // Reload team members to refresh display
