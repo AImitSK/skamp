@@ -566,7 +566,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               }
 
               const linkElement = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline ${
-                isOwnMessage ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-800'
+                isOwnMessage ? 'text-primary-600 hover:text-primary-700' : 'text-blue-600 hover:text-blue-800'
               }">${urlMatch}</a>`;
 
               textContent = textContent.replace(urlMatch, linkElement);
@@ -767,7 +767,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
                   <div className={`relative max-w-xs lg:max-w-md xl:max-w-lg ${
                     isOwnMessage
-                      ? 'bg-blue-600 text-white rounded-l-lg rounded-tr-lg'
+                      ? 'bg-primary-100 text-gray-900 rounded-l-lg rounded-tr-lg'
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
                   } px-4 py-2 shadow-sm`}>
                     {/* Name und Zeit Badge - bei jeder Nachricht */}
@@ -776,13 +776,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     }`}>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                         isOwnMessage
-                          ? 'bg-blue-500 text-blue-100'
+                          ? 'bg-primary-200 text-gray-800'
                           : 'bg-gray-200 text-gray-700'
                       }`}>
                         {message.authorName}
                       </span>
                       <span className={`text-xs ${
-                        isOwnMessage ? 'text-blue-200' : 'text-gray-500'
+                        isOwnMessage ? 'text-gray-600' : 'text-gray-500'
                       } ml-2`}>
                         {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
                       </span>
@@ -806,10 +806,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     {message.mentions && message.mentions.length > 0 && (
                       <div className="flex items-center mt-2 space-x-1">
                         <AtSymbolIcon className={`h-3 w-3 ${
-                          isOwnMessage ? 'text-blue-200' : 'text-gray-400'
+                          isOwnMessage ? 'text-gray-600' : 'text-gray-400'
                         }`} />
                         <span className={`text-xs ${
-                          isOwnMessage ? 'text-blue-200' : 'text-gray-500'
+                          isOwnMessage ? 'text-gray-600' : 'text-gray-500'
                         }`}>
                           {message.mentions.join(', ')}
                         </span>
@@ -819,7 +819,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     {/* Bearbeitet-Hinweis */}
                     {message.edited && (
                       <div className={`text-xs mt-1 ${
-                        isOwnMessage ? 'text-blue-200' : 'text-gray-400'
+                        isOwnMessage ? 'text-gray-600' : 'text-gray-400'
                       }`}>
                         (bearbeitet)
                       </div>
@@ -843,10 +843,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                             className={`relative text-sm px-2 py-1 rounded-full transition-colors ${
                               hasUserReacted
                                 ? isOwnMessage
-                                  ? 'bg-blue-500 text-blue-100'             // Geklickt: Wie Namens-Badge (blau)
+                                  ? 'bg-primary-200 text-gray-800'             // Geklickt: Wie Namens-Badge (hellblau)
                                   : 'bg-gray-200 text-gray-700'             // Geklickt: Wie Namens-Badge (grau)
                                 : isOwnMessage
-                                  ? 'bg-blue-600 bg-opacity-80 text-white'  // Ungeklickt: 80% vom Blasen-Blau
+                                  ? 'bg-primary-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Hellblau
                                   : 'bg-gray-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Grau
                             }`}
                             title={`Mit ${emoji} reagieren`}
