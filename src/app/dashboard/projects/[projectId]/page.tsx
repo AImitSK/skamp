@@ -109,6 +109,8 @@ export default function ProjectDetailPage() {
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   useEffect(() => {
+    if (!currentOrganization?.id) return; // Warte bis Organisation geladen ist
+
     loadProject();
     loadTeamMembers();
     loadTags();
@@ -208,19 +210,31 @@ export default function ProjectDetailPage() {
 
   const loadTodayTasks = async () => {
     if (!projectId || !currentOrganization?.id || !user?.uid) {
+      console.log('loadTodayTasks abgebrochen - fehlende Parameter:', {
+        projectId,
+        organizationId: currentOrganization?.id,
+        userId: user?.uid
+      });
       return;
     }
 
+    console.log('loadTodayTasks läuft für:', {
+      projectId,
+      organizationId: currentOrganization.id,
+      userId: user.uid
+    });
+
     try {
       setLoadingTodayTasks(true);
-      const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
+      const projectTasks = await taskService.getByProject(projectId, currentOrganization.id);
+      console.log('Tasks vom Service erhalten:', projectTasks?.length || 0);
 
       // Filter für heute fällige oder überfällige Tasks des aktuellen Users
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       const userTodayTasks = projectTasks
-        .filter(task => task.projectId === projectId) // Nur Tasks mit projectId
+        // .filter(task => task.projectId === projectId) // Nicht nötig, schon im Service gefiltert
         .filter(task => {
           // Nur Tasks des aktuellen Users
           if (task.assignedUserId !== user.uid) return false;
