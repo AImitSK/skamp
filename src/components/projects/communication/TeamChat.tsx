@@ -6,7 +6,10 @@ import {
   AtSymbolIcon,
   ExclamationTriangleIcon,
   PaperClipIcon,
-  FaceSmileIcon
+  FaceSmileIcon,
+  HandThumbUpIcon,
+  HandThumbDownIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -292,15 +295,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'gerade eben';
-    if (minutes < 60) return `vor ${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}`;
-    if (hours < 24) return `vor ${hours} ${hours === 1 ? 'Stunde' : 'Stunden'}`;
-    if (days < 7) return `vor ${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
-
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    return date.toLocaleTimeString('de-DE', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -770,26 +765,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       ? 'bg-primary-50 text-gray-900 rounded-l-lg rounded-tr-lg'
                       : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
                   } px-4 py-2 shadow-sm`}>
-                    {/* Name und Zeit Badge - bei jeder Nachricht */}
-                    <div className={`flex items-center justify-between mb-2 min-h-[20px] ${
-                      isOwnMessage ? 'flex-row-reverse' : 'flex-row'
-                    }`}>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        isOwnMessage
-                          ? 'bg-primary-100 text-gray-800'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}>
-                        {message.authorName}
-                      </span>
-                      <span className={`text-xs ${
-                        isOwnMessage ? 'text-gray-600' : 'text-gray-500'
-                      } ml-2`}>
-                        {message.timestamp ? formatTimestamp(message.timestamp) : 'gerade eben'}
-                      </span>
-                    </div>
-
-                    {/* Nachrichteninhalt */}
-                    <div className={`text-sm break-words whitespace-pre-wrap leading-relaxed ${
+                    {/* Nachrichteninhalt zuerst */}
+                    <div className={`text-sm break-words whitespace-pre-wrap leading-relaxed mb-2 ${
                       isOwnMessage ? 'text-gray-900' : 'text-gray-800'
                     }`}>
                       {/* Prüfe ob aktueller User erwähnt wurde */}
@@ -826,9 +803,15 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     )}
 
 
-                    {/* Fixe Reaction Buttons - immer sichtbar */}
-                    <div className="flex items-center gap-1 mt-2">
-                      {['👍', '👎', '🤚'].map((emoji) => {
+                    {/* Untere Zeile: Reactions und Uhrzeit */}
+                    <div className="flex items-center justify-between">
+                      {/* Reactions links */}
+                      <div className="flex items-center gap-1">
+                      {[
+                        { emoji: '👍', icon: HandThumbUpIcon, label: 'Gefällt mir' },
+                        { emoji: '👎', icon: HandThumbDownIcon, label: 'Gefällt mir nicht' },
+                        { emoji: '🤚', icon: CheckIcon, label: 'Verstanden' }
+                      ].map(({ emoji, icon: IconComponent, label }) => {
                         // Finde die Reaction für dieses Emoji
                         const reaction = message.reactions?.find(r => r.emoji === emoji);
                         const hasUserReacted = reaction ? reaction.userIds.includes(userId) : false;
@@ -840,7 +823,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                             onClick={() => handleReaction(message.id!, emoji)}
                             onMouseEnter={() => count > 0 ? setShowReactionTooltip(`${message.id}-${emoji}`) : null}
                             onMouseLeave={() => setShowReactionTooltip(null)}
-                            className={`relative text-sm px-2 py-1 rounded-full transition-colors ${
+                            className={`relative flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
                               hasUserReacted
                                 ? isOwnMessage
                                   ? 'bg-primary-100 text-gray-800'             // Geklickt: Wie Namens-Badge (hellblau)
@@ -849,9 +832,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                                   ? 'bg-primary-50 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Hellblau
                                   : 'bg-gray-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Grau
                             }`}
-                            title={`Mit ${emoji} reagieren`}
+                            title={label}
                           >
-                            {emoji} {count > 0 && count}
+                            <IconComponent className="h-4 w-4" />
+                            {count > 0 && <span className="text-xs">{count}</span>}
 
                             {/* Tooltip nur bei Count > 0 */}
                             {showReactionTooltip === `${message.id}-${emoji}` && count > 0 && (
@@ -862,6 +846,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                           </button>
                         );
                       })}
+                      </div>
+
+                      {/* Uhrzeit rechts */}
+                      <span className={`text-xs ${
+                        isOwnMessage ? 'text-gray-600' : 'text-gray-500'
+                      } ml-2 flex-shrink-0`}>
+                        {message.timestamp ? formatTimestamp(message.timestamp) : 'Unbekannt'}
+                      </span>
                     </div>
                   </div>
 
