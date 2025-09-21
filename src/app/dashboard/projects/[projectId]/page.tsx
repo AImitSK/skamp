@@ -687,6 +687,13 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Zurück zur Hauptseite */}
+            <Link href="/dashboard/projects">
+              <Button plain className="p-2">
+                <ArrowLeftIcon className="w-5 h-5" />
+              </Button>
+            </Link>
+
             {/* Team-Mitglieder Avatare */}
             {project.assignedTo && project.assignedTo.length > 0 && (
               <div className="flex items-center -space-x-2">
