@@ -488,7 +488,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     let lastIndex = 0;
 
     // Asset-Links Pattern
-    const assetRegex = /\[([^\]]+)\]\((asset|folder):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
+    const assetRegex = /\[([^\]]+)\]\((asset):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
 
     // Standard-Links Pattern
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
@@ -537,7 +537,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               <div key={index} className="my-2">
                 <AssetPreview
                   assetId={part.assetId}
-                  assetType={part.assetType as 'asset' | 'folder'}
+                  assetType={part.assetType as 'asset'}
                   linkText={part.linkText}
                   projectId={part.projectId}
                   organizationId={organizationId}
@@ -597,11 +597,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         if (asset && asset.downloadUrl) {
           window.open(asset.downloadUrl, '_blank');
         }
-      } else if (type === 'folder') {
-        // Zur Daten-Tab wechseln und Ordner anzeigen
-        // TODO: Implementiere Navigation zum Daten-Tab mit spezifischem Ordner
-        console.log('Navigiere zu Ordner:', assetId);
-      }
     } catch (error) {
       console.error('Fehler beim Öffnen des Assets:', error);
     }
@@ -614,10 +609,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     if (asset.type === 'asset') {
       // Format: [Filename.jpg](asset://projectId/assetId)
       assetText = `[${asset.name}](asset://${projectId}/${asset.id})`;
-    } else if (asset.type === 'folder') {
-      // Format: [Ordner: FolderName](folder://projectId/folderId)
-      assetText = `[Ordner: ${asset.name}](folder://${projectId}/${asset.id})`;
-    }
 
     // Füge Asset-Link zur aktuellen Nachricht hinzu
     if (textareaRef.current) {
@@ -757,6 +748,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       className="size-8 flex-shrink-0 mr-3 self-end"
                       src={authorInfo.photoUrl}
                       initials={getInitials(authorInfo.name || message.authorName)}
+                      title={authorInfo.name || message.authorName}
                     />
                   )}
 
@@ -769,14 +761,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     <div className={`text-sm break-words whitespace-pre-wrap leading-relaxed mb-2 ${
                       isOwnMessage ? 'text-gray-900' : 'text-gray-800'
                     }`}>
-                      {/* Prüfe ob aktueller User erwähnt wurde */}
-                      {teamChatNotificationsService.isUserMentioned(message.content, userDisplayName) ? (
-                        <div className="bg-yellow-200 bg-opacity-20 px-1 rounded">
-                          {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
-                        </div>
-                      ) : (
-                        formatMessageWithLinksAndEmojis(message.content, isOwnMessage)
-                      )}
+                      {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
                     </div>
 
                     {/* Mentions */}
@@ -862,6 +847,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       className="size-8 flex-shrink-0 ml-3 self-end"
                       src={currentUserPhoto}
                       initials={getInitials(userDisplayName)}
+                      title={userDisplayName}
                     />
                   )}
                 </div>
