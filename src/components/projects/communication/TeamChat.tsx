@@ -930,7 +930,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
       {/* Eingabebereich - nur für Team-Mitglieder */}
       {isTeamMember && (
-        <div className="border-t border-gray-200 px-4 py-2 bg-white">
+        <div className="border-t border-gray-200 px-4 pt-4 pb-2 bg-white">
           <div>
             {/* Nachrichteneingabe */}
             <div className="flex items-center space-x-3">
