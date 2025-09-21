@@ -866,12 +866,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder=""
                   rows={1}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-2 py-2 pr-16 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[36px]"
+                  className="w-full text-base border border-gray-300 rounded-lg px-3 py-3 pr-20 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px] leading-relaxed"
                   disabled={sending}
                 />
 
                 {/* Icons Container mit weißem Hintergrund */}
-                <div className="absolute right-1 top-1 bottom-1 bg-white rounded-r-md flex items-center space-x-1 px-1">
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-r-md flex items-center space-x-1 px-1">
                   {/* Asset-Button */}
                   <button
                     type="button"
@@ -910,7 +910,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               <button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="h-[36px] min-h-[36px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+                className="h-[44px] min-h-[44px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

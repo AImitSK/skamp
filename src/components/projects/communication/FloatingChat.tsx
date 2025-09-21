@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  EllipsisVerticalIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { TeamChat } from './TeamChat';
 import { teamChatService } from '@/lib/firebase/team-chat-service';
@@ -12,6 +14,7 @@ import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { Avatar } from '@/components/ui/avatar';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 
 interface FloatingChatProps {
   projectId: string;
@@ -113,6 +116,21 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
     localStorage.setItem(`chat_open_${projectId}`, newState.toString());
   };
 
+  const handleClearChat = async () => {
+    if (!confirm('Möchten Sie den gesamten Chat-Verlauf wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      return;
+    }
+
+    try {
+      await teamChatService.clearChatHistory(projectId);
+      // Optional: Seite neu laden oder State zurücksetzen
+      window.location.reload();
+    } catch (error) {
+      console.error('Fehler beim Löschen des Chat-Verlaufs:', error);
+      alert('Fehler beim Löschen des Chat-Verlaufs');
+    }
+  };
+
   return (
     <>
       {/* Chat Toggle Button - immer sichtbar */}
@@ -182,8 +200,8 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 <h3 className="font-medium">Projekt-Chat</h3>
               </div>
 
-              {/* Nur Minimieren Button */}
-              <div className="flex-shrink-0">
+              {/* Minimieren und Mehr-Optionen Buttons */}
+              <div className="flex-shrink-0 flex items-center space-x-1">
                 <button
                   onClick={toggleChat}
                   className="hover:bg-primary-hover p-1 rounded transition-colors"
@@ -191,6 +209,18 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 >
                   <ChevronDownIcon className="h-5 w-5" />
                 </button>
+
+                <Dropdown>
+                  <DropdownButton plain className="hover:bg-primary-hover p-1 rounded transition-colors">
+                    <EllipsisVerticalIcon className="h-5 w-5" />
+                  </DropdownButton>
+                  <DropdownMenu anchor="bottom end">
+                    <DropdownItem onClick={handleClearChat}>
+                      <TrashIcon className="h-4 w-4" />
+                      Chat-Verlauf löschen
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
               </div>
             </div>
 
