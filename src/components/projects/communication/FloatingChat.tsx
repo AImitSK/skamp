@@ -145,16 +145,10 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
         <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
           <div className="bg-white rounded-lg shadow-2xl border border-gray-200" style={{ width: '550px', height: 'calc(100vh - 70px)', maxHeight: '85vh' }}>
             {/* Chat Header */}
-            <div className="bg-primary text-white px-4 py-3 rounded-t-lg flex items-center justify-between">
+            <div className="bg-primary text-white px-2 py-2 rounded-t-lg flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 flex-shrink-0" />
-                <div className="flex-shrink-0">
-                  <h3 className="font-medium">Team-Chat</h3>
-                  <p className="text-xs text-primary-100">{projectTitle}</p>
-                </div>
-
-                {/* Team-Avatare */}
-                <div className="flex items-center -space-x-2 ml-4">
+                {/* Team-Avatare zuerst */}
+                <div className="flex items-center -space-x-2">
                   {assignedMembers.slice(0, 5).map((member, index) => {
                     const initials = member.displayName
                       ?.split(' ')
@@ -183,25 +177,19 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                     </div>
                   )}
                 </div>
+
+                {/* Nur "Projekt-Chat" Text */}
+                <h3 className="font-medium">Projekt-Chat</h3>
               </div>
 
-              <div className="flex items-center space-x-2 flex-shrink-0">
+              {/* Nur Minimieren Button */}
+              <div className="flex-shrink-0">
                 <button
                   onClick={toggleChat}
                   className="hover:bg-primary-hover p-1 rounded transition-colors"
                   title="Minimieren"
                 >
                   <ChevronDownIcon className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    localStorage.setItem(`chat_open_${projectId}`, 'false');
-                  }}
-                  className="hover:bg-primary-hover p-1 rounded transition-colors"
-                  title="Schließen"
-                >
-                  <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>

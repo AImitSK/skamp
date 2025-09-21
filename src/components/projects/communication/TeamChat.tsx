@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  PaperAirplaneIcon,
+  ArrowRightIcon,
   AtSymbolIcon,
   ExclamationTriangleIcon,
   PaperClipIcon,
@@ -864,33 +864,36 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   value={newMessage}
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
-                  placeholder="Nachricht eingeben... (@name für Erwähnungen)"
+                  placeholder=""
                   rows={1}
-                  className="w-full text-sm border border-gray-300 rounded-lg px-2 py-2 pr-18 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[36px]"
+                  className="w-full text-sm border border-gray-300 rounded-lg px-2 py-2 pr-16 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[36px]"
                   disabled={sending}
                 />
 
-                {/* Asset-Button im Textarea */}
-                <button
-                  type="button"
-                  onClick={() => setShowAssetPicker(true)}
-                  className="absolute right-10 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                  title="Asset anhängen"
-                  disabled={sending}
-                >
-                  <PaperClipIcon className="h-4 w-4" />
-                </button>
+                {/* Icons Container mit weißem Hintergrund */}
+                <div className="absolute right-1 top-1 bottom-1 bg-white rounded-r-md flex items-center space-x-1 px-1">
+                  {/* Asset-Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowAssetPicker(true)}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                    title="Asset anhängen"
+                    disabled={sending}
+                  >
+                    <PaperClipIcon className="h-4 w-4" />
+                  </button>
 
-                {/* Emoji-Button im Textarea */}
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(true)}
-                  className="absolute right-2 top-2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                  title="Emoji einfügen"
-                  disabled={sending}
-                >
-                  <FaceSmileIcon className="h-4 w-4" />
-                </button>
+                  {/* Emoji-Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(true)}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                    title="Emoji einfügen"
+                    disabled={sending}
+                  >
+                    <FaceSmileIcon className="h-4 w-4" />
+                  </button>
+                </div>
 
                 {/* @-Mention Dropdown */}
                 <MentionDropdown
@@ -904,17 +907,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 />
               </div>
 
-              <Button
+              <button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="h-[36px] px-3 flex-shrink-0"
+                className="h-[36px] min-h-[36px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               >
                 {sending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 ) : (
-                  <PaperAirplaneIcon className="h-4 w-4" />
+                  <ArrowRightIcon className="h-4 w-4" />
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
