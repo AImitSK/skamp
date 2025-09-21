@@ -352,24 +352,44 @@ export function ProjectTaskManager({
                     {/* Fortschritt - 2 Spalten */}
                     <div className="col-span-2">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex-1 bg-gray-200 rounded-full h-2 cursor-pointer"
-                          onClick={(e) => handleProgressClick(task, e)}
-                          title="Klicken um Fortschritt zu ändern"
-                        >
-                          <div
-                            className={`h-2 rounded-full transition-all ${
-                              (task.progress || 0) === 100 ? 'bg-green-600' :
-                              (task.progress || 0) >= 75 ? 'bg-blue-600' :
-                              (task.progress || 0) >= 50 ? 'bg-yellow-600' :
-                              (task.progress || 0) >= 25 ? 'bg-orange-600' : 'bg-gray-400'
-                            }`}
-                            style={{ width: `${task.progress || 0}%` }}
-                          />
-                        </div>
-                        <Text className="text-xs text-gray-500 flex-shrink-0">
-                          {task.progress || 0}%
-                        </Text>
+                        {(() => {
+                          const progress = task.progress || 0;
+
+                          // Einheitliche Farblogik wie in anderen Komponenten
+                          const getProgressColor = (percent: number) => {
+                            if (percent >= 90) return 'bg-green-500';
+                            if (percent >= 70) return 'bg-blue-500';
+                            if (percent >= 50) return 'bg-yellow-500';
+                            return 'bg-red-500';
+                          };
+
+                          const progressColor = getProgressColor(progress);
+                          const isInProgress = task.status === 'in_progress';
+
+                          return (
+                            <>
+                              <div className="relative flex-1">
+                                <div
+                                  className="bg-gray-200 rounded-full h-3 cursor-pointer"
+                                  onClick={(e) => handleProgressClick(task, e)}
+                                  title="Klicken um Fortschritt zu ändern"
+                                >
+                                  <div
+                                    className={`${progressColor} rounded-full h-3 transition-all duration-500`}
+                                    style={{ width: `${progress}%` }}
+                                  />
+                                </div>
+
+                                {isInProgress && (
+                                  <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse pointer-events-none"></div>
+                                )}
+                              </div>
+                              <Text className="text-xs text-gray-500 flex-shrink-0">
+                                {Math.round(progress)}%
+                              </Text>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
