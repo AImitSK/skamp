@@ -942,7 +942,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder=""
                   rows={1}
-                  className="w-full text-base border border-gray-300 rounded-lg px-3 py-3 pr-20 focus:ring-blue-500 focus:border-blue-500 resize-none min-h-[44px] leading-relaxed"
+                  className="w-full text-base border border-gray-300 rounded-lg px-3 py-2 pr-20 focus:ring-blue-500 focus:border-blue-500 resize-none h-[44px] leading-relaxed"
                   disabled={sending}
                 />
 
