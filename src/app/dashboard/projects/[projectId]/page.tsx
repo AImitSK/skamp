@@ -858,10 +858,112 @@ export default function ProjectDetailPage() {
                 )}
               </div>
 
-              {/* Untere Reihe: Nur Pressemeldung */}
-              {linkedCampaigns.length > 0 && (
-                <div className="grid gap-6 grid-cols-1">
-                  {/* Pressemeldung [1/1] - volle Breite */}
+              {/* Untere Reihe: Fortschritt nach Phase + Pressemeldung (responsive) */}
+              <div className={`grid gap-6 ${linkedCampaigns.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                {/* Fortschritt nach Phase Box */}
+                {project && currentOrganization && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center mb-4">
+                      <ChartBarIcon className="h-5 w-5 text-green-500 mr-2" />
+                      <Subheading>Fortschritt nach Phase</Subheading>
+                    </div>
+                    {/* Nur den Phase-spezifischen Teil der Pipeline-Komponente */}
+                    <div className="space-y-4">
+                      {(() => {
+                        const stageLabels = {
+                          'ideas_planning': 'Ideen & Planung',
+                          'creation': 'Erstellung',
+                          'internal_approval': 'Interne Freigabe',
+                          'customer_approval': 'Kunden-Freigabe',
+                          'distribution': 'Verteilung',
+                          'monitoring': 'Monitoring',
+                          'completed': 'Abgeschlossen'
+                        };
+
+                        const stageOrder = [
+                          'ideas_planning',
+                          'creation',
+                          'internal_approval',
+                          'customer_approval',
+                          'distribution',
+                          'monitoring',
+                          'completed'
+                        ];
+
+                        const getStageStatus = (stage) => {
+                          const currentIndex = stageOrder.indexOf(project.currentStage);
+                          const stageIndex = stageOrder.indexOf(stage);
+
+                          if (stageIndex < currentIndex) return 'completed';
+                          if (stageIndex === currentIndex) return 'current';
+                          return 'upcoming';
+                        };
+
+                        const getProgressColor = (percent) => {
+                          if (percent >= 90) return 'bg-green-500';
+                          if (percent >= 70) return 'bg-blue-500';
+                          if (percent >= 50) return 'bg-yellow-500';
+                          return 'bg-red-500';
+                        };
+
+                        return stageOrder.map(stage => {
+                          const status = getStageStatus(stage);
+                          const stageProgress = status === 'completed' ? 100 : status === 'current' ? 50 : 0;
+                          const progressColor = getProgressColor(stageProgress);
+
+                          return (
+                            <div key={stage} className="relative">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-3">
+                                  {status === 'completed' && (
+                                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  {status === 'current' && (
+                                    <ClockIcon className="w-5 h-5 text-primary" />
+                                  )}
+                                  {status === 'upcoming' && (
+                                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                  )}
+
+                                  <span className={`font-medium ${
+                                    status === 'current' ? 'text-primary' :
+                                    status === 'completed' ? 'text-green-600' : 'text-gray-500'
+                                  }`}>
+                                    {stageLabels[stage]}
+                                  </span>
+                                </div>
+
+                                <span className="text-sm font-medium text-gray-600">
+                                  {Math.round(stageProgress)}%
+                                </span>
+                              </div>
+
+                              <div className="relative">
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div
+                                    className={`${progressColor} rounded-full h-3 transition-all duration-500`}
+                                    style={{ width: `${stageProgress}%` }}
+                                  ></div>
+                                </div>
+
+                                {status === 'current' && (
+                                  <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pressemeldung - nur wenn Kampagne vorhanden */}
+                {linkedCampaigns.length > 0 && (
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
@@ -973,8 +1075,8 @@ export default function ProjectDetailPage() {
                       )}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 

@@ -258,64 +258,6 @@ export default function PipelineProgressDashboard({
         </div>
       </div>
 
-      {/* Task-Übersicht Box */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-gray-900">
-            Task-Übersicht
-          </h4>
-          {onNavigateToTasks && (
-            <button
-              onClick={onNavigateToTasks}
-              className="text-primary hover:text-primary-hover text-sm font-medium"
-            >
-              Zum Tasks Tab →
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{tasks.length}</div>
-            <p className="text-sm text-gray-600">Gesamt Tasks</p>
-          </div>
-
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {tasks.filter(t => t.status === 'completed').length}
-            </div>
-            <p className="text-sm text-gray-600">Erledigt</p>
-          </div>
-
-          <div className="text-center p-4 bg-orange-50 rounded-lg">
-            <div className="text-2xl font-bold text-orange-600">
-              {tasks.filter(t => t.status !== 'completed').length}
-            </div>
-            <p className="text-sm text-gray-600">Offen</p>
-          </div>
-
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <div className="text-2xl font-bold text-red-600">
-              {progress.criticalTasksRemaining}
-            </div>
-            <p className="text-sm text-gray-600">Kritisch</p>
-          </div>
-        </div>
-
-        {tasks.length === 0 && (
-          <div className="mt-4 text-center text-gray-500">
-            <p className="text-sm">Noch keine Tasks vorhanden.</p>
-            {onNavigateToTasks && (
-              <button
-                onClick={onNavigateToTasks}
-                className="mt-2 text-primary hover:text-primary-hover text-sm font-medium underline"
-              >
-                Erste Task erstellen
-              </button>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* Critical Task Warnings */}
       {progress.criticalTasksRemaining > 0 && (
