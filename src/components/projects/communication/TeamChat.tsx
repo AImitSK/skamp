@@ -301,6 +301,45 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     });
   };
 
+  // Datum für Tagesseparator formatieren
+  const formatDateSeparator = (timestamp: Timestamp | Date): string => {
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (messageDate.getTime() === today.getTime()) {
+      return 'Heute';
+    } else if (messageDate.getTime() === yesterday.getTime()) {
+      return 'Gestern';
+    } else {
+      return date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+  };
+
+  // Prüfe ob neuer Tag beginnt
+  const isNewDay = (currentMessage: TeamMessage, previousMessage: TeamMessage | null): boolean => {
+    if (!previousMessage || !currentMessage.timestamp || !previousMessage.timestamp) return false;
+
+    const currentDate = currentMessage.timestamp instanceof Timestamp
+      ? currentMessage.timestamp.toDate()
+      : currentMessage.timestamp;
+    const previousDate = previousMessage.timestamp instanceof Timestamp
+      ? previousMessage.timestamp.toDate()
+      : previousMessage.timestamp;
+
+    const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    const previousDay = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate());
+
+    return currentDay.getTime() !== previousDay.getTime();
+  };
+
   // @-Mention Handler
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -737,12 +776,22 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               const isOwnMessage = message.authorId === userId;
               const previousMessage = index > 0 ? messages[index - 1] : null;
               const isFirstInGroup = !previousMessage || previousMessage.authorId !== message.authorId;
+              const showDateSeparator = index === 0 || isNewDay(message, previousMessage);
 
               return (
-                <div
-                  key={message.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
-                >
+                <React.Fragment key={message.id}>
+                  {/* Datums-Separator */}
+                  {showDateSeparator && message.timestamp && (
+                    <div className="flex justify-center my-4">
+                      <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
+                        {formatDateSeparator(message.timestamp)}
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
+                  >
                   {!isOwnMessage && (
                     <Avatar
                       className="size-8 flex-shrink-0 mr-3 self-end"
@@ -851,6 +900,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     />
                   )}
                 </div>
+                </React.Fragment>
               );
             })}
             <div ref={messagesEndRef} />
