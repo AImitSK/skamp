@@ -188,6 +188,11 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
               </div>
             )}
 
+            {/* Grüner Punkt für neue Nachrichten (auch ohne Counter) */}
+            {unreadCount > 0 && (
+              <div className="absolute -top-0.5 -right-0.5 bg-green-400 rounded-full h-3 w-3 animate-pulse ring-2 ring-white"></div>
+            )}
+
             {/* Hover Tooltip */}
             <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
               Team-Chat öffnen
@@ -266,6 +271,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                 organizationId={organizationId}
                 userId={userId}
                 userDisplayName={userDisplayName}
+                lastReadTimestamp={lastReadTimestamp}
               />
             </div>
           </div>

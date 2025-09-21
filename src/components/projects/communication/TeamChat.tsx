@@ -31,6 +31,7 @@ interface TeamChatProps {
   organizationId: string;
   userId: string;
   userDisplayName: string;
+  lastReadTimestamp?: Date | null;
 }
 
 export const TeamChat: React.FC<TeamChatProps> = ({
@@ -38,7 +39,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   projectTitle,
   organizationId,
   userId,
-  userDisplayName
+  userDisplayName,
+  lastReadTimestamp
 }) => {
   const [messages, setMessages] = useState<FirebaseTeamMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -334,7 +336,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   };
 
   // Prüfe ob neuer Tag beginnt
-  const isNewDay = (currentMessage: TeamMessage, previousMessage: TeamMessage | null): boolean => {
+  const isNewDay = (currentMessage: FirebaseTeamMessage, previousMessage: FirebaseTeamMessage | null): boolean => {
     if (!previousMessage || !currentMessage.timestamp || !previousMessage.timestamp) return false;
 
     const currentDate = currentMessage.timestamp instanceof Timestamp
@@ -348,6 +350,32 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     const previousDay = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate());
 
     return currentDay.getTime() !== previousDay.getTime();
+  };
+
+  // Prüfe ob "Neue Nachrichten" Separator angezeigt werden soll
+  const shouldShowNewMessagesSeparator = (currentMessage: FirebaseTeamMessage, index: number): boolean => {
+    if (!lastReadTimestamp || !currentMessage.timestamp) return false;
+
+    const currentDate = currentMessage.timestamp instanceof Timestamp
+      ? currentMessage.timestamp.toDate()
+      : currentMessage.timestamp;
+
+    // Ist diese Nachricht nach dem lastReadTimestamp?
+    const isNewMessage = currentDate > lastReadTimestamp;
+
+    if (!isNewMessage) return false;
+
+    // Prüfe ob die vorherige Nachricht älter als lastReadTimestamp ist
+    if (index === 0) return true; // Erste Nachricht und sie ist neu
+
+    const previousMessage = messages[index - 1];
+    if (!previousMessage.timestamp) return true;
+
+    const previousDate = previousMessage.timestamp instanceof Timestamp
+      ? previousMessage.timestamp.toDate()
+      : previousMessage.timestamp;
+
+    return previousDate <= lastReadTimestamp;
   };
 
   // @-Mention Handler
@@ -789,6 +817,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               const previousMessage = index > 0 ? messages[index - 1] : null;
               const isFirstInGroup = !previousMessage || previousMessage.authorId !== message.authorId;
               const showDateSeparator = index === 0 || isNewDay(message, previousMessage);
+              const showNewMessagesSeparator = shouldShowNewMessagesSeparator(message, index);
 
               return (
                 <React.Fragment key={message.id}>
@@ -798,6 +827,17 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
                         {formatDateSeparator(message.timestamp)}
                       </div>
+                    </div>
+                  )}
+
+                  {/* "Neue Nachrichten" Separator */}
+                  {showNewMessagesSeparator && (
+                    <div className="flex items-center my-4">
+                      <div className="flex-1 border-t border-green-300"></div>
+                      <div className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-medium mx-3">
+                        Neue Nachrichten
+                      </div>
+                      <div className="flex-1 border-t border-green-300"></div>
                     </div>
                   )}
 
