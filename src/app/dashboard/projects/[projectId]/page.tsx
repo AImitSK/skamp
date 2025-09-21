@@ -207,13 +207,19 @@ export default function ProjectDetailPage() {
 
 
   const loadTodayTasks = async () => {
-    if (!projectId || !currentOrganization?.id || !user?.uid) return;
+    if (!projectId || !currentOrganization?.id || !user?.uid) {
+      console.log('loadTodayTasks abgebrochen - fehlende Parameter:', { projectId, organizationId: currentOrganization?.id, userId: user?.uid });
+      return;
+    }
+
+    console.log('loadTodayTasks gestartet für User:', user.uid);
 
     try {
       setLoadingTodayTasks(true);
       const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
+      console.log('Alle Projekt-Tasks geladen:', projectTasks.length);
 
-      // Filter für heute fällige Tasks des aktuellen Users
+      // Filter für heute fällige oder überfällige Tasks des aktuellen Users
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -223,12 +229,32 @@ export default function ProjectDetailPage() {
           // Nur Tasks des aktuellen Users
           if (task.assignedUserId !== user.uid) return false;
 
-          // Nur heute fällige Tasks
+          // Nur nicht erledigte Tasks
+          if (task.status === 'completed') return false;
+
+          // Prüfe ob Task heute fällig oder überfällig ist
           if (!task.dueDate) return false;
+
           const dueDate = task.dueDate.toDate();
-          dueDate.setHours(0, 0, 0, 0);
-          return dueDate.getTime() === today.getTime();
-        }) as ProjectTask[]; // Type assertion, da wir wissen dass alle projectId haben
+          const dueDateOnly = new Date(dueDate);
+          dueDateOnly.setHours(0, 0, 0, 0);
+
+          // Heute fällig oder überfällig (dueDate <= heute)
+          const isToday = dueDateOnly.getTime() === today.getTime();
+          const isOverdue = dueDateOnly.getTime() < today.getTime();
+
+          // Setze isOverdue flag für die Anzeige
+          if (isOverdue) {
+            (task as any).isOverdue = true;
+          }
+
+          return isToday || isOverdue;
+        }) as ProjectTask[];
+
+      console.log('Gefilterte Tasks (heute fällig/überfällig):', userTodayTasks.length);
+      userTodayTasks.forEach(task => {
+        console.log('Task:', task.title, 'Due:', task.dueDate?.toDate(), 'Status:', task.status);
+      });
 
       setTodayTasks(userTodayTasks);
     } catch (error) {
@@ -908,7 +934,7 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <CalendarDaysIcon className="h-5 w-5 text-orange-500 mr-2" />
-                      <Subheading>Heute fällige Tasks</Subheading>
+                      <Subheading>Meine fälligen Tasks</Subheading>
                     </div>
                     {/* User Avatar oben rechts */}
                     {user && (
