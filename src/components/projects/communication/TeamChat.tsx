@@ -907,7 +907,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 />
 
                 {/* Icons Container mit weißem Hintergrund */}
-                <div className="absolute right-3 bg-white rounded-md flex items-center space-x-1 px-1" style={{ top: 'calc(50% - 10px)', transform: 'translateY(-50%)' }}>
+                <div className="absolute right-3 bg-white rounded-md flex items-center space-x-1 px-1" style={{ top: '50%', transform: 'translateY(-50%)' }}>
                   {/* Asset-Button */}
                   <button
                     type="button"
