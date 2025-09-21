@@ -841,38 +841,27 @@ export default function ProjectDetailPage() {
           {/* Übersicht Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Pipeline-Übersicht [1/1] - Volle Breite oben */}
+              {/* Pipeline-Übersicht mit Pipeline-Fortschritt [1/1] - Volle Breite oben */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center mb-4">
                   <Squares2X2Icon className="h-5 w-5 text-blue-500 mr-2" />
                   <Subheading>Pipeline-Übersicht</Subheading>
                 </div>
-                {/* TODO: Hier kommt die Pipeline-Übersicht rein */}
-                <div className="p-8 text-center text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                  <Text>Pipeline-Übersicht wird hier implementiert</Text>
-                </div>
+                {/* Pipeline-Fortschritt hier integriert */}
+                {project && currentOrganization && (
+                  <PipelineProgressDashboard
+                    projectId={project.id || ''}
+                    organizationId={currentOrganization.id}
+                    currentStage={project.currentStage}
+                    onNavigateToTasks={() => setActiveTab('tasks')}
+                  />
+                )}
               </div>
 
-              {/* Untere Reihe: Pipeline-Fortschritt + Pressemeldung (responsive) */}
-              <div className={`grid gap-6 ${linkedCampaigns.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
-                {/* Pipeline-Fortschritt nach Phase - [1/2] wenn PM vorhanden, [1/1] wenn nicht */}
-                {project && currentOrganization && (
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <div className="flex items-center mb-4">
-                      <ChartBarIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <Subheading>Fortschritt nach Phase</Subheading>
-                    </div>
-                    <PipelineProgressDashboard
-                      projectId={project.id || ''}
-                      organizationId={currentOrganization.id}
-                      currentStage={project.currentStage}
-                      onNavigateToTasks={() => setActiveTab('tasks')}
-                    />
-                  </div>
-                )}
-
-                {/* Pressemeldung [2/2] - nur wenn Kampagne vorhanden */}
-                {linkedCampaigns.length > 0 && (
+              {/* Untere Reihe: Nur Pressemeldung */}
+              {linkedCampaigns.length > 0 && (
+                <div className="grid gap-6 grid-cols-1">
+                  {/* Pressemeldung [1/1] - volle Breite */}
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
@@ -984,8 +973,8 @@ export default function ProjectDetailPage() {
                       )}
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
