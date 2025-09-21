@@ -216,7 +216,7 @@ export default function ProjectDetailPage() {
 
     try {
       setLoadingTodayTasks(true);
-      const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
+      const projectTasks = await taskService.getByProjectId(currentOrganization.id, projectId);
 
       // Filter für heute fällige oder überfällige Tasks des aktuellen Users
       const today = new Date();
@@ -853,11 +853,12 @@ export default function ProjectDetailPage() {
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex space-x-6">
-              <button 
+              <button
+                type="button"
                 onClick={() => setActiveTab('overview')}
                 className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'overview' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'overview'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -865,6 +866,7 @@ export default function ProjectDetailPage() {
                 Übersicht
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('daten')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'daten'
@@ -875,7 +877,8 @@ export default function ProjectDetailPage() {
                 <LightBulbIcon className="w-4 h-4 mr-2" />
                 Daten
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => setActiveTab('tasks')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'tasks' 
@@ -886,7 +889,8 @@ export default function ProjectDetailPage() {
                 <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
                 Tasks
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => setActiveTab('monitoring')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'monitoring' 

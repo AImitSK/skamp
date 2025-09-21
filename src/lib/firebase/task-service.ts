@@ -364,13 +364,13 @@ export const taskService = {
    * Holt alle Tasks für ein Projekt
    */
   async getByProjectId(
-    organizationId: string, 
+    organizationId: string,
     projectId: string
   ): Promise<PipelineAwareTask[]> {
     const q = query(
       collection(db, 'tasks'),
       where('organizationId', '==', organizationId),
-      where('linkedProjectId', '==', projectId)
+      where('projectId', '==', projectId)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
