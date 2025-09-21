@@ -282,33 +282,33 @@ export function ProjectTaskManager({
       {filteredTasks.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Table Header */}
-          <div className="px-8 py-4 border-b border-zinc-200 bg-zinc-50">
-            <div className="grid grid-cols-4 gap-4 items-center">
-              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <div className="col-span-6 text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Task
               </div>
-              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                Zugewiesen
+              </div>
+              <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                Fortschritt
+              </div>
+              <div className="col-span-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
                 Fälligkeit
-              </div>
-              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Priorität
-              </div>
-              <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Status
               </div>
             </div>
           </div>
 
           {/* Table Body */}
-          <div className="divide-y divide-zinc-200">
+          <div className="divide-y divide-gray-200">
             {filteredTasks.map((task) => {
               const assignedMember = getTeamMember(task.assignedUserId || '');
 
               return (
-                <div key={task.id} className="px-8 py-4 hover:bg-zinc-50 transition-colors">
-                  {/* Erste Zeile: Task Title - läuft komplett durch */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3 flex-1">
+                <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    {/* Task - 6 Spalten mit Icon und truncated Text */}
+                    <div className="col-span-6 flex items-center gap-3">
                       <div className="flex-shrink-0">
                         {task.status === 'completed' ? (
                           <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -318,54 +318,42 @@ export function ProjectTaskManager({
                           <ClockIcon className="h-5 w-5 text-gray-400" />
                         )}
                       </div>
-                      <Text className="text-base font-semibold text-zinc-900">
-                        {task.title}
-                      </Text>
+                      <div className="min-w-0 flex-1">
+                        <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
+                          {task.title}
+                        </Text>
+                      </div>
                     </div>
-                    <Dropdown>
-                      <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                      </DropdownButton>
-                      <DropdownMenu anchor="bottom end">
-                        <DropdownItem onClick={() => setEditingTask(task)}>
-                          <PencilIcon className="h-4 w-4" />
-                          Bearbeiten
-                        </DropdownItem>
-                        {task.status !== 'completed' && (
-                          <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
-                            <CheckCircleIcon className="h-4 w-4" />
-                            Als erledigt markieren
-                          </DropdownItem>
-                        )}
-                        <DropdownDivider />
-                        <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
-                          <TrashIcon className="h-4 w-4" />
-                          <span className="text-red-600">Löschen</span>
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
 
-                  {/* Zweite Zeile: Avatar + breiter Balken links, 3 Werte rechts aligned */}
-                  <div className="grid grid-cols-4 gap-4 items-center">
-                    {/* Avatar + Progress-Balken (nur erste Spalte) */}
-                    <div className="flex items-center gap-3">
-                      {assignedMember && (
-                        <Avatar
-                          className="size-6 flex-shrink-0"
-                          src={assignedMember.photoUrl}
-                          initials={assignedMember.displayName
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                          title={assignedMember.displayName}
-                        />
+                    {/* Zugewiesen - 2 Spalten */}
+                    <div className="col-span-2">
+                      {assignedMember ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar
+                            className="size-6 flex-shrink-0"
+                            src={assignedMember.photoUrl}
+                            initials={assignedMember.displayName
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
+                            title={assignedMember.displayName}
+                          />
+                          <Text className="text-sm text-gray-700 truncate">
+                            {assignedMember.displayName}
+                          </Text>
+                        </div>
+                      ) : (
+                        <Text className="text-sm text-gray-500">-</Text>
                       )}
-                      <div className="flex-1">
+                    </div>
+
+                    {/* Fortschritt - 2 Spalten */}
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-3">
                         <div
-                          className="bg-gray-200 rounded-full h-2 cursor-pointer"
+                          className="flex-1 bg-gray-200 rounded-full h-2 cursor-pointer"
                           onClick={(e) => handleProgressClick(task, e)}
                           title="Klicken um Fortschritt zu ändern"
                         >
@@ -379,29 +367,39 @@ export function ProjectTaskManager({
                             style={{ width: `${task.progress || 0}%` }}
                           />
                         </div>
+                        <Text className="text-xs text-gray-500 flex-shrink-0">
+                          {task.progress || 0}%
+                        </Text>
                       </div>
-                      <span className="text-xs text-zinc-500 ml-2 flex-shrink-0">
-                        {task.progress || 0}%
-                      </span>
                     </div>
 
-                    {/* Fälligkeit - aligned mit Header */}
-                    <div className="text-sm text-zinc-700">
-                      {formatDate(task.dueDate)}
-                    </div>
-
-                    {/* Priorität - aligned mit Header */}
-                    <div>
-                      <Badge color={getPriorityColor(task.priority)}>
-                        {getPriorityLabel(task.priority)}
-                      </Badge>
-                    </div>
-
-                    {/* Status - aligned mit Header */}
-                    <div>
-                      <Badge color={getStatusColor(task)}>
-                        {getStatusLabel(task)}
-                      </Badge>
+                    {/* Fälligkeit - 2 Spalten mit Actions */}
+                    <div className="col-span-2 flex items-center justify-between">
+                      <Text className="text-sm text-gray-700">
+                        {formatDate(task.dueDate)}
+                      </Text>
+                      <Dropdown>
+                        <DropdownButton plain className="p-1 hover:bg-gray-100 rounded-md">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem onClick={() => setEditingTask(task)}>
+                            <PencilIcon className="h-4 w-4" />
+                            Bearbeiten
+                          </DropdownItem>
+                          {task.status !== 'completed' && (
+                            <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
+                              <CheckCircleIcon className="h-4 w-4" />
+                              Als erledigt markieren
+                            </DropdownItem>
+                          )}
+                          <DropdownDivider />
+                          <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
+                            <TrashIcon className="h-4 w-4" />
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
                     </div>
                   </div>
                 </div>
