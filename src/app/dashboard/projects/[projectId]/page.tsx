@@ -50,6 +50,7 @@ import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAu
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
+import PhaseGuideBox from '@/components/projects/guides/PhaseGuideBox';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { taskService } from '@/lib/firebase/task-service';
@@ -1048,8 +1049,12 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
-              {/* Untere Reihe: Fortschritt nach Phase + Pressemeldung (responsive) */}
-              <div className={`grid gap-6 ${linkedCampaigns.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Untere Reihe: Fortschritt nach Phase + Guide/Pressemeldung (responsive) */}
+              <div className={`grid gap-6 ${(() => {
+                const earlyPhases = ['ideas_planning', 'creation'];
+                const showGuide = project && earlyPhases.includes(project.currentStage);
+                return (showGuide || linkedCampaigns.length > 0) ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1';
+              })()}`}>
                 {/* Fortschritt nach Phase Box */}
                 {project && currentOrganization && (
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -1152,9 +1157,31 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                {/* Pressemeldung - nur wenn Kampagne vorhanden */}
-                {linkedCampaigns.length > 0 && (
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                {/* Guide Box für frühe Phasen ODER Pressemeldung für späte Phasen */}
+                {(() => {
+                  const earlyPhases = ['ideas_planning', 'creation'];
+                  const showGuide = project && earlyPhases.includes(project.currentStage);
+
+                  if (showGuide && user && currentOrganization) {
+                    return (
+                      <PhaseGuideBox
+                        currentPhase={project.currentStage}
+                        projectId={project.id!}
+                        organizationId={currentOrganization.id}
+                        userId={user.uid}
+                        onTaskComplete={() => {}} // Minimale Implementation
+                        onPhaseAdvance={(newPhase) => {
+                          // Simple phase advance ohne komplexe Logic
+                          console.log(`Advancing to phase: ${newPhase}`);
+                        }}
+                        setActiveTab={setActiveTab}
+                      />
+                    );
+                  }
+
+                  // Fallback: Bestehende Pressemeldung Box
+                  return linkedCampaigns.length > 0 ? (
+                    <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
                         <DocumentTextIcon className="h-5 w-5 text-primary mr-2" />
@@ -1307,7 +1334,8 @@ export default function ProjectDetailPage() {
                       )}
                     </div>
                   </div>
-                )}
+                  ) : null;
+                })()}
               </div>
             </div>
           )}
