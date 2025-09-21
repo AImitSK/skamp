@@ -14,7 +14,9 @@ import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { Avatar } from '@/components/ui/avatar';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 
 interface FloatingChatProps {
   projectId: string;
@@ -36,6 +38,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   const [lastReadTimestamp, setLastReadTimestamp] = useState<Date | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
+  const [showClearChatDialog, setShowClearChatDialog] = useState(false);
 
   // Lade Team-Mitglieder
   useEffect(() => {
@@ -110,19 +113,41 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
     }
   }, [projectId]);
 
+  // Verhindere Body-Scroll-Jump beim Dialog öffnen
+  useEffect(() => {
+    if (showClearChatDialog) {
+      // Berechne Scrollbar-Breite
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      // Füge padding-right hinzu um Jump zu verhindern
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Reset wenn Dialog geschlossen
+      document.body.style.paddingRight = '';
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.paddingRight = '';
+      document.body.style.overflow = '';
+    };
+  }, [showClearChatDialog]);
+
   const toggleChat = () => {
     const newState = !isOpen;
     setIsOpen(newState);
     localStorage.setItem(`chat_open_${projectId}`, newState.toString());
   };
 
-  const handleClearChat = async () => {
-    if (!confirm('Möchten Sie den gesamten Chat-Verlauf wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      return;
-    }
+  const handleClearChat = () => {
+    setShowClearChatDialog(true);
+  };
 
+  const confirmClearChat = async () => {
     try {
       await teamChatService.clearChatHistory(projectId);
+      setShowClearChatDialog(false);
       // Optional: Seite neu laden oder State zurücksetzen
       window.location.reload();
     } catch (error) {
@@ -210,17 +235,13 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
                   <ChevronDownIcon className="h-5 w-5" />
                 </button>
 
-                <Dropdown>
-                  <DropdownButton plain className="hover:bg-primary-hover p-1 rounded transition-colors">
-                    <EllipsisVerticalIcon className="h-5 w-5" />
-                  </DropdownButton>
-                  <DropdownMenu anchor="bottom end">
-                    <DropdownItem onClick={handleClearChat}>
-                      <TrashIcon className="h-4 w-4" />
-                      Chat-Verlauf löschen
-                    </DropdownItem>
-                  </DropdownMenu>
-                </Dropdown>
+                <button
+                  onClick={handleClearChat}
+                  className="hover:bg-primary-hover p-1 rounded transition-colors"
+                  title="Mehr Optionen"
+                >
+                  <EllipsisVerticalIcon className="h-5 w-5" />
+                </button>
               </div>
             </div>
 
@@ -255,6 +276,33 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           animation: slide-up 0.3s ease-out;
         }
       `}</style>
+      {/* Clear Chat Dialog */}
+      <Dialog open={showClearChatDialog} onClose={() => setShowClearChatDialog(false)}>
+        <DialogTitle>Chat-Verlauf löschen</DialogTitle>
+        <DialogBody>
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <TrashIcon className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <Text className="text-gray-900">
+                Möchten Sie den gesamten Chat-Verlauf wirklich löschen?
+              </Text>
+              <Text className="text-gray-500 mt-2">
+                Diese Aktion kann nicht rückgängig gemacht werden. Alle Nachrichten werden permanent gelöscht.
+              </Text>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowClearChatDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button color="red" onClick={confirmClearChat}>
+            Chat-Verlauf löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

@@ -158,6 +158,29 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     checkTeamMembership();
   }, [projectId, userId, organizationId, userDisplayName]);
 
+  // Verhindere Body-Scroll-Jump bei Modals
+  useEffect(() => {
+    const isModalOpen = showAssetPicker || showEmojiPicker;
+
+    if (isModalOpen) {
+      // Berechne Scrollbar-Breite
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      // Füge padding-right hinzu um Jump zu verhindern
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Reset wenn Modals geschlossen
+      document.body.style.paddingRight = '';
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.paddingRight = '';
+      document.body.style.overflow = '';
+    };
+  }, [showAssetPicker, showEmojiPicker]);
+
   // Abonniere Nachrichten
   useEffect(() => {
     if (!projectId || !organizationId) return;
@@ -871,7 +894,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 />
 
                 {/* Icons Container mit weißem Hintergrund */}
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-r-md flex items-center space-x-1 px-1">
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white rounded-md flex items-center space-x-1 px-1" style={{ marginTop: '-1px' }}>
                   {/* Asset-Button */}
                   <button
                     type="button"
