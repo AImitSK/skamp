@@ -33,7 +33,8 @@ import {
   PaperAirplaneIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  TagIcon
+  TagIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -50,8 +51,10 @@ import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
+import { taskService } from '@/lib/firebase/task-service';
 import { Project } from '@/types/project';
 import { TeamMember } from '@/types/international';
+import { ProjectTask } from '@/types/tasks';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
@@ -93,6 +96,8 @@ export default function ProjectDetailPage() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [todayTasks, setTodayTasks] = useState<ProjectTask[]>([]);
+  const [loadingTodayTasks, setLoadingTodayTasks] = useState(false);
 
   // Dialog States
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -107,7 +112,10 @@ export default function ProjectDetailPage() {
     loadProject();
     loadTeamMembers();
     loadTags();
-  }, [projectId, currentOrganization?.id]);
+    if (activeTab === 'overview') {
+      loadTodayTasks();
+    }
+  }, [projectId, currentOrganization?.id, activeTab]);
 
   // Lade spezifische Tags für das Projekt
   useEffect(() => {
@@ -197,6 +205,38 @@ export default function ProjectDetailPage() {
     }
   };
 
+
+  const loadTodayTasks = async () => {
+    if (!projectId || !currentOrganization?.id || !user?.uid) return;
+
+    try {
+      setLoadingTodayTasks(true);
+      const projectTasks = await taskService.getByProjectId(projectId, currentOrganization.id);
+
+      // Filter für heute fällige Tasks des aktuellen Users
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const userTodayTasks = projectTasks
+        .filter(task => task.projectId === projectId) // Nur Tasks mit projectId
+        .filter(task => {
+          // Nur Tasks des aktuellen Users
+          if (task.assignedUserId !== user.uid) return false;
+
+          // Nur heute fällige Tasks
+          if (!task.dueDate) return false;
+          const dueDate = task.dueDate.toDate();
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime();
+        }) as ProjectTask[]; // Type assertion, da wir wissen dass alle projectId haben
+
+      setTodayTasks(userTodayTasks);
+    } catch (error) {
+      console.error('Fehler beim Laden der heute fälligen Tasks:', error);
+    } finally {
+      setLoadingTodayTasks(false);
+    }
+  };
 
   const loadProject = async () => {
     if (!projectId || !currentOrganization?.id) return;
@@ -418,6 +458,10 @@ export default function ProjectDetailPage() {
       case 'completed': return 'Abgeschlossen';
       default: return stage;
     }
+  };
+
+  const getTeamMember = (userId: string) => {
+    return teamMembers.find(member => member.userId === userId || member.id === userId);
   };
 
   const formatDate = (timestamp: any) => {
@@ -857,6 +901,89 @@ export default function ProjectDetailPage() {
                   />
                 )}
               </div>
+
+              {/* Heute fällige Tasks Box - nur wenn vorhanden */}
+              {todayTasks.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <CalendarDaysIcon className="h-5 w-5 text-orange-500 mr-2" />
+                      <Subheading>Heute fällige Tasks</Subheading>
+                    </div>
+                    {/* User Avatar oben rechts */}
+                    {user && (
+                      <div className="flex items-center">
+                        <Avatar
+                          className="size-8"
+                          src={user.photoURL}
+                          initials={user.displayName
+                            ?.split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2) || user.email?.charAt(0).toUpperCase() || '?'}
+                          title={user.displayName || user.email || 'Aktueller User'}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Task Liste */}
+                  <div className="space-y-3">
+                    {todayTasks.map((task) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3 flex-1">
+                          {/* Status Icon */}
+                          <div className="flex-shrink-0">
+                            {task.status === 'completed' ? (
+                              <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                            ) : task.isOverdue ? (
+                              <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <ClockIcon className="h-5 w-5 text-orange-500" />
+                            )}
+                          </div>
+
+                          {/* Task Titel */}
+                          <div className="min-w-0 flex-1">
+                            <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
+                              {task.title}
+                            </Text>
+                          </div>
+                        </div>
+
+                        {/* Fortschritt */}
+                        <div className="flex items-center gap-3 ml-4">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all ${
+                                (task.progress || 0) === 100 ? 'bg-green-600' :
+                                (task.progress || 0) >= 75 ? 'bg-blue-600' :
+                                (task.progress || 0) >= 50 ? 'bg-yellow-600' :
+                                (task.progress || 0) >= 25 ? 'bg-orange-600' : 'bg-gray-400'
+                              }`}
+                              style={{ width: `${task.progress || 0}%` }}
+                            />
+                          </div>
+                          <Text className="text-xs text-gray-500 w-8">
+                            {task.progress || 0}%
+                          </Text>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer mit Link zum Tasks Tab */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => setActiveTab('tasks')}
+                      className="text-sm text-primary hover:text-primary-hover font-medium"
+                    >
+                      Alle Tasks anzeigen →
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Untere Reihe: Fortschritt nach Phase + Pressemeldung (responsive) */}
               <div className={`grid gap-6 ${linkedCampaigns.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
