@@ -636,6 +636,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         if (asset && asset.downloadUrl) {
           window.open(asset.downloadUrl, '_blank');
         }
+      }
     } catch (error) {
       console.error('Fehler beim Öffnen des Assets:', error);
     }
@@ -648,6 +649,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     if (asset.type === 'asset') {
       // Format: [Filename.jpg](asset://projectId/assetId)
       assetText = `[${asset.name}](asset://${projectId}/${asset.id})`;
+    }
 
     // Füge Asset-Link zur aktuellen Nachricht hinzu
     if (textareaRef.current) {
