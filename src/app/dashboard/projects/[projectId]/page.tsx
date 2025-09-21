@@ -841,16 +841,136 @@ export default function ProjectDetailPage() {
           {/* Übersicht Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Pipeline Progress Dashboard */}
-              {project && currentOrganization && (
-                <PipelineProgressDashboard
-                  projectId={project.id || ''}
-                  organizationId={currentOrganization.id}
-                  currentStage={project.currentStage}
-                  onNavigateToTasks={() => setActiveTab('tasks')}
-                />
-              )}
-              
+              {/* Main Overview Grid - Pipeline + Pressemeldung */}
+              <div className={`grid gap-6 ${linkedCampaigns.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                {/* Pipeline Progress Dashboard */}
+                {project && currentOrganization && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <PipelineProgressDashboard
+                      projectId={project.id || ''}
+                      organizationId={currentOrganization.id}
+                      currentStage={project.currentStage}
+                      onNavigateToTasks={() => setActiveTab('tasks')}
+                    />
+                  </div>
+                )}
+
+                {/* Pressemeldung Box - nur wenn Kampagne vorhanden */}
+                {linkedCampaigns.length > 0 && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                        <Subheading>Pressemeldung</Subheading>
+                      </div>
+                      <Dropdown>
+                        <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem onClick={() => {
+                            if (linkedCampaigns.length > 0) {
+                              router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${linkedCampaigns[0].id}`);
+                            }
+                          }}>
+                            <PencilSquareIcon className="h-4 w-4" />
+                            Bearbeiten
+                          </DropdownItem>
+                          <DropdownItem onClick={() => {
+                            if (linkedCampaigns.length > 0) {
+                              router.push(`/dashboard/pr-tools/approvals?campaignId=${linkedCampaigns[0].id}`);
+                            }
+                          }}>
+                            <EyeIcon className="h-4 w-4" />
+                            Freigabecenter
+                          </DropdownItem>
+                          <DropdownItem
+                            onClick={handleOpenPDF}
+                            disabled={!currentPdfVersion || !linkedCampaigns[0]?.approvalRequired}
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' :
+                             currentPdfVersion ? `Aktuelles PDF (V${currentPdfVersion.version})` : 'Kein PDF vorhanden'}
+                          </DropdownItem>
+                          <DropdownItem
+                            onClick={handleViewFeedback}
+                            disabled={linkedCampaigns.length === 0 || !linkedCampaigns[0]?.approvalRequired}
+                          >
+                            <ClockIcon className="h-4 w-4" />
+                            {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' : 'Feedback Historie'}
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <Text className="text-sm font-medium text-gray-600">PR-Kampagne</Text>
+                        <div className="mt-1">
+                          <button
+                            className="flex items-center text-base text-blue-600 hover:text-blue-700 hover:underline max-w-full"
+                            onClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${linkedCampaigns[0].id}`)}
+                            title={linkedCampaigns[0].title}
+                          >
+                            <PaperAirplaneIcon className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
+                            <span className="truncate">{linkedCampaigns[0].title}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Text className="text-sm font-medium text-gray-600">Status</Text>
+                        <div className="mt-1">
+                          <Badge color={
+                            linkedCampaigns[0].status === 'approved' ? 'green' :
+                            linkedCampaigns[0].status === 'in_review' ? 'blue' :
+                            linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'zinc'
+                          }>
+                            {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
+                             linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
+                             linkedCampaigns[0].status === 'approved' ? 'Freigegeben' :
+                             linkedCampaigns[0].status === 'changes_requested' ? 'Änderung erbeten' :
+                             linkedCampaigns[0].status}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Status Fortschritt - nur anzeigen wenn Kundenfreigabe erforderlich */}
+                      {linkedCampaigns[0].approvalRequired && (
+                        <div>
+                          <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
+                          <div className="mt-2">
+                            {(() => {
+                              const campaignStatus = linkedCampaigns[0].status;
+                              const progress = campaignStatus === 'approved' ? 100 :
+                                              campaignStatus === 'in_review' ? 40 :
+                                              campaignStatus === 'changes_requested' ? 60 :
+                                              campaignStatus === 'pending' ? 20 :
+                                              campaignStatus === 'draft' ? 10 : 0;
+
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <Text className="text-xs text-gray-500">Freigabe</Text>
+                                    <Text className="text-xs text-gray-600">{progress}%</Text>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Quick Actions */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
@@ -959,141 +1079,6 @@ export default function ProjectDetailPage() {
         </div>
         </div>
 
-        {/* Rest der Detailbox - jetzt unter Tab-Box */}
-        <div className="space-y-6">
-          {/* Enhanced Project Info Box */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="space-y-0">
-
-              {/* Pressemeldung Section - Nur anzeigen wenn Kampagne verknüpft */}
-              {linkedCampaigns.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
-                    <div className="flex items-center">
-                      <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
-                      <Subheading>Pressemeldung</Subheading>
-                    </div>
-                    <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => {
-                        if (linkedCampaigns.length > 0) {
-                          router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${linkedCampaigns[0].id}`);
-                        }
-                      }}>
-                        <PencilSquareIcon className="h-4 w-4" />
-                        Bearbeiten
-                      </DropdownItem>
-                      <DropdownItem onClick={() => {
-                        if (linkedCampaigns.length > 0) {
-                          router.push(`/dashboard/pr-tools/approvals?campaignId=${linkedCampaigns[0].id}`);
-                        }
-                      }}>
-                        <EyeIcon className="h-4 w-4" />
-                        Freigabecenter
-                      </DropdownItem>
-                      <DropdownItem
-                        onClick={handleOpenPDF}
-                        disabled={!currentPdfVersion || !linkedCampaigns[0]?.approvalRequired}
-                      >
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                        {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' :
-                         currentPdfVersion ? `Aktuelles PDF (V${currentPdfVersion.version})` : 'Kein PDF vorhanden'}
-                      </DropdownItem>
-                      <DropdownItem
-                        onClick={handleViewFeedback}
-                        disabled={linkedCampaigns.length === 0 || !linkedCampaigns[0]?.approvalRequired}
-                      >
-                        <ClockIcon className="h-4 w-4" />
-                        {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' : 'Feedback Historie'}
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-
-                <div className="space-y-3 px-6 py-4">
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">PR-Kampagne</Text>
-                    <div className="mt-1">
-                      {linkedCampaigns.length > 0 ? (
-                        <button
-                          className="flex items-center text-base text-blue-600 hover:text-blue-700 hover:underline max-w-full"
-                          onClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${linkedCampaigns[0].id}`)}
-                          title={linkedCampaigns[0].title}
-                        >
-                          <PaperAirplaneIcon className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
-                          <span className="truncate">{linkedCampaigns[0].title}</span>
-                        </button>
-                      ) : (
-                        <span className="text-base text-gray-500">-</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Status</Text>
-                    <div className="mt-1">
-                      {linkedCampaigns.length > 0 ? (
-                        <Badge color={
-                          linkedCampaigns[0].status === 'approved' ? 'green' :
-                          linkedCampaigns[0].status === 'in_review' ? 'blue' :
-                          linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'zinc'
-                        }>
-                          {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
-                           linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
-                           linkedCampaigns[0].status === 'approved' ? 'Freigegeben' :
-                           linkedCampaigns[0].status === 'changes_requested' ? 'Änderung erbeten' :
-                           linkedCampaigns[0].status}
-                        </Badge>
-                      ) : (
-                        <span className="text-base text-gray-500">-</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Status Fortschritt - nur anzeigen wenn Kundenfreigabe erforderlich */}
-                  {linkedCampaigns.length > 0 && linkedCampaigns[0].approvalRequired && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
-                      <div className="mt-2">
-                        {/* Berechne Fortschritt direkt aus dem Kampagnenstatus */}
-                        {(() => {
-                          const campaignStatus = linkedCampaigns[0].status;
-                          const progress = campaignStatus === 'approved' ? 100 :
-                                          campaignStatus === 'in_review' ? 40 :
-                                          campaignStatus === 'changes_requested' ? 60 :
-                                          campaignStatus === 'pending' ? 20 :
-                                          campaignStatus === 'draft' ? 10 : 0;
-
-                          return (
-                            <>
-                              <div className="flex items-center justify-between mb-1">
-                                <Text className="text-xs text-gray-500">Freigabe</Text>
-                                <Text className="text-xs text-gray-600">{progress}%</Text>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-              )}
-
-            </div>
-          </div>
-
-        </div>
       </div>
       
       {/* Project Edit Wizard */}
