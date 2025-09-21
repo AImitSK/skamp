@@ -201,62 +201,6 @@ export default function PipelineProgressDashboard({
         </div>
       </div>
 
-      {/* Stage-spezifischer Progress */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h4 className="text-lg font-medium text-gray-900 mb-4">
-          Fortschritt nach Phase
-        </h4>
-
-        <div className="space-y-4">
-          {stageOrder.map(stage => {
-            const status = getStageStatus(stage);
-            const stageProgress = status === 'completed' ? 100 : status === 'current' ? 50 : 0;
-            const progressColor = getProgressColor(stageProgress);
-
-            return (
-              <div key={stage} className="relative">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    {status === 'completed' && (
-                      <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                    )}
-                    {status === 'current' && (
-                      <ClockIcon className="w-5 h-5 text-primary" />
-                    )}
-                    {status === 'upcoming' && (
-                      <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
-                    )}
-
-                    <span className={`font-medium ${
-                      status === 'current' ? 'text-primary' :
-                      status === 'completed' ? 'text-green-600' : 'text-gray-500'
-                    }`}>
-                      {stageLabels[stage]}
-                    </span>
-                  </div>
-
-                  <span className="text-sm font-medium text-gray-600">
-                    {Math.round(stageProgress)}%
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className={`${progressColor} rounded-full h-3 transition-all duration-500`}
-                      style={{ width: `${stageProgress}%` }}
-                    ></div>
-                  </div>
-
-                  {status === 'current' && (
-                    <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
 
       {/* Critical Task Warnings */}

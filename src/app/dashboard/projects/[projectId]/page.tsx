@@ -841,13 +841,13 @@ export default function ProjectDetailPage() {
           {/* Übersicht Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Pipeline-Übersicht mit Pipeline-Fortschritt [1/1] - Volle Breite oben */}
+              {/* BLAUE BOX - Pipeline-Fortschritt [1/1] - Volle Breite oben */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center mb-4">
                   <Squares2X2Icon className="h-5 w-5 text-blue-500 mr-2" />
                   <Subheading>Pipeline-Übersicht</Subheading>
                 </div>
-                {/* Pipeline-Fortschritt hier integriert */}
+                {/* Pipeline-Fortschritt Dashboard hier */}
                 {project && currentOrganization && (
                   <PipelineProgressDashboard
                     projectId={project.id || ''}
@@ -890,7 +890,7 @@ export default function ProjectDetailPage() {
                           'completed'
                         ];
 
-                        const getStageStatus = (stage) => {
+                        const getStageStatus = (stage: string) => {
                           const currentIndex = stageOrder.indexOf(project.currentStage);
                           const stageIndex = stageOrder.indexOf(stage);
 
@@ -899,7 +899,7 @@ export default function ProjectDetailPage() {
                           return 'upcoming';
                         };
 
-                        const getProgressColor = (percent) => {
+                        const getProgressColor = (percent: number) => {
                           if (percent >= 90) return 'bg-green-500';
                           if (percent >= 70) return 'bg-blue-500';
                           if (percent >= 50) return 'bg-yellow-500';
@@ -933,7 +933,7 @@ export default function ProjectDetailPage() {
                                     status === 'current' ? 'text-primary' :
                                     status === 'completed' ? 'text-green-600' : 'text-gray-500'
                                   }`}>
-                                    {stageLabels[stage]}
+                                    {stageLabels[stage as keyof typeof stageLabels]}
                                   </span>
                                 </div>
 
