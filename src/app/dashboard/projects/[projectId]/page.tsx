@@ -997,20 +997,40 @@ export default function ProjectDetailPage() {
 
                         {/* Fortschritt */}
                         <div className="flex items-center gap-3 ml-4">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${
-                                (task.progress || 0) === 100 ? 'bg-green-600' :
-                                (task.progress || 0) >= 75 ? 'bg-blue-600' :
-                                (task.progress || 0) >= 50 ? 'bg-yellow-600' :
-                                (task.progress || 0) >= 25 ? 'bg-orange-600' : 'bg-gray-400'
-                              }`}
-                              style={{ width: `${task.progress || 0}%` }}
-                            />
-                          </div>
-                          <Text className="text-xs text-gray-500 w-8">
-                            {task.progress || 0}%
-                          </Text>
+                          {(() => {
+                            const progress = task.progress || 0;
+
+                            // Einheitliche Farblogik wie in Phase/Pressemeldung Box
+                            const getProgressColor = (percent: number) => {
+                              if (percent >= 90) return 'bg-green-500';
+                              if (percent >= 70) return 'bg-blue-500';
+                              if (percent >= 50) return 'bg-yellow-500';
+                              return 'bg-red-500';
+                            };
+
+                            const progressColor = getProgressColor(progress);
+                            const isInProgress = task.status === 'in_progress';
+
+                            return (
+                              <>
+                                <div className="relative">
+                                  <div className="w-20 bg-gray-200 rounded-full h-3">
+                                    <div
+                                      className={`${progressColor} rounded-full h-3 transition-all duration-500`}
+                                      style={{ width: `${progress}%` }}
+                                    ></div>
+                                  </div>
+
+                                  {isInProgress && (
+                                    <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
+                                  )}
+                                </div>
+                                <Text className="text-xs text-gray-500 w-8">
+                                  {Math.round(progress)}%
+                                </Text>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     ))}
@@ -1225,19 +1245,61 @@ export default function ProjectDetailPage() {
                                               campaignStatus === 'pending' ? 20 :
                                               campaignStatus === 'draft' ? 10 : 0;
 
+                              // Gleiche Farblogik wie in der Phase Box
+                              const getProgressColor = (percent: number) => {
+                                if (percent >= 90) return 'bg-green-500';
+                                if (percent >= 70) return 'bg-blue-500';
+                                if (percent >= 50) return 'bg-yellow-500';
+                                return 'bg-red-500';
+                              };
+
+                              const progressColor = getProgressColor(progress);
+                              const isInProgress = campaignStatus === 'in_review';
+
                               return (
-                                <>
-                                  <div className="flex items-center justify-between mb-1">
-                                    <Text className="text-xs text-gray-500">Freigabe</Text>
-                                    <Text className="text-xs text-gray-600">{progress}%</Text>
+                                <div className="relative">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center space-x-3">
+                                      {campaignStatus === 'approved' && (
+                                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                      )}
+                                      {isInProgress && (
+                                        <ClockIcon className="w-5 h-5 text-primary" />
+                                      )}
+                                      {!isInProgress && campaignStatus !== 'approved' && (
+                                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full"></div>
+                                      )}
+
+                                      <span className={`font-medium ${
+                                        isInProgress ? 'text-primary' :
+                                        campaignStatus === 'approved' ? 'text-green-600' : 'text-gray-500'
+                                      }`}>
+                                        Freigabe
+                                      </span>
+                                    </div>
+
+                                    <span className="text-sm font-medium text-gray-600">
+                                      {Math.round(progress)}%
+                                    </span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                      style={{ width: `${progress}%` }}
-                                    />
+
+                                  <div className="relative">
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                      <div
+                                        className={`${progressColor} rounded-full h-3 transition-all duration-500`}
+                                        style={{ width: `${progress}%` }}
+                                      ></div>
+                                    </div>
+
+                                    {isInProgress && (
+                                      <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
+                                    )}
                                   </div>
-                                </>
+                                </div>
                               );
                             })()}
                           </div>
