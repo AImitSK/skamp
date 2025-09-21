@@ -9,7 +9,7 @@ import {
   FaceSmileIcon,
   HandThumbUpIcon,
   HandThumbDownIcon,
-  MinusIcon
+  HandRaisedIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -856,7 +856,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       {[
                         { emoji: '👍', icon: HandThumbUpIcon, label: 'Gefällt mir' },
                         { emoji: '👎', icon: HandThumbDownIcon, label: 'Gefällt mir nicht' },
-                        { emoji: '🤚', icon: MinusIcon, label: 'Entscheide ihr / Enthaltung' }
+                        { emoji: '🤚', icon: HandRaisedIcon, label: 'Entscheide ihr / Enthaltung' }
                       ].map(({ emoji, icon: IconComponent, label }) => {
                         // Finde die Reaction für dieses Emoji
                         const reaction = message.reactions?.find(r => r.emoji === emoji);
