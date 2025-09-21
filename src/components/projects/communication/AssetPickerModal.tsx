@@ -28,7 +28,7 @@ interface AssetPickerModalProps {
 
 export interface SelectedAsset {
   id: string;
-  type: 'asset';
+  type: 'asset' | 'folder';
   name: string;
   url?: string;
   fileType?: string;
@@ -217,6 +217,34 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
           </div>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
+            {/* Unterordner */}
+            {currentFolders.length > 0 && (
+              <div>
+                <Subheading className="mb-2">Ordner</Subheading>
+                <div className="grid grid-cols-1 gap-2">
+                  {currentFolders.map((folder) => (
+                    <div
+                      key={folder.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer group"
+                      onClick={() => handleFolderClick(folder)}
+                    >
+                      <div className="flex items-center flex-1">
+                        <FolderIcon className="size-5 text-blue-600 mr-3" />
+                        <div>
+                          <Text className="font-medium">{folder.name}</Text>
+                          <Text className="text-sm text-gray-500">
+                            Ordner
+                          </Text>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <ChevronRightIcon className="size-5 text-gray-400 group-hover:text-gray-600" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Assets */}
             {currentAssets.length > 0 ? (

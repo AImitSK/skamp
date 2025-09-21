@@ -6,6 +6,7 @@ import {
   VideoCameraIcon,
   DocumentTextIcon,
   DocumentIcon,
+  FolderIcon,
   ArrowDownTrayIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
@@ -16,7 +17,7 @@ import { mediaService } from '@/lib/firebase/media-service';
 
 interface AssetPreviewProps {
   assetId: string;
-  assetType: 'asset';
+  assetType: 'asset' | 'folder';
   linkText: string;
   projectId: string;
   organizationId: string;
@@ -39,7 +40,11 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
-    loadAsset();
+    if (assetType === 'asset') {
+      loadAsset();
+    } else {
+      setLoading(false);
+    }
   }, [assetId, assetType]);
 
   const loadAsset = async () => {
@@ -100,6 +105,25 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
     }
   };
 
+  // Ordner-Preview
+  if (assetType === 'folder') {
+    return (
+      <div
+        className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+          isOwnMessage
+            ? 'bg-blue-500 border-blue-400 text-white hover:bg-blue-400'
+            : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-gray-100'
+        }`}
+        onClick={onAssetClick}
+        title="Ordner im Daten-Tab öffnen"
+      >
+        <FolderIcon className="h-4 w-4" />
+        <Text className={`text-sm font-medium ${isOwnMessage ? 'text-white' : 'text-gray-900'}`}>
+          {linkText}
+        </Text>
+      </div>
+    );
+  }
 
   // Loading State
   if (loading) {

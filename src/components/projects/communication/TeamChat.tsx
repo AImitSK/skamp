@@ -576,7 +576,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               <div key={index} className="my-2">
                 <AssetPreview
                   assetId={part.assetId}
-                  assetType={part.assetType as 'asset'}
+                  assetType={part.assetType as 'asset' | 'folder'}
                   linkText={part.linkText}
                   projectId={part.projectId}
                   organizationId={organizationId}
