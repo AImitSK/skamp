@@ -36,8 +36,33 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   // Chat-Zustand aus LocalStorage laden oder Default verwenden
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window !== 'undefined') {
-      const savedState = localStorage.getItem(`chat-open-${projectId}`);
-      return savedState !== null ? savedState === 'true' : false; // Default: geschlossen
+      // Prüfe ob es der erste Besuch dieses Projekts ist
+      const visitedProjects = JSON.parse(localStorage.getItem('visited-projects') || '[]');
+      const isFirstVisit = !visitedProjects.includes(projectId);
+
+      // Globaler Key für den Chat-Zustand
+      const savedState = localStorage.getItem('chat-open-state');
+
+      if (isFirstVisit) {
+        // Projekt als besucht markieren
+        visitedProjects.push(projectId);
+        localStorage.setItem('visited-projects', JSON.stringify(visitedProjects));
+
+        // Beim ersten Besuch: Wenn kein gespeicherter Zustand existiert, öffne den Chat
+        if (savedState === null) {
+          localStorage.setItem('chat-open-state', 'true');
+          return true;
+        }
+        // Wenn es einen gespeicherten Zustand gibt, respektiere ihn auch beim ersten Besuch
+        return savedState === 'true';
+      }
+
+      // Bei bereits besuchten Projekten: Verwende den gespeicherten Zustand
+      if (savedState !== null) {
+        return savedState === 'true';
+      }
+
+      return false; // Default geschlossen
     }
     return false;
   });
@@ -47,12 +72,12 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
   const [showClearChatDialog, setShowClearChatDialog] = useState(false);
 
-  // Chat-Zustand in LocalStorage speichern
+  // Chat-Zustand in LocalStorage speichern (globaler Key)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`chat-open-${projectId}`, isOpen.toString());
+      localStorage.setItem('chat-open-state', isOpen.toString());
     }
-  }, [isOpen, projectId]);
+  }, [isOpen]);
 
   // Lade Team-Mitglieder
   useEffect(() => {
@@ -119,13 +144,6 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
     }
   }, [isOpen]);
 
-  // Speichere Chat-Zustand in localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem(`chat_open_${projectId}`);
-    if (savedState === 'true') {
-      setIsOpen(true);
-    }
-  }, [projectId]);
 
   // Verhindere Body-Scroll-Jump beim Dialog öffnen
   useEffect(() => {
@@ -164,7 +182,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   const toggleChat = () => {
     const newState = !isOpen;
     setIsOpen(newState);
-    localStorage.setItem(`chat_open_${projectId}`, newState.toString());
+    // Globaler localStorage-Key wird automatisch im useEffect gespeichert
   };
 
   const handleClearChat = () => {
