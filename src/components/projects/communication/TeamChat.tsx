@@ -9,7 +9,7 @@ import {
   FaceSmileIcon,
   HandThumbUpIcon,
   HandThumbDownIcon,
-  CheckIcon
+  MinusIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -215,7 +215,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         setMessages(newMessages);
         setLoading(false);
         // Scrolle zu neuen Nachrichten
-        setTimeout(() => scrollToBottom(), 100);
+        setTimeout(() => scrollToBottom(), 300);
       },
       100 // Lade bis zu 100 Nachrichten
     );
@@ -231,6 +231,16 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Initiales Scrollen nach unten beim ersten Laden
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      // Sofortiges Scrollen ohne Animation beim ersten Laden
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      }, 200);
+    }
+  }, [loading, messages.length]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !userId || !organizationId || !isTeamMember || sending) return;
@@ -846,7 +856,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                       {[
                         { emoji: '👍', icon: HandThumbUpIcon, label: 'Gefällt mir' },
                         { emoji: '👎', icon: HandThumbDownIcon, label: 'Gefällt mir nicht' },
-                        { emoji: '🤚', icon: CheckIcon, label: 'Verstanden' }
+                        { emoji: '🤚', icon: MinusIcon, label: 'Entscheide ihr / Enthaltung' }
                       ].map(({ emoji, icon: IconComponent, label }) => {
                         // Finde die Reaction für dieses Emoji
                         const reaction = message.reactions?.find(r => r.emoji === emoji);
