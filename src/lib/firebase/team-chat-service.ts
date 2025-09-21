@@ -269,6 +269,26 @@ export class TeamChatService {
       throw error;
     }
   }
+
+  // ==========================================
+  // CHAT HISTORY MANAGEMENT
+  // ==========================================
+
+  async clearChatHistory(projectId: string): Promise<void> {
+    try {
+      const messagesRef = this.getMessagesCollection(projectId);
+      const snapshot = await getDocs(messagesRef);
+
+      // Lösche alle Nachrichten in Batches
+      const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      console.log(`Chat-Verlauf für Projekt ${projectId} gelöscht (${snapshot.docs.length} Nachrichten)`);
+    } catch (error) {
+      console.error('Fehler beim Löschen des Chat-Verlaufs:', error);
+      throw error;
+    }
+  }
 }
 
 export const teamChatService = new TeamChatService();
