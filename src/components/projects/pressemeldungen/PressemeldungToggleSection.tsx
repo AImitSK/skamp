@@ -38,11 +38,13 @@ const CommunicationToggleBox = dynamic(
 interface Props {
   projectId: string;
   campaignId?: string;
+  organizationId: string;
 }
 
 export default function PressemeldungToggleSection({
   projectId,
-  campaignId
+  campaignId,
+  organizationId
 }: Props) {
   const [mediaItems, setMediaItems] = useState<CampaignAssetAttachment[]>([]);
   const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
@@ -145,13 +147,9 @@ export default function PressemeldungToggleSection({
 
       // Lade Approval-Daten um history zu erhalten (wie in funktionierender Freigabe-Seite)
       const { approvalServiceExtended } = await import('@/lib/firebase/approval-service');
-      // Verwende die gleiche organizationId wie in der Haupt-Komponente
-      const { projectService } = await import('@/lib/firebase/project-service');
-      const project = await projectService.getById(projectId);
-      const orgId = project?.organizationId || '';
-      console.log('🔍 DEBUG - OrganizationId für Communication:', orgId);
+      console.log('🔍 DEBUG - OrganizationId für Communication:', organizationId);
 
-      const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, orgId);
+      const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, organizationId);
 
       console.log('🔍 DEBUG - Approvals für Communication geladen:', approvals);
 

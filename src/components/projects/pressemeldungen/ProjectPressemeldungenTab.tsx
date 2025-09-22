@@ -156,6 +156,7 @@ export default function ProjectPressemeldungenTab({
         <PressemeldungToggleSection
           projectId={projectId}
           campaignId={campaigns[0]?.id}
+          organizationId={organizationId}
         />
       )}
 
