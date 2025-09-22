@@ -71,7 +71,11 @@ export default function PressemeldungToggleSection({
         id: v.id || '',
         version: v.version.toString(),
         pdfUrl: v.downloadUrl || '',
-        createdAt: v.createdAt instanceof Date ? v.createdAt : v.createdAt.toDate(),
+        createdAt: v.createdAt instanceof Date
+          ? v.createdAt
+          : v.createdAt?.toDate
+            ? v.createdAt.toDate()
+            : new Date(),
         createdBy: {
           id: v.createdBy || '',
           name: v.createdBy || 'Unbekannt',

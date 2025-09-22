@@ -87,7 +87,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'daten' | 'verteiler' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'daten' | 'pressemeldung' | 'verteiler' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);

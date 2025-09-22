@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/ProjectPressemeldungenTab.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -29,11 +29,7 @@ export default function ProjectPressemeldungenTab({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProjectPressData();
-  }, [projectId, organizationId]);
-
-  const loadProjectPressData = async () => {
+  const loadProjectPressData = useCallback(async () => {
     try {
       console.log('🔍 DEBUG - Lade Pressemeldungen für Projekt:', projectId, 'Organisation:', organizationId);
 
@@ -102,7 +98,11 @@ export default function ProjectPressemeldungenTab({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, organizationId]);
+
+  useEffect(() => {
+    loadProjectPressData();
+  }, [loadProjectPressData]);
 
   const hasLinkedCampaign = campaigns.length > 0;
 
