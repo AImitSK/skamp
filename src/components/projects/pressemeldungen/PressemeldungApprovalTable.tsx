@@ -145,16 +145,19 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         {/* Kunde & Kontakt */}
         <div className="w-[20%] min-w-0">
           <div className="text-sm text-gray-700">
-            {approval.clientName || approval.recipients?.length > 0 ? (
+            {approval.clientName || approval.recipients?.length > 0 || approval.clientEmail ? (
               <div>
                 <p className="font-medium truncate">
                   {approval.clientName || 'Kunde'}
                 </p>
-                {approval.recipients && approval.recipients.length > 0 && (
-                  <p className="text-xs text-gray-500 truncate" title={approval.recipients[0].email}>
-                    {approval.recipients[0].name || approval.recipients[0].email}
+                {(approval.recipients && approval.recipients.length > 0) || approval.clientEmail ? (
+                  <p className="text-xs text-gray-500 truncate"
+                     title={approval.recipients?.length > 0 ? approval.recipients[0].email : approval.clientEmail}>
+                    {approval.recipients && approval.recipients.length > 0
+                      ? (approval.recipients[0].name || approval.recipients[0].email)
+                      : approval.clientEmail || 'Kein Kontakt'}
                   </p>
-                )}
+                ) : null}
               </div>
             ) : (
               <span className="text-gray-500">Nicht zugewiesen</span>
