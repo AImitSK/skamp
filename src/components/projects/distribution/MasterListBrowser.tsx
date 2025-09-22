@@ -194,7 +194,8 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   <div className="w-[10%] text-center">
                     <Button
                       onClick={() => list.id && onLink(list.id)}
-                      className="bg-primary hover:bg-primary-hover text-white text-xs px-3 py-1"
+                      color="secondary"
+                      className="text-xs px-3 py-1"
                     >
                       <LinkIcon className="h-3 w-3 mr-1" />
                       Verknüpfen

@@ -238,7 +238,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div className="flex gap-2">
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+            color="secondary"
           >
             <PlusIcon className="w-4 h-4 mr-2" />
             Neue Liste
