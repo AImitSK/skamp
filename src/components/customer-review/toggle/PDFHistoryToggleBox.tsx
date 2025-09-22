@@ -106,8 +106,13 @@ function PDFHistoryToggleBoxComponent({
     [pdfVersions]
   );
   
-  const sortedVersions = useMemo(() => 
-    [...pdfVersions].sort((a, b) => b.version.localeCompare(a.version)), 
+  const sortedVersions = useMemo(() =>
+    [...pdfVersions].sort((a, b) => {
+      // Handle version as number or string
+      const versionA = typeof a.version === 'number' ? a.version : parseInt(a.version) || 0;
+      const versionB = typeof b.version === 'number' ? b.version : parseInt(b.version) || 0;
+      return versionB - versionA; // Descending order (newest first)
+    }),
     [pdfVersions]
   );
 
