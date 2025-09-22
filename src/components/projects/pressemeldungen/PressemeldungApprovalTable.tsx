@@ -76,7 +76,6 @@ const getTimeSinceLastActivity = (timestamp: any) => {
 
 function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
   const [isCopying, setIsCopying] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
 
   const handleCopyLink = useCallback(async () => {
     if (!approval.shareId) return;
@@ -85,7 +84,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     try {
       const url = `${window.location.origin}/freigabe/${approval.shareId}`;
       await navigator.clipboard.writeText(url);
-      // TODO: Show toast notification
+      console.log('Link kopiert:', url);
     } catch (error) {
       console.error('Fehler beim Kopieren des Links:', error);
     } finally {
@@ -93,17 +92,10 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     }
   }, [approval.shareId]);
 
-  const handleAgencyApproval = useCallback(async () => {
-    setIsApproving(true);
-    try {
-      // TODO: Implement agency approval service call
-      console.log('Agentur Freigabe erteilen für:', approval.id);
-      onRefresh();
-    } catch (error) {
-      console.error('Fehler bei der Agentur Freigabe:', error);
-    } finally {
-      setIsApproving(false);
-    }
+  const handleAgencyApproval = useCallback(() => {
+    console.log('Agentur Freigabe erteilen für:', approval.id);
+    // TODO: Implement agency approval service call
+    onRefresh();
   }, [approval.id, onRefresh]);
 
 
@@ -189,10 +181,10 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
                 <ClipboardIcon className="h-4 w-4" />
                 {isCopying ? 'Wird kopiert...' : 'Link kopieren'}
               </DropdownItem>
-              <DropdownItem onClick={handleAgencyApproval} disabled={isApproving || approval.status === 'approved'}>
+              <DropdownItem onClick={handleAgencyApproval} disabled={approval.status === 'approved'}>
                 <CheckIcon className="h-4 w-4" />
                 <span className="text-green-600">
-                  {isApproving ? 'Wird freigegeben...' : 'Agentur Freigabe erteilen'}
+                  Agentur Freigabe erteilen
                 </span>
               </DropdownItem>
             </DropdownMenu>
