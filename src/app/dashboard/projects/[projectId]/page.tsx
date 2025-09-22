@@ -73,7 +73,6 @@ import ProjectDistributionLists from '@/components/projects/distribution/Project
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
-  console.log('🔄 ProjectDetailPage MOUNT/RENDER');
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -116,7 +115,6 @@ export default function ProjectDetailPage() {
   // Basis-Daten laden (nur einmal pro Projekt)
   useEffect(() => {
     if (!currentOrganization?.id) return; // Warte bis Organisation geladen ist
-    console.log('📊 Loading project base data...');
     loadProject();
     loadTeamMembers();
     loadTags();
@@ -125,7 +123,6 @@ export default function ProjectDetailPage() {
   // Tasks nur für Overview Tab laden
   useEffect(() => {
     if (activeTab === 'overview' && currentOrganization?.id) {
-      console.log('📋 Loading today tasks for overview tab...');
       loadTodayTasks();
     }
   }, [activeTab, projectId, currentOrganization?.id]);
@@ -138,7 +135,6 @@ export default function ProjectDetailPage() {
           // Versuche zuerst die Tags direkt über ihre IDs zu laden
           const directTags = await tagsService.getByIds(project.tags);
           setProjectTags(directTags);
-          console.log('Direkt geladene Tags:', directTags);
         } catch (error) {
           console.error('Fehler beim direkten Laden der Tags:', error);
         }
@@ -283,19 +279,14 @@ export default function ProjectDetailPage() {
         
         // Lade verknüpfte Kampagnen - sowohl über linkedCampaigns als auch projectId
         try {
-          console.log('🔍 DEBUG OVERVIEW - Lade Kampagnen für Projekt:', projectData.id, 'Organisation:', currentOrganization!.id);
-          console.log('🔍 DEBUG OVERVIEW - Projekt-Data:', projectData);
           let allCampaigns: any[] = [];
 
           // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
           if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
-            console.log('🔍 DEBUG OVERVIEW - linkedCampaigns gefunden:', projectData.linkedCampaigns);
             const linkedCampaignData = await Promise.all(
               projectData.linkedCampaigns.map(async (campaignId) => {
                 try {
-                  console.log('🔍 DEBUG OVERVIEW - Lade Kampagne:', campaignId);
                   const campaign = await prService.getById(campaignId, currentOrganization!.id);
-                  console.log('🔍 DEBUG OVERVIEW - Kampagne geladen:', campaign);
                   return campaign;
                 } catch (error) {
                   console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
@@ -304,22 +295,16 @@ export default function ProjectDetailPage() {
               })
             );
             allCampaigns.push(...linkedCampaignData.filter(Boolean));
-            console.log('🔍 DEBUG OVERVIEW - Kampagnen über linkedCampaigns:', allCampaigns.length);
-          } else {
-            console.log('🔍 DEBUG OVERVIEW - Keine linkedCampaigns gefunden');
           }
 
           // 2. Lade Kampagnen über projectId (neuer Ansatz)
-          console.log('🔍 DEBUG OVERVIEW - Suche Kampagnen mit projectId...');
           const projectCampaigns = await prService.getCampaignsByProject(projectData.id!, currentOrganization!.id);
-          console.log('🔍 DEBUG OVERVIEW - Kampagnen über projectId gefunden:', projectCampaigns);
           allCampaigns.push(...projectCampaigns);
 
           // Duplikate entfernen (falls eine Kampagne über beide Wege gefunden wird)
           const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
             index === self.findIndex(c => c.id === campaign.id)
           );
-          console.log('🔍 DEBUG OVERVIEW - Einzigartige Kampagnen:', uniqueCampaigns);
 
           setLinkedCampaigns(uniqueCampaigns);
 
@@ -883,7 +868,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: overview');
                   setActiveTab('overview');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -898,7 +882,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: tasks');
                   setActiveTab('tasks');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -913,7 +896,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: strategie');
                   setActiveTab('strategie');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -928,7 +910,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: daten');
                   setActiveTab('daten');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -943,7 +924,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: verteiler');
                   setActiveTab('verteiler');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -958,7 +938,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: pressemeldung');
                   setActiveTab('pressemeldung');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
@@ -973,7 +952,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: monitoring');
                   setActiveTab('monitoring');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${

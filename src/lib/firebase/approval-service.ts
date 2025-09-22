@@ -2759,25 +2759,21 @@ export const approvalServiceExtended = {
    */
   async getApprovalsByProject(projectId: string, organizationId: string): Promise<ApprovalEnhanced[]> {
     try {
-      console.log('🔍 DEBUG APPROVAL - Lade Freigaben für Projekt:', projectId);
 
       // Lade Projekt-Daten um beide Verknüpfungsarten zu unterstützen
       const projectRef = doc(db, 'projects', projectId);
       const projectSnapshot = await getDoc(projectRef);
 
       if (!projectSnapshot.exists()) {
-        console.log('🔍 DEBUG APPROVAL - Projekt nicht gefunden');
         return [];
       }
 
       const projectData = projectSnapshot.data();
-      console.log('🔍 DEBUG APPROVAL - Projekt-Daten:', projectData);
 
       let campaignIds: string[] = [];
 
       // 1. Kampagnen über linkedCampaigns (alter Ansatz)
       if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
-        console.log('🔍 DEBUG APPROVAL - linkedCampaigns gefunden:', projectData.linkedCampaigns);
         campaignIds.push(...projectData.linkedCampaigns);
       }
 
@@ -2791,15 +2787,12 @@ export const approvalServiceExtended = {
 
       const campaignSnapshot = await getDocs(campaignQuery);
       const projectLinkedCampaignIds = campaignSnapshot.docs.map(doc => doc.id);
-      console.log('🔍 DEBUG APPROVAL - Kampagnen über projectId:', projectLinkedCampaignIds);
       campaignIds.push(...projectLinkedCampaignIds);
 
       // Duplikate entfernen
       campaignIds = [...new Set(campaignIds)];
-      console.log('🔍 DEBUG APPROVAL - Alle Kampagnen-IDs:', campaignIds);
 
       if (campaignIds.length === 0) {
-        console.log('🔍 DEBUG APPROVAL - Keine Kampagnen gefunden');
         return [];
       }
 
@@ -2817,8 +2810,6 @@ export const approvalServiceExtended = {
         id: doc.id,
         ...doc.data()
       })) as ApprovalEnhanced[];
-
-      console.log('🔍 DEBUG APPROVAL - Freigaben gefunden:', rawApprovals);
 
       // Lade fehlende Kundennamen nach (wie in searchEnhanced)
       const approvalsWithClientNames = await Promise.all(rawApprovals.map(async (approval) => {

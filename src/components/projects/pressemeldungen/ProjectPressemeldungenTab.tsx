@@ -31,24 +31,18 @@ export default function ProjectPressemeldungenTab({
 
   const loadProjectPressData = useCallback(async () => {
     try {
-      console.log('🔍 DEBUG - Lade Pressemeldungen für Projekt:', projectId, 'Organisation:', organizationId);
-
       // Lade Projekt-Daten um linkedCampaigns zu erhalten
       const projectData = await projectService.getById(projectId, { organizationId });
-      console.log('🔍 DEBUG - Projekt-Daten:', projectData);
 
       let allCampaigns: PRCampaign[] = [];
 
       if (projectData) {
         // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
         if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
-          console.log('🔍 DEBUG - linkedCampaigns gefunden:', projectData.linkedCampaigns);
           const linkedCampaignData = await Promise.all(
             projectData.linkedCampaigns.map(async (campaignId) => {
               try {
-                console.log('🔍 DEBUG - Lade Kampagne:', campaignId);
                 const campaign = await prService.getById(campaignId, organizationId);
-                console.log('🔍 DEBUG - Kampagne geladen:', campaign);
                 return campaign;
               } catch (error) {
                 console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
@@ -57,37 +51,27 @@ export default function ProjectPressemeldungenTab({
             })
           );
           allCampaigns.push(...linkedCampaignData.filter(Boolean) as PRCampaign[]);
-          console.log('🔍 DEBUG - Kampagnen über linkedCampaigns:', allCampaigns.length);
-        } else {
-          console.log('🔍 DEBUG - Keine linkedCampaigns gefunden');
         }
 
         // 2. Lade Kampagnen über projectId (neuer Ansatz)
-        console.log('🔍 DEBUG - Suche Kampagnen mit projectId...');
         const projectCampaigns = await prService.getCampaignsByProject(projectId, organizationId);
-        console.log('🔍 DEBUG - Kampagnen über projectId gefunden:', projectCampaigns);
         allCampaigns.push(...projectCampaigns);
 
         // Duplikate entfernen
         const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
           index === self.findIndex(c => c.id === campaign.id)
         );
-        console.log('🔍 DEBUG - Einzigartige Kampagnen:', uniqueCampaigns);
 
         setCampaigns(uniqueCampaigns);
 
         // Lade Freigaben für gefundene Kampagnen
         if (uniqueCampaigns.length > 0) {
-          console.log('🔍 DEBUG - Lade Freigaben...');
           const approvalData = await approvalServiceExtended.getApprovalsByProject(projectId, organizationId);
-          console.log('🔍 DEBUG - Freigaben gefunden:', approvalData);
           setApprovals(approvalData);
         } else {
-          console.log('🔍 DEBUG - Keine Kampagnen gefunden, keine Freigaben zu laden');
           setApprovals([]);
         }
       } else {
-        console.log('🔍 DEBUG - Keine Projekt-Daten gefunden');
         setCampaigns([]);
         setApprovals([]);
       }

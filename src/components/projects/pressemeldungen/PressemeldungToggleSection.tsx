@@ -97,7 +97,6 @@ export default function PressemeldungToggleSection({
       const campaign = await prService.getById(campaignId);
 
       if (campaign?.attachedAssets) {
-        console.log('🔍 DEBUG - Angehängte Assets gefunden:', campaign.attachedAssets);
         return campaign.attachedAssets;
       }
 
@@ -113,7 +112,6 @@ export default function PressemeldungToggleSection({
       if (!campaignId) return [];
 
       const versions = await pdfVersionsService.getVersionHistory(campaignId);
-      console.log('🔍 DEBUG - PDF-Versionen gefunden:', versions.length, versions);
       return versions.map(v => ({
         id: v.id || '',
         version: v.version.toString(),
@@ -147,19 +145,14 @@ export default function PressemeldungToggleSection({
 
       // Lade Approval-Daten um history zu erhalten (wie in funktionierender Freigabe-Seite)
       const { approvalServiceExtended } = await import('@/lib/firebase/approval-service');
-      console.log('🔍 DEBUG - OrganizationId für Communication:', organizationId);
 
       const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, organizationId);
 
-      console.log('🔍 DEBUG - Approvals für Communication geladen:', approvals);
-
       // Finde das richtige Approval für diese campaignId
       const approval = approvals.find(a => a.campaignId === campaignId);
-      console.log('🔍 DEBUG - Approval für campaignId gefunden:', approval);
 
       // Verwende approval.history statt campaign.approvalData.feedbackHistory (wie in funktionierender Freigabe-Seite)
       const historyData = approval?.history?.filter(h => h.details?.comment) || [];
-      console.log('🔍 DEBUG - History mit Comments gefunden:', historyData.length, historyData);
 
       // Transformiere history zu feedbackHistory Format (wie in funktionierender Freigabe-Seite)
       const feedbackHistoryData = historyData.map(h => ({
@@ -168,8 +161,6 @@ export default function PressemeldungToggleSection({
         requestedAt: h.timestamp,
         action: h.action
       }));
-
-      console.log('🔍 DEBUG - Transformierte Feedback-History:', feedbackHistoryData);
 
       setFeedbackHistory(feedbackHistoryData);
       setCommunicationCount(feedbackHistoryData.length);
@@ -255,21 +246,14 @@ export default function PressemeldungToggleSection({
             metadata: {}
           }))}
           onMediaSelect={(mediaId) => {
-            console.log('🔍 DEBUG - Media ID:', mediaId);
-            console.log('🔍 DEBUG - Alle mediaItems:', mediaItems);
-
             // Fullscreen-Viewer öffnen (wie in funktionierender Freigabe-Seite)
             const media = mediaItems.find(item => item.id === mediaId);
-            console.log('🔍 DEBUG - Gefundenes Media:', media);
 
             if (media) {
               const url = media.metadata?.thumbnailUrl || media.metadata?.downloadUrl;
-              console.log('🔍 DEBUG - URL zum Öffnen:', url);
 
               if (url) {
                 window.open(url, '_blank');
-              } else {
-                console.log('❌ Keine URL gefunden in media.metadata');
               }
             }
           }}
