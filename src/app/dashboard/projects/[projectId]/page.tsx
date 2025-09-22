@@ -1254,6 +1254,7 @@ export default function ProjectDetailPage() {
                 <ProjectStrategyTab
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
+                  project={project}
                 />
               )}
             </div>
