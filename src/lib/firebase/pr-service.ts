@@ -1723,5 +1723,61 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     } catch (error) {
       throw error;
     }
+  },
+
+  /**
+   * Lädt alle Kampagnen für ein spezifisches Projekt
+   */
+  async getCampaignsByProject(projectId: string, organizationId: string): Promise<PRCampaign[]> {
+    try {
+      const campaignsRef = collection(db, 'campaigns');
+      const q = query(
+        campaignsRef,
+        where('projectId', '==', projectId),
+        where('organizationId', '==', organizationId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PRCampaign[];
+    } catch (error) {
+      console.error('Fehler beim Laden der Projekt-Kampagnen:', error);
+      throw new Error('Kampagnen konnten nicht geladen werden');
+    }
+  },
+
+  /**
+   * Verknüpft eine Kampagne mit einem Projekt
+   */
+  async linkCampaignToProject(campaignId: string, projectId: string): Promise<void> {
+    try {
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      await updateDoc(campaignRef, {
+        projectId,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Fehler beim Verknüpfen der Kampagne:', error);
+      throw new Error('Kampagne konnte nicht verknüpft werden');
+    }
+  },
+
+  /**
+   * Entfernt die Projekt-Verknüpfung einer Kampagne
+   */
+  async unlinkCampaignFromProject(campaignId: string): Promise<void> {
+    try {
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      await updateDoc(campaignRef, {
+        projectId: null,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Fehler beim Entfernen der Projekt-Verknüpfung:', error);
+      throw new Error('Projekt-Verknüpfung konnte nicht entfernt werden');
+    }
   }
 };

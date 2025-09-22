@@ -2720,5 +2720,51 @@ CeleroPress Admin-Benachrichtigung
 
 export const approvalService = new ApprovalService();
 
+// Erweiterte Service-Methoden für Projekt-Integration
+export const approvalServiceExtended = {
+  ...approvalService,
+
+  /**
+   * Lädt alle Freigaben für ein spezifisches Projekt
+   */
+  async getApprovalsByProject(projectId: string, organizationId: string): Promise<ApprovalEnhanced[]> {
+    try {
+      const approvalsRef = collection(db, 'approvals');
+
+      // Erst alle Kampagnen für das Projekt laden
+      const campaignsRef = collection(db, 'campaigns');
+      const campaignQuery = query(
+        campaignsRef,
+        where('projectId', '==', projectId),
+        where('organizationId', '==', organizationId)
+      );
+
+      const campaignSnapshot = await getDocs(campaignQuery);
+      const campaignIds = campaignSnapshot.docs.map(doc => doc.id);
+
+      if (campaignIds.length === 0) {
+        return [];
+      }
+
+      // Dann Freigaben für diese Kampagnen laden
+      const approvalQuery = query(
+        approvalsRef,
+        where('campaignId', 'in', campaignIds),
+        where('organizationId', '==', organizationId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const approvalSnapshot = await getDocs(approvalQuery);
+      return approvalSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ApprovalEnhanced[];
+    } catch (error) {
+      console.error('Fehler beim Laden der Projekt-Freigaben:', error);
+      throw new Error('Freigaben konnten nicht geladen werden');
+    }
+  }
+};
+
 // Export für Tests
 export { ApprovalService };
