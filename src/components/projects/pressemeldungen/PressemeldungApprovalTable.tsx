@@ -133,7 +133,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Status */}
-        <div className="w-[15%]">
+        <div className="w-[20%]">
           <Badge
             color={getStatusColor(approval.status) as any}
             className="text-xs whitespace-nowrap"
@@ -163,25 +163,13 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Letzte Aktivität */}
-        <div className="w-[15%]">
+        <div className="w-[20%]">
           <div className="text-sm text-gray-600">
             <p>{formatDate(approval.lastActivity || approval.updatedAt)}</p>
             <p className="text-xs text-gray-500">
               {getTimeSinceLastActivity(approval.lastActivity || approval.updatedAt)}
             </p>
           </div>
-        </div>
-
-        {/* Versenden */}
-        <div className="w-[10%]">
-          <Button
-            color="secondary"
-            className="text-xs px-3 py-1"
-            disabled={true}
-          >
-            <PaperAirplaneIcon className="h-3 w-3 mr-1" />
-            Versenden
-          </Button>
         </div>
 
         {/* Aktionen */}
@@ -238,17 +226,14 @@ export default function PressemeldungApprovalTable({
           <div className="w-[30%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kampagne
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
           <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kunde & Kontakt
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Letzte Aktivität
-          </div>
-          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Versenden
           </div>
           <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             Aktionen

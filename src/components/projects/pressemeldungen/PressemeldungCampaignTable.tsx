@@ -134,7 +134,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRow
         </div>
 
         {/* Admin */}
-        <div className="w-[20%]">
+        <div className="w-[15%]">
           <div className="flex items-center">
             {(() => {
               const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
@@ -166,7 +166,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRow
         </div>
 
         {/* Kampagne Versenden */}
-        <div className="w-[10%]">
+        <div className="w-[15%]">
           <Button
             onClick={handleSend}
             color="secondary"
@@ -255,13 +255,13 @@ export default function PressemeldungCampaignTable({
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Admin
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Erstellt am
           </div>
-          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
           </div>
           <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
