@@ -78,12 +78,6 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
   const [isCopying, setIsCopying] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
 
-  const handleOpenLink = useCallback(() => {
-    if (approval.shareId) {
-      window.open(`/freigabe/${approval.shareId}`, '_blank');
-    }
-  }, [approval.shareId]);
-
   const handleCopyLink = useCallback(async () => {
     if (!approval.shareId) return;
 
@@ -183,7 +177,11 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
             </DropdownButton>
 
             <DropdownMenu anchor="bottom end">
-              <DropdownItem onClick={handleOpenLink} disabled={!approval.shareId}>
+              <DropdownItem
+                href={approval.shareId ? `/freigabe/${approval.shareId}` : undefined}
+                target="_blank"
+                disabled={!approval.shareId}
+              >
                 <ExternalLinkIcon className="h-4 w-4" />
                 Freigabe-Link öffnen
               </DropdownItem>
