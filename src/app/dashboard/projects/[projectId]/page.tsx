@@ -1098,11 +1098,11 @@ export default function ProjectDetailPage() {
                 </div>
               )}
 
-              {/* Untere Reihe: Fortschritt nach Phase + Guide/Pressemeldung (responsive) */}
+              {/* Untere Reihe: Fortschritt nach Phase + Guide (responsive) */}
               <div className={`grid gap-6 ${(() => {
                 const earlyPhases = ['ideas_planning', 'creation'];
                 const showGuide = project && earlyPhases.includes(project.currentStage);
-                return (showGuide || linkedCampaigns.length > 0) ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1';
+                return showGuide ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1';
               })()}`}>
                 {/* Fortschritt nach Phase Box */}
                 {project && currentOrganization && (
