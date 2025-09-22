@@ -75,28 +75,6 @@ const getTimeSinceLastActivity = (timestamp: any) => {
 };
 
 function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
-  const [isCopying, setIsCopying] = useState(false);
-
-  const handleCopyLink = useCallback(async () => {
-    if (!approval.shareId) return;
-
-    setIsCopying(true);
-    try {
-      const url = `${window.location.origin}/freigabe/${approval.shareId}`;
-      await navigator.clipboard.writeText(url);
-      console.log('Link kopiert:', url);
-    } catch (error) {
-      console.error('Fehler beim Kopieren des Links:', error);
-    } finally {
-      setIsCopying(false);
-    }
-  }, [approval.shareId]);
-
-  const handleAgencyApproval = useCallback(() => {
-    console.log('Agentur Freigabe erteilen für:', approval.id);
-    // TODO: Implement agency approval service call
-    onRefresh();
-  }, [approval.id, onRefresh]);
 
 
   return (
@@ -169,23 +147,8 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
             </DropdownButton>
 
             <DropdownMenu anchor="bottom end">
-              <DropdownItem
-                href={approval.shareId ? `/freigabe/${approval.shareId}` : undefined}
-                target="_blank"
-                disabled={!approval.shareId}
-              >
-                <ExternalLinkIcon className="h-4 w-4" />
-                Freigabe-Link öffnen
-              </DropdownItem>
-              <DropdownItem onClick={handleCopyLink} disabled={!approval.shareId || isCopying}>
-                <ClipboardIcon className="h-4 w-4" />
-                {isCopying ? 'Wird kopiert...' : 'Link kopieren'}
-              </DropdownItem>
-              <DropdownItem onClick={handleAgencyApproval} disabled={approval.status === 'approved'}>
-                <CheckIcon className="h-4 w-4" />
-                <span className="text-green-600">
-                  Agentur Freigabe erteilen
-                </span>
+              <DropdownItem>
+                Test
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
