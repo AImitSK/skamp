@@ -60,12 +60,7 @@ function MediaToggleBoxComponent({
     [mediaItems, maxDisplayCount]
   );
   
-  const subtitle = useMemo(() => 
-    mediaItems.length > 0 
-      ? `Diese werden nach Ihrer Freigabe mit der Mitteilung versendet`
-      : undefined,
-    [mediaItems.length]
-  );
+  const subtitle = undefined;
 
   return (
     <>

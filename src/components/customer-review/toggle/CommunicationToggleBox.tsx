@@ -112,7 +112,7 @@ function CommunicationToggleBoxComponent({
     <ToggleBox
       id={id}
       title={title}
-      subtitle={subtitle}
+      subtitle={undefined}
       count={communications.length}
       icon={ChatBubbleLeftRightIcon}
       iconColor="text-green-600"

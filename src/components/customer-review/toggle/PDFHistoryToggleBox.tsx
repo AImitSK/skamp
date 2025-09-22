@@ -120,7 +120,7 @@ function PDFHistoryToggleBoxComponent({
     <ToggleBox
       id={id}
       title={title}
-      subtitle={pdfVersions.length > 0 ? 'Alle Versionen der Pressemitteilung' : undefined}
+      subtitle={undefined}
       count={pdfVersions.length}
       icon={DocumentTextIcon}
       iconColor="text-purple-600"
