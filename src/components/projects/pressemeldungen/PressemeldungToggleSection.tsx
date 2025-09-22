@@ -239,10 +239,22 @@ export default function PressemeldungToggleSection({
             metadata: {}
           }))}
           onMediaSelect={(mediaId) => {
+            console.log('🔍 DEBUG - Media ID:', mediaId);
+            console.log('🔍 DEBUG - Alle mediaItems:', mediaItems);
+
             // Fullscreen-Viewer öffnen (wie in funktionierender Freigabe-Seite)
             const media = mediaItems.find(item => item.id === mediaId);
-            if (media && media.metadata?.thumbnailUrl) {
-              window.open(media.metadata.thumbnailUrl, '_blank');
+            console.log('🔍 DEBUG - Gefundenes Media:', media);
+
+            if (media) {
+              const url = media.metadata?.thumbnailUrl || media.metadata?.downloadUrl;
+              console.log('🔍 DEBUG - URL zum Öffnen:', url);
+
+              if (url) {
+                window.open(url, '_blank');
+              } else {
+                console.log('❌ Keine URL gefunden in media.metadata');
+              }
             }
           }}
         />
