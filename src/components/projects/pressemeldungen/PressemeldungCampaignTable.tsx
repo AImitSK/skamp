@@ -143,16 +143,12 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRow
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
 
               return (
-                <>
-                  <Avatar
-                    src={avatarUrl}
-                    alt={displayName}
-                    className="h-6 w-6 mr-2"
-                  />
-                  <span className="text-sm text-gray-700 truncate" title={displayName}>
-                    {displayName}
-                  </span>
-                </>
+                <Avatar
+                  src={avatarUrl}
+                  alt={displayName}
+                  title={displayName}
+                  className="h-6 w-6 cursor-help"
+                />
               );
             })()}
           </div>
