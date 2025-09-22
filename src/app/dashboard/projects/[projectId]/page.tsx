@@ -911,6 +911,21 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
+                  console.log('🎯 Tab Click: pressemeldung');
+                  setActiveTab('pressemeldung');
+                }}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'pressemeldung'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <DocumentTextIcon className="w-4 h-4 mr-2" />
+                Pressemeldung
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   console.log('🎯 Tab Click: verteiler');
                   setActiveTab('verteiler');
                 }}
@@ -1375,7 +1390,43 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
+          {/* Daten Tab */}
+          {activeTab === 'daten' && (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <FolderOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Daten-Bereich</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Hier werden zukünftig projektspezifische Daten angezeigt.
+                </p>
+              </div>
+            </div>
+          )}
 
+          {/* Pressemeldung Tab */}
+          {activeTab === 'pressemeldung' && (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Pressemeldung</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Hier können Sie Pressemeldungen für dieses Projekt verwalten.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Verteiler Tab */}
+          {activeTab === 'verteiler' && (
+            <div className="space-y-6">
+              {project && currentOrganization && (
+                <ProjectDistributionLists
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                />
+              )}
+            </div>
+          )}
 
           {/* Monitoring & Analytics Tab */}
           {activeTab === 'monitoring' && (
