@@ -65,6 +65,7 @@ import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { Tag } from '@/types/crm';
 import { approvalService } from '@/lib/firebase/approval-service';
+import { prService } from '@/lib/firebase/pr-service';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
 import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModal';
 import { ApprovalEnhanced } from '@/types/approvals';
@@ -282,44 +283,50 @@ export default function ProjectDetailPage() {
       if (projectData) {
         setProject(projectData);
         
-        // Lade verknüpfte Kampagnen
-        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
-          try {
-            const campaigns = await Promise.all(
+        // Lade verknüpfte Kampagnen - sowohl über linkedCampaigns als auch projectId
+        try {
+          let allCampaigns: any[] = [];
+
+          // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
+          if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+            const linkedCampaignData = await Promise.all(
               projectData.linkedCampaigns.map(async (campaignId) => {
                 try {
-                  // Hier müsste der PR-Service importiert werden
-                  // const campaign = await prService.getById(campaignId);
-                  // Vorerst Dummy-Daten für die erste verknüpfte Kampagne
-                  return {
-                    id: campaignId,
-                    title: `${projectData.title} - PR-Kampagne`,
-                    status: 'in_review',
-                    progress: 75,
-                    approvalRequired: true // Default: Freigabe erforderlich
-                  };
+                  const campaign = await prService.getById(campaignId, currentOrganization!.id);
+                  return campaign;
                 } catch (error) {
                   console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
                   return null;
                 }
               })
             );
-            setLinkedCampaigns(campaigns.filter(Boolean));
-
-            // Lade PDF-Version für die erste Kampagne
-            if (campaigns.length > 0 && campaigns[0]) {
-              try {
-                const pdfVersion = await pdfVersionsService.getCurrentVersion(campaigns[0].id);
-                setCurrentPdfVersion(pdfVersion);
-              } catch (error) {
-                console.error('Fehler beim Laden der PDF-Version:', error);
-                // PDF-Fehler ist nicht kritisch - setze einfach null
-                setCurrentPdfVersion(null);
-              }
-            }
-          } catch (error) {
-            console.error('Fehler beim Laden der verknüpften Kampagnen:', error);
+            allCampaigns.push(...linkedCampaignData.filter(Boolean));
           }
+
+          // 2. Lade Kampagnen über projectId (neuer Ansatz)
+          const projectCampaigns = await prService.getCampaignsByProject(projectData.id!, currentOrganization!.id);
+          allCampaigns.push(...projectCampaigns);
+
+          // Duplikate entfernen (falls eine Kampagne über beide Wege gefunden wird)
+          const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
+            index === self.findIndex(c => c.id === campaign.id)
+          );
+
+          setLinkedCampaigns(uniqueCampaigns);
+
+          // Lade PDF-Version für die erste Kampagne
+          if (uniqueCampaigns.length > 0 && uniqueCampaigns[0]) {
+            try {
+              const pdfVersion = await pdfVersionsService.getCurrentVersion(uniqueCampaigns[0].id);
+              setCurrentPdfVersion(pdfVersion);
+            } catch (error) {
+              console.error('Fehler beim Laden der PDF-Version:', error);
+              // PDF-Fehler ist nicht kritisch - setze einfach null
+              setCurrentPdfVersion(null);
+            }
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der verknüpften Kampagnen:', error);
         }
       } else {
         setError('Projekt nicht gefunden');
