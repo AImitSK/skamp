@@ -68,17 +68,21 @@ export default function PressemeldungToggleSection({
 
       const versions = await pdfVersionsService.getVersionHistory(campaignId);
       return versions.map(v => ({
-        id: v.id,
-        version: v.version,
-        fileName: v.fileName,
-        downloadUrl: v.downloadUrl,
-        createdAt: v.createdAt,
-        createdBy: v.createdBy,
-        fileSize: v.fileSize,
-        status: v.status as 'draft' | 'review' | 'approved' | 'rejected',
-        changesSummary: v.changesSummary || undefined,
-        approvedBy: v.approvedBy || undefined,
-        approvedAt: v.approvedAt || undefined
+        id: v.id || '',
+        version: v.version.toString(),
+        pdfUrl: v.downloadUrl || '',
+        createdAt: v.createdAt instanceof Date ? v.createdAt : v.createdAt.toDate(),
+        createdBy: {
+          id: v.createdBy || '',
+          name: v.createdBy || 'Unbekannt',
+          email: ''
+        },
+        fileSize: v.fileSize || 0,
+        comment: v.changesSummary || undefined,
+        isCurrent: false,
+        campaignId: campaignId,
+        organizationId: '',
+        status: v.status as 'draft' | 'pending_customer' | 'approved' | 'rejected'
       }));
     } catch (error) {
       console.error('Fehler beim Laden der PDF-Versionen:', error);
