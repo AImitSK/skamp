@@ -12,9 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import type { StrategyDocument } from '@/lib/firebase/strategy-document-service';
 
+// Erweiterte Interface für Unified Documents
+interface UnifiedStrategyDocument extends StrategyDocument {
+  source?: 'strategy' | 'folder';
+  assetId?: string;
+  contentRef?: string;
+}
+
 interface StrategyDocumentsTableProps {
-  documents: StrategyDocument[];
-  onEdit: (document: StrategyDocument) => void;
+  documents: UnifiedStrategyDocument[];
+  onEdit: (document: UnifiedStrategyDocument) => void;
   onDelete: (documentId: string) => void;
   loading: boolean;
 }
@@ -145,11 +152,18 @@ export default function StrategyDocumentsTable({
                   <div className="text-sm font-medium text-gray-900">
                     {document.title}
                   </div>
-                  {document.templateName && (
-                    <div className="text-xs text-gray-500">
-                      Vorlage: {document.templateName}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {document.templateName && (
+                      <div className="text-xs text-gray-500">
+                        Vorlage: {document.templateName}
+                      </div>
+                    )}
+                    {document.source === 'folder' && (
+                      <Badge color="gray" className="text-xs">
+                        Ordner-System
+                      </Badge>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Badge color="blue" className="text-xs">
