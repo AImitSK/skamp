@@ -23,6 +23,14 @@ export default function PressemeldungToggleSection({
   const [communicationCount, setCommunicationCount] = useState(0);
   const [lastMessageDate, setLastMessageDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedToggles, setExpandedToggles] = useState<Record<string, boolean>>({});
+
+  const handleToggle = (id: string) => {
+    setExpandedToggles(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   useEffect(() => {
     if (campaignId) {
@@ -148,53 +156,47 @@ export default function PressemeldungToggleSection({
     <div className="space-y-4">
       {/* Angehängte Medien */}
       <MediaToggleBox
+        id="media"
+        title="Angehängte Medien"
+        subtitle="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
+        count={mediaItems.length}
+        isExpanded={expandedToggles['media'] || false}
+        onToggle={handleToggle}
         mediaItems={mediaItems}
-        badgeCount={mediaItems.length}
-        badgeText={`${mediaItems.length} ${mediaItems.length === 1 ? 'Medium' : 'Medien'}`}
-        toggleText="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
-        onMediaSelect={(media) => {
-          console.log('Medium ausgewählt:', media);
+        onMediaSelect={(mediaId) => {
+          console.log('Medium ausgewählt:', mediaId);
         }}
-        onMediaDownload={(media) => {
-          console.log('Medium herunterladen:', media);
-        }}
-        showUpload={false}
       />
 
       {/* PDF-Historie */}
       <PDFHistoryToggleBox
+        id="pdf-history"
+        title="PDF-Historie"
+        subtitle="Alle Versionen der Pressemitteilung"
+        count={pdfVersions.length}
+        isExpanded={expandedToggles['pdf-history'] || false}
+        onToggle={handleToggle}
         pdfVersions={pdfVersions}
-        badgeCount={pdfVersions.length}
-        badgeText={`${pdfVersions.length} ${pdfVersions.length === 1 ? 'Version' : 'Versionen'}`}
-        toggleText="Alle Versionen der Pressemitteilung"
         onVersionSelect={(version) => {
           console.log('PDF-Version ausgewählt:', version);
         }}
-        onVersionDownload={(version) => {
-          if (version.downloadUrl) {
-            window.open(version.downloadUrl, '_blank');
-          }
-        }}
-        onVersionView={(version) => {
-          console.log('PDF-Version anzeigen:', version);
-        }}
-        showUpload={false}
+        showDownloadButtons={true}
       />
 
       {/* Kommunikation */}
       <CommunicationToggleBox
-        shareId={campaignId}
-        badgeCount={communicationCount}
-        badgeText={`${communicationCount} ${communicationCount === 1 ? 'Nachricht' : 'Nachrichten'}`}
-        toggleText={formatLastMessageText()}
-        onNewMessage={(message) => {
-          console.log('Neue Nachricht:', message);
+        id="communication"
+        title="Kommunikation"
+        subtitle={formatLastMessageText()}
+        count={communicationCount}
+        isExpanded={expandedToggles['communication'] || false}
+        onToggle={handleToggle}
+        communications={[]}
+        onNewMessage={() => {
+          console.log('Neue Nachricht');
           loadCommunicationData(); // Reload communication data
         }}
-        onMessageReply={(messageId, reply) => {
-          console.log('Antwort auf Nachricht:', messageId, reply);
-        }}
-        showComposer={true}
+        allowNewMessages={true}
       />
     </div>
   );
