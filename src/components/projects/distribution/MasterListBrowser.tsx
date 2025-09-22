@@ -25,7 +25,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 10;
 
   // Filter Listen
   const filteredLists = lists.filter(list => {
@@ -103,64 +103,107 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
         </div>
       </div>
 
-      {/* Listen Grid */}
+      {/* Master-Listen Tabelle */}
       {paginatedLists.length > 0 ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedLists.map((list) => (
-            <div
-              key={list.id}
-              className="relative rounded-lg border border-gray-200 bg-white p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1 min-w-0 mr-2">
-                  <h4 className="font-medium text-gray-900 truncate">
-                    {list.name}
-                  </h4>
-                  {list.description && (
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                      {list.description}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  plain
-                  onClick={() => list.id && onLink(list.id)}
-                  className="p-2 hover:bg-gray-100 rounded-md"
-                  title="Liste verknüpfen"
-                >
-                  <LinkIcon className="h-4 w-4 text-primary" />
-                </Button>
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center">
+              <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
               </div>
-
-              <div className="flex items-center gap-2 mt-3">
-                <Badge
-                  color={getCategoryColor(list.category) as any}
-                  className="text-xs"
-                >
-                  {LIST_CATEGORY_LABELS[list.category as keyof typeof LIST_CATEGORY_LABELS] || list.category}
-                </Badge>
-                <Badge
-                  color={list.type === 'dynamic' ? 'green' : 'zinc'}
-                  className="text-xs"
-                >
-                  {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
-                </Badge>
+              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Kategorie
               </div>
-
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <div className="flex items-center text-sm text-gray-500">
-                  <UsersIcon className="h-4 w-4 mr-1" />
-                  <span>{(list.contactCount || 0).toLocaleString()} Kontakte</span>
-                </div>
-                {list.type === 'dynamic' && (
-                  <div className="flex items-center text-xs text-gray-400">
-                    <ArrowPathIcon className="h-3 w-3 mr-1" />
-                    {formatDate(list.lastUpdated || list.updatedAt)}
-                  </div>
-                )}
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Typ
+              </div>
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                Kontakte
+              </div>
+              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Aktualisiert
+              </div>
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                Aktion
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Body */}
+          <div className="divide-y divide-gray-200">
+            {paginatedLists.map((list) => (
+              <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center">
+                  {/* Name */}
+                  <div className="w-[35%] min-w-0">
+                    <div className="flex items-center">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {list.name}
+                        </p>
+                        {list.description && (
+                          <p className="text-xs text-gray-500 truncate mt-1">
+                            {list.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kategorie */}
+                  <div className="w-[15%]">
+                    <Badge
+                      color={getCategoryColor(list.category) as any}
+                      className="text-xs whitespace-nowrap"
+                    >
+                      {LIST_CATEGORY_LABELS[list.category as keyof typeof LIST_CATEGORY_LABELS] || list.category}
+                    </Badge>
+                  </div>
+
+                  {/* Typ */}
+                  <div className="w-[10%]">
+                    <Badge
+                      color={list.type === 'dynamic' ? 'green' : 'zinc'}
+                      className="text-xs whitespace-nowrap"
+                    >
+                      {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                    </Badge>
+                  </div>
+
+                  {/* Kontakte */}
+                  <div className="w-[10%] text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-sm font-medium text-gray-700">
+                        {(list.contactCount || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Aktualisiert */}
+                  <div className="flex-1">
+                    <div className="flex items-center text-sm text-gray-600">
+                      {list.type === 'dynamic' && (
+                        <ArrowPathIcon className="h-3 w-3 mr-1 text-gray-400" />
+                      )}
+                      <span>{formatDate(list.lastUpdated || list.updatedAt)}</span>
+                    </div>
+                  </div>
+
+                  {/* Aktion */}
+                  <div className="w-[10%] text-center">
+                    <Button
+                      onClick={() => list.id && onLink(list.id)}
+                      className="bg-primary hover:bg-primary-hover text-white text-xs px-3 py-1"
+                    >
+                      <LinkIcon className="h-3 w-3 mr-1" />
+                      Verknüpfen
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
@@ -186,20 +229,33 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
             Zurück
           </Button>
           <div className="flex items-center gap-2">
-            {[...Array(totalPages)].map((_, i) => (
-              <Button
-                key={i + 1}
-                plain
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 text-sm ${
-                  currentPage === i + 1
-                    ? 'font-semibold text-primary bg-primary/10 rounded'
-                    : 'text-gray-600'
-                }`}
-              >
-                {i + 1}
-              </Button>
-            ))}
+            {[...Array(Math.min(totalPages, 7))].map((_, i) => {
+              let pageNum;
+              if (totalPages <= 7) {
+                pageNum = i + 1;
+              } else if (currentPage <= 4) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i;
+              } else {
+                pageNum = currentPage - 3 + i;
+              }
+
+              return (
+                <Button
+                  key={pageNum}
+                  plain
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-1 text-sm ${
+                    currentPage === pageNum
+                      ? 'font-semibold text-primary bg-primary/10 rounded'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
           </div>
           <Button
             plain

@@ -7,7 +7,9 @@ import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { SearchInput } from '@/components/ui/search-input';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import {
   LinkIcon,
   PlusIcon,
@@ -15,16 +17,16 @@ import {
   TrashIcon,
   ArrowDownTrayIcon,
   EyeIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ArrowPathIcon,
+  EllipsisVerticalIcon,
+  FolderIcon,
+  PencilIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { listsService } from '@/lib/firebase/lists-service';
-import { DistributionList } from '@/types/lists';
+import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import MasterListBrowser from './MasterListBrowser';
-import ProjectListCard from './ProjectListCard';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
 import Papa from 'papaparse';
 
@@ -42,6 +44,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (projectId && organizationId) {
@@ -52,15 +55,12 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Projekt-Listen laden
       const pLists = await projectListsService.getProjectLists(projectId);
       setProjectLists(pLists);
 
-      // Master-Listen laden
       const mLists = await listsService.getAll(organizationId);
       setMasterLists(mLists);
 
-      // Details für verknüpfte Master-Listen laden
       const linkedMasterIds = pLists
         .filter(l => l.type === 'linked' && l.masterListId)
         .map(l => l.masterListId!);
@@ -82,14 +82,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   const handleLinkMasterList = async (masterListId: string) => {
     if (!user) return;
-
     try {
-      await projectListsService.linkMasterList(
-        projectId,
-        masterListId,
-        user.uid,
-        organizationId
-      );
+      await projectListsService.linkMasterList(projectId, masterListId, user.uid, organizationId);
       await loadData();
     } catch (error) {
       console.error('Fehler beim Verknüpfen der Liste:', error);
@@ -98,7 +92,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   const handleCreateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
-
     try {
       await projectListsService.createProjectList(
         projectId,
@@ -132,7 +125,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       if (!projectList.id) return;
 
       const contacts = await projectListsService.getProjectListContacts(projectList.id);
-
       const exportData = contacts.map(contact => ({
         Name: 'name' in contact && typeof contact.name === 'object'
           ? `${contact.name.firstName} ${contact.name.lastName}`
@@ -157,18 +149,38 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     }
   };
 
-  // Gefilterte Listen für verknüpfte Listen
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedListIds(new Set(filteredProjectLists.map(l => l.id!)));
+    } else {
+      setSelectedListIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedListIds.size === 0) return;
+
+    try {
+      await Promise.all(Array.from(selectedListIds).map(id =>
+        projectListsService.unlinkList(projectId, id)
+      ));
+      await loadData();
+      setSelectedListIds(new Set());
+    } catch (error) {
+      console.error('Fehler beim Löschen der Listen:', error);
+    }
+  };
+
+  // Gefilterte Listen
   const linkedListIds = projectLists
     .filter(l => l.type === 'linked')
     .map(l => l.masterListId)
     .filter(Boolean) as string[];
 
-  // Verfügbare Master-Listen (noch nicht verknüpft)
   const availableMasterLists = masterLists.filter(
     list => list.id && !linkedListIds.includes(list.id)
   );
 
-  // Filter für Anzeige
   const filteredProjectLists = projectLists.filter(list => {
     if (searchTerm) {
       const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
@@ -182,6 +194,25 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     }
     return true;
   });
+
+  const getCategoryColor = (category?: string): string => {
+    switch (category) {
+      case 'press': return 'purple';
+      case 'customers': return 'blue';
+      case 'partners': return 'green';
+      case 'leads': return 'amber';
+      default: return 'zinc';
+    }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    return timestamp.toDate().toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
 
   if (loading) {
     return (
@@ -248,18 +279,155 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         </div>
       </div>
 
-      {/* Projekt-Listen */}
+      {/* Bulk Actions */}
+      {selectedListIds.size > 0 && (
+        <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+          <Text className="text-sm text-blue-700">
+            {selectedListIds.size} {selectedListIds.size === 1 ? 'Liste' : 'Listen'} ausgewählt
+          </Text>
+          <Button
+            onClick={handleBulkDelete}
+            className="bg-red-600 hover:bg-red-700 text-white text-sm"
+          >
+            <TrashIcon className="w-4 h-4 mr-1" />
+            Löschen
+          </Button>
+        </div>
+      )}
+
+      {/* Projekt-Listen Tabelle */}
       {filteredProjectLists.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProjectLists.map((list) => (
-            <ProjectListCard
-              key={list.id}
-              projectList={list}
-              masterList={list.masterListId ? masterListDetails.get(list.masterListId) : undefined}
-              onUnlink={() => list.id && handleUnlinkList(list.id)}
-              onExport={() => handleExportList(list)}
-            />
-          ))}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center">
+              <div className="flex items-center w-[35%]">
+                <Checkbox
+                  checked={filteredProjectLists.length > 0 && selectedListIds.size === filteredProjectLists.length}
+                  indeterminate={selectedListIds.size > 0 && selectedListIds.size < filteredProjectLists.length}
+                  onChange={(checked: boolean) => handleSelectAll(checked)}
+                />
+                <span className="ml-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </span>
+              </div>
+              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Typ
+              </div>
+              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Kategorie
+              </div>
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                Kontakte
+              </div>
+              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider text-right pr-14">
+                Hinzugefügt
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="divide-y divide-gray-200">
+            {filteredProjectLists.map((list) => {
+              const masterList = list.masterListId ? masterListDetails.get(list.masterListId) : undefined;
+              const listName = list.name || masterList?.name || 'Unbenannte Liste';
+              const listDescription = list.description || masterList?.description;
+              const category = masterList?.category || 'custom';
+              const contactCount = list.cachedContactCount || masterList?.contactCount || 0;
+
+              return (
+                <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center">
+                    {/* Name */}
+                    <div className="flex items-center w-[35%]">
+                      <Checkbox
+                        checked={selectedListIds.has(list.id!)}
+                        onChange={(checked: boolean) => {
+                          const newIds = new Set(selectedListIds);
+                          if (checked) newIds.add(list.id!);
+                          else newIds.delete(list.id!);
+                          setSelectedListIds(newIds);
+                        }}
+                      />
+                      <div className="ml-4 min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {list.type === 'linked' && (
+                            <LinkIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                          )}
+                          {list.type === 'custom' && (
+                            <FolderIcon className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          )}
+                          <span className="text-sm font-semibold text-gray-900 truncate">
+                            {listName}
+                          </span>
+                        </div>
+                        {listDescription && (
+                          <p className="text-xs text-gray-500 truncate mt-1">
+                            {listDescription}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Typ */}
+                    <div className="w-[15%]">
+                      <Badge
+                        color={list.type === 'linked' ? 'blue' : list.type === 'custom' ? 'green' : 'purple'}
+                        className="text-xs whitespace-nowrap"
+                      >
+                        {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt-eigen' : 'Kombiniert'}
+                      </Badge>
+                    </div>
+
+                    {/* Kategorie */}
+                    <div className="w-[15%]">
+                      {masterList && (
+                        <Badge color={getCategoryColor(category) as any} className="text-xs whitespace-nowrap">
+                          {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Kontakte */}
+                    <div className="w-[10%] text-center">
+                      <span className="text-sm font-medium text-gray-700">
+                        {contactCount.toLocaleString()}
+                      </span>
+                    </div>
+
+                    {/* Datum */}
+                    <div className="flex-1 text-right pr-14">
+                      <span className="text-sm text-gray-600">
+                        {formatDate(list.addedAt)}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="ml-4">
+                      <Dropdown>
+                        <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem onClick={() => handleExportList(list)}>
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            Exportieren
+                          </DropdownItem>
+                          <DropdownDivider />
+                          <DropdownItem onClick={() => list.id && handleUnlinkList(list.id)}>
+                            <TrashIcon className="h-4 w-4" />
+                            <span className="text-red-600">
+                              {list.type === 'linked' ? 'Verknüpfung entfernen' : 'Löschen'}
+                            </span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
