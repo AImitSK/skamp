@@ -22,6 +22,7 @@ export default function PressemeldungToggleSection({
   const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
   const [communicationCount, setCommunicationCount] = useState(0);
   const [lastMessageDate, setLastMessageDate] = useState<Date | null>(null);
+  const [feedbackHistory, setFeedbackHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedToggles, setExpandedToggles] = useState<Record<string, boolean>>({});
 
@@ -113,26 +114,31 @@ export default function PressemeldungToggleSection({
 
   const loadCommunicationData = async () => {
     try {
-      if (!projectId) return;
+      if (!campaignId) return;
 
-      // Lade Team-Chat-Nachrichten für das Projekt
-      const { teamChatService } = await import('@/lib/firebase/team-chat-service');
-      const messages = await teamChatService.getMessages(projectId, 50);
+      // Lade Kampagne-Daten um feedbackHistory zu erhalten
+      const { prService } = await import('@/lib/firebase/pr-service');
+      const campaign = await prService.getById(campaignId);
 
-      console.log('🔍 DEBUG - Team-Chat-Nachrichten gefunden:', messages.length);
+      console.log('🔍 DEBUG - Kampagne für Kommunikation geladen:', campaign);
 
-      setCommunicationCount(messages.length);
+      // Verwende feedbackHistory aus approvalData (wie in der funktionierenden Freigabe-Seite)
+      const feedbackHistoryData = campaign?.approvalData?.feedbackHistory || [];
+      console.log('🔍 DEBUG - Feedback-History gefunden:', feedbackHistoryData.length);
 
-      if (messages.length > 0) {
+      setFeedbackHistory(feedbackHistoryData);
+      setCommunicationCount(feedbackHistoryData.length);
+
+      if (feedbackHistoryData.length > 0) {
         // Finde die neueste Nachricht
-        const sortedMessages = messages.sort((a, b) => {
-          const aTime = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
-          const bTime = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+        const sortedFeedback = feedbackHistoryData.sort((a, b) => {
+          const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+          const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
           return bTime - aTime;
         });
 
-        const latestMessage = sortedMessages[0];
-        setLastMessageDate(latestMessage.timestamp?.toDate ? latestMessage.timestamp.toDate() : new Date());
+        const latestFeedback = sortedFeedback[0];
+        setLastMessageDate(latestFeedback.requestedAt ? (latestFeedback.requestedAt instanceof Date ? latestFeedback.requestedAt : new Date(latestFeedback.requestedAt as any)) : null);
       } else {
         setLastMessageDate(null);
       }
@@ -228,7 +234,43 @@ export default function PressemeldungToggleSection({
         count={communicationCount}
         isExpanded={expandedToggles['communication'] || false}
         onToggle={handleToggle}
-        communications={[]}
+        communications={feedbackHistory.sort((a, b) => {
+          // Sortiere nach timestamp - älteste zuerst (wie in der funktionierenden Freigabe-Seite)
+          const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+          const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
+          return aTime - bTime;
+        }).map((feedback, index) => {
+          // KORREKTE Erkennung basierend auf action-Feld
+          const isCustomer = (feedback as any).action === 'changes_requested';
+
+          // Namen und Avatar basierend auf isCustomer
+          let senderName, senderAvatar;
+          if (isCustomer) {
+            // KUNDE: Grüner Avatar
+            senderName = feedback.author || 'Kunde';
+            senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
+          } else {
+            // TEAM: Blauer Avatar
+            senderName = feedback.author || 'Teammitglied';
+            senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+          }
+
+          return {
+            id: `feedback-${index}`,
+            type: 'feedback' as const,
+            content: feedback.comment || '',
+            message: feedback.comment || '',
+            sender: {
+              id: 'unknown',
+              name: senderName,
+              email: '',
+              role: isCustomer ? 'customer' as const : 'agency' as const,
+              avatar: senderAvatar
+            },
+            timestamp: feedback.requestedAt ? (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)) : new Date(),
+            isCustomer: isCustomer
+          };
+        })}
         onNewMessage={() => {
           console.log('Neue Nachricht');
           loadCommunicationData(); // Reload communication data
