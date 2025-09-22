@@ -336,7 +336,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
         <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
           <UsersIcon className="mx-auto h-10 w-10 text-gray-400" />
           <Text className="mt-2 text-gray-600">
-            {searchTerm || selectedCategory !== 'all'
+            {searchTerm || selectedCategories.length > 0 || selectedTypes.length > 0
               ? 'Keine Listen gefunden'
               : 'Keine weiteren Master-Listen verfügbar'}
           </Text>
