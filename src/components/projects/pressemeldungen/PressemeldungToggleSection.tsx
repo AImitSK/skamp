@@ -190,7 +190,16 @@ export default function PressemeldungToggleSection({
         count={mediaItems.length}
         isExpanded={expandedToggles['media'] || false}
         onToggle={handleToggle}
-        mediaItems={mediaItems}
+        mediaItems={mediaItems.map(item => ({
+          id: item.id,
+          filename: item.metadata?.fileName || 'Unbekannte Datei',
+          mimeType: item.metadata?.fileType || 'application/octet-stream',
+          fileSize: item.metadata?.fileSize || 0,
+          thumbnailUrl: item.metadata?.thumbnailUrl,
+          downloadUrl: item.metadata?.downloadUrl || '',
+          uploadedAt: new Date(), // Fallback
+          tags: item.metadata?.tags || []
+        }))}
         onMediaSelect={(mediaId) => {
           console.log('Medium ausgewählt:', mediaId);
         }}
