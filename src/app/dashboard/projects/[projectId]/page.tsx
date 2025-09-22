@@ -43,8 +43,6 @@ import type { Task } from '@/types/tasks';
 
 // Pipeline-Komponenten importieren
 import PipelineProgressDashboard from '@/components/projects/workflow/PipelineProgressDashboard';
-import MonitoringConfigPanel from '@/components/projects/monitoring/MonitoringConfigPanel';
-import MonitoringStatusWidget from '@/components/projects/monitoring/MonitoringStatusWidget';
 import ProjectAssetGallery from '@/components/projects/assets/ProjectAssetGallery';
 import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatus';
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
@@ -1292,54 +1290,16 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Monitoring & Analytics Tab */}
+          {/* Analytics Tab */}
           {activeTab === 'monitoring' && (
             <div className="space-y-6">
-              {project && (
-                <>
-                  {/* Monitoring Status Widget */}
-                  <MonitoringStatusWidget
-                    projectId={project?.id || ''}
-                    currentStage={project.currentStage}
-                    isEnabled={true}
-                    stats={{
-                      totalClippings: 47,
-                      totalReach: 1250000,
-                      averageSentiment: 0.78,
-                      trending: 'up',
-                      lastUpdated: new Date()
-                    }}
-                  />
-                  
-                  {/* Monitoring Config Panel */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <MonitoringConfigPanel
-                      projectId={project?.id || ''}
-                      organizationId={currentOrganization?.id || ''}
-                      currentConfig={{
-                        isEnabled: true,
-                        monitoringPeriod: 30,
-                        autoTransition: true,
-                        providers: [
-                          {
-                            name: 'landau',
-                            apiEndpoint: '',
-                            isEnabled: true,
-                            supportedMetrics: ['reach', 'sentiment', 'mentions']
-                          }
-                        ],
-                        alertThresholds: {
-                          minReach: 10000,
-                          sentimentAlert: 0.3,
-                          competitorMentions: 5
-                        },
-                        reportSchedule: 'weekly'
-                      }}
-                      onConfigUpdate={(config) => console.log('Config updated:', config)}
-                    />
-                  </div>
-                </>
-              )}
+              <div className="text-center py-12">
+                <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Analytics</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Hier werden zukünftig Analytics und Monitoring-Funktionen angezeigt.
+                </p>
+              </div>
             </div>
           )}
 
