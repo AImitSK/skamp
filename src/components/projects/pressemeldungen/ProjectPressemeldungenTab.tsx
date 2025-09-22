@@ -142,16 +142,21 @@ export default function ProjectPressemeldungenTab({
       />
 
       {/* Freigabe-Tabelle */}
-      <PressemeldungApprovalTable
-        approvals={approvals}
-        onRefresh={loadProjectPressData}
-      />
+      <div className="space-y-4">
+        <Heading level={3}>Freigabe</Heading>
+        <PressemeldungApprovalTable
+          approvals={approvals}
+          onRefresh={loadProjectPressData}
+        />
+      </div>
 
-      {/* Toggle-Bereiche */}
-      <PressemeldungToggleSection
-        projectId={projectId}
-        campaignId={campaigns[0]?.id}
-      />
+      {/* Toggle-Bereiche - nur anzeigen wenn Kampagnen existieren oder Freigaben vorhanden sind */}
+      {(campaigns.length > 0 || approvals.length > 0) && (
+        <PressemeldungToggleSection
+          projectId={projectId}
+          campaignId={campaigns[0]?.id}
+        />
+      )}
 
       {/* Footer-Aktionen */}
       <div className="flex gap-4 pt-6 border-t border-gray-200">
