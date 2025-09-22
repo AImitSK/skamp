@@ -232,10 +232,11 @@ export default function DocumentEditorModal({
             status: 'draft',
             author: user.uid,
             authorName: user.displayName || user.email || 'Unbekannt',
-            version: 1,
             templateId: templateInfo?.type,
-            templateName: templateInfo?.name,
-            organizationId
+            templateName: templateInfo?.name
+          }, {
+            organizationId,
+            userId: user.uid
           });
         }
       } else {
