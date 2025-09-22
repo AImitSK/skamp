@@ -145,7 +145,13 @@ export default function PressemeldungToggleSection({
 
       // Lade Approval-Daten um history zu erhalten (wie in funktionierender Freigabe-Seite)
       const { approvalServiceExtended } = await import('@/lib/firebase/approval-service');
-      const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, '');
+      // Verwende die gleiche organizationId wie in der Haupt-Komponente
+      const { projectService } = await import('@/lib/firebase/project-service');
+      const project = await projectService.getById(projectId);
+      const orgId = project?.organizationId || '';
+      console.log('🔍 DEBUG - OrganizationId für Communication:', orgId);
+
+      const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, orgId);
 
       console.log('🔍 DEBUG - Approvals für Communication geladen:', approvals);
 
