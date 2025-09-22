@@ -9,6 +9,7 @@ import { PRCampaign } from '@/types/pr';
 import { ApprovalEnhanced } from '@/types/approval';
 import { prService } from '@/lib/firebase/pr-service';
 import { approvalServiceExtended } from '@/lib/firebase/approval-service';
+import { projectService } from '@/lib/firebase/project-service';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
 import PressemeldungApprovalTable from './PressemeldungApprovalTable';
 import PressemeldungToggleSection from './PressemeldungToggleSection';
@@ -34,14 +35,54 @@ export default function ProjectPressemeldungenTab({
 
   const loadProjectPressData = async () => {
     try {
-      const [campaignData, approvalData] = await Promise.all([
-        prService.getCampaignsByProject(projectId, organizationId),
-        approvalServiceExtended.getApprovalsByProject(projectId, organizationId)
-      ]);
-      setCampaigns(campaignData);
-      setApprovals(approvalData);
+      // Lade Projekt-Daten um linkedCampaigns zu erhalten
+      const projectData = await projectService.getById(projectId, { organizationId });
+
+      let allCampaigns: PRCampaign[] = [];
+
+      if (projectData) {
+        // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
+        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+          const linkedCampaignData = await Promise.all(
+            projectData.linkedCampaigns.map(async (campaignId) => {
+              try {
+                const campaign = await prService.getById(campaignId, organizationId);
+                return campaign;
+              } catch (error) {
+                console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
+                return null;
+              }
+            })
+          );
+          allCampaigns.push(...linkedCampaignData.filter(Boolean) as PRCampaign[]);
+        }
+
+        // 2. Lade Kampagnen über projectId (neuer Ansatz)
+        const projectCampaigns = await prService.getCampaignsByProject(projectId, organizationId);
+        allCampaigns.push(...projectCampaigns);
+
+        // Duplikate entfernen
+        const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
+          index === self.findIndex(c => c.id === campaign.id)
+        );
+
+        setCampaigns(uniqueCampaigns);
+
+        // Lade Freigaben für gefundene Kampagnen
+        if (uniqueCampaigns.length > 0) {
+          const approvalData = await approvalServiceExtended.getApprovalsByProject(projectId, organizationId);
+          setApprovals(approvalData);
+        } else {
+          setApprovals([]);
+        }
+      } else {
+        setCampaigns([]);
+        setApprovals([]);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Pressemeldungen:', error);
+      setCampaigns([]);
+      setApprovals([]);
     } finally {
       setLoading(false);
     }
