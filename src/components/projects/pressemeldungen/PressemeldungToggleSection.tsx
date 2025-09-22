@@ -234,7 +234,6 @@ export default function PressemeldungToggleSection({
         <MediaToggleBox
           id="media"
           title="Angehängte Medien"
-          subtitle="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
           count={mediaItems.length}
           isExpanded={expandedToggles['media'] || false}
           onToggle={handleToggle}
@@ -276,7 +275,6 @@ export default function PressemeldungToggleSection({
         <PDFHistoryToggleBox
           id="pdf-history"
           title="PDF-Historie"
-          subtitle="Alle Versionen der Pressemitteilung"
           count={pdfVersions.length}
           isExpanded={expandedToggles['pdf-history'] || false}
           onToggle={handleToggle}
@@ -291,7 +289,6 @@ export default function PressemeldungToggleSection({
         <CommunicationToggleBox
           id="communication"
           title="Kommunikation"
-          subtitle={formatLastMessageText()}
           count={communicationCount}
           isExpanded={expandedToggles['communication'] || false}
           onToggle={handleToggle}
