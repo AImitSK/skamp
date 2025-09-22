@@ -66,7 +66,7 @@ export default function PressemeldungToggleSection({
     try {
       if (!campaignId) return [];
 
-      const versions = await pdfVersionsService.getPDFVersions(campaignId);
+      const versions = await pdfVersionsService.getVersionHistory(campaignId);
       return versions.map(v => ({
         id: v.id,
         version: v.version,

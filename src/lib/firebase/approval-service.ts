@@ -2729,9 +2729,29 @@ export const approvalServiceExtended = {
    */
   async getApprovalsByProject(projectId: string, organizationId: string): Promise<ApprovalEnhanced[]> {
     try {
-      const approvalsRef = collection(db, 'approvals');
+      console.log('🔍 DEBUG APPROVAL - Lade Freigaben für Projekt:', projectId);
 
-      // Erst alle Kampagnen für das Projekt laden
+      // Lade Projekt-Daten um beide Verknüpfungsarten zu unterstützen
+      const projectRef = doc(db, 'projects', projectId);
+      const projectSnapshot = await getDoc(projectRef);
+
+      if (!projectSnapshot.exists()) {
+        console.log('🔍 DEBUG APPROVAL - Projekt nicht gefunden');
+        return [];
+      }
+
+      const projectData = projectSnapshot.data();
+      console.log('🔍 DEBUG APPROVAL - Projekt-Daten:', projectData);
+
+      let campaignIds: string[] = [];
+
+      // 1. Kampagnen über linkedCampaigns (alter Ansatz)
+      if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+        console.log('🔍 DEBUG APPROVAL - linkedCampaigns gefunden:', projectData.linkedCampaigns);
+        campaignIds.push(...projectData.linkedCampaigns);
+      }
+
+      // 2. Kampagnen über projectId (neuer Ansatz)
       const campaignsRef = collection(db, 'campaigns');
       const campaignQuery = query(
         campaignsRef,
@@ -2740,13 +2760,21 @@ export const approvalServiceExtended = {
       );
 
       const campaignSnapshot = await getDocs(campaignQuery);
-      const campaignIds = campaignSnapshot.docs.map(doc => doc.id);
+      const projectLinkedCampaignIds = campaignSnapshot.docs.map(doc => doc.id);
+      console.log('🔍 DEBUG APPROVAL - Kampagnen über projectId:', projectLinkedCampaignIds);
+      campaignIds.push(...projectLinkedCampaignIds);
+
+      // Duplikate entfernen
+      campaignIds = [...new Set(campaignIds)];
+      console.log('🔍 DEBUG APPROVAL - Alle Kampagnen-IDs:', campaignIds);
 
       if (campaignIds.length === 0) {
+        console.log('🔍 DEBUG APPROVAL - Keine Kampagnen gefunden');
         return [];
       }
 
       // Dann Freigaben für diese Kampagnen laden
+      const approvalsRef = collection(db, 'approvals');
       const approvalQuery = query(
         approvalsRef,
         where('campaignId', 'in', campaignIds),
@@ -2755,13 +2783,16 @@ export const approvalServiceExtended = {
       );
 
       const approvalSnapshot = await getDocs(approvalQuery);
-      return approvalSnapshot.docs.map(doc => ({
+      const approvals = approvalSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as ApprovalEnhanced[];
+
+      console.log('🔍 DEBUG APPROVAL - Freigaben gefunden:', approvals);
+      return approvals;
     } catch (error) {
       console.error('Fehler beim Laden der Projekt-Freigaben:', error);
-      throw new Error('Freigaben konnten nicht geladen werden');
+      return [];
     }
   }
 };
