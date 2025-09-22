@@ -77,20 +77,33 @@ export default function ProjectStrategyTab({
     }
   };
 
-  // Lade Dokumente aus dem Ordner-System
+  // Lade Dokumente aus dem Ordner-System (spezifisch aus dem "Dokumente"-Ordner)
   const loadFolderDocuments = async (): Promise<UnifiedStrategyDocument[]> => {
     try {
-      // Lade alle Media Assets für dieses Projekt
+      // 1. Finde den "Dokumente"-Ordner für dieses Projekt
       const result = await mediaService.getMediaByClientId(organizationId, projectId, false);
-      const mediaAssets = result.assets;
+      const projectFolders = result.folders;
+
+      // Suche nach dem "Dokumente"-Ordner
+      const documentsFolder = projectFolders.find(folder =>
+        folder.name?.toLowerCase().includes('dokumente') ||
+        folder.name?.toLowerCase().includes('documents')
+      );
+
+      if (!documentsFolder) {
+        console.log('Kein Dokumente-Ordner gefunden für Projekt:', projectId);
+        return [];
+      }
+
+      // 2. Lade Assets aus dem Dokumente-Ordner
+      const documentsAssets = await mediaService.getMediaAssetsInFolder(documentsFolder.id);
 
       const folderDocs: UnifiedStrategyDocument[] = [];
 
-      for (const asset of mediaAssets) {
+      for (const asset of documentsAssets) {
         // Prüfe ob es ein internes Dokument ist (hat contentRef und ist celero-doc/celero-sheet)
         if (asset.contentRef &&
-            (asset.fileType === 'celero-doc' || asset.fileType === 'celero-sheet') &&
-            asset.projectId === projectId) {
+            (asset.fileType === 'celero-doc' || asset.fileType === 'celero-sheet')) {
           try {
             // Lade den Content des Dokuments
             const docContent = await documentContentService.loadDocument(asset.contentRef);
