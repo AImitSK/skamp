@@ -151,8 +151,8 @@ export default function ProjectPressemeldungenTab({
         />
       </div>
 
-      {/* Toggle-Bereiche - nur anzeigen wenn Kampagnen existieren oder Freigaben vorhanden sind */}
-      {(campaigns.length > 0 || approvals.length > 0) && (
+      {/* Toggle-Bereiche - nur anzeigen wenn Freigaben vorhanden sind */}
+      {approvals.length > 0 && (
         <PressemeldungToggleSection
           projectId={projectId}
           campaignId={campaigns[0]?.id}
