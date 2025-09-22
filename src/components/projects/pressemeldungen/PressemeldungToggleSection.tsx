@@ -61,8 +61,17 @@ export default function PressemeldungToggleSection({
 
   const loadMediaItems = async (): Promise<CampaignAssetAttachment[]> => {
     try {
-      // TODO: Implement media loading for campaign
-      // For now, return empty array
+      if (!campaignId) return [];
+
+      // Lade Kampagne-Daten um attachedAssets zu erhalten
+      const { prService } = await import('@/lib/firebase/pr-service');
+      const campaign = await prService.getById(campaignId);
+
+      if (campaign?.attachedAssets) {
+        console.log('🔍 DEBUG - Angehängte Assets gefunden:', campaign.attachedAssets);
+        return campaign.attachedAssets;
+      }
+
       return [];
     } catch (error) {
       console.error('Fehler beim Laden der Medien:', error);
@@ -104,14 +113,33 @@ export default function PressemeldungToggleSection({
 
   const loadCommunicationData = async () => {
     try {
-      if (!campaignId) return;
+      if (!projectId) return;
 
-      // TODO: Implement communication data loading
-      // For now, set default values
-      setCommunicationCount(0);
-      setLastMessageDate(null);
+      // Lade Team-Chat-Nachrichten für das Projekt
+      const { teamChatService } = await import('@/lib/firebase/team-chat-service');
+      const messages = await teamChatService.getMessages(projectId, 50);
+
+      console.log('🔍 DEBUG - Team-Chat-Nachrichten gefunden:', messages.length);
+
+      setCommunicationCount(messages.length);
+
+      if (messages.length > 0) {
+        // Finde die neueste Nachricht
+        const sortedMessages = messages.sort((a, b) => {
+          const aTime = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+          const bTime = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+          return bTime - aTime;
+        });
+
+        const latestMessage = sortedMessages[0];
+        setLastMessageDate(latestMessage.timestamp?.toDate ? latestMessage.timestamp.toDate() : new Date());
+      } else {
+        setLastMessageDate(null);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Kommunikationsdaten:', error);
+      setCommunicationCount(0);
+      setLastMessageDate(null);
     }
   };
 
