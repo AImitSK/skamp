@@ -1496,13 +1496,6 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Verteiler Tab */}
-          {activeTab === 'verteiler' && project && currentOrganization && (
-            <ProjectDistributionLists
-              projectId={project.id!}
-              organizationId={currentOrganization.id}
-            />
-          )}
         </div>
         </div>
 
