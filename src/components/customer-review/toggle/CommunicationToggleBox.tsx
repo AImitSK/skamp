@@ -47,7 +47,9 @@ function CommunicationToggleBoxComponent({
   };
 
   const formatDate = (date: Date | string) => {
+    if (!date) return 'Unbekannt';
     const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (!dateObj || isNaN(dateObj.getTime())) return 'Unbekannt';
     return dateObj.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
