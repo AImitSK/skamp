@@ -111,6 +111,7 @@ export default function PressemeldungToggleSection({
       if (!campaignId) return [];
 
       const versions = await pdfVersionsService.getVersionHistory(campaignId);
+      console.log('🔍 DEBUG - PDF-Versionen gefunden:', versions.length, versions);
       return versions.map(v => ({
         id: v.id || '',
         version: v.version.toString(),
@@ -147,10 +148,11 @@ export default function PressemeldungToggleSection({
       const campaign = await prService.getById(campaignId);
 
       console.log('🔍 DEBUG - Kampagne für Kommunikation geladen:', campaign);
+      console.log('🔍 DEBUG - approvalData:', campaign?.approvalData);
 
       // Verwende feedbackHistory aus approvalData (wie in der funktionierenden Freigabe-Seite)
       const feedbackHistoryData = campaign?.approvalData?.feedbackHistory || [];
-      console.log('🔍 DEBUG - Feedback-History gefunden:', feedbackHistoryData.length);
+      console.log('🔍 DEBUG - Feedback-History gefunden:', feedbackHistoryData.length, feedbackHistoryData);
 
       setFeedbackHistory(feedbackHistoryData);
       setCommunicationCount(feedbackHistoryData.length);
