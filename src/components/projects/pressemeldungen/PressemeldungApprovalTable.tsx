@@ -24,29 +24,59 @@ interface ApprovalTableRowProps {
   onRefresh: () => void;
 }
 
+// Helper functions außerhalb der Component
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'pending': return 'amber';
+    case 'in_review': return 'amber';
+    case 'approved': return 'green';
+    case 'rejected': return 'red';
+    case 'expired': return 'zinc';
+    default: return 'zinc';
+  }
+};
+
+const getStatusLabel = (status: string): string => {
+  switch (status) {
+    case 'pending': return 'Ausstehend';
+    case 'in_review': return 'In Prüfung';
+    case 'approved': return 'Freigegeben';
+    case 'rejected': return 'Abgelehnt';
+    case 'expired': return 'Abgelaufen';
+    default: return status;
+  }
+};
+
+const formatDate = (timestamp: any) => {
+  if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+  return timestamp.toDate().toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getTimeSinceLastActivity = (timestamp: any) => {
+  if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+
+  const now = new Date();
+  const activityDate = timestamp.toDate();
+  const diffInMs = now.getTime() - activityDate.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) {
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    return diffInHours === 0 ? 'Vor wenigen Minuten' : `Vor ${diffInHours}h`;
+  }
+
+  return `Vor ${diffInDays} Tag${diffInDays === 1 ? '' : 'en'}`;
+};
+
 function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
   const [isCopying, setIsCopying] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'pending': return 'amber';
-      case 'approved': return 'green';
-      case 'rejected': return 'red';
-      case 'expired': return 'zinc';
-      default: return 'zinc';
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case 'pending': return 'Ausstehend';
-      case 'approved': return 'Freigegeben';
-      case 'rejected': return 'Abgelehnt';
-      case 'expired': return 'Abgelaufen';
-      default: return status;
-    }
-  };
 
   const handleOpenLink = useCallback(() => {
     if (approval.shareId) {
@@ -82,32 +112,6 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     }
   }, [approval.id, onRefresh]);
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getTimeSinceLastActivity = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-
-    const now = new Date();
-    const activityDate = timestamp.toDate();
-    const diffInMs = now.getTime() - activityDate.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInDays === 0) {
-      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-      return diffInHours === 0 ? 'Vor wenigen Minuten' : `Vor ${diffInHours}h`;
-    }
-
-    return `Vor ${diffInDays} Tag${diffInDays === 1 ? '' : 'en'}`;
-  };
 
   return (
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
@@ -139,14 +143,16 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Kunde & Kontakt */}
-        <div className="w-[25%] min-w-0">
+        <div className="w-[20%] min-w-0">
           <div className="text-sm text-gray-700">
-            {approval.customerContact ? (
+            {approval.clientName || approval.recipients?.length > 0 ? (
               <div>
-                <p className="font-medium truncate">{approval.customerContact.split(' - ')[0]}</p>
-                {approval.customerContact.includes(' - ') && (
-                  <p className="text-xs text-gray-500 truncate">
-                    {approval.customerContact.split(' - ')[1]}
+                <p className="font-medium truncate">
+                  {approval.clientName || 'Kunde'}
+                </p>
+                {approval.recipients && approval.recipients.length > 0 && (
+                  <p className="text-xs text-gray-500 truncate" title={approval.recipients[0].email}>
+                    {approval.recipients[0].name || approval.recipients[0].email}
                   </p>
                 )}
               </div>
@@ -179,7 +185,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Aktionen */}
-        <div className="w-[5%] text-center">
+        <div className="w-[10%] text-center">
           <Dropdown>
             <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
@@ -235,7 +241,7 @@ export default function PressemeldungApprovalTable({
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[25%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kunde & Kontakt
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -244,7 +250,7 @@ export default function PressemeldungApprovalTable({
           <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
           </div>
-          <div className="w-[5%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             Aktionen
           </div>
         </div>

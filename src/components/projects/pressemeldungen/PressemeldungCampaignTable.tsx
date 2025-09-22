@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/PressemeldungCampaignTable.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -13,21 +13,27 @@ import {
   PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import { PRCampaign } from '@/types/pr';
+import { TeamMember } from '@/types/international';
 import { prService } from '@/lib/firebase/pr-service';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 interface Props {
   campaigns: PRCampaign[];
+  organizationId: string;
   onRefresh: () => void;
 }
 
 interface CampaignTableRowProps {
   campaign: PRCampaign;
+  teamMembers: TeamMember[];
   onRefresh: () => void;
 }
 
-function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
+function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRowProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const getStatusColor = (status: string): string => {
@@ -128,16 +134,27 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         </div>
 
         {/* Admin */}
-        <div className="w-[25%]">
+        <div className="w-[20%]">
           <div className="flex items-center">
-            <Avatar
-              src={undefined}
-              alt={'Admin'}
-              className="h-6 w-6 mr-2"
-            />
-            <span className="text-sm text-gray-700 truncate">
-              Admin
-            </span>
+            {(() => {
+              const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
+              const displayName = campaignAdmin?.displayName || user?.displayName || user?.email || 'Admin';
+              const avatarUrl = campaignAdmin?.photoUrl ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
+
+              return (
+                <>
+                  <Avatar
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="h-6 w-6 mr-2"
+                  />
+                  <span className="text-sm text-gray-700 truncate" title={displayName}>
+                    {displayName}
+                  </span>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -162,7 +179,7 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         </div>
 
         {/* Aktionen */}
-        <div className="w-[5%] text-center">
+        <div className="w-[10%] text-center">
           <Dropdown>
             <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
@@ -189,8 +206,32 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
 
 export default function PressemeldungCampaignTable({
   campaigns,
+  organizationId,
   onRefresh
 }: Props) {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (!organizationId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const members = await teamMemberService.getByOrganization(organizationId);
+        setTeamMembers(members);
+      } catch (error) {
+        console.log('Fehler beim Laden der TeamMembers:', error);
+        setTeamMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTeamMembers();
+  }, [organizationId]);
   if (campaigns.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -214,7 +255,7 @@ export default function PressemeldungCampaignTable({
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[25%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Admin
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -223,7 +264,7 @@ export default function PressemeldungCampaignTable({
           <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
           </div>
-          <div className="w-[5%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             Aktionen
           </div>
         </div>
@@ -235,6 +276,7 @@ export default function PressemeldungCampaignTable({
           <CampaignTableRow
             key={campaign.id}
             campaign={campaign}
+            teamMembers={teamMembers}
             onRefresh={onRefresh}
           />
         ))}
