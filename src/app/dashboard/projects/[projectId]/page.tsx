@@ -85,7 +85,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'daten' | 'pressemeldung' | 'verteiler' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
@@ -913,6 +913,21 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
+                  console.log('🎯 Tab Click: strategie');
+                  setActiveTab('strategie');
+                }}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'strategie'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <DocumentTextIcon className="w-4 h-4 mr-2" />
+                Strategie
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   console.log('🎯 Tab Click: daten');
                   setActiveTab('daten');
                 }}
@@ -928,21 +943,6 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: pressemeldung');
-                  setActiveTab('pressemeldung');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'pressemeldung'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <DocumentTextIcon className="w-4 h-4 mr-2" />
-                Pressemeldung
-              </button>
-              <button
-                type="button"
-                onClick={() => {
                   console.log('🎯 Tab Click: verteiler');
                   setActiveTab('verteiler');
                 }}
@@ -954,6 +954,21 @@ export default function ProjectDetailPage() {
               >
                 <UsersIcon className="w-4 h-4 mr-2" />
                 Verteiler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('🎯 Tab Click: pressemeldung');
+                  setActiveTab('pressemeldung');
+                }}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'pressemeldung'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <DocumentTextIcon className="w-4 h-4 mr-2" />
+                Pressemeldung
               </button>
               <button
                 type="button"
@@ -1250,6 +1265,19 @@ export default function ProjectDetailPage() {
                 />
               )}
 
+            </div>
+          )}
+
+          {/* Strategie Tab */}
+          {activeTab === 'strategie' && (
+            <div className="space-y-6">
+              <div className="text-center py-12">
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">Strategie</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Hier werden zukünftig Strategiedokumente und -funktionen angezeigt.
+                </p>
+              </div>
             </div>
           )}
 
