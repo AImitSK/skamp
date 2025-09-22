@@ -1072,8 +1072,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             const client = await companiesEnhancedService.getById(approval.clientId, organizationId);
             if (client?.name) {
               clientName = client.name;
-              // Update das Approval-Dokument in Firestore
-              await this.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
+              // Update das Approval-Dokument nur wenn es zur aktuellen Organisation gehört
+              if (approval.organizationId === organizationId) {
+                try {
+                  await this.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
+                } catch (updateError) {
+                  // Fehlschlag beim Update ignorieren, aber Namen für Anzeige verwenden
+                  console.warn('Konnte Approval nicht aktualisieren, verwende Namen nur für Anzeige:', updateError);
+                }
+              }
             }
           } catch (error) {
             console.error('Fehler beim Nachladen des Kundennamens:', error);
