@@ -69,6 +69,7 @@ import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModa
 import { ApprovalEnhanced } from '@/types/approvals';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
+import ProjectDistributionLists from '@/components/projects/distribution/ProjectDistributionLists';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -1190,7 +1191,7 @@ export default function ProjectDetailPage() {
                           // Simple phase advance ohne komplexe Logic
                           console.log(`Advancing to phase: ${newPhase}`);
                         }}
-                        setActiveTab={setActiveTab}
+                        setActiveTab={(tab: string) => setActiveTab(tab as any)}
                       />
                     );
                   }
@@ -1444,17 +1445,12 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Verteiler Tab - erstmal leer */}
-          {activeTab === 'verteiler' && (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-lg p-8 text-center">
-                <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <Heading level={3}>Verteiler</Heading>
-                <Text className="text-gray-500 mt-2">
-                  Hier können Sie bald Ihre Medien- und Journalistenkontakte verwalten
-                </Text>
-              </div>
-            </div>
+          {/* Verteiler Tab */}
+          {activeTab === 'verteiler' && project && currentOrganization && (
+            <ProjectDistributionLists
+              projectId={project.id!}
+              organizationId={currentOrganization.id}
+            />
           )}
         </div>
         </div>
