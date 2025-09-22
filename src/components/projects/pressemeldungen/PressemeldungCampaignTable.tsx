@@ -33,6 +33,7 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
   const getStatusColor = (status: string): string => {
     switch (status) {
       case 'draft': return 'zinc';
+      case 'in_review': return 'amber';
       case 'approved': return 'green';
       case 'sent': return 'blue';
       case 'rejected': return 'red';
@@ -43,6 +44,7 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'draft': return 'Entwurf';
+      case 'in_review': return 'In Prüfung';
       case 'approved': return 'Freigegeben';
       case 'sent': return 'Versendet';
       case 'rejected': return 'Abgelehnt';
@@ -75,8 +77,21 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
+    if (!timestamp) return 'Unbekannt';
+
+    // Handle Firestore Timestamp
+    let date: Date;
+    if (timestamp.toDate) {
+      date = timestamp.toDate();
+    } else if (timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      return 'Unbekannt';
+    }
+
+    return date.toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
@@ -93,9 +108,9 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {campaign.title}
               </p>
-              {campaign.description && (
+              {campaign.projectTitle && (
                 <p className="text-xs text-gray-500 truncate mt-1">
-                  {campaign.description}
+                  Projekt: {campaign.projectTitle}
                 </p>
               )}
             </div>
@@ -116,12 +131,12 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         <div className="w-[25%]">
           <div className="flex items-center">
             <Avatar
-              src={campaign.userAvatar}
-              alt={campaign.userName || 'Admin'}
+              src={undefined}
+              alt={'Admin'}
               className="h-6 w-6 mr-2"
             />
             <span className="text-sm text-gray-700 truncate">
-              {campaign.userName || 'Unbekannt'}
+              Admin
             </span>
           </div>
         </div>
@@ -139,7 +154,7 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
             onClick={handleSend}
             color="secondary"
             className="text-xs px-3 py-1"
-            disabled={campaign.status !== 'approved'}
+            disabled={campaign.status !== 'approved' && campaign.status !== 'sent'}
           >
             <PaperAirplaneIcon className="h-3 w-3 mr-1" />
             Versenden
