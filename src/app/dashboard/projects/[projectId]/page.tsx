@@ -23,7 +23,7 @@ import {
   PhotoIcon,
   ClipboardDocumentListIcon,
   FolderIcon,
-  LightBulbIcon,
+  FolderOpenIcon,
   EyeIcon,
   LinkIcon,
   ArrowDownTrayIcon,
@@ -34,7 +34,8 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   TagIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -83,7 +84,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'daten' | 'tasks' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'daten' | 'verteiler' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
@@ -869,7 +870,7 @@ export default function ProjectDetailPage() {
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'overview'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    ? 'text-primary border-b-2 border-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -879,27 +880,12 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('🎯 Tab Click: daten');
-                  setActiveTab('daten');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'daten'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <LightBulbIcon className="w-4 h-4 mr-2" />
-                Daten
-              </button>
-              <button
-                type="button"
-                onClick={() => {
                   console.log('🎯 Tab Click: tasks');
                   setActiveTab('tasks');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'tasks' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'tasks'
+                    ? 'text-primary border-b-2 border-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -909,12 +895,42 @@ export default function ProjectDetailPage() {
               <button
                 type="button"
                 onClick={() => {
+                  console.log('🎯 Tab Click: daten');
+                  setActiveTab('daten');
+                }}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'daten'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FolderOpenIcon className="w-4 h-4 mr-2" />
+                Daten
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('🎯 Tab Click: verteiler');
+                  setActiveTab('verteiler');
+                }}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'verteiler'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <UsersIcon className="w-4 h-4 mr-2" />
+                Verteiler
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   console.log('🎯 Tab Click: monitoring');
                   setActiveTab('monitoring');
                 }}
                 className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'monitoring' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'monitoring'
+                    ? 'text-primary border-b-2 border-primary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -1425,6 +1441,19 @@ export default function ProjectDetailPage() {
                   clientId={project.customer?.id || ''}
                 />
               )}
+            </div>
+          )}
+
+          {/* Verteiler Tab - erstmal leer */}
+          {activeTab === 'verteiler' && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-lg p-8 text-center">
+                <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Heading level={3}>Verteiler</Heading>
+                <Text className="text-gray-500 mt-2">
+                  Hier können Sie bald Ihre Medien- und Journalistenkontakte verwalten
+                </Text>
+              </div>
             </div>
           )}
         </div>
