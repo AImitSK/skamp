@@ -11,6 +11,10 @@ import { STRATEGY_TEMPLATES, type TemplateType } from '@/constants/strategy-temp
 import StrategyTemplateGrid from './StrategyTemplateGrid';
 import StrategyDocumentsTable from './StrategyDocumentsTable';
 import type { InternalDocument } from '@/types/document-content';
+import {
+  FolderIcon,
+  ArrowLeftIcon
+} from '@heroicons/react/24/outline';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -42,7 +46,75 @@ export default function ProjectStrategyTab({
   const [templateContent, setTemplateContent] = useState<string | null>(null);
   const [templateInfo, setTemplateInfo] = useState<{type: TemplateType, name: string} | null>(null);
 
-  // Lade Strategiedokumente aus beiden Services
+  // Ordner-System States (wie in ProjectFoldersView)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
+  const [currentAssets, setCurrentAssets] = useState<any[]>([]);
+  const [projectFolders, setProjectFolders] = useState<any[]>([]);
+  const [currentFolders, setCurrentFolders] = useState<any[]>([]);
+  const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
+
+  // Ordner-System Loading (exakt wie ProjectFoldersView)
+  const loadFolderContent = async (folderId?: string) => {
+    setLoading(true);
+    try {
+      if (folderId) {
+        // Lade Inhalte des spezifischen Ordners (wie ProjectFoldersView)
+        const [folders, assets] = await Promise.all([
+          mediaService.getFolders(organizationId, folderId),
+          mediaService.getMediaAssets(organizationId, folderId)
+        ]);
+        setCurrentFolders(folders);
+        setCurrentAssets(assets);
+      } else {
+        // Lade Projekt-Hauptordner
+        const result = await mediaService.getMediaByClientId(organizationId, projectId, false);
+        setProjectFolders(result.folders);
+        setCurrentFolders(result.folders);
+        setCurrentAssets([]);
+        setNavigationStack([]);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Ordnerinhalte:', error);
+      setCurrentAssets([]);
+      setCurrentFolders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Navigation in Ordner (wie ProjectFoldersView)
+  const handleFolderClick = (folderId: string) => {
+    const folder = currentFolders.find(f => f.id === folderId) ||
+                   projectFolders.find((f: any) => f.id === folderId);
+    if (folder) {
+      const newStack = [...navigationStack, { id: folder.id, name: folder.name }];
+      setNavigationStack(newStack);
+      setSelectedFolderId(folderId);
+      loadFolderContent(folderId);
+    }
+  };
+
+  // Zurück-Navigation (wie ProjectFoldersView)
+  const handleBackClick = () => {
+    if (navigationStack.length > 0) {
+      const newStack = navigationStack.slice(0, -1);
+      setNavigationStack(newStack);
+
+      if (newStack.length > 0) {
+        const previousFolder = newStack[newStack.length - 1];
+        setSelectedFolderId(previousFolder.id);
+        loadFolderContent(previousFolder.id);
+      } else {
+        setSelectedFolderId(undefined);
+        loadFolderContent();
+      }
+    } else {
+      setSelectedFolderId(undefined);
+      loadFolderContent();
+    }
+  };
+
+  // Kombiniere Strategy-Dokumente und aktuelle Ordner-Assets
   const loadDocuments = async () => {
     try {
       setLoading(true);
@@ -52,55 +124,10 @@ export default function ProjectStrategyTab({
         organizationId
       });
 
-      // 2. Lade Dokumente aus dem Ordner-System (Media Assets mit contentRef)
-      const folderDocs = await loadFolderDocuments();
-
-      // 3. Kombiniere beide Listen
-      const unifiedDocs: UnifiedStrategyDocument[] = [
-        ...strategyDocs.map(doc => ({ ...doc, source: 'strategy' as const })),
-        ...folderDocs
-      ];
-
-      // Sortiere nach updatedAt/createdAt
-      unifiedDocs.sort((a, b) => {
-        const aTime = a.updatedAt || a.createdAt;
-        const bTime = b.updatedAt || b.createdAt;
-        return bTime.toMillis() - aTime.toMillis();
-      });
-
-      setDocuments(unifiedDocs);
-    } catch (error) {
-      console.error('Fehler beim Laden der Strategiedokumente:', error);
-      setDocuments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Lade Dokumente aus dem Ordner-System (spezifisch aus dem "Dokumente"-Ordner)
-  const loadFolderDocuments = async (): Promise<UnifiedStrategyDocument[]> => {
-    try {
-      // 1. Finde den "Dokumente"-Ordner für dieses Projekt
-      const result = await mediaService.getMediaByClientId(organizationId, projectId, false);
-      const projectFolders = result.folders;
-
-      // Suche nach dem "Dokumente"-Ordner
-      const documentsFolder = projectFolders.find(folder =>
-        folder.name?.toLowerCase().includes('dokumente') ||
-        folder.name?.toLowerCase().includes('documents')
-      );
-
-      if (!documentsFolder) {
-        console.log('Kein Dokumente-Ordner gefunden für Projekt:', projectId);
-        return [];
-      }
-
-      // 2. Lade Assets aus dem Dokumente-Ordner
-      const documentsAssets = await mediaService.getMediaAssetsInFolder(documentsFolder.id);
-
+      // 2. Konvertiere currentAssets zu UnifiedStrategyDocument
       const folderDocs: UnifiedStrategyDocument[] = [];
 
-      for (const asset of documentsAssets) {
+      for (const asset of currentAssets) {
         // Prüfe ob es ein internes Dokument ist (hat contentRef und ist celero-doc/celero-sheet)
         if (asset.contentRef &&
             (asset.fileType === 'celero-doc' || asset.fileType === 'celero-sheet')) {
@@ -137,15 +164,36 @@ export default function ProjectStrategyTab({
         }
       }
 
-      return folderDocs;
+      // 3. Kombiniere beide Listen
+      const unifiedDocs: UnifiedStrategyDocument[] = [
+        ...strategyDocs.map(doc => ({ ...doc, source: 'strategy' as const })),
+        ...folderDocs
+      ];
+
+      // Sortiere nach updatedAt/createdAt
+      unifiedDocs.sort((a, b) => {
+        const aTime = a.updatedAt || a.createdAt;
+        const bTime = b.updatedAt || b.createdAt;
+        return bTime.toMillis() - aTime.toMillis();
+      });
+
+      setDocuments(unifiedDocs);
     } catch (error) {
-      console.error('Fehler beim Laden der Folder-Dokumente:', error);
-      return [];
+      console.error('Fehler beim Laden der Strategiedokumente:', error);
+      setDocuments([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Load documents when currentAssets changes (reactive to folder selection)
   useEffect(() => {
     loadDocuments();
+  }, [projectId, organizationId, currentAssets]);
+
+  // Initial load of folder content (load all assets initially)
+  useEffect(() => {
+    loadFolderContent();
   }, [projectId, organizationId]);
 
   // Template auswählen
@@ -218,6 +266,60 @@ export default function ProjectStrategyTab({
     <div className="space-y-8">
       {/* Template-Kacheln */}
       <StrategyTemplateGrid onTemplateSelect={handleTemplateSelect} />
+
+      {/* Ordner-Browser (exakt wie ProjectFoldersView) */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-900">
+            Ordner-Navigation
+          </h3>
+          {navigationStack.length > 0 && (
+            <button
+              onClick={handleBackClick}
+              className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeftIcon className="w-4 h-4 mr-1" />
+              Zurück
+            </button>
+          )}
+        </div>
+
+        {/* Breadcrumb */}
+        {navigationStack.length > 0 && (
+          <div className="mb-4 text-sm text-gray-600">
+            Projekt {navigationStack.map((folder, index) => (
+              <span key={folder.id}>
+                {' > '}{folder.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Ordner anzeigen */}
+        <div className="space-y-2">
+          {currentFolders.map((folder: any) => (
+            <button
+              key={folder.id}
+              onClick={() => handleFolderClick(folder.id)}
+              className="w-full flex items-center space-x-3 p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <FolderIcon className="w-5 h-5 text-blue-500" />
+              <div>
+                <div className="font-medium text-gray-900">{folder.name}</div>
+                <div className="text-sm text-gray-500">
+                  {folder.subfolders?.length || 0} Unterordner
+                </div>
+              </div>
+            </button>
+          ))}
+
+          {currentFolders.length === 0 && !loading && (
+            <p className="text-gray-500 text-center py-4">
+              {selectedFolderId ? 'Keine Unterordner vorhanden' : 'Lade Ordner...'}
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Bestehende Dokumente */}
       <StrategyDocumentsTable
