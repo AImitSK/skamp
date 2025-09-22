@@ -285,14 +285,19 @@ export default function ProjectDetailPage() {
         
         // Lade verknüpfte Kampagnen - sowohl über linkedCampaigns als auch projectId
         try {
+          console.log('🔍 DEBUG OVERVIEW - Lade Kampagnen für Projekt:', projectData.id, 'Organisation:', currentOrganization!.id);
+          console.log('🔍 DEBUG OVERVIEW - Projekt-Data:', projectData);
           let allCampaigns: any[] = [];
 
           // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
           if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+            console.log('🔍 DEBUG OVERVIEW - linkedCampaigns gefunden:', projectData.linkedCampaigns);
             const linkedCampaignData = await Promise.all(
               projectData.linkedCampaigns.map(async (campaignId) => {
                 try {
+                  console.log('🔍 DEBUG OVERVIEW - Lade Kampagne:', campaignId);
                   const campaign = await prService.getById(campaignId, currentOrganization!.id);
+                  console.log('🔍 DEBUG OVERVIEW - Kampagne geladen:', campaign);
                   return campaign;
                 } catch (error) {
                   console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
@@ -301,16 +306,22 @@ export default function ProjectDetailPage() {
               })
             );
             allCampaigns.push(...linkedCampaignData.filter(Boolean));
+            console.log('🔍 DEBUG OVERVIEW - Kampagnen über linkedCampaigns:', allCampaigns.length);
+          } else {
+            console.log('🔍 DEBUG OVERVIEW - Keine linkedCampaigns gefunden');
           }
 
           // 2. Lade Kampagnen über projectId (neuer Ansatz)
+          console.log('🔍 DEBUG OVERVIEW - Suche Kampagnen mit projectId...');
           const projectCampaigns = await prService.getCampaignsByProject(projectData.id!, currentOrganization!.id);
+          console.log('🔍 DEBUG OVERVIEW - Kampagnen über projectId gefunden:', projectCampaigns);
           allCampaigns.push(...projectCampaigns);
 
           // Duplikate entfernen (falls eine Kampagne über beide Wege gefunden wird)
           const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
             index === self.findIndex(c => c.id === campaign.id)
           );
+          console.log('🔍 DEBUG OVERVIEW - Einzigartige Kampagnen:', uniqueCampaigns);
 
           setLinkedCampaigns(uniqueCampaigns);
 
