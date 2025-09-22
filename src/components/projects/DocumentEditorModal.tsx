@@ -40,6 +40,12 @@ interface DocumentEditorModalProps {
   folderId: string;
   organizationId: string;
   projectId: string;
+  useStrategyService?: boolean;
+  initialContent?: string;
+  templateInfo?: {
+    type: string;
+    name: string;
+  };
 }
 
 export default function DocumentEditorModal({
@@ -49,7 +55,10 @@ export default function DocumentEditorModal({
   document,
   folderId,
   organizationId,
-  projectId
+  projectId,
+  useStrategyService = false,
+  initialContent,
+  templateInfo
 }: DocumentEditorModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -114,20 +123,24 @@ export default function DocumentEditorModal({
     [document?.contentRef, user?.uid]
   );
 
-  // Lade existierendes Dokument
+  // Lade existierendes Dokument oder Template
   useEffect(() => {
     if (document?.contentRef && isOpen && editor) {
-      console.log('useEffect: Loading document with editor ready');
       loadDocument();
     } else if (isOpen && !document && editor) {
-      // Neues Dokument
-      console.log('useEffect: Setting up new document');
-      setTitle('Neues Dokument');
-      editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
-    } else if (isOpen) {
-      console.log('useEffect: Modal open but editor not ready yet', { editor: !!editor, document: !!document });
+      // Neues Dokument - Template oder leer
+      if (initialContent && templateInfo) {
+        // Template verwenden
+        const templateTitle = `${templateInfo.name} - ${new Date().toLocaleDateString()}`;
+        setTitle(templateTitle);
+        editor.commands.setContent(initialContent);
+      } else {
+        // Leeres Dokument
+        setTitle('Neues Dokument');
+        editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+      }
     }
-  }, [document, isOpen, editor]);
+  }, [document, isOpen, editor, initialContent, templateInfo]);
 
   const loadDocument = async () => {
     if (!document?.contentRef || !user?.uid) return;
@@ -197,29 +210,58 @@ export default function DocumentEditorModal({
     setSaving(true);
     try {
       const content = editor.getHTML();
-      
-      if (document?.contentRef) {
-        // Update existierendes Dokument
-        await documentContentService.updateDocument(
-          document.contentRef,
-          content,
-          user.uid,
-          true // Neue Version erstellen
-        );
-      } else {
-        // Neues Dokument erstellen
-        const { documentId, assetId } = await documentContentService.createDocument(
-          content,
-          {
-            fileName: title,
-            folderId,
-            organizationId,
+
+      if (useStrategyService) {
+        // Strategie-Service verwenden
+        const { strategyDocumentService } = await import('@/lib/firebase/strategy-document-service');
+
+        if (document?.id) {
+          // Update existierendes Strategiedokument
+          await strategyDocumentService.update(document.id, {
+            title: title.trim(),
+            content: content,
+            updatedAt: new Date()
+          });
+        } else {
+          // Neues Strategiedokument erstellen
+          await strategyDocumentService.create({
             projectId,
-            userId: user.uid,
-            fileType: 'celero-doc'
-          }
-        );
-        console.log('Dokument erstellt:', { documentId, assetId });
+            title: title.trim(),
+            type: 'strategy',
+            content: content,
+            status: 'draft',
+            author: user.uid,
+            authorName: user.displayName || user.email || 'Unbekannt',
+            version: 1,
+            templateId: templateInfo?.type,
+            templateName: templateInfo?.name,
+            organizationId
+          });
+        }
+      } else {
+        // Standard Document-Content-Service verwenden
+        if (document?.contentRef) {
+          // Update existierendes Dokument
+          await documentContentService.updateDocument(
+            document.contentRef,
+            content,
+            user.uid,
+            true // Neue Version erstellen
+          );
+        } else {
+          // Neues Dokument erstellen
+          const { documentId, assetId } = await documentContentService.createDocument(
+            content,
+            {
+              fileName: title,
+              folderId,
+              organizationId,
+              projectId,
+              userId: user.uid,
+              fileType: 'celero-doc'
+            }
+          );
+        }
       }
       
       onSave();

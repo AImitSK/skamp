@@ -47,6 +47,7 @@ import ProjectAssetGallery from '@/components/projects/assets/ProjectAssetGaller
 import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatus';
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import ProjectPressemeldungenTab from '@/components/projects/pressemeldungen/ProjectPressemeldungenTab';
+import ProjectStrategyTab from '@/components/projects/strategy/ProjectStrategyTab';
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
@@ -1249,13 +1250,12 @@ export default function ProjectDetailPage() {
           {/* Strategie Tab */}
           {activeTab === 'strategie' && (
             <div className="space-y-6">
-              <div className="text-center py-12">
-                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Strategie</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Hier werden zukünftig Strategiedokumente und -funktionen angezeigt.
-                </p>
-              </div>
+              {project && currentOrganization && (
+                <ProjectStrategyTab
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                />
+              )}
             </div>
           )}
 
