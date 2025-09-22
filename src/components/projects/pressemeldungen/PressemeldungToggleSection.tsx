@@ -2,12 +2,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MediaToggleBox, PDFHistoryToggleBox, CommunicationToggleBox } from '@/components/customer-review/toggle';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { mediaService } from '@/lib/firebase/media-service';
 import { pdfVersionsService } from '@/lib/firebase/pdf-versions-service';
 import { notificationsService } from '@/lib/firebase/notifications-service';
 import { CampaignAssetAttachment } from '@/types/pr';
 import { PDFVersion } from '@/types/customer-review';
+
+// Dynamische Imports mit Loading-States (wie in der funktionierenden Freigabe-Seite)
+const MediaToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.MediaToggleBox })),
+  {
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
+
+const PDFHistoryToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.PDFHistoryToggleBox })),
+  {
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
+
+const CommunicationToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.CommunicationToggleBox })),
+  {
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
 
 interface Props {
   projectId: string;
@@ -188,8 +214,9 @@ export default function PressemeldungToggleSection({
 
   return (
     <div className="space-y-4">
-      {/* Angehängte Medien */}
-      <MediaToggleBox
+      <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-64"></div>}>
+        {/* Angehängte Medien */}
+        <MediaToggleBox
         id="media"
         title="Angehängte Medien"
         subtitle="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
@@ -209,10 +236,10 @@ export default function PressemeldungToggleSection({
         onMediaSelect={(mediaId) => {
           console.log('Medium ausgewählt:', mediaId);
         }}
-      />
+        />
 
-      {/* PDF-Historie */}
-      <PDFHistoryToggleBox
+        {/* PDF-Historie */}
+        <PDFHistoryToggleBox
         id="pdf-history"
         title="PDF-Historie"
         subtitle="Alle Versionen der Pressemitteilung"
@@ -224,10 +251,10 @@ export default function PressemeldungToggleSection({
           console.log('PDF-Version ausgewählt:', version);
         }}
         showDownloadButtons={true}
-      />
+        />
 
-      {/* Kommunikation */}
-      <CommunicationToggleBox
+        {/* Kommunikation */}
+        <CommunicationToggleBox
         id="communication"
         title="Kommunikation"
         subtitle={formatLastMessageText()}
@@ -276,7 +303,8 @@ export default function PressemeldungToggleSection({
           loadCommunicationData(); // Reload communication data
         }}
         allowNewMessages={true}
-      />
+        />
+      </Suspense>
     </div>
   );
 }
