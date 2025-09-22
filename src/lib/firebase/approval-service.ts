@@ -206,8 +206,21 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Lade Campaign-Daten für Title und Client-Info
       const { prService } = await import('./pr-service');
       const campaign = await prService.getById(campaignId);
-      
-      
+
+      // Lade Kundennamen wenn nicht in Campaign gesetzt aber clientId vorhanden
+      let clientName = campaign?.clientName;
+      if (!clientName && campaign?.clientId) {
+        try {
+          const { companiesEnhancedService } = await import('./crm-service-enhanced');
+          const client = await companiesEnhancedService.getById(campaign.clientId, organizationId);
+          if (client) {
+            clientName = client.name;
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Kundennamens:', error);
+        }
+      }
+
       // Wenn customerContact nur eine ID ist, lade die Kontakt-Daten
       let contactData = customerContact;
       if (typeof customerContact === 'string' && campaign?.clientId) {
@@ -216,23 +229,23 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           const contacts = await contactsEnhancedService.searchEnhanced(organizationId, {
             companyIds: [campaign.clientId]
           });
-          
+
           // Finde den Kontakt mit der passenden ID
           const contact = contacts.find(c => c.id === customerContact);
           if (contact) {
             const firstName = contact.name?.firstName || '';
             const lastName = contact.name?.lastName || '';
             const fullName = `${firstName} ${lastName}`.trim();
-            const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email || 
+            const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email ||
                                 contact.emails?.[0]?.email || '';
-            
+
             contactData = {
               contactId: contact.id,
               name: fullName || primaryEmail || 'Unbekannter Kontakt',
               email: primaryEmail,
               role: contact.position || undefined
             };
-            
+
           }
         } catch (error) {
         }
@@ -248,7 +261,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         title: campaign?.title || 'Unbekannte Kampagne',
         campaignTitle: campaign?.title || 'Unbekannte Kampagne',
         clientId: campaign?.clientId,
-        clientName: campaign?.clientName || 'Unbekannter Kunde',
+        clientName: clientName || 'Unbekannter Kunde',
         clientEmail: (campaign as any)?.clientEmail || contactData?.email,
         type: 'customer_only' as const,
         status: 'pending' as const,
@@ -1036,30 +1049,47 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         });
       }
 
-      // Erweitere mit berechneten Feldern
-      const enhancedApprovals = approvals.map(approval => {
+      // Erweitere mit berechneten Feldern und lade fehlende Kundennamen
+      const enhancedApprovals = await Promise.all(approvals.map(async (approval) => {
         // Stelle sicher, dass recipients ein Array ist
         const recipients = Array.isArray(approval.recipients) ? approval.recipients : [];
-        
+
         const pendingCount = recipients.filter(r => r.status === 'pending').length;
         const approvedCount = recipients.filter(r => r.status === 'approved').length;
         const totalRequired = recipients.filter(r => r.isRequired).length || recipients.length;
-        
+
         const progressPercentage = totalRequired > 0 ? Math.round((approvedCount / totalRequired) * 100) : 0;
-        
-        const isOverdue = approval.options?.expiresAt && 
-          approval.status === 'pending' && 
+
+        const isOverdue = approval.options?.expiresAt &&
+          approval.status === 'pending' &&
           approval.options.expiresAt.toDate() < new Date();
+
+        // Lade Kundennamen nach, wenn "Unbekannter Kunde" und clientId vorhanden
+        let clientName = approval.clientName;
+        if (clientName === 'Unbekannter Kunde' && approval.clientId) {
+          try {
+            const { companiesEnhancedService } = await import('./crm-service-enhanced');
+            const client = await companiesEnhancedService.getById(approval.clientId, organizationId);
+            if (client?.name) {
+              clientName = client.name;
+              // Update das Approval-Dokument in Firestore
+              await this.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
+            }
+          } catch (error) {
+            console.error('Fehler beim Nachladen des Kundennamens:', error);
+          }
+        }
 
         return {
           ...approval,
+          clientName, // Verwende den geladenen Kundennamen
           recipients, // Stelle sicher, dass recipients immer ein Array ist
           pendingCount,
           approvedCount,
           progressPercentage,
           isOverdue: !!isOverdue
         } as ApprovalListView;
-      });
+      }));
 
       // Filter überfällige
       if (filters.isOverdue !== undefined) {
