@@ -143,16 +143,29 @@ export default function PressemeldungToggleSection({
     try {
       if (!campaignId) return;
 
-      // Lade Kampagne-Daten um feedbackHistory zu erhalten
-      const { prService } = await import('@/lib/firebase/pr-service');
-      const campaign = await prService.getById(campaignId);
+      // Lade Approval-Daten um history zu erhalten (wie in funktionierender Freigabe-Seite)
+      const { approvalServiceExtended } = await import('@/lib/firebase/approval-service');
+      const approvals = await approvalServiceExtended.getApprovalsByProject(projectId, '');
 
-      console.log('🔍 DEBUG - Kampagne für Kommunikation geladen:', campaign);
-      console.log('🔍 DEBUG - approvalData:', campaign?.approvalData);
+      console.log('🔍 DEBUG - Approvals für Communication geladen:', approvals);
 
-      // Verwende feedbackHistory aus approvalData (wie in der funktionierenden Freigabe-Seite)
-      const feedbackHistoryData = campaign?.approvalData?.feedbackHistory || [];
-      console.log('🔍 DEBUG - Feedback-History gefunden:', feedbackHistoryData.length, feedbackHistoryData);
+      // Finde das richtige Approval für diese campaignId
+      const approval = approvals.find(a => a.campaignId === campaignId);
+      console.log('🔍 DEBUG - Approval für campaignId gefunden:', approval);
+
+      // Verwende approval.history statt campaign.approvalData.feedbackHistory (wie in funktionierender Freigabe-Seite)
+      const historyData = approval?.history?.filter(h => h.details?.comment) || [];
+      console.log('🔍 DEBUG - History mit Comments gefunden:', historyData.length, historyData);
+
+      // Transformiere history zu feedbackHistory Format (wie in funktionierender Freigabe-Seite)
+      const feedbackHistoryData = historyData.map(h => ({
+        author: h.actorName || 'Teammitglied',
+        comment: h.details?.comment || '',
+        requestedAt: h.timestamp,
+        action: h.action
+      }));
+
+      console.log('🔍 DEBUG - Transformierte Feedback-History:', feedbackHistoryData);
 
       setFeedbackHistory(feedbackHistoryData);
       setCommunicationCount(feedbackHistoryData.length);
