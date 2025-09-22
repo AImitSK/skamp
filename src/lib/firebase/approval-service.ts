@@ -1075,7 +1075,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               // Update das Approval-Dokument nur wenn es zur aktuellen Organisation gehört
               if (approval.organizationId === organizationId) {
                 try {
-                  await this.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
+                  await approvalService.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
                 } catch (updateError) {
                   // Fehlschlag beim Update ignorieren, aber Namen für Anzeige verwenden
                   console.warn('Konnte Approval nicht aktualisieren, verwende Namen nur für Anzeige:', updateError);
@@ -2820,13 +2820,46 @@ export const approvalServiceExtended = {
       );
 
       const approvalSnapshot = await getDocs(approvalQuery);
-      const approvals = approvalSnapshot.docs.map(doc => ({
+      const rawApprovals = approvalSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as ApprovalEnhanced[];
 
-      console.log('🔍 DEBUG APPROVAL - Freigaben gefunden:', approvals);
-      return approvals;
+      console.log('🔍 DEBUG APPROVAL - Freigaben gefunden:', rawApprovals);
+
+      // Lade fehlende Kundennamen nach (wie in searchEnhanced)
+      const approvalsWithClientNames = await Promise.all(rawApprovals.map(async (approval) => {
+        let clientName = approval.clientName;
+
+        // Lade Kundennamen nach, wenn "Unbekannter Kunde" und clientId vorhanden
+        if (clientName === 'Unbekannter Kunde' && approval.clientId) {
+          try {
+            const { companiesEnhancedService } = await import('./crm-service-enhanced');
+            const client = await companiesEnhancedService.getById(approval.clientId, organizationId);
+            if (client?.name) {
+              clientName = client.name;
+              // Update das Approval-Dokument nur wenn es zur aktuellen Organisation gehört
+              if (approval.organizationId === organizationId) {
+                try {
+                  await approvalService.update(approval.id!, organizationId, { clientName: client.name } as Partial<ApprovalEnhanced>);
+                } catch (updateError) {
+                  // Fehlschlag beim Update ignorieren, aber Namen für Anzeige verwenden
+                  console.warn('Konnte Approval nicht aktualisieren, verwende Namen nur für Anzeige:', updateError);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Fehler beim Nachladen des Kundennamens:', error);
+          }
+        }
+
+        return {
+          ...approval,
+          clientName
+        };
+      }));
+
+      return approvalsWithClientNames;
     } catch (error) {
       console.error('Fehler beim Laden der Projekt-Freigaben:', error);
       return [];
