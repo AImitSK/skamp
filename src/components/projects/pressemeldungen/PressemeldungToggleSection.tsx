@@ -217,92 +217,92 @@ export default function PressemeldungToggleSection({
       <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-64"></div>}>
         {/* Angehängte Medien */}
         <MediaToggleBox
-        id="media"
-        title="Angehängte Medien"
-        subtitle="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
-        count={mediaItems.length}
-        isExpanded={expandedToggles['media'] || false}
-        onToggle={handleToggle}
-        mediaItems={mediaItems.map(item => ({
-          id: item.id,
-          filename: item.metadata?.fileName || 'Unbekannte Datei',
-          mimeType: item.metadata?.fileType || 'application/octet-stream',
-          fileSize: item.metadata?.fileSize || 0,
-          thumbnailUrl: item.metadata?.thumbnailUrl,
-          downloadUrl: item.metadata?.downloadUrl || '',
-          uploadedAt: new Date(), // Fallback
-          tags: item.metadata?.tags || []
-        }))}
-        onMediaSelect={(mediaId) => {
-          console.log('Medium ausgewählt:', mediaId);
-        }}
+          id="media"
+          title="Angehängte Medien"
+          subtitle="Diese werden nach Ihrer Freigabe mit der Mitteilung versendet"
+          count={mediaItems.length}
+          isExpanded={expandedToggles['media'] || false}
+          onToggle={handleToggle}
+          mediaItems={mediaItems.map(item => ({
+            id: item.id,
+            filename: item.metadata?.fileName || 'Unbekannte Datei',
+            mimeType: item.metadata?.fileType || 'application/octet-stream',
+            fileSize: item.metadata?.fileSize || 0,
+            thumbnailUrl: item.metadata?.thumbnailUrl,
+            downloadUrl: item.metadata?.downloadUrl || '',
+            uploadedAt: new Date(), // Fallback
+            tags: item.metadata?.tags || []
+          }))}
+          onMediaSelect={(mediaId) => {
+            console.log('Medium ausgewählt:', mediaId);
+          }}
         />
 
         {/* PDF-Historie */}
         <PDFHistoryToggleBox
-        id="pdf-history"
-        title="PDF-Historie"
-        subtitle="Alle Versionen der Pressemitteilung"
-        count={pdfVersions.length}
-        isExpanded={expandedToggles['pdf-history'] || false}
-        onToggle={handleToggle}
-        pdfVersions={pdfVersions}
-        onVersionSelect={(version) => {
-          console.log('PDF-Version ausgewählt:', version);
-        }}
-        showDownloadButtons={true}
+          id="pdf-history"
+          title="PDF-Historie"
+          subtitle="Alle Versionen der Pressemitteilung"
+          count={pdfVersions.length}
+          isExpanded={expandedToggles['pdf-history'] || false}
+          onToggle={handleToggle}
+          pdfVersions={pdfVersions}
+          onVersionSelect={(version) => {
+            console.log('PDF-Version ausgewählt:', version);
+          }}
+          showDownloadButtons={true}
         />
 
         {/* Kommunikation */}
         <CommunicationToggleBox
-        id="communication"
-        title="Kommunikation"
-        subtitle={formatLastMessageText()}
-        count={communicationCount}
-        isExpanded={expandedToggles['communication'] || false}
-        onToggle={handleToggle}
-        communications={feedbackHistory.sort((a, b) => {
-          // Sortiere nach timestamp - älteste zuerst (wie in der funktionierenden Freigabe-Seite)
-          const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
-          const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
-          return aTime - bTime;
-        }).map((feedback, index) => {
-          // KORREKTE Erkennung basierend auf action-Feld
-          const isCustomer = (feedback as any).action === 'changes_requested';
+          id="communication"
+          title="Kommunikation"
+          subtitle={formatLastMessageText()}
+          count={communicationCount}
+          isExpanded={expandedToggles['communication'] || false}
+          onToggle={handleToggle}
+          communications={feedbackHistory.sort((a, b) => {
+            // Sortiere nach timestamp - älteste zuerst (wie in der funktionierenden Freigabe-Seite)
+            const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+            const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
+            return aTime - bTime;
+          }).map((feedback, index) => {
+            // KORREKTE Erkennung basierend auf action-Feld
+            const isCustomer = (feedback as any).action === 'changes_requested';
 
-          // Namen und Avatar basierend auf isCustomer
-          let senderName, senderAvatar;
-          if (isCustomer) {
-            // KUNDE: Grüner Avatar
-            senderName = feedback.author || 'Kunde';
-            senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
-          } else {
-            // TEAM: Blauer Avatar
-            senderName = feedback.author || 'Teammitglied';
-            senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
-          }
+            // Namen und Avatar basierend auf isCustomer
+            let senderName, senderAvatar;
+            if (isCustomer) {
+              // KUNDE: Grüner Avatar
+              senderName = feedback.author || 'Kunde';
+              senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
+            } else {
+              // TEAM: Blauer Avatar
+              senderName = feedback.author || 'Teammitglied';
+              senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+            }
 
-          return {
-            id: `feedback-${index}`,
-            type: 'feedback' as const,
-            content: feedback.comment || '',
-            message: feedback.comment || '',
-            sender: {
-              id: 'unknown',
-              name: senderName,
-              email: '',
-              role: isCustomer ? 'customer' as const : 'agency' as const,
-              avatar: senderAvatar
-            },
-            timestamp: feedback.requestedAt ? (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)) : new Date(),
-            isCustomer: isCustomer
-          };
-        })}
-        onNewMessage={() => {
-          console.log('Neue Nachricht');
-          loadCommunicationData(); // Reload communication data
-        }}
-        allowNewMessages={true}
+            return {
+              id: `feedback-${index}`,
+              type: 'feedback' as const,
+              content: feedback.comment || '',
+              message: feedback.comment || '',
+              sender: {
+                id: 'unknown',
+                name: senderName,
+                email: '',
+                role: isCustomer ? 'customer' as const : 'agency' as const,
+                avatar: senderAvatar
+              },
+              timestamp: feedback.requestedAt ? (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)) : new Date(),
+              isCustomer: isCustomer
+            };
+          })}
+          onNewMessage={() => {
+            console.log('Neue Nachricht');
+            loadCommunicationData(); // Reload communication data
+          }}
+          allowNewMessages={true}
         />
       </Suspense>
     </div>
