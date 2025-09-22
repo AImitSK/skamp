@@ -168,22 +168,24 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         {/* Aktionen */}
         <div className="w-[15%] text-center">
           <Dropdown>
-            <DropdownButton plain className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors">
+            <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
             </DropdownButton>
 
             <DropdownMenu anchor="bottom end">
               <DropdownItem onClick={handleOpenLink} disabled={!approval.shareId}>
-                <ExternalLinkIcon className="mr-3 h-4 w-4" />
+                <ExternalLinkIcon className="h-4 w-4" />
                 Freigabe-Link öffnen
               </DropdownItem>
               <DropdownItem onClick={handleCopyLink} disabled={!approval.shareId || isCopying}>
-                <ClipboardIcon className="mr-3 h-4 w-4" />
+                <ClipboardIcon className="h-4 w-4" />
                 {isCopying ? 'Wird kopiert...' : 'Link kopieren'}
               </DropdownItem>
               <DropdownItem onClick={handleAgencyApproval} disabled={isApproving || approval.status === 'approved'}>
-                <CheckIcon className="mr-3 h-4 w-4" />
-                {isApproving ? 'Wird freigegeben...' : 'Agentur Freigabe erteilen'}
+                <CheckIcon className="h-4 w-4" />
+                <span className="text-green-600">
+                  {isApproving ? 'Wird freigegeben...' : 'Agentur Freigabe erteilen'}
+                </span>
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>

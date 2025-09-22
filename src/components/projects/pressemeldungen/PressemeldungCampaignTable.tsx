@@ -150,18 +150,20 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         {/* Aktionen */}
         <div className="w-[10%] text-center">
           <Dropdown>
-            <DropdownButton plain className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors">
+            <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
             </DropdownButton>
 
             <DropdownMenu anchor="bottom end">
               <DropdownItem onClick={handleEdit}>
-                <PencilIcon className="mr-3 h-4 w-4" />
+                <PencilIcon className="h-4 w-4" />
                 Bearbeiten
               </DropdownItem>
               <DropdownItem onClick={handleDelete} disabled={isDeleting}>
-                <TrashIcon className="mr-3 h-4 w-4" />
-                {isDeleting ? 'Wird gelöscht...' : 'Löschen'}
+                <TrashIcon className="h-4 w-4" />
+                <span className="text-red-600">
+                  {isDeleting ? 'Wird gelöscht...' : 'Löschen'}
+                </span>
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
