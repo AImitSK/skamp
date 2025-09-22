@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import {
   EllipsisVerticalIcon,
-  ExternalLinkIcon,
-  DocumentTextIcon
+  ExternalLinkIcon
 } from '@heroicons/react/24/outline';
 import { ApprovalEnhanced } from '@/types/approval';
 
@@ -146,17 +145,10 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
 
             <DropdownMenu anchor="bottom end">
               <DropdownItem
-                href={`/freigabe/${approval.shareId}`}
+                href={approval.shareId ? `/freigabe/${approval.shareId}` : "#"}
                 target="_blank"
               >
-                <ExternalLinkIcon className="h-4 w-4" />
                 Freigabe öffnen
-              </DropdownItem>
-              <DropdownItem
-                href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`}
-              >
-                <DocumentTextIcon className="h-4 w-4" />
-                Kampagne anzeigen
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
