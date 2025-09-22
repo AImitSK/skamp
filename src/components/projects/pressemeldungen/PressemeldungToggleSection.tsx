@@ -227,16 +227,23 @@ export default function PressemeldungToggleSection({
           onToggle={handleToggle}
           mediaItems={mediaItems.map(item => ({
             id: item.id,
-            filename: item.metadata?.fileName || 'Unbekannte Datei',
-            mimeType: item.metadata?.fileType || 'application/octet-stream',
-            fileSize: item.metadata?.fileSize || 0,
-            thumbnailUrl: item.metadata?.thumbnailUrl,
-            downloadUrl: item.metadata?.downloadUrl || '',
-            uploadedAt: new Date(), // Fallback
-            tags: item.metadata?.tags || []
+            filename: item.metadata?.fileName || `Asset-${item.id}`,
+            name: item.metadata?.fileName || `Asset-${item.id}`,
+            mimeType: item.metadata?.fileType || (item.type === 'asset' ? 'image/jpeg' : 'application/octet-stream'),
+            size: item.metadata?.fileSize || 0,
+            url: item.metadata?.thumbnailUrl || '',
+            thumbnailUrl: item.metadata?.thumbnailUrl || '',
+            uploadedAt: new Date(),
+            uploadedBy: { id: '', name: '', email: '' },
+            organizationId: '',
+            metadata: {}
           }))}
           onMediaSelect={(mediaId) => {
-            console.log('Medium ausgewählt:', mediaId);
+            // Fullscreen-Viewer öffnen (wie in funktionierender Freigabe-Seite)
+            const media = mediaItems.find(item => item.id === mediaId);
+            if (media && media.metadata?.thumbnailUrl) {
+              window.open(media.metadata.thumbnailUrl, '_blank');
+            }
           }}
         />
 
