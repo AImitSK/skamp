@@ -113,7 +113,7 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         </div>
 
         {/* Admin */}
-        <div className="w-[15%]">
+        <div className="w-[25%]">
           <div className="flex items-center">
             <Avatar
               src={campaign.userAvatar}
@@ -134,21 +134,20 @@ function CampaignTableRow({ campaign, onRefresh }: CampaignTableRowProps) {
         </div>
 
         {/* Kampagne Versenden */}
-        <div className="w-[15%]">
-          {campaign.status === 'approved' && (
-            <Button
-              onClick={handleSend}
-              color="secondary"
-              className="text-xs px-3 py-1"
-            >
-              <PaperAirplaneIcon className="h-3 w-3 mr-1" />
-              Versenden
-            </Button>
-          )}
+        <div className="w-[10%]">
+          <Button
+            onClick={handleSend}
+            color="secondary"
+            className="text-xs px-3 py-1"
+            disabled={campaign.status !== 'approved'}
+          >
+            <PaperAirplaneIcon className="h-3 w-3 mr-1" />
+            Versenden
+          </Button>
         </div>
 
         {/* Aktionen */}
-        <div className="w-[10%] text-center">
+        <div className="w-[5%] text-center">
           <Dropdown>
             <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
@@ -200,16 +199,16 @@ export default function PressemeldungCampaignTable({
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[25%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Admin
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Erstellt am
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
           </div>
-          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <div className="w-[5%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             Aktionen
           </div>
         </div>

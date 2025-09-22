@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/PressemeldungApprovalTable.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -9,7 +9,8 @@ import {
   EllipsisVerticalIcon,
   ExternalLinkIcon,
   ClipboardIcon,
-  CheckIcon
+  CheckIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import { ApprovalEnhanced } from '@/types/approval';
 
@@ -47,13 +48,13 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     }
   };
 
-  const handleOpenLink = () => {
+  const handleOpenLink = useCallback(() => {
     if (approval.shareId) {
       window.open(`/freigabe/${approval.shareId}`, '_blank');
     }
-  };
+  }, [approval.shareId]);
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = useCallback(async () => {
     if (!approval.shareId) return;
 
     setIsCopying(true);
@@ -66,9 +67,9 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     } finally {
       setIsCopying(false);
     }
-  };
+  }, [approval.shareId]);
 
-  const handleAgencyApproval = async () => {
+  const handleAgencyApproval = useCallback(async () => {
     setIsApproving(true);
     try {
       // TODO: Implement agency approval service call
@@ -79,7 +80,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     } finally {
       setIsApproving(false);
     }
-  };
+  }, [approval.id, onRefresh]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return 'Unbekannt';
@@ -112,7 +113,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[25%] min-w-0">
+        <div className="w-[30%] min-w-0">
           <div className="flex items-center">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900 truncate">
@@ -156,7 +157,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Letzte Aktivität */}
-        <div className="w-[20%]">
+        <div className="w-[15%]">
           <div className="text-sm text-gray-600">
             <p>{formatDate(approval.lastActivity || approval.updatedAt)}</p>
             <p className="text-xs text-gray-500">
@@ -165,8 +166,20 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
           </div>
         </div>
 
+        {/* Versenden */}
+        <div className="w-[10%]">
+          <Button
+            color="secondary"
+            className="text-xs px-3 py-1"
+            disabled={true}
+          >
+            <PaperAirplaneIcon className="h-3 w-3 mr-1" />
+            Versenden
+          </Button>
+        </div>
+
         {/* Aktionen */}
-        <div className="w-[15%] text-center">
+        <div className="w-[5%] text-center">
           <Dropdown>
             <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
               <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
@@ -216,7 +229,7 @@ export default function PressemeldungApprovalTable({
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center">
-          <div className="w-[25%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[30%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kampagne
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -225,10 +238,13 @@ export default function PressemeldungApprovalTable({
           <div className="w-[25%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kunde & Kontakt
           </div>
-          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Letzte Aktivität
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Versenden
+          </div>
+          <div className="w-[5%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             Aktionen
           </div>
         </div>
