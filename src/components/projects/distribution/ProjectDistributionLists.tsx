@@ -1,7 +1,7 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchInput } from '@/components/ui/search-input';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { Popover, Transition } from '@headlessui/react';
 import {
   LinkIcon,
   PlusIcon,
@@ -21,6 +22,7 @@ import {
   FolderIcon,
   PencilIcon,
   DocumentDuplicateIcon,
+  FunnelIcon,
 } from '@heroicons/react/24/outline';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { listsService } from '@/lib/firebase/lists-service';
@@ -43,7 +45,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -188,9 +191,15 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         return false;
       }
     }
-    if (selectedCategory !== 'all') {
-      if (selectedCategory === 'linked' && list.type !== 'linked') return false;
-      if (selectedCategory === 'custom' && list.type !== 'custom') return false;
+    // Typ-Filter
+    if (selectedTypes.length > 0) {
+      if (!selectedTypes.includes(list.type)) return false;
+    }
+
+    // Kategorie-Filter
+    if (selectedCategories.length > 0) {
+      const category = masterListDetails.get(list.masterListId || '')?.category || 'custom';
+      if (!selectedCategories.includes(category)) return false;
     }
     return true;
   });
@@ -213,6 +222,23 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       year: 'numeric'
     });
   };
+
+  // Filter Options
+  const categoryOptions = [
+    { value: 'press', label: 'Presse' },
+    { value: 'customers', label: 'Kunden' },
+    { value: 'partners', label: 'Partner' },
+    { value: 'leads', label: 'Leads' },
+    { value: 'custom', label: 'Benutzerdefiniert' }
+  ];
+
+  const typeOptions = [
+    { value: 'linked', label: 'Verknüpft' },
+    { value: 'custom', label: 'Projekt-eigen' },
+    { value: 'combined', label: 'Kombiniert' }
+  ];
+
+  const activeFiltersCount = selectedCategories.length + selectedTypes.length;
 
   if (loading) {
     return (
@@ -238,45 +264,136 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div className="flex gap-2">
           <Button
             onClick={() => setShowCreateModal(true)}
-            color="secondary"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
-            <PlusIcon className="w-4 h-4 mr-2" />
+            <PlusIcon className="w-4 h-4" />
             Neue Liste
           </Button>
         </div>
       </div>
 
       {/* Such- und Filterleiste */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex items-center gap-2">
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Listen durchsuchen..."
           className="flex-1"
         />
-        <div className="flex gap-2">
-          <Button
-            plain
-            onClick={() => setSelectedCategory('all')}
-            className={selectedCategory === 'all' ? 'font-semibold' : ''}
+
+        {/* Filter Button */}
+        <Popover className="relative">
+          <Popover.Button
+            className={`inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10 ${
+              activeFiltersCount > 0
+                ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            aria-label="Filter"
           >
-            Alle
-          </Button>
-          <Button
-            plain
-            onClick={() => setSelectedCategory('linked')}
-            className={selectedCategory === 'linked' ? 'font-semibold' : ''}
+            <FunnelIcon className="h-4 w-4" />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                {activeFiltersCount}
+              </span>
+            )}
+          </Popover.Button>
+
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-200"
+            enterFrom="opacity-0 translate-y-1"
+            enterTo="opacity-100 translate-y-0"
+            leave="transition ease-in duration-150"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 translate-y-1"
           >
-            Verknüpft
-          </Button>
-          <Button
-            plain
-            onClick={() => setSelectedCategory('custom')}
-            className={selectedCategory === 'custom' ? 'font-semibold' : ''}
-          >
-            Projekt-eigen
-          </Button>
-        </div>
+            <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedCategories([]);
+                        setSelectedTypes([]);
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
+                </div>
+
+                {/* Type Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Typ
+                  </label>
+                  <div className="space-y-2">
+                    {typeOptions.map((option) => {
+                      const isChecked = selectedTypes.includes(option.value);
+                      return (
+                        <label
+                          key={option.value}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const newValues = e.target.checked
+                                ? [...selectedTypes, option.value]
+                                : selectedTypes.filter(v => v !== option.value);
+                              setSelectedTypes(newValues);
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {option.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategorie
+                  </label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {categoryOptions.map((option) => {
+                      const isChecked = selectedCategories.includes(option.value);
+                      return (
+                        <label
+                          key={option.value}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const newValues = e.target.checked
+                                ? [...selectedCategories, option.value]
+                                : selectedCategories.filter(v => v !== option.value);
+                              setSelectedCategories(newValues);
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {option.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </Popover.Panel>
+          </Transition>
+        </Popover>
       </div>
 
       {/* Bulk Actions */}
