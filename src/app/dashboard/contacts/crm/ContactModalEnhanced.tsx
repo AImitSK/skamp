@@ -132,6 +132,33 @@ export default function ContactModalEnhanced({
   const [selectedCompany, setSelectedCompany] = useState<CompanyEnhanced | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const loadTags = useCallback(async () => {
+    if (!organizationId) return;
+    try {
+      const orgTags = await tagsEnhancedService.getAllAsLegacyTags(organizationId);
+      setTags(orgTags);
+    } catch (error) {
+      // Error loading tags - operation tracked internally
+    }
+  }, [organizationId]);
+
+  const loadPublications = useCallback(async () => {
+    if (!organizationId) return;
+    try {
+      // Wenn eine Firma ausgewählt ist, lade nur deren Publikationen
+      if (formData.companyId) {
+        const pubs = await publicationService.getByPublisherId(formData.companyId, organizationId);
+        setPublications(pubs);
+      } else {
+        // Sonst lade alle Publikationen
+        const pubs = await publicationService.getAll(organizationId);
+        setPublications(pubs);
+      }
+    } catch (error) {
+      // Error loading publications - operation tracked internally
+    }
+  }, [formData.companyId, organizationId]);
+
   // Initialize form data when contact changes
   useEffect(() => {
     if (contact) {
@@ -180,33 +207,6 @@ export default function ContactModalEnhanced({
   useEffect(() => {
     loadPublications();
   }, [formData.companyId, organizationId, loadPublications]);
-
-  const loadTags = useCallback(async () => {
-    if (!organizationId) return;
-    try {
-      const orgTags = await tagsEnhancedService.getAllAsLegacyTags(organizationId);
-      setTags(orgTags);
-    } catch (error) {
-      // Error loading tags - operation tracked internally
-    }
-  }, [organizationId]);
-
-  const loadPublications = useCallback(async () => {
-    if (!organizationId) return;
-    try {
-      // Wenn eine Firma ausgewählt ist, lade nur deren Publikationen
-      if (formData.companyId) {
-        const pubs = await publicationService.getByPublisherId(formData.companyId, organizationId);
-        setPublications(pubs);
-      } else {
-        // Sonst lade alle Publikationen
-        const pubs = await publicationService.getAll(organizationId);
-        setPublications(pubs);
-      }
-    } catch (error) {
-      // Error loading publications - operation tracked internally
-    }
-  }, [formData.companyId, organizationId]);
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
