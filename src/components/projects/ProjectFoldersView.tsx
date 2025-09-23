@@ -1421,8 +1421,7 @@ export default function ProjectFoldersView({
       <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
-            <Subheading>Projekt-Ordner</Subheading>
+            <Subheading>Dateimanager</Subheading>
             <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
           </div>
         </div>
@@ -1449,8 +1448,7 @@ export default function ProjectFoldersView({
     <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
-          <Subheading>Projekt-Ordner</Subheading>
+          <Subheading>Dateimanager</Subheading>
           {loading && (
             <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
           )}
