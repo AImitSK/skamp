@@ -5,6 +5,9 @@ import {
   updateDoc,
   serverTimestamp,
   writeBatch,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { listsService } from './lists-service';
@@ -409,5 +412,28 @@ export const emailCampaignService = {
     }
     
     await batch.commit();
+  },
+
+  /**
+   * Versand-Daten für eine Kampagne abrufen
+   */
+  async getSends(
+    campaignId: string,
+    options?: { organizationId?: string }
+  ): Promise<EmailCampaignSend[]> {
+    try {
+      const sendsRef = collection(db, 'email_campaign_sends');
+      const q = query(sendsRef, where('campaignId', '==', campaignId));
+
+      const snapshot = await getDocs(q);
+
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as EmailCampaignSend));
+    } catch (error) {
+      console.error('Error fetching campaign sends:', error);
+      return [];
+    }
   }
 };
