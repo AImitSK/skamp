@@ -422,15 +422,23 @@ export const emailCampaignService = {
     options?: { organizationId?: string }
   ): Promise<EmailCampaignSend[]> {
     try {
+      console.log('📊 getSends called with campaignId:', campaignId);
+
       const sendsRef = collection(db, 'email_campaign_sends');
       const q = query(sendsRef, where('campaignId', '==', campaignId));
 
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => ({
+      console.log('📊 Found', snapshot.docs.length, 'sends for campaign:', campaignId);
+
+      const sends = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as EmailCampaignSend));
+
+      console.log('📊 Sends data:', sends);
+
+      return sends;
     } catch (error) {
       console.error('Error fetching campaign sends:', error);
       return [];
