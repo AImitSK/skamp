@@ -368,8 +368,15 @@ export const emailCampaignService = {
     sendResult: any,
     userId: string
   ): Promise<void> {
+    console.log('💾 saveSendResults called:', {
+      campaignId,
+      contactsCount: contacts.length,
+      resultsCount: sendResult.results?.length,
+      userId
+    });
+
     const batch = writeBatch(db);
-    
+
     // Mapping zwischen E-Mail und Kontakt erstellen
     const contactMap = new Map<string, ContactEnhanced>();
     for (const contact of contacts) {
@@ -378,9 +385,14 @@ export const emailCampaignService = {
         contactMap.set(email, contact);
       }
     }
-    
+
+    console.log('💾 Contact map size:', contactMap.size);
+    console.log('💾 Send results:', sendResult.results);
+
     for (const result of sendResult.results) {
+      console.log('💾 Processing result:', result);
       const contact = contactMap.get(result.email);
+      console.log('💾 Found contact for', result.email, ':', !!contact);
       if (contact) {
         const sendDoc = doc(collection(db, 'email_campaign_sends'));
         
@@ -408,10 +420,14 @@ export const emailCampaignService = {
         }
 
         batch.set(sendDoc, sendData);
+        console.log('💾 Added send to batch for:', result.email);
+      } else {
+        console.warn('⚠️ No contact found for email:', result.email);
       }
     }
-    
+
     await batch.commit();
+    console.log('✅ Batch committed successfully');
   },
 
   /**
