@@ -25,22 +25,35 @@ interface StrategyTemplateGridProps {
 }
 
 function TemplateCard({ id, title, description, icon: Icon, onClick }: TemplateCardProps) {
+  const isTemplate = id !== 'blank' && id !== 'table';
+
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2"
+      className={`w-full text-left border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 ${
+        isTemplate ? 'bg-gradient-to-br from-blue-50 to-white' : 'bg-white'
+      }`}
     >
-      <div className="flex items-start space-x-4">
-        <div className="flex-shrink-0">
-          <Icon className="w-8 h-8 text-[#005fab]" />
-        </div>
-        <div className="flex-grow min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {title}
-          </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {description}
-          </p>
+      <div className="flex flex-col h-full">
+        <div className="flex items-start space-x-4 mb-auto">
+          <div className="flex-shrink-0">
+            <Icon className="w-8 h-8 text-[#005fab]" />
+          </div>
+          <div className="flex-grow min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {title}
+              </h3>
+              {isTemplate && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                  Vorlage
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {description}
+            </p>
+          </div>
         </div>
       </div>
     </button>

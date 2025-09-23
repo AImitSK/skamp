@@ -21,13 +21,15 @@ interface ProjectStrategyTabProps {
     customer?: { name: string };
   };
   dokumenteFolderId?: string;
+  onDocumentSaved?: () => void;
 }
 
 export default function ProjectStrategyTab({
   projectId,
   organizationId,
   project,
-  dokumenteFolderId
+  dokumenteFolderId,
+  onDocumentSaved
 }: ProjectStrategyTabProps) {
   const [showEditor, setShowEditor] = useState(false);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
@@ -53,6 +55,10 @@ export default function ProjectStrategyTab({
     setShowEditor(false);
     setTemplateContent(null);
     setTemplateInfo(null);
+    // Aktualisiere das Ordnermodul
+    if (onDocumentSaved) {
+      onDocumentSaved();
+    }
   };
 
   return (

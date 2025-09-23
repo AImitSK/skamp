@@ -1283,12 +1283,14 @@ export default function ProjectDetailPage() {
                   organizationId={currentOrganization.id}
                   project={project}
                   dokumenteFolderId={dokumenteFolder?.mainFolder?.id}
+                  onDocumentSaved={loadProjectFolders}
                 />
               )}
 
               {/* Projekt-Ordner - Zeigt nur Dokumente-Ordner */}
               {currentOrganization && dokumenteFolder && (
                 <ProjectFoldersView
+                  key={`strategy-folders-${dokumenteFolder.assets?.length || 0}`}
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
                   projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
