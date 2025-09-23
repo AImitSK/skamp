@@ -145,9 +145,9 @@ export default function ProjectDetailPage() {
     loadProjectTags();
   }, [project?.tags]);
 
-  // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab aktiviert wird
+  // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab ODER Strategie-Tab aktiviert wird
   useEffect(() => {
-    if (activeTab === 'daten' && project && currentOrganization?.id) {
+    if ((activeTab === 'daten' || activeTab === 'strategie') && project && currentOrganization?.id) {
       loadProjectFolders();
       loadStrategyDocuments();
     }
@@ -1250,11 +1250,24 @@ export default function ProjectDetailPage() {
           {/* Strategie Tab */}
           {activeTab === 'strategie' && (
             <div className="space-y-6">
+              {/* Templates ZUERST */}
               {project && currentOrganization && (
                 <ProjectStrategyTab
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
                   project={project}
+                />
+              )}
+
+              {/* Projekt-Ordner - EXAKTER INHALT WIE DATEN-TAB */}
+              {currentOrganization && (
+                <ProjectFoldersView
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                  projectFolders={projectFolders}
+                  foldersLoading={foldersLoading}
+                  onRefresh={loadProjectFolders}
+                  clientId={project.customer?.id || ''}
                 />
               )}
             </div>
