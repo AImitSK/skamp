@@ -1643,61 +1643,96 @@ export default function ProjectFoldersView({
           );
         })}
 
-        {/* Assets anzeigen */}
-        <div className="space-y-2">
-          {currentAssets.map((asset: any) => (
-            <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  {getFileIcon(asset)}
-                  <div className="min-w-0 flex-1 flex items-center">
-                    <button
-                      onClick={() => handleAssetClick(asset)}
-                      className="text-left hover:text-blue-600 transition-colors w-full"
-                    >
-                      <Text className="text-sm font-medium text-gray-900 truncate hover:text-blue-600">
-                        {asset.fileName}
-                      </Text>
-                    </button>
-                  </div>
+        {/* Assets anzeigen - Tabellen-Ansicht */}
+        {currentAssets.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center">
+                <div className="w-[50%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Text className="text-xs text-gray-500 whitespace-nowrap">
-                    {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
-                  </Text>
-                  <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') ? (
-                        <>
-                          <DropdownItem onClick={() => handleEditDocument(asset)}>
-                            Ansehen / Bearbeiten
-                          </DropdownItem>
-                        </>
-                      ) : (
-                        <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
-                          Ansehen
-                        </DropdownItem>
-                      )}
-                      <DropdownItem onClick={() => handleDownloadDocument(asset)}>
-                        Download
-                      </DropdownItem>
-                      <DropdownItem onClick={() => handleMoveAsset(asset)}>
-                        Verschieben
-                      </DropdownItem>
-                      <DropdownDivider />
-                      <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
-                        <span className="text-red-600">Löschen</span>
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
+                <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Typ
                 </div>
+                <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Erstellt
+                </div>
+                <div className="w-[10%]"></div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-gray-200">
+              {currentAssets.map((asset: any) => (
+                <div key={asset.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center">
+                    {/* Name mit Icon */}
+                    <div className="w-[50%] flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getFileIcon(asset)}
+                      </div>
+                      <button
+                        onClick={() => handleAssetClick(asset)}
+                        className="text-left hover:text-blue-600 transition-colors min-w-0 flex-1"
+                      >
+                        <span className="text-sm font-semibold text-gray-900 truncate block">
+                          {asset.fileName}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Typ */}
+                    <div className="w-[20%]">
+                      <Text className="text-sm text-gray-600">
+                        {asset.fileType === 'celero-doc' ? 'Dokument' : asset.fileType || 'Datei'}
+                      </Text>
+                    </div>
+
+                    {/* Erstellt */}
+                    <div className="w-[20%]">
+                      <Text className="text-sm text-gray-600">
+                        {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+                      </Text>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="w-[10%] flex justify-end">
+                      <Dropdown>
+                        <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') ? (
+                            <>
+                              <DropdownItem onClick={() => handleEditDocument(asset)}>
+                                Ansehen / Bearbeiten
+                              </DropdownItem>
+                            </>
+                          ) : (
+                            <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
+                              Ansehen
+                            </DropdownItem>
+                          )}
+                          <DropdownItem onClick={() => handleDownloadDocument(asset)}>
+                            Download
+                          </DropdownItem>
+                          <DropdownItem onClick={() => handleMoveAsset(asset)}>
+                            Verschieben
+                          </DropdownItem>
+                          <DropdownDivider />
+                          <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Empty State */}
         {currentFolders.length === 0 && currentAssets.length === 0 && !loading && (
