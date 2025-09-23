@@ -132,7 +132,8 @@ function MoveAssetModal({
   asset,
   availableFolders,
   currentFolderId,
-  organizationId
+  organizationId,
+  rootFolder
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -141,6 +142,7 @@ function MoveAssetModal({
   availableFolders: any[];
   currentFolderId?: string;
   organizationId: string;
+  rootFolder?: { id: string; name: string };
 }) {
   const [currentPath, setCurrentPath] = useState<{id: string, name: string}[]>([]);
   const [currentFolders, setCurrentFolders] = useState<any[]>([]);
@@ -154,10 +156,18 @@ function MoveAssetModal({
       setCurrentPath([]);
       setSelectedFolderId(null);
       setAlert(null);
-      // Lade die 3 Hauptordner (Medien, Dokumente, Pressemeldungen)
-      setCurrentFolders(availableFolders || []);
+
+      if (rootFolder) {
+        // Im Strategie-Tab: Zeige den Dokumente-Ordner als Root mit seinen Unterordnern
+        setCurrentPath([{ id: rootFolder.id, name: rootFolder.name }]);
+        setSelectedFolderId(rootFolder.id);
+        setCurrentFolders(availableFolders || []);
+      } else {
+        // Im Daten-Tab: Lade die 3 Hauptordner (Medien, Dokumente, Pressemeldungen)
+        setCurrentFolders(availableFolders || []);
+      }
     }
-  }, [isOpen, availableFolders]);
+  }, [isOpen, availableFolders, rootFolder]);
 
   const showAlert = (message: string) => {
     setAlert({ type: 'error', message });
@@ -179,13 +189,18 @@ function MoveAssetModal({
 
   const handleBackClick = async () => {
     if (currentPath.length === 0) return;
-    
+
     try {
       if (currentPath.length === 1) {
-        // Zurück zu den Hauptordnern
-        setCurrentFolders(availableFolders || []);
-        setCurrentPath([]);
-        setSelectedFolderId(null);
+        if (rootFolder) {
+          // Im Strategie-Tab: Kann nicht weiter zurück als zum Dokumente-Ordner
+          return;
+        } else {
+          // Im Daten-Tab: Zurück zu den Hauptordnern
+          setCurrentFolders(availableFolders || []);
+          setCurrentPath([]);
+          setSelectedFolderId(null);
+        }
       } else {
         // Zurück zum vorherigen Ordner
         const parentFolder = currentPath[currentPath.length - 2];
@@ -1735,6 +1750,7 @@ export default function ProjectFoldersView({
         availableFolders={projectFolders?.subfolders || []}
         currentFolderId={selectedFolderId}
         organizationId={organizationId}
+        rootFolder={projectFolders?.assets ? projectFolders.mainFolder : undefined}
       />
 
       {/* Document Editor Modal */}
