@@ -1354,23 +1354,6 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Daten & Strategie Tab */}
-          {activeTab === 'daten' && (
-            <div className="space-y-6">
-              {/* Projekt-Ordner */}
-              {currentOrganization && (
-                <ProjectFoldersView
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectFolders={projectFolders}
-                  foldersLoading={foldersLoading}
-                  onRefresh={loadProjectFolders}
-                  clientId={project.customer?.id || ''}
-                />
-              )}
-            </div>
-          )}
-
         </div>
         </div>
 

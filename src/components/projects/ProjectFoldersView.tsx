@@ -1419,11 +1419,8 @@ export default function ProjectFoldersView({
   if (foldersLoading) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <Subheading>Dateimanager</Subheading>
-            <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-          </div>
+        <div className="flex items-center justify-center mb-4">
+          <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
         </div>
         <div>
           <FolderSkeleton />
@@ -1446,15 +1443,9 @@ export default function ProjectFoldersView({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Subheading>Dateimanager</Subheading>
-          {loading && (
-            <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          {selectedFolderId && (
+      {selectedFolderId && (
+        <div className="flex items-center justify-end mb-4">
+          <div className="flex items-center space-x-2">
             <Button
               plain
               onClick={() => setShowCreateFolderModal(true)}
@@ -1488,7 +1479,7 @@ export default function ProjectFoldersView({
               </Button>
             </div>
           )}
-          
+
           <Button
             onClick={() => setShowUploadModal(true)}
             disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
@@ -1498,6 +1489,7 @@ export default function ProjectFoldersView({
           </Button>
         </div>
       </div>
+      )}
 
       {/* Smart Upload Info Panel */}
       {project && (
