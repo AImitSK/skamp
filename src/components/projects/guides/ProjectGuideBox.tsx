@@ -49,7 +49,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'ideas_planning',
     title: 'Ideen & Planung',
     icon: SparklesIcon,
-    color: 'text-purple-600 bg-purple-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'create_tasks',
@@ -69,7 +69,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'creation',
     title: 'Content Erstellung',
     icon: DocumentTextIcon,
-    color: 'text-blue-600 bg-blue-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'upload_media',
@@ -89,7 +89,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'internal_approval',
     title: 'Interne Freigabe',
     icon: ChatBubbleLeftRightIcon,
-    color: 'text-green-600 bg-green-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'team_feedback',
@@ -103,7 +103,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'customer_approval',
     title: 'Kunden-Freigabe',
     icon: ShieldCheckIcon,
-    color: 'text-yellow-600 bg-yellow-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'customer_approval',
@@ -117,7 +117,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'distribution',
     title: 'Verteilung',
     icon: PaperAirplaneIcon,
-    color: 'text-indigo-600 bg-indigo-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'create_list',
@@ -149,7 +149,7 @@ const GUIDE_PHASES: GuidePhase[] = [
     id: 'monitoring',
     title: 'Monitoring & Analyse',
     icon: ChartBarIcon,
-    color: 'text-orange-600 bg-orange-50',
+    color: 'text-gray-700 bg-gray-50',
     steps: [
       {
         id: 'manage_inbox',
@@ -193,13 +193,18 @@ export default function ProjectGuideBox({
   }, [currentPhase, completedSteps]);
 
   const togglePhase = (phaseId: string) => {
-    const newExpanded = new Set(expandedPhases);
-    if (newExpanded.has(phaseId)) {
-      newExpanded.delete(phaseId);
+    // Nur eine Phase gleichzeitig offen
+    if (expandedPhases.has(phaseId)) {
+      setExpandedPhases(new Set()); // Schließen wenn bereits offen
     } else {
-      newExpanded.add(phaseId);
+      setExpandedPhases(new Set([phaseId])); // Nur diese Phase öffnen
     }
-    setExpandedPhases(newExpanded);
+  };
+
+  const toggleStepComplete = (stepId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Verhindere Phase-Toggle
+    // TODO: Implementiere Step-Tracking in Firebase
+    console.log('Toggle step:', stepId);
   };
 
   const handleStepClick = (step: GuideStep) => {
@@ -256,11 +261,14 @@ export default function ProjectGuideBox({
           const Icon = phase.icon;
 
           return (
-            <div key={phase.id} className={status === 'current' ? 'bg-blue-50/30' : ''}>
+            <div key={phase.id} className={
+              status === 'completed' ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
+              status === 'current' ? 'bg-blue-50/30' : ''
+            }>
               {/* Phase Header */}
               <button
                 onClick={() => togglePhase(phase.id)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${phase.color}`}>
@@ -295,21 +303,28 @@ export default function ProjectGuideBox({
                     const isCompleted = completedSteps.includes(step.id);
 
                     return (
-                      <button
+                      <div
                         key={step.id}
-                        onClick={() => handleStepClick(step)}
-                        className={`w-full text-left p-3 rounded-lg border transition-all ${
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
                           isCompleted
-                            ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                            ? 'bg-green-50 border-green-200'
                             : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                         }`}
                       >
-                        <div className="flex items-start gap-3">
+                        <button
+                          onClick={(e) => toggleStepComplete(step.id, e)}
+                          className="flex-shrink-0 mt-0.5"
+                        >
                           {isCompleted ? (
-                            <CheckCircleIconSolid className="w-5 h-5 text-green-600 mt-0.5" />
+                            <CheckCircleIconSolid className="w-5 h-5 text-green-600" />
                           ) : (
-                            <CheckCircleIcon className="w-5 h-5 text-gray-400 mt-0.5" />
+                            <CheckCircleIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                           )}
+                        </button>
+                        <button
+                          onClick={() => handleStepClick(step)}
+                          className="flex-1 text-left"
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <span className={`font-medium ${isCompleted ? 'text-green-900' : 'text-gray-900'}`}>
@@ -321,8 +336,8 @@ export default function ProjectGuideBox({
                               {step.description}
                             </Text>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -330,13 +345,6 @@ export default function ProjectGuideBox({
             </div>
           );
         })}
-      </div>
-
-      {/* Footer Tip */}
-      <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-        <Text className="text-xs text-gray-600 text-center">
-          💡 Klicke auf eine Aufgabe, um direkt zum entsprechenden Bereich zu gelangen
-        </Text>
       </div>
     </div>
   );
