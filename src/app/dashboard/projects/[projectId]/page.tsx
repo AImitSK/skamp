@@ -314,7 +314,7 @@ export default function ProjectDetailPage() {
             const linkedCampaignData = await Promise.all(
               projectData.linkedCampaigns.map(async (campaignId) => {
                 try {
-                  const campaign = await prService.getById(campaignId, currentOrganization!.id);
+                  const campaign = await prService.getById(campaignId, { organizationId: currentOrganization!.id });
                   return campaign;
                 } catch (error) {
                   console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
