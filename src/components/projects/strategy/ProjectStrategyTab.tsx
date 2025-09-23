@@ -20,12 +20,14 @@ interface ProjectStrategyTabProps {
     currentStage: any;
     customer?: { name: string };
   };
+  dokumenteFolderId?: string;
 }
 
 export default function ProjectStrategyTab({
   projectId,
   organizationId,
-  project
+  project,
+  dokumenteFolderId
 }: ProjectStrategyTabProps) {
   const [showEditor, setShowEditor] = useState(false);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
@@ -59,13 +61,13 @@ export default function ProjectStrategyTab({
       <StrategyTemplateGrid onTemplateSelect={handleTemplateSelect} />
 
       {/* Document Editor Modal für Templates */}
-      {showEditor && (
+      {showEditor && dokumenteFolderId && (
         <DocumentEditorModal
           isOpen={showEditor}
           onClose={handleCloseEditor}
           onSave={handleDocumentSave}
           document={null} // Neues Dokument
-          folderId={undefined} // Wird später gesetzt
+          folderId={dokumenteFolderId} // Speichert direkt im Dokumente-Ordner
           organizationId={organizationId}
           projectId={projectId}
           useStrategyService={false} // Verwende Ordner-System

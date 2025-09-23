@@ -1282,6 +1282,7 @@ export default function ProjectDetailPage() {
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
                   project={project}
+                  dokumenteFolderId={dokumenteFolder?.mainFolder?.id}
                 />
               )}
 
