@@ -64,7 +64,8 @@ import {
   TableCellsIcon,
   BriefcaseIcon,
   ArchiveBoxIcon,
-  XMarkIcon
+  XMarkIcon,
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
