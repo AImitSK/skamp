@@ -1232,7 +1232,7 @@ export default function ProjectDetailPage() {
                         try {
                           await projectService.update(project.id, {
                             completedGuideSteps: newSteps
-                          }, { organizationId: currentOrganization.id });
+                          }, { organizationId: currentOrganization.id, userId: user!.id });
                         } catch (error) {
                           console.error('Fehler beim Speichern der Guide-Steps:', error);
                         }
