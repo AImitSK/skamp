@@ -43,33 +43,36 @@ export default function MonitoringPage() {
       console.log('📊 All campaigns:', allCampaigns);
       console.log('📊 Campaigns count:', allCampaigns.length);
 
-      const sentCampaigns = allCampaigns.filter((c: any) =>
-        c.status === 'sent' || c.emailSends?.length > 0
+      // Prüfe für jede Kampagne ob sie Sends hat
+      const campaignsWithSends = await Promise.all(
+        allCampaigns.map(async (campaign: any) => {
+          const sends = await emailCampaignService.getSends(campaign.id!, {
+            organizationId: currentOrganization.id
+          });
+          return { campaign, sends };
+        })
       );
+
+      // Filtere nur Kampagnen die tatsächlich versendet wurden (haben Sends)
+      const sentCampaigns = campaignsWithSends.filter(({ sends }) => sends.length > 0);
 
       console.log('📊 Sent campaigns:', sentCampaigns);
       console.log('📊 Sent campaigns count:', sentCampaigns.length);
 
-      const campaignsWithStats = await Promise.all(
-        sentCampaigns.map(async (campaign: any) => {
-          const sends = await emailCampaignService.getSends(campaign.id!, {
-            organizationId: currentOrganization.id
-          });
+      const campaignsWithStats = sentCampaigns.map(({ campaign, sends }) => {
+        const stats = {
+          total: sends.length,
+          delivered: sends.filter((s: any) => s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length,
+          opened: sends.filter((s: any) => s.status === 'opened' || s.status === 'clicked').length,
+          clicked: sends.filter((s: any) => s.status === 'clicked').length,
+          bounced: sends.filter((s: any) => s.status === 'bounced').length,
+        };
 
-          const stats = {
-            total: sends.length,
-            delivered: sends.filter((s: any) => s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length,
-            opened: sends.filter((s: any) => s.status === 'opened' || s.status === 'clicked').length,
-            clicked: sends.filter((s: any) => s.status === 'clicked').length,
-            bounced: sends.filter((s: any) => s.status === 'bounced').length,
-          };
-
-          return {
-            ...campaign,
-            stats
-          };
-        })
-      );
+        return {
+          ...campaign,
+          stats
+        };
+      });
 
       setCampaigns(campaignsWithStats);
     } catch (error) {
