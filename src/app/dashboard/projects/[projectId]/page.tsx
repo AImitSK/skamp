@@ -104,6 +104,7 @@ export default function ProjectDetailPage() {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [todayTasks, setTodayTasks] = useState<ProjectTask[]>([]);
   const [loadingTodayTasks, setLoadingTodayTasks] = useState(false);
+  const [completedGuideSteps, setCompletedGuideSteps] = useState<string[]>([]);
 
   // Dialog States
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -1220,8 +1221,15 @@ export default function ProjectDetailPage() {
                 {project && (
                   <ProjectGuideBox
                     currentPhase={project.currentStage}
-                    completedSteps={[]} // TODO: Track completed steps
+                    completedSteps={completedGuideSteps}
                     onNavigate={(tab) => setActiveTab(tab as any)}
+                    onStepToggle={(stepId) => {
+                      setCompletedGuideSteps(prev =>
+                        prev.includes(stepId)
+                          ? prev.filter(id => id !== stepId)
+                          : [...prev, stepId]
+                      );
+                    }}
                   />
                 )}
               </div>

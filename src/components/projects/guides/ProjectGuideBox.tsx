@@ -41,6 +41,7 @@ interface ProjectGuideBoxProps {
   currentPhase: string;
   completedSteps?: string[];
   onNavigate: (tab: string) => void;
+  onStepToggle?: (stepId: string) => void;
   className?: string;
 }
 
@@ -177,6 +178,7 @@ export default function ProjectGuideBox({
   currentPhase,
   completedSteps = [],
   onNavigate,
+  onStepToggle,
   className = ''
 }: ProjectGuideBoxProps) {
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
@@ -203,8 +205,9 @@ export default function ProjectGuideBox({
 
   const toggleStepComplete = (stepId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Verhindere Phase-Toggle
-    // TODO: Implementiere Step-Tracking in Firebase
-    console.log('Toggle step:', stepId);
+    if (onStepToggle) {
+      onStepToggle(stepId);
+    }
   };
 
   const handleStepClick = (step: GuideStep) => {
@@ -233,23 +236,10 @@ export default function ProjectGuideBox({
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ClipboardDocumentListIcon className="w-6 h-6 text-indigo-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Projekt-Leitfaden</h3>
-          </div>
-          <Badge color="blue" className="font-medium">
-            {progress}% abgeschlossen
-          </Badge>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
+      <div className="px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <ClipboardDocumentListIcon className="w-6 h-6 text-gray-700" />
+          <h3 className="text-lg font-semibold text-gray-900">Fortschritt nach Phase</h3>
         </div>
       </div>
 
