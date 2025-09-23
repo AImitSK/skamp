@@ -1,7 +1,7 @@
 // src/app/api/webhooks/sendgrid/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/client-init';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, increment, Timestamp } from 'firebase/firestore';
 
 interface SendGridEvent {
   email: string;
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         case 'delivered':
           await updateDoc(sendRef, {
             status: 'delivered',
-            deliveredAt: new Date(event.timestamp * 1000),
+            deliveredAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             updatedAt: serverTimestamp()
           });
           console.log('✅ Updated to delivered:', sendDoc.id);
@@ -56,14 +56,14 @@ export async function POST(request: NextRequest) {
           const currentData = sendDoc.data();
           const updateData: any = {
             status: 'opened',
-            lastOpenedAt: new Date(event.timestamp * 1000),
+            lastOpenedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             openCount: increment(1),
             updatedAt: serverTimestamp()
           };
 
           // Setze openedAt nur beim ersten Mal
           if (!currentData.openedAt) {
-            updateData.openedAt = new Date(event.timestamp * 1000);
+            updateData.openedAt = Timestamp.fromDate(new Date(event.timestamp * 1000));
           }
 
           await updateDoc(sendRef, updateData);
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           const clickData = sendDoc.data();
           const clickUpdateData: any = {
             status: 'clicked',
-            lastClickedAt: new Date(event.timestamp * 1000),
+            lastClickedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             clickCount: increment(1),
             lastClickedUrl: event.url,
             updatedAt: serverTimestamp()
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
           // Setze clickedAt nur beim ersten Mal
           if (!clickData.clickedAt) {
-            clickUpdateData.clickedAt = new Date(event.timestamp * 1000);
+            clickUpdateData.clickedAt = Timestamp.fromDate(new Date(event.timestamp * 1000));
           }
 
           await updateDoc(sendRef, clickUpdateData);
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         case 'bounce':
           await updateDoc(sendRef, {
             status: 'bounced',
-            bouncedAt: new Date(event.timestamp * 1000),
+            bouncedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             bounceReason: event.reason,
             updatedAt: serverTimestamp()
           });
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         case 'dropped':
           await updateDoc(sendRef, {
             status: 'failed',
-            failedAt: new Date(event.timestamp * 1000),
+            failedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             errorMessage: event.reason,
             updatedAt: serverTimestamp()
           });
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         case 'spam_report':
           await updateDoc(sendRef, {
             status: 'spam',
-            spamReportedAt: new Date(event.timestamp * 1000),
+            spamReportedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             updatedAt: serverTimestamp()
           });
           console.log('🚫 Updated to spam:', sendDoc.id);
