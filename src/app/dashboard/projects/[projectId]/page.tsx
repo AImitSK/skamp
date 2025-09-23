@@ -693,107 +693,25 @@ export default function ProjectDetailPage() {
     <div>
       {/* Kompakter Header mit allen Projektinfos */}
       <div className="mb-6">
+        {/* Titel-Zeile mit Zurück-Button */}
         <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
+          <div className="flex items-center gap-3 mb-2">
             {/* Zurück-Button links vom Titel */}
             <Link href="/dashboard/projects">
-              <Button plain className="p-2 mt-1">
+              <Button plain className="p-2">
                 <ArrowLeftIcon className="w-5 h-5" />
               </Button>
             </Link>
 
-            <div className="flex-1">
-              {/* Titel und Status in einer Zeile */}
-              <div className="flex items-center gap-3 mb-2">
-                <Heading className="!text-2xl">{project.title}</Heading>
-                <Badge color={getProjectStatusColor(project.status)}>
-                  {getProjectStatusLabel(project.status)}
-                </Badge>
-                {/* Erstellt-Datum */}
-                <span className="text-sm text-gray-500">
-                  Erstellt: {formatProjectDate(project.createdAt)}
-                </span>
-              </div>
-
-              {/* Trennlinie */}
-              <div className="border-t border-gray-200 mt-8 mb-3"></div>
-
-              {/* Kompakte Info-Zeile */}
-              <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
-                {/* Aktuelle Phase */}
-                <div className="flex items-center gap-1.5">
-                  <Squares2X2Icon className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">Phase:</span>
-                  <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
-                </div>
-
-
-                {/* Kunde */}
-                {project.customer && (
-                  <div className="flex items-center gap-1.5">
-                    <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">Kunde:</span>
-                    <button
-                      className="text-primary hover:text-primary-hover hover:underline text-sm"
-                      onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
-                      title="Kunde anzeigen"
-                    >
-                      {project.customer.name}
-                    </button>
-                  </div>
-                )}
-
-                {/* Priorität */}
-                <div className="flex items-center gap-1.5">
-                  <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">Priorität:</span>
-                  <Badge
-                    color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
-                    className="!py-0.5 !text-xs"
-                  >
-                    {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-                  </Badge>
-                </div>
-
-                {/* Deadline wenn vorhanden */}
-                {project.deadline && (
-                  <div className="flex items-center gap-1.5">
-                    <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">Deadline:</span>
-                    <span className="text-gray-900">
-                      {project.deadline?.toDate().toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                )}
-
-                {/* Tags - ans Ende und nur wenn vorhanden */}
-                {projectTags.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <TagIcon className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">Tags:</span>
-                    <div className="flex items-center gap-1">
-                      {projectTags.slice(0, 3).map(tag => (
-                        <Badge
-                          key={tag.id}
-                          color={tag.color || 'zinc'}
-                          className="!py-0.5 !text-xs"
-                        >
-                          {tag.name}
-                        </Badge>
-                      ))}
-                      {projectTags.length > 3 && (
-                        <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-              </div>
-            </div>
+            {/* Titel und Status */}
+            <Heading className="!text-2xl">{project.title}</Heading>
+            <Badge color={getProjectStatusColor(project.status)}>
+              {getProjectStatusLabel(project.status)}
+            </Badge>
+            {/* Erstellt-Datum */}
+            <span className="text-sm text-gray-500">
+              Erstellt: {formatProjectDate(project.createdAt)}
+            </span>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -801,18 +719,17 @@ export default function ProjectDetailPage() {
             {project.assignedTo && project.assignedTo.length > 0 && (
               <div className="flex items-center -space-x-2">
                 {(() => {
-                  // Nur die zugewiesenen Team-Mitglieder anzeigen (ohne Duplikate)
-                  const uniqueUserIds = Array.from(new Set(project.assignedTo || []));
+                  // Wie in KanBan Card - nur assignedTo ohne Duplikate
+                  const uniqueMembers = [];
+                  const seenMemberIds = new Set();
 
-                  // Member finden
-                  const uniqueMembers: Array<{userId: string, member: TeamMember | null}> = [];
-                  for (const userId of uniqueUserIds) {
-                    if (userId && !uniqueMembers.find(u => u.userId === userId)) {
-                      const member = teamMembers.find(m =>
-                        m.userId === userId ||
-                        m.id === userId
-                      );
-                      uniqueMembers.push({ userId, member: member || null });
+                  for (const userId of project.assignedTo) {
+                    const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                    if (member && !seenMemberIds.has(member.id)) {
+                      uniqueMembers.push({ userId, member });
+                      seenMemberIds.add(member.id);
+                    } else if (!member) {
+                      uniqueMembers.push({ userId, member: null });
                     }
                   }
 
@@ -878,6 +795,83 @@ export default function ProjectDetailPage() {
               </Dropdown>
             </div>
           </div>
+        </div>
+
+        {/* Trennlinie */}
+        <div className="border-t border-gray-200 mt-4 mb-3"></div>
+
+        {/* Kompakte Info-Zeile */}
+        <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
+          {/* Aktuelle Phase */}
+          <div className="flex items-center gap-1.5">
+            <Squares2X2Icon className="w-4 h-4 text-gray-400" />
+            <span className="font-medium">Phase:</span>
+            <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
+          </div>
+
+          {/* Kunde */}
+          {project.customer && (
+            <div className="flex items-center gap-1.5">
+              <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
+              <span className="font-medium">Kunde:</span>
+              <button
+                className="text-primary hover:text-primary-hover hover:underline text-sm"
+                onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
+                title="Kunde anzeigen"
+              >
+                {project.customer.name}
+              </button>
+            </div>
+          )}
+
+          {/* Priorität */}
+          <div className="flex items-center gap-1.5">
+            <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
+            <span className="font-medium">Priorität:</span>
+            <Badge
+              color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
+              className="!py-0.5 !text-xs"
+            >
+              {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+            </Badge>
+          </div>
+
+          {/* Deadline wenn vorhanden */}
+          {project.deadline && (
+            <div className="flex items-center gap-1.5">
+              <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+              <span className="font-medium">Deadline:</span>
+              <span className="text-gray-900">
+                {project.deadline?.toDate().toLocaleDateString('de-DE', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+          )}
+
+          {/* Tags - ans Ende und nur wenn vorhanden */}
+          {projectTags.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <TagIcon className="w-4 h-4 text-gray-400" />
+              <span className="font-medium">Tags:</span>
+              <div className="flex items-center gap-1">
+                {projectTags.slice(0, 3).map(tag => (
+                  <Badge
+                    key={tag.id}
+                    color={tag.color || 'zinc'}
+                    className="!py-0.5 !text-xs"
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+                {projectTags.length > 3 && (
+                  <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
