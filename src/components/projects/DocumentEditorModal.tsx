@@ -482,11 +482,29 @@ export default function DocumentEditorModal({
                   margin-bottom: 1.2em !important;
                   color: #111827 !important;
                 }
-                .prose-custom :global(.ProseMirror h1),
-                .prose-custom :global(.ProseMirror h2),
-                .prose-custom :global(.ProseMirror h3) {
+                .prose-custom :global(.ProseMirror h1) {
+                  font-size: 2em !important;
+                  font-weight: 700 !important;
                   color: #111827 !important;
+                  margin-top: 1.5em !important;
+                  margin-bottom: 0.75em !important;
+                  line-height: 1.2 !important;
+                }
+                .prose-custom :global(.ProseMirror h2) {
+                  font-size: 1.5em !important;
                   font-weight: 600 !important;
+                  color: #111827 !important;
+                  margin-top: 1.25em !important;
+                  margin-bottom: 0.5em !important;
+                  line-height: 1.3 !important;
+                }
+                .prose-custom :global(.ProseMirror h3) {
+                  font-size: 1.25em !important;
+                  font-weight: 600 !important;
+                  color: #374151 !important;
+                  margin-top: 1em !important;
+                  margin-bottom: 0.5em !important;
+                  line-height: 1.4 !important;
                 }
                 .prose-custom :global(.ProseMirror ul),
                 .prose-custom :global(.ProseMirror ol) {
