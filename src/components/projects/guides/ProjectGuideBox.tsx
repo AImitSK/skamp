@@ -238,7 +238,7 @@ export default function ProjectGuideBox({
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <ClipboardDocumentListIcon className="h-5 w-5 text-primary mr-2" />
