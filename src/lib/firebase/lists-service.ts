@@ -83,10 +83,20 @@ export const listsService = {
   },
 
   async getById(id: string): Promise<DistributionList | null> {
-    const docRef = doc(db, 'distribution_lists', id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as DistributionList;
+    // Validate ID to prevent Firebase error
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      console.warn('⚠️ Invalid list ID provided to getById:', id);
+      return null;
+    }
+
+    try {
+      const docRef = doc(db, 'distribution_lists', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as DistributionList;
+      }
+    } catch (error) {
+      console.error('Error fetching distribution list:', error);
     }
     return null;
   },

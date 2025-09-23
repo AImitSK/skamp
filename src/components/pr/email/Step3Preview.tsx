@@ -274,18 +274,23 @@ export default function Step3Preview({
         });
         
         // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
+        // Filtere leere oder ungültige List IDs heraus
+        const validListIds = draft.recipients.listIds?.filter(id => id && id.trim() !== '') || [];
+
         const campaignWithLists = {
           ...campaign,
-          distributionListIds: draft.recipients.listIds,
-          distributionListNames: draft.recipients.listNames,
+          distributionListIds: validListIds.length > 0 ? validListIds : undefined,
+          distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
           recipientCount: draft.recipients.totalCount
         };
-        
+
         emailLogger.debug('Campaign data prepared for scheduling', {
           campaignId: campaign.id,
           listIds: campaignWithLists.distributionListIds,
           listNames: campaignWithLists.distributionListNames,
-          totalCount: campaignWithLists.recipientCount
+          totalCount: campaignWithLists.recipientCount,
+          hasValidLists: validListIds.length > 0,
+          manualRecipientsCount: draft.recipients.manual?.length || 0
         });
         
         const result = await emailService.scheduleEmail({
@@ -334,13 +339,33 @@ export default function Step3Preview({
           totalRecipients,
           manualRecipients: draft.recipients.manual.length
         });
-        
+
+        // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
+        // Filtere leere oder ungültige List IDs heraus
+        const validListIds = draft.recipients.listIds?.filter(id => id && id.trim() !== '') || [];
+
+        const campaignWithLists = {
+          ...campaign,
+          distributionListIds: validListIds.length > 0 ? validListIds : undefined,
+          distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
+          recipientCount: draft.recipients.totalCount
+        };
+
+        emailLogger.debug('Campaign data prepared for immediate send', {
+          campaignId: campaign.id,
+          listIds: campaignWithLists.distributionListIds,
+          listNames: campaignWithLists.distributionListNames,
+          totalCount: campaignWithLists.recipientCount,
+          hasValidLists: validListIds.length > 0,
+          manualRecipientsCount: draft.recipients.manual?.length || 0
+        });
+
         // WICHTIG: Update Campaign Status auf "sending" VOR dem Versand
         await updateCampaignStatus('sending');
-        
+
         try {
           const result = await emailCampaignService.sendPRCampaign(
-            campaign,
+            campaignWithLists,
             emailContent,
             {
               name: senderInfo.name,

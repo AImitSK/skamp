@@ -307,15 +307,23 @@ export const emailCampaignService = {
    */
   async getCampaignContacts(campaign: PRCampaign): Promise<ContactEnhanced[]> {
     console.log('📋 Loading contacts for campaign:', campaign.title);
-    
+
     try {
       const allContacts: ContactEnhanced[] = [];
       const contactIds = new Set<string>(); // Für Deduplizierung
-      
+
       // Multi-List Support: Lade Kontakte aus allen Listen
-      const listIds = campaign.distributionListIds || [campaign.distributionListId];
-      
+      const listIds = campaign.distributionListIds ||
+                     (campaign.distributionListId ? [campaign.distributionListId] : []);
+
+      // Wenn keine Listen vorhanden sind, gebe leeres Array zurück
+      if (listIds.length === 0 || (listIds.length === 1 && !listIds[0])) {
+        console.log('📋 No distribution lists found, returning empty array');
+        return [];
+      }
+
       for (const listId of listIds) {
+        if (!listId) continue; // Skip empty/undefined list IDs
         console.log('📋 Loading list:', listId);
         
         // Lade die Verteilerliste
