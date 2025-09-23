@@ -114,7 +114,7 @@ export default function MonitoringPage() {
           <ChartBarIcon className="h-8 w-8 text-primary" />
           <Heading>PR-Monitoring & Versandhistorie</Heading>
         </div>
-        <Text>Überwache alle versendeten Pressemeldungen und deren Performance</Text>
+        <Text>Überwache alle versendeten Pressemeldungen und deren Performance (E-Mail Tracking & Clippings)</Text>
       </div>
 
       <div className="flex gap-4 items-end">
