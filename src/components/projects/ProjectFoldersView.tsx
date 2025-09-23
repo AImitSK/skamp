@@ -862,6 +862,13 @@ export default function ProjectFoldersView({
       // Wenn assets direkt mitgeliefert werden (für Strategie-Tab), zeige sie
       setCurrentAssets(projectFolders.assets || []);
       setBreadcrumbs([]);
+
+      // Wenn assets vorhanden sind, bedeutet das wir direkt in einem Ordner starten
+      // (z.B. Strategie-Tab startet direkt im Dokumente-Ordner)
+      if (projectFolders.assets && projectFolders.mainFolder?.id) {
+        setSelectedFolderId(projectFolders.mainFolder.id);
+      }
+
       // Lade alle Ordner für Verschieben-Modal
       loadAllFolders();
     }
