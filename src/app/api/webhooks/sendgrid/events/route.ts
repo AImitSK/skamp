@@ -53,25 +53,39 @@ export async function POST(request: NextRequest) {
           break;
 
         case 'open':
-          await updateDoc(sendRef, {
+          const currentData = sendDoc.data();
+          const updateData: any = {
             status: 'opened',
-            openedAt: new Date(event.timestamp * 1000),
             lastOpenedAt: new Date(event.timestamp * 1000),
             openCount: increment(1),
             updatedAt: serverTimestamp()
-          });
+          };
+
+          // Setze openedAt nur beim ersten Mal
+          if (!currentData.openedAt) {
+            updateData.openedAt = new Date(event.timestamp * 1000);
+          }
+
+          await updateDoc(sendRef, updateData);
           console.log('👁️ Updated to opened:', sendDoc.id);
           break;
 
         case 'click':
-          await updateDoc(sendRef, {
+          const clickData = sendDoc.data();
+          const clickUpdateData: any = {
             status: 'clicked',
-            clickedAt: new Date(event.timestamp * 1000),
             lastClickedAt: new Date(event.timestamp * 1000),
             clickCount: increment(1),
-            clickedUrl: event.url,
+            lastClickedUrl: event.url,
             updatedAt: serverTimestamp()
-          });
+          };
+
+          // Setze clickedAt nur beim ersten Mal
+          if (!clickData.clickedAt) {
+            clickUpdateData.clickedAt = new Date(event.timestamp * 1000);
+          }
+
+          await updateDoc(sendRef, clickUpdateData);
           console.log('🖱️ Updated to clicked:', sendDoc.id);
           break;
 
@@ -89,7 +103,7 @@ export async function POST(request: NextRequest) {
           await updateDoc(sendRef, {
             status: 'failed',
             failedAt: new Date(event.timestamp * 1000),
-            failureReason: event.reason,
+            errorMessage: event.reason,
             updatedAt: serverTimestamp()
           });
           console.log('❌ Updated to dropped:', sendDoc.id);
