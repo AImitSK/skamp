@@ -1322,6 +1322,7 @@ export default function ProjectDetailPage() {
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
                   clientId={project.customer?.id || ''}
+                  project={project}
                 />
               )}
             </div>

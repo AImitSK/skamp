@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { STRATEGY_TEMPLATES, type TemplateType } from '@/constants/strategy-templates';
 import StrategyTemplateGrid from './StrategyTemplateGrid';
 import ProjectFoldersView from '../ProjectFoldersView';
+import { projectService } from '@/lib/firebase/project-service';
 import { mediaService } from '@/lib/firebase/media-service';
 import type { InternalDocument } from '@/types/document-content';
 
@@ -38,25 +39,43 @@ export default function ProjectStrategyTab({
 
   // Dokumente-Ordner spezifische States
   const [documentsFolder, setDocumentsFolder] = useState<any>(null);
+  const [projectFolders, setProjectFolders] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Lade Dokumente-Ordner beim Initialisieren
+  // Lade Projekt-Ordnerstruktur und finde Dokumente-Ordner
   useEffect(() => {
     const loadDocumentsFolder = async () => {
       if (!projectId || !organizationId) return;
 
       try {
         setLoading(true);
-        // Lade Projekt-Hauptordner
-        const result = await mediaService.getMediaByClientId(organizationId, projectId, false);
+        // Lade Projekt-Ordnerstruktur (gleiche Methode wie im Daten-Tab)
+        const folderStructure = await projectService.getProjectFolderStructure(projectId, {
+          organizationId
+        });
 
-        // Finde den Dokumente-Ordner
-        const documentsFolder = result.folders?.find((folder: any) => folder.name === 'Dokumente');
+        if (folderStructure && folderStructure.subfolders) {
+          // Speichere die gesamte Struktur
+          setProjectFolders(folderStructure);
 
-        if (documentsFolder) {
-          setDocumentsFolder(documentsFolder);
-        } else {
-          console.warn('Dokumente-Ordner nicht gefunden in Projekt:', projectId);
+          // Finde den Dokumente-Ordner in den Unterordnern
+          const documentsFolder = folderStructure.subfolders.find((folder: any) =>
+            folder.name === 'Dokumente'
+          );
+
+          if (documentsFolder) {
+            // Lade die Unterordner des Dokumente-Ordners
+            const subfolders = await mediaService.getFolders(organizationId, documentsFolder.id);
+
+            // Erstelle eine neue Struktur mit Dokumente-Ordner als Root und seinen Unterordnern
+            const documentsFolderStructure = {
+              ...documentsFolder,
+              subfolders: subfolders || []
+            };
+            setDocumentsFolder(documentsFolderStructure);
+          } else {
+            console.warn('Dokumente-Ordner nicht gefunden in Projekt:', projectId);
+          }
         }
       } catch (error) {
         console.error('Fehler beim Laden des Dokumente-Ordners:', error);
@@ -88,6 +107,38 @@ export default function ProjectStrategyTab({
     setShowEditor(false);
     setTemplateContent(null);
     setTemplateInfo(null);
+  };
+
+  // Refresh Funktion zum Neuladen der Ordnerstruktur
+  const handleRefresh = async () => {
+    if (!projectId || !organizationId) return;
+
+    try {
+      const folderStructure = await projectService.getProjectFolderStructure(projectId, {
+        organizationId
+      });
+
+      if (folderStructure && folderStructure.subfolders) {
+        setProjectFolders(folderStructure);
+
+        const documentsFolder = folderStructure.subfolders.find((folder: any) =>
+          folder.name === 'Dokumente'
+        );
+
+        if (documentsFolder) {
+          // Lade die Unterordner des Dokumente-Ordners
+          const subfolders = await mediaService.getFolders(organizationId, documentsFolder.id);
+
+          const documentsFolderStructure = {
+            ...documentsFolder,
+            subfolders: subfolders || []
+          };
+          setDocumentsFolder(documentsFolderStructure);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Ordner:', error);
+    }
   };
 
   if (loading) {
@@ -133,7 +184,7 @@ export default function ProjectStrategyTab({
         organizationId={organizationId}
         projectFolders={documentsFolder} // Übergebe Dokumente-Ordner als "Projekt-Root"
         foldersLoading={loading}
-        onRefresh={() => {/* Nicht benötigt da wir statisch im Dokumente-Ordner sind */}}
+        onRefresh={handleRefresh} // Verwende die Refresh-Funktion
         clientId={projectId} // ClientId ist ProjectId
         project={project}
       />
