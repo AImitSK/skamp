@@ -242,7 +242,7 @@ export default function ProjectGuideBox({
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <ClipboardDocumentListIcon className="h-5 w-5 text-primary mr-2" />
-            <Subheading>Fortschritt nach Phase</Subheading>
+            <Subheading>Projekt-Guide</Subheading>
           </div>
           <Badge color="blue" className="font-medium">
             {progress}% abgeschlossen
@@ -296,6 +296,9 @@ export default function ProjectGuideBox({
                     <Text className="text-xs text-gray-500">
                       ({phase.steps.filter(s => completedSteps.includes(s.id)).length} von {phase.steps.length} erledigt)
                     </Text>
+                    {status === 'current' && (
+                      <Badge color="blue" className="text-xs py-0">Aktuell</Badge>
+                    )}
                   </div>
                 </div>
                 {isExpanded ? (
