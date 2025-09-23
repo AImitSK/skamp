@@ -1418,14 +1418,14 @@ export default function ProjectFoldersView({
 
   if (foldersLoading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <Subheading>Dateimanager</Subheading>
             <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
           </div>
         </div>
-        <div className="overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
+        <div>
           <FolderSkeleton />
         </div>
       </div>
@@ -1445,7 +1445,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <Subheading>Dateimanager</Subheading>
@@ -1565,9 +1565,8 @@ export default function ProjectFoldersView({
       )}
 
       {/* Content */}
-      <div 
-        className="overflow-y-auto space-y-3" 
-        style={{ height: 'calc(100% - 80px)' }}
+      <div
+        className="space-y-3"
         onDragOver={handleMainDragOver}
         onDrop={handleMainDrop}
       >
