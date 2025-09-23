@@ -304,6 +304,7 @@ export default function ProjectDetailPage() {
       
       if (projectData) {
         setProject(projectData);
+        setCompletedGuideSteps(projectData.completedGuideSteps || []);
         
         // Lade verknüpfte Kampagnen - sowohl über linkedCampaigns als auch projectId
         try {
@@ -1219,12 +1220,23 @@ export default function ProjectDetailPage() {
                     currentPhase={project.currentStage}
                     completedSteps={completedGuideSteps}
                     onNavigate={(tab) => setActiveTab(tab as any)}
-                    onStepToggle={(stepId) => {
-                      setCompletedGuideSteps(prev =>
-                        prev.includes(stepId)
-                          ? prev.filter(id => id !== stepId)
-                          : [...prev, stepId]
-                      );
+                    onStepToggle={async (stepId) => {
+                      const newSteps = completedGuideSteps.includes(stepId)
+                        ? completedGuideSteps.filter(id => id !== stepId)
+                        : [...completedGuideSteps, stepId];
+
+                      setCompletedGuideSteps(newSteps);
+
+                      // Speichere in DB
+                      if (project?.id && currentOrganization?.id) {
+                        try {
+                          await projectService.update(project.id, {
+                            completedGuideSteps: newSteps
+                          }, { organizationId: currentOrganization.id });
+                        } catch (error) {
+                          console.error('Fehler beim Speichern der Guide-Steps:', error);
+                        }
+                      }
                     }}
                   />
                 )}

@@ -63,6 +63,9 @@ export interface Project {
   // Projekt-Kategorisierung und Priorisierung
   tags?: string[];
   priority?: ProjectPriority;
+
+  // Projekt-Guide Fortschritt
+  completedGuideSteps?: string[];
   
   // ========================================
   // PLAN 6/9: MEDIA-ASSETS-INTEGRATION
