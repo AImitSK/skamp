@@ -87,6 +87,7 @@ export default function ProjectDetailPage() {
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring'>('overview');
   const [projectFolders, setProjectFolders] = useState<any>(null);
+  const [dokumenteFolder, setDokumenteFolder] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -201,13 +202,38 @@ export default function ProjectDetailPage() {
 
   const loadProjectFolders = async () => {
     if (!project?.id || !currentOrganization?.id) return;
-    
+
     setFoldersLoading(true);
     try {
       const folderStructure = await projectService.getProjectFolderStructure(project.id, {
         organizationId: currentOrganization.id
       });
       setProjectFolders(folderStructure);
+
+      // Für Strategie-Tab: Finde den Dokumente-Ordner und lade seinen Inhalt
+      if (folderStructure && folderStructure.subfolders) {
+        const dokFolder = folderStructure.subfolders.find((folder: any) =>
+          folder.name === 'Dokumente'
+        );
+
+        if (dokFolder) {
+          // Lade die Unterordner und Assets des Dokumente-Ordners
+          const { mediaService } = await import('@/lib/firebase/media-service');
+          const [subfolders, assets] = await Promise.all([
+            mediaService.getFolders(currentOrganization.id, dokFolder.id),
+            mediaService.getMediaAssets(currentOrganization.id, dokFolder.id)
+          ]);
+
+          // Erstelle Struktur die direkt den Inhalt des Dokumente-Ordners zeigt
+          const dokumenteInhaltAlsRoot = {
+            mainFolder: dokFolder,
+            subfolders: subfolders || [],  // Die Unterordner des Dokumente-Ordners
+            assets: assets || [],           // Die Dateien im Dokumente-Ordner
+            statistics: folderStructure.statistics
+          };
+          setDokumenteFolder(dokumenteInhaltAlsRoot);
+        }
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Projekt-Ordner:', error);
     } finally {
@@ -1259,12 +1285,12 @@ export default function ProjectDetailPage() {
                 />
               )}
 
-              {/* Projekt-Ordner - EXAKTER INHALT WIE DATEN-TAB */}
-              {currentOrganization && (
+              {/* Projekt-Ordner - Zeigt nur Dokumente-Ordner */}
+              {currentOrganization && dokumenteFolder && (
                 <ProjectFoldersView
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
-                  projectFolders={projectFolders}
+                  projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
                   clientId={project.customer?.id || ''}

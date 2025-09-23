@@ -859,7 +859,8 @@ export default function ProjectFoldersView({
   useEffect(() => {
     if (projectFolders?.subfolders) {
       setCurrentFolders(projectFolders.subfolders);
-      setCurrentAssets([]);
+      // Wenn assets direkt mitgeliefert werden (für Strategie-Tab), zeige sie
+      setCurrentAssets(projectFolders.assets || []);
       setBreadcrumbs([]);
       // Lade alle Ordner für Verschieben-Modal
       loadAllFolders();
