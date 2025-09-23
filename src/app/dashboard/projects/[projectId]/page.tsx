@@ -51,7 +51,7 @@ import ProjectStrategyTab from '@/components/projects/strategy/ProjectStrategyTa
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
-import PhaseGuideBox from '@/components/projects/guides/PhaseGuideBox';
+import ProjectGuideBox from '@/components/projects/guides/ProjectGuideBox';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { taskService } from '@/lib/firebase/task-service';
@@ -1216,31 +1216,14 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
 
-                {/* Guide Box für frühe Phasen ODER Pressemeldung für späte Phasen */}
-                {(() => {
-                  const earlyPhases = ['ideas_planning', 'creation'];
-                  const showGuide = project && earlyPhases.includes(project.currentStage);
-
-                  if (showGuide && user && currentOrganization) {
-                    return (
-                      <PhaseGuideBox
-                        currentPhase={project.currentStage}
-                        projectId={project.id!}
-                        organizationId={currentOrganization.id}
-                        userId={user.uid}
-                        onTaskComplete={() => {}} // Minimale Implementation
-                        onPhaseAdvance={(newPhase) => {
-                          // Simple phase advance ohne komplexe Logic
-                          console.log(`Advancing to phase: ${newPhase}`);
-                        }}
-                        setActiveTab={(tab: string) => setActiveTab(tab as any)}
-                      />
-                    );
-                  }
-
-                  // Keine zusätzliche Pressemeldung Box mehr - alles im Pressemeldung Tab
-                  return null;
-                })()}
+                {/* Projekt-Leitfaden Guide Box - immer anzeigen */}
+                {project && (
+                  <ProjectGuideBox
+                    currentPhase={project.currentStage}
+                    completedSteps={[]} // TODO: Track completed steps
+                    onNavigate={(tab) => setActiveTab(tab as any)}
+                  />
+                )}
               </div>
             </div>
           )}
