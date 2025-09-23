@@ -1110,11 +1110,7 @@ export default function ProjectDetailPage() {
               )}
 
               {/* Untere Reihe: Fortschritt nach Phase + Guide (responsive) */}
-              <div className={`grid gap-6 ${(() => {
-                const earlyPhases = ['ideas_planning', 'creation'];
-                const showGuide = project && earlyPhases.includes(project.currentStage);
-                return showGuide ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1';
-              })()}`}>
+              <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
                 {/* Fortschritt nach Phase Box */}
                 {project && currentOrganization && (
                   <div className="bg-white rounded-lg border border-gray-200 p-6">
