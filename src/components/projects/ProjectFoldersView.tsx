@@ -980,10 +980,19 @@ export default function ProjectFoldersView({
   
 
   const handleGoToRoot = () => {
-    // Immer zur Hauptansicht zurückgehen (3 Hauptordner)
-    setSelectedFolderId(undefined);
-    setNavigationStack([]);
-    loadFolderContent();
+    if (projectFolders.assets && projectFolders.mainFolder?.id) {
+      // Im Strategie-Tab: Zurück zum Dokumente-Ordner (der hier Root ist)
+      setSelectedFolderId(projectFolders.mainFolder.id);
+      setNavigationStack([]);
+      setCurrentFolders(projectFolders.subfolders || []);
+      setCurrentAssets(projectFolders.assets || []);
+      setBreadcrumbs([]);
+    } else {
+      // Im Daten-Tab: Zurück zu den 3 Hauptordnern
+      setSelectedFolderId(undefined);
+      setNavigationStack([]);
+      loadFolderContent();
+    }
   };
 
   const handleBreadcrumbClick = (clickedIndex: number) => {
@@ -1519,7 +1528,7 @@ export default function ProjectFoldersView({
             onClick={handleGoToRoot}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
-            Projekt-Ordner
+            {projectFolders.assets ? 'Dokumente' : 'Projekt-Ordner'}
           </button>
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
