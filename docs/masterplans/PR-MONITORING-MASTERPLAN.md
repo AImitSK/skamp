@@ -1190,6 +1190,6 @@ Kontakt bearbeiten → Zeigt:
 
 ---
 
-**Status: 🟡 WARTET AUF FEEDBACK**
+**Status: 🟢 PHASE 1 IMPLEMENTIERT**
 
-Nächster Schritt: Diskussion der offenen Fragen und Freigabe für Phase 1
+Nächster Schritt: Testing mit echter Kampagne, dann Phase 2 (Google News Integration)
