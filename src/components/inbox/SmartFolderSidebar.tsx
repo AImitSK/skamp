@@ -6,13 +6,13 @@ import { SmartFolder } from '@/types/inbox-enhanced';
 import { smartFolderService } from '@/lib/email/smart-folder-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { 
+import {
   FolderIcon,
   PlusIcon,
   EllipsisVerticalIcon,
   UsersIcon,
-  ChartBarIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -22,9 +22,9 @@ import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { RoutingRuleEditor } from '@/components/email/RoutingRuleEditor';
 import { SignatureList } from '@/components/email/SignatureList';
-import { 
-  PlusIcon, 
-  PencilIcon, 
+import {
+  PlusIcon,
+  PencilIcon,
   TrashIcon,
   EnvelopeIcon,
   ShieldCheckIcon,
@@ -38,7 +38,8 @@ import {
   FunnelIcon,
   DocumentTextIcon,
   PencilSquareIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';

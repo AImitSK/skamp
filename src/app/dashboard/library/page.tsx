@@ -9,14 +9,14 @@ import {
   advertisementService
 } from "@/lib/firebase/library-service";
 import type { Publication, Advertisement } from "@/types/library";
-import { 
-  BookOpenIcon, 
-  NewspaperIcon, 
+import {
+  BookOpenIcon,
+  NewspaperIcon,
   GlobeAltIcon,
   UserGroupIcon,
-  ChartBarIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
