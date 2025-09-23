@@ -695,6 +695,13 @@ export default function ProjectDetailPage() {
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
+            {/* Zurück-Button links vom Titel */}
+            <Link href="/dashboard/projects">
+              <Button plain className="p-2 mt-1">
+                <ArrowLeftIcon className="w-5 h-5" />
+              </Button>
+            </Link>
+
             <div className="flex-1">
               {/* Titel und Status in einer Zeile */}
               <div className="flex items-center gap-3 mb-2">
@@ -790,27 +797,16 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Zurück zur Hauptseite */}
-            <Link href="/dashboard/projects">
-              <Button plain className="p-2">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </Button>
-            </Link>
-
             {/* Team-Mitglieder Avatare */}
             {project.assignedTo && project.assignedTo.length > 0 && (
               <div className="flex items-center -space-x-2">
                 {(() => {
-                  // Sammle alle zugewiesenen User-IDs inklusive Admin und Manager
-                  const allUserIds = [
-                    ...(project.assignedTo || []),
-                    project.userId,
-                    project.managerId
-                  ].filter(Boolean);
+                  // Nur die zugewiesenen Team-Mitglieder anzeigen (ohne Duplikate)
+                  const uniqueUserIds = Array.from(new Set(project.assignedTo || []));
 
-                  // Eindeutige User-IDs sammeln und Member finden
+                  // Member finden
                   const uniqueMembers: Array<{userId: string, member: TeamMember | null}> = [];
-                  for (const userId of allUserIds) {
+                  for (const userId of uniqueUserIds) {
                     if (userId && !uniqueMembers.find(u => u.userId === userId)) {
                       const member = teamMembers.find(m =>
                         m.userId === userId ||
