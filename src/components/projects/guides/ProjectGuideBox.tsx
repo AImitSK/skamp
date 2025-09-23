@@ -237,9 +237,22 @@ export default function ProjectGuideBox({
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <ClipboardDocumentListIcon className="w-6 h-6 text-gray-700" />
-          <h3 className="text-lg font-semibold text-gray-900">Fortschritt nach Phase</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ClipboardDocumentListIcon className="w-5 h-5 text-gray-700" />
+            <h3 className="text-base font-semibold text-gray-900">Fortschritt nach Phase</h3>
+          </div>
+          <Badge color="blue" className="font-medium">
+            {progress}% abgeschlossen
+          </Badge>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
 
@@ -258,25 +271,23 @@ export default function ProjectGuideBox({
               {/* Phase Header */}
               <button
                 onClick={() => togglePhase(phase.id)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${phase.color}`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`p-1.5 rounded-lg ${phase.color}`}>
+                    <Icon className="w-4 h-4" />
                   </div>
-                  <div className="text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">{phase.title}</span>
-                      {status === 'completed' && (
-                        <CheckCircleIconSolid className="w-5 h-5 text-green-500" />
-                      )}
-                      {status === 'current' && (
-                        <Badge color="blue" className="text-xs">Aktuell</Badge>
-                      )}
-                    </div>
-                    <Text className="text-xs text-gray-500 mt-0.5">
-                      {phase.steps.filter(s => completedSteps.includes(s.id)).length} von {phase.steps.length} erledigt
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-gray-900">{phase.title}</span>
+                    <Text className="text-xs text-gray-500">
+                      ({phase.steps.filter(s => completedSteps.includes(s.id)).length} von {phase.steps.length} erledigt)
                     </Text>
+                    {status === 'completed' && (
+                      <CheckCircleIconSolid className="w-4 h-4 text-green-500" />
+                    )}
+                    {status === 'current' && (
+                      <Badge color="blue" className="text-xs py-0">Aktuell</Badge>
+                    )}
                   </div>
                 </div>
                 {isExpanded ? (
