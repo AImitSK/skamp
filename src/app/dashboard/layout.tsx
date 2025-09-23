@@ -202,6 +202,12 @@ export default function DashboardLayout({
           icon: DocumentTextIcon,
           description: "Wiederverwendbare Textbausteine"
         },
+        {
+          name: "Monitoring",
+          href: "/dashboard/pr-tools/monitoring",
+          icon: ChartBarIcon,
+          description: "E-Mail Tracking und Veröffentlichungs-Monitoring"
+        },
     ],
   },
   {
