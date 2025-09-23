@@ -196,17 +196,11 @@ export default function DashboardLayout({
           icon: PhotoIcon,
           description: "Zentrale Verwaltung aller Medieninhalte"
         },
-        { 
-          name: "Boilerplates", 
-          href: "/dashboard/pr-tools/boilerplates", 
+        {
+          name: "Boilerplates",
+          href: "/dashboard/pr-tools/boilerplates",
           icon: DocumentTextIcon,
           description: "Wiederverwendbare Textbausteine"
-        },
-        { 
-          name: "Templates", 
-          href: "/dashboard/pr-tools/templates", 
-          icon: DocumentCheckIcon,
-          description: "PDF-Layout-Vorlagen verwalten"
         },
     ],
   },

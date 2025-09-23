@@ -50,4 +50,3 @@
 ## Aktueller Status
 - Media Library Feature: Vollständig implementiert und getestet
 - Tests aktuell in Bearbeitung - Funktionsnamen anpassen
-- immer gleich pushen
