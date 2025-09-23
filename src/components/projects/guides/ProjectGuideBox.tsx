@@ -14,7 +14,8 @@ import {
   PaperAirplaneIcon,
   ChartBarIcon,
   ClipboardDocumentListIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import { Text } from '@/components/ui/text';
