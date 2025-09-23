@@ -1295,6 +1295,14 @@ export default function ProjectDetailPage() {
           {/* Daten Tab */}
           {activeTab === 'daten' && (
             <div className="space-y-6">
+              {/* Header */}
+              <div>
+                <Heading level={3}>Projektdaten verwalten</Heading>
+                <Text className="text-gray-500 mt-1">
+                  Organisieren Sie alle Projektdateien und Dokumente zentral
+                </Text>
+              </div>
+
               {/* Projekt-Ordner - Zeigt alle Projekt-Ordner */}
               {currentOrganization && projectFolders && (
                 <ProjectFoldersView
