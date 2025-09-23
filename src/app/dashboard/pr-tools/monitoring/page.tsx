@@ -40,9 +40,15 @@ export default function MonitoringPage() {
       setLoading(true);
       const allCampaigns = await prService.getAll(currentOrganization.id);
 
+      console.log('📊 All campaigns:', allCampaigns);
+      console.log('📊 Campaigns count:', allCampaigns.length);
+
       const sentCampaigns = allCampaigns.filter((c: any) =>
         c.status === 'sent' || c.emailSends?.length > 0
       );
+
+      console.log('📊 Sent campaigns:', sentCampaigns);
+      console.log('📊 Sent campaigns count:', sentCampaigns.length);
 
       const campaignsWithStats = await Promise.all(
         sentCampaigns.map(async (campaign: any) => {
