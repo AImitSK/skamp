@@ -1443,9 +1443,9 @@ export default function ProjectFoldersView({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
-      {selectedFolderId && (
-        <div className="flex items-center justify-end mb-4">
-          <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center space-x-2">
+          {selectedFolderId && (
             <Button
               plain
               onClick={() => setShowCreateFolderModal(true)}
@@ -1489,7 +1489,6 @@ export default function ProjectFoldersView({
           </Button>
         </div>
       </div>
-      )}
 
       {/* Smart Upload Info Panel */}
       {project && (
