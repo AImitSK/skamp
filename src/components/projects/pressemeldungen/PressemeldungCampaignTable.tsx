@@ -164,15 +164,24 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
 
         {/* Kampagne Versenden */}
         <div className="w-[15%]">
-          <Button
-            onClick={handleSend}
-            color="secondary"
-            className="text-xs px-3 py-1"
-            disabled={campaign.status !== 'approved' && campaign.status !== 'sent'}
-          >
-            <PaperAirplaneIcon className="h-3 w-3 mr-1" />
-            Versenden
-          </Button>
+          {campaign.status === 'sent' ? (
+            <a
+              href={`/dashboard/pr-tools/monitoring/${campaign.id}`}
+              className="text-xs text-blue-600 hover:text-blue-700 flex items-center"
+            >
+              Monitoring →
+            </a>
+          ) : (
+            <Button
+              onClick={handleSend}
+              color="secondary"
+              className="text-xs px-3 py-1"
+              disabled={campaign.status !== 'approved'}
+            >
+              <PaperAirplaneIcon className="h-3 w-3 mr-1" />
+              Versenden
+            </Button>
+          )}
         </div>
 
         {/* Aktionen */}
