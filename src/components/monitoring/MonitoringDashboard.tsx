@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { MediaClipping } from '@/types/monitoring';
 import { EmailCampaignSend } from '@/types/email';
 import { Text } from '@/components/ui/text';
@@ -25,8 +25,13 @@ import {
   EyeIcon,
   NewspaperIcon,
   FaceSmileIcon,
-  FaceFrownIcon
+  FaceFrownIcon,
+  CurrencyEuroIcon
 } from '@heroicons/react/24/outline';
+import { useOrganization } from '@/context/OrganizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
+import { AVESettings } from '@/types/monitoring';
 
 interface MonitoringDashboardProps {
   clippings: MediaClipping[];
@@ -51,6 +56,24 @@ const CHART_COLORS = [
 ];
 
 export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardProps) {
+  const { currentOrganization } = useOrganization();
+  const { user } = useAuth();
+  const [aveSettings, setAVESettings] = useState<AVESettings | null>(null);
+
+  useEffect(() => {
+    if (currentOrganization?.id && user?.uid) {
+      aveSettingsService.getOrCreate(currentOrganization.id, user.uid)
+        .then(setAVESettings)
+        .catch(console.error);
+    }
+  }, [currentOrganization?.id, user?.uid]);
+
+  const calculateAVE = (clipping: MediaClipping): number => {
+    if (clipping.ave) return clipping.ave;
+    if (!aveSettings) return 0;
+    return aveSettingsService.calculateAVE(clipping, aveSettings);
+  };
+
   const timelineData = useMemo(() => {
     const groupedByDate = clippings.reduce((acc, clipping) => {
       if (!clipping.publishedAt || !clipping.publishedAt.toDate) return acc;
@@ -138,7 +161,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
   }, [sends]);
 
   const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
-  const totalAVE = clippings.reduce((sum, c) => sum + (c.ave || 0), 0);
+  const totalAVE = clippings.reduce((sum, c) => sum + calculateAVE(c), 0);
 
   if (clippings.length === 0 && sends.length === 0) {
     return (
@@ -154,7 +177,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <Subheading className="mb-4">📊 Performance-Übersicht</Subheading>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <NewspaperIcon className="h-5 w-5 text-gray-600" />
@@ -174,6 +197,18 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               {totalReach.toLocaleString('de-DE')}
             </div>
           </div>
+
+          {totalAVE > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <CurrencyEuroIcon className="h-5 w-5 text-gray-600" />
+                <Text className="text-sm text-gray-600">Gesamt-AVE</Text>
+              </div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {totalAVE.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
+              </div>
+            </div>
+          )}
 
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">

@@ -727,29 +727,47 @@ interface MonitoringSuggestion {
 
 ---
 
-### **Phase 3: Clipping-Enhancement** 📊 MITTEL
+### **Phase 3: Clipping-Enhancement** 🚧 IN ARBEIT
 
 #### **Ziel:** Reichere Daten und bessere Analyse
 
 **Tasks:**
-1. ⏳ AVE-Berechnung (Advertising Value Equivalent)
-   - Formel: Reichweite × Faktor × Sentiment-Multiplikator
-   - Konfigurierbare Faktoren pro Medientyp (Print: 3€, Online: 1€)
-   - UI zur AVE-Faktor-Konfiguration
-2. ⏳ Sentiment-Analyse Verbesserung
+1. 🚧 AVE-Berechnung (Advertising Value Equivalent)
+   - Formel: `AVE = Reichweite × Faktor × Sentiment-Multiplikator`
+   - Default-Faktoren:
+     - Print: 3€ pro Reichweite
+     - Online: 1€ pro Reichweite
+     - Broadcast: 5€ pro Reichweite
+     - Blog: 0.5€ pro Reichweite
+   - Sentiment-Multiplikatoren:
+     - Positiv: 1.0 (voller Wert)
+     - Neutral: 0.8 (20% Abzug)
+     - Negativ: 0.5 (50% Abzug)
+   - Monitoring-Settings-Seite für AVE-Faktor-Konfiguration
+   - AVE-Display in ClippingArchive und Dashboard
+
+2. 🚧 Sentiment-Analyse Verbesserung
    - Sentiment-Score (-1 bis 1) zusätzlich zu Labels
-   - UI für manuelle Anpassung
-3. 📋 Screenshot-Capture (Puppeteer) - Optional
+   - Slider in MarkPublishedModal für feinere Abstufung
+   - Score-basierte Berechnung statt nur Label
+
+3. 📋 Screenshot-Capture (Puppeteer) - VERSCHOBEN auf später
    - Automatischer Screenshot bei URL-Eingabe
    - Upload zu Firebase Storage
-4. 📋 Web Scraping (Volltext-Extraktion) - Optional
+   - **Grund:** Komplexität, erst nach AVE-Features
+
+4. 📋 Web Scraping (Volltext-Extraktion) - VERSCHOBEN auf später
    - Artikel-Text extrahieren
    - Metadaten (Autor, Datum)
+   - **Grund:** Erst nach Screenshot-Feature
 
-**Priorisierung:**
-1. AVE-Berechnung (sofort nützlich)
-2. Sentiment-Verbesserungen
-3. Screenshot & Scraping (später)
+**Priorisierung (aktualisiert):**
+1. ✅ AVE-Berechnung + Settings (HEUTE)
+2. ✅ Sentiment-Score mit Slider (HEUTE)
+3. 📋 Screenshot-Capture (SPÄTER - Phase 4)
+4. 📋 Web-Scraping (SPÄTER - Phase 5)
+
+**Status:** 24. September 2025 - Implementierung gestartet
 
 ---
 

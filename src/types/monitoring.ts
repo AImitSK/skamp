@@ -104,7 +104,44 @@ export interface PublishingData {
   articleTitle?: string;
   reach?: number;
   sentiment?: 'positive' | 'neutral' | 'negative';
+  sentimentScore?: number;
   publicationNotes?: string;
   outletName?: string;
   publishedAt?: Timestamp;
 }
+
+export interface AVESettings {
+  id?: string;
+  organizationId: string;
+
+  factors: {
+    print: number;
+    online: number;
+    broadcast: number;
+    blog: number;
+  };
+
+  sentimentMultipliers: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+
+  updatedBy: string;
+  updatedAt: Timestamp;
+  createdAt: Timestamp;
+}
+
+export const DEFAULT_AVE_SETTINGS: Omit<AVESettings, 'id' | 'organizationId' | 'updatedBy' | 'updatedAt' | 'createdAt'> = {
+  factors: {
+    print: 3,
+    online: 1,
+    broadcast: 5,
+    blog: 0.5
+  },
+  sentimentMultipliers: {
+    positive: 1.0,
+    neutral: 0.8,
+    negative: 0.5
+  }
+};

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { MediaClipping } from '@/types/monitoring';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
@@ -16,14 +17,41 @@ import {
   CalendarIcon,
   NewspaperIcon
 } from '@heroicons/react/24/outline';
+import { useOrganization } from '@/context/OrganizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
+import { AVESettings } from '@/types/monitoring';
 
 interface ClippingArchiveProps {
   clippings: MediaClipping[];
 }
 
 export function ClippingArchive({ clippings }: ClippingArchiveProps) {
+  const { currentOrganization } = useOrganization();
+  const { user } = useAuth();
+  const [aveSettings, setAVESettings] = useState<AVESettings | null>(null);
+
+  useEffect(() => {
+    if (currentOrganization?.id && user?.uid) {
+      aveSettingsService.getOrCreate(currentOrganization.id, user.uid)
+        .then(setAVESettings)
+        .catch(console.error);
+    }
+  }, [currentOrganization?.id, user?.uid]);
+
+  const calculateAVE = (clipping: MediaClipping): number => {
+    if (clipping.ave) return clipping.ave;
+    if (!aveSettings) return 0;
+    return aveSettingsService.calculateAVE(clipping, aveSettings);
+  };
+
+  const clippingsWithAVE = clippings.map(c => ({
+    ...c,
+    calculatedAVE: calculateAVE(c)
+  }));
+
   const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
-  const totalAVE = clippings.reduce((sum, c) => sum + (c.ave || 0), 0);
+  const totalAVE = clippingsWithAVE.reduce((sum, c) => sum + c.calculatedAVE, 0);
 
   const sentimentCounts = {
     positive: clippings.filter(c => c.sentiment === 'positive').length,
@@ -108,7 +136,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {clippings.map((clipping) => (
+              {clippingsWithAVE.map((clipping) => (
                 <tr key={clipping.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div>
@@ -140,10 +168,10 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
                           {clipping.reach.toLocaleString('de-DE')}
                         </div>
                       )}
-                      {clipping.ave && (
+                      {clipping.calculatedAVE > 0 && (
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           <CurrencyEuroIcon className="h-4 w-4" />
-                          {clipping.ave.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
+                          {clipping.calculatedAVE.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
                         </div>
                       )}
                     </div>

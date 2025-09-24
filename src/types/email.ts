@@ -101,6 +101,7 @@ export interface EmailCampaignSend {
   articleTitle?: string;
   reach?: number;
   sentiment?: 'positive' | 'neutral' | 'negative';
+  sentimentScore?: number;
   publicationNotes?: string;
 
   // Manuelles Tracking

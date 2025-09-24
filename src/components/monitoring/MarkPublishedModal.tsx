@@ -33,6 +33,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
     outletName: '',
     reach: '',
     sentiment: 'neutral' as 'positive' | 'neutral' | 'negative',
+    sentimentScore: 0,
     publicationNotes: '',
     publishedAt: new Date().toISOString().split('T')[0]
   });
@@ -72,6 +73,8 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         clippingData.sentimentNotes = formData.publicationNotes;
       }
 
+      clippingData.sentimentScore = formData.sentimentScore;
+
       const clippingId = await clippingService.create(clippingData, { organizationId: currentOrganization.id });
 
       const sendRef = doc(db, 'email_campaign_sends', send.id!);
@@ -98,6 +101,8 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
       if (formData.publicationNotes) {
         updateData.publicationNotes = formData.publicationNotes;
       }
+
+      updateData.sentimentScore = formData.sentimentScore;
 
       await updateDoc(sendRef, updateData);
 
@@ -180,12 +185,41 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                 <Label>Sentiment</Label>
                 <Select
                   value={formData.sentiment}
-                  onChange={(e) => setFormData({ ...formData, sentiment: e.target.value as any })}
+                  onChange={(e) => {
+                    const sentiment = e.target.value as 'positive' | 'neutral' | 'negative';
+                    let score = 0;
+                    if (sentiment === 'positive') score = 0.7;
+                    if (sentiment === 'negative') score = -0.7;
+                    setFormData({ ...formData, sentiment, sentimentScore: score });
+                  }}
                 >
                   <option value="positive">😊 Positiv</option>
                   <option value="neutral">😐 Neutral</option>
                   <option value="negative">😞 Negativ</option>
                 </Select>
+              </Field>
+
+              <Field>
+                <Label>Sentiment-Score (optional)</Label>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="-1"
+                    max="1"
+                    step="0.1"
+                    value={formData.sentimentScore}
+                    onChange={(e) => setFormData({ ...formData, sentimentScore: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Sehr negativ</span>
+                    <span className="font-medium">{formData.sentimentScore.toFixed(1)}</span>
+                    <span>Sehr positiv</span>
+                  </div>
+                </div>
               </Field>
 
               <Field>

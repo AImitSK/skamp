@@ -30,6 +30,10 @@ const settingsItems = [
     href: "/dashboard/settings/email",
   },
   {
+    name: "Monitoring & AVE",
+    href: "/dashboard/settings/monitoring",
+  },
+  {
     name: "Import / Export",
     href: "/dashboard/settings/import-export",
   },
