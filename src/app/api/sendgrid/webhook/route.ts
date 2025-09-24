@@ -1,7 +1,5 @@
 // src/app/api/sendgrid/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, updateDoc, query, where, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
 
 // SendGrid Event Types
 interface SendGridEvent {
@@ -55,6 +53,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * Einzelnes SendGrid Event verarbeiten
+ * Nutzt Firestore REST API da Client SDK in API Routes nicht funktioniert
  */
 async function processWebhookEvent(event: SendGridEvent) {
   console.log('🔄 Processing event:', event.event, 'for', event.email);
@@ -65,62 +64,120 @@ async function processWebhookEvent(event: SendGridEvent) {
   });
 
   try {
-    // Email Campaign Send Dokument finden - VERBESSERT: Suche mit mehreren Kriterien
-    let q = query(
-      collection(db, 'email_campaign_sends'),
-      where('recipientEmail', '==', event.email)
-    );
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      console.warn('⚠️ No email_campaign_send found for:', event.email);
-      console.warn('⚠️ Make sure email_campaign_sends are being created when emails are sent');
+    // 1. Find documents via REST API
+    const queryUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+
+    const queryResponse = await fetch(queryUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'email_campaign_sends' }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'recipientEmail' },
+              op: 'EQUAL',
+              value: { stringValue: event.email }
+            }
+          }
+        }
+      })
+    });
+
+    if (!queryResponse.ok) {
+      console.error('❌ Query failed:',  await queryResponse.text());
       return;
     }
 
-    console.log(`📊 Found ${querySnapshot.size} email_campaign_send documents for:`, event.email);
+    const queryResult = await queryResponse.json();
+    const documents = queryResult.filter((r: any) => r.document).map((r: any) => r.document);
 
-    // Alle passenden Dokumente aktualisieren (falls mehrere Kampagnen)
-    const updates = [];
+    if (documents.length === 0) {
+      console.warn('⚠️ No email_campaign_send found for:', event.email);
+      return;
+    }
 
-    for (const docSnapshot of querySnapshot.docs) {
-      const sendData = docSnapshot.data();
-      console.log('📄 Checking document:', {
-        id: docSnapshot.id,
-        messageId: sendData.messageId,
-        status: sendData.status,
-        organizationId: sendData.organizationId
-      });
-      
-      // Nur aktualisieren wenn Message ID übereinstimmt (für Genauigkeit)
-      if (event['sg_message_id'] && sendData.messageId && 
+    console.log(`📊 Found ${documents.length} documents for:`, event.email);
+
+    // 2. Update each document
+    for (const document of documents) {
+      const docPath = document.name;
+      const sendData = convertFirestoreDoc(document);
+
+      // Check message ID match
+      if (event['sg_message_id'] && sendData.messageId &&
           !event['sg_message_id'].includes(sendData.messageId)) {
         continue;
       }
 
-      // Update-Daten basierend auf Event-Typ
+      // Create update data
       const updateData = createUpdateData(event, sendData);
-      
-      if (Object.keys(updateData).length > 0) {
-        updates.push({
-          docId: docSnapshot.id,
-          data: updateData
-        });
-      }
-    }
+      if (Object.keys(updateData).length === 0) continue;
 
-    // Bulk-Update ausführen
-    for (const update of updates) {
-      const docRef = doc(db, 'email_campaign_sends', update.docId);
-      await updateDoc(docRef, update.data);
-      console.log('✅ Updated status to', update.data.status, 'for', event.email);
+      // Convert to Firestore format
+      const firestoreFields: any = {};
+      for (const [key, value] of Object.entries(updateData)) {
+        firestoreFields[key] = toFirestoreValue(value);
+      }
+
+      // Update via REST API
+      // Build updateMask query params (each field separately)
+      const updateMaskParams = Object.keys(updateData)
+        .map(key => `updateMask.fieldPaths=${key}`)
+        .join('&');
+      const updateUrl = `https://firestore.googleapis.com/v1/${docPath}?${updateMaskParams}&key=${apiKey}`;
+
+      const updateResponse = await fetch(updateUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields: firestoreFields })
+      });
+
+      if (updateResponse.ok) {
+        console.log('✅ Updated status to', updateData.status, 'for', event.email);
+      } else {
+        console.error('❌ Update failed:', await updateResponse.text());
+      }
     }
 
   } catch (error) {
     console.error('❌ Error processing webhook event:', error);
     throw error;
   }
+}
+
+// Helper: Convert Firestore REST API document to object
+function convertFirestoreDoc(doc: any): any {
+  const obj: any = {};
+  for (const [key, value] of Object.entries(doc.fields || {})) {
+    obj[key] = fromFirestoreValue(value);
+  }
+  return obj;
+}
+
+function fromFirestoreValue(value: any): any {
+  if (value.stringValue !== undefined) return value.stringValue;
+  if (value.integerValue !== undefined) return parseInt(value.integerValue);
+  if (value.doubleValue !== undefined) return value.doubleValue;
+  if (value.booleanValue !== undefined) return value.booleanValue;
+  if (value.timestampValue !== undefined) return new Date(value.timestampValue);
+  return null;
+}
+
+function toFirestoreValue(value: any): any {
+  if (value === null) return { nullValue: null };
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'number') return Number.isInteger(value) ? { integerValue: value.toString() } : { doubleValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
+  return { stringValue: String(value) };
 }
 
 /**
