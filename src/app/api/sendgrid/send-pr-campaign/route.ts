@@ -3,8 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { rateLimitServiceAPI } from '@/lib/security/rate-limit-service-api';
 import { emailAddressService } from '@/lib/email/email-address-service';
-import { doc, collection, writeBatch } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
 import sgMail from '@sendgrid/mail';
 
 // SendGrid konfigurieren
@@ -241,10 +239,6 @@ export async function POST(request: NextRequest) {
 
       console.log(`📦 Sending in ${batches.length} batches`);
 
-      // Batch für Firestore vorbereiten
-      const firestoreBatch = writeBatch(db);
-      const emailSendDocs: any[] = [];
-
       // Sende Batches sequenziell
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
@@ -294,34 +288,13 @@ export async function POST(request: NextRequest) {
             };
 
             const [response] = await sgMail.send(msg);
-            const messageId = response.headers['x-message-id'] || '';
 
             results.push({
               email: recipient.email,
               status: 'sent',
-              messageId: messageId
+              messageId: response.headers['x-message-id'] || ''
             });
             successCount++;
-
-            // NEU: email_campaign_sends Dokument vorbereiten
-            if (data.campaignId) {
-              const sendDoc = doc(collection(db, 'email_campaign_sends'));
-              const sendData = {
-                campaignId: data.campaignId,
-                recipientEmail: recipient.email,
-                recipientName: recipient.name,
-                messageId: messageId,
-                status: 'sent',
-                userId: auth.userId,
-                organizationId: auth.organizationId, // WICHTIG: organizationId für Multi-Tenancy
-                sentAt: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date()
-              };
-
-              firestoreBatch.set(sendDoc, sendData);
-              emailSendDocs.push({ id: sendDoc.id, ...sendData });
-            }
 
           } catch (error: any) {
             console.error('Send error for', recipient.email, ':', error.message);
@@ -331,43 +304,12 @@ export async function POST(request: NextRequest) {
               error: error.message
             });
             failCount++;
-
-            // NEU: Auch fehlgeschlagene Sends dokumentieren
-            if (data.campaignId) {
-              const sendDoc = doc(collection(db, 'email_campaign_sends'));
-              const sendData = {
-                campaignId: data.campaignId,
-                recipientEmail: recipient.email,
-                recipientName: recipient.name,
-                status: 'failed',
-                errorMessage: error.message,
-                userId: auth.userId,
-                organizationId: auth.organizationId, // WICHTIG: organizationId für Multi-Tenancy
-                failedAt: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date()
-              };
-
-              firestoreBatch.set(sendDoc, sendData);
-              emailSendDocs.push({ id: sendDoc.id, ...sendData });
-            }
           }
         }
 
         // Kleine Pause zwischen Batches
         if (batchIndex < batches.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
-
-      // NEU: Firestore Batch committen
-      if (data.campaignId && emailSendDocs.length > 0) {
-        try {
-          await firestoreBatch.commit();
-          console.log(`✅ Created ${emailSendDocs.length} email_campaign_sends documents in Firestore`);
-        } catch (firestoreError) {
-          console.error('⚠️ Failed to save email_campaign_sends to Firestore:', firestoreError);
-          // Fehler beim Speichern sollte den Response nicht blockieren
         }
       }
 
