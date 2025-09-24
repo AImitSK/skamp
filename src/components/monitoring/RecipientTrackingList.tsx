@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { EmailCampaignSend } from '@/types/email';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { Popover, Transition } from '@headlessui/react';
 import {
   EyeIcon,
   CursorArrowRaysIcon,
@@ -164,22 +165,48 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
                     </td>
                     <td className="px-6 py-4">
                       {send.publishedStatus === 'published' && send.articleUrl ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Popover className="relative">
+                          <Popover.Button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
                             <CalendarIcon className="h-4 w-4" />
                             {formatDate(send.publishedAt)}
-                          </div>
-                          {send.articleTitle && (
-                            <Text className="text-sm text-gray-600 truncate max-w-xs">
-                              {send.articleTitle}
-                            </Text>
-                          )}
-                          {send.reach && (
-                            <Text className="text-xs text-gray-500">
-                              Reichweite: {send.reach.toLocaleString('de-DE')}
-                            </Text>
-                          )}
-                        </div>
+                          </Popover.Button>
+
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-200"
+                            enterFrom="opacity-0 translate-y-1"
+                            enterTo="opacity-100 translate-y-0"
+                            leave="transition ease-in duration-150"
+                            leaveFrom="opacity-100 translate-y-0"
+                            leaveTo="opacity-0 translate-y-1"
+                          >
+                            <Popover.Panel className="absolute z-10 mt-2 w-80 origin-top-left">
+                              <div className="rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
+                                {send.articleTitle && (
+                                  <div className="font-medium text-gray-900 mb-2">
+                                    {send.articleTitle}
+                                  </div>
+                                )}
+                                <div className="space-y-1 text-sm text-gray-600">
+                                  {send.reach && (
+                                    <div className="flex items-center gap-2">
+                                      <EyeIcon className="h-4 w-4" />
+                                      <span>Reichweite: {send.reach.toLocaleString('de-DE')}</span>
+                                    </div>
+                                  )}
+                                  {send.sentiment && (
+                                    <div className="flex items-center gap-2">
+                                      <span>Sentiment: {
+                                        send.sentiment === 'positive' ? 'Positiv' :
+                                        send.sentiment === 'neutral' ? 'Neutral' : 'Negativ'
+                                      }</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </Popover.Panel>
+                          </Transition>
+                        </Popover>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}

@@ -81,23 +81,36 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <Subheading className="mb-4">E-Mail Funnel</Subheading>
           <div className="space-y-3 mt-8">
-            {funnelData.map((item, idx) => (
-              <div key={idx}>
-                <div className="flex justify-between items-center mb-1">
-                  <Text className="text-sm text-gray-600">{item.label}</Text>
-                  <Text className="text-sm font-semibold text-gray-900">{item.value}</Text>
+            {funnelData.map((item, idx) => {
+              const percentage = Math.round(item.width);
+              const isHighPercentage = percentage > 90;
+
+              return (
+                <div key={idx}>
+                  <div className="flex justify-between items-center mb-1">
+                    <Text className="text-sm text-gray-600">{item.label}</Text>
+                    <Text className="text-sm font-semibold text-gray-900">{item.value}</Text>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
+                    <div
+                      className="h-8 rounded-full flex items-center justify-end"
+                      style={{ width: `${item.width}%`, backgroundColor: '#005fab' }}
+                    >
+                      {isHighPercentage && (
+                        <Text className="text-xs font-medium text-white mr-2">
+                          {percentage}%
+                        </Text>
+                      )}
+                    </div>
+                    {!isHighPercentage && (
+                      <Text className="text-xs font-medium text-gray-700 absolute right-2">
+                        {percentage}%
+                      </Text>
+                    )}
+                  </div>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
-                  <div
-                    className="h-8 rounded-full"
-                    style={{ width: `${item.width}%`, backgroundColor: '#005fab' }}
-                  />
-                  <Text className="text-xs font-medium text-gray-700 absolute right-2">
-                    {Math.round(item.width)}%
-                  </Text>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
