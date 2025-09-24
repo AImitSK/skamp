@@ -88,10 +88,6 @@ export default function MonitoringDetailPage() {
       setLoadingPDFs(true);
       console.log('📂 Loading PDFs for campaign:', campaign.title);
 
-      const { mediaService } = await import('@/lib/firebase/media-service');
-      const allFolders = await mediaService.getAllFoldersForOrganization(currentOrganization.id);
-      console.log('📂 Total folders in org:', allFolders.length);
-
       const projectId = campaign.projectId;
       console.log('📂 Campaign projectId:', projectId);
 
@@ -101,38 +97,21 @@ export default function MonitoringDetailPage() {
         return;
       }
 
-      // Suche nach Projektordner - versuche verschiedene Ansätze
-      let projectFolder = allFolders.find(f =>
-        f.name.includes('P-') && f.name.includes(projectId.substring(0, 8))
-      );
+      const { projectService } = await import('@/lib/firebase/project-service');
+      const { mediaService } = await import('@/lib/firebase/media-service');
 
-      // Fallback: Suche über projectId im metadata oder tags
-      if (!projectFolder) {
-        projectFolder = allFolders.find(f =>
-          f.metadata?.projectId === projectId ||
-          f.tags?.includes(projectId)
-        );
-      }
+      const folderStructure = await projectService.getProjectFolderStructure(projectId, {
+        organizationId: currentOrganization.id
+      });
+      console.log('📂 Project folder structure:', folderStructure);
 
-      // Fallback 2: Suche nach beliebigem Teil der projectId
-      if (!projectFolder) {
-        projectFolder = allFolders.find(f =>
-          f.name.includes('P-') && f.name.includes(projectId)
-        );
-      }
-
-      console.log('📂 Found project folder:', projectFolder?.name);
-      console.log('📂 All P- folders:', allFolders.filter(f => f.name.includes('P-')).map(f => f.name));
-
-      if (!projectFolder) {
-        console.log('📂 Project folder not found');
+      if (!folderStructure?.subfolders) {
+        console.log('📂 No project folders found');
         setAnalysisPDFs([]);
         return;
       }
 
-      const analysenFolder = allFolders.find(f =>
-        f.parentFolderId === projectFolder.id && f.name === 'Analysen'
-      );
+      const analysenFolder = folderStructure.subfolders.find((f: any) => f.name === 'Analysen');
       console.log('📂 Found Analysen folder:', analysenFolder?.name);
 
       if (analysenFolder) {
