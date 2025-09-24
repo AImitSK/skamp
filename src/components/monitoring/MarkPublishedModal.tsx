@@ -31,6 +31,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
     articleUrl: '',
     articleTitle: '',
     outletName: '',
+    outletType: 'online' as 'print' | 'online' | 'broadcast' | 'blog',
     reach: '',
     sentiment: 'neutral' as 'positive' | 'neutral' | 'negative',
     sentimentScore: 0,
@@ -56,7 +57,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         url: formData.articleUrl,
         publishedAt: publishedTimestamp,
         outletName: formData.outletName || 'Unbekannt',
-        outletType: 'online',
+        outletType: formData.outletType,
         sentiment: formData.sentiment,
         detectionMethod: 'manual',
         detectedAt: Timestamp.now(),
@@ -160,6 +161,19 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                   onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
                   placeholder="z.B. Süddeutsche Zeitung"
                 />
+              </Field>
+
+              <Field>
+                <Label>Medientyp</Label>
+                <Select
+                  value={formData.outletType}
+                  onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
+                >
+                  <option value="print">📰 Print (Zeitung/Magazin)</option>
+                  <option value="online">💻 Online</option>
+                  <option value="broadcast">📺 Broadcast (TV/Radio)</option>
+                  <option value="blog">✍️ Blog</option>
+                </Select>
               </Field>
 
               <Field>
