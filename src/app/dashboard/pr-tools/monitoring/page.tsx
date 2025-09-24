@@ -57,6 +57,7 @@ export default function MonitoringPage() {
               organizationId: currentOrganization.id
             })
           ]);
+          console.log(`📧 Kampagne "${campaign.title}" (ID: ${campaign.id}): ${sends.length} sends, Status: ${campaign.status}`);
           return { campaign, sends, clippings };
         })
       );
