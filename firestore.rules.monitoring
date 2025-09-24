@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function belongsToOrganization(organizationId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == organizationId;
+    }
+
+    // Media Clippings Collection
+    match /media_clippings/{clippingId} {
+      allow read: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+      allow create: if isAuthenticated() && belongsToOrganization(request.resource.data.organizationId);
+      allow update, delete: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+    }
+
+    // Monitoring Suggestions Collection (Phase 2)
+    match /monitoring_suggestions/{suggestionId} {
+      allow read: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+      allow create: if isAuthenticated() && belongsToOrganization(request.resource.data.organizationId);
+      allow update, delete: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+    }
+
+    // Email Campaign Sends Collection (bereits existierend, erweitert)
+    match /email_campaign_sends/{sendId} {
+      allow read: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+      allow create: if isAuthenticated() && belongsToOrganization(request.resource.data.organizationId);
+      allow update: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+      allow delete: if isAuthenticated() && belongsToOrganization(resource.data.organizationId);
+    }
+  }
+}
+
+// WICHTIG: Diese Rules müssen in die Haupt-firestore.rules integriert werden!
+// Aktuell sind EMERGENCY RULES aktiv die alles erlauben.
+// Für Production müssen die spezifischen Rules aktiviert werden.

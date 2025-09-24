@@ -15,6 +15,7 @@ import { SearchInput } from '@/components/ui/search-input';
 import { useRouter } from 'next/navigation';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
+import { clippingService } from '@/lib/firebase/clipping-service';
 
 export default function MonitoringPage() {
   const { user } = useAuth();
@@ -45,13 +46,18 @@ export default function MonitoringPage() {
       console.log('📊 All campaigns:', allCampaigns);
       console.log('📊 Campaigns count:', allCampaigns.length);
 
-      // Prüfe für jede Kampagne ob sie Sends hat
+      // Prüfe für jede Kampagne ob sie Sends hat und lade Clippings
       const campaignsWithSends = await Promise.all(
         allCampaigns.map(async (campaign: any) => {
-          const sends = await emailCampaignService.getSends(campaign.id!, {
-            organizationId: currentOrganization.id
-          });
-          return { campaign, sends };
+          const [sends, clippings] = await Promise.all([
+            emailCampaignService.getSends(campaign.id!, {
+              organizationId: currentOrganization.id
+            }),
+            clippingService.getByCampaignId(campaign.id!, {
+              organizationId: currentOrganization.id
+            })
+          ]);
+          return { campaign, sends, clippings };
         })
       );
 
@@ -61,13 +67,14 @@ export default function MonitoringPage() {
       console.log('📊 Sent campaigns:', sentCampaigns);
       console.log('📊 Sent campaigns count:', sentCampaigns.length);
 
-      const campaignsWithStats = sentCampaigns.map(({ campaign, sends }) => {
+      const campaignsWithStats = sentCampaigns.map(({ campaign, sends, clippings }) => {
         const stats = {
           total: sends.length,
           delivered: sends.filter((s: any) => s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length,
           opened: sends.filter((s: any) => s.status === 'opened' || s.status === 'clicked').length,
           clicked: sends.filter((s: any) => s.status === 'clicked').length,
           bounced: sends.filter((s: any) => s.status === 'bounced').length,
+          clippings: clippings.length
         };
 
         return {
@@ -214,9 +221,9 @@ export default function MonitoringPage() {
                           <EnvelopeIcon className="h-4 w-4 text-gray-400" />
                           {campaign.stats.total}
                         </span>
-                        <span className="text-gray-500 flex items-center gap-1">
+                        <span className={`flex items-center gap-1 ${campaign.stats.clippings > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
                           <NewspaperIcon className="h-4 w-4" />
-                          0
+                          {campaign.stats.clippings}
                         </span>
                       </div>
                     </td>

@@ -71,6 +71,7 @@ import { ApprovalEnhanced } from '@/types/approvals';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
 import ProjectDistributionLists from '@/components/projects/distribution/ProjectDistributionLists';
+import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -1342,15 +1343,7 @@ export default function ProjectDetailPage() {
 
           {/* Analytics Tab */}
           {activeTab === 'monitoring' && (
-            <div className="space-y-6">
-              <div className="text-center py-12">
-                <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Analytics</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Hier werden zukünftig Analytics und Monitoring-Funktionen angezeigt.
-                </p>
-              </div>
-            </div>
+            <ProjectMonitoringTab projectId={projectId} />
           )}
 
         </div>
