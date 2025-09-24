@@ -981,7 +981,7 @@ export default function ProjectDetailPage() {
                 }`}
               >
                 <ChartBarIcon className="w-4 h-4 mr-2" />
-                Analytics
+                Monitoring
               </button>
             </div>
           </div>

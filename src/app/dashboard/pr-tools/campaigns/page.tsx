@@ -662,9 +662,9 @@ export default function PRCampaignsPage() {
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
                             {campaign.status === 'sent' && (
-                              <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
+                              <DropdownItem href={`/dashboard/pr-tools/monitoring/${campaign.id}`}>
                                 <ChartBarIconOutline className="h-4 w-4" />
-                                Analytics
+                                Monitoring
                               </DropdownItem>
                             )}
                             <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
