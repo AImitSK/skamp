@@ -18,6 +18,7 @@ import { prService } from '@/lib/firebase/pr-service';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import EmailSendModal from '@/components/pr/EmailSendModal';
 
 interface Props {
   campaigns: PRCampaign[];
@@ -29,9 +30,10 @@ interface CampaignTableRowProps {
   campaign: PRCampaign;
   teamMembers: TeamMember[];
   onRefresh: () => void;
+  onSend: (campaign: PRCampaign) => void;
 }
 
-function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRowProps) {
+function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: CampaignTableRowProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,8 +80,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh }: CampaignTableRow
   };
 
   const handleSend = () => {
-    // TODO: Implement campaign sending logic
-    console.log('Kampagne versenden:', campaign.id);
+    onSend(campaign);
   };
 
   const formatDate = (timestamp: any) => {
@@ -207,6 +208,7 @@ export default function PressemeldungCampaignTable({
 }: Props) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSendModal, setShowSendModal] = useState<PRCampaign | null>(null);
 
   useEffect(() => {
     const loadTeamMembers = async () => {
@@ -274,9 +276,23 @@ export default function PressemeldungCampaignTable({
             campaign={campaign}
             teamMembers={teamMembers}
             onRefresh={onRefresh}
+            onSend={setShowSendModal}
           />
         ))}
       </div>
+
+      {/* Send Modal */}
+      {showSendModal && (
+        <EmailSendModal
+          campaign={showSendModal}
+          onClose={() => setShowSendModal(null)}
+          onSent={() => {
+            setShowSendModal(null);
+            onRefresh();
+          }}
+          projectMode={true}
+        />
+      )}
     </div>
   );
 }
