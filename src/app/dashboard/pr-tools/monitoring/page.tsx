@@ -128,20 +128,22 @@ export default function MonitoringPage() {
         <Text>Überwache alle versendeten Pressemeldungen und deren Performance (E-Mail Tracking & Clippings)</Text>
       </div>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-2 items-center">
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Kampagnen durchsuchen..."
           className="flex-1"
         />
-        <Select
-          value={projectFilter}
-          onChange={(e) => setProjectFilter(e.target.value)}
-        >
-          <option value="all">Alle Projekte</option>
-          <option value="none">Ohne Projekt</option>
-        </Select>
+        <div className="w-48">
+          <Select
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.target.value)}
+          >
+            <option value="all">Alle Projekte</option>
+            <option value="none">Ohne Projekt</option>
+          </Select>
+        </div>
       </div>
 
       {filteredCampaigns.length === 0 ? (

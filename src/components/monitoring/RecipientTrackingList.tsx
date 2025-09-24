@@ -67,7 +67,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
   return (
     <>
       <div className="space-y-6">
-        <div className="flex gap-4">
+        <div className="flex gap-2 items-center">
           <div className="flex-1">
             <Input
               type="text"
@@ -76,14 +76,16 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">Alle</option>
-            <option value="published">Veröffentlicht</option>
-            <option value="not_published">Nicht veröffentlicht</option>
-          </Select>
+          <div className="w-56">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Alle</option>
+              <option value="published">Veröffentlicht</option>
+              <option value="not_published">Nicht veröffentlicht</option>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-3">
