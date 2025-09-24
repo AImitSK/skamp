@@ -43,6 +43,7 @@ import {
   PaperClipIcon,
   XMarkIcon,
   XCircleIcon,
+  SparklesIcon,
   InformationCircleIcon,
   PaperAirplaneIcon,
   FolderIcon,
@@ -74,6 +75,12 @@ import { Project } from "@/types/project";
 import { ProjectAssignmentMigrationDialog } from '@/components/campaigns/ProjectAssignmentMigrationDialog';
 import { toast } from 'react-hot-toast';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
+
+// Dynamic import für AI Modal
+import dynamic from 'next/dynamic';
+const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
+  ssr: false
+});
 
 
 // Einfache Alert-Komponente für diese Seite
@@ -309,6 +316,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [realPrScore, setRealPrScore] = useState<{
@@ -994,6 +1002,59 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
   };
 
+  const handleAiGenerate = (result: any) => {
+    if (result.structured?.headline) {
+      setCampaignTitle(result.structured.headline);
+    }
+
+    if (result.structured) {
+      const htmlParts: string[] = [];
+
+      if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
+        htmlParts.push(`<p><strong>${result.structured.leadParagraph}</strong></p>`);
+      }
+
+      if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+        const mainParagraphs = result.structured.bodyParagraphs
+          .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
+          .map((paragraph: string) => `<p>${paragraph}</p>`);
+
+        htmlParts.push(...mainParagraphs);
+      }
+
+      if (result.structured.quote && result.structured.quote.text) {
+        const quoteHtml = `<blockquote data-type="pr-quote" class="pr-quote border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">
+        <p>"${result.structured.quote.text}"</p>
+        <footer class="text-sm text-gray-500 mt-2">— <strong>${result.structured.quote.person}</strong>, ${result.structured.quote.role}${result.structured.quote.company ? `, ${result.structured.quote.company}` : ''}</footer>
+      </blockquote>`;
+
+        htmlParts.push(quoteHtml);
+      }
+
+      if (result.structured.cta) {
+        htmlParts.push(`<p><span data-type="cta-text" class="cta-text font-bold text-[#005fab]">${result.structured.cta}</span></p>`);
+      }
+
+      if (result.structured.hashtags && result.structured.hashtags.length > 0) {
+        const formattedHashtags = result.structured.hashtags
+          .map((hashtag: string) => {
+            const cleanHashtag = hashtag.startsWith('#') ? hashtag : `#${hashtag}`;
+            return `<span data-type="hashtag" class="hashtag text-blue-600 font-semibold">${cleanHashtag}</span>`;
+          })
+          .join(' ');
+
+        htmlParts.push(`<p></p>`);
+        htmlParts.push(`<p class="hashtags-section mt-4">${formattedHashtags}</p>`);
+      }
+
+      const fullHtmlContent = htmlParts.join('\n\n');
+      setEditorContent(fullHtmlContent);
+      setPressReleaseContent(fullHtmlContent);
+    }
+
+    setShowAiModal(false);
+  };
+
   const handleRemoveAsset = (assetId: string) => {
     setAttachedAssets(attachedAssets.filter(a =>
       !((a.type === 'asset' && a.assetId === assetId) ||
@@ -1561,9 +1622,28 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
+                    <Button
+                      type="button"
+                      onClick={() => setShowAiModal(true)}
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                    >
+                      <SparklesIcon className="h-4 w-4" />
+                      KI-Assistent
+                    </Button>
                   </div>
+
+                {/* Info-Box für KI-Nutzung */}
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
+                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Content Composer mit SEO-Features */}
                 <CampaignContentComposer
@@ -2079,6 +2159,18 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           selectedProjectName={selectedProject?.title}
           uploadType="attachment"
           enableSmartRouter={true}
+        />
+      )}
+
+      {/* AI Modal */}
+      {showAiModal && (
+        <StructuredGenerationModal
+          onClose={() => setShowAiModal(false)}
+          onGenerate={handleAiGenerate}
+          existingContent={{
+            title: campaignTitle,
+            content: ''
+          }}
         />
       )}
 
