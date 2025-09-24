@@ -37,7 +37,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     try {
       setLoading(true);
 
-      const projectCampaigns = await prService.getByProject(projectId, currentOrganization.id);
+      const projectCampaigns = await prService.getCampaignsByProject(projectId, currentOrganization.id);
       console.log('📊 Projekt-Kampagnen gefunden:', projectCampaigns.length);
 
       const campaignsWithData = await Promise.all(
