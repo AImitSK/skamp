@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState } from 'react';
 import { EmailCampaignSend } from '@/types/email';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
-import { Popover, Transition } from '@headlessui/react';
 import {
   EyeIcon,
   CursorArrowRaysIcon,
@@ -113,7 +112,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
             <Text className="text-gray-500">Keine Empfänger gefunden</Text>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-visible">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -165,48 +164,38 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
                     </td>
                     <td className="px-6 py-4">
                       {send.publishedStatus === 'published' && send.articleUrl ? (
-                        <Popover className="relative">
-                          <Popover.Button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                        <div className="group relative">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 cursor-pointer">
                             <CalendarIcon className="h-4 w-4" />
                             {formatDate(send.publishedAt)}
-                          </Popover.Button>
-
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-200"
-                            enterFrom="opacity-0 translate-y-1"
-                            enterTo="opacity-100 translate-y-0"
-                            leave="transition ease-in duration-150"
-                            leaveFrom="opacity-100 translate-y-0"
-                            leaveTo="opacity-0 translate-y-1"
-                          >
-                            <Popover.Panel className="absolute z-10 mt-2 w-80 origin-top-left">
-                              <div className="rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
-                                {send.articleTitle && (
-                                  <div className="font-medium text-gray-900 mb-2">
-                                    {send.articleTitle}
+                          </div>
+                          {/* Hover Popover */}
+                          <div className="absolute left-0 top-full mt-2 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div className="rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
+                              {send.articleTitle && (
+                                <div className="font-medium text-gray-900 mb-2">
+                                  {send.articleTitle}
+                                </div>
+                              )}
+                              <div className="space-y-1 text-sm text-gray-600">
+                                {send.reach && (
+                                  <div className="flex items-center gap-2">
+                                    <EyeIcon className="h-4 w-4" />
+                                    <span>Reichweite: {send.reach.toLocaleString('de-DE')}</span>
                                   </div>
                                 )}
-                                <div className="space-y-1 text-sm text-gray-600">
-                                  {send.reach && (
-                                    <div className="flex items-center gap-2">
-                                      <EyeIcon className="h-4 w-4" />
-                                      <span>Reichweite: {send.reach.toLocaleString('de-DE')}</span>
-                                    </div>
-                                  )}
-                                  {send.sentiment && (
-                                    <div className="flex items-center gap-2">
-                                      <span>Sentiment: {
-                                        send.sentiment === 'positive' ? 'Positiv' :
-                                        send.sentiment === 'neutral' ? 'Neutral' : 'Negativ'
-                                      }</span>
-                                    </div>
-                                  )}
-                                </div>
+                                {send.sentiment && (
+                                  <div className="flex items-center gap-2">
+                                    <span>Sentiment: {
+                                      send.sentiment === 'positive' ? 'Positiv' :
+                                      send.sentiment === 'neutral' ? 'Neutral' : 'Negativ'
+                                    }</span>
+                                  </div>
+                                )}
                               </div>
-                            </Popover.Panel>
-                          </Transition>
-                        </Popover>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}

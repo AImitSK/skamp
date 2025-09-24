@@ -171,7 +171,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
                     onClick={() => router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`)}
                   >
                     <td className="px-6 py-4">
-                      <Text className="font-medium text-gray-900">{campaign.title}</Text>
+                      <div className="font-semibold text-gray-900 truncate max-w-md">{campaign.title}</div>
                     </td>
                     <td className="px-6 py-4">
                       <Text className="text-gray-600">

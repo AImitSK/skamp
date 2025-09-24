@@ -188,7 +188,7 @@ export default function MonitoringPage() {
                   >
                     <td className="px-6 py-4">
                       <div>
-                        <Text className="font-medium text-gray-900">{campaign.title}</Text>
+                        <div className="font-semibold text-gray-900 truncate max-w-md">{campaign.title}</div>
                         <div className="flex gap-4 mt-1 text-sm items-center">
                           <span className="text-gray-600 flex items-center gap-1">
                             <EyeIcon className="h-4 w-4" />

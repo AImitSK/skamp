@@ -97,15 +97,15 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
                       style={{ width: `${item.width}%`, backgroundColor: '#005fab' }}
                     >
                       {isHighPercentage && (
-                        <Text className="text-xs font-medium text-white mr-2">
+                        <span className="text-xs font-medium text-white mr-2">
                           {percentage}%
-                        </Text>
+                        </span>
                       )}
                     </div>
                     {!isHighPercentage && (
-                      <Text className="text-xs font-medium text-gray-700 absolute right-2">
+                      <span className="text-xs font-medium text-gray-700 absolute right-2">
                         {percentage}%
-                      </Text>
+                      </span>
                     )}
                   </div>
                 </div>
