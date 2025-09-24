@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EmailCampaignSend } from '@/types/email';
+import { MediaClipping } from '@/types/monitoring';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import {
   EyeIcon,
@@ -16,9 +18,17 @@ import {
   LinkIcon,
   EllipsisVerticalIcon,
   DocumentCheckIcon,
-  CalendarIcon
+  CalendarIcon,
+  PencilIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { MarkPublishedModal } from './MarkPublishedModal';
+import { EditClippingModal } from './EditClippingModal';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
+import { clippingService } from '@/lib/firebase/clipping-service';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 interface RecipientTrackingListProps {
   sends: EmailCampaignSend[];
@@ -27,9 +37,16 @@ interface RecipientTrackingListProps {
 }
 
 export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: RecipientTrackingListProps) {
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSend, setSelectedSend] = useState<EmailCampaignSend | null>(null);
+  const [editingSend, setEditingSend] = useState<EmailCampaignSend | null>(null);
+  const [editingClipping, setEditingClipping] = useState<MediaClipping | null>(null);
+  const [deletingSend, setDeletingSend] = useState<EmailCampaignSend | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const filteredSends = sends.filter(send => {
     const matchesSearch = send.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,6 +58,59 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
 
     return matchesSearch && matchesStatus;
   });
+
+  const handleEdit = async (send: EmailCampaignSend) => {
+    if (!send.clippingId || !currentOrganization?.id) return;
+
+    try {
+      const clipping = await clippingService.getById(send.clippingId, {
+        organizationId: currentOrganization.id
+      });
+
+      if (clipping) {
+        setEditingSend(send);
+        setEditingClipping(clipping);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des Clippings:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingSend?.clippingId || !currentOrganization?.id || !user?.uid) return;
+
+    try {
+      setLoading(true);
+
+      await clippingService.delete(deletingSend.clippingId, {
+        organizationId: currentOrganization.id
+      });
+
+      const sendRef = doc(db, 'email_campaign_sends', deletingSend.id!);
+      await updateDoc(sendRef, {
+        publishedStatus: 'not_published',
+        publishedAt: null,
+        clippingId: null,
+        articleUrl: null,
+        articleTitle: null,
+        reach: null,
+        sentiment: null,
+        sentimentScore: null,
+        publicationNotes: null,
+        manuallyMarkedPublished: false,
+        markedPublishedBy: null,
+        markedPublishedAt: null,
+        updatedAt: serverTimestamp()
+      });
+
+      setDeletingSend(null);
+      onSendUpdated();
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (send: EmailCampaignSend) => {
     if (send.status === 'bounced') {
@@ -214,7 +284,15 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
                                 <LinkIcon className="h-4 w-4" />
                                 Artikel ansehen
                               </DropdownItem>
+                              <DropdownItem onClick={() => handleEdit(send)}>
+                                <PencilIcon className="h-4 w-4" />
+                                Bearbeiten
+                              </DropdownItem>
                               <DropdownDivider />
+                              <DropdownItem onClick={() => setDeletingSend(send)}>
+                                <TrashIcon className="h-4 w-4 text-red-600" />
+                                <span className="text-red-600">Veröffentlichung löschen</span>
+                              </DropdownItem>
                             </>
                           )}
                           {send.status !== 'bounced' && send.status !== 'failed' && send.publishedStatus !== 'published' && (
@@ -245,6 +323,42 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
           }}
         />
       )}
+
+      {editingSend && editingClipping && (
+        <EditClippingModal
+          send={editingSend}
+          clipping={editingClipping}
+          onClose={() => {
+            setEditingSend(null);
+            setEditingClipping(null);
+          }}
+          onSuccess={() => {
+            setEditingSend(null);
+            setEditingClipping(null);
+            onSendUpdated();
+          }}
+        />
+      )}
+
+      <Dialog open={!!deletingSend} onClose={() => setDeletingSend(null)}>
+        <DialogTitle>Veröffentlichung löschen</DialogTitle>
+        <DialogBody>
+          <Text>
+            Möchten Sie die Veröffentlichung für <strong>{deletingSend?.recipientName}</strong> wirklich löschen?
+          </Text>
+          <Text className="mt-2 text-sm text-gray-600">
+            Das Clipping wird dauerhaft gelöscht und der Status wird auf "Nicht veröffentlicht" zurückgesetzt.
+          </Text>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setDeletingSend(null)} disabled={loading}>
+            Abbrechen
+          </Button>
+          <Button color="red" onClick={handleDelete} disabled={loading}>
+            {loading ? 'Löschen...' : 'Löschen'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
