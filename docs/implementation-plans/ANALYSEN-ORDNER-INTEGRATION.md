@@ -563,12 +563,14 @@ useEffect(() => {
 4. ✅ Löschen-Funktion → Prüfe ob PDF entfernt wird
 5. ✅ Ordner-Link → Prüfe Navigation zum Analysen-Ordner
 6. ✅ Fallback für alte Projekte → Prüfe Upload in Pressemeldungen wenn Analysen fehlt
+7. ✅ "Als Veröffentlicht markieren" Modal → Prüfe Speichern ohne Firestore-Fehler
 
 ### Edge Cases:
-- ❓ Projekt ohne Analysen-Ordner (alte Projekte)
-- ❓ Campaign ohne Projekt-Verknüpfung
-- ❓ Mehrere PDFs für eine Campaign
-- ❓ PDF-Upload schlägt fehl (Netzwerk, Permissions)
+- ✅ Projekt ohne Analysen-Ordner (alte Projekte) → Funktioniert mit projectService API
+- ✅ Optionale Felder leer lassen → Keine undefined-Werte mehr in Firestore
+- ✅ Campaign ohne Projekt-Verknüpfung → Korrekt behandelt
+- ✅ Mehrere PDFs für eine Campaign → Werden alle angezeigt
+- ✅ PDF-Upload schlägt fehl (Netzwerk, Permissions) → Error-Dialog statt Alert
 
 ---
 
@@ -636,10 +638,48 @@ P-20250924-AcmeCorp-Launch Campaign/
 2. ✅ Monitoring-Report-Service: Upload-Ziel von Pressemeldungen → Analysen
 3. ✅ Monitoring Analytics Tab: PDF-Download-Liste mit Löschen-Funktion
 4. ✅ Ordner-Link-Generierung für direkten Zugriff
+5. ✅ Browser-Dialoge durch UI-Komponenten ersetzt (confirm/alert → Dialog)
+6. ✅ Firestore undefined-Fehler behoben (MarkPublishedModal + clippingService)
+7. ✅ Folder Discovery via projectService.getProjectFolderStructure() statt manueller Suche
 
 **Keine Änderungen nötig:**
 - ProjectFoldersView (arbeitet dynamisch mit allen Ordnern)
 - MoveAssetModal (erkennt neue Ordner automatisch)
 
-**Geschätzte Entwicklungszeit:** 2-3 Stunden
+**Status:** ✅ Vollständig implementiert und getestet
+**Entwicklungszeit:** ~3 Stunden
 **Risiko:** Niedrig (isolierte Änderungen, gute Fallbacks)
+
+---
+
+## 🐛 Behobene Bugs während der Implementierung
+
+### Bug 1: PDF-Liste nicht sichtbar
+**Problem:** Analytics Tab zeigte keine PDF-Liste, obwohl PDFs im Analysen-Ordner lagen
+**Ursache:** Manuelle Ordnersuche mit `projectId.substring(0, 8)` funktionierte nicht
+**Lösung:** `projectService.getProjectFolderStructure()` API verwenden (wie Dateimanager)
+**Commits:**
+- `56cf22b7` - debug: Füge Logging zur PDF-Liste hinzu
+- `c4f89a40` - debug: Erweitere Projektordner-Suche mit Fallbacks
+- `75a91018` - fix: Nutze projectService.getProjectFolderStructure() wie Projekt-Seite
+
+### Bug 2: Browser-Dialoge statt UI-Komponenten
+**Problem:** Löschen- und Erfolgs-Meldungen nutzten `confirm()` und `alert()`
+**Lösung:** Dialog-Komponenten aus `@/components/ui/dialog` verwenden
+**Commit:** `31c4f72f` - feat: Ersetze Browser-Dialoge durch UI-Komponenten
+
+### Bug 3: Firestore undefined-Fehler
+**Problem:**
+```
+FirebaseError: Function updateDoc() called with invalid data.
+Unsupported field value: undefined (found in field publicationNotes)
+```
+**Ursache:** Optionale Felder mit `|| undefined` führten zu undefined-Werten in Firestore
+**Lösung:** Dynamische Objekt-Erstellung - Felder nur hinzufügen wenn Wert vorhanden
+**Commits:**
+- `a72afe1e` - fix: Behebe Firestore undefined-Fehler und ersetze Alert durch Dialog
+- `d3da6123` - fix: Entferne undefined-Werte auch aus clippingService.create()
+
+**Betroffene Dateien:**
+- `src/components/monitoring/MarkPublishedModal.tsx`
+- `src/app/dashboard/pr-tools/monitoring/[campaignId]/page.tsx`
