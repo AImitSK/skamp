@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChartBarIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, EyeIcon, ExclamationCircleIcon, EnvelopeIcon, NewspaperIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { SearchInput } from '@/components/ui/search-input';
 import { useRouter } from 'next/navigation';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
@@ -126,15 +128,13 @@ export default function MonitoringPage() {
         <Text>Überwache alle versendeten Pressemeldungen und deren Performance (E-Mail Tracking & Clippings)</Text>
       </div>
 
-      <div className="flex gap-4 items-end">
-        <div className="flex-1">
-          <Input
-            type="text"
-            placeholder="Kampagne suchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="flex gap-4 items-center">
+        <SearchInput
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Kampagnen durchsuchen..."
+          className="flex-1"
+        />
         <Select
           value={projectFilter}
           onChange={(e) => setProjectFilter(e.target.value)}
@@ -180,12 +180,15 @@ export default function MonitoringPage() {
                     <td className="px-6 py-4">
                       <div>
                         <Text className="font-medium text-gray-900">{campaign.title}</Text>
-                        <div className="flex gap-4 mt-1 text-sm">
-                          <span className="text-green-600">✅ {campaign.stats.opened} geöffnet ({openRate}%)</span>
+                        <div className="flex gap-4 mt-1 text-sm items-center">
+                          <span className="text-gray-600 flex items-center gap-1">
+                            <EyeIcon className="h-4 w-4" />
+                            {campaign.stats.opened} geöffnet ({openRate}%)
+                          </span>
                           {campaign.stats.bounced > 0 && (
-                            <span className={getBounceRateColor(bounceRate)}>
-                              ❌ {campaign.stats.bounced} bounced ({bounceRate}%)
-                              {bounceRate > 5 && ' ⚠️'}
+                            <span className={`${getBounceRateColor(bounceRate)} flex items-center gap-1`}>
+                              <ExclamationCircleIcon className="h-4 w-4" />
+                              {campaign.stats.bounced} bounced ({bounceRate}%)
                             </span>
                           )}
                         </div>
@@ -205,20 +208,32 @@ export default function MonitoringPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1 text-sm">
-                        <span>📧 {campaign.stats.total}</span>
-                        <span className="text-gray-500">📰 0</span>
+                        <span className="flex items-center gap-1">
+                          <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                          {campaign.stats.total}
+                        </span>
+                        <span className="text-gray-500 flex items-center gap-1">
+                          <NewspaperIcon className="h-4 w-4" />
+                          0
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        outline
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`);
-                        }}
-                      >
-                        Details
-                      </Button>
+                      <Dropdown>
+                        <DropdownButton
+                          plain
+                          className="p-1.5 hover:bg-gray-100 rounded-md"
+                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                        >
+                          <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem onClick={() => router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`)}>
+                            <ChartBarIcon className="h-4 w-4" />
+                            Details
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
                     </td>
                   </tr>
                 );
