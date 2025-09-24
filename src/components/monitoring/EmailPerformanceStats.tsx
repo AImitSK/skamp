@@ -87,15 +87,14 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
                   <Text className="text-sm text-gray-600">{item.label}</Text>
                   <Text className="text-sm font-semibold text-gray-900">{item.value}</Text>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-8 flex items-center">
+                <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
                   <div
-                    className="h-8 rounded-full flex items-center justify-end pr-3"
+                    className="h-8 rounded-full"
                     style={{ width: `${item.width}%`, backgroundColor: '#005fab' }}
-                  >
-                    <Text className="text-xs text-white font-medium">
-                      {Math.round(item.width)}%
-                    </Text>
-                  </div>
+                  />
+                  <Text className="text-xs font-medium text-gray-700 absolute right-2">
+                    {Math.round(item.width)}%
+                  </Text>
                 </div>
               </div>
             ))}
