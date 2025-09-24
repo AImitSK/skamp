@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, TableCellsIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, TableCellsIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
@@ -20,6 +20,7 @@ import { PRCampaign } from '@/types/pr';
 import { MediaClipping } from '@/types/monitoring';
 import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import Link from 'next/link';
 
 export default function MonitoringDetailPage() {
@@ -37,10 +38,19 @@ export default function MonitoringDetailPage() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings'>('dashboard');
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
+  const [loadingPDFs, setLoadingPDFs] = useState(false);
+  const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, [campaignId, currentOrganization?.id]);
+
+  useEffect(() => {
+    if (activeTab === 'dashboard' && campaign && currentOrganization?.id) {
+      loadAnalysisPDFs();
+    }
+  }, [activeTab, campaign, currentOrganization?.id]);
 
   const loadData = async () => {
     if (!currentOrganization?.id) return;
@@ -68,6 +78,58 @@ export default function MonitoringDetailPage() {
     }
   };
 
+  const loadAnalysisPDFs = async () => {
+    if (!currentOrganization?.id || !campaign) return;
+
+    try {
+      setLoadingPDFs(true);
+
+      const { mediaService } = await import('@/lib/firebase/media-service');
+      const allFolders = await mediaService.getAllFoldersForOrganization(currentOrganization.id);
+
+      const projectId = campaign.projectId;
+      if (!projectId) {
+        setAnalysisPDFs([]);
+        return;
+      }
+
+      const projectFolder = allFolders.find(f =>
+        f.name.includes('P-') && f.name.includes(projectId.substring(0, 8))
+      );
+
+      if (!projectFolder) {
+        setAnalysisPDFs([]);
+        return;
+      }
+
+      const analysenFolder = allFolders.find(f =>
+        f.parentFolderId === projectFolder.id && f.name === 'Analysen'
+      );
+
+      if (analysenFolder) {
+        const assets = await mediaService.getMediaAssets(
+          currentOrganization.id,
+          analysenFolder.id
+        );
+
+        const campaignPDFs = assets.filter(asset =>
+          asset.fileType === 'application/pdf' &&
+          asset.fileName.includes(campaign.title)
+        );
+
+        setAnalysisPDFs(campaignPDFs);
+
+        setAnalysenFolderLink(
+          `/dashboard/projects/${projectId}?tab=daten&folder=${analysenFolder.id}`
+        );
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Analyse-PDFs:', error);
+    } finally {
+      setLoadingPDFs(false);
+    }
+  };
+
   const handleSendUpdated = () => {
     loadData();
   };
@@ -84,11 +146,32 @@ export default function MonitoringDetailPage() {
       );
 
       window.open(result.pdfUrl, '_blank');
+      loadAnalysisPDFs();
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
       alert('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
     } finally {
       setExportingPDF(false);
+    }
+  };
+
+  const handleDeletePDF = async (assetId: string) => {
+    if (!currentOrganization?.id) return;
+
+    if (!confirm('PDF wirklich löschen?')) return;
+
+    try {
+      const { mediaService } = await import('@/lib/firebase/media-service');
+      const asset = analysisPDFs.find(p => p.id === assetId);
+
+      if (asset) {
+        await mediaService.deleteMediaAsset(asset);
+        await loadAnalysisPDFs();
+        alert('PDF erfolgreich gelöscht');
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      alert('Fehler beim Löschen des PDFs');
     }
   };
 
@@ -227,7 +310,68 @@ export default function MonitoringDetailPage() {
 
         <div className="p-6">
           {activeTab === 'dashboard' && (
-            <MonitoringDashboard clippings={clippings} sends={sends} />
+            <div className="space-y-6">
+              <MonitoringDashboard clippings={clippings} sends={sends} />
+
+              {analysisPDFs.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <DocumentArrowDownIcon className="h-5 w-5 text-gray-600 mr-2" />
+                      <Subheading>Generierte Reports ({analysisPDFs.length})</Subheading>
+                    </div>
+                    {analysenFolderLink && (
+                      <Link
+                        href={analysenFolderLink}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                        Zum Analysen-Ordner
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {analysisPDFs.map((pdf) => (
+                      <div
+                        key={pdf.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          <DocumentTextIcon className="h-5 w-5 text-red-500" />
+                          <div>
+                            <Text className="font-medium">{pdf.fileName}</Text>
+                            <Text className="text-xs text-gray-500">
+                              {pdf.createdAt?.toDate?.()?.toLocaleDateString('de-DE')}
+                            </Text>
+                          </div>
+                        </div>
+
+                        <Dropdown>
+                          <DropdownButton plain>
+                            <EllipsisVerticalIcon className="h-5 w-5" />
+                          </DropdownButton>
+                          <DropdownMenu anchor="bottom end">
+                            <DropdownItem onClick={() => window.open(pdf.downloadUrl, '_blank')}>
+                              <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                              Download
+                            </DropdownItem>
+                            <DropdownItem onClick={() => handleDeletePDF(pdf.id)}>
+                              <TrashIcon className="h-4 w-4 mr-2 text-red-600" />
+                              <span className="text-red-600">Löschen</span>
+                            </DropdownItem>
+                            <DropdownItem disabled>
+                              <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                              Versenden (Coming Soon)
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {activeTab === 'performance' && (

@@ -591,18 +591,17 @@ class MonitoringReportService {
           );
 
           if (projectFolder) {
-            const reportsFolder = allFolders.find(folder =>
-              folder.parentFolderId === projectFolder.id && folder.name === 'Reports'
+            let targetFolder = allFolders.find(folder =>
+              folder.parentFolderId === projectFolder.id && folder.name === 'Analysen'
             );
 
-            let targetFolderId = reportsFolder?.id;
-
-            if (!targetFolderId) {
-              const pressemeldungenFolder = allFolders.find(folder =>
+            if (!targetFolder) {
+              targetFolder = allFolders.find(folder =>
                 folder.parentFolderId === projectFolder.id && folder.name === 'Pressemeldungen'
               );
-              targetFolderId = pressemeldungenFolder?.id || projectFolder.id;
             }
+
+            const targetFolderId = targetFolder?.id || projectFolder.id;
 
             if (targetFolderId) {
               const asset = await mediaService.uploadClientMedia(
@@ -647,6 +646,53 @@ class MonitoringReportService {
       };
     } catch (error) {
       throw new Error(`PDF-Report-Generierung fehlgeschlagen: ${error}`);
+    }
+  }
+
+  async getAnalysenFolderLink(
+    campaignId: string,
+    organizationId: string
+  ): Promise<string | null> {
+    try {
+      const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
+      const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
+
+      if (!campaignData?.projectId) return null;
+
+      const projectId = campaignData.projectId;
+      const analysenFolderId = await this.findAnalysenFolder(projectId, organizationId);
+
+      if (analysenFolderId) {
+        return `/dashboard/projects/${projectId}?tab=daten&folder=${analysenFolderId}`;
+      }
+
+      return `/dashboard/projects/${projectId}?tab=daten`;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async findAnalysenFolder(
+    projectId: string,
+    organizationId: string
+  ): Promise<string | null> {
+    try {
+      const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
+
+      const projectName = projectId.substring(0, 8);
+      const projectFolder = allFolders.find(f =>
+        f.name.includes('P-') && f.name.includes(projectName)
+      );
+
+      if (!projectFolder) return null;
+
+      const analysenFolder = allFolders.find(f =>
+        f.parentFolderId === projectFolder.id && f.name === 'Analysen'
+      );
+
+      return analysenFolder?.id || null;
+    } catch (error) {
+      return null;
     }
   }
 }

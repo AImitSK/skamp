@@ -2048,7 +2048,7 @@ export const projectService = {
         ...(clientId && { clientId }) // Kundenzuordnung hinzufügen wenn vorhanden
       }, context);
       
-      // Unterordner-Struktur definieren (3 Standard-Ordner)
+      // Unterordner-Struktur definieren (4 Standard-Ordner)
       const subfolders = [
         {
           name: 'Medien',
@@ -2064,6 +2064,11 @@ export const projectService = {
           name: 'Pressemeldungen',
           description: 'Pressemitteilungen und PR-Texte',
           color: '#8B5CF6' // Lila
+        },
+        {
+          name: 'Analysen',
+          description: 'Monitoring-Reports und Analytics-PDFs',
+          color: '#F59E0B' // Orange
         }
       ];
       
