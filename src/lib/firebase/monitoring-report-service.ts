@@ -605,7 +605,7 @@ class MonitoringReportService {
             }
 
             if (targetFolderId) {
-              uploadResult = await mediaService.uploadClientMedia(
+              const asset = await mediaService.uploadClientMedia(
                 pdfFile,
                 organizationId,
                 campaignData.clientId,
@@ -613,6 +613,11 @@ class MonitoringReportService {
                 undefined,
                 { userId }
               );
+
+              return {
+                pdfUrl: asset.downloadUrl,
+                fileSize: pdfFile.size
+              };
             } else {
               throw new Error('Zielordner nicht gefunden');
             }
@@ -620,7 +625,7 @@ class MonitoringReportService {
             throw new Error('Projekt-Ordner nicht gefunden');
           }
         } else {
-          uploadResult = await mediaService.uploadMedia(
+          const asset = await mediaService.uploadMedia(
             pdfFile,
             organizationId,
             undefined,
@@ -628,16 +633,12 @@ class MonitoringReportService {
             3,
             { userId }
           );
-        }
 
-        if (!uploadResult?.asset) {
-          throw new Error('Upload-Ergebnis enthält kein Asset');
+          return {
+            pdfUrl: asset.downloadUrl,
+            fileSize: pdfFile.size
+          };
         }
-
-        return {
-          pdfUrl: uploadResult.asset.downloadUrl,
-          fileSize: pdfFile.size
-        };
       }
 
       return {
