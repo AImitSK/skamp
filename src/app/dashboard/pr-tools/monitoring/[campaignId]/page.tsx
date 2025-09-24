@@ -113,8 +113,7 @@ export default function MonitoringDetailPage() {
         );
 
         const campaignPDFs = assets.filter(asset =>
-          asset.fileType === 'application/pdf' &&
-          asset.fileName.includes(campaign.title)
+          asset.fileType === 'application/pdf'
         );
 
         setAnalysisPDFs(campaignPDFs);
