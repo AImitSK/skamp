@@ -123,8 +123,14 @@ export const emailCampaignService = {
       companyName?: string;
     }>
   ): Promise<{ success: number; failed: number; messageIds: string[] }> {
-    
+
     console.log('🚀 Starting PR campaign send:', campaign.title);
+
+    // PHASE A - Task 1.1: Garantiere dass campaign.organizationId gesetzt ist
+    if (!campaign.organizationId) {
+      console.warn('⚠️ Campaign missing organizationId, using userId as fallback');
+      campaign.organizationId = campaign.userId;
+    }
     
     try {
       // 1. Kontakte aus der Verteilerliste(n) laden
@@ -240,12 +246,13 @@ export const emailCampaignService = {
       );
 
       // 5. Versand-Status in Datenbank speichern
+      // PHASE A - Task 1.3: organizationId ist jetzt durch Task 1.1 garantiert
       await this.saveSendResults(
         campaign.id!,
         contactsWithEmail,
         sendResult,
         campaign.userId,
-        campaign.organizationId || campaign.userId // Pass organizationId
+        campaign.organizationId! // organizationId ist durch Task 1.1 garantiert
       );
 
       // 6. Kampagnen-Status aktualisieren
@@ -313,7 +320,7 @@ export const emailCampaignService = {
 
   /**
    * Versand-Daten für eine Kampagne abrufen - Multi-Tenant-fähig
-   * Lädt alle Sends einer Organisation, nicht nur des aktuellen Users
+   * PHASE A - Task 1.2: Erweiterte Query für userId/organizationId
    */
   async getSends(
     campaignId: string,
@@ -322,9 +329,10 @@ export const emailCampaignService = {
     console.log('📊 getSends called with campaignId:', campaignId);
 
     try {
-      const { query, where, orderBy, getDocs } = await import('firebase/firestore');
+      const { query, where, orderBy, getDocs, or } = await import('firebase/firestore');
 
-      // Query für campaign sends - OHNE User-Filter für organisationsweite Abfrage
+      // PHASE A - Task 1.2: Query mit organizationId ODER userId
+      // Damit werden sowohl neue Emails (mit organizationId) als auch alte (mit userId) gefunden
       let q = query(
         collection(db, 'email_campaign_sends'),
         where('campaignId', '==', campaignId),
@@ -332,10 +340,20 @@ export const emailCampaignService = {
       );
 
       const snapshot = await getDocs(q);
-      const sends = snapshot.docs.map(doc => ({
+      let sends = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as EmailCampaignSend));
+
+      // PHASE A - Task 1.2: Fallback-Filter wenn organizationId übergeben wurde
+      // Filtere clientseitig auf organizationId ODER userId (für Team-Mitglieder)
+      if (options?.organizationId) {
+        sends = sends.filter(send =>
+          send.organizationId === options.organizationId ||
+          send.userId === options.organizationId
+        );
+        console.log(`📊 Filtered to ${sends.length} sends for organization:`, options.organizationId);
+      }
 
       console.log(`📊 Found ${sends.length} sends for campaign:`, campaignId);
       console.log('📊 Sends data:', sends);
@@ -474,34 +492,4 @@ export const emailCampaignService = {
     console.log('✅ Batch committed successfully');
   },
 
-  /**
-   * Versand-Daten für eine Kampagne abrufen
-   */
-  async getSends(
-    campaignId: string,
-    options?: { organizationId?: string }
-  ): Promise<EmailCampaignSend[]> {
-    try {
-      console.log('📊 getSends called with campaignId:', campaignId);
-
-      const sendsRef = collection(db, 'email_campaign_sends');
-      const q = query(sendsRef, where('campaignId', '==', campaignId));
-
-      const snapshot = await getDocs(q);
-
-      console.log('📊 Found', snapshot.docs.length, 'sends for campaign:', campaignId);
-
-      const sends = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as EmailCampaignSend));
-
-      console.log('📊 Sends data:', sends);
-
-      return sends;
-    } catch (error) {
-      console.error('Error fetching campaign sends:', error);
-      return [];
-    }
-  }
 };
