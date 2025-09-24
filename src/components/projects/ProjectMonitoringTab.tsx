@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
+import { projectService } from '@/lib/firebase/project-service';
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
@@ -37,7 +38,41 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     try {
       setLoading(true);
 
-      const projectCampaigns = await prService.getCampaignsByProject(projectId, currentOrganization.id);
+      // Lade Projekt-Daten um linkedCampaigns zu erhalten
+      const projectData = await projectService.getById(projectId, { organizationId: currentOrganization.id });
+
+      let allCampaigns: any[] = [];
+
+      if (projectData) {
+        // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
+        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+          const linkedCampaignData = await Promise.all(
+            projectData.linkedCampaigns.map(async (campaignId: string) => {
+              try {
+                const campaign = await prService.getById(campaignId, currentOrganization.id);
+                return campaign;
+              } catch (error) {
+                console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
+                return null;
+              }
+            })
+          );
+          allCampaigns.push(...linkedCampaignData.filter(Boolean));
+        }
+
+        // 2. Lade Kampagnen über projectId (neuer Ansatz)
+        const projectCampaigns = await prService.getCampaignsByProject(projectId, currentOrganization.id);
+        allCampaigns.push(...projectCampaigns);
+
+        // Duplikate entfernen
+        const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
+          index === self.findIndex(c => c.id === campaign.id)
+        );
+
+        allCampaigns = uniqueCampaigns;
+      }
+
+      const projectCampaigns = allCampaigns;
 
       const campaignsWithData = await Promise.all(
         projectCampaigns.map(async (campaign: any) => {
