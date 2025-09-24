@@ -32,10 +32,10 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
   const clickRate = stats.total > 0 ? Math.round((stats.clicked / stats.total) * 100) : 0;
 
   const pieData = [
-    { name: 'Geklickt', value: stats.clicked, color: '#374151' },
-    { name: 'Geöffnet', value: stats.opened - stats.clicked, color: '#6b7280' },
-    { name: 'Zugestellt', value: stats.notOpened, color: '#d1d5db' },
-    { name: 'Bounced', value: stats.bounced, color: '#9ca3af' }
+    { name: 'Geklickt', value: stats.clicked, color: '#005fab' },
+    { name: 'Geöffnet', value: stats.opened - stats.clicked, color: '#3397d7' },
+    { name: 'Zugestellt', value: stats.notOpened, color: '#add8f0' },
+    { name: 'Bounced', value: stats.bounced, color: '#DEDC00' }
   ].filter(item => item.value > 0);
 
   const funnelData = [
@@ -89,8 +89,8 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-8 flex items-center">
                   <div
-                    className="bg-gray-800 h-8 rounded-full flex items-center justify-end pr-3"
-                    style={{ width: `${item.width}%` }}
+                    className="h-8 rounded-full flex items-center justify-end pr-3"
+                    style={{ width: `${item.width}%`, backgroundColor: '#005fab' }}
                   >
                     <Text className="text-xs text-white font-medium">
                       {Math.round(item.width)}%
