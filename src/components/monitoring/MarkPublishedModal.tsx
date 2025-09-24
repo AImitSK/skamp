@@ -47,7 +47,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
       const publishedDate = new Date(formData.publishedAt);
       const publishedTimestamp = Timestamp.fromDate(publishedDate);
 
-      const clippingId = await clippingService.create({
+      const clippingData: any = {
         organizationId: currentOrganization.id,
         campaignId,
         emailSendId: send.id,
@@ -57,14 +57,22 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         outletName: formData.outletName || 'Unbekannt',
         outletType: 'online',
         sentiment: formData.sentiment,
-        reach: formData.reach ? parseInt(formData.reach) : undefined,
-        sentimentNotes: formData.publicationNotes,
         detectionMethod: 'manual',
         detectedAt: Timestamp.now(),
         createdBy: user.uid,
         verifiedBy: user.uid,
         verifiedAt: Timestamp.now()
-      }, { organizationId: currentOrganization.id });
+      };
+
+      if (formData.reach) {
+        clippingData.reach = parseInt(formData.reach);
+      }
+
+      if (formData.publicationNotes) {
+        clippingData.sentimentNotes = formData.publicationNotes;
+      }
+
+      const clippingId = await clippingService.create(clippingData, { organizationId: currentOrganization.id });
 
       const sendRef = doc(db, 'email_campaign_sends', send.id!);
       const updateData: any = {
