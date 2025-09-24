@@ -11,6 +11,7 @@ import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { projectService } from '@/lib/firebase/project-service';
+import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
@@ -49,7 +50,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           const linkedCampaignData = await Promise.all(
             projectData.linkedCampaigns.map(async (campaignId: string) => {
               try {
-                const campaign = await prService.getById(campaignId, currentOrganization.id);
+                const campaign = await prService.getById(campaignId);
                 return campaign;
               } catch (error) {
                 console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
@@ -143,39 +144,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <Subheading className="mb-4">📈 Projekt-Statistiken</Subheading>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <Text className="text-sm text-gray-600">Kampagnen</Text>
-            <div className="text-2xl font-semibold text-gray-900 mt-1">
-              {campaigns.length}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <Text className="text-sm text-gray-600">Gesamt-Empfänger</Text>
-            <div className="text-2xl font-semibold text-gray-900 mt-1">
-              {totalSends}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <Text className="text-sm text-gray-600">Clippings</Text>
-            <div className="text-2xl font-semibold text-gray-900 mt-1">
-              {totalClippings}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <Text className="text-sm text-gray-600">Gesamtreichweite</Text>
-            <div className="text-2xl font-semibold text-gray-900 mt-1">
-              {totalReach > 0 ? totalReach.toLocaleString('de-DE') : '-'}
-            </div>
-          </div>
-        </div>
-      </div>
+      <MonitoringDashboard clippings={allClippings} sends={allSends} />
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <Subheading className="mb-4">📋 Kampagnen in diesem Projekt</Subheading>
@@ -246,8 +215,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           </table>
         </div>
       </div>
-
-      <EmailPerformanceStats sends={allSends} />
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <Subheading className="mb-4">📋 Alle Empfänger & Veröffentlichungen</Subheading>

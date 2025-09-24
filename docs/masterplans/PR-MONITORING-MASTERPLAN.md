@@ -657,40 +657,133 @@ interface MonitoringSuggestion {
 
 ## 📋 IMPLEMENTIERUNGS-PHASEN
 
-### **Phase 1: Basis-Tracking (MVP)** ✅ PRIORITÄT
+### **Phase 1: Basis-Tracking (MVP)** ✅ ABGESCHLOSSEN
 
 #### **Ziel:** Manuelles Veröffentlichungs-Tracking ohne Automatisierung
 
 **Tasks:**
 1. ✅ Erweitere `EmailCampaignSend` Interface um Publishing-Felder
 2. ✅ Erstelle `media_clippings` Collection & Types
-3. ✅ Baue Monitoring-Tab UI in Kampagnen-Detail
-4. ✅ Implementiere Empfänger-Liste mit SendGrid-Status
-5. ✅ Baue "Als veröffentlicht markieren" Modal
-6. ✅ Clipping-Eingabe-Formular (URL, Reichweite, Sentiment)
-7. ✅ Clipping-Archiv-View mit Grid-Layout
-8. ✅ Basis-Statistiken (Count, Reichweite, Sentiment)
+3. ✅ Baue Monitoring-Übersicht (`/pr-tools/monitoring`)
+4. ✅ Baue Monitoring-Detail-Seite (`/pr-tools/monitoring/[campaignId]`)
+5. ✅ Implementiere Empfänger-Liste mit SendGrid-Status
+6. ✅ Baue "Als veröffentlicht markieren" Modal
+7. ✅ Clipping-Eingabe-Formular (URL, Reichweite, Sentiment)
+8. ✅ Clipping-Archiv-View mit Tabellen-Layout
+9. ✅ Email Performance Stats mit Charts (Funnel, Pie)
+10. ✅ Projekt-Monitoring-Tab mit aggregierten Stats
+11. ✅ Navigation & Integration (Analytics-Button → Monitoring)
 
 **Ergebnis:**
-- User kann nach Versand manuell Veröffentlichungen tracken
-- Alle Clippings in einem Archiv
-- Basis-Metriken sichtbar
+- ✅ User kann nach Versand manuell Veröffentlichungen tracken
+- ✅ Alle Clippings in einem Archiv
+- ✅ Performance-Charts mit Markenfarben
+- ✅ Projekt-weite Monitoring-Übersicht
+- ✅ Vollständige Navigation integriert
+
+**Stand:** 24. September 2025 - Phase 1 komplett abgeschlossen und getestet
 
 ---
 
-### **Phase 2: Google News Integration** 🔄 MITTEL
+### **Phase 2: Analytics & Reporting** ✅ ABGESCHLOSSEN
+
+#### **Ziel:** Professionelle Reports für Kunden
+
+**Tasks:**
+1. ✅ Dashboard mit KPIs
+   - ✅ Total Clippings
+   - ✅ Gesamtreichweite
+   - ✅ AVE Total (falls vorhanden)
+   - ✅ Sentiment-Pie-Chart
+   - ✅ Timeline-Graph (Veröffentlichungen über Zeit)
+   - ✅ Medium-Verteilung (Pie Chart)
+   - ✅ Top 5 Medien nach Reichweite
+   - ✅ E-Mail Performance KPIs
+   - ✅ Conversion-Rate (Opens → Clippings)
+2. ✅ Export-Funktion
+   - ✅ PDF-Report-Generator (mit Brand Colors #005fab, #DEDC00)
+   - ✅ Excel-Export (Multi-Sheet: Zusammenfassung, E-Mails, Clippings)
+   - ✅ Client-Side Upload (kein Admin SDK)
+3. ⏳ Vergleichs-Analytics (VERSCHOBEN - nicht priorisiert)
+   - Kampagne vs. Kampagne
+   - Projekt vs. Projekt
+   - Zeitraum-Vergleiche
+4. 📋 Benchmarking (VERSCHOBEN - optional)
+   - Branchendurchschnitt
+   - Historische Daten
+
+**Implementierte Komponenten:**
+- `MonitoringDashboard.tsx` - Analytics Dashboard mit Charts (Recharts)
+- `monitoring-report-service.ts` - PDF-Report Generator
+- `monitoring-excel-export.ts` - Excel Multi-Sheet Export
+- Export-Buttons in Monitoring-Detail-Seite integriert
+- Projekt-Monitoring-Tab mit Dashboard erweitert
+
+**Priorisierung:**
+1. ✅ Dashboard mit KPIs (ERLEDIGT)
+2. ✅ PDF-Report für einzelne Kampagne (ERLEDIGT)
+3. ✅ Excel-Export der Monitoring-Daten (ERLEDIGT)
+4. ⏳ Vergleichs-Analytics (Verschoben - bei Bedarf später)
+
+---
+
+### **Phase 3: Clipping-Enhancement** 📊 MITTEL
+
+#### **Ziel:** Reichere Daten und bessere Analyse
+
+**Tasks:**
+1. ⏳ AVE-Berechnung (Advertising Value Equivalent)
+   - Formel: Reichweite × Faktor × Sentiment-Multiplikator
+   - Konfigurierbare Faktoren pro Medientyp (Print: 3€, Online: 1€)
+   - UI zur AVE-Faktor-Konfiguration
+2. ⏳ Sentiment-Analyse Verbesserung
+   - Sentiment-Score (-1 bis 1) zusätzlich zu Labels
+   - UI für manuelle Anpassung
+3. 📋 Screenshot-Capture (Puppeteer) - Optional
+   - Automatischer Screenshot bei URL-Eingabe
+   - Upload zu Firebase Storage
+4. 📋 Web Scraping (Volltext-Extraktion) - Optional
+   - Artikel-Text extrahieren
+   - Metadaten (Autor, Datum)
+
+**Priorisierung:**
+1. AVE-Berechnung (sofort nützlich)
+2. Sentiment-Verbesserungen
+3. Screenshot & Scraping (später)
+
+---
+
+### **Phase 4: RSS Feed Monitoring** 🔄 NIEDRIG
+
+#### **Ziel:** Überwachung spezifischer Medien-RSS-Feeds
+
+**Tasks:**
+1. ⏳ RSS Parser Integration (npm package)
+2. ⏳ User kann RSS Feeds hinzufügen (pro Kampagne oder global)
+3. ⏳ Firebase Function: RSS Crawler
+4. ⏳ Keyword-Matching in RSS Items
+5. ⏳ Vorschläge in UI wie bei Google News
+
+**Use Case:**
+- User fügt RSS Feed von "Süddeutsche Zeitung Tech" hinzu
+- System checkt täglich auf neue Artikel
+- Bei Keyword-Match → Vorschlag
+
+---
+
+### **Phase 5: Google News Integration** 🔄 MITTEL (SPÄTER)
 
 #### **Ziel:** Automatische Artikel-Erkennung
 
 **Tasks:**
-1. ✅ Google News API Account & Setup
-2. ✅ Firebase Function: Daily News Crawler
-3. ✅ `monitoring_suggestions` Collection
-4. ✅ Keyword-Extraction aus Kampagnen-Content
-5. ✅ Matching-Algorithmus (Score-Berechnung)
-6. ✅ UI: Vorschläge in Monitoring-Tab
-7. ✅ Bestätigen/Ablehnen-Flow
-8. ✅ Auto-Verknüpfung mit Empfängern (wenn möglich)
+1. 📋 Google News API Account & Setup
+2. 📋 Firebase Function: Daily News Crawler
+3. 📋 `monitoring_suggestions` Collection
+4. 📋 Keyword-Extraction aus Kampagnen-Content
+5. 📋 Matching-Algorithmus (Score-Berechnung)
+6. 📋 UI: Vorschläge in Monitoring-Tab
+7. 📋 Bestätigen/Ablehnen-Flow
+8. 📋 Auto-Verknüpfung mit Empfängern (wenn möglich)
 
 **Technische Details:**
 - Firebase Scheduled Function (täglich um 06:00)
@@ -701,80 +794,6 @@ interface MonitoringSuggestion {
 - Zeitfenster: 30 Tage nach Versand
 - Speichert Treffer als `monitoring_suggestion`
 - User bestätigt/lehnt ab in UI
-
----
-
-### **Phase 3: RSS Feed Monitoring** 🔄 NIEDRIG
-
-#### **Ziel:** Überwachung spezifischer Medien-RSS-Feeds
-
-**Tasks:**
-1. ✅ RSS Parser Integration (npm package)
-2. ✅ User kann RSS Feeds hinzufügen (pro Kampagne oder global)
-3. ✅ Firebase Function: RSS Crawler
-4. ✅ Keyword-Matching in RSS Items
-5. ✅ Vorschläge in UI wie bei Google News
-
-**Use Case:**
-- User fügt RSS Feed von "Süddeutsche Zeitung Tech" hinzu
-- System checkt täglich auf neue Artikel
-- Bei Keyword-Match → Vorschlag
-
----
-
-### **Phase 4: Clipping-Enhancement** 📊 MITTEL
-
-#### **Ziel:** Reichere Daten und bessere Analyse
-
-**Tasks:**
-1. ✅ Screenshot-Capture (Puppeteer)
-   - Automatischer Screenshot bei URL-Eingabe
-   - Upload zu Firebase Storage
-2. ✅ Web Scraping (Volltext-Extraktion)
-   - Artikel-Text extrahieren
-   - Metadaten (Autor, Datum)
-3. ✅ Sentiment-Analyse (optional AI)
-   - OpenAI/Claude API
-   - Auto-Klassifizierung: positiv/neutral/negativ
-4. ✅ AVE-Berechnung (Advertising Value Equivalent)
-   - Formel: Reichweite × Faktor × Sentiment-Multiplikator
-   - Konfigurierbare Faktoren pro Medientyp
-
----
-
-### **Phase 5: Analytics & Reporting** 📈 HOCH
-
-#### **Ziel:** Professionelle Reports für Kunden
-
-**Tasks:**
-1. ✅ Dashboard mit KPIs
-   - Total Clippings
-   - Gesamtreichweite
-   - AVE Total
-   - Sentiment-Pie-Chart
-   - Timeline-Graph (Veröffentlichungen über Zeit)
-2. ✅ Export-Funktion
-   - PDF-Report-Generator
-   - Excel-Export (Tabelle)
-3. ✅ Vergleichs-Analytics
-   - Kampagne vs. Kampagne
-   - Projekt vs. Projekt
-   - Zeitraum-Vergleiche
-4. ✅ Benchmarking (optional)
-   - Branchendurchschnitt
-   - Historische Daten
-
----
-
-### **Phase 6: Projekt-Integration** 🔗 NIEDRIG
-
-#### **Ziel:** Monitoring auf Projekt-Ebene
-
-**Tasks:**
-1. ✅ Projekt-Tab "Monitoring" erweitern
-2. ✅ Aggregation aller Kampagnen-Clippings
-3. ✅ Projekt-weites Clipping-Archiv
-4. ✅ Projekt-Report (alle Kampagnen kombiniert)
 
 ---
 
