@@ -101,10 +101,28 @@ export default function MonitoringDetailPage() {
         return;
       }
 
-      const projectFolder = allFolders.find(f =>
+      // Suche nach Projektordner - versuche verschiedene Ansätze
+      let projectFolder = allFolders.find(f =>
         f.name.includes('P-') && f.name.includes(projectId.substring(0, 8))
       );
+
+      // Fallback: Suche über projectId im metadata oder tags
+      if (!projectFolder) {
+        projectFolder = allFolders.find(f =>
+          f.metadata?.projectId === projectId ||
+          f.tags?.includes(projectId)
+        );
+      }
+
+      // Fallback 2: Suche nach beliebigem Teil der projectId
+      if (!projectFolder) {
+        projectFolder = allFolders.find(f =>
+          f.name.includes('P-') && f.name.includes(projectId)
+        );
+      }
+
       console.log('📂 Found project folder:', projectFolder?.name);
+      console.log('📂 All P- folders:', allFolders.filter(f => f.name.includes('P-')).map(f => f.name));
 
       if (!projectFolder) {
         console.log('📂 Project folder not found');
