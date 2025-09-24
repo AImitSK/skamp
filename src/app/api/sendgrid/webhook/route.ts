@@ -141,7 +141,7 @@ async function processWebhookEvent(event: SendGridEvent) {
       });
 
       if (updateResponse.ok) {
-        console.log('✅ Updated status to', updateData.status, 'for', event.email);
+        console.log('✅ Updated document for', event.email, '- Fields:', Object.keys(updateData).join(', '));
       } else {
         console.error('❌ Update failed:', await updateResponse.text());
       }

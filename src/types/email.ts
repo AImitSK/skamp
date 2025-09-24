@@ -50,17 +50,17 @@ export interface EmailSendResult {
   error?: string;
 }
 
-// ERWEITERT: Zusätzliche Tracking-Felder für Analytics
+// ERWEITERT: Zusätzliche Tracking-Felder für Analytics & Monitoring
 export interface EmailCampaignSend {
   id?: string;
   campaignId: string;
   recipientEmail: string;
   recipientName: string;
   messageId?: string;
-  
+
   // Status-Tracking
   status: 'queued' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
-  
+
   // Zeitstempel für jeden Status
   sentAt?: Timestamp;
   deliveredAt?: Timestamp;
@@ -68,26 +68,45 @@ export interface EmailCampaignSend {
   clickedAt?: Timestamp;
   bouncedAt?: Timestamp;
   failedAt?: Timestamp;
-  
+
   // Engagement-Metriken
   openCount?: number;          // Wie oft geöffnet
   clickCount?: number;         // Wie oft geklickt
   lastOpenedAt?: Timestamp;    // Letztes Öffnen
   lastClickedAt?: Timestamp;   // Letzter Klick
   lastClickedUrl?: string;     // Letzter geklickter Link
-  
+
   // Technical Information für Insights
   lastUserAgent?: string;      // Browser/Gerät
   lastIpAddress?: string;      // IP-Adresse
-  
+
   // Error/Bounce Details
   errorMessage?: string;
   bounceReason?: string;
   deferredAt?: Timestamp;      // Temporäre Verzögerung
   deferredReason?: string;
-  
+
   // Event-Tracking
   lastEventAt?: Timestamp;     // Letztes Event von SendGrid
+
+  // MONITORING-ERWEITERUNG (Phase 1)
+  publishedStatus?: 'not_published' | 'published' | 'pending' | 'declined';
+  publishedAt?: Timestamp;
+
+  // Clipping-Verknüpfung
+  clippingId?: string;
+
+  // Quick-Daten (denormalisiert für Performance)
+  articleUrl?: string;
+  articleTitle?: string;
+  reach?: number;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  publicationNotes?: string;
+
+  // Manuelles Tracking
+  manuallyMarkedPublished?: boolean;
+  markedPublishedBy?: string;
+  markedPublishedAt?: Timestamp;
 
   userId: string;
   organizationId?: string;     // NEU: Für Multi-Tenancy Support
