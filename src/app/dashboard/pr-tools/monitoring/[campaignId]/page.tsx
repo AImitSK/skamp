@@ -21,6 +21,7 @@ import { MediaClipping } from '@/types/monitoring';
 import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import Link from 'next/link';
 
 export default function MonitoringDetailPage() {
@@ -41,6 +42,10 @@ export default function MonitoringDetailPage() {
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
   const [loadingPDFs, setLoadingPDFs] = useState(false);
   const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pdfToDelete, setPdfToDelete] = useState<any>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -79,20 +84,13 @@ export default function MonitoringDetailPage() {
   };
 
   const loadAnalysisPDFs = async () => {
-    if (!currentOrganization?.id || !campaign) {
-      console.log('📂 loadAnalysisPDFs aborted: Missing org or campaign');
-      return;
-    }
+    if (!currentOrganization?.id || !campaign) return;
 
     try {
       setLoadingPDFs(true);
-      console.log('📂 Loading PDFs for campaign:', campaign.title);
 
       const projectId = campaign.projectId;
-      console.log('📂 Campaign projectId:', projectId);
-
       if (!projectId) {
-        console.log('📂 No projectId - skipping PDF load');
         setAnalysisPDFs([]);
         return;
       }
@@ -103,39 +101,32 @@ export default function MonitoringDetailPage() {
       const folderStructure = await projectService.getProjectFolderStructure(projectId, {
         organizationId: currentOrganization.id
       });
-      console.log('📂 Project folder structure:', folderStructure);
 
       if (!folderStructure?.subfolders) {
-        console.log('📂 No project folders found');
         setAnalysisPDFs([]);
         return;
       }
 
       const analysenFolder = folderStructure.subfolders.find((f: any) => f.name === 'Analysen');
-      console.log('📂 Found Analysen folder:', analysenFolder?.name);
 
       if (analysenFolder) {
         const assets = await mediaService.getMediaAssets(
           currentOrganization.id,
           analysenFolder.id
         );
-        console.log('📂 Total assets in Analysen folder:', assets.length);
 
         const campaignPDFs = assets.filter(asset =>
           asset.fileType === 'application/pdf'
         );
-        console.log('📂 PDFs found:', campaignPDFs.length, campaignPDFs);
 
         setAnalysisPDFs(campaignPDFs);
 
         setAnalysenFolderLink(
           `/dashboard/projects/${projectId}?tab=daten&folder=${analysenFolder.id}`
         );
-      } else {
-        console.log('📂 Analysen folder not found - no PDFs to load');
       }
     } catch (error) {
-      console.error('📂 Fehler beim Laden der Analyse-PDFs:', error);
+      console.error('Fehler beim Laden der Analyse-PDFs:', error);
     } finally {
       setLoadingPDFs(false);
     }
@@ -158,31 +149,39 @@ export default function MonitoringDetailPage() {
 
       window.open(result.pdfUrl, '_blank');
       loadAnalysisPDFs();
+      setSuccessMessage('PDF-Report erfolgreich generiert!');
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
-      alert('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
+      setSuccessMessage('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
+      setShowSuccessDialog(true);
     } finally {
       setExportingPDF(false);
     }
   };
 
-  const handleDeletePDF = async (assetId: string) => {
-    if (!currentOrganization?.id) return;
+  const handleDeletePDF = async (pdf: any) => {
+    setPdfToDelete(pdf);
+    setShowDeleteDialog(true);
+  };
 
-    if (!confirm('PDF wirklich löschen?')) return;
+  const confirmDeletePDF = async () => {
+    if (!currentOrganization?.id || !pdfToDelete) return;
 
     try {
       const { mediaService } = await import('@/lib/firebase/media-service');
-      const asset = analysisPDFs.find(p => p.id === assetId);
-
-      if (asset) {
-        await mediaService.deleteMediaAsset(asset);
-        await loadAnalysisPDFs();
-        alert('PDF erfolgreich gelöscht');
-      }
+      await mediaService.deleteMediaAsset(pdfToDelete);
+      await loadAnalysisPDFs();
+      setShowDeleteDialog(false);
+      setPdfToDelete(null);
+      setSuccessMessage('PDF erfolgreich gelöscht');
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
-      alert('Fehler beim Löschen des PDFs');
+      setShowDeleteDialog(false);
+      setPdfToDelete(null);
+      setSuccessMessage('Fehler beim Löschen des PDFs');
+      setShowSuccessDialog(true);
     }
   };
 
@@ -367,7 +366,7 @@ export default function MonitoringDetailPage() {
                               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
                               Download
                             </DropdownItem>
-                            <DropdownItem onClick={() => handleDeletePDF(pdf.id)}>
+                            <DropdownItem onClick={() => handleDeletePDF(pdf)}>
                               <TrashIcon className="h-4 w-4 mr-2 text-red-600" />
                               <span className="text-red-600">Löschen</span>
                             </DropdownItem>
@@ -402,6 +401,39 @@ export default function MonitoringDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+        <DialogTitle>PDF löschen</DialogTitle>
+        <DialogBody>
+          <Text>
+            Möchten Sie das PDF &quot;{pdfToDelete?.fileName}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+          </Text>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowDeleteDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button color="red" onClick={confirmDeletePDF}>
+            Löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
+        <DialogTitle>
+          {successMessage.includes('fehlgeschlagen') || successMessage.includes('Fehler') ? 'Fehler' : 'Erfolg'}
+        </DialogTitle>
+        <DialogBody>
+          <Text>{successMessage}</Text>
+        </DialogBody>
+        <DialogActions>
+          <Button onClick={() => setShowSuccessDialog(false)}>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
