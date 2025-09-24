@@ -26,6 +26,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
   const { currentOrganization } = useOrganization();
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     articleUrl: '',
     articleTitle: '',
@@ -66,127 +67,151 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
       }, { organizationId: currentOrganization.id });
 
       const sendRef = doc(db, 'email_campaign_sends', send.id!);
-      await updateDoc(sendRef, {
+      const updateData: any = {
         publishedStatus: 'published',
         publishedAt: publishedTimestamp,
         clippingId,
         articleUrl: formData.articleUrl,
-        articleTitle: formData.articleTitle || undefined,
-        reach: formData.reach ? parseInt(formData.reach) : undefined,
         sentiment: formData.sentiment,
-        publicationNotes: formData.publicationNotes || undefined,
         manuallyMarkedPublished: true,
         markedPublishedBy: user.uid,
         markedPublishedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
+      };
+
+      if (formData.articleTitle) {
+        updateData.articleTitle = formData.articleTitle;
+      }
+
+      if (formData.reach) {
+        updateData.reach = parseInt(formData.reach);
+      }
+
+      if (formData.publicationNotes) {
+        updateData.publicationNotes = formData.publicationNotes;
+      }
+
+      await updateDoc(sendRef, updateData);
 
       onSuccess();
     } catch (error) {
       console.error('Fehler beim Markieren als veröffentlicht:', error);
-      alert('Fehler beim Speichern');
+      setError(error instanceof Error ? error.message : 'Fehler beim Speichern');
+      setLoading(false);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={true} onClose={onClose}>
-      <DialogTitle>Als veröffentlicht markieren</DialogTitle>
-      <form onSubmit={handleSubmit}>
+    <>
+      <Dialog open={true} onClose={onClose}>
+        <DialogTitle>Als veröffentlicht markieren</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogBody>
+            <div className="space-y-4">
+              <Field>
+                <Label>Empfänger</Label>
+                <Input
+                  value={`${send.recipientName} (${send.recipientEmail})`}
+                  disabled
+                />
+              </Field>
+
+              <Field>
+                <Label>Artikel-URL *</Label>
+                <Input
+                  type="url"
+                  value={formData.articleUrl}
+                  onChange={(e) => setFormData({ ...formData, articleUrl: e.target.value })}
+                  placeholder="https://..."
+                  required
+                />
+              </Field>
+
+              <Field>
+                <Label>Artikel-Titel</Label>
+                <Input
+                  type="text"
+                  value={formData.articleTitle}
+                  onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
+                  placeholder="Optional"
+                />
+              </Field>
+
+              <Field>
+                <Label>Medium/Outlet</Label>
+                <Input
+                  type="text"
+                  value={formData.outletName}
+                  onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
+                  placeholder="z.B. Süddeutsche Zeitung"
+                />
+              </Field>
+
+              <Field>
+                <Label>Veröffentlichungsdatum</Label>
+                <Input
+                  type="date"
+                  value={formData.publishedAt}
+                  onChange={(e) => setFormData({ ...formData, publishedAt: e.target.value })}
+                />
+              </Field>
+
+              <Field>
+                <Label>Reichweite (optional)</Label>
+                <Input
+                  type="number"
+                  value={formData.reach}
+                  onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
+                  placeholder="z.B. 2500000"
+                />
+              </Field>
+
+              <Field>
+                <Label>Sentiment</Label>
+                <Select
+                  value={formData.sentiment}
+                  onChange={(e) => setFormData({ ...formData, sentiment: e.target.value as any })}
+                >
+                  <option value="positive">😊 Positiv</option>
+                  <option value="neutral">😐 Neutral</option>
+                  <option value="negative">😞 Negativ</option>
+                </Select>
+              </Field>
+
+              <Field>
+                <Label>Notizen (optional)</Label>
+                <Textarea
+                  value={formData.publicationNotes}
+                  onChange={(e) => setFormData({ ...formData, publicationNotes: e.target.value })}
+                  placeholder="Zusätzliche Informationen..."
+                  rows={3}
+                />
+              </Field>
+            </div>
+          </DialogBody>
+
+          <DialogActions>
+            <Button plain onClick={onClose} disabled={loading}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Speichern...' : 'Speichern'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      <Dialog open={!!error} onClose={() => setError('')}>
+        <DialogTitle>Fehler</DialogTitle>
         <DialogBody>
-          <div className="space-y-4">
-            <Field>
-              <Label>Empfänger</Label>
-              <Input
-                value={`${send.recipientName} (${send.recipientEmail})`}
-                disabled
-              />
-            </Field>
-
-            <Field>
-              <Label>Artikel-URL *</Label>
-              <Input
-                type="url"
-                value={formData.articleUrl}
-                onChange={(e) => setFormData({ ...formData, articleUrl: e.target.value })}
-                placeholder="https://..."
-                required
-              />
-            </Field>
-
-            <Field>
-              <Label>Artikel-Titel</Label>
-              <Input
-                type="text"
-                value={formData.articleTitle}
-                onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
-                placeholder="Optional"
-              />
-            </Field>
-
-            <Field>
-              <Label>Medium/Outlet</Label>
-              <Input
-                type="text"
-                value={formData.outletName}
-                onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
-                placeholder="z.B. Süddeutsche Zeitung"
-              />
-            </Field>
-
-            <Field>
-              <Label>Veröffentlichungsdatum</Label>
-              <Input
-                type="date"
-                value={formData.publishedAt}
-                onChange={(e) => setFormData({ ...formData, publishedAt: e.target.value })}
-              />
-            </Field>
-
-            <Field>
-              <Label>Reichweite (optional)</Label>
-              <Input
-                type="number"
-                value={formData.reach}
-                onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
-                placeholder="z.B. 2500000"
-              />
-            </Field>
-
-            <Field>
-              <Label>Sentiment</Label>
-              <Select
-                value={formData.sentiment}
-                onChange={(e) => setFormData({ ...formData, sentiment: e.target.value as any })}
-              >
-                <option value="positive">😊 Positiv</option>
-                <option value="neutral">😐 Neutral</option>
-                <option value="negative">😞 Negativ</option>
-              </Select>
-            </Field>
-
-            <Field>
-              <Label>Notizen (optional)</Label>
-              <Textarea
-                value={formData.publicationNotes}
-                onChange={(e) => setFormData({ ...formData, publicationNotes: e.target.value })}
-                placeholder="Zusätzliche Informationen..."
-                rows={3}
-              />
-            </Field>
-          </div>
+          <p className="text-sm text-gray-600">{error}</p>
         </DialogBody>
-
         <DialogActions>
-          <Button plain onClick={onClose} disabled={loading}>
-            Abbrechen
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Speichern...' : 'Speichern'}
-          </Button>
+          <Button onClick={() => setError('')}>OK</Button>
         </DialogActions>
-      </form>
-    </Dialog>
+      </Dialog>
+    </>
   );
 }
