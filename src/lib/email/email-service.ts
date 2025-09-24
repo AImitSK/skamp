@@ -117,6 +117,8 @@ export class EmailService {
       recipients,
       campaignEmail: emailContent,
       senderInfo,
+      campaignId: campaign.id, // WICHTIG: Campaign ID für email_campaign_sends
+      campaignTitle: campaign.title,
       mediaShareUrl,
       keyVisual
     });

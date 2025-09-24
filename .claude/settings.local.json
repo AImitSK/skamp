@@ -84,7 +84,11 @@
       "Bash(npx madge:*)",
       "Bash(dir \"c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\components\\projects\")",
       "Bash(xargs ls:*)",
-      "Bash(firebase --version)"
+      "Bash(firebase --version)",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

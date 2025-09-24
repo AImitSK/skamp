@@ -88,8 +88,9 @@ export interface EmailCampaignSend {
   
   // Event-Tracking
   lastEventAt?: Timestamp;     // Letztes Event von SendGrid
-  
+
   userId: string;
+  organizationId?: string;     // NEU: Für Multi-Tenancy Support
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

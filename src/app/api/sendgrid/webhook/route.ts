@@ -58,26 +58,40 @@ export async function POST(request: NextRequest) {
  */
 async function processWebhookEvent(event: SendGridEvent) {
   console.log('🔄 Processing event:', event.event, 'for', event.email);
+  console.log('📧 Event details:', {
+    messageId: event['sg_message_id'],
+    email: event.email,
+    event: event.event
+  });
 
   try {
-    // Email Campaign Send Dokument finden
-    const q = query(
+    // Email Campaign Send Dokument finden - VERBESSERT: Suche mit mehreren Kriterien
+    let q = query(
       collection(db, 'email_campaign_sends'),
       where('recipientEmail', '==', event.email)
     );
-    
+
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
       console.warn('⚠️ No email_campaign_send found for:', event.email);
+      console.warn('⚠️ Make sure email_campaign_sends are being created when emails are sent');
       return;
     }
 
+    console.log(`📊 Found ${querySnapshot.size} email_campaign_send documents for:`, event.email);
+
     // Alle passenden Dokumente aktualisieren (falls mehrere Kampagnen)
     const updates = [];
-    
+
     for (const docSnapshot of querySnapshot.docs) {
       const sendData = docSnapshot.data();
+      console.log('📄 Checking document:', {
+        id: docSnapshot.id,
+        messageId: sendData.messageId,
+        status: sendData.status,
+        organizationId: sendData.organizationId
+      });
       
       // Nur aktualisieren wenn Message ID übereinstimmt (für Genauigkeit)
       if (event['sg_message_id'] && sendData.messageId && 

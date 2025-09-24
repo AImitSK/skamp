@@ -240,7 +240,13 @@ export const emailCampaignService = {
       );
 
       // 5. Versand-Status in Datenbank speichern
-      await this.saveSendResults(campaign.id!, contactsWithEmail, sendResult, campaign.userId);
+      await this.saveSendResults(
+        campaign.id!,
+        contactsWithEmail,
+        sendResult,
+        campaign.userId,
+        campaign.organizationId || campaign.userId // Pass organizationId
+      );
 
       // 6. Kampagnen-Status aktualisieren
       if (sendResult.summary.success > 0) {
@@ -306,6 +312,42 @@ export const emailCampaignService = {
   },
 
   /**
+   * Versand-Daten für eine Kampagne abrufen - Multi-Tenant-fähig
+   * Lädt alle Sends einer Organisation, nicht nur des aktuellen Users
+   */
+  async getSends(
+    campaignId: string,
+    options?: { organizationId?: string }
+  ): Promise<EmailCampaignSend[]> {
+    console.log('📊 getSends called with campaignId:', campaignId);
+
+    try {
+      const { query, where, orderBy, getDocs } = await import('firebase/firestore');
+
+      // Query für campaign sends - OHNE User-Filter für organisationsweite Abfrage
+      let q = query(
+        collection(db, 'email_campaign_sends'),
+        where('campaignId', '==', campaignId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const snapshot = await getDocs(q);
+      const sends = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as EmailCampaignSend));
+
+      console.log(`📊 Found ${sends.length} sends for campaign:`, campaignId);
+      console.log('📊 Sends data:', sends);
+
+      return sends;
+    } catch (error) {
+      console.error('Error fetching campaign sends:', error);
+      return [];
+    }
+  },
+
+  /**
    * Hilfsfunktion: Kontakte aus den Verteilerlisten einer Kampagne laden
    */
   async getCampaignContacts(campaign: PRCampaign): Promise<ContactEnhanced[]> {
@@ -366,7 +408,8 @@ export const emailCampaignService = {
     campaignId: string,
     contacts: ContactEnhanced[],
     sendResult: any,
-    userId: string
+    userId: string,
+    organizationId?: string // NEU: organizationId als optionaler Parameter
   ): Promise<void> {
     console.log('💾 saveSendResults called:', {
       campaignId,
@@ -395,15 +438,16 @@ export const emailCampaignService = {
       console.log('💾 Found contact for', result.email, ':', !!contact);
       if (contact) {
         const sendDoc = doc(collection(db, 'email_campaign_sends'));
-        
-        const sendData: Omit<EmailCampaignSend, 'id'> = {
+
+        const sendData: any = {
           campaignId,
           recipientEmail: result.email,
           recipientName: getContactDisplayName(contact!),
           status: result.status === 'sent' ? 'sent' : 'failed',
           userId: userId,
-          createdAt: serverTimestamp() as any,
-          updatedAt: serverTimestamp() as any
+          organizationId: organizationId || contact.organizationId, // NEU: organizationId speichern
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         };
 
         // Nur hinzufügen wenn definiert
