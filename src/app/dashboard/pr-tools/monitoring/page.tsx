@@ -43,9 +43,6 @@ export default function MonitoringPage() {
       setLoading(true);
       const allCampaigns = await prService.getAll(currentOrganization.id);
 
-      console.log('📊 All campaigns:', allCampaigns);
-      console.log('📊 Campaigns count:', allCampaigns.length);
-
       // Prüfe für jede Kampagne ob sie Sends hat und lade Clippings
       const campaignsWithSends = await Promise.all(
         allCampaigns.map(async (campaign: any) => {
@@ -57,16 +54,12 @@ export default function MonitoringPage() {
               organizationId: currentOrganization.id
             })
           ]);
-          console.log(`📧 Kampagne "${campaign.title}" (ID: ${campaign.id}): ${sends.length} sends, Status: ${campaign.status}`);
           return { campaign, sends, clippings };
         })
       );
 
       // Filtere nur Kampagnen die tatsächlich versendet wurden (haben Sends)
       const sentCampaigns = campaignsWithSends.filter(({ sends }) => sends.length > 0);
-
-      console.log('📊 Sent campaigns:', sentCampaigns);
-      console.log('📊 Sent campaigns count:', sentCampaigns.length);
 
       const campaignsWithStats = sentCampaigns.map(({ campaign, sends, clippings }) => {
         const stats = {
