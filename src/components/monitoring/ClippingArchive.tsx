@@ -5,6 +5,17 @@ import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import {
+  EyeIcon,
+  CurrencyEuroIcon,
+  FaceSmileIcon,
+  FaceFrownIcon,
+  EllipsisVerticalIcon,
+  LinkIcon,
+  CalendarIcon,
+  NewspaperIcon
+} from '@heroicons/react/24/outline';
 
 interface ClippingArchiveProps {
   clippings: MediaClipping[];
@@ -20,12 +31,13 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
     negative: clippings.filter(c => c.sentiment === 'negative').length
   };
 
-  const getSentimentEmoji = (sentiment: 'positive' | 'neutral' | 'negative') => {
-    switch (sentiment) {
-      case 'positive': return '😊';
-      case 'neutral': return '😐';
-      case 'negative': return '😞';
-    }
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return '-';
+    return timestamp.toDate().toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
   };
 
   const getSentimentColor = (sentiment: 'positive' | 'neutral' | 'negative') => {
@@ -59,10 +71,19 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
 
             <div>
               <Text className="text-sm text-gray-600">Sentiment</Text>
-              <div className="flex gap-3 mt-1">
-                <span className="text-gray-900">😊 {sentimentCounts.positive}</span>
-                <span className="text-gray-900">😐 {sentimentCounts.neutral}</span>
-                <span className="text-gray-900">😞 {sentimentCounts.negative}</span>
+              <div className="flex gap-3 mt-1 items-center">
+                <span className="flex items-center gap-1 text-gray-900">
+                  <FaceSmileIcon className="h-5 w-5 text-green-600" />
+                  {sentimentCounts.positive}
+                </span>
+                <span className="flex items-center gap-1 text-gray-900">
+                  <div className="h-5 w-5 rounded-full bg-gray-400" />
+                  {sentimentCounts.neutral}
+                </span>
+                <span className="flex items-center gap-1 text-gray-900">
+                  <FaceFrownIcon className="h-5 w-5 text-red-600" />
+                  {sentimentCounts.negative}
+                </span>
               </div>
             </div>
           </div>
@@ -74,52 +95,101 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
           <Text className="text-gray-500">Noch keine Veröffentlichungen erfasst</Text>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {clippings.map((clipping) => (
-            <div
-              key={clipping.id}
-              className="border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <Text className="font-medium text-gray-900 mb-1">
-                    {clipping.title}
-                  </Text>
-                  <Text className="text-sm text-gray-600 mb-2">
-                    {clipping.outletName} • {new Date(clipping.publishedAt.toDate()).toLocaleDateString('de-DE')}
-                  </Text>
-                </div>
-                <Badge color={getSentimentColor(clipping.sentiment)}>
-                  {getSentimentEmoji(clipping.sentiment)}
-                </Badge>
-              </div>
-
-              {clipping.excerpt && (
-                <Text className="text-sm text-gray-600 mb-3 line-clamp-2">
-                  {clipping.excerpt}
-                </Text>
-              )}
-
-              <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
-                {clipping.reach && (
-                  <span>👁️ {clipping.reach.toLocaleString('de-DE')}</span>
-                )}
-                {clipping.ave && (
-                  <span>💰 {clipping.ave.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-                )}
-                <Badge color="zinc">{clipping.outletType}</Badge>
-              </div>
-
-              <a
-                href={clipping.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                Artikel ansehen →
-              </a>
-            </div>
-          ))}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Veröffentlichung</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medium</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reichweite</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sentiment</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {clippings.map((clipping) => (
+                <tr key={clipping.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div>
+                      <Text className="font-medium text-gray-900">
+                        {clipping.title}
+                      </Text>
+                      {clipping.excerpt && (
+                        <Text className="text-sm text-gray-600 truncate max-w-md">
+                          {clipping.excerpt}
+                        </Text>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div>
+                      <Text className="text-sm font-medium text-gray-900">
+                        {clipping.outletName}
+                      </Text>
+                      <Badge color="zinc" className="mt-1">
+                        {clipping.outletType}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      {clipping.reach && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <EyeIcon className="h-4 w-4" />
+                          {clipping.reach.toLocaleString('de-DE')}
+                        </div>
+                      )}
+                      {clipping.ave && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <CurrencyEuroIcon className="h-4 w-4" />
+                          {clipping.ave.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge color={getSentimentColor(clipping.sentiment)}>
+                      {clipping.sentiment === 'positive' && (
+                        <span className="flex items-center gap-1">
+                          <FaceSmileIcon className="h-4 w-4" />
+                          Positiv
+                        </span>
+                      )}
+                      {clipping.sentiment === 'neutral' && 'Neutral'}
+                      {clipping.sentiment === 'negative' && (
+                        <span className="flex items-center gap-1">
+                          <FaceFrownIcon className="h-4 w-4" />
+                          Negativ
+                        </span>
+                      )}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <CalendarIcon className="h-4 w-4" />
+                      {formatDate(clipping.publishedAt)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Dropdown>
+                      <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
+                        <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                      </DropdownButton>
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem
+                          onClick={() => window.open(clipping.url, '_blank')}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                          Artikel ansehen
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
