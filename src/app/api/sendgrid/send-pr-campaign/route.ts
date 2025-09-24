@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { rateLimitServiceAPI } from '@/lib/security/rate-limit-service-api';
 import { emailAddressService } from '@/lib/email/email-address-service';
-import { doc, collection, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, writeBatch, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import sgMail from '@sendgrid/mail';
 
@@ -314,9 +314,9 @@ export async function POST(request: NextRequest) {
                 status: 'sent',
                 userId: auth.userId,
                 organizationId: auth.organizationId, // WICHTIG: organizationId für Multi-Tenancy
-                sentAt: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                sentAt: Timestamp.now(),
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
               };
 
               firestoreBatch.set(sendDoc, sendData);
@@ -343,9 +343,9 @@ export async function POST(request: NextRequest) {
                 errorMessage: error.message,
                 userId: auth.userId,
                 organizationId: auth.organizationId, // WICHTIG: organizationId für Multi-Tenancy
-                failedAt: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                failedAt: Timestamp.now(),
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
               };
 
               firestoreBatch.set(sendDoc, sendData);

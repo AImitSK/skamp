@@ -408,27 +408,70 @@ export const listsService = {
 
   async getContactsByIds(contactIds: string[]): Promise<ContactEnhanced[]> {
     if (contactIds.length === 0) return [];
-    
+
     // Batch-Abfragen für große Listen (Firestore limit ist 10 pro "in" query)
     const batches = [];
     for (let i = 0; i < contactIds.length; i += 10) {
       batches.push(contactIds.slice(i, i + 10));
     }
-    
+
     const allContacts: ContactEnhanced[] = [];
-    
+
     for (const batch of batches) {
+      // Zuerst in contacts_enhanced suchen
       const q = query(
         collection(db, 'contacts_enhanced'),
         where('__name__', 'in', batch)
       );
-      
+
       const snapshot = await getDocs(q);
-      snapshot.docs.forEach(doc => {
-        allContacts.push({ id: doc.id, ...doc.data() } as ContactEnhanced);
-      });
+
+      // Wenn keine Kontakte gefunden, in der alten contacts Collection suchen (Fallback)
+      if (snapshot.empty) {
+        console.log('⚠️ No contacts found in contacts_enhanced, trying contacts collection...');
+        const fallbackQ = query(
+          collection(db, 'contacts'),
+          where('__name__', 'in', batch)
+        );
+
+        const fallbackSnapshot = await getDocs(fallbackQ);
+        fallbackSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          // Konvertiere alte Contact zu ContactEnhanced
+          const enhancedContact: ContactEnhanced = {
+            id: doc.id,
+            organizationId: data.userId || data.organizationId,
+            createdBy: data.userId,
+            name: {
+              firstName: data.firstName || '',
+              lastName: data.lastName || ''
+            },
+            displayName: data.displayName || `${data.firstName} ${data.lastName}`,
+            emails: data.email ? [{
+              type: 'business',
+              email: data.email,
+              isPrimary: true
+            }] : [],
+            phones: data.phone ? [{
+              type: 'business',
+              number: data.phone,
+              isPrimary: true
+            }] : [],
+            companyName: data.companyName,
+            position: data.position || data.title,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+          };
+          allContacts.push(enhancedContact);
+        });
+      } else {
+        snapshot.docs.forEach(doc => {
+          allContacts.push({ id: doc.id, ...doc.data() } as ContactEnhanced);
+        });
+      }
     }
-    
+
+    console.log(`📊 Retrieved ${allContacts.length} contacts from ${contactIds.length} IDs`);
     return allContacts;
   },
 
