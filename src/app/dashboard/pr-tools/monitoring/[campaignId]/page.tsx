@@ -79,16 +79,24 @@ export default function MonitoringDetailPage() {
   };
 
   const loadAnalysisPDFs = async () => {
-    if (!currentOrganization?.id || !campaign) return;
+    if (!currentOrganization?.id || !campaign) {
+      console.log('📂 loadAnalysisPDFs aborted: Missing org or campaign');
+      return;
+    }
 
     try {
       setLoadingPDFs(true);
+      console.log('📂 Loading PDFs for campaign:', campaign.title);
 
       const { mediaService } = await import('@/lib/firebase/media-service');
       const allFolders = await mediaService.getAllFoldersForOrganization(currentOrganization.id);
+      console.log('📂 Total folders in org:', allFolders.length);
 
       const projectId = campaign.projectId;
+      console.log('📂 Campaign projectId:', projectId);
+
       if (!projectId) {
+        console.log('📂 No projectId - skipping PDF load');
         setAnalysisPDFs([]);
         return;
       }
@@ -96,8 +104,10 @@ export default function MonitoringDetailPage() {
       const projectFolder = allFolders.find(f =>
         f.name.includes('P-') && f.name.includes(projectId.substring(0, 8))
       );
+      console.log('📂 Found project folder:', projectFolder?.name);
 
       if (!projectFolder) {
+        console.log('📂 Project folder not found');
         setAnalysisPDFs([]);
         return;
       }
@@ -105,25 +115,30 @@ export default function MonitoringDetailPage() {
       const analysenFolder = allFolders.find(f =>
         f.parentFolderId === projectFolder.id && f.name === 'Analysen'
       );
+      console.log('📂 Found Analysen folder:', analysenFolder?.name);
 
       if (analysenFolder) {
         const assets = await mediaService.getMediaAssets(
           currentOrganization.id,
           analysenFolder.id
         );
+        console.log('📂 Total assets in Analysen folder:', assets.length);
 
         const campaignPDFs = assets.filter(asset =>
           asset.fileType === 'application/pdf'
         );
+        console.log('📂 PDFs found:', campaignPDFs.length, campaignPDFs);
 
         setAnalysisPDFs(campaignPDFs);
 
         setAnalysenFolderLink(
           `/dashboard/projects/${projectId}?tab=daten&folder=${analysenFolder.id}`
         );
+      } else {
+        console.log('📂 Analysen folder not found - no PDFs to load');
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Analyse-PDFs:', error);
+      console.error('📂 Fehler beim Laden der Analyse-PDFs:', error);
     } finally {
       setLoadingPDFs(false);
     }
