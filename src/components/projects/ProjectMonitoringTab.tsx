@@ -38,6 +38,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       setLoading(true);
 
       const projectCampaigns = await prService.getByProject(projectId, currentOrganization.id);
+      console.log('📊 Projekt-Kampagnen gefunden:', projectCampaigns.length);
 
       const campaignsWithData = await Promise.all(
         projectCampaigns.map(async (campaign: any) => {
@@ -49,11 +50,13 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
               organizationId: currentOrganization.id
             })
           ]);
+          console.log(`📧 Kampagne "${campaign.title}": ${sends.length} sends, Status: ${campaign.status}`);
           return { campaign, sends, clippings };
         })
       );
 
       const sentCampaigns = campaignsWithData.filter(({ sends }) => sends.length > 0);
+      console.log('✅ Kampagnen mit Sends:', sentCampaigns.length);
 
       const allSendsArr = sentCampaigns.flatMap(({ sends }) => sends);
       const allClippingsArr = sentCampaigns.flatMap(({ clippings }) => clippings);
