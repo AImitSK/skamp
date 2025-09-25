@@ -97,10 +97,9 @@ export const useDragAndDrop = (
     // Gültige Übergänge definieren
     const validTransitions: Record<PipelineStage, PipelineStage[]> = {
       'ideas_planning': ['creation'],
-      'creation': ['ideas_planning', 'internal_approval'],
-      'internal_approval': ['creation', 'customer_approval'],
-      'customer_approval': ['internal_approval', 'distribution'],
-      'distribution': ['customer_approval', 'monitoring'],
+      'creation': ['ideas_planning', 'approval'],
+      'approval': ['creation', 'distribution'],
+      'distribution': ['approval', 'monitoring'],
       'monitoring': ['distribution', 'completed'],
       'completed': ['monitoring'] // Rollback möglich
     };
@@ -112,10 +111,9 @@ export const useDragAndDrop = (
   const getValidTargetStages = useCallback((currentStage: PipelineStage): PipelineStage[] => {
     const validTransitions: Record<PipelineStage, PipelineStage[]> = {
       'ideas_planning': ['creation'],
-      'creation': ['ideas_planning', 'internal_approval'],
-      'internal_approval': ['creation', 'customer_approval'],
-      'customer_approval': ['internal_approval', 'distribution'],
-      'distribution': ['customer_approval', 'monitoring'],
+      'creation': ['ideas_planning', 'approval'],
+      'approval': ['creation', 'distribution'],
+      'distribution': ['approval', 'monitoring'],
       'monitoring': ['distribution', 'completed'],
       'completed': ['monitoring']
     };
@@ -131,8 +129,7 @@ export const useDragAndDrop = (
     const stageOrder: PipelineStage[] = [
       'ideas_planning',
       'creation',
-      'internal_approval',
-      'customer_approval',
+      'approval',
       'distribution',
       'monitoring',
       'completed'
@@ -184,9 +181,8 @@ export const useDragAndDrop = (
   const getStageName = useCallback((stage: PipelineStage): string => {
     const stageNames: Record<PipelineStage, string> = {
       'ideas_planning': 'Ideen & Planung',
-      'creation': 'Erstellung',
-      'internal_approval': 'Interne Freigabe',
-      'customer_approval': 'Kunden-Freigabe',
+      'creation': 'Content und Materialien erstellen',
+      'approval': 'Freigabe',
       'distribution': 'Verteilung',
       'monitoring': 'Monitoring',
       'completed': 'Abgeschlossen'

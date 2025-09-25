@@ -3,11 +3,10 @@ import { Timestamp } from 'firebase/firestore';
 import type { ProjectMilestone } from './pr';
 
 // ✅ Pipeline-Stage direkt hier definieren für bessere Type-Sicherheit
-export type PipelineStage = 
+export type PipelineStage =
   | 'ideas_planning'      // Ideen & Planung
   | 'creation'           // Erstellung-Phase
-  | 'internal_approval'  // Interne Freigabe
-  | 'customer_approval'  // Kunden-Freigabe
+  | 'approval'           // Freigabe (kombiniert)
   | 'distribution'       // Verteilung-Phase
   | 'monitoring'         // Monitoring-Phase
   | 'completed';         // Abgeschlossen

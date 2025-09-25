@@ -29,15 +29,7 @@ export const STAGE_COLORS: Record<PipelineStage, {
     header: 'bg-primary-50',
     count: 'bg-primary-100 text-primary-800'
   },
-  'internal_approval': {
-    bg: 'bg-primary-25',
-    border: 'border-primary-100',
-    text: 'text-primary-700',
-    accent: 'bg-primary-50',
-    header: 'bg-primary-50',
-    count: 'bg-primary-100 text-primary-800'
-  },
-  'customer_approval': {
+  'approval': {
     bg: 'bg-primary-25',
     border: 'border-primary-100',
     text: 'text-primary-700',
@@ -95,7 +87,7 @@ export const RESPONSIVE_CONFIG = {
   desktop: {
     breakpoint: Infinity, // ≥ 1200px
     layout: 'full',
-    columns: 7,
+    columns: 6,
     cardWidth: 'flex-1 min-w-[240px]',
     padding: 'p-0',
     gap: 'gap-4'
@@ -109,58 +101,44 @@ export const RESPONSIVE_CONFIG = {
 export const STAGE_CONFIG: Record<PipelineStage, {
   name: string;
   shortName: string;
-  description: string;
   icon: string;
   order: number;
 }> = {
   'ideas_planning': {
     name: 'Ideen & Planung',
     shortName: 'Planung',
-    description: 'Projektideen sammeln und planen',
     icon: 'LightBulbIcon',
     order: 1
   },
   'creation': {
-    name: 'Erstellung',
+    name: 'Content und Materialien erstellen',
     shortName: 'Erstellung',
-    description: 'Content und Materialien erstellen',
     icon: 'PencilIcon',
     order: 2
   },
-  'internal_approval': {
-    name: 'Interne Freigabe',
-    shortName: 'Intern',
-    description: 'Interne Überprüfung und Freigabe',
+  'approval': {
+    name: 'Freigabe',
+    shortName: 'Freigabe',
     icon: 'CheckCircleIcon',
     order: 3
-  },
-  'customer_approval': {
-    name: 'Kunden-Freigabe',
-    shortName: 'Kunde',
-    description: 'Freigabe durch den Kunden',
-    icon: 'UserCheckIcon',
-    order: 4
   },
   'distribution': {
     name: 'Verteilung',
     shortName: 'Verteilung',
-    description: 'Verteilung und Veröffentlichung',
     icon: 'PaperAirplaneIcon',
-    order: 5
+    order: 4
   },
   'monitoring': {
     name: 'Monitoring',
     shortName: 'Monitoring',
-    description: 'Überwachung und Analyse',
     icon: 'ChartBarIcon',
-    order: 6
+    order: 5
   },
   'completed': {
     name: 'Abgeschlossen',
     shortName: 'Fertig',
-    description: 'Projekt abgeschlossen',
     icon: 'CheckBadgeIcon',
-    order: 7
+    order: 6
   }
 };
 

@@ -48,7 +48,6 @@ import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatu
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import ProjectPressemeldungenTab from '@/components/projects/pressemeldungen/ProjectPressemeldungenTab';
 import ProjectStrategyTab from '@/components/projects/strategy/ProjectStrategyTab';
-import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { ProjectTaskManager } from '@/components/projects/ProjectTaskManager';
 import { FloatingChat } from '@/components/projects/communication/FloatingChat';
 import ProjectGuideBox from '@/components/projects/guides/ProjectGuideBox';

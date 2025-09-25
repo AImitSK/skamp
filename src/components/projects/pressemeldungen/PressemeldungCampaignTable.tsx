@@ -166,7 +166,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
         <div className="w-[15%]">
           {campaign.status === 'sent' ? (
             <a
-              href={`/dashboard/pr-tools/monitoring/${campaign.id}`}
+              href={`/dashboard/analytics/monitoring/${campaign.id}`}
               className="text-xs text-blue-600 hover:text-blue-700 flex items-center"
             >
               Monitoring →
