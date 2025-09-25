@@ -4,10 +4,9 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { 
-  BookOpenIcon, 
-  NewspaperIcon, 
-  BuildingLibraryIcon 
+import {
+  UserGroupIcon,
+  NewspaperIcon
 } from "@heroicons/react/24/outline";
 
 interface Tab {
@@ -19,22 +18,16 @@ interface Tab {
 
 const tabs: Tab[] = [
   {
-    name: "Dashboard",
-    href: "/dashboard/library",
-    icon: BuildingLibraryIcon,
-    description: "Übersicht und Statistiken"
+    name: "Redakteure",
+    href: "/dashboard/library/editors",
+    icon: UserGroupIcon,
+    description: "Redakteure und ihre Publikationen verwalten"
   },
   {
     name: "Publikationen",
     href: "/dashboard/library/publications",
-    icon: BookOpenIcon,
-    description: "Zeitungen, Magazine & Online-Medien"
-  },
-  {
-    name: "Werbemittel",
-    href: "/dashboard/library/advertisements",
     icon: NewspaperIcon,
-    description: "Anzeigenformate & Spezifikationen"
+    description: "Zeitungen, Magazine & Online-Medien"
   }
 ];
 

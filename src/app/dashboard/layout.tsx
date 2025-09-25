@@ -86,7 +86,9 @@ interface NavigationItem {
   name: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   current: boolean;
-  children: NavigationChild[];
+  href?: string;
+  description?: string;
+  children?: NavigationChild[];
 }
 
 export default function DashboardLayout({
@@ -138,26 +140,32 @@ export default function DashboardLayout({
   },
   {
     name: "Bibliothek",
-    icon: ArchiveBoxIcon, // NEUES ICON
+    icon: ArchiveBoxIcon,
     current: pathname.startsWith('/dashboard/library'),
     children: [
-      { 
-        name: "Publikationen", 
-        href: "/dashboard/library/publications", 
-        icon: NewspaperIcon, // NEUES ICON
-        description: "Alle Publikationen und deren Metriken verwalten."
+      {
+        name: "Redakteure",
+        href: "/dashboard/library/editors",
+        icon: UserGroupIcon,
+        description: "Redakteure und ihre Publikationen verwalten"
       },
-      { 
-        name: "Werbemittel", 
-        href: "/dashboard/library/advertisements", 
-        icon: PhotoIcon, // NEUES ICON
-        description: "Werbemittel und deren Spezifikationen organisieren."
+      {
+        name: "Publikationen",
+        href: "/dashboard/library/publications",
+        icon: NewspaperIcon,
+        description: "Alle Publikationen und deren Metriken verwalten"
       },
-      { 
-        name: "Strategische Übersichten", 
-        href: "/dashboard/library/", 
-        icon: TableCellsIcon, // NEUES ICON
-        description: "Zusammenfassende Ansichten aller Bibliotheksinhalte."
+      {
+        name: "Boilerplates",
+        href: "/dashboard/library/boilerplates",
+        icon: DocumentTextIcon,
+        description: "Wiederverwendbare Textbausteine und Vorlagen"
+      },
+      {
+        name: "Mediathek",
+        href: "/dashboard/library/media",
+        icon: PhotoIcon,
+        description: "Zentrale Verwaltung aller Medieninhalte"
       },
     ],
   },
@@ -173,35 +181,23 @@ export default function DashboardLayout({
     icon: MegaphoneIcon,
     current: pathname.startsWith('/dashboard/pr-tools'),
     children: [
-        { 
-          name: "Kampagnen", 
-          href: "/dashboard/pr-tools/campaigns", 
+        {
+          name: "Kampagnen",
+          href: "/dashboard/pr-tools/campaigns",
           icon: MegaphoneIcon,
           description: "Plane und versende deine PR-Kampagnen"
         },
-        { 
-          name: "Freigaben", 
-          href: "/dashboard/pr-tools/approvals", 
+        {
+          name: "Freigaben",
+          href: "/dashboard/pr-tools/approvals",
           icon: ShieldCheckIcon,
           description: "Verwalte Freigabeprozesse für deine Kampagnen"
         },
-        { 
-          name: "Kalender", 
-          href: "/dashboard/pr-tools/calendar", 
+        {
+          name: "Kalender",
+          href: "/dashboard/pr-tools/calendar",
           icon: CalendarDaysIcon,
           description: "Behalte den Überblick über alle Termine"
-        },
-        { 
-          name: "Mediathek", 
-          href: "/dashboard/pr-tools/media-library", 
-          icon: PhotoIcon,
-          description: "Zentrale Verwaltung aller Medieninhalte"
-        },
-        {
-          name: "Boilerplates",
-          href: "/dashboard/pr-tools/boilerplates",
-          icon: DocumentTextIcon,
-          description: "Wiederverwendbare Textbausteine"
         },
         {
           name: "Monitoring",

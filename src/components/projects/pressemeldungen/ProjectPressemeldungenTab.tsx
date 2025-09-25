@@ -148,7 +148,7 @@ export default function ProjectPressemeldungenTab({
       <div className="flex gap-4 pt-6 border-t border-gray-200">
         <Button
           color="secondary"
-          href="/dashboard/pr-tools/boilerplates"
+          href="/dashboard/library/boilerplates"
         >
           Boilerplate erstellen
         </Button>
