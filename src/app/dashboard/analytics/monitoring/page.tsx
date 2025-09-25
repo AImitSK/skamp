@@ -178,7 +178,7 @@ export default function MonitoringPage() {
                   <tr
                     key={campaign.id}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`)}
+                    onClick={() => router.push(`/dashboard/analytics/monitoring/${campaign.id}`)}
                   >
                     <td className="px-6 py-4">
                       <div>
@@ -231,7 +231,7 @@ export default function MonitoringPage() {
                           <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
-                          <DropdownItem onClick={() => router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`)}>
+                          <DropdownItem onClick={() => router.push(`/dashboard/analytics/monitoring/${campaign.id}`)}>
                             <ChartBarIcon className="h-4 w-4" />
                             Details
                           </DropdownItem>

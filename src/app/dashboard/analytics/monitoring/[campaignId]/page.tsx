@@ -228,7 +228,7 @@ export default function MonitoringDetailPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard/pr-tools/monitoring">
+            <Link href="/dashboard/analytics/monitoring">
               <Button plain className="p-2">
                 <ArrowLeftIcon className="w-5 h-5" />
               </Button>

@@ -190,31 +190,6 @@ export default function DashboardLayout({
     ],
   },
   {
-    name: "PR-Tools",
-    icon: MegaphoneIcon,
-    current: pathname.startsWith('/dashboard/pr-tools'),
-    children: [
-        {
-          name: "Kampagnen",
-          href: "/dashboard/pr-tools/campaigns",
-          icon: MegaphoneIcon,
-          description: "Plane und versende deine PR-Kampagnen"
-        },
-        {
-          name: "Freigaben",
-          href: "/dashboard/pr-tools/approvals",
-          icon: ShieldCheckIcon,
-          description: "Verwalte Freigabeprozesse für deine Kampagnen"
-        },
-        {
-          name: "Kalender",
-          href: "/dashboard/pr-tools/calendar",
-          icon: CalendarDaysIcon,
-          description: "Behalte den Überblick über alle Termine"
-        },
-    ],
-  },
-  {
     name: "Kommunikation",
     icon: EnvelopeIcon,
     current: pathname.startsWith('/dashboard/communication'),
