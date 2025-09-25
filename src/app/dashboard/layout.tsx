@@ -189,60 +189,6 @@ export default function DashboardLayout({
       },
     ],
   },
-  {
-    name: "Kommunikation",
-    icon: EnvelopeIcon,
-    current: pathname.startsWith('/dashboard/communication'),
-    children: [
-        { 
-          name: "Kampagnen In-Box", 
-          href: "/dashboard/communication/inbox", 
-          icon: InboxIcon,
-          notificationCount: inboxUnread,
-          description: assignedUnread > 0 
-            ? `${assignedUnread} dir zugewiesene ungelesene E-Mails`
-            : "Eingehende Nachrichten zu deinen Kampagnen"
-        },
-        { 
-          name: "Benachrichtigungen", 
-          href: "/dashboard/communication/notifications", 
-          icon: BellIcon, 
-          notificationCount: unreadCount,
-          description: "Alle wichtigen Updates auf einen Blick"
-        },
-    ],
-  },
-  {
-    name: "Academy",
-    icon: AcademicCapIcon,
-    current: pathname.startsWith('/dashboard/academy'),
-    children: [
-        { 
-          name: "Dokumentation", 
-          href: "/dashboard/academy/documentation", 
-          icon: BookOpenIcon,
-          description: "Detaillierte Anleitungen und Hilfe"
-        },
-        { 
-          name: "Einsteiger Tutorials", 
-          href: "/dashboard/academy/tutorials", 
-          icon: AcademicCapIcon,
-          description: "Lerne CeleroPress Schritt für Schritt kennen"
-        },
-        { 
-          name: "Blog", 
-          href: "/dashboard/academy/blog", 
-          icon: NewspaperIcon,
-          description: "Neuigkeiten und Best Practices"
-        },
-        { 
-          name: "Developer Portal", 
-          href: "/dashboard/developer", 
-          icon: CodeBracketIcon,
-          description: "API-Dokumentation, Testing-Tools und Integration-Beispiele"
-        },
-    ],
-  },
 ];
 
   const settingsItems = [
@@ -291,35 +237,47 @@ export default function DashboardLayout({
   ];
 
   const userMenuItems = [
-      { 
-        name: "Profil", 
-        href: "/dashboard/admin/profile", 
+      {
+        name: "Profil",
+        href: "/dashboard/admin/profile",
         icon: UserIcon,
         description: "Persönliche Einstellungen bearbeiten"
       },
-      { 
-        name: "Vertrag", 
-        href: "/dashboard/admin/contract", 
-        icon: DocumentCheckIcon,
-        description: "Vertragsdetails und Konditionen"
+      {
+        name: "API-Verwaltung",
+        href: "/dashboard/admin/api",
+        icon: CodeBracketIcon,
+        description: "API-Schlüssel und Dokumentation"
       },
-      { 
-        name: "Abrechnung", 
-        href: "/dashboard/admin/billing", 
+      {
+        name: "Developer Portal",
+        href: "/dashboard/developer",
+        icon: CodeBracketIcon,
+        description: "API-Dokumentation, Testing-Tools und Integration-Beispiele"
+      },
+      {
+        name: "Abrechnung",
+        href: "/dashboard/admin/billing",
         icon: CreditCardIcon,
         description: "Rechnungen und Zahlungsmethoden"
       },
-      { 
-        name: "Integrationen", 
-        href: "/dashboard/admin/integrations", 
+      {
+        name: "Vertragsdetails",
+        href: "/dashboard/admin/contract",
+        icon: DocumentCheckIcon,
+        description: "Vertragsdetails und Konditionen"
+      },
+      {
+        name: "Integrationen",
+        href: "/dashboard/admin/integrations",
         icon: PuzzlePieceIcon,
         description: "Verbinde CeleroPress mit anderen Tools"
       },
-      { 
-        name: "API", 
-        href: "/dashboard/admin/api", 
-        icon: CodeBracketIcon,
-        description: "API-Schlüssel und Dokumentation"
+      {
+        name: "Dokumentation",
+        href: "/dashboard/academy/documentation",
+        icon: BookOpenIcon,
+        description: "Detaillierte Anleitungen und Hilfe"
       },
   ];
 
@@ -498,27 +456,31 @@ export default function DashboardLayout({
               
               {/* Right side icons */}
               <NavbarSection className="flex items-center gap-x-4">
+                {/* Inbox Icon - only desktop */}
+                <a
+                  href="/dashboard/communication/inbox"
+                  className="hidden lg:flex relative p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors"
+                  aria-label="Inbox"
+                >
+                  <InboxIcon className="size-6" />
+                  {inboxUnread > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                      {inboxUnread > 99 ? '99+' : inboxUnread}
+                    </span>
+                  )}
+                </a>
+
                 {/* Notifications Dropdown - visible on all screens */}
                 <NotificationsDropdown />
-                
-                {/* Settings - only desktop */}
-                <Dropdown>
-                  <DropdownButton as={NavbarItem} aria-label="Einstellungen" className="hidden lg:flex !border-transparent !bg-transparent hover:!bg-transparent">
-                    <Cog6ToothIcon className="size-6" />
-                  </DropdownButton>
-                  <DropdownMenu anchor="bottom end" className="avatar-dropdown-menu">
-                    {settingsItems.map(item => (
-                      <DropdownItem 
-                        href={item.href} 
-                        key={item.name}
-                        icon={item.icon}
-                        description={item.description}
-                      >
-                        {item.name}
-                      </DropdownItem>
-                    ))}
-                  </DropdownMenu>
-                </Dropdown>
+
+                {/* Settings Link - only desktop */}
+                <a
+                  href="/dashboard/settings/notifications"
+                  className="hidden lg:flex p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors"
+                  aria-label="Einstellungen"
+                >
+                  <Cog6ToothIcon className="size-6" />
+                </a>
 
                 {/* User Avatar - only desktop */}
                 <Dropdown>
