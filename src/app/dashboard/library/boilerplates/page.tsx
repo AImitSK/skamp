@@ -298,11 +298,6 @@ export default function BoilerplatesPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6">
-        <Heading level={1}>Textbausteine</Heading>
-      </div>
-
       {/* Compact Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">

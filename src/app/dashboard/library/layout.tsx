@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   UserGroupIcon,
-  NewspaperIcon
+  NewspaperIcon,
+  DocumentTextIcon,
+  PhotoIcon
 } from "@heroicons/react/24/outline";
 
 interface Tab {
@@ -28,6 +30,18 @@ const tabs: Tab[] = [
     href: "/dashboard/library/publications",
     icon: NewspaperIcon,
     description: "Zeitungen, Magazine & Online-Medien"
+  },
+  {
+    name: "Boilerplates",
+    href: "/dashboard/library/boilerplates",
+    icon: DocumentTextIcon,
+    description: "Wiederverwendbare Textbausteine und Vorlagen"
+  },
+  {
+    name: "Mediathek",
+    href: "/dashboard/library/media",
+    icon: PhotoIcon,
+    description: "Zentrale Verwaltung aller Medieninhalte"
   }
 ];
 

@@ -1140,37 +1140,10 @@ export default function MediathekPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <Heading level={1}>Mediathek</Heading>
-          {draggedAsset && <Text className="mt-1 text-blue-600 font-medium">Datei per Drag & Drop verschieben!</Text>}
-          {draggedFolder && <Text className="mt-1 text-purple-600 font-medium">Ordner wird verschoben!</Text>}
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 gap-3">
-          <Button 
-            onClick={handleCreateFolder}
-            disabled={draggedFolder !== null}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            <FolderPlusIcon className="h-4 w-4" />
-            Ordner anlegen
-          </Button>
-          <Button 
-            onClick={handleUploadModalOpen}
-            disabled={draggedFolder !== null || !organizationId}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Dateien hochladen
-          </Button>
-        </div>
-      </div>
-
       {/* Breadcrumb Navigation */}
       {breadcrumbs.length > 0 && (
-        <div className="mt-6">
-          <BreadcrumbNavigation 
+        <div className="mb-6">
+          <BreadcrumbNavigation
             breadcrumbs={breadcrumbs}
             onNavigate={handleNavigateToFolder}
           />
@@ -1178,7 +1151,7 @@ export default function MediathekPage() {
       )}
 
       {/* Search and Controls */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
           <Input
@@ -1189,7 +1162,26 @@ export default function MediathekPage() {
             className="pl-10"
           />
         </div>
-        
+
+        <div className="flex gap-3">
+          <Button
+            onClick={handleCreateFolder}
+            disabled={draggedFolder !== null}
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            <FolderPlusIcon className="h-4 w-4" />
+            Ordner anlegen
+          </Button>
+          <Button
+            onClick={handleUploadModalOpen}
+            disabled={draggedFolder !== null || !organizationId}
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Dateien hochladen
+          </Button>
+        </div>
+
         {/* View Toggle */}
         <div className="flex items-center bg-gray-100 rounded-lg p-1">
           <Button
