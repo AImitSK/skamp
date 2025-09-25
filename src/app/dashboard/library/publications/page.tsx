@@ -356,14 +356,6 @@ export default function PublicationsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <Heading level={1}>Publikationen</Heading>
-        <Text className="mt-1 text-sm text-gray-500">
-          {publications.length} Publikationen in Ihrer Bibliothek
-        </Text>
-      </div>
-
       {/* Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
