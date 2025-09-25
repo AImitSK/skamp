@@ -172,7 +172,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
                   <tr
                     key={campaign.id}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => router.push(`/dashboard/pr-tools/monitoring/${campaign.id}`)}
+                    onClick={() => router.push(`/dashboard/analytics/monitoring/${campaign.id}`)}
                   >
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-900 truncate max-w-md">{campaign.title}</div>

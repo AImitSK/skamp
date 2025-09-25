@@ -177,6 +177,19 @@ export default function DashboardLayout({
     description: "Projekt-Management mit Kanban-Board und Pipeline-Tracking"
   },
   {
+    name: "Analyse",
+    icon: ChartBarIcon,
+    current: pathname.startsWith('/dashboard/analytics'),
+    children: [
+      {
+        name: "Monitoring",
+        href: "/dashboard/analytics/monitoring",
+        icon: ChartBarIcon,
+        description: "E-Mail Tracking und Veröffentlichungs-Monitoring"
+      },
+    ],
+  },
+  {
     name: "PR-Tools",
     icon: MegaphoneIcon,
     current: pathname.startsWith('/dashboard/pr-tools'),
@@ -198,12 +211,6 @@ export default function DashboardLayout({
           href: "/dashboard/pr-tools/calendar",
           icon: CalendarDaysIcon,
           description: "Behalte den Überblick über alle Termine"
-        },
-        {
-          name: "Monitoring",
-          href: "/dashboard/pr-tools/monitoring",
-          icon: ChartBarIcon,
-          description: "E-Mail Tracking und Veröffentlichungs-Monitoring"
         },
     ],
   },
