@@ -210,8 +210,8 @@ export const contactsService = {
 
     const q = query(
       collection(db, 'contacts_enhanced'),
-      where('companyId', '==', companyId),
-      orderBy('lastName') // Sortieren nach Nachname für eine konsistente Liste
+      where('companyId', '==', companyId)
+      // orderBy entfernt - Firestore Index noch nicht bereit
     );
     const snapshot = await getDocs(q);
     const contacts = snapshot.docs.map(doc => ({
