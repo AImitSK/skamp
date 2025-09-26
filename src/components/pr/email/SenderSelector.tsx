@@ -68,6 +68,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         // Wenn noch kein Kontakt ausgewählt, wähle den ersten
         if (sender.type === 'contact' && !sender.contactId && contacts.length > 0) {
           console.log('🔄 Auto-Auswahl des ersten Kontakts:', contacts[0]);
+          console.log('🔄 displayName des ersten Kontakts:', contacts[0].displayName);
           handleContactSelect(contacts[0].id!);
         }
       } catch (error) {
