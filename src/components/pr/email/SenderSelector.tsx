@@ -87,11 +87,11 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         type: 'contact',
         contactId: contact.id,
         contactData: {
-          name: `${contact.firstName} ${contact.lastName}`,
-          email: contact.email || '',
+          name: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
+          email: contact.emails?.[0]?.address || contact.email || '',
           title: contact.position || '',
-          company: campaign.clientName || '',
-          phone: contact.phone || ''
+          company: campaign.clientName || contact.companyName || '',
+          phone: contact.phones?.[0]?.number || contact.phone || ''
         }
       });
     }
