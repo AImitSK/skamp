@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Gemini initialisieren (wie in bestehender route)
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     // Analysis-spezifische Prompts
     let systemPrompt: string;
