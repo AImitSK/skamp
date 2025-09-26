@@ -16,8 +16,10 @@
   - ✅ **BEHOBEN:** freigabe-nicht-mehr-verfuegbar Seite updated
 
 ### 2. **Versand-Funktionalität defekt**
-- [ ] **Versenden Button: Falsche Anzeige-Logik**
-  - Wird nach falschen Regeln ein-/ausgeblendet
+- [x] **Versenden Button: Falsche Anzeige-Logik**
+  - ✅ **BEHOBEN:** Campaign-Status wird jetzt bei Kundenfreigabe auf 'approved' gesetzt
+  - ✅ **Root Cause:** `submitDecisionPublic` aktualisierte nur Approval-, nicht Campaign-Status
+  - ✅ **Fix:** Campaign-Status Update nach Approval hinzugefügt
 - [ ] **Versende Modal: Absender nicht gefunden**
   - PDF-Ausgabe: "© 2025 Unbekannter Kunde"
   - Absender-Erkennung funktioniert nicht

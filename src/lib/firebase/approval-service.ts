@@ -869,7 +869,19 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
-      
+
+      // BUGFIX: Campaign-Status auch aktualisieren wenn approved
+      if (newStatus === 'approved' && approval.campaignId) {
+        try {
+          await updateDoc(doc(db, 'pr_campaigns', approval.campaignId), {
+            status: 'approved',
+            updatedAt: serverTimestamp()
+          });
+        } catch (campaignError) {
+          console.error('Fehler beim Aktualisieren des Campaign-Status:', campaignError);
+          // Nicht kritisch - Approval ist bereits gesetzt
+        }
+      }
 
       // Benachrichtigungen senden (non-blocking)
       if (newStatus !== approval.status) {
