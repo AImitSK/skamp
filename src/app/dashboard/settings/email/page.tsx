@@ -106,10 +106,17 @@ export default function EmailSettingsPage() {
 
     if (organizationId) {
       console.log('🔍 DEBUG useEffect: Calling loadDomains now...');
-      loadEmailAddresses();
-      loadDomains();
-      loadSignatures();
-      loadTeamMembers(); // NEU: Lade echte Team-Mitglieder
+      try {
+        loadEmailAddresses();
+        console.log('🔍 DEBUG useEffect: About to call loadDomains...');
+        loadDomains();
+        console.log('🔍 DEBUG useEffect: loadDomains called, now calling signatures...');
+        loadSignatures();
+        loadTeamMembers(); // NEU: Lade echte Team-Mitglieder
+        console.log('🔍 DEBUG useEffect: All functions called successfully');
+      } catch (error) {
+        console.error('❌ DEBUG useEffect: Error calling functions:', error);
+      }
     } else {
       console.log('⚠️ DEBUG useEffect: organizationId is empty, not loading domains');
     }
@@ -153,33 +160,37 @@ export default function EmailSettingsPage() {
   };
 
   const loadDomains = async () => {
+    console.log('🔍 DEBUG loadDomains: Function called!');
+
     try {
       setLoadingDomains(true);
       console.log('🔍 DEBUG loadDomains: Starting...');
       console.log('🔍 DEBUG loadDomains: organizationId:', organizationId);
-      console.log('🔍 DEBUG loadDomains: User:', { uid: user?.uid, email: user?.email });
-      console.log('🔍 DEBUG loadDomains: Organization:', currentOrganization);
-      console.log('🔍 DEBUG loadDomains: Active tab:', activeTab);
 
+      if (!organizationId) {
+        console.log('❌ DEBUG loadDomains: organizationId is empty, stopping');
+        return;
+      }
+
+      console.log('🔍 DEBUG loadDomains: About to call domainServiceEnhanced.getAll()');
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
-      console.log('📧 DEBUG: Raw domains from service:', allDomains);
-      console.log('📧 DEBUG: Domain count:', allDomains.length);
+      console.log('📧 DEBUG loadDomains: Raw domains from service:', allDomains);
+      console.log('📧 DEBUG loadDomains: Domain count:', allDomains.length);
 
       // Debug jede Domain einzeln
       allDomains.forEach((domain, index) => {
-        console.log(`📧 DEBUG: Domain ${index}:`, {
+        console.log(`📧 DEBUG loadDomains: Domain ${index}:`, {
           id: domain.id,
           domain: domain.domain,
           status: domain.status,
           organizationId: domain.organizationId,
-          createdAt: domain.createdAt,
-          createdBy: domain.createdBy
+          createdAt: domain.createdAt
         });
       });
 
       // Zeige alle Domains an (inklusive failed), damit User sie sehen können
       const verifiedDomains = allDomains; // Entferne Filter temporär
-      console.log('✅ DEBUG: Domains after filter (should be same):', verifiedDomains);
+      console.log('✅ DEBUG loadDomains: Domains after filter (should be same):', verifiedDomains);
 
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
         id: d.id!,
@@ -190,18 +201,21 @@ export default function EmailSettingsPage() {
         status: d.status
       } as EmailDomain));
 
-      console.log('🎯 DEBUG: Final emailDomains for UI:', emailDomains);
+      console.log('🎯 DEBUG loadDomains: Final emailDomains for UI:', emailDomains);
+      console.log('🎯 DEBUG loadDomains: About to call setDomains...');
       setDomains(emailDomains);
+      console.log('🎯 DEBUG loadDomains: setDomains called successfully!');
 
     } catch (error) {
-      console.error('❌ DEBUG: Error loading domains:', error);
-      console.error('❌ DEBUG: Error details:', {
+      console.error('❌ DEBUG loadDomains: Error:', error);
+      console.error('❌ DEBUG loadDomains: Error details:', {
         message: error?.message,
         stack: error?.stack,
         name: error?.name
       });
       showToast('Fehler beim Laden der Domains', 'error');
     } finally {
+      console.log('🔍 DEBUG loadDomains: Finally block - setting loadingDomains to false');
       setLoadingDomains(false);
     }
   };
