@@ -185,16 +185,19 @@ export const contactsService = {
 
   // NEU: Funktion, um alle Kontakte für eine bestimmte Firma zu laden
   async getByCompanyId(companyId: string): Promise<Contact[]> {
+    console.log('🔍 getByCompanyId: Suche in contacts_enhanced für companyId:', companyId);
     const q = query(
-      collection(db, 'contacts'),
+      collection(db, 'contacts_enhanced'),
       where('companyId', '==', companyId),
       orderBy('lastName') // Sortieren nach Nachname für eine konsistente Liste
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const contacts = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as Contact));
+    console.log('✅ getByCompanyId: Gefunden:', contacts.length, 'Kontakte');
+    return contacts;
   },
 
   async getById(id: string): Promise<Contact | null> {
