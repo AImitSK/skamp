@@ -101,11 +101,17 @@ export default function EmailSettingsPage() {
 
   // Load all data
   useEffect(() => {
+    console.log('🔍 DEBUG useEffect: organizationId changed:', organizationId);
+    console.log('🔍 DEBUG useEffect: Will call loadDomains?', !!organizationId);
+
     if (organizationId) {
+      console.log('🔍 DEBUG useEffect: Calling loadDomains now...');
       loadEmailAddresses();
       loadDomains();
       loadSignatures();
       loadTeamMembers(); // NEU: Lade echte Team-Mitglieder
+    } else {
+      console.log('⚠️ DEBUG useEffect: organizationId is empty, not loading domains');
     }
   }, [organizationId]);
 
@@ -149,9 +155,11 @@ export default function EmailSettingsPage() {
   const loadDomains = async () => {
     try {
       setLoadingDomains(true);
-      console.log('🔍 DEBUG: Loading domains for organizationId:', organizationId);
-      console.log('🔍 DEBUG: User:', { uid: user?.uid, email: user?.email });
-      console.log('🔍 DEBUG: Organization:', currentOrganization);
+      console.log('🔍 DEBUG loadDomains: Starting...');
+      console.log('🔍 DEBUG loadDomains: organizationId:', organizationId);
+      console.log('🔍 DEBUG loadDomains: User:', { uid: user?.uid, email: user?.email });
+      console.log('🔍 DEBUG loadDomains: Organization:', currentOrganization);
+      console.log('🔍 DEBUG loadDomains: Active tab:', activeTab);
 
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
       console.log('📧 DEBUG: Raw domains from service:', allDomains);
