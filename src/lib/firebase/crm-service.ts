@@ -248,10 +248,34 @@ export const contactsService = {
   async search(userId: string, searchTerm: string): Promise<Contact[]> {
     const allContacts = await this.getAll(userId);
     const term = searchTerm.toLowerCase();
-    return allContacts.filter(contact => 
+    return allContacts.filter(contact =>
       `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(term) ||
       contact.email?.toLowerCase().includes(term) ||
       contact.companyName?.toLowerCase().includes(term)
     );
+  },
+
+  // NEU: Kontakt via Email finden
+  async findByEmail(email: string, organizationId: string): Promise<Contact | null> {
+    const q = query(
+      collection(db, 'contacts'),
+      where('organizationId', '==', organizationId),
+      where('email', '==', email)
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      // Fallback: Legacy-Suche mit userId
+      const allContacts = await this.getAll(organizationId);
+      const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
+      return contact || null;
+    }
+
+    const contact = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Contact;
+    if (contact.companyId) {
+      const company = await companiesService.getById(contact.companyId);
+      contact.companyName = company?.name;
+    }
+    return contact;
   },
 };
