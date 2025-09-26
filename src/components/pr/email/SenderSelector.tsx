@@ -78,9 +78,9 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         contactData: {
           name: `${contact.firstName} ${contact.lastName}`,
           email: contact.email || '',
-          title: contact.position,
-          company: campaign.clientName,
-          phone: contact.phone
+          title: contact.position || '',
+          company: campaign.clientName || '',
+          phone: contact.phone || ''
         }
       });
     }
