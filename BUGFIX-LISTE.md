@@ -20,9 +20,12 @@
   - ✅ **BEHOBEN:** Campaign-Status wird jetzt bei Kundenfreigabe auf 'approved' gesetzt
   - ✅ **Root Cause:** `submitDecisionPublic` aktualisierte nur Approval-, nicht Campaign-Status
   - ✅ **Fix:** Campaign-Status Update nach Approval hinzugefügt
-- [ ] **Versende Modal: Absender nicht gefunden**
-  - PDF-Ausgabe: "© 2025 Unbekannter Kunde"
-  - Absender-Erkennung funktioniert nicht
+- [x] **Versende Modal: Absender nicht gefunden**
+  - ✅ **BEHOBEN:** SenderSelector findet jetzt Kontakte der Firma
+  - ✅ **Root Cause 1:** Falsche Collection ('contacts' statt 'contacts_enhanced')
+  - ✅ **Root Cause 2:** Firestore Index für orderBy nicht bereit
+  - ✅ **Root Cause 3:** Undefined phone Werte → Firestore setDoc() Fehler
+  - ✅ **Fixes:** Collection geändert, orderBy entfernt, undefined Fallbacks hinzugefügt
 
 ### 3. **CRM-Integration defekt**
 - [ ] **Kontaktzuordnung funktioniert nicht**
