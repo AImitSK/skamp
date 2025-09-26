@@ -1319,16 +1319,16 @@ export const projectService = {
         issues.push(`${incompleteCriticalTasks.length} kritische Tasks nicht abgeschlossen`);
       }
 
-      // Stage-spezifische Validierung
-      if (toStage === 'customer_approval') {
+      // Stage-spezifische Validierung - BUGFIX: customer_approval → approval
+      if (toStage === 'approval') {
         // Prüfe ob Content erstellt wurde
         const creationTasks = await taskService.getByProjectStage('', projectId, 'creation');
-        const hasContentCreated = creationTasks.some(t => 
+        const hasContentCreated = creationTasks.some(t =>
           t.templateCategory === 'content_creation' && t.status === 'completed'
         );
-        
+
         if (!hasContentCreated) {
-          issues.push('Content muss erstellt werden vor Kunden-Freigabe');
+          issues.push('Content muss erstellt werden vor Freigabe');
         }
       }
 
