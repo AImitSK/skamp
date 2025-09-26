@@ -37,11 +37,21 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
   // Lade Kontakte der Firma
   useEffect(() => {
     const loadCompanyContacts = async () => {
-      if (!campaign.clientId) return;
+      console.log('🔍 SenderSelector: Campaign clientId:', campaign.clientId);
+      console.log('🔍 SenderSelector: Campaign clientName:', campaign.clientName);
+      console.log('🔍 SenderSelector: Full campaign object:', campaign);
+
+      if (!campaign.clientId) {
+        console.log('❌ SenderSelector: Keine clientId gefunden - breche ab');
+        return;
+      }
 
       setLoadingContacts(true);
       try {
+        console.log('🔄 SenderSelector: Lade Kontakte für clientId:', campaign.clientId);
         const contacts = await contactsService.getByCompanyId(campaign.clientId);
+        console.log('✅ SenderSelector: Kontakte geladen:', contacts.length, 'Kontakte gefunden');
+        console.log('📋 SenderSelector: Kontakte Details:', contacts);
         setCompanyContacts(contacts);
         
         // Wenn noch kein Kontakt ausgewählt, wähle den ersten
