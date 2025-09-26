@@ -205,13 +205,12 @@ export default function ProjectsPage() {
     }, 500);
   };
 
-  // Group projects by pipeline stage for board view
+  // Group projects by pipeline stage for board view - BUGFIX: 6 Phasen statt 7
   const groupProjectsByStage = (projectList: Project[]) => {
     const stages: PipelineStage[] = [
       'ideas_planning',
       'creation',
-      'internal_approval',
-      'customer_approval',
+      'approval',
       'distribution',
       'monitoring',
       'completed'
@@ -297,8 +296,7 @@ export default function ProjectsPage() {
     switch (stage) {
       case 'ideas_planning': return 'Planung';
       case 'creation': return 'Erstellung';
-      case 'internal_approval': return 'Interne Freigabe';
-      case 'customer_approval': return 'Kundenfreigabe';
+      case 'approval': return 'Freigabe';
       case 'distribution': return 'Verteilung';
       case 'monitoring': return 'Monitoring';
       case 'completed': return 'Abgeschlossen';
