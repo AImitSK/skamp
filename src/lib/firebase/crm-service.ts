@@ -186,6 +186,15 @@ export const contactsService = {
   // NEU: Funktion, um alle Kontakte für eine bestimmte Firma zu laden
   async getByCompanyId(companyId: string): Promise<Contact[]> {
     console.log('🔍 getByCompanyId: Suche in contacts_enhanced für companyId:', companyId);
+
+    // DEBUGGING: Lade ALLE Kontakte um zu sehen welche companyIds existieren
+    const allContactsQuery = query(collection(db, 'contacts_enhanced'));
+    const allSnapshot = await getDocs(allContactsQuery);
+    const allContacts = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log('🔍 DEBUG: Alle Kontakte in DB:', allContacts.length);
+    console.log('🔍 DEBUG: CompanyIds in DB:', allContacts.map(c => c.companyId));
+    console.log('🔍 DEBUG: Erste 3 Kontakte Details:', allContacts.slice(0, 3));
+
     const q = query(
       collection(db, 'contacts_enhanced'),
       where('companyId', '==', companyId),
@@ -196,7 +205,7 @@ export const contactsService = {
       id: doc.id,
       ...doc.data()
     } as Contact));
-    console.log('✅ getByCompanyId: Gefunden:', contacts.length, 'Kontakte');
+    console.log('✅ getByCompanyId: Gefunden:', contacts.length, 'Kontakte für companyId:', companyId);
     return contacts;
   },
 
