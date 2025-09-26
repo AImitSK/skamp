@@ -181,7 +181,7 @@ export const useDragAndDrop = (
   const getStageName = useCallback((stage: PipelineStage): string => {
     const stageNames: Record<PipelineStage, string> = {
       'ideas_planning': 'Ideen & Planung',
-      'creation': 'Content und Materialien erstellen',
+      'creation': 'Content und Materialien',
       'approval': 'Freigabe',
       'distribution': 'Verteilung',
       'monitoring': 'Monitoring',

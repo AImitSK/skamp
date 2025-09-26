@@ -93,6 +93,10 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
       const publishedDate = new Date(formData.publishedAt);
       const publishedTimestamp = Timestamp.fromDate(publishedDate);
 
+      // BUGFIX: Lade Kampagne um projectId zu ermitteln
+      const { prService } = await import('@/lib/firebase/pr-service');
+      const campaign = await prService.getById(campaignId);
+
       const clippingData: any = {
         organizationId: currentOrganization.id,
         campaignId,
@@ -109,6 +113,11 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         verifiedBy: user.uid,
         verifiedAt: Timestamp.now()
       };
+
+      // BUGFIX: Setze projectId wenn Kampagne zu einem Projekt gehört
+      if (campaign?.projectId) {
+        clippingData.projectId = campaign.projectId;
+      }
 
       if (formData.reach) {
         clippingData.reach = parseInt(formData.reach);

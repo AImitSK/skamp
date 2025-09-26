@@ -28,10 +28,12 @@
   - ✅ **Fixes:** Collection geändert, orderBy entfernt, undefined Fallbacks hinzugefügt
 
 ### 3. **CRM-Integration defekt**
-- [ ] **Kontaktzuordnung funktioniert nicht**
-  - "Als veröffentlicht markieren" findet keine CRM-Einträge
-  - Fehler: "Kein CRM-Eintrag für s.kuehne@sk-online-marketing.de gefunden"
-  - **Related:** Unser Domain-Debug Problem
+- [x] **Kontaktzuordnung funktioniert nicht**
+  - ✅ **BEHOBEN:** findByEmail Collection auf contacts_enhanced korrigiert
+  - ✅ **BEHOBEN:** Clipping-Archiv projectId-Problem behoben
+  - ✅ **Root Cause 1:** findByEmail suchte in 'contacts' statt 'contacts_enhanced'
+  - ✅ **Root Cause 2:** MarkPublishedModal setzte keine projectId beim Clipping
+  - ✅ **Fixes:** Collection-Konsistenz und projectId-Zuordnung implementiert
 
 ---
 
@@ -66,6 +68,11 @@
   - Fortschritts-Indikator in Projekt-Übersicht funktioniert nicht
 - [ ] **Projekt erstellen: Erfolgsbox falscher Link**
   - Redirect nach Erstellung fehlerhaft
+- [x] **Kanban: Phase 3 nicht erreichbar**
+  - ✅ **BEHOBEN:** Dropdown-Menü verwendet jetzt Business Logic statt Sequential Navigation
+  - ✅ **BEHOBEN:** Phase-Name verkürzt für bessere UI-Darstellung
+  - ✅ **Root Cause:** ProjectQuickActionsMenu verwendete previousStage/nextStage statt validateStageTransition
+  - ✅ **Fix:** getValidTargetStages() Integration für konsistente Drag & Drop + Dropdown Regeln
 
 ---
 
@@ -81,9 +88,10 @@
   - ✅ **BEHOBEN:** Multi-Tenancy Parameter korrigiert in monitoring/page.tsx
   - ✅ **Root Cause:** prService.getAll() verwendete organizationId als userId
   - ✅ **Fix:** useOrganizationId: true Parameter hinzugefügt
-- [ ] **Clipping-Archiv (0) - Zuordnung defekt**
-  - Veröffentlichungen werden nicht korrekt zugeordnet
-  - Problem sowohl im Archiv als auch in Projekten
+- [x] **Clipping-Archiv (0) - Zuordnung defekt**
+  - ✅ **BEHOBEN:** MarkPublishedModal setzt jetzt projectId beim Clipping
+  - ✅ **Root Cause:** Clippings wurden ohne projectId erstellt
+  - ✅ **Fix:** Campaign wird geladen um projectId zu ermitteln und zu setzen
 
 ### 10. **Auth & Onboarding**
 - [ ] **Erster Login: Keine Google-Anmeldung möglich**
@@ -115,11 +123,11 @@
 ---
 
 ## 📊 **Statistik**
-- **Critical Bugs:** 3 🔴
-- **High Priority:** 8 ⚠️
-- **Medium Priority:** 5 📋
+- **Critical Bugs:** 0 🔴
+- **High Priority:** 7 ⚠️
+- **Medium Priority:** 4 📋
 - **Low Priority:** 4 🔧
-- **GESAMT:** 20 Issues
+- **GESAMT:** 15 Issues
 
 ---
 

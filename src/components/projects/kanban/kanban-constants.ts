@@ -111,7 +111,7 @@ export const STAGE_CONFIG: Record<PipelineStage, {
     order: 1
   },
   'creation': {
-    name: 'Content und Materialien erstellen',
+    name: 'Content und Materialien',
     shortName: 'Erstellung',
     icon: 'PencilIcon',
     order: 2

@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageConfig, getAllStages } from './kanban-constants';
+import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 
 // ========================================
 // INTERFACES
@@ -100,18 +101,17 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
     };
   }, [isOpen, onClose]);
 
-  // Get next and previous stages
-  const getAdjacentStages = () => {
-    const allStages = getAllStages();
-    const currentIndex = allStages.indexOf(project.currentStage);
-    
-    return {
-      previousStage: currentIndex > 0 ? allStages[currentIndex - 1] : null,
-      nextStage: currentIndex < allStages.length - 1 ? allStages[currentIndex + 1] : null
-    };
-  };
+  // BUGFIX: Verwende Business Logic für gültige Stage-Übergänge
+  const { getValidTargetStages, getStageName } = useDragAndDrop(
+    (projectId: string, targetStage: PipelineStage) => {
+      if (onMoveToStage) {
+        onMoveToStage(projectId, targetStage);
+      }
+    }
+  );
 
-  const { previousStage, nextStage } = getAdjacentStages();
+  // Hole alle gültigen Ziel-Stages für aktuellen Stage
+  const validTargetStages = getValidTargetStages(project.currentStage);
 
   // Handle action and close menu
   const handleAction = (e: React.MouseEvent, action: () => void) => {
@@ -163,28 +163,24 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         )}
       </div>
 
-      {/* Phase Navigation */}
-      {onMoveToStage && (previousStage || nextStage) && (
+      {/* Phase Navigation - BUGFIX: Business Logic statt Sequential */}
+      {onMoveToStage && validTargetStages.length > 0 && (
         <div className="py-1 border-t border-gray-100">
-          {previousStage && (
+          <div className="px-4 py-1">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Verschieben nach:
+            </p>
+          </div>
+          {validTargetStages.map((targetStage) => (
             <button
-              onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, previousStage))}
+              key={targetStage}
+              onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, targetStage))}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
             >
               <ArrowsRightLeftIcon className="h-4 w-4" />
-              <span>← Vorherige Phase ({getStageConfig(previousStage).name})</span>
+              <span>{getStageName(targetStage)}</span>
             </button>
-          )}
-          
-          {nextStage && (
-            <button
-              onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, nextStage))}
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-            >
-              <ArrowsRightLeftIcon className="h-4 w-4" />
-              <span>→ Nächste Phase ({getStageConfig(nextStage).name})</span>
-            </button>
-          )}
+          ))}
         </div>
       )}
 
