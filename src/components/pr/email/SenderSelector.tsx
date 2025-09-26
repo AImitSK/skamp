@@ -155,7 +155,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
                   <option value="">Bitte wählen...</option>
                   {companyContacts.map(contact => (
                     <option key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
+                      {contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim()}
                       {contact.position && ` - ${contact.position}`}
                     </option>
                   ))}
