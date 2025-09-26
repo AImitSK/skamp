@@ -896,9 +896,15 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setSuccessMessage('Kampagne erfolgreich gespeichert!');
       }
       
-      // Navigation
+      // Navigation zurück zum Projekt (nicht mehr zu pr-tools)
       setTimeout(() => {
-        router.push(`/dashboard/pr-tools/campaigns/campaigns/${result.campaignId}`);
+        // Wenn die Kampagne zu einem Projekt gehört, navigiere zum Projekt
+        if (existingCampaign?.projectId) {
+          router.push(`/dashboard/projects/${existingCampaign.projectId}`);
+        } else {
+          // Fallback: Zur Projekte-Übersicht
+          router.push('/dashboard/projects');
+        }
       }, 2000);
 
     } catch (error) {
@@ -2078,7 +2084,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           <div className="flex gap-3">
             <Button 
               type="button" 
-              onClick={() => router.push('/dashboard/pr-tools/campaigns')}
+              onClick={() => {
+                // Zurück zum Projekt oder zur Projekte-Übersicht
+                if (existingCampaign?.projectId) {
+                  router.push(`/dashboard/projects/${existingCampaign.projectId}`);
+                } else {
+                  router.push('/dashboard/projects');
+                }
+              }}
               plain
               className="!bg-gray-50 hover:!bg-gray-100 !text-gray-700 !border !border-gray-300"
             >
