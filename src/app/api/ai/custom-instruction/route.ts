@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
 
     // ULTRA-PRÄZISER System-Prompt nur für Custom Instructions
     const systemPrompt = `Du bist ein präziser Text-Editor. Du machst AUSSCHLIESSLICH die angeforderte Änderung und behältst alles andere 1:1 bei.

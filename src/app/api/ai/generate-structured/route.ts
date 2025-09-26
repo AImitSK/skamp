@@ -577,7 +577,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
 
     // Dynamisch System-Prompt basierend auf Kontext erstellen
     const systemPrompt = buildSystemPrompt(context);
