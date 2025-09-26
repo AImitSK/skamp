@@ -149,14 +149,30 @@ export default function EmailSettingsPage() {
   const loadDomains = async () => {
     try {
       setLoadingDomains(true);
-      console.log('🔍 Loading domains for organizationId:', organizationId);
+      console.log('🔍 DEBUG: Loading domains for organizationId:', organizationId);
+      console.log('🔍 DEBUG: User:', { uid: user?.uid, email: user?.email });
+      console.log('🔍 DEBUG: Organization:', currentOrganization);
+
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
-      console.log('📧 All domains loaded:', allDomains);
-      
+      console.log('📧 DEBUG: Raw domains from service:', allDomains);
+      console.log('📧 DEBUG: Domain count:', allDomains.length);
+
+      // Debug jede Domain einzeln
+      allDomains.forEach((domain, index) => {
+        console.log(`📧 DEBUG: Domain ${index}:`, {
+          id: domain.id,
+          domain: domain.domain,
+          status: domain.status,
+          organizationId: domain.organizationId,
+          createdAt: domain.createdAt,
+          createdBy: domain.createdBy
+        });
+      });
+
       // Zeige alle Domains an (inklusive failed), damit User sie sehen können
       const verifiedDomains = allDomains; // Entferne Filter temporär
-      console.log('✅ All domains (including failed):', verifiedDomains);
-      
+      console.log('✅ DEBUG: Domains after filter (should be same):', verifiedDomains);
+
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
         id: d.id!,
         name: d.domain,
@@ -165,10 +181,17 @@ export default function EmailSettingsPage() {
         domain: d.domain,
         status: d.status
       } as EmailDomain));
-      
+
+      console.log('🎯 DEBUG: Final emailDomains for UI:', emailDomains);
       setDomains(emailDomains);
+
     } catch (error) {
-      console.error('❌ Error loading domains:', error);
+      console.error('❌ DEBUG: Error loading domains:', error);
+      console.error('❌ DEBUG: Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       showToast('Fehler beim Laden der Domains', 'error');
     } finally {
       setLoadingDomains(false);

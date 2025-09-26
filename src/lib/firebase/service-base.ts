@@ -257,6 +257,10 @@ export abstract class BaseService<T extends BaseEntity> {
     options: QueryOptions = {}
   ): Promise<T[]> {
     try {
+      console.log(`🔍 BaseService.getAll DEBUG: Starting for collection ${this.collectionName}`);
+      console.log(`🔍 BaseService.getAll DEBUG: organizationId: ${organizationId}`);
+      console.log(`🔍 BaseService.getAll DEBUG: options:`, options);
+
       const constraints: QueryConstraint[] = [];
 
       // Sortierung
@@ -278,22 +282,36 @@ export abstract class BaseService<T extends BaseEntity> {
         constraints.push(startAfter(options.startAfter));
       }
 
+      console.log(`🔍 BaseService.getAll DEBUG: constraints:`, constraints.length);
+
       const q = this.getBaseQuery(organizationId, constraints);
+      console.log(`🔍 BaseService.getAll DEBUG: Executing query...`);
+
       const snapshot = await getDocs(q);
+      console.log(`🔍 BaseService.getAll DEBUG: Query returned ${snapshot.docs.length} documents`);
 
       const documents = snapshot.docs.map(doc => this.toEntity({
         id: doc.id,
         ...doc.data()
       }));
 
+      console.log(`🔍 BaseService.getAll DEBUG: Documents after mapping:`, documents.length);
+
       // Client-seitige Filterung für Soft Delete
       if (!options.includeDeleted) {
-        return documents.filter(doc => !doc.deletedAt);
+        const filtered = documents.filter(doc => !doc.deletedAt);
+        console.log(`🔍 BaseService.getAll DEBUG: After soft-delete filter: ${filtered.length} (was ${documents.length})`);
+        return filtered;
       }
 
       return documents;
     } catch (error) {
-      console.error(`Error fetching all ${this.collectionName}:`, error);
+      console.error(`❌ BaseService.getAll ERROR in ${this.collectionName}:`, error);
+      console.error(`❌ BaseService.getAll ERROR details:`, {
+        organizationId,
+        options,
+        collectionName: this.collectionName
+      });
       return [];
     }
   }
