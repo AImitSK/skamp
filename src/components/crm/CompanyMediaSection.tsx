@@ -65,7 +65,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
   // NEU: Direkt zur Mediathek mit Kunden-Context
   const handleUploadForClient = () => {
     // Öffne Mediathek mit Client-Parameter für automatische Zuordnung
-    window.open(`/dashboard/pr-tools/media-library?uploadFor=${companyId}&clientName=${encodeURIComponent(companyName)}`, '_blank');
+    window.open(`/dashboard/library/media?uploadFor=${companyId}&clientName=${encodeURIComponent(companyName)}`, '_blank');
   };
 
   if (loading) {
@@ -97,7 +97,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
         </div>
         
         <div className="flex gap-2">
-          <Link href={`/dashboard/pr-tools/media-library?client=${companyId}`}>
+          <Link href={`/dashboard/library/media?client=${companyId}`}>
             <Button plain className="text-sm">
               <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-1" />
               Zur Mediathek
@@ -135,7 +135,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
                 {folders.map((folder) => (
                   <Link 
                     key={folder.id} 
-                    href={`/dashboard/pr-tools/media-library?folder=${folder.id}`}
+                    href={`/dashboard/library/media?folder=${folder.id}`}
                     className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200 hover:border-primary/30"
                   >
                     <div className="flex items-center space-x-3">
@@ -208,7 +208,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
               
               {totalCount > 6 && (
                 <div className="text-center mt-4">
-                  <Link href={`/dashboard/pr-tools/media-library?client=${companyId}`}>
+                  <Link href={`/dashboard/library/media?client=${companyId}`}>
                     <Button plain className="text-sm">
                       Alle {totalCount} Medien anzeigen
                     </Button>

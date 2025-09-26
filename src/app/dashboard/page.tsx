@@ -8,7 +8,6 @@ import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
 import { Divider } from "@/components/ui/divider";
-import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
 import { Select } from "@/components/ui/select";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -169,16 +168,6 @@ export default function DashboardHomePage() {
         </div>
       )}
 
-      {/* Freigabe-Widget */}
-      {currentOrganization && (
-        <div className="mb-8">
-          <ApprovalWidget
-            key={`approval-${refreshKey}-${currentOrganization.id}`}
-            userId={currentOrganization.id}
-            onRefresh={handleDataRefresh}
-          />
-        </div>
-      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Schnellzugriff */}

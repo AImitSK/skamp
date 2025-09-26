@@ -9,10 +9,11 @@
 *Blockieren grundlegende Funktionalität*
 
 ### 1. **Projekt-Workflow komplett defekt**
-- [ ] **Nach Pressemeldung Save: Falsche Weiterleitung**
-  - ❌ Aktuell: `https://www.celeropress.com/dashboard/pr-tools/campaigns/campaigns/sYmRFYDy0Sp8RA1RjFFp`
-  - ✅ Soll: Zurück zum Kanban Board
-  - **Impact:** Nutzer landen in toter Route
+- [x] **Nach Pressemeldung Save: Falsche Weiterleitung**
+  - ✅ **BEHOBEN:** Campaign Save/Cancel redirects jetzt zu Projekten
+  - ✅ **BEHOBEN:** Alte pr-tools Übersichts-/Detailseiten gelöscht
+  - ✅ **BEHOBEN:** Media Library Links auf neue Route umgestellt
+  - ✅ **BEHOBEN:** freigabe-nicht-mehr-verfuegbar Seite updated
 
 ### 2. **Versand-Funktionalität defekt**
 - [ ] **Versenden Button: Falsche Anzeige-Logik**

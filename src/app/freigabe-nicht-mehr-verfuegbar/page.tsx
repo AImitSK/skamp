@@ -52,16 +52,10 @@ export default function FreigabeNichtMehrVerfuegbar() {
           
           {/* Actions */}
           <div className="space-y-3">
-            <Link href="/dashboard/pr-tools/campaigns">
+            <Link href="/dashboard/projects">
               <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white">
                 <ArrowRightIcon className="h-4 w-4 mr-2" />
-                Zu den Kampagnen
-              </Button>
-            </Link>
-            
-            <Link href="/dashboard/pr-tools/approvals">
-              <Button plain className="w-full border border-gray-300">
-                Freigaben verwalten
+                Zur Projekt-Übersicht
               </Button>
             </Link>
           </div>
