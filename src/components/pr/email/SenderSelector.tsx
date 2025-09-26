@@ -67,6 +67,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         
         // Wenn noch kein Kontakt ausgewählt, wähle den ersten
         if (sender.type === 'contact' && !sender.contactId && contacts.length > 0) {
+          console.log('🔄 Auto-Auswahl des ersten Kontakts:', contacts[0]);
           handleContactSelect(contacts[0].id!);
         }
       } catch (error) {
@@ -81,18 +82,25 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
 
   // Handler für Kontakt-Auswahl
   const handleContactSelect = (contactId: string) => {
+    console.log('🔄 handleContactSelect aufgerufen mit contactId:', contactId);
     const contact = companyContacts.find(c => c.id === contactId);
+    console.log('🔍 Gefundener Kontakt:', contact);
+
     if (contact) {
+      const contactData = {
+        name: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
+        email: contact.emails?.[0]?.address || contact.email || '',
+        title: contact.position || '',
+        company: campaign.clientName || contact.companyName || '',
+        phone: contact.phones?.[0]?.number || contact.phone || ''
+      };
+
+      console.log('📋 Erstellte contactData:', contactData);
+
       onChange({
         type: 'contact',
         contactId: contact.id,
-        contactData: {
-          name: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
-          email: contact.emails?.[0]?.address || contact.email || '',
-          title: contact.position || '',
-          company: campaign.clientName || contact.companyName || '',
-          phone: contact.phones?.[0]?.number || contact.phone || ''
-        }
+        contactData
       });
     }
   };
