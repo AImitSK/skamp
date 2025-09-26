@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Gemini initialisieren
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     // SPEZIFISCHER SYSTEM-PROMPT NUR FÜR KEYWORD-EXTRAKTION
     const systemPrompt = `Du bist ein SEO-Keyword-Spezialist. Deine EINZIGE Aufgabe ist es, aus Texten die wichtigsten Keywords zu extrahieren.
