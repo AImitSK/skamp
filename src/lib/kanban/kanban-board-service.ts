@@ -453,13 +453,12 @@ class KanbanBoardService {
   ): Promise<{ isValid: boolean; issues: string[] }> {
     const issues: string[] = [];
 
-    // Gültige Übergänge definieren
+    // BUGFIX: Gültige Übergänge auf 6 Phasen aktualisiert (konsistent mit useDragAndDrop)
     const validTransitions: Record<PipelineStage, PipelineStage[]> = {
       'ideas_planning': ['creation'],
-      'creation': ['ideas_planning', 'internal_approval'],
-      'internal_approval': ['creation', 'customer_approval'],
-      'customer_approval': ['internal_approval', 'distribution'],
-      'distribution': ['customer_approval', 'monitoring'],
+      'creation': ['ideas_planning', 'approval'],
+      'approval': ['creation', 'distribution'],
+      'distribution': ['approval', 'monitoring'],
       'monitoring': ['distribution', 'completed'],
       'completed': ['monitoring'] // Rollback möglich
     };
