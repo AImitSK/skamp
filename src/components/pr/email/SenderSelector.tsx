@@ -37,38 +37,15 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
   // Lade Kontakte der Firma
   useEffect(() => {
     const loadCompanyContacts = async () => {
-      console.log('🔍 SenderSelector: Campaign clientId:', campaign.clientId);
-      console.log('🔍 SenderSelector: Campaign clientName:', campaign.clientName);
-      console.log('🔍 SenderSelector: Full campaign object:', campaign);
-
-      if (!campaign.clientId) {
-        console.log('❌ SenderSelector: Keine clientId gefunden - breche ab');
-        return;
-      }
+      if (!campaign.clientId) return;
 
       setLoadingContacts(true);
       try {
-        console.log('🔄 SenderSelector: Lade Kontakte für clientId:', campaign.clientId);
         const contacts = await contactsService.getByCompanyId(campaign.clientId);
-        console.log('✅ SenderSelector: Kontakte geladen:', contacts.length, 'Kontakte gefunden');
-        console.log('📋 SenderSelector: Kontakte Details:', contacts);
-
-        // DEBUG: Kontakt-Struktur analysieren
-        if (contacts.length > 0) {
-          const firstContact = contacts[0];
-          console.log('🔍 DEBUG: Erste Kontakt Struktur:', firstContact);
-          console.log('🔍 DEBUG: firstName:', firstContact.firstName);
-          console.log('🔍 DEBUG: lastName:', firstContact.lastName);
-          console.log('🔍 DEBUG: name object:', firstContact.name);
-          console.log('🔍 DEBUG: position:', firstContact.position);
-          console.log('🔍 DEBUG: Alle Keys:', Object.keys(firstContact));
-        }
         setCompanyContacts(contacts);
-        
+
         // Wenn noch kein Kontakt ausgewählt, wähle den ersten
         if (sender.type === 'contact' && !sender.contactId && contacts.length > 0) {
-          console.log('🔄 Auto-Auswahl des ersten Kontakts:', contacts[0]);
-          console.log('🔄 displayName des ersten Kontakts:', contacts[0].displayName);
           handleContactSelect(contacts[0].id!);
         }
       } catch (error) {
@@ -83,9 +60,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
 
   // Handler für Kontakt-Auswahl
   const handleContactSelect = (contactId: string) => {
-    console.log('🔄 handleContactSelect aufgerufen mit contactId:', contactId);
     const contact = companyContacts.find(c => c.id === contactId);
-    console.log('🔍 Gefundener Kontakt:', contact);
 
     if (contact) {
       const contactData = {
@@ -95,8 +70,6 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         company: campaign.clientName || contact.companyName || '',
         phone: contact.phones?.[0]?.number || contact.phone || ''
       };
-
-      console.log('📋 Erstellte contactData:', contactData);
 
       onChange({
         type: 'contact',

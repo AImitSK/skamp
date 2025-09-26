@@ -185,40 +185,15 @@ export const contactsService = {
 
   // NEU: Funktion, um alle Kontakte für eine bestimmte Firma zu laden
   async getByCompanyId(companyId: string): Promise<Contact[]> {
-    console.log('🔍 getByCompanyId: Suche in contacts_enhanced für companyId:', companyId);
-
-    // DEBUGGING: Lade ALLE Kontakte um zu sehen welche companyIds existieren
-    const allContactsQuery = query(collection(db, 'contacts_enhanced'));
-    const allSnapshot = await getDocs(allContactsQuery);
-    const allContacts = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log('🔍 DEBUG: Alle Kontakte in DB:', allContacts.length);
-    console.log('🔍 DEBUG: CompanyIds in DB:', allContacts.map(c => c.companyId));
-
-    // ERWEITERTE ANALYSE: Finde den spezifischen Kontakt
-    const targetContact = allContacts.find(c => c.companyId === companyId);
-    console.log('🔍 DEBUG: Ziel-Kontakt gefunden:', targetContact ? 'JA' : 'NEIN');
-    if (targetContact) {
-      console.log('🔍 DEBUG: Ziel-Kontakt Details:', targetContact);
-      console.log('🔍 DEBUG: companyId Typ:', typeof targetContact.companyId);
-      console.log('🔍 DEBUG: companyId exakt:', JSON.stringify(targetContact.companyId));
-    }
-
-    // VERGLEICH: Gesucht vs. Vorhanden
-    console.log('🔍 DEBUG: Gesuchte companyId:', JSON.stringify(companyId));
-    console.log('🔍 DEBUG: Gesuchte companyId Typ:', typeof companyId);
-    console.log('🔍 DEBUG: Erste 3 Kontakte Details:', allContacts.slice(0, 3));
-
     const q = query(
       collection(db, 'contacts_enhanced'),
       where('companyId', '==', companyId)
-      // orderBy entfernt - Firestore Index noch nicht bereit
     );
     const snapshot = await getDocs(q);
     const contacts = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as Contact));
-    console.log('✅ getByCompanyId: Gefunden:', contacts.length, 'Kontakte für companyId:', companyId);
     return contacts;
   },
 

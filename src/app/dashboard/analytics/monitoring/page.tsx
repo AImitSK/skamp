@@ -41,7 +41,7 @@ export default function MonitoringPage() {
 
     try {
       setLoading(true);
-      const allCampaigns = await prService.getAll(currentOrganization.id);
+      const allCampaigns = await prService.getAll(currentOrganization.id, true);
 
       // Prüfe für jede Kampagne ob sie Sends hat und lade Clippings
       const campaignsWithSends = await Promise.all(
