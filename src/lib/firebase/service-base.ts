@@ -211,6 +211,17 @@ export abstract class BaseService<T extends BaseEntity> {
     includeDeleted = false
   ): Promise<T | null> {
     try {
+      // Validierung der Parameter
+      if (!id || typeof id !== 'string' || id.trim() === '') {
+        console.error(`Invalid document ID provided: ${id}`);
+        return null;
+      }
+
+      if (!organizationId || typeof organizationId !== 'string' || organizationId.trim() === '') {
+        console.error(`Invalid organizationId provided: ${organizationId}`);
+        return null;
+      }
+
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
 

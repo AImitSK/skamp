@@ -381,6 +381,12 @@ export class EmailAddressService {
     try {
       // Validiere Domain mit organisationsspezifischem Lookup
       let domain;
+
+      // Erst prüfen ob domainId gültig ist
+      if (!data.domainId || typeof data.domainId !== 'string' || data.domainId.trim() === '') {
+        throw new Error('Ungültige Domain-ID');
+      }
+
       try {
         // Dynamischer Import des Enhanced Service zur Laufzeit
         const { domainServiceEnhanced } = await import('@/lib/firebase/domain-service-enhanced');
