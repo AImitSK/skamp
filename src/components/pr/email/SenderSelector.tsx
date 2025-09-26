@@ -52,6 +52,17 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
         const contacts = await contactsService.getByCompanyId(campaign.clientId);
         console.log('✅ SenderSelector: Kontakte geladen:', contacts.length, 'Kontakte gefunden');
         console.log('📋 SenderSelector: Kontakte Details:', contacts);
+
+        // DEBUG: Kontakt-Struktur analysieren
+        if (contacts.length > 0) {
+          const firstContact = contacts[0];
+          console.log('🔍 DEBUG: Erste Kontakt Struktur:', firstContact);
+          console.log('🔍 DEBUG: firstName:', firstContact.firstName);
+          console.log('🔍 DEBUG: lastName:', firstContact.lastName);
+          console.log('🔍 DEBUG: name object:', firstContact.name);
+          console.log('🔍 DEBUG: position:', firstContact.position);
+          console.log('🔍 DEBUG: Alle Keys:', Object.keys(firstContact));
+        }
         setCompanyContacts(contacts);
         
         // Wenn noch kein Kontakt ausgewählt, wähle den ersten
