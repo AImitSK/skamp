@@ -257,8 +257,9 @@ export const contactsService = {
 
   // NEU: Kontakt via Email finden
   async findByEmail(email: string, organizationId: string): Promise<Contact | null> {
+    // KONSISTENZ-FIX: Verwende contacts_enhanced wie in getByCompanyId
     const q = query(
-      collection(db, 'contacts'),
+      collection(db, 'contacts_enhanced'),
       where('organizationId', '==', organizationId),
       where('email', '==', email)
     );

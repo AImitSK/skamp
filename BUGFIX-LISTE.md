@@ -77,8 +77,10 @@
   - Kein Loading-State bei Bildauswahl
 
 ### 9. **Monitoring & Clipping**
-- [ ] **Neue Kampagnen erscheinen nicht im Monitoring**
-  - Nach Versand sind Kampagnen nicht sichtbar
+- [x] **Neue Kampagnen erscheinen nicht im Monitoring**
+  - ✅ **BEHOBEN:** Multi-Tenancy Parameter korrigiert in monitoring/page.tsx
+  - ✅ **Root Cause:** prService.getAll() verwendete organizationId als userId
+  - ✅ **Fix:** useOrganizationId: true Parameter hinzugefügt
 - [ ] **Clipping-Archiv (0) - Zuordnung defekt**
   - Veröffentlichungen werden nicht korrekt zugeordnet
   - Problem sowohl im Archiv als auch in Projekten
@@ -114,10 +116,10 @@
 
 ## 📊 **Statistik**
 - **Critical Bugs:** 3 🔴
-- **High Priority:** 9 ⚠️
-- **Medium Priority:** 6 📋
+- **High Priority:** 8 ⚠️
+- **Medium Priority:** 5 📋
 - **Low Priority:** 4 🔧
-- **GESAMT:** 22 Issues
+- **GESAMT:** 20 Issues
 
 ---
 
