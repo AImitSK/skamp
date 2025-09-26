@@ -1295,7 +1295,22 @@ export const projectService = {
       const { taskService } = await import('./task-service');
       
       const issues: string[] = [];
-      
+
+      // BUGFIX: Basic Stage-Transition-Regeln prüfen (konsistent mit Client)
+      const validTransitions: Record<PipelineStage, PipelineStage[]> = {
+        'ideas_planning': ['creation'],
+        'creation': ['ideas_planning', 'approval'],
+        'approval': ['creation', 'distribution'],
+        'distribution': ['approval', 'monitoring'],
+        'monitoring': ['distribution', 'completed'],
+        'completed': ['monitoring']
+      };
+
+      // Prüfe ob Übergang erlaubt ist
+      if (!validTransitions[fromStage]?.includes(toStage)) {
+        issues.push(`Übergang von ${fromStage} zu ${toStage} ist nicht erlaubt`);
+      }
+
       // Prüfe kritische Tasks für aktuelle Stage
       const criticalTasks = await taskService.getCriticalTasksForStage('', projectId, fromStage);
       const incompleteCriticalTasks = criticalTasks.filter(t => t.status !== 'completed');
