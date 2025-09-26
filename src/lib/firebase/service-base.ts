@@ -257,9 +257,7 @@ export abstract class BaseService<T extends BaseEntity> {
     options: QueryOptions = {}
   ): Promise<T[]> {
     try {
-      console.log(`🔍 BaseService.getAll DEBUG: Starting for collection ${this.collectionName}`);
-      console.log(`🔍 BaseService.getAll DEBUG: organizationId: ${organizationId}`);
-      console.log(`🔍 BaseService.getAll DEBUG: options:`, options);
+      // Debug logs entfernt für bessere Übersichtlichkeit
 
       const constraints: QueryConstraint[] = [];
 
@@ -282,25 +280,20 @@ export abstract class BaseService<T extends BaseEntity> {
         constraints.push(startAfter(options.startAfter));
       }
 
-      console.log(`🔍 BaseService.getAll DEBUG: constraints:`, constraints.length);
 
       const q = this.getBaseQuery(organizationId, constraints);
-      console.log(`🔍 BaseService.getAll DEBUG: Executing query...`);
 
       const snapshot = await getDocs(q);
-      console.log(`🔍 BaseService.getAll DEBUG: Query returned ${snapshot.docs.length} documents`);
 
       const documents = snapshot.docs.map(doc => this.toEntity({
         id: doc.id,
         ...doc.data()
       }));
 
-      console.log(`🔍 BaseService.getAll DEBUG: Documents after mapping:`, documents.length);
 
       // Client-seitige Filterung für Soft Delete
       if (!options.includeDeleted) {
         const filtered = documents.filter(doc => !doc.deletedAt);
-        console.log(`🔍 BaseService.getAll DEBUG: After soft-delete filter: ${filtered.length} (was ${documents.length})`);
         return filtered;
       }
 
