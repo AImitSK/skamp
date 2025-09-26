@@ -153,8 +153,9 @@ export default function EmailSettingsPage() {
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
       console.log('📧 All domains loaded:', allDomains);
       
-      const verifiedDomains = allDomains.filter(d => d.status === 'verified' || d.status === 'pending');
-      console.log('✅ Verified/Pending domains:', verifiedDomains);
+      // Zeige alle Domains an (inklusive failed), damit User sie sehen können
+      const verifiedDomains = allDomains; // Entferne Filter temporär
+      console.log('✅ All domains (including failed):', verifiedDomains);
       
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
         id: d.id!,
@@ -783,7 +784,7 @@ export default function EmailSettingsPage() {
                     <option value="">Domain wählen...</option>
                     {domains.map(domain => (
                       <option key={domain.id} value={domain.id}>
-                        @{domain.name}
+                        @{domain.name} ({domain.status})
                       </option>
                     ))}
                   </Select>
