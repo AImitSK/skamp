@@ -126,9 +126,27 @@ export const projectService = {
         id: doc.id,
         ...doc.data()
       } as Project));
-      
-      
-      return projects;
+
+      // 🔥 AUTO-PROGRESS: Berechne Progress für alle Projekte
+      console.log(`🔄 [AUTO-PROGRESS] Berechne Progress für ${projects.length} Projekte...`);
+      for (const project of projects) {
+        if (project.id) {
+          try {
+            await this.updateProjectProgress(project.id, context.organizationId);
+          } catch (error) {
+            console.warn(`⚠️ Progress-Berechnung fehlgeschlagen für Projekt ${project.id}:`, error);
+          }
+        }
+      }
+
+      // Lade aktualisierte Projekte nach Progress-Berechnung
+      const updatedSnapshot = await getDocs(q);
+      const updatedProjects = updatedSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Project));
+
+      return updatedProjects;
     } catch (error) {
       return [];
     }
@@ -1213,21 +1231,27 @@ export const projectService = {
   /**
    * Aktualisiert Projekt-Progress
    */
-  async updateProjectProgress(projectId: string): Promise<any> { // ProjectProgress
+  async updateProjectProgress(projectId: string, organizationId?: string): Promise<any> { // ProjectProgress
+    console.log(`🚀 [PROGRESS-START] updateProjectProgress called for project: ${projectId}`);
     try {
-      const organizationId = ''; // In der Praxis wird dies übergeben
-      const context = { organizationId };
-      
+      const orgId = organizationId || ''; // Fallback für Legacy-Aufrufe
+      const context = { organizationId: orgId };
+
       // Dynamic import um circular dependencies zu vermeiden
       const { taskService } = await import('./task-service');
-      
-      const tasks = await taskService.getByProjectId(organizationId, projectId);
+
+      const tasks = await taskService.getByProjectId(orgId, projectId);
       const completedTasks = tasks.filter(t => t.status === 'completed');
       
       const taskCompletion = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
-      const criticalTasksRemaining = tasks.filter(t => 
+      const criticalTasksRemaining = tasks.filter(t =>
         t.requiredForStageCompletion && t.status !== 'completed'
       ).length;
+
+      // 🔍 DEBUG: Progress-Calculation Logging
+      console.log(`🔍 [PROGRESS-DEBUG] Projekt ${projectId}:`);
+      console.log(`📊 Tasks total: ${tasks.length}, completed: ${completedTasks.length}`);
+      console.log(`📊 Task completion: ${taskCompletion}%`);
 
       // Berechne Stage-spezifischen Progress (6-Stage-System)
       const stages: PipelineStage[] = [
@@ -1241,6 +1265,9 @@ export const projectService = {
         const stageTasks = tasks.filter(t => t.pipelineStage === stage);
         const stageCompletedTasks = stageTasks.filter(t => t.status === 'completed');
         stageProgress[stage] = stageTasks.length > 0 ? (stageCompletedTasks.length / stageTasks.length) * 100 : 0;
+
+        // 🔍 DEBUG: Stage-specific logging
+        console.log(`📋 Stage "${stage}": ${stageTasks.length} tasks, ${stageCompletedTasks.length} completed (${stageProgress[stage]}%)`);
       });
 
       // Berechne Gesamt-Progress mit Gewichtung (6-Stage-System)
@@ -1263,6 +1290,10 @@ export const projectService = {
 
       const overallPercent = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
 
+      // 🔍 DEBUG: Final progress calculation
+      console.log(`🎯 Overall progress: ${overallPercent}%`);
+      console.log(`⚖️ Total weight: ${totalWeight}, completed weight: ${completedWeight}`);
+
       const progress = {
         overallPercent,
         stageProgress,
@@ -1273,7 +1304,7 @@ export const projectService = {
       };
 
       // Update Project mit Progress
-      await this.update(projectId, { progress }, { organizationId, userId: '' });
+      await this.update(projectId, { progress }, { organizationId: orgId, userId: '' });
 
       return progress;
     } catch (error) {

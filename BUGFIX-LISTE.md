@@ -88,10 +88,16 @@
 ### 7. **Projekt-Management**
 - [x] **Task-Completion Anzeige defekt**
   - ✅ **BEHOBEN:** Fortschritts-Indikator zeigt jetzt korrekten Progress an
-  - ✅ **Root Cause:** Progress-Calculator verwendete veraltete 7-Stage Pipeline-Struktur
-  - ✅ **Problem:** calculateTaskProgress() suchte nach 'internal_approval' + 'customer_approval'
-  - ✅ **Fix:** Aktualisiert auf neues 6-Stage-System mit kombinierter 'approval' Stage
+  - ✅ **Root Cause 1:** Progress-Calculator verwendete veraltete 7-Stage Pipeline-Struktur
+  - ✅ **Root Cause 2:** updateProjectProgress() wurde nicht automatisch aufgerufen
+  - ✅ **Root Cause 3:** Inkonsistente Property-Namen (linkedProjectId vs projectId)
+  - ✅ **Problem 1:** calculateTaskProgress() suchte nach 'internal_approval' + 'customer_approval'
+  - ✅ **Problem 2:** getByProjectId() und getByProjectStage() verwendeten verschiedene Property-Namen
+  - ✅ **Fix 1:** Aktualisiert auf neues 6-Stage-System mit kombinierter 'approval' Stage
+  - ✅ **Fix 2:** Automatische Progress-Berechnung in getAll() implementiert
+  - ✅ **Fix 3:** Backward-Compatible Task-Suche mit beiden Property-Namen
   - ✅ **Lösung:** Stage-Weights angepasst (approval = 30% statt 15%+15%)
+  - ✅ **Debug:** Extensive Logging für Progress-Berechnung und Task-Suche hinzugefügt
   - ✅ **Resultat:** Gesamt-Fortschritt und Phasen-Fortschritt funktionieren wieder
 - [ ] **Projekt erstellen: Erfolgsbox falscher Link**
   - Redirect nach Erstellung fehlerhaft

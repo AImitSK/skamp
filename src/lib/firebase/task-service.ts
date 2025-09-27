@@ -361,22 +361,50 @@ export const taskService = {
   },
 
   /**
-   * Holt alle Tasks für ein Projekt
+   * Holt alle Tasks für ein Projekt - BUGFIX: Konsistente Property-Namen
    */
   async getByProjectId(
     organizationId: string,
     projectId: string
   ): Promise<PipelineAwareTask[]> {
-    const q = query(
+    console.log(`🔍 [TASK-DEBUG] Suche Tasks für Projekt ${projectId} in Organisation ${organizationId}`);
+
+    // Versuche mit beiden Property-Namen für Backward-Compatibility
+    const qLinked = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('linkedProjectId', '==', projectId)
+    );
+    const qDirect = query(
       collection(db, 'tasks'),
       where('organizationId', '==', organizationId),
       where('projectId', '==', projectId)
     );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+
+    const [linkedSnapshot, directSnapshot] = await Promise.all([
+      getDocs(qLinked),
+      getDocs(qDirect)
+    ]);
+
+    const linkedTasks = linkedSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as PipelineAwareTask));
+
+    const directTasks = directSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PipelineAwareTask));
+
+    // Kombiniere und dedupliziere basierend auf Task-ID
+    const allTasks = [...linkedTasks, ...directTasks];
+    const uniqueTasks = allTasks.filter((task, index, self) =>
+      self.findIndex(t => t.id === task.id) === index
+    );
+
+    console.log(`📊 [TASK-DEBUG] Gefunden: ${linkedTasks.length} linkedProjectId, ${directTasks.length} projectId, ${uniqueTasks.length} total unique`);
+
+    return uniqueTasks;
   },
 
   /**
