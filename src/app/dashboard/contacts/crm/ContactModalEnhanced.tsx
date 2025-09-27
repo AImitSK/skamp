@@ -22,7 +22,7 @@ import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
 // CountrySelector, LanguageSelector durch reguläre Select ersetzt
-import { PhoneInput } from "@/components/ui/phone-input";
+// PhoneInput entfernt - verwenden normales Input-Feld
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { 
   PlusIcon, 
@@ -689,37 +689,38 @@ export default function ContactModalEnhanced({
                   </div>
                   
                   {formData.phones && formData.phones.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {formData.phones.map((phone, index) => (
-                        <div key={index} className="flex gap-2 items-start">
-                          <Select
-                            value={phone.type}
-                            onChange={(e) => {
-                              const updated = [...formData.phones!];
-                              updated[index].type = e.target.value as any;
-                              setFormData({ ...formData, phones: updated });
-                            }}
-                            className="w-32"
-                          >
-                            <option value="business">Geschäftlich</option>
-                            <option value="mobile">Mobil</option>
-                            <option value="private">Privat</option>
-                            <option value="fax">Fax</option>
-                            <option value="other">Sonstige</option>
-                          </Select>
-                          <div className="flex-1">
-                            <PhoneInput
-                              value={phone.number}
-                              onChange={(value) => {
+                        <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-3">
+                            <Select
+                              value={phone.type}
+                              onChange={(e) => {
                                 const updated = [...formData.phones!];
-                                updated[index].number = value || '';
+                                updated[index].type = e.target.value as any;
                                 setFormData({ ...formData, phones: updated });
                               }}
-                              defaultCountry={'DE'}
+                            >
+                              <option value="business">Geschäftlich</option>
+                              <option value="mobile">Mobil</option>
+                              <option value="private">Privat</option>
+                              <option value="fax">Fax</option>
+                              <option value="other">Sonstige</option>
+                            </Select>
+                          </div>
+                          <div className="col-span-7">
+                            <Input
+                              type="tel"
+                              value={phone.number}
+                              onChange={(e) => {
+                                const updated = [...formData.phones!];
+                                updated[index].number = e.target.value;
+                                setFormData({ ...formData, phones: updated });
+                              }}
                               placeholder="+49 30 12345678"
                             />
                           </div>
-                          <div className="flex items-center pt-2">
+                          <div className="col-span-1 flex items-center">
                             <Checkbox
                               checked={phone.isPrimary}
                               onChange={(checked) => {
@@ -733,7 +734,7 @@ export default function ContactModalEnhanced({
                               aria-label="Primär"
                             />
                           </div>
-                          <div className="pt-2">
+                          <div className="col-span-1">
                             <Button type="button" plain onClick={() => removePhoneField(index)}>
                               <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
