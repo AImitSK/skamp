@@ -1229,10 +1229,10 @@ export const projectService = {
         t.requiredForStageCompletion && t.status !== 'completed'
       ).length;
 
-      // Berechne Stage-spezifischen Progress
+      // Berechne Stage-spezifischen Progress (6-Stage-System)
       const stages: PipelineStage[] = [
-        'ideas_planning', 'creation', 'internal_approval', 
-        'customer_approval', 'distribution', 'monitoring', 'completed'
+        'ideas_planning', 'creation', 'approval',
+        'distribution', 'monitoring', 'completed'
       ];
       
       const stageProgress: Record<PipelineStage, number> = {} as any;
@@ -1243,15 +1243,14 @@ export const projectService = {
         stageProgress[stage] = stageTasks.length > 0 ? (stageCompletedTasks.length / stageTasks.length) * 100 : 0;
       });
 
-      // Berechne Gesamt-Progress mit Gewichtung
+      // Berechne Gesamt-Progress mit Gewichtung (6-Stage-System)
       const stageWeights = {
-        'ideas_planning': 10,
-        'creation': 25,
-        'internal_approval': 15,
-        'customer_approval': 15,
-        'distribution': 25,
-        'monitoring': 8,
-        'completed': 2
+        'ideas_planning': 10,      // Ideen & Planung
+        'creation': 25,           // Erstellung-Phase
+        'approval': 30,           // Freigabe (kombiniert: internal + customer)
+        'distribution': 25,       // Verteilung-Phase
+        'monitoring': 8,          // Monitoring-Phase
+        'completed': 2            // Abgeschlossen
       };
 
       let totalWeight = 0;
