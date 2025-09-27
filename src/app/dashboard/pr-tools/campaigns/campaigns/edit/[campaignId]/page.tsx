@@ -163,8 +163,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // State für bisherigen Feedback-Verlauf
   const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
 
-  // TEST: Modal für Projekt-Medienverzeichnis
-  const [showProjectMediaModal, setShowProjectMediaModal] = useState(false);
 
   // Asset-Migration State
   const [showMigrationDialog, setShowMigrationDialog] = useState(false);
@@ -1747,24 +1745,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   />
                 </div>
 
-                {/* TEST BUTTON: Projekt-Medienverzeichnis anzeigen */}
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Text className="font-medium text-blue-900">🧪 TEST: Projekt-Medienverzeichnis</Text>
-                      <Text className="text-sm text-blue-700 mt-1">
-                        {selectedProjectId ? `Projekt: ${selectedProject?.title}` : 'Kein Projekt zugeordnet'}
-                      </Text>
-                    </div>
-                    <Button
-                      onClick={() => setShowProjectMediaModal(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <FolderIcon className="h-4 w-4 mr-2" />
-                      Medienverzeichnis testen
-                    </Button>
-                  </div>
-                </div>
               </div>
             </FieldGroup>
           </div>
@@ -2424,32 +2404,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         isProcessing={isMigrating}
       />
 
-      {/* TEST MODAL: Projekt-Medienverzeichnis */}
-      {showProjectMediaModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-auto">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">🧪 TEST: Projekt-Medienverzeichnis</h2>
-            </div>
-            <div className="px-6 py-4 text-center">
-              <div className="bg-gray-100 p-4 rounded-lg font-mono text-lg">
-                {selectedProjectId
-                  ? `Projekte/P-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${selectedProject?.customer?.name || 'Kunde'}-${selectedProject?.title}/Medien/`
-                  : 'Root'
-                }
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <Button
-                onClick={() => setShowProjectMediaModal(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
-              >
-                Schließen
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* CSS für Animationen */}
       <style jsx global>{`
