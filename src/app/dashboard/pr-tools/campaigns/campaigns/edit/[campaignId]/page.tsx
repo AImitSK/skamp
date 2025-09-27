@@ -679,10 +679,29 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setSelectedCompanyName(campaign.clientName || '');
         setSelectedProjectId(campaign.projectId || '');
 
-        // Debug-Log für Projekt-Zuordnung
+        // 🔥 WICHTIG: Kunde aus Projekt laden wenn Campaign projekt-verknüpft ist
         if (campaign.projectId) {
-          console.log('Kampagne hat Projekt-ID:', campaign.projectId);
-          console.log('Kunde-ID:', campaign.clientId);
+          console.log('🔍 [LOAD-FIX] Kampagne hat Projekt-ID:', campaign.projectId);
+          console.log('🔍 [LOAD-FIX] Aktueller clientName:', campaign.clientName);
+
+          // Lade Projekt und extrahiere echten Kunden (auch wenn Campaign schon clientName hat)
+          try {
+            const { projectService } = await import('@/lib/firebase/project-service');
+            const project = await projectService.getById(campaign.projectId, {
+              organizationId: currentOrganization.id
+            });
+
+            if (project?.customer?.id && project?.customer?.name) {
+              console.log('🏢 [AUTO-CLIENT-LOAD] Überschreibe mit echtem Projekt-Kunden:', project.customer.name);
+              setSelectedCompanyId(project.customer.id);
+              setSelectedCompanyName(project.customer.name);
+              setSelectedProject(project);
+            } else {
+              console.log('⚠️ [LOAD-FIX] Projekt hat keinen Kunden:', project?.customer);
+            }
+          } catch (error) {
+            console.error('❌ [LOAD-FIX] Fehler beim Laden des Projekt-Kunden:', error);
+          }
         }
         setSelectedListIds(campaign.distributionListIds || []);
         setSelectedListNames(campaign.distributionListNames || []);
