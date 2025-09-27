@@ -289,21 +289,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         </div>
       </div>
 
-      {/* Progress Bar */}
-      {progressPercent > 0 && (
-        <div className="mb-3">
-          <div className="flex justify-between text-xs text-gray-600 mb-1">
-            <span>Fortschritt</span>
-            <span>{Math.round(progressPercent)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
 
 
       {/* Tags - nur anzeigen wenn sie nicht wie IDs aussehen */}
