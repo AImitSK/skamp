@@ -49,8 +49,10 @@
   - ✅ **BEHOBEN:** Verbesserte Validierung - nur bei Blur, weniger aggressiv
   - ✅ **Root Cause:** Grid-Layout Konflikte zwischen col-span Definitionen
   - ✅ **Fix:** Einheitliches Grid-System und automatische Format-Normalisierung
-- [ ] **Publikationen Modal: ISSN-Feld defekt**
-  - Validation/Eingabe fehlerhaft
+- [x] **Publikationen Modal: ISSN-Feld defekt**
+  - ✅ **BEHOBEN:** Grid-Layout Problem behoben - Input-Feld funktioniert wieder
+  - ✅ **Root Cause:** Flex-Layout Konflikte machten Input-Feld nur 1 Zeichen breit
+  - ✅ **Fix:** Grid-System implementiert (col-span-3 + col-span-8 + col-span-1)
 
 ### 5. **Navigation & Settings**
 - [ ] **Settings > Templates umbenennen**

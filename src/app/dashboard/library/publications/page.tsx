@@ -18,8 +18,8 @@ import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider }
 import { Popover, Transition } from '@headlessui/react';
 import { PublicationModal } from "./PublicationModal";
 import PublicationImportModal from "./PublicationImportModal";
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   FunnelIcon,
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
@@ -27,6 +27,7 @@ import {
   PencilIcon,
   TrashIcon,
   DocumentDuplicateIcon,
+  EyeIcon,
   CheckBadgeIcon,
   GlobeAltIcon,
   ChevronLeftIcon,
@@ -713,26 +714,27 @@ export default function PublicationsPage() {
                       </DropdownButton>
                       <DropdownMenu anchor="bottom end">
                         <DropdownItem href={`/dashboard/library/publications/${pub.id}`}>
+                          <EyeIcon className="h-4 w-4 mr-2" />
                           Anzeigen
                         </DropdownItem>
-                        <DropdownItem 
+                        <DropdownItem
                           onClick={() => {
                             setSelectedPublication(pub);
                             setShowPublicationModal(true);
                           }}
                         >
-                          <PencilIcon />
+                          <PencilIcon className="h-4 w-4 mr-2" />
                           Bearbeiten
                         </DropdownItem>
                         <DropdownItem onClick={() => handleDuplicate(pub)}>
-                          <DocumentDuplicateIcon />
+                          <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
                           Duplizieren
                         </DropdownItem>
                         <DropdownDivider />
-                        <DropdownItem 
+                        <DropdownItem
                           onClick={() => handleDelete(pub.id!, pub.title)}
                         >
-                          <TrashIcon />
+                          <TrashIcon className="h-4 w-4 mr-2" />
                           <span className="text-red-600">Löschen</span>
                         </DropdownItem>
                       </DropdownMenu>
