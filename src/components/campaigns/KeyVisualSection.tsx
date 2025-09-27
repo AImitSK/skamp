@@ -62,6 +62,7 @@ export function KeyVisualSection({
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadingWithSmartRouter, setUploadingWithSmartRouter] = useState(false);
+  const [isLoadingCropper, setIsLoadingCropper] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Campaign Smart Router State
@@ -206,31 +207,37 @@ export function KeyVisualSection({
     if (assets.length > 0 && assets[0].type === 'asset') {
       // Asset aus Media Library ausgewählt - lade über Proxy-Route für CORS-freies Cropping
       const asset = assets[0];
-      
+
+      // Schließe Asset Selector Modal und zeige Loading
+      setShowAssetSelector(false);
+      setIsLoadingCropper(true);
+
       try {
         // Verwende Proxy-Route statt direkter Firebase URL - verwende originalUrl als Fallback
         const imageUrl = asset.metadata.thumbnailUrl || asset.metadata.originalUrl || asset.metadata.downloadUrl;
         const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
         const response = await fetch(proxyUrl);
-        
+
         if (!response.ok) {
           throw new Error(`Proxy request failed: ${response.status}`);
         }
-        
+
         const blob = await response.blob();
-        
+
         // Konvertiere zu Data URL (wie bei direktem Upload)
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
             setSelectedImageSrc(e.target.result as string);
+            setIsLoadingCropper(false);
             setShowCropper(true);
           }
         };
         reader.readAsDataURL(blob);
-        
+
       } catch (error) {
         console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
+        setIsLoadingCropper(false);
       }
     }
   };
@@ -241,29 +248,34 @@ export function KeyVisualSection({
 
   const handleEditKeyVisual = async () => {
     if (value?.url) {
+      // Zeige Loading während Bild für Cropper geladen wird
+      setIsLoadingCropper(true);
+
       try {
         // Verwende Proxy-Route für CORS-freies Cropping (genau wie handleAssetSelected)
         const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(value.url)}`;
         const response = await fetch(proxyUrl);
-        
+
         if (!response.ok) {
           throw new Error(`Proxy request failed: ${response.status}`);
         }
-        
+
         const blob = await response.blob();
-        
+
         // Konvertiere zu Data URL (wie bei direktem Upload)
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
             setSelectedImageSrc(e.target.result as string);
+            setIsLoadingCropper(false);
             setShowCropper(true);
           }
         };
         reader.readAsDataURL(blob);
-        
+
       } catch (error) {
         console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
+        setIsLoadingCropper(false);
       }
     }
   };
@@ -442,6 +454,23 @@ export function KeyVisualSection({
               </Text>
               <Text className="text-sm text-gray-500">
                 Key Visual wird intelligent geroutet und hochgeladen
+              </Text>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cropper Loading Overlay */}
+      {isLoadingCropper && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <Text className="font-medium text-gray-900 mb-2">
+                Cropping-Tool wird geladen...
+              </Text>
+              <Text className="text-sm text-gray-500">
+                Bild wird für die Bearbeitung vorbereitet
               </Text>
             </div>
           </div>

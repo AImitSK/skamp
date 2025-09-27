@@ -101,8 +101,11 @@
   - ✅ **FINAL:** System vereinfacht mit festen Progress-Werten (0%-20%-40%-60%-80%-100%)
   - ✅ **CLEANUP:** Debug-Logs entfernt, überflüssige UI-Elemente reduziert
   - ✅ **Resultat:** Einfaches, vorhersagbares Progress-System ohne Komplexität
-- [ ] **Projekt erstellen: Erfolgsbox falscher Link**
-  - Redirect nach Erstellung fehlerhaft
+- [x] **Projekt erstellen: Erfolgsbox falscher Link**
+  - ✅ **BEHOBEN:** Erfolgsbox auf einen fokussierten "Zum Projekt" Button reduziert
+  - ✅ **Root Cause:** Zu viele verwirrende Button-Optionen ("Zur Kampagne", "Dashboard schließen")
+  - ✅ **Fix:** Überflüssige Buttons entfernt, zentraler Call-to-Action implementiert
+  - ✅ **Resultat:** Saubere, fokussierte User Experience nach Projekt-Erstellung
 - [x] **Kanban: Phase 3 nicht erreichbar**
   - ✅ **BEHOBEN:** Dropdown-Menü verwendet jetzt Business Logic statt Sequential Navigation
   - ✅ **BEHOBEN:** Phase-Name verkürzt für bessere UI-Darstellung
