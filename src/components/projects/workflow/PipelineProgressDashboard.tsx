@@ -56,9 +56,17 @@ export default function PipelineProgressDashboard({
         // Wenn keine Tasks vorhanden, setze Fortschritt auf 100%
         const taskCompletionPercent = totalTasks === 0 ? 100 : Math.round((completedTasks / totalTasks) * 100);
 
-        // Pipeline-Fortschritt basierend auf aktueller Phase (7 Phasen)
-        const stageIndex = stageOrder.indexOf(currentStage);
-        const pipelinePercent = Math.round(((stageIndex + 1) / 7) * 100);
+        // Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
+        const fixedProgressMap = {
+          'ideas_planning': 0,    // 0% Ideen & Planung
+          'creation': 20,         // 20% Content und Materialien
+          'approval': 40,         // 40% Freigabe
+          'distribution': 60,     // 60% Verteilung
+          'monitoring': 80,       // 80% Monitoring
+          'completed': 100        // 100% Abgeschlossen
+        };
+
+        const pipelinePercent = (fixedProgressMap as any)[currentStage] || 0;
 
         setProgress({
           overallPercent: pipelinePercent,
@@ -78,19 +86,17 @@ export default function PipelineProgressDashboard({
 
   const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
-    'creation': 'Erstellung',
-    'internal_approval': 'Interne Freigabe',
-    'customer_approval': 'Kunden-Freigabe',
+    'creation': 'Content und Materialien',
+    'approval': 'Freigabe',
     'distribution': 'Verteilung',
     'monitoring': 'Monitoring',
     'completed': 'Abgeschlossen'
-  };
+  } as any;
 
   const stageOrder: PipelineStage[] = [
     'ideas_planning',
     'creation',
-    'internal_approval',
-    'customer_approval',
+    'approval',
     'distribution',
     'monitoring',
     'completed'

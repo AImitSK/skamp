@@ -127,8 +127,6 @@ export const projectService = {
         ...doc.data()
       } as Project));
 
-      // 🔥 AUTO-PROGRESS: Berechne Progress für alle Projekte
-      console.log(`🔄 [AUTO-PROGRESS] Berechne Progress für ${projects.length} Projekte...`);
       for (const project of projects) {
         if (project.id) {
           try {
@@ -1232,7 +1230,6 @@ export const projectService = {
    * Aktualisiert Projekt-Progress
    */
   async updateProjectProgress(projectId: string, organizationId?: string): Promise<any> { // ProjectProgress
-    console.log(`🚀 [PROGRESS-START] updateProjectProgress called for project: ${projectId}`);
     try {
       const orgId = organizationId || ''; // Fallback für Legacy-Aufrufe
       const context = { organizationId: orgId };
@@ -1248,15 +1245,6 @@ export const projectService = {
         t.requiredForStageCompletion && t.status !== 'completed'
       ).length;
 
-      // 🔍 DEBUG: Progress-Calculation Logging
-      console.log(`🔍 [PROGRESS-DEBUG] Projekt ${projectId}:`);
-      console.log(`📊 Tasks total: ${tasks.length}, completed: ${completedTasks.length}`);
-      console.log(`📊 Task completion: ${taskCompletion}%`);
-
-      // 🔍 DEBUG: Task-Details
-      tasks.forEach((task, index) => {
-        console.log(`📝 Task ${index + 1}: "${task.title}" - Stage: "${task.pipelineStage || 'NICHT GESETZT'}" - Status: "${task.status}" - Progress: ${task.progress || 0}%`);
-      });
 
       // Berechne Stage-spezifischen Progress (6-Stage-System)
       const stages: PipelineStage[] = [
@@ -1266,59 +1254,26 @@ export const projectService = {
       
       const stageProgress: Record<PipelineStage, number> = {} as any;
       
-      // 🔧 BUGFIX: Tasks ohne pipelineStage dem aktuellen Projekt-Stage zuordnen
-      const currentProjectStage = (await this.getById(projectId, { organizationId: orgId }))?.currentStage || 'ideas_planning';
-      const tasksWithoutStage = tasks.filter(t => !t.pipelineStage);
+      // Einfache feste Progress-Werte basierend auf currentStage
+      const currentProject = await this.getById(projectId, { organizationId: orgId });
+      const currentStage = currentProject?.currentStage || 'ideas_planning';
 
-      if (tasksWithoutStage.length > 0) {
-        console.log(`🔧 [LEGACY-FIX] ${tasksWithoutStage.length} Tasks ohne pipelineStage gefunden - zuordnen zu "${currentProjectStage}"`);
-      }
-
-      stages.forEach(stage => {
-        // Normal zugeordnete Tasks
-        const directStageTasks = tasks.filter(t => t.pipelineStage === stage);
-
-        // Legacy Tasks ohne Stage dem aktuellen Projekt-Stage zuordnen
-        const legacyTasks = (stage === currentProjectStage) ? tasksWithoutStage : [];
-
-        // Kombiniere beide Task-Gruppen
-        const stageTasks = [...directStageTasks, ...legacyTasks];
-        const stageCompletedTasks = stageTasks.filter(t => t.status === 'completed');
-        stageProgress[stage] = stageTasks.length > 0 ? (stageCompletedTasks.length / stageTasks.length) * 100 : 0;
-
-        // 🔍 DEBUG: Stage-specific logging
-        console.log(`📋 Stage "${stage}": ${directStageTasks.length} direct + ${legacyTasks.length} legacy = ${stageTasks.length} tasks, ${stageCompletedTasks.length} completed (${stageProgress[stage]}%)`);
-      });
-
-      // Berechne Gesamt-Progress mit Gewichtung (6-Stage-System)
-      const stageWeights = {
-        'ideas_planning': 10,      // Ideen & Planung
-        'creation': 25,           // Erstellung-Phase
-        'approval': 30,           // Freigabe (kombiniert: internal + customer)
-        'distribution': 25,       // Verteilung-Phase
-        'monitoring': 8,          // Monitoring-Phase
-        'completed': 2            // Abgeschlossen
+      const fixedProgressMap = {
+        'ideas_planning': 0,
+        'creation': 20,
+        'approval': 40,
+        'distribution': 60,
+        'monitoring': 80,
+        'completed': 100
       };
 
-      let totalWeight = 0;
-      let completedWeight = 0;
-
-      Object.entries(stageWeights).forEach(([stage, weight]) => {
-        totalWeight += weight;
-        const stageProgressValue = stageProgress[stage as PipelineStage] / 100;
-        const weightedProgress = stageProgressValue * weight;
-        completedWeight += weightedProgress;
-
-        // 🔍 DEBUG: Gewichtete Progress-Berechnung
-        console.log(`⚖️ Stage "${stage}": ${stageProgress[stage as PipelineStage]}% * ${weight} = ${weightedProgress.toFixed(2)}`);
+      stages.forEach(stage => {
+        stageProgress[stage] = 0;
       });
 
-      const overallPercent = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+      // Setze Progress basierend auf aktuellem Stage
+      const overallPercent = fixedProgressMap[currentStage as keyof typeof fixedProgressMap] || 0;
 
-      // 🔍 DEBUG: Final progress calculation
-      console.log(`🎯 FINAL: totalWeight=${totalWeight}, completedWeight=${completedWeight.toFixed(2)}, overallPercent=${overallPercent.toFixed(2)}%`);
-      console.log(`🎯 Overall progress: ${overallPercent}%`);
-      console.log(`⚖️ Total weight: ${totalWeight}, completed weight: ${completedWeight}`);
 
       const progress = {
         overallPercent,

@@ -367,8 +367,6 @@ export const taskService = {
     organizationId: string,
     projectId: string
   ): Promise<PipelineAwareTask[]> {
-    console.log(`🔍 [TASK-DEBUG] Suche Tasks für Projekt ${projectId} in Organisation ${organizationId}`);
-
     // Versuche mit beiden Property-Namen für Backward-Compatibility
     const qLinked = query(
       collection(db, 'tasks'),
@@ -401,8 +399,6 @@ export const taskService = {
     const uniqueTasks = allTasks.filter((task, index, self) =>
       self.findIndex(t => t.id === task.id) === index
     );
-
-    console.log(`📊 [TASK-DEBUG] Gefunden: ${linkedTasks.length} linkedProjectId, ${directTasks.length} projectId, ${uniqueTasks.length} total unique`);
 
     return uniqueTasks;
   },
