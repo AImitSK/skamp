@@ -544,27 +544,38 @@ export default function ContactModalEnhanced({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
                     <Label>Position</Label>
-                    <Input 
-                      value={formData.position || ''} 
+                    <Input
+                      value={formData.position || ''}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                       placeholder="z.B. Geschäftsführer, Redakteur"
                     />
                   </Field>
                   <Field>
                     <Label>Abteilung</Label>
-                    <Input 
-                      value={formData.department || ''} 
+                    <Input
+                      value={formData.department || ''}
                       onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                       placeholder="z.B. Vertrieb, Redaktion"
                     />
                   </Field>
                 </div>
 
+                {/* Tags */}
+                <Field>
+                  <Label>Tags</Label>
+                  <TagInput
+                    selectedTagIds={formData.tagIds || []}
+                    availableTags={tags}
+                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                    onCreateTag={handleCreateTag}
+                  />
+                </Field>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
                     <Label>Status</Label>
-                    <Select 
-                      value={formData.status} 
+                    <Select
+                      value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                     >
                       {CONTACT_STATUS_OPTIONS.map(opt => (
@@ -594,17 +605,6 @@ export default function ContactModalEnhanced({
                     </div>
                   </Field>
                 </div>
-
-                {/* Tags */}
-                <Field>
-                  <Label>Tags</Label>
-                  <TagInput
-                    selectedTagIds={formData.tagIds || []}
-                    availableTags={tags}
-                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
-                    onCreateTag={handleCreateTag}
-                  />
-                </Field>
               </FieldGroup>
             )}
 

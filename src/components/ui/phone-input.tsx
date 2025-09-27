@@ -188,7 +188,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
               value={selectedCountry}
               onChange={handleCountryChange}
               disabled={disabled}
-              className="w-32 shrink-0"
+              className="w-24 shrink-0"
               aria-label="Land"
             >
               {countries.map(country => (
@@ -199,7 +199,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             </Select>
           )}
 
-          <div className="relative flex-1 min-w-0">
+          <div className="flex-1">
             <Input
               ref={ref}
               type="tel"
