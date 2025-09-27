@@ -26,7 +26,7 @@ import {
   QueueListIcon as ListOrderedIcon,
   LinkIcon
 } from '@heroicons/react/24/outline';
-import { FocusAreasInput } from "@/components/FocusAreasInput";
+// FocusAreasInput entfernt - Tags werden nicht mehr benötigt
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SimpleSwitch } from "@/components/notifications/SimpleSwitch";
 import type { LanguageCode } from "@/types/international";
@@ -94,7 +94,6 @@ export default function BoilerplateModal({
     isGlobal: true,
     clientId: undefined,
     clientName: undefined,
-    tags: [],
     language: 'de' as LanguageCode
   });
 
@@ -113,7 +112,6 @@ export default function BoilerplateModal({
         isGlobal: boilerplate.isGlobal,
         clientId: boilerplate.clientId,
         clientName: boilerplate.clientName,
-        tags: boilerplate.tags || [],
         language: ((boilerplate as any).language || 'de') as LanguageCode
       };
       
@@ -133,7 +131,6 @@ export default function BoilerplateModal({
         isGlobal: true,
         clientId: undefined,
         clientName: undefined,
-        tags: [],
         language: 'de' as LanguageCode
       });
 
@@ -180,8 +177,7 @@ export default function BoilerplateModal({
         description: formData.description,
         isGlobal: formData.isGlobal,
         clientId: formData.clientId,
-        clientName: formData.clientName,
-        tags: formData.tags || []
+        clientName: formData.clientName
       };
 
       if (boilerplate && boilerplate.id) {
@@ -352,18 +348,7 @@ export default function BoilerplateModal({
             />
           </Field>
 
-          {/* Tags */}
-          <Field>
-            <Label>Tags (optional)</Label>
-            <FocusAreasInput
-              value={formData.tags || []}
-              onChange={(tags) => setFormData({ ...formData, tags })}
-              placeholder="Tags hinzufügen..."
-            />
-            <Description className="mt-2">
-              Fügen Sie Tags zur besseren Organisation hinzu
-            </Description>
-          </Field>
+          {/* Tags entfernt - werden nicht mehr benötigt */}
         </Fieldset>
       </DialogBody>
       

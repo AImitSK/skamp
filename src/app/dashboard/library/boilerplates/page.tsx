@@ -161,8 +161,7 @@ export default function BoilerplatesPage() {
       filtered = filtered.filter(bp =>
         bp.name.toLowerCase().includes(term) ||
         bp.content.toLowerCase().includes(term) ||
-        bp.description?.toLowerCase().includes(term) ||
-        bp.tags?.some(tag => tag.toLowerCase().includes(term))
+        bp.description?.toLowerCase().includes(term)
       );
     }
 
@@ -556,11 +555,8 @@ export default function BoilerplatesPage() {
                 <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Sprache
                 </div>
-                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Sichtbarkeit
-                </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Tags
                 </div>
                 <div className="w-[5%]"></div>
               </div>
@@ -633,21 +629,7 @@ export default function BoilerplatesPage() {
                       )}
                     </div>
 
-                    {/* Tags */}
-                    <div className="w-[15%]">
-                      {bp.tags && bp.tags.length > 0 ? (
-                        <div className="flex gap-1 flex-wrap">
-                          {bp.tags.slice(0, 3).map((tag, i) => (
-                            <Badge key={i} color="zinc" className="text-xs">{tag}</Badge>
-                          ))}
-                          {bp.tags.length > 3 && (
-                            <Text className="text-xs text-gray-400">+{bp.tags.length - 3}</Text>
-                          )}
-                        </div>
-                      ) : (
-                        <Text className="text-xs text-gray-400">—</Text>
-                      )}
-                    </div>
+                    {/* Tags entfernt */}
 
                     {/* Actions */}
                     <div className="w-[5%] text-right">
@@ -761,17 +743,7 @@ export default function BoilerplatesPage() {
                   {bp.content}
                 </div>
 
-                {/* Tags */}
-                {bp.tags && bp.tags.length > 0 && (
-                  <div className="mt-3 flex gap-1 flex-wrap">
-                    {bp.tags.slice(0, 2).map((tag, i) => (
-                      <Badge key={i} color="zinc" className="text-xs">{tag}</Badge>
-                    ))}
-                    {bp.tags.length > 2 && (
-                      <Badge color="zinc" className="text-xs">+{bp.tags.length - 2}</Badge>
-                    )}
-                  </div>
-                )}
+                {/* Tags entfernt */}
 
                 {/* Actions */}
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">

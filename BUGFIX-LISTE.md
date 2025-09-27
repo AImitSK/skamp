@@ -70,8 +70,11 @@
   - ✅ **Root Cause:** FloatingAIToolbar interferierte mit Boilerplate-Eingabe
   - ✅ **Fix:** Einfacher Editor nur mit Basics: Bold, Italic, Underline, Listen
   - ✅ **Resultat:** Keine KI-Features mehr, perfekt für Textbausteine
-- [ ] **Anderes Tag-System**
-  - Inkonsistenz zu restlichem System
+- [x] **Anderes Tag-System**
+  - ✅ **BEHOBEN:** Tag-System komplett aus Boilerplates entfernt
+  - ✅ **Root Cause:** Inkonsistenz zum restlichen System vermieden
+  - ✅ **Fix:** Tag-Feld und TAG-Spalte vollständig entfernt
+  - ✅ **Resultat:** Einfachere Boilerplate-Verwaltung ohne Tag-Komplexität
 - [ ] **PDF-Ausgabe Fehler**
   - Absender wird nicht korrekt übernommen
 
