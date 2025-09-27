@@ -759,6 +759,10 @@ export default function ContactModalEnhanced({
                               defaultCountry={phone.countryCode || 'DE'}
                               showCountrySelect={false}
                               placeholder="30 12345678"
+                              keepInvalidInput={true}
+                              onValidationError={(error) => {
+                                // Telefonnummer-Validierungsfehler werden automatisch angezeigt
+                              }}
                             />
                           </div>
                           <div className="col-span-1 flex items-center pt-2">

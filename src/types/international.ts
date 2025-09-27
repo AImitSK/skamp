@@ -208,10 +208,11 @@ export interface InternationalAddress {
 export interface PhoneNumber {
   type: 'business' | 'private' | 'mobile' | 'fax' | 'other';
   number: string; // E.164 Format: +49301234567
+  countryCode?: CountryCode; // ISO 3166-1 Alpha-2 für Länder-Auswahl
   extension?: string;
   isPrimary?: boolean;
   validatedAt?: Timestamp;
-  
+
   // Formatierte Anzeige
   formattedNational?: string; // 030 1234567
   formattedInternational?: string; // +49 30 1234567

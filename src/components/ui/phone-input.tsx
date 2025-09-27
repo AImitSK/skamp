@@ -51,6 +51,8 @@ interface PhoneInputProps {
   'aria-describedby'?: string
   error?: boolean
   helperText?: string
+  onValidationError?: (error: string | null) => void
+  keepInvalidInput?: boolean
 }
 
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
@@ -70,13 +72,16 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       'aria-label': ariaLabel = 'Telefonnummer',
       'aria-describedby': ariaDescribedBy,
       error,
-      helperText
+      helperText,
+      onValidationError,
+      keepInvalidInput = false
     },
     ref
   ) {
     const [inputValue, setInputValue] = useState('')
     const [selectedCountry, setSelectedCountry] = useState<CountryCode>(defaultCountry)
     const [isFocused, setIsFocused] = useState(false)
+    const [validationError, setValidationError] = useState<string | null>(null)
 
     // Get countries list
     const countries = useMemo(() => {
@@ -134,12 +139,26 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       if (input) {
         const normalized = normalizeToE164(input, selectedCountry)
         if (normalized.isValid && normalized.e164) {
+          setValidationError(null)
+          onValidationError?.(null)
           onChange(normalized.e164)
         } else {
-          // Allow intermediate input states
-          onChange(null)
+          // Set validation error but keep input if keepInvalidInput is true
+          const errorMsg = normalized.error || 'Ungültige Telefonnummer'
+          setValidationError(errorMsg)
+          onValidationError?.(errorMsg)
+
+          if (keepInvalidInput) {
+            // Keep the invalid input visible, but don't call onChange with invalid data
+            onChange(null)
+          } else {
+            // Allow intermediate input states (user is still typing)
+            onChange(null)
+          }
         }
       } else {
+        setValidationError(null)
+        onValidationError?.(null)
         onChange(null)
       }
     }
@@ -153,7 +172,14 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       if (inputValue) {
         const normalized = normalizeToE164(inputValue, newCountry)
         if (normalized.isValid && normalized.e164) {
+          setValidationError(null)
+          onValidationError?.(null)
           onChange(normalized.e164)
+        } else {
+          const errorMsg = normalized.error || 'Ungültige Telefonnummer'
+          setValidationError(errorMsg)
+          onValidationError?.(errorMsg)
+          onChange(null)
         }
       }
     }
@@ -172,7 +198,14 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         if (normalized.isValid && normalized.e164) {
           const formatted = formatE164Phone(normalized.e164, 'national')
           setInputValue(formatted)
+          setValidationError(null)
+          onValidationError?.(null)
           onChange(normalized.e164)
+        } else {
+          // On blur, show validation error more prominently
+          const errorMsg = normalized.error || 'Ungültige Telefonnummer'
+          setValidationError(errorMsg)
+          onValidationError?.(errorMsg)
         }
       }
     }
@@ -213,24 +246,24 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
               className={clsx(
                 'w-full',
                 inputClassName,
-                error && 'border-red-500 focus:ring-red-500'
+                (error || validationError) && 'border-red-500 focus:ring-red-500'
               )}
               aria-label={ariaLabel}
               aria-describedby={ariaDescribedBy}
-              aria-invalid={error}
+              aria-invalid={error || !!validationError}
             />
           </div>
         </div>
 
-        {(helperText || error) && (
-          <p 
+        {(helperText || error || validationError) && (
+          <p
             className={clsx(
               'mt-1 text-sm',
-              error ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'
+              (error || validationError) ? 'text-red-600 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'
             )}
             id={ariaDescribedBy}
           >
-            {helperText || (error && 'Ungültige Telefonnummer')}
+            {validationError || helperText || (error && 'Ungültige Telefonnummer')}
           </p>
         )}
       </div>
