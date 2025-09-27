@@ -85,10 +85,10 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
 
         {/* Dropdown */}
         {isOpen && (
-          <div className="absolute z-[60] mt-1 w-full rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+          <div className="absolute z-[9999] mt-1 w-full rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" style={{ maxHeight: '300px' }}>
             {/* Vorhandene Tags */}
             {filteredTags.length > 0 && (
-              <div className="max-h-60 overflow-auto">
+              <div className="overflow-auto" style={{ maxHeight: '200px' }}>
                 {filteredTags.map(tag => (
                   <button
                     key={tag.id}
@@ -151,7 +151,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
       {/* Click-outside Handler */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[55]"
+          className="fixed inset-0 z-[9998]"
           onClick={() => setIsOpen(false)}
         />
       )}

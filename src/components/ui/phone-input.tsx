@@ -181,8 +181,8 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     const currentCountry = countries.find(c => c.code === selectedCountry) || countries[0]
 
     return (
-      <div className={clsx('w-full', className)}>
-        <div className="flex gap-2 w-full">
+      <div className={className || 'w-full'}>
+        <div className="flex gap-2">
           {showCountrySelect && (
             <Select
               value={selectedCountry}
