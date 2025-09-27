@@ -958,36 +958,21 @@ class PDFTemplateService {
             border-left: 3px solid ${template.colorScheme.primary};
           }
           
-          /* Optimierte Paragraphen-Abstände */
+          /* Einfache Paragraphen-Abstände ohne Einrückungen */
           .boilerplate-content p {
-            margin-top: 2mm;
-            margin-bottom: 2mm;
+            margin: 0 0 3mm 0;
+            text-align: left;
           }
-          
-          /* Erste Paragraphen (oft Zitatgeber) */
+
+          /* Erste Paragraphen */
           .boilerplate-content p:first-child {
             margin-top: 0mm;
           }
-          
-          /* Zitatgeber-Styling für Paragraphen mit starken Elementen am Anfang */
+
+          /* Zitatgeber-Styling für starke Elemente */
           .boilerplate-content p strong:first-child {
             color: ${template.colorScheme.primary};
-            font-size: 10pt;
-          }
-          
-          /* Paragraphen direkt nach einem starken Element */
-          .boilerplate-content p:first-child + p {
-            margin-top: 1mm;
-            font-size: 10pt;
-            color: #666;
-            padding-left: 8mm;
-          }
-          
-          /* Trennlinien für neue Abschnitte */
-          .boilerplate-content p:nth-child(3) {
-            margin-top: 8mm;
-            padding-top: 4mm;
-            border-top: 1px solid #eee;
+            font-size: 11pt;
           }
           
           .footer {
