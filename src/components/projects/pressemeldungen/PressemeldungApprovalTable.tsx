@@ -28,6 +28,7 @@ const getStatusColor = (status: string): string => {
     case 'in_review': return 'amber';
     case 'approved': return 'green';
     case 'rejected': return 'red';
+    case 'changes_requested': return 'orange';
     case 'expired': return 'zinc';
     default: return 'zinc';
   }
@@ -39,6 +40,7 @@ const getStatusLabel = (status: string): string => {
     case 'in_review': return 'In Prüfung';
     case 'approved': return 'Freigegeben';
     case 'rejected': return 'Abgelehnt';
+    case 'changes_requested': return 'Änderungen Angefordert';
     case 'expired': return 'Abgelaufen';
     default: return status;
   }

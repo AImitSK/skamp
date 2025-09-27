@@ -1253,6 +1253,11 @@ export const projectService = {
       console.log(`📊 Tasks total: ${tasks.length}, completed: ${completedTasks.length}`);
       console.log(`📊 Task completion: ${taskCompletion}%`);
 
+      // 🔍 DEBUG: Task-Details
+      tasks.forEach((task, index) => {
+        console.log(`📝 Task ${index + 1}: "${task.title}" - Stage: "${task.pipelineStage || 'NICHT GESETZT'}" - Status: "${task.status}" - Progress: ${task.progress || 0}%`);
+      });
+
       // Berechne Stage-spezifischen Progress (6-Stage-System)
       const stages: PipelineStage[] = [
         'ideas_planning', 'creation', 'approval',
@@ -1285,12 +1290,18 @@ export const projectService = {
 
       Object.entries(stageWeights).forEach(([stage, weight]) => {
         totalWeight += weight;
-        completedWeight += (stageProgress[stage as PipelineStage] / 100) * weight;
+        const stageProgressValue = stageProgress[stage as PipelineStage] / 100;
+        const weightedProgress = stageProgressValue * weight;
+        completedWeight += weightedProgress;
+
+        // 🔍 DEBUG: Gewichtete Progress-Berechnung
+        console.log(`⚖️ Stage "${stage}": ${stageProgress[stage as PipelineStage]}% * ${weight} = ${weightedProgress.toFixed(2)}`);
       });
 
       const overallPercent = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
 
       // 🔍 DEBUG: Final progress calculation
+      console.log(`🎯 FINAL: totalWeight=${totalWeight}, completedWeight=${completedWeight.toFixed(2)}, overallPercent=${overallPercent.toFixed(2)}%`);
       console.log(`🎯 Overall progress: ${overallPercent}%`);
       console.log(`⚖️ Total weight: ${totalWeight}, completed weight: ${completedWeight}`);
 
