@@ -79,8 +79,10 @@
   - ✅ **BEHOBEN:** Absender wird korrekt aus Projektkunde übernommen
   - ✅ **Root Cause 1:** onProjectSelect übertrug nur Projekt, nicht Kunde
   - ✅ **Root Cause 2:** PDF-Template verwendete "Unbekannter Kunde" als Fallback
+  - ✅ **Root Cause 3:** Bestehende Kampagnen hatten "Unbekannter Kunde" gespeichert
   - ✅ **Fix 1:** Automatische Kundenübernahme aus project.customer.id/name
   - ✅ **Fix 2:** CSS-Regeln für Boilerplate-Content bereinigt
+  - ✅ **Fix 3:** Campaign-Load überschreibt veralteten clientName mit Projekt-Kunde
   - ✅ **Resultat:** PDF zeigt korrekten Kundennamen in Kopf- und Fußzeile
 
 ### 7. **Projekt-Management**
