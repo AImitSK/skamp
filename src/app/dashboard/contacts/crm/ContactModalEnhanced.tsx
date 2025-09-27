@@ -598,7 +598,7 @@ export default function ContactModalEnhanced({
                 {/* Tags */}
                 <Field>
                   <Label>Tags</Label>
-                  <div className="relative z-[60]">
+                  <div className="relative z-[9999]" style={{ isolation: 'isolate' }}>
                     <TagInput 
                       selectedTagIds={formData.tagIds || []} 
                       availableTags={tags} 
@@ -710,7 +710,7 @@ export default function ContactModalEnhanced({
                               <option value="other">Sonstige</option>
                             </Select>
                           </div>
-                          <div className="col-span-7">
+                          <div className="col-span-7 w-full">
                             <PhoneInput
                               value={phone.number}
                               onChange={(value) => {
@@ -719,6 +719,7 @@ export default function ContactModalEnhanced({
                                 setFormData({ ...formData, phones: updated });
                               }}
                               defaultCountry={'DE'}
+                              className="w-full"
                             />
                           </div>
                           <div className="col-span-1 flex items-center pt-2">

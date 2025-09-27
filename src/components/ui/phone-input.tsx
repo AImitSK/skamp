@@ -181,14 +181,14 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     const currentCountry = countries.find(c => c.code === selectedCountry) || countries[0]
 
     return (
-      <div className={className}>
-        <div className="flex gap-2">
+      <div className={clsx('w-full', className)}>
+        <div className="flex gap-2 w-full">
           {showCountrySelect && (
             <Select
               value={selectedCountry}
               onChange={handleCountryChange}
               disabled={disabled}
-              className="w-32"
+              className="w-32 shrink-0"
               aria-label="Land"
             >
               {countries.map(country => (
@@ -199,7 +199,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             </Select>
           )}
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Input
               ref={ref}
               type="tel"
@@ -211,6 +211,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
               disabled={disabled}
               required={required}
               className={clsx(
+                'w-full',
                 inputClassName,
                 error && 'border-red-500 focus:ring-red-500'
               )}
