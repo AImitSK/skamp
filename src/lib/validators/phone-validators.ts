@@ -170,7 +170,7 @@ export function normalizeToE164(
   if (cleaned.startsWith('+')) {
     if (isValidE164Phone(cleaned)) {
       const country = detectCountryFromE164(cleaned);
-return { e164: cleaned, isValid: true, country: country || undefined };
+      return { e164: cleaned, isValid: true, country: country || undefined };
     }
     return { isValid: false, error: 'Ungültiges E.164 Format' };
   }

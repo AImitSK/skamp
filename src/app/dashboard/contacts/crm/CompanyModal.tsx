@@ -26,6 +26,31 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { PhoneInput } from "@/components/ui/phone-input";
+
+// Vorwahl-Optionen
+const COUNTRY_OPTIONS = [
+  { code: 'DE', label: '+49 DE', callingCode: '49' },
+  { code: 'AT', label: '+43 AT', callingCode: '43' },
+  { code: 'CH', label: '+41 CH', callingCode: '41' },
+  { code: 'US', label: '+1 US', callingCode: '1' },
+  { code: 'GB', label: '+44 GB', callingCode: '44' },
+  { code: 'FR', label: '+33 FR', callingCode: '33' },
+  { code: 'IT', label: '+39 IT', callingCode: '39' },
+  { code: 'ES', label: '+34 ES', callingCode: '34' },
+  { code: 'NL', label: '+31 NL', callingCode: '31' },
+  { code: 'BE', label: '+32 BE', callingCode: '32' },
+  { code: 'PL', label: '+48 PL', callingCode: '48' },
+  { code: 'SE', label: '+46 SE', callingCode: '46' },
+  { code: 'NO', label: '+47 NO', callingCode: '47' },
+  { code: 'DK', label: '+45 DK', callingCode: '45' },
+  { code: 'FI', label: '+358 FI', callingCode: '358' },
+  { code: 'CZ', label: '+420 CZ', callingCode: '420' },
+  { code: 'HU', label: '+36 HU', callingCode: '36' },
+  { code: 'PT', label: '+351 PT', callingCode: '351' },
+  { code: 'GR', label: '+30 GR', callingCode: '30' },
+  { code: 'IE', label: '+353 IE', callingCode: '353' }
+];
+
 import { 
   PlusIcon, 
   TrashIcon, 
@@ -801,56 +826,70 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
                       {formData.phones.map((phone, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="grid grid-cols-12 gap-2 items-start">
-                            <div className="col-span-3">
-                              <Select 
-                                value={phone.type} 
-                                onChange={(e) => {
-                                  const updated = [...formData.phones!];
-                                  updated[index].type = e.target.value as any;
-                                  setFormData({ ...formData, phones: updated });
-                                }}
-                              >
-                                <option value="business">Geschäftlich</option>
-                                <option value="mobile">Mobil</option>
-                                <option value="fax">Fax</option>
-                                <option value="private">Privat</option>
-                                <option value="other">Sonstige</option>
-                              </Select>
-                            </div>
-                            <div className="col-span-7">
-                              <PhoneInput
-                                value={phone.number}
-                                onChange={(value) => {
-                                  const updated = [...formData.phones!];
-                                  updated[index].number = value || '';
-                                  setFormData({ ...formData, phones: updated });
-                                }}
-                                defaultCountry={formData.mainAddress?.countryCode || 'DE'}
-                                showCountrySelect={false}
-                                placeholder="+49 30 12345678"
-                              />
-                            </div>
-                            <div className="col-span-1 flex items-center pt-2">
-                              <Checkbox
-                                checked={phone.isPrimary}
-                                onChange={(checked) => {
-                                  const updated = [...formData.phones!];
-                                  // Ensure only one primary
-                                  updated.forEach((p, i) => {
-                                    p.isPrimary = i === index && checked;
-                                  });
-                                  setFormData({ ...formData, phones: updated });
-                                }}
-                                aria-label="Primär"
-                              />
-                            </div>
-                            <div className="col-span-1 pt-2">
-                              <Button type="button" plain onClick={() => removePhoneField(index)}>
-                                <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
-                              </Button>
-                            </div>
+                        <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-2">
+                            <Select
+                              value={phone.type}
+                              onChange={(e) => {
+                                const updated = [...formData.phones!];
+                                updated[index].type = e.target.value as any;
+                                setFormData({ ...formData, phones: updated });
+                              }}
+                            >
+                              <option value="business">Geschäftlich</option>
+                              <option value="mobile">Mobil</option>
+                              <option value="private">Privat</option>
+                              <option value="fax">Fax</option>
+                              <option value="other">Sonstige</option>
+                            </Select>
+                          </div>
+                          <div className="col-span-2">
+                            <Select
+                              value={phone.countryCode || formData.mainAddress?.countryCode || 'DE'}
+                              onChange={(e) => {
+                                const updated = [...formData.phones!];
+                                updated[index].countryCode = e.target.value;
+                                setFormData({ ...formData, phones: updated });
+                              }}
+                            >
+                              {COUNTRY_OPTIONS.map(country => (
+                                <option key={country.code} value={country.code}>
+                                  {country.label}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                          <div className="col-span-6">
+                            <PhoneInput
+                              value={phone.number}
+                              onChange={(value) => {
+                                const updated = [...formData.phones!];
+                                updated[index].number = value || '';
+                                setFormData({ ...formData, phones: updated });
+                              }}
+                              defaultCountry={phone.countryCode || formData.mainAddress?.countryCode || 'DE'}
+                              showCountrySelect={false}
+                              placeholder="30 12345678"
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-center pt-2">
+                            <Checkbox
+                              checked={phone.isPrimary}
+                              onChange={(checked) => {
+                                const updated = [...formData.phones!];
+                                // Ensure only one primary
+                                updated.forEach((p, i) => {
+                                  p.isPrimary = i === index && checked;
+                                });
+                                setFormData({ ...formData, phones: updated });
+                              }}
+                              aria-label="Primär"
+                            />
+                          </div>
+                          <div className="col-span-1 pt-2">
+                            <Button type="button" plain onClick={() => removePhoneField(index)}>
+                              <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
+                            </Button>
                           </div>
                         </div>
                       ))}

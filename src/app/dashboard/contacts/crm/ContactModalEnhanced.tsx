@@ -22,7 +22,7 @@ import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
 // CountrySelector, LanguageSelector durch reguläre Select ersetzt
-// PhoneInput entfernt - verwenden normales Input-Feld
+import { PhoneInput } from "@/components/ui/phone-input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 
 // Vorwahl-Optionen
@@ -715,7 +715,7 @@ export default function ContactModalEnhanced({
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-2">
                       {formData.phones.map((phone, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-2">
                             <Select
                               value={phone.type}
@@ -749,18 +749,19 @@ export default function ContactModalEnhanced({
                             </Select>
                           </div>
                           <div className="col-span-6">
-                            <Input
-                              type="tel"
+                            <PhoneInput
                               value={phone.number}
-                              onChange={(e) => {
+                              onChange={(value) => {
                                 const updated = [...formData.phones!];
-                                updated[index].number = e.target.value;
+                                updated[index].number = value || '';
                                 setFormData({ ...formData, phones: updated });
                               }}
+                              defaultCountry={phone.countryCode || 'DE'}
+                              showCountrySelect={false}
                               placeholder="30 12345678"
                             />
                           </div>
-                          <div className="col-span-1 flex items-center">
+                          <div className="col-span-1 flex items-center pt-2">
                             <Checkbox
                               checked={phone.isPrimary}
                               onChange={(checked) => {
@@ -774,7 +775,7 @@ export default function ContactModalEnhanced({
                               aria-label="Primär"
                             />
                           </div>
-                          <div className="col-span-1">
+                          <div className="col-span-1 pt-2">
                             <Button type="button" plain onClick={() => removePhoneField(index)}>
                               <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
