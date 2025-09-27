@@ -1154,43 +1154,47 @@ const loadPublishers = async () => {
                 <h4 className="font-medium text-gray-900 mb-3">Identifikatoren</h4>
                 <div className="space-y-2">
                   {identifiers.map((identifier, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Select
-                        value={identifier.type}
-                        onChange={(e) => {
-                          const updated = [...identifiers];
-                          updated[index] = { ...updated[index], type: e.target.value as any };
-                          setIdentifiers(updated);
-                        }}
-                        className="w-40"
-                      >
-                        <option value="ISSN">ISSN</option>
-                        <option value="ISBN">ISBN</option>
-                        <option value="DOI">DOI</option>
-                        <option value="URL">URL</option>
-                        <option value="DOMAIN">Domain</option>
-                        <option value="SOCIAL_HANDLE">Social Handle</option>
-                        <option value="OTHER">Sonstiges</option>
-                      </Select>
-                      <Input
-                        type="text"
-                        value={identifier.value}
-                        onChange={(e) => {
-                          const updated = [...identifiers];
-                          updated[index].value = e.target.value;
-                          setIdentifiers(updated);
-                        }}
-                        placeholder="Wert eingeben..."
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        plain
-                        onClick={() => removeIdentifier(index)}
-                        disabled={identifiers.length === 1}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </Button>
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-3">
+                        <Select
+                          value={identifier.type}
+                          onChange={(e) => {
+                            const updated = [...identifiers];
+                            updated[index] = { ...updated[index], type: e.target.value as any };
+                            setIdentifiers(updated);
+                          }}
+                        >
+                          <option value="ISSN">ISSN</option>
+                          <option value="ISBN">ISBN</option>
+                          <option value="DOI">DOI</option>
+                          <option value="URL">URL</option>
+                          <option value="DOMAIN">Domain</option>
+                          <option value="SOCIAL_HANDLE">Social Handle</option>
+                          <option value="OTHER">Sonstiges</option>
+                        </Select>
+                      </div>
+                      <div className="col-span-8">
+                        <Input
+                          type="text"
+                          value={identifier.value}
+                          onChange={(e) => {
+                            const updated = [...identifiers];
+                            updated[index].value = e.target.value;
+                            setIdentifiers(updated);
+                          }}
+                          placeholder="Wert eingeben..."
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button
+                          type="button"
+                          plain
+                          onClick={() => removeIdentifier(index)}
+                          disabled={identifiers.length === 1}
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   <Button type="button" plain onClick={addIdentifier}>
