@@ -1565,6 +1565,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                                 setSelectedProjectId(projectId);
                                 setSelectedProject(project);
 
+                                // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
+                                if (project?.customer?.id && project?.customer?.name) {
+                                  console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt:', project.customer.name);
+                                  setSelectedCompanyId(project.customer.id);
+                                  setSelectedCompanyName(project.customer.name);
+                                }
+
                                 toast.success('Projekt erfolgreich zugewiesen');
                               }
                             } catch (error) {
@@ -1572,6 +1579,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                               // Bei Fehler: Projekt trotzdem setzen
                               setSelectedProjectId(projectId);
                               setSelectedProject(project);
+
+                              // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
+                              if (project?.customer?.id && project?.customer?.name) {
+                                console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt (Fehlerfall):', project.customer.name);
+                                setSelectedCompanyId(project.customer.id);
+                                setSelectedCompanyName(project.customer.name);
+                              }
                             }
                           } else {
                             // Erste Zuweisung oder keine Änderung - speichere in Firestore
@@ -1615,6 +1629,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
                             setSelectedProjectId(projectId);
                             setSelectedProject(project);
+
+                            // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
+                            if (project?.customer?.id && project?.customer?.name) {
+                              console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt:', project.customer.name);
+                              setSelectedCompanyId(project.customer.id);
+                              setSelectedCompanyName(project.customer.name);
+                            }
                           }
                         }}
                         organizationId={currentOrganization!.id}
@@ -2339,6 +2360,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             // Update lokale State
             setSelectedProjectId(pendingProjectId);
             setSelectedProject(pendingProject);
+
+            // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
+            if (pendingProject?.customer?.id && pendingProject?.customer?.name) {
+              console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt (Migration):', pendingProject.customer.name);
+              setSelectedCompanyId(pendingProject.customer.id);
+              setSelectedCompanyName(pendingProject.customer.name);
+            }
 
             console.log('✅ [SUCCESS] Asset-Migration erfolgreich abgeschlossen');
 
