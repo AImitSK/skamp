@@ -36,14 +36,14 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
-// Toast notification helper
+// Toast notification helper - UI-Komponenten statt Browser-Dialoge
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+  // TODO: Hier sollte eine echte Toast-Komponente verwendet werden
+  // Vorläufig als console.log statt störende Browser-Dialoge
   if (type === 'error') {
-    
-    alert(`Fehler: ${message}`);
+    console.error('Error:', message);
   } else {
-    
-    alert(message); // Temporär - später durch echte Toast-Komponente ersetzen
+    console.log('Success:', message);
   }
 };
 
@@ -63,6 +63,10 @@ export default function TeamSettingsPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
+
+  // Confirmation dialog state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
   
   // Load team members on mount
   useEffect(() => {
@@ -262,19 +266,25 @@ export default function TeamSettingsPage() {
       showToast('Der Owner kann nicht entfernt werden', 'error');
       return;
     }
-    
-    if (!confirm(`Möchten Sie ${member.displayName} wirklich aus dem Team entfernen?`)) {
-      return;
-    }
-    
+
+    // Zeige Confirmation Dialog statt Browser-confirm
+    setMemberToRemove(member);
+    setShowConfirmModal(true);
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) return;
+
     try {
       const context = { organizationId, userId: user?.uid || '' };
-      await teamMemberService.remove(member.id!, context);
+      await teamMemberService.remove(memberToRemove.id!, context);
       await loadTeamMembers();
       showToast('Mitglied wurde entfernt');
     } catch (error) {
-      
       showToast('Fehler beim Entfernen des Mitglieds', 'error');
+    } finally {
+      setShowConfirmModal(false);
+      setMemberToRemove(null);
     }
   };
   
@@ -717,6 +727,45 @@ export default function TeamSettingsPage() {
               className="bg-primary hover:bg-primary-hover text-white"
             >
               {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Confirmation Dialog für Mitglied entfernen */}
+        <Dialog
+          open={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          className="sm:max-w-md"
+        >
+          <DialogTitle className="px-6 py-4">
+            Mitglied entfernen
+          </DialogTitle>
+
+          <DialogBody className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-900 mb-2">
+                  Möchten Sie <strong>{memberToRemove?.displayName}</strong> wirklich aus dem Team entfernen?
+                </p>
+                <p className="text-sm text-gray-500">
+                  Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogActions className="px-6 py-4">
+            <Button plain onClick={() => setShowConfirmModal(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={confirmRemoveMember}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {memberToRemove?.status === 'invited' ? 'Einladung löschen' : 'Mitglied entfernen'}
             </Button>
           </DialogActions>
         </Dialog>

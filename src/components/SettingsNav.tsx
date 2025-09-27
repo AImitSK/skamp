@@ -14,10 +14,6 @@ const settingsItems = [
     href: "/dashboard/settings/branding",
   },
   {
-    name: "Templates",
-    href: "/dashboard/settings/templates",
-  },
-  {
     name: "Team",
     href: "/dashboard/settings/team",
   },
@@ -36,6 +32,10 @@ const settingsItems = [
   {
     name: "Import / Export",
     href: "/dashboard/settings/import-export",
+  },
+  {
+    name: "PDF Templates",
+    href: "/dashboard/settings/templates",
   },
 ];
 

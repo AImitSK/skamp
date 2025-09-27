@@ -13,7 +13,19 @@ import { Field, Label, Description, Fieldset } from "@/components/ui/fieldset";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { LanguageSelector } from "@/components/ui/language-selector";
-import { GmailStyleEditor } from "@/components/GmailStyleEditor";
+// Einfacher Editor ohne KI-Toolbar - ersetzt GmailStyleEditor
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
+import {
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+  ListBulletIcon,
+  QueueListIcon as ListOrderedIcon,
+  LinkIcon
+} from '@heroicons/react/24/outline';
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SimpleSwitch } from "@/components/notifications/SimpleSwitch";
@@ -45,7 +57,34 @@ export default function BoilerplateModal({
 }: BoilerplateModalProps) {
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
-  const [richTextContent, setRichTextContent] = useState('');
+
+  // Einfacher Tiptap Editor Setup (ohne KI-Toolbar)
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3]
+        }
+      }),
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline'
+        }
+      })
+    ],
+    content: '<p>Geben Sie hier Ihren Textbaustein ein...</p>',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[200px] px-3 py-2 text-gray-900 leading-relaxed border rounded-md border-gray-300'
+      }
+    },
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      setFormData(prev => ({ ...prev, content }));
+    }
+  });
   
   const [formData, setFormData] = useState<BoilerplateCreateData & { language?: LanguageCode }>({
     name: '',
@@ -80,11 +119,10 @@ export default function BoilerplateModal({
       
       setFormData(newFormData);
       
-      // WICHTIG: Setze den Rich Text Content mit einem kleinen Delay
-      // damit der Editor Zeit hat sich zu initialisieren
-      setTimeout(() => {
-        setRichTextContent(boilerplate.content);
-      }, 100);
+      // Setze Editor Content
+      if (editor) {
+        editor.commands.setContent(boilerplate.content || '<p>Geben Sie hier Ihren Textbaustein ein...</p>');
+      }
     } else {
       // Reset für neuen Boilerplate
       setFormData({
@@ -98,9 +136,13 @@ export default function BoilerplateModal({
         tags: [],
         language: 'de' as LanguageCode
       });
-      setRichTextContent('');
+
+      // Reset Editor Content
+      if (editor) {
+        editor.commands.setContent('<p>Geben Sie hier Ihren Textbaustein ein...</p>');
+      }
     }
-  }, [boilerplate]);
+  }, [boilerplate, editor]);
 
   const loadCompanies = async () => {
     try {
@@ -122,17 +164,18 @@ export default function BoilerplateModal({
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !richTextContent.trim()) {
+    const content = editor?.getHTML() || '';
+    if (!formData.name.trim() || !content.trim()) {
       alert('Bitte füllen Sie Name und Inhalt aus.');
       return;
     }
 
     setSaving(true);
-    
+
     try {
       const boilerplateData: BoilerplateCreateData = {
         name: formData.name,
-        content: richTextContent,
+        content: content,
         category: formData.category,
         description: formData.description,
         isGlobal: formData.isGlobal,
@@ -205,18 +248,58 @@ export default function BoilerplateModal({
           {/* Inhalt */}
           <Field>
             <Label>Inhalt</Label>
-            <div className="border rounded-lg mt-2">
-              <GmailStyleEditor
-                content={richTextContent}
-                onChange={(newContent) => {
-                  setRichTextContent(newContent);
-                }}
-                placeholder="Geben Sie hier Ihren Textbaustein ein..."
-                className="min-h-[200px]"
-              />
+            <div className="mt-2">
+              {/* Einfache Editor-Toolbar */}
+              {editor && (
+                <div className="border border-gray-300 rounded-t-md p-2 bg-gray-50 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
+                    title="Fett"
+                  >
+                    <BoldIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor.isActive('italic') ? 'bg-gray-200' : ''}`}
+                    title="Kursiv"
+                  >
+                    <ItalicIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor.isActive('underline') ? 'bg-gray-200' : ''}`}
+                    title="Unterstrichen"
+                  >
+                    <UnderlineIcon className="h-4 w-4" />
+                  </button>
+                  <div className="w-px h-6 bg-gray-300 mx-1" />
+                  <button
+                    type="button"
+                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor.isActive('bulletList') ? 'bg-gray-200' : ''}`}
+                    title="Aufzählung"
+                  >
+                    <ListBulletIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor.isActive('orderedList') ? 'bg-gray-200' : ''}`}
+                    title="Nummerierte Liste"
+                  >
+                    <ListOrderedIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              {/* Editor */}
+              <EditorContent editor={editor} />
             </div>
             <Description className="mt-2">
-              Formatieren Sie Ihren Text mit der Toolbar.
+              Einfacher Texteditor ohne KI-Funktionen - perfekt für Textbausteine.
             </Description>
           </Field>
 

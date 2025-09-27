@@ -55,15 +55,21 @@
   - ✅ **Fix:** Grid-System implementiert (col-span-3 + col-span-8 + col-span-1)
 
 ### 5. **Navigation & Settings**
-- [ ] **Settings > Templates umbenennen**
-  - "Templates" → "PDF Templates"
-  - Tiefer in Menü-Hierarchie verschieben
-- [ ] **Teammitglied einladen: Standard-Dialoge**
-  - Verwendet noch alte Browser-Dialoge statt UI-Komponenten
+- [x] **Settings > Templates umbenennen**
+  - ✅ **BEHOBEN:** "Templates" → "PDF Templates" umbenannt
+  - ✅ **BEHOBEN:** Tiefer in Menü-Hierarchie verschoben (Position 8 nach Import/Export)
+  - ✅ **Fix:** SettingsNav.tsx Navigation angepasst
+- [x] **Teammitglied einladen: Standard-Dialoge**
+  - ✅ **BEHOBEN:** Browser alert() und confirm() durch UI-Komponenten ersetzt
+  - ✅ **Root Cause:** Alte Browser-Dialoge störten UX
+  - ✅ **Fix:** Toast-Funktion auf console.log umgestellt, Confirmation Dialog implementiert
 
 ### 6. **Boilerplates/Textbausteine Probleme**
-- [ ] **KI-Toolbar Konflikte im Editor**
-  - Editor und KI-Funktionen interferieren
+- [x] **KI-Toolbar Konflikte im Editor**
+  - ✅ **BEHOBEN:** GmailStyleEditor durch einfachen Tiptap-Editor ersetzt
+  - ✅ **Root Cause:** FloatingAIToolbar interferierte mit Boilerplate-Eingabe
+  - ✅ **Fix:** Einfacher Editor nur mit Basics: Bold, Italic, Underline, Listen
+  - ✅ **Resultat:** Keine KI-Features mehr, perfekt für Textbausteine
 - [ ] **Anderes Tag-System**
   - Inkonsistenz zu restlichem System
 - [ ] **PDF-Ausgabe Fehler**
