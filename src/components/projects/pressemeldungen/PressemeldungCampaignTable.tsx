@@ -45,6 +45,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
       case 'approved': return 'green';
       case 'sent': return 'blue';
       case 'rejected': return 'red';
+      case 'changes_requested': return 'orange';
       default: return 'zinc';
     }
   };
@@ -56,6 +57,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
       case 'approved': return 'Freigegeben';
       case 'sent': return 'Versendet';
       case 'rejected': return 'Abgelehnt';
+      case 'changes_requested': return 'Änderungen Angefordert';
       default: return status;
     }
   };
