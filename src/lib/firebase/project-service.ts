@@ -1266,13 +1266,28 @@ export const projectService = {
       
       const stageProgress: Record<PipelineStage, number> = {} as any;
       
+      // 🔧 BUGFIX: Tasks ohne pipelineStage dem aktuellen Projekt-Stage zuordnen
+      const currentProjectStage = (await this.getById(projectId, { organizationId: orgId }))?.currentStage || 'ideas_planning';
+      const tasksWithoutStage = tasks.filter(t => !t.pipelineStage);
+
+      if (tasksWithoutStage.length > 0) {
+        console.log(`🔧 [LEGACY-FIX] ${tasksWithoutStage.length} Tasks ohne pipelineStage gefunden - zuordnen zu "${currentProjectStage}"`);
+      }
+
       stages.forEach(stage => {
-        const stageTasks = tasks.filter(t => t.pipelineStage === stage);
+        // Normal zugeordnete Tasks
+        const directStageTasks = tasks.filter(t => t.pipelineStage === stage);
+
+        // Legacy Tasks ohne Stage dem aktuellen Projekt-Stage zuordnen
+        const legacyTasks = (stage === currentProjectStage) ? tasksWithoutStage : [];
+
+        // Kombiniere beide Task-Gruppen
+        const stageTasks = [...directStageTasks, ...legacyTasks];
         const stageCompletedTasks = stageTasks.filter(t => t.status === 'completed');
         stageProgress[stage] = stageTasks.length > 0 ? (stageCompletedTasks.length / stageTasks.length) * 100 : 0;
 
         // 🔍 DEBUG: Stage-specific logging
-        console.log(`📋 Stage "${stage}": ${stageTasks.length} tasks, ${stageCompletedTasks.length} completed (${stageProgress[stage]}%)`);
+        console.log(`📋 Stage "${stage}": ${directStageTasks.length} direct + ${legacyTasks.length} legacy = ${stageTasks.length} tasks, ${stageCompletedTasks.length} completed (${stageProgress[stage]}%)`);
       });
 
       // Berechne Gesamt-Progress mit Gewichtung (6-Stage-System)
