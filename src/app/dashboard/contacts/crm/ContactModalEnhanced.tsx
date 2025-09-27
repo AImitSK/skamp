@@ -691,24 +691,23 @@ export default function ContactModalEnhanced({
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
                       {formData.phones.map((phone, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 items-start">
-                          <div className="col-span-3">
-                            <Select
-                              value={phone.type}
-                              onChange={(e) => {
-                                const updated = [...formData.phones!];
-                                updated[index].type = e.target.value as any;
-                                setFormData({ ...formData, phones: updated });
-                              }}
-                            >
-                              <option value="business">Geschäftlich</option>
-                              <option value="mobile">Mobil</option>
-                              <option value="private">Privat</option>
-                              <option value="fax">Fax</option>
-                              <option value="other">Sonstige</option>
-                            </Select>
-                          </div>
-                          <div className="col-span-7">
+                        <div key={index} className="flex gap-2 items-start">
+                          <Select
+                            value={phone.type}
+                            onChange={(e) => {
+                              const updated = [...formData.phones!];
+                              updated[index].type = e.target.value as any;
+                              setFormData({ ...formData, phones: updated });
+                            }}
+                            className="w-32"
+                          >
+                            <option value="business">Geschäftlich</option>
+                            <option value="mobile">Mobil</option>
+                            <option value="private">Privat</option>
+                            <option value="fax">Fax</option>
+                            <option value="other">Sonstige</option>
+                          </Select>
+                          <div className="flex-1">
                             <PhoneInput
                               value={phone.number}
                               onChange={(value) => {
@@ -717,11 +716,10 @@ export default function ContactModalEnhanced({
                                 setFormData({ ...formData, phones: updated });
                               }}
                               defaultCountry={'DE'}
-                              showCountrySelect={false}
                               placeholder="+49 30 12345678"
                             />
                           </div>
-                          <div className="col-span-1 flex items-center pt-2">
+                          <div className="flex items-center pt-2">
                             <Checkbox
                               checked={phone.isPrimary}
                               onChange={(checked) => {
@@ -735,7 +733,7 @@ export default function ContactModalEnhanced({
                               aria-label="Primär"
                             />
                           </div>
-                          <div className="col-span-1 pt-2">
+                          <div className="pt-2">
                             <Button type="button" plain onClick={() => removePhoneField(index)}>
                               <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>

@@ -1,7 +1,7 @@
 // src/components/tag-input.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { Badge } from "@/components/ui/badge";
 import { Tag, TagColor } from "@/types/crm";
@@ -21,8 +21,6 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [newTagColor, setNewTagColor] = useState<TagColor>('blue');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const selectedTags = availableTags.filter(tag => selectedTagIds.includes(tag.id!));
   const filteredTags = availableTags.filter(tag => 
@@ -77,39 +75,20 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
       {/* Tag-Auswahl */}
       <div className="relative">
         <input
-          ref={inputRef}
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => {
-            setIsOpen(true);
-            if (inputRef.current) {
-              const rect = inputRef.current.getBoundingClientRect();
-              setDropdownPosition({
-                top: rect.bottom + window.scrollY,
-                left: rect.left + window.scrollX,
-                width: rect.width
-              });
-            }
-          }}
+          onFocus={() => setIsOpen(true)}
           placeholder="Tags hinzufügen..."
           className="w-full rounded-md border border-zinc-300 py-2 px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
 
-        {/* Dropdown - fixed positioning */}
+        {/* Dropdown */}
         {isOpen && (
-          <div
-            className="fixed z-[9999] rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5"
-            style={{
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`,
-              width: `${dropdownPosition.width}px`,
-              maxHeight: '300px'
-            }}
-          >
+          <div className="absolute z-50 mt-1 w-full rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 max-h-60">
             {/* Vorhandene Tags */}
             {filteredTags.length > 0 && (
-              <div className="overflow-auto" style={{ maxHeight: '200px' }}>
+              <div className="max-h-48 overflow-auto">
                 {filteredTags.map(tag => (
                   <button
                     key={tag.id}
@@ -172,7 +151,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
       {/* Click-outside Handler */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[9998]"
+          className="fixed inset-0 z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
