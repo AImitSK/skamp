@@ -29,13 +29,6 @@ export function CreationSuccessDashboard({
     onGoToProject(result.projectId);
   };
 
-  const handleGoToCampaign = () => {
-    if (result.campaignId) {
-      // Navigation zur Kampagnen-Seite
-      window.location.href = `/dashboard/campaigns/${result.campaignId}`;
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Success Animation Header */}
@@ -202,46 +195,16 @@ export function CreationSuccessDashboard({
 
       {/* Quick Actions */}
       <div className="p-6 bg-gray-50 rounded-b-lg border border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4">
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-            {/* Go to Project */}
-            <button
-              onClick={handleGoToProject}
-              className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <RocketLaunchIcon className="w-4 h-4 mr-2" />
-              Zum Projekt
-              <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-2" />
-            </button>
-
-            {/* Go to Campaign */}
-            {result.campaignId && (
-              <button
-                onClick={handleGoToCampaign}
-                className="flex items-center justify-center px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
-              >
-                <SpeakerWaveIcon className="w-4 h-4 mr-2" />
-                Zur Kampagne
-                <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-2" />
-              </button>
-            )}
-          </div>
-
-          {/* Close Button */}
+        <div className="text-center">
+          {/* Go to Project - Einziger Button */}
           <button
-            onClick={onClose}
-            className="flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+            onClick={handleGoToProject}
+            className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md"
           >
-            Dashboard schließen
+            <RocketLaunchIcon className="w-5 h-5 mr-2" />
+            Zum Projekt
+            <ArrowTopRightOnSquareIcon className="w-5 h-5 ml-2" />
           </button>
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
-            Sie finden alle Projekt-Details jederzeit in Ihrem Dashboard.
-            Bei Fragen wenden Sie sich an Ihr Team oder den Support.
-          </p>
         </div>
       </div>
     </div>
