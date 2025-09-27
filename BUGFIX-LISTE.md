@@ -41,10 +41,14 @@
 *Beeinträchtigen User Experience erheblich*
 
 ### 4. **UI/UX Defekte**
-- [ ] **Personen Modal: Tag-Fenster defekt**
-  - Tag-Auswahl funktioniert nicht
-- [ ] **Personen Modal: Telefonnummer-Feld defekt**
-  - Eingabe nicht möglich
+- [x] **Personen Modal: Tag-Fenster defekt**
+  - ✅ **BEHOBEN:** Tag-Dropdown z-index Problem behoben
+  - ✅ **Root Cause:** TagInput-Komponente hatte Overflow-Probleme
+- [x] **Personen Modal: Telefonnummer-Feld defekt**
+  - ✅ **BEHOBEN:** PhoneInput Grid-Layout repariert und reusable Lösung erstellt
+  - ✅ **BEHOBEN:** Verbesserte Validierung - nur bei Blur, weniger aggressiv
+  - ✅ **Root Cause:** Grid-Layout Konflikte zwischen col-span Definitionen
+  - ✅ **Fix:** Einheitliches Grid-System und automatische Format-Normalisierung
 - [ ] **Publikationen Modal: ISSN-Feld defekt**
   - Validation/Eingabe fehlerhaft
 

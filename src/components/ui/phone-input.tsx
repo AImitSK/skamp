@@ -130,22 +130,22 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       }
     }, [value, isFocused, selectedCountry])
 
-    // Handle input change
+    // Handle input change - nur Buchstaben filtern, Leerzeichen entfernen
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target.value
-      setInputValue(input)
+      let input = e.target.value
 
-      // Nur bei leerer Eingabe validieren, sonst abwarten bis Blur
-      if (!input) {
-        setValidationError(null)
-        onValidationError?.(null)
-        onChange(null)
-      } else {
-        // Während der Eingabe keine Validierung - erst bei Blur
-        setValidationError(null)
-        onValidationError?.(null)
-        onChange(null) // Kein E.164 bis validiert
-      }
+      // Entferne Buchstaben, behalte nur Ziffern, +, -, (), Leerzeichen
+      input = input.replace(/[a-zA-Z]/g, '')
+
+      // Entferne automatisch Leerzeichen
+      const cleanedInput = input.replace(/\s/g, '')
+
+      setInputValue(cleanedInput)
+
+      // Keine Validierung - einfach speichern was da ist
+      onChange(cleanedInput || null)
+      setValidationError(null)
+      onValidationError?.(null)
     }
 
     // Handle country change
@@ -153,20 +153,9 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       const newCountry = e.target.value as CountryCode
       setSelectedCountry(newCountry)
 
-      // Re-parse existing input with new country
-      if (inputValue) {
-        const normalized = normalizeToE164(inputValue, newCountry)
-        if (normalized.isValid && normalized.e164) {
-          setValidationError(null)
-          onValidationError?.(null)
-          onChange(normalized.e164)
-        } else {
-          const errorMsg = normalized.error || 'Ungültige Telefonnummer'
-          setValidationError(errorMsg)
-          onValidationError?.(errorMsg)
-          onChange(null)
-        }
-      }
+      // Keine Validierung bei Länder-Wechsel - Eingabe bleibt unverändert
+      setValidationError(null)
+      onValidationError?.(null)
     }
 
     // Handle focus
@@ -174,42 +163,10 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       setIsFocused(true)
     }
 
-    // Handle blur - einfache Format-Normalisierung ohne strenge Validierung
+    // Handle blur - keine Validierung, keine Änderung der Eingabe
     const handleBlur = () => {
       setIsFocused(false)
-
-      if (inputValue.trim()) {
-        // Einfache Normalisierung: +49 5734 9602-0 → 05734 96020
-        const cleaned = inputValue.replace(/[^\d+]/g, '') // Nur Ziffern und +
-
-        if (cleaned.startsWith('+49')) {
-          // Deutsche internationale Nummer → national
-          const nationalPart = cleaned.substring(3) // Entferne +49
-          const formatted = '0' + nationalPart
-          setInputValue(formatted)
-          onChange(`+49${nationalPart}`) // E.164 für Backend
-          setValidationError(null)
-          onValidationError?.(null)
-        } else if (cleaned.startsWith('0')) {
-          // Bereits deutsche nationale Nummer
-          setInputValue(cleaned)
-          const e164 = `+49${cleaned.substring(1)}`
-          onChange(e164)
-          setValidationError(null)
-          onValidationError?.(null)
-        } else if (cleaned.match(/^\d+$/)) {
-          // Nur Ziffern - als deutsche nationale Nummer behandeln
-          const formatted = '0' + cleaned
-          setInputValue(formatted)
-          onChange(`+49${cleaned}`)
-          setValidationError(null)
-          onValidationError?.(null)
-        } else {
-          // Ungültiges Format - aber keine strenge Validierung
-          setValidationError('Ungültiges Telefonnummer-Format')
-          onValidationError?.('Ungültiges Telefonnummer-Format')
-        }
-      }
+      // Gar nichts machen - Eingabe bleibt wie sie ist
     }
 
     // Get current country info
