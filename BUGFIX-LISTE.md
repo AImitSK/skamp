@@ -75,8 +75,13 @@
   - ✅ **Root Cause:** Inkonsistenz zum restlichen System vermieden
   - ✅ **Fix:** Tag-Feld und TAG-Spalte vollständig entfernt
   - ✅ **Resultat:** Einfachere Boilerplate-Verwaltung ohne Tag-Komplexität
-- [ ] **PDF-Ausgabe Fehler**
-  - Absender wird nicht korrekt übernommen
+- [x] **PDF-Ausgabe Fehler**
+  - ✅ **BEHOBEN:** Absender wird korrekt aus Projektkunde übernommen
+  - ✅ **Root Cause 1:** onProjectSelect übertrug nur Projekt, nicht Kunde
+  - ✅ **Root Cause 2:** PDF-Template verwendete "Unbekannter Kunde" als Fallback
+  - ✅ **Fix 1:** Automatische Kundenübernahme aus project.customer.id/name
+  - ✅ **Fix 2:** CSS-Regeln für Boilerplate-Content bereinigt
+  - ✅ **Resultat:** PDF zeigt korrekten Kundennamen in Kopf- und Fußzeile
 
 ### 7. **Projekt-Management**
 - [ ] **Task-Completion Anzeige defekt**
