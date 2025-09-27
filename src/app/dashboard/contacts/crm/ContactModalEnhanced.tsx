@@ -598,14 +598,12 @@ export default function ContactModalEnhanced({
                 {/* Tags */}
                 <Field>
                   <Label>Tags</Label>
-                  <div className="relative">
-                    <TagInput 
-                      selectedTagIds={formData.tagIds || []} 
-                      availableTags={tags} 
-                      onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
-                      onCreateTag={handleCreateTag} 
-                    />
-                  </div>
+                  <TagInput
+                    selectedTagIds={formData.tagIds || []}
+                    availableTags={tags}
+                    onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                    onCreateTag={handleCreateTag}
+                  />
                 </Field>
               </FieldGroup>
             )}
@@ -693,10 +691,10 @@ export default function ContactModalEnhanced({
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
                       {formData.phones.map((phone, index) => (
-                        <div key={index} className="flex gap-2 items-start">
-                          <div className="w-32 shrink-0">
-                            <Select 
-                              value={phone.type} 
+                        <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                          <div className="col-span-3">
+                            <Select
+                              value={phone.type}
                               onChange={(e) => {
                                 const updated = [...formData.phones!];
                                 updated[index].type = e.target.value as any;
@@ -710,7 +708,7 @@ export default function ContactModalEnhanced({
                               <option value="other">Sonstige</option>
                             </Select>
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="col-span-7">
                             <PhoneInput
                               value={phone.number}
                               onChange={(value) => {
@@ -719,9 +717,11 @@ export default function ContactModalEnhanced({
                                 setFormData({ ...formData, phones: updated });
                               }}
                               defaultCountry={'DE'}
+                              showCountrySelect={false}
+                              placeholder="+49 30 12345678"
                             />
                           </div>
-                          <div className="flex items-center pt-2">
+                          <div className="col-span-1 flex items-center pt-2">
                             <Checkbox
                               checked={phone.isPrimary}
                               onChange={(checked) => {
@@ -735,7 +735,7 @@ export default function ContactModalEnhanced({
                               aria-label="Primär"
                             />
                           </div>
-                          <div className="pt-2">
+                          <div className="col-span-1 pt-2">
                             <Button type="button" plain onClick={() => removePhoneField(index)}>
                               <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
