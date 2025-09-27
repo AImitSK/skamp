@@ -86,8 +86,13 @@
   - ✅ **Resultat:** PDF zeigt korrekten Kundennamen in Kopf- und Fußzeile
 
 ### 7. **Projekt-Management**
-- [ ] **Task-Completion Anzeige defekt**
-  - Fortschritts-Indikator in Projekt-Übersicht funktioniert nicht
+- [x] **Task-Completion Anzeige defekt**
+  - ✅ **BEHOBEN:** Fortschritts-Indikator zeigt jetzt korrekten Progress an
+  - ✅ **Root Cause:** Progress-Calculator verwendete veraltete 7-Stage Pipeline-Struktur
+  - ✅ **Problem:** calculateTaskProgress() suchte nach 'internal_approval' + 'customer_approval'
+  - ✅ **Fix:** Aktualisiert auf neues 6-Stage-System mit kombinierter 'approval' Stage
+  - ✅ **Lösung:** Stage-Weights angepasst (approval = 30% statt 15%+15%)
+  - ✅ **Resultat:** Gesamt-Fortschritt und Phasen-Fortschritt funktionieren wieder
 - [ ] **Projekt erstellen: Erfolgsbox falscher Link**
   - Redirect nach Erstellung fehlerhaft
 - [x] **Kanban: Phase 3 nicht erreichbar**
