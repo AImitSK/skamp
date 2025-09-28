@@ -33,6 +33,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import { useInboxCount } from "@/hooks/use-inbox-count";
+import { useAutoGlobal } from "@/lib/hooks/useAutoGlobal";
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -65,7 +66,10 @@ import {
   BriefcaseIcon,
   ArchiveBoxIcon,
   XMarkIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  GlobeAltIcon,
+  UsersIcon,
+  AdjustmentsHorizontalIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -102,6 +106,7 @@ export default function DashboardLayout({
   const { unreadCount } = useNotifications();
   const { totalUnread: inboxUnread, assignedUnread } = useInboxCount();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isSuperAdmin, autoGlobalMode, globalPermissions } = useAutoGlobal();
 
   const handleLogout = async () => {
     try {
@@ -481,6 +486,47 @@ export default function DashboardLayout({
                 >
                   <Cog6ToothIcon className="size-6" />
                 </a>
+
+                {/* SuperAdmin Dropdown - only for SuperAdmin */}
+                {isSuperAdmin && (
+                  <Dropdown>
+                    <DropdownButton className="hidden lg:flex items-center gap-1 p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <ShieldCheckIcon className="size-5" />
+                      <span className="text-sm font-medium">Super Admin</span>
+                      <ChevronDownIcon className="size-4" />
+                    </DropdownButton>
+                    <DropdownMenu anchor="bottom end" className="min-w-60">
+                      <DropdownItem
+                        href="/super-admin/journalists"
+                        icon={UsersIcon}
+                        description="Premium-Journalisten verwalten"
+                      >
+                        Journalisten-Datenbank
+                      </DropdownItem>
+                      <DropdownItem
+                        href="/super-admin/matching/duplicates"
+                        icon={AdjustmentsHorizontalIcon}
+                        description="Duplikate zusammenführen"
+                      >
+                        Matching-Kandidaten
+                      </DropdownItem>
+                      <DropdownItem
+                        href="/super-admin/matching/analytics"
+                        icon={ChartBarIcon}
+                        description="Datenqualität und Statistiken"
+                      >
+                        Analytics
+                      </DropdownItem>
+                      <DropdownItem
+                        href="/super-admin/settings"
+                        icon={Cog6ToothIcon}
+                        description="Global-System konfigurieren"
+                      >
+                        Global-Einstellungen
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
+                )}
 
                 {/* User Avatar - only desktop */}
                 <Dropdown>

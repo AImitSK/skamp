@@ -24,6 +24,9 @@ import { TagInput } from "@/components/ui/tag-input";
 // CountrySelector, LanguageSelector durch reguläre Select ersetzt
 import { PhoneInput } from "@/components/ui/phone-input";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { interceptSave } from '@/lib/utils/global-interceptor';
+import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
+import { useAuth } from '@/context/AuthContext';
 
 // Vorwahl-Optionen
 const COUNTRY_OPTIONS = [
@@ -119,6 +122,8 @@ export default function ContactModalEnhanced({
   userId,
   organizationId
 }: Props) {
+  const { user } = useAuth();
+  const { autoGlobalMode } = useAutoGlobal();
   const [activeTab, setActiveTab] = useState<ContactTabId>('general');
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
     name: {
@@ -396,11 +401,20 @@ export default function ContactModalEnhanced({
     
     try {
       // Prepare data for save
-      const dataToSave: Partial<ContactEnhanced> = {
+      let dataToSave: Partial<ContactEnhanced> = {
         ...formData,
         displayName: formData.name ? `${formData.name.firstName} ${formData.name.lastName}` : '',
         status: formData.status || 'active'
       };
+
+      // Apply global interceptor for SuperAdmin/Team
+      if (autoGlobalMode) {
+        dataToSave = interceptSave(dataToSave, 'contact', user, {
+          liveMode: true, // TODO: Get from banner toggle
+          sourceType: 'manual',
+          autoGlobalMode: true
+        });
+      }
 
       const context = { organizationId: organizationId, userId: userId };
 

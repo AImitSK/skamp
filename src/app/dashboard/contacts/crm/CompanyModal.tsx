@@ -26,6 +26,9 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { interceptSave } from '@/lib/utils/global-interceptor';
+import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
+import { useAuth } from '@/context/AuthContext';
 
 // Vorwahl-Optionen
 const COUNTRY_OPTIONS = [
@@ -149,6 +152,8 @@ interface Props {
 
 export default function CompanyModal({ company, onClose, onSave, userId, organizationId }: Props) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { autoGlobalMode } = useAutoGlobal();
   const [activeTab, setActiveTab] = useState<CompanyTabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
     // Basic fields
@@ -399,14 +404,24 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         formData.officialName = formData.name!;
       }
 
+      // Apply global interceptor for SuperAdmin/Team
+      let dataToSave = { ...formData };
+      if (autoGlobalMode) {
+        dataToSave = interceptSave(dataToSave, 'company', user, {
+          liveMode: true, // TODO: Get from banner toggle
+          sourceType: 'manual',
+          autoGlobalMode: true
+        });
+      }
+
       const context = { organizationId: organizationId, userId: userId };
       
       if (company?.id) {
         // Update existing company
-        await companiesEnhancedService.update(company.id, formData, context);
+        await companiesEnhancedService.update(company.id, dataToSave, context);
       } else {
         // Create new company
-        await companiesEnhancedService.create(formData as any, context);
+        await companiesEnhancedService.create(dataToSave as any, context);
       }
       
       onSave();

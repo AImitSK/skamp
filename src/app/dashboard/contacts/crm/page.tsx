@@ -20,6 +20,8 @@ import * as Headless from '@headlessui/react';
 import ImportModalEnhanced from "./ImportModalEnhanced";
 import { exportCompaniesToCSV, exportContactsToCSV, downloadCSV } from "@/lib/utils/exportUtils";
 import { CurrencyCode } from '@/types/international';
+import { GlobalModeBanner } from '@/components/super-admin/GlobalModeBanner';
+import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -132,6 +134,7 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
 export default function ContactsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const { autoGlobalMode } = useAutoGlobal();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -455,6 +458,14 @@ const getContactCount = (companyId: string) => {
         <div className="mb-4">
           <Alert type={alert.type} title={alert.title} message={alert.message} />
         </div>
+      )}
+
+      {/* Global Mode Banner */}
+      {autoGlobalMode && (
+        <GlobalModeBanner
+          context={activeTab === 'contacts' ? 'contact' : 'company'}
+          className="mb-6"
+        />
       )}
 
       {/* Header */}
