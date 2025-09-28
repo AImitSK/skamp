@@ -11,6 +11,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
+import React from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -29,7 +30,8 @@ import {
   ArrowUpTrayIcon,
   SparklesIcon,
   Squares2X2Icon,
-  ListBulletIcon
+  ListBulletIcon,
+  TagIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
 // Temporary types until journalist-database files are properly built
@@ -991,7 +993,7 @@ export default function EditorsPage() {
                   leaveFrom="opacity-100 translate-y-0"
                   leaveTo="opacity-0 translate-y-1"
                 >
-                  <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                  <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
@@ -1129,25 +1131,22 @@ export default function EditorsPage() {
                 <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Journalist
                 </div>
-                <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Medium
                 </div>
-                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-36 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
                 <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                   Score
                 </div>
-                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-16 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                   Themen
                 </div>
-                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kontakt
                 </div>
-                <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
-                  Follower
-                </div>
-                <div className="w-20"></div>
+                <div className="w-24"></div>
               </div>
             </div>
 
@@ -1178,14 +1177,14 @@ export default function EditorsPage() {
                       </div>
 
                       {/* Medium */}
-                      <div className="w-40 px-4">
+                      <div className="w-48 px-4">
                         <div className="text-sm text-zinc-900 dark:text-white truncate">
                           {journalist.professionalData.currentEmployment.mediumName}
                         </div>
                       </div>
 
                       {/* Verification Status */}
-                      <div className="w-32 px-4">
+                      <div className="w-36 px-4">
                         {journalist.metadata.verification.status === 'verified' ? (
                           <Badge color="green" className="text-xs">
                             <CheckBadgeIcon className="h-3 w-3 mr-1" />
@@ -1210,23 +1209,47 @@ export default function EditorsPage() {
                       </div>
 
                       {/* Topics */}
-                      <div className="w-32 px-4">
-                        <div className="flex flex-wrap gap-1">
-                          {primaryTopics.map((topic, index) => (
-                            <Badge key={index} color="zinc" className="text-xs">
-                              {topic}
-                            </Badge>
-                          ))}
-                          {journalist.professionalData.expertise.primaryTopics.length > 2 && (
-                            <span className="text-xs text-zinc-400">
-                              +{journalist.professionalData.expertise.primaryTopics.length - 2}
-                            </span>
+                      <div className="w-16 px-4 text-center">
+                        <Popover className="relative">
+                          {({ open }) => (
+                            <>
+                              <Popover.Button className="flex items-center justify-center p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                                <TagIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                  {journalist.professionalData.expertise.primaryTopics.length}
+                                </span>
+                              </Popover.Button>
+                              <Transition
+                                as={React.Fragment}
+                                enter="transition ease-out duration-200"
+                                enterFrom="opacity-0 translate-y-1"
+                                enterTo="opacity-100 translate-y-0"
+                                leave="transition ease-in duration-150"
+                                leaveFrom="opacity-100 translate-y-0"
+                                leaveTo="opacity-0 translate-y-1"
+                              >
+                                <Popover.Panel className="absolute z-10 mt-2 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 p-3 min-w-[200px] left-1/2 transform -translate-x-1/2">
+                                  <div className="space-y-1">
+                                    <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                                      Themen ({journalist.professionalData.expertise.primaryTopics.length})
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {journalist.professionalData.expertise.primaryTopics.map((topic, index) => (
+                                        <Badge key={index} color="zinc" className="text-xs">
+                                          {topic}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </Popover.Panel>
+                              </Transition>
+                            </>
                           )}
-                        </div>
+                        </Popover>
                       </div>
 
                       {/* Contact */}
-                      <div className="w-32 px-4">
+                      <div className="w-40 px-4">
                         <div className="flex items-center space-x-2 text-xs">
                           {primaryEmail && (
                             <a href={`mailto:${primaryEmail}`} className="text-primary hover:text-primary-hover">
@@ -1239,22 +1262,8 @@ export default function EditorsPage() {
                         </div>
                       </div>
 
-                      {/* Follower */}
-                      <div className="w-24 px-4 text-center">
-                        {totalFollowers > 0 ? (
-                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                            {totalFollowers >= 1000 ?
-                              `${Math.round(totalFollowers / 1000)}K` :
-                              totalFollowers.toLocaleString()
-                            }
-                          </div>
-                        ) : (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </div>
-
                       {/* Actions */}
-                      <div className="w-20 px-4">
+                      <div className="w-24 px-4">
                         {canImport ? (
                           <Button
                             onClick={() => handleImport(journalist)}
