@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
+import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { ContactEnhanced } from "@/types/crm-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,119 @@ import {
   TagIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
+
+// Helper function to convert ContactEnhanced to JournalistDatabaseEntry
+function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabaseEntry | null {
+  // Only include contacts that are journalists and global
+  if (!contact.mediaProfile?.isJournalist || !contact.isGlobal) {
+    return null;
+  }
+
+  const primaryEmail = contact.emails?.find(e => e.isPrimary) || contact.emails?.[0];
+  const primaryPhone = contact.phones?.find(p => p.isPrimary) || contact.phones?.[0];
+
+  return {
+    id: contact.id!,
+    globalId: contact.id!,
+    version: contact.globalMetadata?.version || 1,
+    lastModifiedBy: contact.globalMetadata?.addedBy || contact.updatedBy || 'unknown',
+    organizationId: contact.organizationId || '',
+    createdAt: contact.createdAt,
+    updatedAt: contact.updatedAt,
+    createdBy: contact.createdBy || '',
+    updatedBy: contact.updatedBy || '',
+    personalData: {
+      name: {
+        salutation: contact.name?.salutation,
+        firstName: contact.name?.firstName || '',
+        lastName: contact.name?.lastName || '',
+        title: contact.name?.title
+      },
+      displayName: contact.displayName,
+      emails: contact.emails?.map(email => ({
+        email: email.email,
+        type: email.type as any || 'business',
+        isPrimary: email.isPrimary || false,
+        isVerified: email.isVerified || false
+      })) || [],
+      phones: contact.phones?.map(phone => ({
+        number: phone.number,
+        type: phone.type as any || 'business',
+        countryCode: phone.countryCode || 'DE',
+        isPrimary: phone.isPrimary || false,
+        isVerified: phone.isVerified || false
+      })) || [],
+      address: contact.addresses?.[0] ? {
+        street: contact.addresses[0].street,
+        city: contact.addresses[0].city,
+        state: contact.addresses[0].state,
+        postalCode: contact.addresses[0].postalCode,
+        country: contact.addresses[0].countryCode
+      } : undefined,
+      socialProfiles: contact.socialProfiles?.map(social => ({
+        platform: social.platform as any,
+        url: social.url,
+        handle: social.handle,
+        isVerified: social.isVerified || false
+      })) || [],
+      languages: contact.languages || [],
+      timezone: contact.timezone
+    },
+    professionalData: {
+      mediaProfiles: contact.mediaProfile ? [{
+        company: contact.companyName || contact.mediaProfile.outlet || '',
+        position: contact.position || contact.mediaProfile.position || '',
+        department: contact.mediaProfile.department,
+        outlet: contact.mediaProfile.outlet || contact.companyName || '',
+        mediaType: (contact.mediaProfile.mediaType as MediaType) || 'online',
+        reach: contact.mediaProfile.reach ? {
+          followers: contact.mediaProfile.reach.followers || 0,
+          subscribers: contact.mediaProfile.reach.subscribers || 0,
+          avgViews: contact.mediaProfile.reach.avgViews || 0,
+          engagementRate: contact.mediaProfile.reach.engagementRate || 0
+        } : undefined,
+        isPrimary: true
+      }] : [],
+      topics: contact.mediaProfile?.topics || contact.topics || [],
+      languages: contact.languages || [],
+      expertise: contact.mediaProfile?.expertise || [],
+      awards: contact.mediaProfile?.awards || [],
+      education: contact.education || []
+    },
+    preferences: {
+      communicationChannels: contact.preferences?.communicationChannels || ['email'],
+      bestContactTime: contact.preferences?.bestContactTime,
+      preferredLanguage: contact.preferences?.preferredLanguage || 'de',
+      topics: contact.mediaProfile?.topics || contact.topics || [],
+      frequency: contact.preferences?.frequency || 'weekly'
+    },
+    metadata: {
+      qualityScore: contact.globalMetadata?.qualityScore || 0,
+      verificationStatus: contact.emailVerified ? 'verified' : 'unverified' as VerificationStatus,
+      lastVerified: contact.emailVerified ? contact.updatedAt : undefined,
+      dataPrivacy: {
+        consentGiven: contact.gdprConsent?.marketing || false,
+        consentDate: contact.gdprConsent?.consentDate,
+        optedOut: contact.gdprConsent?.optedOut || false,
+        source: contact.globalMetadata?.sourceType || 'manual'
+      },
+      tags: [], // TODO: Map from tagIds if needed
+      globalMetadata: {
+        isGlobal: contact.isGlobal || false,
+        addedBy: contact.globalMetadata?.addedBy || contact.createdBy || '',
+        addedAt: contact.globalMetadata?.addedAt || contact.createdAt,
+        autoPromoted: contact.globalMetadata?.autoPromoted || false,
+        isDraft: contact.globalMetadata?.isDraft || false,
+        publishedAt: contact.globalMetadata?.publishedAt,
+        reviewedBy: contact.globalMetadata?.reviewedBy,
+        version: contact.globalMetadata?.version || 1,
+        qualityScore: contact.globalMetadata?.qualityScore || 0
+      },
+      changeHistory: [] // TODO: Implement if needed
+    }
+  };
+}
+
 // Temporary types until journalist-database files are properly built
 type VerificationStatus = 'verified' | 'pending' | 'unverified';
 type MediaType = 'online' | 'print' | 'tv' | 'radio' | 'podcast';
@@ -899,8 +1014,6 @@ export default function EditorsPage() {
 
       setSubscription(mockSubscription);
 
-      // Mock search results
-      const mockJournalists: JournalistDatabaseEntry[] = [
         {
           id: '1',
           globalId: 'journalist-001',
@@ -1041,7 +1154,16 @@ export default function EditorsPage() {
         }
       ];
 
-      setJournalists(mockJournalists);
+      // Load real global journalists from all organizations
+      // For now, we load from current organization and filter global journalists
+      const allContacts = await contactsEnhancedService.getAll(currentOrganization.id);
+
+      // Convert global journalist contacts to database entries
+      const globalJournalists = allContacts
+        .map(contact => convertContactToJournalist(contact))
+        .filter((journalist): journalist is JournalistDatabaseEntry => journalist !== null);
+
+      setJournalists(globalJournalists);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
     } finally {
