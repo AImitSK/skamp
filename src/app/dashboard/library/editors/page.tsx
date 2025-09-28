@@ -911,14 +911,6 @@ export default function EditorsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <Heading level={1}>Journalisten-Datenbank</Heading>
-      </div>
-
-      {/* Premium Banner */}
-      <PremiumBanner subscription={subscription} onUpgrade={handleUpgrade} />
-
       {/* Search & Filter Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
@@ -1089,6 +1081,9 @@ export default function EditorsPage() {
           </Popover>
         </div>
       </div>
+
+      {/* Premium Banner */}
+      <PremiumBanner subscription={subscription} onUpgrade={handleUpgrade} />
 
       {/* Results Info */}
       <div className="mb-4">
