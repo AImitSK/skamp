@@ -141,12 +141,14 @@ function JournalistCard({
   journalist,
   onImport,
   onViewDetails,
+  onUpgrade,
   subscription,
   isImporting = false
 }: {
   journalist: JournalistDatabaseEntry;
   onImport: (journalist: JournalistDatabaseEntry) => void;
   onViewDetails: (journalist: JournalistDatabaseEntry) => void;
+  onUpgrade: () => void;
   subscription: JournalistSubscription | null;
   isImporting?: boolean;
 }) {
@@ -902,6 +904,7 @@ export default function EditorsPage() {
               journalist={journalist}
               onImport={handleImport}
               onViewDetails={handleViewDetails}
+              onUpgrade={handleUpgrade}
               subscription={subscription}
               isImporting={importingIds.has(journalist.id!)}
             />
