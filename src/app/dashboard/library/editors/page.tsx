@@ -27,7 +27,9 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ArrowUpTrayIcon,
-  SparklesIcon
+  SparklesIcon,
+  Squares2X2Icon,
+  ListBulletIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
 // Temporary types until journalist-database files are properly built
@@ -567,6 +569,7 @@ export default function EditorsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [subscription, setSubscription] = useState<JournalistSubscription | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   // Filter States
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
@@ -928,6 +931,36 @@ export default function EditorsPage() {
             className="flex-1"
           />
 
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-gray-300 rounded-lg">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`
+                px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
+                ${viewMode === 'table'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              title="Tabellen-Ansicht"
+            >
+              <ListBulletIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`
+                px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
+                ${viewMode === 'grid'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              title="Grid-Ansicht"
+            >
+              <Squares2X2Icon className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* Filter Button */}
           <Popover className="relative">
             {({ open }) => (
@@ -1070,21 +1103,186 @@ export default function EditorsPage() {
         </Text>
       </div>
 
-      {/* Results Grid */}
+      {/* Results */}
       {filteredJournalists.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredJournalists.map((journalist) => (
-            <JournalistCard
-              key={journalist.id}
-              journalist={journalist}
-              onImport={handleImport}
-              onViewDetails={handleViewDetails}
-              onUpgrade={handleUpgrade}
-              subscription={subscription}
-              isImporting={importingIds.has(journalist.id!)}
-            />
-          ))}
-        </div>
+        viewMode === 'grid' ? (
+          // Grid View
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredJournalists.map((journalist) => (
+              <JournalistCard
+                key={journalist.id}
+                journalist={journalist}
+                onImport={handleImport}
+                onViewDetails={handleViewDetails}
+                onUpgrade={handleUpgrade}
+                subscription={subscription}
+                isImporting={importingIds.has(journalist.id!)}
+              />
+            ))}
+          </div>
+        ) : (
+          // Table View
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+              <div className="flex items-center">
+                <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Journalist
+                </div>
+                <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Medium
+                </div>
+                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Status
+                </div>
+                <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+                  Score
+                </div>
+                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Themen
+                </div>
+                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Kontakt
+                </div>
+                <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+                  Follower
+                </div>
+                <div className="w-20"></div>
+              </div>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {filteredJournalists.map((journalist) => {
+                const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
+                                    journalist.personalData.emails[0]?.email;
+                const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
+                const primaryTopics = journalist.professionalData.expertise.primaryTopics.slice(0, 2);
+                const totalFollowers = journalist.socialMedia.influence.totalFollowers;
+                const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
+
+                return (
+                  <div key={journalist.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center">
+                      {/* Journalist Name & Position */}
+                      <div className="flex-1 px-4 min-w-0">
+                        <button
+                          onClick={() => handleViewDetails(journalist)}
+                          className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary block truncate text-left"
+                        >
+                          {journalist.personalData.displayName}
+                        </button>
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-1">
+                          {journalist.professionalData.currentEmployment.position}
+                        </div>
+                      </div>
+
+                      {/* Medium */}
+                      <div className="w-40 px-4">
+                        <div className="text-sm text-zinc-900 dark:text-white truncate">
+                          {journalist.professionalData.currentEmployment.mediumName}
+                        </div>
+                      </div>
+
+                      {/* Verification Status */}
+                      <div className="w-32 px-4">
+                        {journalist.metadata.verification.status === 'verified' ? (
+                          <Badge color="green" className="text-xs">
+                            <CheckBadgeIcon className="h-3 w-3 mr-1" />
+                            Verifiziert
+                          </Badge>
+                        ) : journalist.metadata.verification.status === 'pending' ? (
+                          <Badge color="yellow" className="text-xs">
+                            Ausstehend
+                          </Badge>
+                        ) : (
+                          <Badge color="gray" className="text-xs">
+                            Nicht verifiziert
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Quality Score */}
+                      <div className="w-24 px-4 text-center">
+                        <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {journalist.metadata.dataQuality.overallScore}
+                        </div>
+                      </div>
+
+                      {/* Topics */}
+                      <div className="w-32 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {primaryTopics.map((topic, index) => (
+                            <Badge key={index} color="zinc" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                          {journalist.professionalData.expertise.primaryTopics.length > 2 && (
+                            <span className="text-xs text-zinc-400">
+                              +{journalist.professionalData.expertise.primaryTopics.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Contact */}
+                      <div className="w-32 px-4">
+                        <div className="flex items-center space-x-2 text-xs">
+                          {primaryEmail && (
+                            <a href={`mailto:${primaryEmail}`} className="text-primary hover:text-primary-hover">
+                              <EnvelopeIcon className="h-4 w-4" />
+                            </a>
+                          )}
+                          {hasPhone && (
+                            <PhoneIcon className="h-4 w-4 text-zinc-400" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Follower */}
+                      <div className="w-24 px-4 text-center">
+                        {totalFollowers > 0 ? (
+                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                            {totalFollowers >= 1000 ?
+                              `${Math.round(totalFollowers / 1000)}K` :
+                              totalFollowers.toLocaleString()
+                            }
+                          </div>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-20 px-4">
+                        {canImport ? (
+                          <Button
+                            onClick={() => handleImport(journalist)}
+                            disabled={importingIds.has(journalist.id!)}
+                            className="bg-primary hover:bg-primary-hover text-white text-xs px-3 py-1.5"
+                          >
+                            {importingIds.has(journalist.id!) ? (
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            ) : (
+                              <ArrowUpTrayIcon className="h-3 w-3" />
+                            )}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={handleUpgrade}
+                            className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 text-xs px-3 py-1.5"
+                          >
+                            <StarIcon className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
       ) : (
         <div className="text-center py-12">
           <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
