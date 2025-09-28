@@ -6,125 +6,297 @@
 ## 🎯 Vision & Zielsetzung
 
 ### Produktvision
-Eine zentrale, verifizierte Journalisten-Datenbank, die als Premium-Feature den Wert von CeleroPress signifikant steigert und wiederkehrende Einnahmen generiert.
+Eine zentrale, kuratierte Journalisten-Datenbank mit 100.000+ verifizierten Medienkontakten, die als Premium-Feature exklusiv für CeleroPress-Kunden verfügbar ist und die CRM-Funktionalität erheblich erweitert.
 
 ### Geschäftsziele
-- **Monetarisierung**: Premium-Feature mit monatlicher Gebühr (29-99€/Monat je nach Umfang)
-- **Kundenbindung**: Erhöhung der Retention durch exklusive Daten
-- **Netzwerkeffekt**: Je mehr Kunden, desto besser die Datenqualität
-- **USP**: Alleinstellungsmerkmal gegenüber Wettbewerbern
+- **Monetarisierung**: Premium-Feature mit gestaffelten Abos (29-99€/Monat)
+- **Kundenbindung**: Erhöhung der Retention durch exklusive Premium-Daten
+- **Datenqualität**: Kontinuierliche Verbesserung durch Crowdsourcing + AI-Matching
+- **USP**: Deutschlands größte verifizierte Journalisten-Datenbank
+
+### Datenbank-Architektur: Zwei-Ebenen-System
+
+#### 1. **Kunden-CRM** (Lokale Datenbank)
+```
+/organizations/{orgId}/contacts/crm/contacts/
+├── Eigene Redakteure (vom Kunden gepflegt)
+├── Importierte Premium-Kontakte (read-only + sync)
+└── Lokale Anpassungen und Notizen
+```
+
+#### 2. **Premium Journalisten-DB** (Master-Datenbank)
+```
+/journalistDatabase/master/
+├── 100.000+ kuratierte Journalisten
+├── Verifizierte Kontaktdaten
+├── Themen-Zuordnungen
+└── Kontinuierliche Updates
+```
 
 ### Kernfunktionen
-1. **Zentrale Datenbank** mit verifizierten Journalisten-Kontakten
-2. **Intelligentes Matching** zur Datenkonsolidierung
-3. **DSGVO-konformer Verifizierungsprozess**
-4. **API-Integrationen** zu externen Datenquellen
-5. **Synchronisation** mit lokalem CRM
+1. **Premium-Datenbank**: Durchsuchen & Einzelimport von 100.000+ Journalisten
+2. **Crowdsourcing-Matching**: Kunden-CRM-Daten werden anonymisiert gematcht
+3. **Sync-System**: Automatische Updates für importierte Premium-Kontakte
+4. **DSGVO-Compliance**: Verifizierung und Opt-out-Management
+5. **Intelligente Suche**: KI-gestützte Themen- und Relevanz-Filter
 
 ---
 
 ## 🏗️ Technische Architektur
 
-### Datenbank-Struktur
+### Datenbank-Struktur: Drei-Schichten-System
 
+#### **Schicht 1: Kunden-CRM (Pro Organisation)**
 ```
-Firestore Collections:
+/organizations/{orgId}/contacts/
+├── /crm/contacts/{contactId}              # Eigene Redakteure
+│   ├── personalData: object
+│   ├── professionalData: object
+│   ├── isEditable: true                   # Vollständig editierbar
+│   └── createdBy: "user"
+│
+├── /premium-imports/{contactId}           # Importierte Premium-Kontakte
+│   ├── sourceType: "premium-database"    # Markierung als Import
+│   ├── sourceId: string                  # Referenz zur Master-DB
+│   ├── isEditable: false                 # Read-only
+│   ├── lastSyncAt: timestamp
+│   ├── syncStatus: 'synced' | 'outdated' | 'conflict'
+│   └── localNotes?: string               # Lokale Anmerkungen
+```
 
-/journalistDatabase (Master-Datenbank)
+#### **Schicht 2: Premium Master-Datenbank**
+```
+/journalistDatabase/master/
 ├── /journalists/{journalistId}
 │   ├── personalData
-│   │   ├── firstName: string
-│   │   ├── lastName: string
-│   │   ├── email: string
-│   │   ├── phone?: string
+│   │   ├── displayName: string
+│   │   ├── emails: Array<{email: string, isPrimary: boolean}>
+│   │   ├── phones?: Array<{number: string, type: string}>
 │   │   └── profileImage?: string
 │   ├── professionalData
-│   │   ├── medium: string
-│   │   ├── position: string
-│   │   ├── department?: string
-│   │   ├── topics: string[]
-│   │   └── language: string[]
+│   │   ├── currentEmployment: {
+│   │   │   ├── mediumName: string
+│   │   │   ├── position: string
+│   │   │   ├── startDate?: timestamp
+│   │   │   └── department?: string
+│   │   │}
+│   │   ├── expertise: {
+│   │   │   ├── primaryTopics: string[]
+│   │   │   ├── mediaTypes: string[]
+│   │   │   └── languages: string[]
+│   │   │}
+│   │   └── previousPositions?: Array<object>
 │   ├── socialMedia
-│   │   ├── linkedin?: string
-│   │   ├── twitter?: string
-│   │   └── website?: string
+│   │   ├── profiles: Array<{platform: string, url: string, followerCount?: number}>
+│   │   └── influence: {totalFollowers: number, engagementRate?: number}
 │   ├── metadata
-│   │   ├── createdAt: timestamp
-│   │   ├── updatedAt: timestamp
-│   │   ├── verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected'
-│   │   ├── verifiedAt?: timestamp
-│   │   ├── dataSource: 'manual' | 'api' | 'crowdsourced' | 'import'
-│   │   ├── qualityScore: number (0-100)
-│   │   ├── sourceCount: number
-│   │   └── lastActivityAt: timestamp
+│   │   ├── verification: {
+│   │   │   ├── status: 'verified' | 'pending' | 'unverified'
+│   │   │   ├── verifiedAt?: timestamp
+│   │   │   ├── verifiedBy?: string
+│   │   │   └── nextReviewDate?: timestamp
+│   │   │}
+│   │   ├── dataQuality: {
+│   │   │   ├── overallScore: number (0-100)
+│   │   │   ├── completeness: number
+│   │   │   ├── accuracy: number
+│   │   │   └── lastUpdated: timestamp
+│   │   │}
+│   │   ├── sources: Array<{
+│   │   │   ├── type: 'crowdsourced' | 'manual' | 'api' | 'verified'
+│   │   │   ├── organizationId?: string
+│   │   │   ├── confidence: number
+│   │   │   └── addedAt: timestamp
+│   │   │}>
+│   │   └── usage: {
+│   │   │   ├── importCount: number
+│   │   │   ├── lastImported: timestamp
+│   │   │   └── popularity: number
+│   │   │}
 │   └── gdpr
-│       ├── consentGiven: boolean
+│       ├── consentStatus: 'pending' | 'given' | 'denied' | 'expired'
 │       ├── consentDate?: timestamp
-│       ├── nextReminderDate?: timestamp
-│       └── optOutDate?: timestamp
+│       ├── optOutDate?: timestamp
+│       └── dataRetentionDate?: timestamp
+```
 
-/journalistCandidates (Matching-Kandidaten)
-├── /candidates/{candidateId}
-│   ├── matchedContacts: Array<{
-│   │   ├── organizationId: string
-│   │   ├── contactId: string
-│   │   ├── contactData: object
+#### **Schicht 3: Crowdsourcing & Matching-Engine**
+```
+/journalistMatching/
+├── /candidates/{candidateId}              # Potentielle neue Journalisten
+│   ├── sourceContacts: Array<{            # Kundendaten (anonymisiert)
+│   │   ├── organizationHash: string       # Gehashte Org-ID
+│   │   ├── contactHash: string            # Gehashte Contact-ID
+│   │   ├── contactData: object            # Anonymisierte Daten
+│   │   ├── confidence: number             # Match-Confidence
 │   │   └── addedAt: timestamp
 │   │}>
-│   ├── mergedData: object (AI-generiert)
-│   ├── matchScore: number
-│   ├── status: 'pending' | 'approved' | 'rejected' | 'merged'
-│   └── reviewedBy?: string
+│   ├── mergedProfile: object              # KI-generiertes Profil
+│   ├── matchingScore: number              # Gesamt-Match-Score
+│   ├── status: 'analyzing' | 'ready' | 'approved' | 'rejected'
+│   ├── reviewedBy?: string
+│   └── approvedAt?: timestamp
 
-/journalistVerifications (Verifizierungsprozess)
-├── /verifications/{verificationId}
-│   ├── journalistId: string
-│   ├── token: string (unique)
-│   ├── type: 'initial' | 'update' | 'reminder'
-│   ├── createdAt: timestamp
-│   ├── expiresAt: timestamp
-│   ├── completedAt?: timestamp
-│   └── emailsSent: number
-
-/journalistSubscriptions (Premium-Feature Zugang)
-├── /subscriptions/{organizationId}
-│   ├── plan: 'basic' | 'professional' | 'enterprise'
-│   ├── status: 'active' | 'inactive' | 'trial'
-│   ├── startDate: timestamp
-│   ├── endDate?: timestamp
-│   ├── searchQuota: number
-│   ├── importQuota: number
-│   └── apiAccess: boolean
-
-/journalistSyncLog (Synchronisations-Historie)
-├── /logs/{logId}
+├── /matching-jobs/{jobId}                 # Batch-Matching Jobs
 │   ├── organizationId: string
-│   ├── journalistId: string
-│   ├── action: 'import' | 'update' | 'delete'
-│   ├── timestamp: timestamp
-│   └── changes?: object
+│   ├── processedContacts: number
+│   ├── newCandidates: number
+│   ├── status: 'pending' | 'running' | 'completed' | 'failed'
+│   ├── startedAt: timestamp
+│   └── completedAt?: timestamp
 ```
 
 ### API-Struktur
 
 ```typescript
-// API Routes
+// API Routes für Kunden
 /api/journalists/
-├── GET    /search          // Suche in Datenbank (Premium)
-├── GET    /[id]           // Einzelner Journalist
-├── POST   /import         // Import ins CRM
-├── POST   /verify         // Verifizierungsprozess
-├── PUT    /[id]/update    // Daten aktualisieren
-├── POST   /match          // Matching-Vorschläge
-└── GET    /statistics     // Nutzungsstatistiken
+├── GET    /search          // Premium-Suche (mit Quota-Check)
+├── GET    /[id]           // Einzelner Journalist Details
+├── POST   /import         // Import ins eigene CRM
+├── POST   /sync           // Sync für importierte Kontakte
+└── GET    /subscription   // Abo-Status und Limits
 
+// API Routes für Admin
 /api/admin/journalists/
 ├── POST   /add            // Manuell hinzufügen
-├── POST   /bulk-import    // Massenimport
-├── GET    /candidates     // Matching-Kandidaten
-├── POST   /approve        // Kandidat bestätigen
+├── POST   /bulk-import    // CSV/Excel Massenimport
+├── GET    /candidates     // Matching-Kandidaten Review
+├── POST   /approve        // Kandidat → Master-DB
 ├── POST   /merge          // Duplikate zusammenführen
-└── GET    /quality        // Datenqualität-Dashboard
+├── GET    /quality        // Datenqualität-Dashboard
+└── POST   /verify         // Manuelle Verifizierung
+
+// Crowdsourcing Engine (Background)
+/api/internal/matching/
+├── POST   /analyze        // Neue CRM-Kontakte analysieren
+├── POST   /generate       // KI-Profile generieren
+├── GET    /candidates     // Pending Kandidaten
+└── POST   /batch-process  // Batch-Verarbeitung
+```
+
+### 🔄 **Crowdsourcing-Workflow: Anonymisiertes Matching**
+
+#### **Schritt 1: Datensammlung** (Automatisch)
+```mermaid
+CRM-Kontakt erstellt → Anonymisierung → Matching-Engine → Kandidat erstellt
+```
+
+1. **Kontakt-Erstellung**: Kunde erstellt Journalist in seinem CRM
+2. **Anonymisierung**:
+   - E-Mail → Hash (md5)
+   - Name → Phonetischer Hash
+   - Organisation-ID → Verschlüsselter Hash
+3. **Similarity-Check**:
+   - Fuzzy-Matching gegen bestehende Kandidaten
+   - Name + Medium + Themen Ähnlichkeit
+4. **Kandidat-Erstellung**: Bei ausreichender Confidence (>70%)
+
+#### **Schritt 2: KI-Profil-Generierung** (Background Job)
+```python
+# Pseudo-Code für Profil-Merge
+def merge_candidate_profiles(candidate_id):
+    contacts = get_anonymous_contacts(candidate_id)
+
+    # KI-basierte Datenkonsolidierung
+    merged_profile = ai_merge({
+        'name': most_common_variant(contacts, 'name'),
+        'email': highest_confidence(contacts, 'email'),
+        'medium': cross_reference_company_names(contacts),
+        'topics': aggregate_and_dedupe(contacts, 'topics'),
+        'confidence': calculate_aggregate_confidence(contacts)
+    })
+
+    return merged_profile
+```
+
+#### **Schritt 3: Admin-Review** (Manual)
+```
+Kandidat-Dashboard → Review → Approve/Reject → Master-DB Update
+```
+
+- **Quality-Score** basiert auf:
+  - Anzahl bestätigender Quellen (min. 3)
+  - Konsistenz der Daten (Name, E-Mail, Medium)
+  - Vollständigkeit des Profils
+  - Verifikations-Status
+
+#### **Schritt 4: Verifizierung** (DSGVO-konform)
+```
+Master-DB Entry → E-Mail-Verifizierung → Consent-Management → Live in Premium-DB
+```
+
+### 🔄 **Sync-System: Importierte Premium-Kontakte**
+
+#### **Import-Prozess**
+```typescript
+// Beim Import aus Premium-DB ins Kunden-CRM
+async function importJournalist(journalistId: string, organizationId: string) {
+  const premiumContact = await getPremiumJournalist(journalistId);
+
+  const importedContact = {
+    id: generateLocalId(),
+    sourceType: "premium-database",
+    sourceId: journalistId,
+    isEditable: false,                    // Read-only!
+    lastSyncAt: new Date(),
+    syncStatus: "synced",
+    localNotes: "",                       // Einziges editierbares Feld
+    data: premiumContact                  // Kopie der Premium-Daten
+  };
+
+  await saveToOrganizationCRM(organizationId, importedContact);
+  await logSyncAction(organizationId, journalistId, "import");
+}
+```
+
+#### **Sync-Verhalten für Read-Only Kontakte**
+
+1. **Automatische Sync-Checks** (täglich):
+   ```typescript
+   // Prüfe auf Updates in Master-DB
+   const outdatedContacts = await findOutdatedImports(organizationId);
+   for (const contact of outdatedContacts) {
+     await syncFromMaster(contact);
+   }
+   ```
+
+2. **Manueller Sync-Button**:
+   - 🔄 **"Synchronisieren"** statt ✏️ Edit-Button
+   - Holt aktuelle Daten aus Premium-DB
+   - Behält `localNotes` bei
+
+3. **Konflikt-Management**:
+   ```typescript
+   enum SyncStatus {
+     'synced',          // Aktuell
+     'outdated',        // Update verfügbar
+     'conflict',        // Kontakt in Master-DB geändert/gelöscht
+     'deleted'          // Kontakt aus Master-DB entfernt
+   }
+   ```
+
+#### **UI-Unterscheidung**
+
+**Eigene CRM-Kontakte:**
+- ✏️ **Edit-Button**
+- ❌ **Delete-Button**
+- 🏷️ **"Eigener Kontakt"** Badge
+
+**Importierte Premium-Kontakte:**
+- 🔄 **Sync-Button**
+- 📝 **"Notizen bearbeiten"** (nur localNotes)
+- ⭐ **"Premium"** Badge
+- 🔒 **Gesperrte Felder** (grau hinterlegt)
+
+#### **Datenfluss-Diagramm**
+```mermaid
+graph LR
+    A[Premium Master-DB] -->|Import| B[Kunden-CRM Import]
+    A -->|Updates| B
+    B -->|Sync Check| A
+    B -->|Local Notes| C[Lokale Anmerkungen]
+    C -.->|Bleibt erhalten| B
 ```
 
 ---

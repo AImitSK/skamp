@@ -785,10 +785,6 @@ export default function ProjectDetailPage() {
                     <UserGroupIcon className="w-4 h-4 mr-2" />
                     Team verwalten
                   </DropdownItem>
-                  <DropdownItem onClick={() => router.push(`/dashboard/strategy-documents?projectId=${projectId}`)}>
-                    <DocumentTextIcon className="w-4 h-4 mr-2" />
-                    Dokumente
-                  </DropdownItem>
                   <DropdownItem onClick={handleDeleteProject} className="text-red-600">
                     <TrashIcon className="w-4 h-4 mr-2" />
                     Projekt löschen

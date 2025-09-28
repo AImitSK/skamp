@@ -493,71 +493,329 @@ function ImportDialog({
   onConfirm: () => void;
   isLoading?: boolean;
 }) {
+  const [step, setStep] = useState<'preview' | 'mapping' | 'confirm'>('preview');
+  const [fieldMapping, setFieldMapping] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    position: '',
+    topics: '',
+    notes: ''
+  });
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
+
+  // Reset state when journalist changes
+  useEffect(() => {
+    if (journalist) {
+      setStep('preview');
+      setFieldMapping({
+        name: journalist.personalData.displayName,
+        email: journalist.personalData.emails.find(e => e.isPrimary)?.email || journalist.personalData.emails[0]?.email || '',
+        phone: journalist.personalData.phones?.[0]?.number || '',
+        company: journalist.professionalData.currentEmployment.mediumName,
+        position: journalist.professionalData.currentEmployment.position,
+        topics: journalist.professionalData.expertise.primaryTopics.join(', '),
+        notes: `Importiert aus Journalisten-Datenbank\nScore: ${journalist.metadata.dataQuality.overallScore}`
+      });
+      // Mock duplicate check
+      setDuplicateWarning(Math.random() > 0.7); // 30% chance of duplicate warning
+    }
+  }, [journalist]);
+
   if (!journalist) return null;
 
+  const handleNext = () => {
+    if (step === 'preview') setStep('mapping');
+    else if (step === 'mapping') setStep('confirm');
+  };
+
+  const handleBack = () => {
+    if (step === 'mapping') setStep('preview');
+    else if (step === 'confirm') setStep('mapping');
+  };
+
   return (
-    <Dialog open={!!journalist} onClose={onClose}>
-      <div className="p-6">
-        <div className="sm:flex sm:items-start">
-          <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-            <ArrowUpTrayIcon className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-            <DialogTitle>Journalist importieren</DialogTitle>
-            <DialogBody className="mt-2">
-              <Text>
-                Möchten Sie <strong>{journalist.personalData.displayName}</strong> aus der
-                Journalisten-Datenbank in Ihr CRM importieren?
-              </Text>
-
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center text-sm">
-                  <span className="font-medium text-gray-700 w-20">Position:</span>
-                  <span className="text-gray-600">
-                    {journalist.professionalData.currentEmployment.position} bei {journalist.professionalData.currentEmployment.mediumName}
-                  </span>
-                </div>
-
-                <div className="flex items-center text-sm">
-                  <span className="font-medium text-gray-700 w-20">E-Mail:</span>
-                  <span className="text-gray-600">
-                    {journalist.personalData.emails.find(e => e.isPrimary)?.email ||
-                     journalist.personalData.emails[0]?.email || 'Nicht verfügbar'}
-                  </span>
-                </div>
-
-                <div className="flex items-center text-sm">
-                  <span className="font-medium text-gray-700 w-20">Themen:</span>
-                  <span className="text-gray-600">
-                    {journalist.professionalData.expertise.primaryTopics.slice(0, 3).join(', ')}
-                    {journalist.professionalData.expertise.primaryTopics.length > 3 && ' ...'}
-                  </span>
-                </div>
+    <Dialog open={!!journalist} onClose={onClose} size="2xl">
+      <DialogTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <ArrowUpTrayIcon className="h-5 w-5 text-green-600" />
               </div>
-            </DialogBody>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                Journalist importieren
+              </h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Schritt {step === 'preview' ? '1' : step === 'mapping' ? '2' : '3'} von 3
+              </p>
+            </div>
+          </div>
+          <div className="flex space-x-1">
+            {['preview', 'mapping', 'confirm'].map((s, index) => (
+              <div
+                key={s}
+                className={`h-2 w-8 rounded-full ${
+                  step === s ? 'bg-primary' :
+                  ['preview', 'mapping', 'confirm'].indexOf(step) > index ? 'bg-green-500' : 'bg-zinc-200'
+                }`}
+              />
+            ))}
           </div>
         </div>
+      </DialogTitle>
 
-        <DialogActions className="mt-5 sm:mt-4">
-          <Button plain onClick={onClose} disabled={isLoading}>
-            Abbrechen
-          </Button>
-          <Button
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary-hover text-white"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Importiere...
-              </>
-            ) : (
-              'Jetzt importieren'
+      <DialogBody>
+        {step === 'preview' && (
+          <div className="space-y-4">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <UserIcon className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-lg font-medium text-zinc-900 dark:text-white">
+                  {journalist.personalData.displayName}
+                </h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  {journalist.professionalData.currentEmployment.position} bei {journalist.professionalData.currentEmployment.mediumName}
+                </p>
+                <div className="mt-2 flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
+                  <span>Score: {journalist.metadata.dataQuality.overallScore}</span>
+                  <span>•</span>
+                  <span>{journalist.professionalData.expertise.primaryTopics.length} Themen</span>
+                </div>
+              </div>
+            </div>
+
+            {duplicateWarning && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Mögliches Duplikat erkannt
+                    </div>
+                    <div className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                      Ein ähnlicher Kontakt könnte bereits in Ihrem CRM existieren. Bitte prüfen Sie die Feld-Zuordnung sorgfältig.
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
-          </Button>
-        </DialogActions>
-      </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">E-Mail:</span>
+                <div className="text-zinc-600 dark:text-zinc-400">
+                  {journalist.personalData.emails.find(e => e.isPrimary)?.email || 'Nicht verfügbar'}
+                </div>
+              </div>
+              <div>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">Telefon:</span>
+                <div className="text-zinc-600 dark:text-zinc-400">
+                  {journalist.personalData.phones?.[0]?.number || 'Nicht verfügbar'}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span className="font-medium text-zinc-700 dark:text-zinc-300 text-sm">Themen:</span>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {journalist.professionalData.expertise.primaryTopics.slice(0, 6).map((topic, index) => (
+                  <Badge key={index} color="zinc" className="text-xs">
+                    {topic}
+                  </Badge>
+                ))}
+                {journalist.professionalData.expertise.primaryTopics.length > 6 && (
+                  <span className="text-xs text-zinc-500">
+                    +{journalist.professionalData.expertise.primaryTopics.length - 6} weitere
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'mapping' && (
+          <div className="space-y-4">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              Ordnen Sie die Daten den entsprechenden Feldern in Ihrem CRM zu:
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={fieldMapping.name}
+                  onChange={(e) => setFieldMapping({...fieldMapping, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    E-Mail *
+                  </label>
+                  <input
+                    type="email"
+                    value={fieldMapping.email}
+                    onChange={(e) => setFieldMapping({...fieldMapping, email: e.target.value})}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={fieldMapping.phone}
+                    onChange={(e) => setFieldMapping({...fieldMapping, phone: e.target.value})}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Unternehmen
+                  </label>
+                  <input
+                    type="text"
+                    value={fieldMapping.company}
+                    onChange={(e) => setFieldMapping({...fieldMapping, company: e.target.value})}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Position
+                  </label>
+                  <input
+                    type="text"
+                    value={fieldMapping.position}
+                    onChange={(e) => setFieldMapping({...fieldMapping, position: e.target.value})}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Themen/Tags
+                </label>
+                <input
+                  type="text"
+                  value={fieldMapping.topics}
+                  onChange={(e) => setFieldMapping({...fieldMapping, topics: e.target.value})}
+                  placeholder="Komma-getrennte Liste"
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Notizen
+                </label>
+                <textarea
+                  value={fieldMapping.notes}
+                  onChange={(e) => setFieldMapping({...fieldMapping, notes: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'confirm' && (
+          <div className="space-y-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <CheckBadgeIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Bereit zum Import
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-zinc-900 dark:text-white">
+                Diese Daten werden importiert:
+              </h4>
+
+              <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 space-y-2">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><strong>Name:</strong> {fieldMapping.name}</div>
+                  <div><strong>E-Mail:</strong> {fieldMapping.email}</div>
+                  <div><strong>Telefon:</strong> {fieldMapping.phone || 'Nicht angegeben'}</div>
+                  <div><strong>Unternehmen:</strong> {fieldMapping.company}</div>
+                  <div><strong>Position:</strong> {fieldMapping.position}</div>
+                  <div><strong>Themen:</strong> {fieldMapping.topics}</div>
+                </div>
+                {fieldMapping.notes && (
+                  <div className="text-sm pt-2 border-t border-zinc-200 dark:border-zinc-600">
+                    <strong>Notizen:</strong>
+                    <div className="mt-1 text-zinc-600 dark:text-zinc-400 whitespace-pre-line">
+                      {fieldMapping.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogBody>
+
+      <DialogActions>
+        <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          Abbrechen
+        </Button>
+        <div className="flex space-x-2">
+          {step !== 'preview' && (
+            <Button variant="outline" onClick={handleBack} disabled={isLoading}>
+              Zurück
+            </Button>
+          )}
+          {step !== 'confirm' ? (
+            <Button
+              onClick={handleNext}
+              disabled={!fieldMapping.name || !fieldMapping.email}
+              className="bg-primary hover:bg-primary-hover text-white"
+            >
+              Weiter
+            </Button>
+          ) : (
+            <Button
+              onClick={onConfirm}
+              disabled={isLoading}
+              className="bg-primary hover:bg-primary-hover text-white"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Importiere...
+                </>
+              ) : (
+                <>
+                  <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+                  Import bestätigen
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </DialogActions>
     </Dialog>
   );
 }
@@ -582,6 +840,7 @@ export default function EditorsPage() {
   // UI States
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [selectedJournalist, setSelectedJournalist] = useState<JournalistDatabaseEntry | null>(null);
+  const [detailJournalist, setDetailJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
 
   // Alert Management
@@ -886,7 +1145,7 @@ export default function EditorsPage() {
   };
 
   const handleViewDetails = (journalist: JournalistDatabaseEntry) => {
-    showAlert('info', 'Details', `Detail-Ansicht für ${journalist.personalData.displayName} wird implementiert.`);
+    setDetailJournalist(journalist);
   };
 
   if (loading) {
@@ -1301,6 +1560,185 @@ export default function EditorsPage() {
         onConfirm={handleConfirmImport}
         isLoading={importingIds.has(selectedJournalist?.id || '')}
       />
+
+      {/* Detail Modal */}
+      {detailJournalist && (
+        <Dialog open={!!detailJournalist} onClose={() => setDetailJournalist(null)} size="4xl">
+          <DialogTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserIcon className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                    {detailJournalist.personalData.displayName}
+                  </h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {detailJournalist.professionalData.currentEmployment.position}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {detailJournalist.metadata.verification.status === 'verified' && (
+                  <Badge color="green" className="text-xs">
+                    <CheckBadgeIcon className="h-3 w-3 mr-1" />
+                    Verifiziert
+                  </Badge>
+                )}
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Score: {detailJournalist.metadata.dataQuality.overallScore}
+                </div>
+              </div>
+            </div>
+          </DialogTitle>
+
+          <DialogBody>
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Kontaktinformationen</h4>
+                  <div className="space-y-2">
+                    {detailJournalist.personalData.emails.map((email, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <EnvelopeIcon className="h-4 w-4 text-zinc-400" />
+                        <a href={`mailto:${email.email}`} className="text-sm text-primary hover:text-primary-hover">
+                          {email.email}
+                        </a>
+                        {email.isPrimary && (
+                          <Badge color="zinc" className="text-xs">Primär</Badge>
+                        )}
+                      </div>
+                    ))}
+                    {detailJournalist.personalData.phones?.map((phone, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <PhoneIcon className="h-4 w-4 text-zinc-400" />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">{phone.number}</span>
+                        <Badge color="zinc" className="text-xs">{phone.type}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Medium & Position</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <NewspaperIcon className="h-4 w-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                        {detailJournalist.professionalData.currentEmployment.mediumName}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <UserIcon className="h-4 w-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                        {detailJournalist.professionalData.currentEmployment.position}
+                      </span>
+                    </div>
+                    {detailJournalist.professionalData.currentEmployment.startDate && (
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Seit: {new Date(detailJournalist.professionalData.currentEmployment.startDate).toLocaleDateString('de-DE')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Topics */}
+              <div>
+                <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">
+                  Themen ({detailJournalist.professionalData.expertise.primaryTopics.length})
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {detailJournalist.professionalData.expertise.primaryTopics.map((topic, index) => (
+                    <Badge key={index} color="zinc" className="text-sm">
+                      {topic}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Social Media */}
+              {detailJournalist.socialMedia.profiles.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Social Media</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {detailJournalist.socialMedia.profiles.map((profile, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg">
+                        <div>
+                          <div className="font-medium text-sm text-zinc-900 dark:text-white capitalize">
+                            {profile.platform}
+                          </div>
+                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                            {profile.followerCount?.toLocaleString()} Follower
+                          </div>
+                        </div>
+                        <a
+                          href={profile.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary-hover"
+                        >
+                          <GlobeAltIcon className="h-4 w-4" />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Media Types */}
+              <div>
+                <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Medientypen</h4>
+                <div className="flex flex-wrap gap-2">
+                  {detailJournalist.professionalData.mediaTypes.map((type, index) => (
+                    <Badge key={index} color="blue" className="text-sm capitalize">
+                      {type}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Verification Info */}
+              {detailJournalist.metadata.verification.status === 'verified' && detailJournalist.metadata.verification.verifiedAt && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <CheckBadgeIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <div>
+                      <div className="text-sm font-medium text-green-800 dark:text-green-200">
+                        Verifiziert
+                      </div>
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        Verifiziert am: {new Date(detailJournalist.metadata.verification.verifiedAt).toLocaleDateString('de-DE')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogBody>
+
+          <DialogActions>
+            <Button variant="outline" onClick={() => setDetailJournalist(null)}>
+              Schließen
+            </Button>
+            <Button
+              onClick={() => {
+                handleImport(detailJournalist);
+                setDetailJournalist(null);
+              }}
+              disabled={!subscription?.features.importEnabled}
+              className="bg-primary hover:bg-primary-hover text-white"
+            >
+              <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+              Importieren
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

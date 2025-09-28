@@ -118,8 +118,10 @@
 *Sollten behoben werden, aber nicht kritisch*
 
 ### 8. **Performance & UX**
-- [ ] **KeyVisual Auswahl braucht Loader**
-  - Kein Loading-State bei Bildauswahl
+- [x] **KeyVisual Auswahl braucht Loader**
+  - ✅ **BEHOBEN:** Loading-Modal zwischen Asset-Auswahl und Cropping-Tool implementiert
+  - ✅ **Root Cause:** User-Verwirrung zwischen Selection- und Cropping-Modal
+  - ✅ **Fix:** isLoadingCropper State mit Spinner und beschreibendem Text hinzugefügt
 
 ### 9. **Monitoring & Clipping**
 - [x] **Neue Kampagnen erscheinen nicht im Monitoring**
@@ -148,11 +150,14 @@
   - Sollte team-weit funktionieren
 
 ### 12. **Broken Links & Debug-Code**
-- [ ] **Edit/News Seite: Debug-Text entfernen**
-  - "🧪 TEST: Projekt-Medienverzeichnis" in Production
-- [ ] **3-Punkte Menü: "Dokumente" Link 404**
-  - `https://www.celeropress.com/dashboard/strategy-documents?projectId=...`
-  - Route existiert nicht
+- [x] **Edit/News Seite: Debug-Text entfernen**
+  - ✅ **BEHOBEN:** "🧪 TEST: Projekt-Medienverzeichnis" aus Production entfernt
+  - ✅ **Root Cause:** Debug-Text und TEST-Button waren in Kampagnen-Edit-Seite verblieben
+  - ✅ **Fix:** showProjectMediaModal State, TEST-Button und Modal vollständig entfernt
+- [x] **3-Punkte Menü: "Dokumente" Link 404**
+  - ✅ **BEHOBEN:** Defekter "Dokumente" Link aus Dropdown-Menü entfernt
+  - ✅ **Root Cause:** Link verwies auf nicht existierende Route `/dashboard/strategy-documents`
+  - ✅ **Fix:** DropdownItem für "Dokumente" entfernt, da Dokumentenverwaltung über "Strategie" Tab verfügbar ist
 
 ### 13. **Inbox komplett überarbeiten**
   - Komplettes Redesign erforderlich
