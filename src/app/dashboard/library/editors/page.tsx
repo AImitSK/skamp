@@ -27,18 +27,193 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ArrowUpTrayIcon,
-  SparklesIcon,
-  CrownIcon
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
-import {
-  JournalistDatabaseEntry,
-  JournalistSearchParams,
-  JournalistSubscription,
-  MediaType,
-  VerificationStatus
-} from "@/types/journalist-database";
-import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
+// Temporary types until journalist-database files are properly built
+type VerificationStatus = 'verified' | 'pending' | 'unverified';
+type MediaType = 'online' | 'print' | 'tv' | 'radio' | 'podcast';
+
+interface JournalistSubscription {
+  organizationId: string;
+  plan: 'free' | 'professional' | 'business' | 'enterprise';
+  status: 'active' | 'trial' | 'suspended';
+  features: {
+    searchEnabled: boolean;
+    importEnabled: boolean;
+    exportEnabled: boolean;
+    apiAccess: boolean;
+    advancedFilters: boolean;
+    bulkOperations: boolean;
+    customFieldMapping: boolean;
+  };
+  limits: {
+    searchesPerMonth: number;
+    importsPerMonth: number;
+    exportsPerMonth: number;
+    maxSyncedContacts: number;
+    apiCallsPerDay: number;
+  };
+  usage: {
+    currentPeriod: {
+      searches: number;
+      imports: number;
+      exports: number;
+      apiCalls: number;
+    };
+    lifetime: {
+      totalSearches: number;
+      totalImports: number;
+      totalExports: number;
+      totalContributions: number;
+    };
+  };
+  billing: {
+    startDate: any;
+    currentPeriodStart: any;
+    currentPeriodEnd: any;
+  };
+}
+
+interface JournalistDatabaseEntry {
+  id: string;
+  globalId: string;
+  version: number;
+  lastModifiedBy: string;
+  organizationId: string;
+  createdAt: any;
+  updatedAt: any;
+  createdBy: string;
+  updatedBy: string;
+  personalData: {
+    name: {
+      salutation?: string;
+      firstName: string;
+      lastName: string;
+      title?: string;
+    };
+    displayName: string;
+    emails: Array<{
+      email: string;
+      type: 'business' | 'private';
+      isPrimary: boolean;
+      isVerified: boolean;
+      verifiedAt?: any;
+    }>;
+    phones?: Array<{
+      number: string;
+      type: string;
+      isPrimary: boolean;
+      countryCode: string;
+    }>;
+    languages: string[];
+  };
+  professionalData: {
+    currentEmployment: {
+      mediumName: string;
+      position: string;
+      department?: string;
+      isFreelance: boolean;
+    };
+    expertise: {
+      primaryTopics: string[];
+      secondaryTopics?: string[];
+      industries?: string[];
+    };
+    mediaTypes: MediaType[];
+  };
+  socialMedia: {
+    profiles: Array<{
+      platform: string;
+      url: string;
+      handle?: string;
+      verified: boolean;
+      followers?: number;
+      engagement?: number;
+    }>;
+    influence: {
+      totalFollowers: number;
+      influenceScore: number;
+      reachScore: number;
+      engagementScore: number;
+      lastCalculated: any;
+    };
+  };
+  metadata: {
+    verification: {
+      status: VerificationStatus;
+      method?: string;
+      verifiedAt?: any;
+      verifiedBy?: string;
+    };
+    dataQuality: {
+      completeness: number;
+      accuracy: number;
+      freshness: number;
+      overallScore: number;
+    };
+    sources: Array<{
+      type: string;
+      name: string;
+      contributedAt: any;
+      confidence: number;
+      fields: string[];
+    }>;
+  };
+  analytics: {
+    articleMetrics: {
+      totalArticles: number;
+      averageReach: number;
+      totalReach: number;
+      averageEngagement: number;
+    };
+    sentimentAnalysis: {
+      averageSentiment: number;
+      sentimentDistribution: {
+        positive: number;
+        neutral: number;
+        negative: number;
+      };
+      lastAnalyzed: any;
+    };
+    topicDistribution: Array<{
+      topic: string;
+      articleCount: number;
+      percentage: number;
+      averageSentiment: number;
+    }>;
+    responseMetrics: {
+      responseRate: number;
+      averageResponseTime: number;
+      preferredResponseChannel?: string;
+    };
+    trends: {
+      activityTrend: string;
+    };
+  };
+  gdpr: {
+    consent: {
+      status: string;
+      grantedAt?: any;
+      method?: string;
+    };
+    communicationPreferences: {
+      allowEmails: boolean;
+      allowDataSharing: boolean;
+      allowProfiling: boolean;
+      preferredLanguage: string;
+    };
+    dataRights: any;
+  };
+  syncInfo: {
+    linkedOrganizations: any[];
+    masterSyncStatus: {
+      pendingChanges: number;
+      syncHealth: string;
+    };
+    changeHistory: any[];
+  };
+}
 
 // Alert Component
 function Alert({
@@ -111,7 +286,7 @@ function PremiumBanner({
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <CrownIcon className="h-6 w-6 text-yellow-600" />
+            <StarIcon className="h-6 w-6 text-yellow-600" />
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-yellow-800">
@@ -292,7 +467,7 @@ function JournalistCard({
               onClick={onUpgrade}
               className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 text-sm px-4 py-1.5"
             >
-              <CrownIcon className="h-4 w-4 mr-1" />
+              <StarIcon className="h-4 w-4 mr-1" />
               Premium
             </Button>
           )}
