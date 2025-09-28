@@ -914,9 +914,6 @@ export default function EditorsPage() {
       {/* Header */}
       <div className="mb-6">
         <Heading level={1}>Journalisten-Datenbank</Heading>
-        <Text className="mt-2 text-gray-600">
-          Durchsuchen Sie unsere kuratierte Datenbank mit verifizierten Medienkontakten
-        </Text>
       </div>
 
       {/* Premium Banner */}
@@ -1124,7 +1121,7 @@ export default function EditorsPage() {
           </div>
         ) : (
           // Table View
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-visible">
             {/* Table Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
@@ -1228,7 +1225,7 @@ export default function EditorsPage() {
                                 leaveFrom="opacity-100 translate-y-0"
                                 leaveTo="opacity-0 translate-y-1"
                               >
-                                <Popover.Panel className="absolute z-10 mt-2 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 p-3 min-w-[200px] left-1/2 transform -translate-x-1/2">
+                                <Popover.Panel className="absolute z-50 mt-2 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 p-3 min-w-[200px] left-1/2 transform -translate-x-1/2">
                                   <div className="space-y-1">
                                     <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                                       Themen ({journalist.professionalData.expertise.primaryTopics.length})
