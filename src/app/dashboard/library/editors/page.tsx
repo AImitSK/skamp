@@ -1173,12 +1173,12 @@ export default function EditorsPage() {
 
       // Load real global journalists from all organizations
       // EINFACH: Nur globale Journalisten laden
-      const globalJournalists = await journalistDatabaseService.search({
+      const searchResult = await journalistDatabaseService.search({
         filters: {},
         organizationId: currentOrganization.id
       }, mockSubscription);
 
-      setJournalists(globalJournalists);
+      setJournalists(searchResult.journalists);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
     } finally {
