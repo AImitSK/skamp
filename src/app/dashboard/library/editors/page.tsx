@@ -608,7 +608,7 @@ function ImportDialog({
   onConfirm: () => void;
   isLoading?: boolean;
 }) {
-  const [step, setStep] = useState<'preview' | 'mapping' | 'confirm'>('preview');
+  const [step, setStep] = useState<'preview' | 'relations' | 'mapping' | 'confirm'>('preview');
   const [fieldMapping, setFieldMapping] = useState({
     name: '',
     email: '',
@@ -618,7 +618,22 @@ function ImportDialog({
     topics: '',
     notes: ''
   });
+
+  // NEUE STATE für Relations-Management
+  const [importConfig, setImportConfig] = useState<{
+    companyStrategy: 'create_new' | 'use_existing' | 'merge';
+    selectedCompanyId?: string;
+    publicationStrategy: 'import_all' | 'import_selected' | 'skip';
+    selectedPublicationIds: string[];
+  }>({
+    companyStrategy: 'create_new',
+    publicationStrategy: 'import_all',
+    selectedPublicationIds: []
+  });
+
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [existingCompanies, setExistingCompanies] = useState<any[]>([]); // TODO: Proper type
+  const [existingPublications, setExistingPublications] = useState<any[]>([]); // TODO: Proper type
 
   // Reset state when journalist changes
   useEffect(() => {
@@ -641,12 +656,14 @@ function ImportDialog({
   if (!journalist) return null;
 
   const handleNext = () => {
-    if (step === 'preview') setStep('mapping');
+    if (step === 'preview') setStep('relations');
+    else if (step === 'relations') setStep('mapping');
     else if (step === 'mapping') setStep('confirm');
   };
 
   const handleBack = () => {
-    if (step === 'mapping') setStep('preview');
+    if (step === 'relations') setStep('preview');
+    else if (step === 'mapping') setStep('relations');
     else if (step === 'confirm') setStep('mapping');
   };
 
@@ -665,17 +682,17 @@ function ImportDialog({
                 Journalist importieren
               </h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Schritt {step === 'preview' ? '1' : step === 'mapping' ? '2' : '3'} von 3
+                Schritt {step === 'preview' ? '1' : step === 'relations' ? '2' : step === 'mapping' ? '3' : '4'} von 4
               </p>
             </div>
           </div>
           <div className="flex space-x-1">
-            {['preview', 'mapping', 'confirm'].map((s, index) => (
+            {['preview', 'relations', 'mapping', 'confirm'].map((s, index) => (
               <div
                 key={s}
-                className={`h-2 w-8 rounded-full ${
+                className={`h-2 w-6 rounded-full ${
                   step === s ? 'bg-primary' :
-                  ['preview', 'mapping', 'confirm'].indexOf(step) > index ? 'bg-green-500' : 'bg-zinc-200'
+                  ['preview', 'relations', 'mapping', 'confirm'].indexOf(step) > index ? 'bg-green-500' : 'bg-zinc-200'
                 }`}
               />
             ))}
@@ -750,6 +767,246 @@ function ImportDialog({
                   <span className="text-xs text-zinc-500">
                     +{(journalist.professionalData.expertise.primaryTopics || []).length - 6} weitere
                   </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* NEUER RELATIONS-STEP */}
+        {step === 'relations' && (
+          <div className="space-y-6">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              Definieren Sie, wie Medienhaus und Publikationen importiert werden sollen:
+            </div>
+
+            {/* Company/Medienhaus Strategy */}
+            {journalist.professionalData.employment?.company && (
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <h4 className="font-medium text-zinc-900 dark:text-white mb-3 flex items-center">
+                  <NewspaperIcon className="h-4 w-4 mr-2" />
+                  Medienhaus: {journalist.professionalData.employment.company.name}
+                </h4>
+
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="companyStrategy"
+                      value="create_new"
+                      checked={importConfig.companyStrategy === 'create_new'}
+                      onChange={(e) => setImportConfig({
+                        ...importConfig,
+                        companyStrategy: e.target.value as any
+                      })}
+                      className="text-primary"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                        Neue Firma anlegen
+                      </div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Erstellt "{journalist.professionalData.employment.company.name}" als neue Firma im CRM
+                      </div>
+                    </div>
+                  </label>
+
+                  {existingCompanies.length > 0 && (
+                    <>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="companyStrategy"
+                          value="use_existing"
+                          checked={importConfig.companyStrategy === 'use_existing'}
+                          onChange={(e) => setImportConfig({
+                            ...importConfig,
+                            companyStrategy: e.target.value as any
+                          })}
+                          className="text-primary"
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                            Mit bestehender Firma verknüpfen
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            Journalist wird einer bereits existierenden Firma zugeordnet
+                          </div>
+                        </div>
+                      </label>
+
+                      {importConfig.companyStrategy === 'use_existing' && (
+                        <div className="ml-6 mt-2">
+                          <select
+                            value={importConfig.selectedCompanyId || ''}
+                            onChange={(e) => setImportConfig({
+                              ...importConfig,
+                              selectedCompanyId: e.target.value
+                            })}
+                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-sm bg-white dark:bg-zinc-800"
+                          >
+                            <option value="">Firma auswählen...</option>
+                            {existingCompanies.map((company) => (
+                              <option key={company.id} value={company.id}>
+                                {company.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="companyStrategy"
+                          value="merge"
+                          checked={importConfig.companyStrategy === 'merge'}
+                          onChange={(e) => setImportConfig({
+                            ...importConfig,
+                            companyStrategy: e.target.value as any
+                          })}
+                          className="text-primary"
+                        />
+                        <div>
+                          <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                            Mit bestehender Firma zusammenführen
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            Premium-Daten werden in bestehende Firmendaten eingearbeitet
+                          </div>
+                        </div>
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Publications Strategy */}
+            {journalist.professionalData.publicationAssignments &&
+             journalist.professionalData.publicationAssignments.length > 0 && (
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                <h4 className="font-medium text-zinc-900 dark:text-white mb-3 flex items-center">
+                  <GlobeAltIcon className="h-4 w-4 mr-2" />
+                  Publikationen ({journalist.professionalData.publicationAssignments.length})
+                </h4>
+
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="publicationStrategy"
+                      value="import_all"
+                      checked={importConfig.publicationStrategy === 'import_all'}
+                      onChange={(e) => setImportConfig({
+                        ...importConfig,
+                        publicationStrategy: e.target.value as any,
+                        selectedPublicationIds: journalist.professionalData.publicationAssignments?.map(a => a.publication.globalPublicationId) || []
+                      })}
+                      className="text-primary"
+                    />
+                    <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                      Alle Publikationen importieren
+                    </div>
+                  </label>
+
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="publicationStrategy"
+                      value="import_selected"
+                      checked={importConfig.publicationStrategy === 'import_selected'}
+                      onChange={(e) => setImportConfig({
+                        ...importConfig,
+                        publicationStrategy: e.target.value as any
+                      })}
+                      className="text-primary"
+                    />
+                    <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                      Ausgewählte Publikationen importieren
+                    </div>
+                  </label>
+
+                  {importConfig.publicationStrategy === 'import_selected' && (
+                    <div className="ml-6 mt-2 space-y-2">
+                      {journalist.professionalData.publicationAssignments.map((assignment, index) => (
+                        <label key={index} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={importConfig.selectedPublicationIds.includes(assignment.publication.globalPublicationId)}
+                            onChange={(e) => {
+                              const pubId = assignment.publication.globalPublicationId;
+                              const newSelected = e.target.checked
+                                ? [...importConfig.selectedPublicationIds, pubId]
+                                : importConfig.selectedPublicationIds.filter(id => id !== pubId);
+                              setImportConfig({
+                                ...importConfig,
+                                selectedPublicationIds: newSelected
+                              });
+                            }}
+                            className="text-primary"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm text-zinc-900 dark:text-white">
+                              {assignment.publication.title}
+                            </div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {assignment.role} • {assignment.publication.type}
+                              {assignment.isMainPublication && ' • Haupt-Publikation'}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="publicationStrategy"
+                      value="skip"
+                      checked={importConfig.publicationStrategy === 'skip'}
+                      onChange={(e) => setImportConfig({
+                        ...importConfig,
+                        publicationStrategy: e.target.value as any,
+                        selectedPublicationIds: []
+                      })}
+                      className="text-primary"
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                        Keine Publikationen importieren
+                      </div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Nur den Journalisten ohne Publications-Verknüpfungen importieren
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Import Summary */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                Import-Zusammenfassung
+              </h5>
+              <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <div>• 1 Journalist wird importiert</div>
+                {importConfig.companyStrategy === 'create_new' && (
+                  <div>• 1 neue Firma wird erstellt</div>
+                )}
+                {importConfig.companyStrategy === 'use_existing' && importConfig.selectedCompanyId && (
+                  <div>• Journalist wird bestehender Firma zugeordnet</div>
+                )}
+                {importConfig.publicationStrategy === 'import_all' && (
+                  <div>• {journalist.professionalData.publicationAssignments?.length || 0} Publikationen werden importiert</div>
+                )}
+                {importConfig.publicationStrategy === 'import_selected' && (
+                  <div>• {importConfig.selectedPublicationIds.length} ausgewählte Publikationen werden importiert</div>
+                )}
+                {importConfig.publicationStrategy === 'skip' && (
+                  <div>• Keine Publikationen werden importiert</div>
                 )}
               </div>
             </div>
@@ -1367,7 +1624,10 @@ export default function EditorsPage() {
                   Journalist
                 </div>
                 <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Medium
+                  Medienhaus
+                </div>
+                <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Publikationen
                 </div>
                 <div className="w-36 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
@@ -1411,10 +1671,41 @@ export default function EditorsPage() {
                         </div>
                       </div>
 
-                      {/* Medium */}
+                      {/* Company/Medienhaus */}
                       <div className="w-48 px-4">
-                        <div className="text-sm text-zinc-900 dark:text-white truncate">
-                          {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
+                        <div className="flex items-center space-x-2">
+                          <NewspaperIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                              {journalist.professionalData.employment?.company?.name ||
+                               journalist.professionalData.currentEmployment?.mediumName ||
+                               'Unbekanntes Medium'}
+                            </div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                              {journalist.professionalData.employment?.company?.type || 'media'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Publications */}
+                      <div className="w-48 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(journalist.professionalData.publicationAssignments || []).slice(0, 2).map((assignment, index) => (
+                            <Badge key={index} color="blue" className="text-xs">
+                              {assignment.publication.title}
+                            </Badge>
+                          ))}
+                          {(journalist.professionalData.publicationAssignments || []).length > 2 && (
+                            <Badge color="zinc" className="text-xs">
+                              +{(journalist.professionalData.publicationAssignments || []).length - 2}
+                            </Badge>
+                          )}
+                          {(!journalist.professionalData.publicationAssignments || journalist.professionalData.publicationAssignments.length === 0) && (
+                            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                              Keine Publikationen
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1608,28 +1899,178 @@ export default function EditorsPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Medium & Position</h4>
+                  <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Position</h4>
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <NewspaperIcon className="h-4 w-4 text-zinc-400" />
-                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {detailJournalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
-                      </span>
-                    </div>
                     <div className="flex items-center space-x-2">
                       <UserIcon className="h-4 w-4 text-zinc-400" />
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {detailJournalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
+                        {detailJournalist.professionalData.employment?.position ||
+                         detailJournalist.professionalData.currentEmployment?.position ||
+                         'Unbekannte Position'}
                       </span>
                     </div>
-                    {detailJournalist.professionalData.currentEmployment?.startDate && (
+                    {detailJournalist.professionalData.employment?.department && (
                       <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Seit: {new Date(detailJournalist.professionalData.currentEmployment.startDate).toLocaleDateString('de-DE')}
+                        Abteilung: {detailJournalist.professionalData.employment.department}
+                      </div>
+                    )}
+                    {detailJournalist.professionalData.employment?.startDate && (
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Seit: {new Date(detailJournalist.professionalData.employment.startDate).toLocaleDateString('de-DE')}
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* NEUE SECTION: Company/Medienhaus */}
+              {detailJournalist.professionalData.employment?.company && (
+                <div className="border-t pt-6">
+                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <NewspaperIcon className="h-4 w-4 mr-2 text-zinc-500" />
+                    Medienhaus & Arbeitgeber
+                  </h4>
+                  <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="font-medium text-zinc-900 dark:text-white">
+                            {detailJournalist.professionalData.employment.company.name}
+                          </h5>
+                          <Badge color="blue" className="text-xs">
+                            {detailJournalist.professionalData.employment.company.type}
+                          </Badge>
+                        </div>
+                        {detailJournalist.professionalData.employment.company.website && (
+                          <a
+                            href={detailJournalist.professionalData.employment.company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:text-primary-hover"
+                          >
+                            {detailJournalist.professionalData.employment.company.website}
+                          </a>
+                        )}
+                      </div>
+
+                      <div>
+                        {detailJournalist.professionalData.employment.company.mediaInfo && (
+                          <div className="space-y-1">
+                            {detailJournalist.professionalData.employment.company.mediaInfo.targetAudience && (
+                              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                                Zielgruppe: {detailJournalist.professionalData.employment.company.mediaInfo.targetAudience}
+                              </div>
+                            )}
+                            {detailJournalist.professionalData.employment.company.mediaInfo.reach && (
+                              <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                                Reichweite: {detailJournalist.professionalData.employment.company.mediaInfo.reach.toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Import-Button für Company falls nicht im lokalen CRM vorhanden */}
+                    <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                      <Button
+                        size="sm"
+                        color="zinc"
+                        className="text-xs"
+                        disabled={true} // TODO: Prüfe ob Company bereits importiert
+                      >
+                        Medienhaus ins CRM importieren
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* NEUE SECTION: Publikationen */}
+              {detailJournalist.professionalData.publicationAssignments &&
+               detailJournalist.professionalData.publicationAssignments.length > 0 && (
+                <div className="border-t pt-6">
+                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <GlobeAltIcon className="h-4 w-4 mr-2 text-zinc-500" />
+                    Publikationen ({detailJournalist.professionalData.publicationAssignments.length})
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {detailJournalist.professionalData.publicationAssignments.map((assignment, index) => (
+                      <div key={index} className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-medium text-zinc-900 dark:text-white truncate">
+                              {assignment.publication.title}
+                            </h5>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge color="green" className="text-xs">
+                                {assignment.publication.type}
+                              </Badge>
+                              <Badge color="zinc" className="text-xs">
+                                {assignment.publication.format}
+                              </Badge>
+                              {assignment.isMainPublication && (
+                                <Badge color="yellow" className="text-xs">
+                                  Haupt-Publikation
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                            Rolle: <span className="font-medium">{assignment.role}</span>
+                          </div>
+                          <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                            Häufigkeit: {assignment.contributionFrequency}
+                          </div>
+                          {assignment.publication.frequency && (
+                            <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                              Erscheinung: {assignment.publication.frequency}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Spezifische Themen für diese Publikation */}
+                        {assignment.topics && assignment.topics.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                              Themen für diese Publikation:
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {assignment.topics.slice(0, 3).map((topic, topicIndex) => (
+                                <Badge key={topicIndex} color="blue" className="text-xs">
+                                  {topic}
+                                </Badge>
+                              ))}
+                              {assignment.topics.length > 3 && (
+                                <Badge color="zinc" className="text-xs">
+                                  +{assignment.topics.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Import-Checkbox für diese Publikation */}
+                        <div className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                          <label className="flex items-center space-x-2 text-xs">
+                            <input
+                              type="checkbox"
+                              defaultChecked={assignment.isMainPublication}
+                              className="rounded border-zinc-300 text-primary"
+                            />
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              Diese Publikation mit importieren
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Topics */}
               <div>

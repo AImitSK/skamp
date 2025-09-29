@@ -14,7 +14,8 @@ import {
   LanguageCode,
   GdprConsent
 } from './international';
-import { ContactEnhanced, JournalistContact } from './crm-enhanced';
+import { ContactEnhanced, JournalistContact, CompanyEnhanced } from './crm-enhanced';
+import { Publication, PublicationType, PublicationFormat, PublicationFrequency } from './library';
 
 // ========================================
 // Haupt-Datenbank Entry
@@ -68,24 +69,77 @@ export interface JournalistDatabaseEntry extends BaseEntity {
 
   // ===== Berufliche Daten =====
   professionalData: {
-    // Aktueller Arbeitgeber
-    currentEmployment: {
-      mediumId?: string; // Verknüpfung zu companies_enhanced
-      mediumName: string;
+    // ERWEITERT: Vollständige Unternehmens-Daten für Import
+    employment: {
+      company: {
+        globalCompanyId: string; // Eindeutige ID in Premium-DB
+        name: string;
+        type: 'publisher' | 'media_house' | 'agency' | 'broadcast' | 'freelance';
+        website?: string;
+
+        // Vollständige Company-Daten für Import
+        fullProfile?: CompanyEnhanced;
+
+        // Media-spezifische Informationen
+        mediaInfo?: {
+          type: 'print' | 'online' | 'broadcast' | 'mixed';
+          targetAudience?: string;
+          reach?: number;
+          founded?: Date;
+          circulation?: number;
+        };
+
+        // Adresse für vollständigen Import
+        address?: InternationalAddress;
+        emails?: Array<{
+          type: 'general' | 'editorial' | 'press';
+          email: string;
+          isPrimary: boolean;
+        }>;
+        phones?: PhoneNumber[];
+      };
+
       position: string;
       department?: string;
       startDate?: Date;
-      isFreelance: boolean;
+      isMainEmployer: boolean;
+      isFreelancer: boolean;
     };
 
-    // Frühere Arbeitgeber
+    // ERWEITERT: Vollständige Publikations-Zuordnungen
+    publicationAssignments: Array<{
+      publication: {
+        globalPublicationId: string;
+        title: string;
+        type: PublicationType;
+        format: PublicationFormat;
+        frequency: PublicationFrequency;
+
+        // Vollständige Publication-Daten für Import
+        fullProfile?: Publication;
+
+        // Basis-Metriken
+        metrics?: {
+          circulation?: number;
+          monthlyPageViews?: number;
+          subscribers?: number;
+        };
+      };
+
+      // Journalist-spezifische Zuordnung
+      role: 'editor' | 'reporter' | 'columnist' | 'freelancer' | 'correspondent' | 'contributor';
+      topics?: string[]; // Spezifische Themen für diese Publikation
+      isMainPublication: boolean;
+      contributionFrequency: 'daily' | 'weekly' | 'monthly' | 'occasional';
+      startDate?: Date;
+    }>;
+
+    // Frühere Arbeitgeber (vereinfacht)
     employmentHistory?: Array<{
-      mediumName: string;
+      companyName: string;
       position: string;
-      department?: string;
       startDate: Date;
       endDate?: Date;
-      wasFreelance: boolean;
     }>;
 
     // Fachgebiete & Themen
@@ -96,7 +150,7 @@ export interface JournalistDatabaseEntry extends BaseEntity {
       geographicFocus?: CountryCode[]; // Geografischer Fokus
     };
 
-    // Medientypen
+    // Medientypen (abgeleitet aus Publications)
     mediaTypes: ('print' | 'online' | 'tv' | 'radio' | 'podcast' | 'newsletter' | 'blog')[];
 
     // Publikationsfrequenz
@@ -562,13 +616,51 @@ export interface JournalistSyncConfig {
 // Import/Export Interfaces
 // ========================================
 
+// ========================================
+// Multi-Entity Import Types
+// ========================================
+
 /**
- * Request für den Import von Journalisten aus der Datenbank
+ * Import-Strategie für Company-Handling
+ */
+export interface CompanyImportStrategy {
+  action: 'create_new' | 'use_existing' | 'merge';
+  selectedCompanyId?: string; // Bei use_existing oder merge
+  createData?: Partial<CompanyEnhanced>; // Custom-Daten für neue Company
+}
+
+/**
+ * Import-Strategie für Publications-Handling
+ */
+export interface PublicationImportStrategy {
+  action: 'import_all' | 'import_selected' | 'skip';
+  selectedPublicationIds?: string[]; // Bei import_selected
+  createData?: Array<Partial<Publication>>; // Custom-Daten für neue Publications
+}
+
+/**
+ * Import-Konfiguration für Multi-Entity-Import
+ */
+export interface MultiEntityImportConfig {
+  companyStrategy: CompanyImportStrategy;
+  publicationStrategy: PublicationImportStrategy;
+  fieldMapping?: {
+    journalist?: Record<string, string>;
+    company?: Record<string, string>;
+    publications?: Record<string, Record<string, string>>;
+  };
+}
+
+/**
+ * Erweiterte Request für Multi-Entity Import
  */
 export interface JournalistImportRequest {
   journalistIds: string[];
   organizationId: string;
   userId: string;
+
+  // ERWEITERT: Multi-Entity Konfiguration
+  multiEntityConfig: MultiEntityImportConfig;
 
   options: {
     // Import-Verhalten
@@ -584,15 +676,28 @@ export interface JournalistImportRequest {
     includeFields?: string[];
     excludeFields?: string[];
 
-    // Ziel-Einstellungen
-    targetCompanyId?: string; // Alle zu dieser Firma zuordnen
+    // Tags und Zuweisungen
     addTags?: string[]; // Diese Tags hinzufügen
     assignToUser?: string; // Diesem User zuweisen
   };
 }
 
 /**
- * Response vom Import-Prozess
+ * Multi-Entity Import Result
+ */
+export interface MultiEntityImportResult {
+  success: boolean;
+  entities: {
+    contact: ContactEnhanced | null;
+    company: CompanyEnhanced | null;
+    publications: Publication[];
+  };
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Erweiterte Response vom Multi-Entity Import-Prozess
  */
 export interface JournalistImportResponse {
   success: boolean;
@@ -602,12 +707,20 @@ export interface JournalistImportResponse {
     updated: number;
     skipped: number;
     failed: number;
+    // ERWEITERT: Multi-Entity Stats
+    companiesCreated: number;
+    companiesUpdated: number;
+    publicationsCreated: number;
+    publicationsUpdated: number;
   };
 
   results: Array<{
     journalistId: string;
     status: 'imported' | 'updated' | 'skipped' | 'failed';
+    // ERWEITERT: Multi-Entity IDs
     localContactId?: string;
+    localCompanyId?: string;
+    localPublicationIds?: string[];
     error?: string;
     details?: string;
   }>;

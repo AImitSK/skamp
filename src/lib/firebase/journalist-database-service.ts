@@ -38,9 +38,14 @@ import {
   JournalistSubscription,
   VerificationStatus,
   SyncDirection,
-  ConflictStrategy
+  ConflictStrategy,
+  MultiEntityImportResult,
+  MultiEntityImportConfig,
+  CompanyImportStrategy,
+  PublicationImportStrategy
 } from '@/types/journalist-database';
-import { ContactEnhanced, JournalistContact } from '@/types/crm-enhanced';
+import { ContactEnhanced, JournalistContact, CompanyEnhanced } from '@/types/crm-enhanced';
+import { Publication } from '@/types/library';
 import { contactsEnhancedService } from './crm-service-enhanced';
 
 // ========================================
@@ -368,57 +373,380 @@ class JournalistDatabaseService extends BaseService<JournalistDatabaseEntry> {
 
   // ===== Helper-Methoden =====
 
+  // ========================================
+  // NEUE MULTI-ENTITY IMPORT METHODEN
+  // ========================================
+
   /**
-   * Konvertiert Datenbank-Entry zu lokalem Kontakt
+   * HAUPTMETHODE: Multi-Entity Import mit Company & Publications
    */
-  private convertToContact(
+  async importWithRelations(
+    journalistId: string,
+    organizationId: string,
+    config: MultiEntityImportConfig
+  ): Promise<MultiEntityImportResult> {
+
+    const batch = writeBatch(db);
+    const result: MultiEntityImportResult = {
+      success: false,
+      entities: {
+        contact: null,
+        company: null,
+        publications: []
+      },
+      errors: [],
+      warnings: []
+    };
+
+    try {
+      // 1. Hole vollständige Journalist-Daten aus Premium-DB
+      const journalist = await this.getWithRelations(journalistId);
+      if (!journalist) {
+        result.errors.push('Journalist nicht in Premium-DB gefunden');
+        return result;
+      }
+
+      // 2. Company-Import (MUSS zuerst passieren!)
+      const companyResult = await this.handleCompanyImport(
+        journalist.professionalData.employment,
+        config.companyStrategy,
+        organizationId,
+        batch
+      );
+
+      if (!companyResult.success) {
+        result.errors.push(`Company-Import fehlgeschlagen: ${companyResult.error}`);
+        return result;
+      }
+      result.entities.company = companyResult.company;
+
+      // 3. Publications-Import (braucht Company-ID!)
+      const publicationsResult = await this.handlePublicationsImport(
+        journalist.professionalData.publicationAssignments,
+        config.publicationStrategy,
+        companyResult.company!.id!,
+        organizationId,
+        batch
+      );
+
+      if (!publicationsResult.success) {
+        result.errors.push(`Publications-Import fehlgeschlagen: ${publicationsResult.error}`);
+        return result;
+      }
+      result.entities.publications = publicationsResult.publications;
+
+      // 4. Contact-Import (mit korrekten Relationen!)
+      const contactResult = await this.handleContactImport(
+        journalist,
+        {
+          companyId: companyResult.company!.id!,
+          publicationIds: publicationsResult.publications.map(p => p.id!)
+        },
+        config.fieldMapping?.journalist,
+        organizationId,
+        batch
+      );
+
+      if (!contactResult.success) {
+        result.errors.push(`Contact-Import fehlgeschlagen: ${contactResult.error}`);
+        return result;
+      }
+      result.entities.contact = contactResult.contact;
+
+      // 5. Commit aller Änderungen atomisch
+      await batch.commit();
+      result.success = true;
+
+    } catch (error) {
+      result.errors.push(`Unerwarteter Fehler: ${error.message}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Hole Journalist mit allen Relations aus Premium-DB
+   */
+  private async getWithRelations(journalistId: string): Promise<JournalistDatabaseEntry | null> {
+    // TODO: Implementiere vollständige Premium-DB-Abfrage
+    // Für jetzt Mock-Daten verwenden
+    return null;
+  }
+
+  /**
+   * Company-Import mit verschiedenen Strategien
+   */
+  private async handleCompanyImport(
+    employment: JournalistDatabaseEntry['professionalData']['employment'],
+    strategy: CompanyImportStrategy,
+    organizationId: string,
+    batch: any
+  ): Promise<{ success: boolean; company?: CompanyEnhanced; error?: string }> {
+
+    try {
+      let targetCompany: CompanyEnhanced;
+
+      switch (strategy.action) {
+        case 'create_new':
+          targetCompany = this.createCompanyFromPremiumData(employment, organizationId);
+          const companyRef = doc(collection(db, 'organizations', organizationId, 'companies'));
+          targetCompany.id = companyRef.id;
+          batch.set(companyRef, targetCompany);
+          break;
+
+        case 'use_existing':
+          if (!strategy.selectedCompanyId) {
+            return { success: false, error: 'Keine Company-ID für existing-Strategy' };
+          }
+          targetCompany = await this.getExistingCompany(strategy.selectedCompanyId, organizationId);
+          if (!targetCompany) {
+            return { success: false, error: 'Ausgewählte Company nicht gefunden' };
+          }
+          break;
+
+        case 'merge':
+          if (!strategy.selectedCompanyId) {
+            return { success: false, error: 'Keine Company-ID für merge-Strategy' };
+          }
+          const existing = await this.getExistingCompany(strategy.selectedCompanyId, organizationId);
+          if (!existing) {
+            return { success: false, error: 'Company für Merge nicht gefunden' };
+          }
+          targetCompany = this.mergeCompanyData(existing, employment);
+          batch.update(
+            doc(db, 'organizations', organizationId, 'companies', existing.id!),
+            targetCompany
+          );
+          break;
+
+        default:
+          return { success: false, error: 'Unbekannte Company-Strategie' };
+      }
+
+      return { success: true, company: targetCompany };
+
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Publications-Import mit verschiedenen Strategien
+   */
+  private async handlePublicationsImport(
+    assignments: JournalistDatabaseEntry['professionalData']['publicationAssignments'],
+    strategy: PublicationImportStrategy,
+    publisherId: string,
+    organizationId: string,
+    batch: any
+  ): Promise<{ success: boolean; publications: Publication[]; error?: string }> {
+
+    try {
+      if (strategy.action === 'skip') {
+        return { success: true, publications: [] };
+      }
+
+      const publications: Publication[] = [];
+      const selectedAssignments = strategy.action === 'import_all'
+        ? assignments
+        : assignments.filter(a =>
+            strategy.selectedPublicationIds?.includes(a.publication.globalPublicationId)
+          );
+
+      for (const assignment of selectedAssignments) {
+        // Prüfe ob Publication bereits existiert
+        const existing = await this.findExistingPublication(
+          assignment.publication.title,
+          publisherId,
+          organizationId
+        );
+
+        if (existing) {
+          publications.push(existing);
+        } else {
+          // Erstelle neue Publication
+          const newPublication = this.createPublicationFromPremiumData(
+            assignment.publication,
+            publisherId,
+            organizationId
+          );
+
+          const pubRef = doc(collection(db, 'organizations', organizationId, 'publications'));
+          newPublication.id = pubRef.id;
+          batch.set(pubRef, newPublication);
+          publications.push(newPublication);
+        }
+      }
+
+      return { success: true, publications };
+
+    } catch (error) {
+      return { success: false, publications: [], error: error.message };
+    }
+  }
+
+  /**
+   * Contact-Import mit korrekten Relationen
+   */
+  private async handleContactImport(
     journalist: JournalistDatabaseEntry,
-    options: JournalistImportRequest['options']
-  ): Partial<ContactEnhanced> {
+    relations: { companyId: string; publicationIds: string[] },
+    fieldMapping?: Record<string, string>,
+    organizationId: string,
+    batch: any
+  ): Promise<{ success: boolean; contact?: ContactEnhanced; error?: string }> {
+
+    try {
+      const contactData = this.convertToContactWithRelations(journalist, relations, fieldMapping);
+
+      const contactRef = doc(collection(db, 'organizations', organizationId, 'contacts'));
+      contactData.id = contactRef.id;
+      batch.set(contactRef, contactData);
+
+      return { success: true, contact: contactData };
+
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ========================================
+  // HELPER METHODEN
+  // ========================================
+
+  /**
+   * Erstellt Company aus Premium-DB-Daten
+   */
+  private createCompanyFromPremiumData(
+    employment: JournalistDatabaseEntry['professionalData']['employment'],
+    organizationId: string
+  ): CompanyEnhanced {
+    const company = employment.company;
+
     return {
+      // Basis-Felder
+      organizationId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'journalist-database-import',
+      updatedBy: 'journalist-database-import',
+
+      // Company-Daten aus Premium-DB
+      name: company.name,
+      type: 'media' as any, // TODO: Map company.type richtig
+      officialName: company.name,
+
+      // Adresse falls vorhanden
+      ...(company.address && { mainAddress: company.address }),
+
+      // Kontaktdaten
+      ...(company.emails && {
+        emails: company.emails.map(e => ({
+          type: e.type,
+          email: e.email,
+          isPrimary: e.isPrimary
+        }))
+      }),
+
+      ...(company.phones && { phones: company.phones }),
+      ...(company.website && { website: company.website }),
+
+      // Media-Info
+      mediaInfo: {
+        type: company.mediaInfo?.type || 'mixed',
+        targetAudience: company.mediaInfo?.targetAudience,
+        reach: company.mediaInfo?.reach,
+        founded: company.mediaInfo?.founded,
+        ...(company.mediaInfo?.circulation && { circulation: company.mediaInfo.circulation })
+      },
+
+      // Custom-Felder für Tracking
+      customFields: {
+        globalCompanyId: company.globalCompanyId,
+        importedFromPremiumDB: true,
+        importedAt: new Date()
+      }
+    } as CompanyEnhanced;
+  }
+
+  /**
+   * Konvertiert Journalist zu Contact MIT korrekten Relationen
+   */
+  private convertToContactWithRelations(
+    journalist: JournalistDatabaseEntry,
+    relations: { companyId: string; publicationIds: string[] },
+    fieldMapping?: Record<string, string>
+  ): ContactEnhanced {
+    return {
+      // Basis-Felder
+      organizationId: '', // Wird in handleContactImport gesetzt
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: 'journalist-database-import',
+      updatedBy: 'journalist-database-import',
+
+      // Persönliche Daten
       name: journalist.personalData.name,
       displayName: journalist.personalData.displayName,
       emails: journalist.personalData.emails.map(e => ({
-        type: e.type as 'business' | 'private' | 'other',
+        type: e.type as any,
         email: e.email,
         isPrimary: e.isPrimary,
         isVerified: e.isVerified
       })),
       phones: journalist.personalData.phones,
-      position: journalist.professionalData.currentEmployment.position,
-      companyName: journalist.professionalData.currentEmployment.mediumName,
-      companyId: options.targetCompanyId,
 
+      // KRITISCH: Korrekte Company-Verknüpfung
+      companyId: relations.companyId,
+      companyName: journalist.professionalData.employment.company.name,
+      position: journalist.professionalData.employment.position,
+      department: journalist.professionalData.employment.department,
+
+      // KRITISCH: Korrekte Publications-Verknüpfungen
       mediaProfile: {
         isJournalist: true,
-        publicationIds: [], // Wird später gemappt
+        publicationIds: relations.publicationIds, // NICHT mehr leer!
         beats: journalist.professionalData.expertise.primaryTopics,
         mediaTypes: journalist.professionalData.mediaTypes as any,
-        influence: {
-          score: journalist.socialMedia.influence.influenceScore,
-          reach: journalist.socialMedia.influence.totalFollowers,
-          engagement: journalist.socialMedia.influence.engagementScore
-        },
         preferredTopics: journalist.professionalData.expertise.primaryTopics
       },
 
-      socialProfiles: journalist.socialMedia.profiles.map(p => ({
+      // Social Media
+      socialProfiles: journalist.socialMedia?.profiles?.map(p => ({
         platform: p.platform,
         url: p.url,
         handle: p.handle,
         verified: p.verified
-      })),
+      })) || [],
 
+      // Custom-Felder für Tracking
       customFields: {
         journalistDatabaseId: journalist.globalId,
-        verificationStatus: journalist.metadata.verification.status,
-        qualityScore: journalist.metadata.dataQuality.overallScore,
-        lastSyncedAt: serverTimestamp()
-      },
-
-      tagIds: options.addTags
-    };
+        verificationStatus: journalist.metadata?.verification?.status,
+        qualityScore: journalist.metadata?.dataQuality?.overallScore,
+        importedFromPremiumDB: true,
+        lastSyncedAt: new Date()
+      }
+    } as ContactEnhanced;
   }
+
+  /**
+   * ALTE METHODE: Wird durch importWithRelations ersetzt
+   * @deprecated Verwende stattdessen importWithRelations()
+   */
+  private convertToContact(
+    journalist: JournalistDatabaseEntry,
+    options: JournalistImportRequest['options']
+  ): Partial<ContactEnhanced> {
+    // Diese Methode ist KAPUTT - verwendet sie nicht mehr!
+    throw new Error('convertToContact ist deprecated. Verwende importWithRelations() stattdessen.');
+  }
+
+  // TODO: Implementiere weitere Helper-Methoden:
+  // - getExistingCompany()
+  // - mergeCompanyData()
+  // - findExistingPublication()
+  // - createPublicationFromPremiumData()
 
   /**
    * Findet existierenden lokalen Kontakt
