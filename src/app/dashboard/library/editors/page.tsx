@@ -1924,13 +1924,6 @@ export default function EditorsPage() {
                       </div>
                     </div>
 
-                    {/* Medienhaus wird automatisch beim Import übernommen */}
-                    <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
-                        <CheckIcon className="h-4 w-4" />
-                        <span>Wird beim Import automatisch übernommen</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -2002,13 +1995,6 @@ export default function EditorsPage() {
                           </div>
                         )}
 
-                        {/* Publikation wird automatisch beim Import übernommen */}
-                        <div className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                          <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
-                            <CheckIcon className="h-4 w-4" />
-                            <span>Wird beim Import automatisch übernommen</span>
-                          </div>
-                        </div>
                       </div>
                     ))}
                   </div>
