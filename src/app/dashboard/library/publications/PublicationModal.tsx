@@ -17,8 +17,10 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { LanguageSelectorMulti } from "@/components/ui/language-selector";
 import { CountrySelectorMulti } from "@/components/ui/country-selector";
+import { interceptSave } from '@/lib/utils/global-interceptor';
+import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 
-import { 
+import {
   CheckIcon,
   XMarkIcon,
   PlusIcon,
@@ -181,6 +183,7 @@ function TagInput({
 export function PublicationModal({ isOpen, onClose, publication, onSuccess, preselectedPublisherId }: PublicationModalProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const { autoGlobalMode } = useAutoGlobal();
   const [loading, setLoading] = useState(false);
 const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
 const [loadingPublishers, setLoadingPublishers] = useState(true);
@@ -569,13 +572,19 @@ const loadPublishers = async () => {
       // Clean the object to remove any remaining undefined values
       const cleanedData = removeUndefined(publicationData);
 
+      // Apply global interceptor if in autoGlobalMode
+      const dataToSave = interceptSave(cleanedData, 'publication', user, {
+        autoGlobalMode,
+        liveMode: true
+      });
+
       if (publication?.id) {
-        await publicationService.update(publication.id, cleanedData, {
+        await publicationService.update(publication.id, dataToSave, {
           organizationId: currentOrganization?.id || '',
           userId: user?.uid || ''
         });
       } else {
-        await publicationService.create(cleanedData, {
+        await publicationService.create(dataToSave, {
           organizationId: currentOrganization?.id || '',
           userId: user?.uid || ''
         });

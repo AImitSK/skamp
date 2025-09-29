@@ -3,10 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
-import { publicationService } from "@/lib/firebase/library-service";
-import { ContactEnhanced, CompanyEnhanced, companyTypeLabels } from "@/types/crm-enhanced";
-import { Publication } from "@/types/library";
+import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
+import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 
 // Deutsche Übersetzungen
 const roleTranslations = {
@@ -53,188 +51,7 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
 
-// Helper function to convert ContactEnhanced to JournalistDatabaseEntry
-function convertContactToJournalist(
-  contact: ContactEnhanced,
-  companies: CompanyEnhanced[],
-  publications: Publication[]
-): JournalistDatabaseEntry | null {
-  // Only include contacts that are journalists and global
-  if (!contact.mediaProfile?.isJournalist || !contact.isGlobal) {
-    return null;
-  }
 
-  // Find real company data
-  const realCompany = companies.find(comp => comp.id === contact.companyId);
-
-  // Find real publications data
-  const realPublications = contact.mediaProfile?.publicationIds
-    ? publications.filter(pub => contact.mediaProfile?.publicationIds.includes(pub.id!))
-    : [];
-
-  const primaryEmail = contact.emails?.find(e => e.isPrimary) || contact.emails?.[0];
-  const primaryPhone = contact.phones?.find(p => p.isPrimary) || contact.phones?.[0];
-
-  return {
-    id: contact.id!,
-    globalId: contact.id!,
-    version: contact.globalMetadata?.version || 1,
-    lastModifiedBy: contact.globalMetadata?.addedBy || contact.updatedBy || 'unknown',
-    organizationId: contact.organizationId || '',
-    createdAt: contact.createdAt,
-    updatedAt: contact.updatedAt,
-    createdBy: contact.createdBy || '',
-    updatedBy: contact.updatedBy || '',
-    personalData: {
-      name: {
-        salutation: contact.name?.salutation,
-        firstName: contact.name?.firstName || '',
-        lastName: contact.name?.lastName || '',
-        title: contact.name?.title
-      },
-      displayName: contact.displayName,
-      emails: contact.emails?.map(email => ({
-        email: email.email,
-        type: email.type as any || 'business',
-        isPrimary: email.isPrimary || false,
-        isVerified: email.isVerified || false
-      })) || [],
-      phones: contact.phones?.map(phone => ({
-        number: phone.number,
-        type: phone.type as any || 'business',
-        countryCode: phone.countryCode || 'DE',
-        isPrimary: phone.isPrimary || false,
-        isVerified: phone.isVerified || false
-      })) || [],
-      address: contact.addresses?.[0] ? {
-        street: contact.addresses[0].street,
-        city: contact.addresses[0].city,
-        state: contact.addresses[0].state,
-        postalCode: contact.addresses[0].postalCode,
-        country: contact.addresses[0].countryCode
-      } : undefined,
-      socialProfiles: contact.socialProfiles?.map(social => ({
-        platform: social.platform as any,
-        url: social.url,
-        handle: social.handle,
-        isVerified: social.isVerified || false
-      })) || [],
-      languages: contact.languages || [],
-      timezone: contact.timezone
-    },
-    professionalData: {
-      // NEUE Struktur: Employment mit Company-Daten
-      employment: {
-        company: {
-          globalCompanyId: realCompany?.id || contact.companyId || '',
-          name: realCompany?.name || contact.companyName || '',
-          type: realCompany?.type || 'other' as any,
-          website: realCompany?.website,
-          fullProfile: realCompany
-        },
-        position: contact.position || '',
-        department: contact.department,
-        startDate: undefined, // TODO: Add to ContactEnhanced if needed
-        isMainEmployer: true, // TODO: Load from real data if available
-        isFreelancer: contact.mediaProfile?.isFreelancer || false
-      },
-
-      // LEGACY Struktur für Backwards Compatibility
-      currentEmployment: {
-        mediumName: realCompany?.name || contact.companyName || '',
-        position: contact.position || '',
-        isMainEmployer: true
-      },
-
-      // NEUE Struktur: Publication Assignments
-      publicationAssignments: realPublications.map((realPub, index) => ({
-        publication: {
-          globalPublicationId: realPub.id!,
-          title: realPub.title,
-          type: realPub.type,
-          format: realPub.format,
-          frequency: realPub.frequency,
-          fullProfile: realPub
-        },
-        role: (contact.position?.toLowerCase().includes('chef') || contact.position?.toLowerCase().includes('editor') || contact.position?.toLowerCase().includes('leiter')) ? 'editor' : 'reporter' as any,
-        topics: contact.mediaProfile?.beats || [],
-        isMainPublication: index === 0,
-        contributionFrequency: realPub.frequency || 'unknown' as any
-      })),
-
-      // Frühere Arbeitgeber (vereinfacht)
-      employmentHistory: [],
-
-      // Fachgebiete & Themen
-      expertise: {
-        primaryTopics: contact.mediaProfile?.beats || contact.mediaProfile?.preferredTopics || contact.topics || contact.personalInfo?.interests || [],
-        secondaryTopics: contact.mediaProfile?.preferredTopics || contact.topics || [],
-        industries: [],
-        geographicFocus: []
-      },
-
-      // Medientypen (abgeleitet aus Publications)
-      mediaTypes: contact.mediaProfile?.mediaTypes || realPublications.map(pub => pub.format).filter(Boolean) as any[]
-    },
-    preferences: {
-      communicationChannels: contact.preferences?.communicationChannels || contact.communicationPreferences?.preferredChannel ? [contact.communicationPreferences.preferredChannel] : [],
-      bestContactTime: contact.preferences?.bestContactTime || contact.communicationPreferences?.preferredTime,
-      preferredLanguage: contact.preferences?.preferredLanguage || contact.communicationPreferences?.preferredLanguage,
-      topics: contact.mediaProfile?.beats || contact.mediaProfile?.preferredTopics || contact.topics || contact.personalInfo?.interests || [],
-      frequency: contact.preferences?.frequency
-    },
-    metadata: {
-      // Verifizierungsstatus
-      verification: {
-        status: contact.emailVerified ? 'verified' : 'unverified' as 'unverified' | 'pending' | 'verified' | 'rejected' | 'expired',
-        method: contact.emailVerified ? 'email' : undefined,
-        verifiedAt: contact.emailVerified ? contact.updatedAt : undefined,
-        verifiedBy: contact.emailVerified ? contact.updatedBy : undefined
-      },
-
-      // Datenqualität
-      dataQuality: {
-        completeness: contact.globalMetadata?.qualityScore || 70,
-        accuracy: 85,
-        freshness: 90,
-        overallScore: contact.globalMetadata?.qualityScore || 0
-      },
-
-      // Datenquellen
-      sources: [{
-        type: 'import' as 'manual' | 'api' | 'crowdsource' | 'import' | 'partner',
-        name: 'CRM Import',
-        contributedAt: contact.createdAt,
-        contributedBy: contact.organizationId,
-        confidence: 80,
-        fields: ['personalData', 'professionalData']
-      }],
-      dataPrivacy: {
-        consentGiven: contact.gdprConsent?.marketing || false,
-        consentDate: contact.gdprConsent?.consentDate,
-        optedOut: contact.gdprConsent?.optedOut || false,
-        source: contact.globalMetadata?.sourceType || 'manual'
-      },
-      tags: [], // TODO: Map from tagIds if needed
-      globalMetadata: {
-        isGlobal: contact.isGlobal || false,
-        addedBy: contact.globalMetadata?.addedBy || contact.createdBy || '',
-        addedAt: contact.globalMetadata?.addedAt || contact.createdAt,
-        autoPromoted: contact.globalMetadata?.autoPromoted || false,
-        isDraft: contact.globalMetadata?.isDraft || false,
-        publishedAt: contact.globalMetadata?.publishedAt,
-        reviewedBy: contact.globalMetadata?.reviewedBy,
-        version: contact.globalMetadata?.version || 1,
-        qualityScore: contact.globalMetadata?.qualityScore || 0
-      },
-      changeHistory: [] // TODO: Implement if needed
-    }
-  };
-}
-
-// Temporary types until journalist-database files are properly built
-type VerificationStatus = 'verified' | 'pending' | 'unverified';
-type MediaType = 'online' | 'print' | 'tv' | 'radio' | 'podcast';
 
 interface JournalistSubscription {
   organizationId: string;
@@ -525,7 +342,7 @@ function JournalistCard({
   journalist: JournalistDatabaseEntry;
   onImport: (journalist: JournalistDatabaseEntry) => void;
   onViewDetails: (journalist: JournalistDatabaseEntry) => void;
-  onUpgrade: () => void;
+  onUpgrade: (journalist: JournalistDatabaseEntry) => void;
   subscription: JournalistSubscription | null;
   isImporting?: boolean;
 }) {
@@ -549,7 +366,7 @@ function JournalistCard({
                 {journalist.personalData.displayName}
               </h3>
               <p className="text-xs text-gray-500">
-                {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'} bei {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
+                {journalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last} bei {journalist.professionalData.employment.company?.name || 'Selbstständig'}
               </p>
             </div>
           </div>
@@ -666,7 +483,7 @@ function JournalistCard({
             </Button>
           ) : (
             <Button
-              onClick={onUpgrade}
+              onClick={() => onUpgrade(journalist)}
               className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 text-sm px-4 py-1.5"
             >
               <StarIcon className="h-4 w-4 mr-1" />
@@ -715,9 +532,7 @@ function ImportDialog({
   });
 
   const [duplicateWarning, setDuplicateWarning] = useState(false);
-  const [existingCompanies, setExistingCompanies] = useState<any[]>([]); // TODO: Proper type
-  const [existingPublications, setExistingPublications] = useState<any[]>([]); // TODO: Proper type
-
+  const [existingCompanies, setExistingCompanies] = useState<any[]>([]);   const [existingPublications, setExistingPublications] = useState<any[]>([]); 
   // Reset state when journalist changes
   useEffect(() => {
     if (journalist) {
@@ -726,12 +541,11 @@ function ImportDialog({
         name: journalist.personalData.displayName,
         email: journalist.personalData.emails.find(e => e.isPrimary)?.email || journalist.personalData.emails[0]?.email || '',
         phone: journalist.personalData.phones?.[0]?.number || '',
-        company: journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium',
-        position: journalist.professionalData.currentEmployment?.position || 'Unbekannte Position',
+        company: journalist.professionalData.employment.company?.name || 'Selbstständig',
+        position: journalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last,
         topics: (journalist.professionalData.expertise.primaryTopics || []).join(', '),
         notes: `Importiert aus Journalisten-Datenbank\nScore: ${journalist.metadata?.dataQuality?.overallScore || 0}`
       });
-      // Mock duplicate check
       setDuplicateWarning(Math.random() > 0.7); // 30% chance of duplicate warning
     }
   }, [journalist]);
@@ -797,7 +611,7 @@ function ImportDialog({
                   {journalist.personalData.displayName}
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'} bei {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
+                  {journalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last} bei {journalist.professionalData.employment.company?.name || 'Selbstständig'}
                 </p>
                 <div className="mt-2 flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
                   <span>Score: {journalist.metadata?.dataQuality?.overallScore || 0}</span>
@@ -1299,6 +1113,8 @@ export default function EditorsPage() {
   const [selectedJournalist, setSelectedJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [detailJournalist, setDetailJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importDialogJournalist, setImportDialogJournalist] = useState<JournalistDatabaseEntry | null>(null);
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -1312,7 +1128,6 @@ export default function EditorsPage() {
 
     setLoading(true);
     try {
-      // Mock subscription check
       const mockSubscription: JournalistSubscription = {
         organizationId: currentOrganization.id,
         plan: 'free', // Change to 'professional' to test premium features
@@ -1357,21 +1172,11 @@ export default function EditorsPage() {
       setSubscription(mockSubscription);
 
       // Load real global journalists from all organizations
-      // Load all required data from database
-      const [allContacts, allCompanies, allPublications] = await Promise.all([
-        contactsEnhancedService.getAll(currentOrganization.id),
-        companiesEnhancedService.getAll(currentOrganization.id),
-        publicationService.getAll(currentOrganization.id)
-      ]);
-
-      // Store in state
-      setCompanies(allCompanies);
-      setPublications(allPublications);
-
-      // Convert global journalist contacts to database entries with real data
-      const globalJournalists = (allContacts || [])
-        .map(contact => convertContactToJournalist(contact, allCompanies, allPublications))
-        .filter((journalist): journalist is JournalistDatabaseEntry => journalist !== null);
+      // EINFACH: Nur globale Journalisten laden
+      const globalJournalists = await journalistDatabaseService.search({
+        filters: {},
+        organizationId: currentOrganization.id
+      });
 
       setJournalists(globalJournalists);
     } catch (error) {
@@ -1393,7 +1198,7 @@ export default function EditorsPage() {
         const searchLower = searchTerm.toLowerCase();
         const matches =
           journalist.personalData.displayName.toLowerCase().includes(searchLower) ||
-          (journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium').toLowerCase().includes(searchLower) ||
+          (journalist.professionalData.employment.company?.name || 'Selbstständig').toLowerCase().includes(searchLower) ||
           (journalist.professionalData.expertise.primaryTopics || []).some(t => t.toLowerCase().includes(searchLower));
         if (!matches) return false;
       }
@@ -1458,7 +1263,6 @@ export default function EditorsPage() {
     setImportingIds(prev => new Set([...prev, selectedJournalist.id!]));
 
     try {
-      // Mock import - replace with real API call
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       showAlert('success', 'Import erfolgreich', `${selectedJournalist.personalData.displayName} wurde in Ihr CRM importiert.`);
@@ -1474,8 +1278,9 @@ export default function EditorsPage() {
     }
   };
 
-  const handleUpgrade = () => {
-    showAlert('info', 'Premium-Upgrade', 'Upgrade-Funktionalität wird in Kürze verfügbar sein.');
+  const handleUpgrade = (journalist: JournalistDatabaseEntry) => {
+    setImportDialogJournalist(journalist);
+    setShowImportDialog(true);
   };
 
   const handleViewDetails = (journalist: JournalistDatabaseEntry) => {
@@ -1762,7 +1567,7 @@ export default function EditorsPage() {
                           {journalist.personalData.displayName}
                         </button>
                         <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-1">
-                          {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
+                          {journalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
                         </div>
                       </div>
 
@@ -1772,9 +1577,7 @@ export default function EditorsPage() {
                           <NewspaperIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-zinc-900 dark:text-white truncate">
-                              {journalist.professionalData.employment?.company?.name ||
-                               journalist.professionalData.currentEmployment?.mediumName ||
-                               'Unbekanntes Medium'}
+                              {journalist.professionalData.employment.company?.name || 'Selbstständig'}
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                               {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || 'Medienhaus'}
@@ -1901,7 +1704,7 @@ export default function EditorsPage() {
                           </Button>
                         ) : (
                           <Button
-                            onClick={handleUpgrade}
+                            onClick={() => handleUpgrade(journalist)}
                             className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 text-xs px-3 py-1.5"
                           >
                             <StarIcon className="h-3 w-3" />
@@ -1925,12 +1728,19 @@ export default function EditorsPage() {
         </div>
       )}
 
-      {/* Import Dialog */}
-      <ImportDialog
-        journalist={selectedJournalist}
-        onClose={() => setSelectedJournalist(null)}
-        onConfirm={handleConfirmImport}
-        isLoading={importingIds.has(selectedJournalist?.id || '')}
+      {/* Import Dialog - Relations aware */}
+      <JournalistImportDialog
+        isOpen={showImportDialog}
+        onClose={() => {
+          setShowImportDialog(false);
+          setImportDialogJournalist(null);
+        }}
+        journalist={importDialogJournalist}
+        organizationId={currentOrganization?.id || ''}
+        onSuccess={() => {
+          showAlert('success', 'Import erfolgreich', 'Journalist wurde zu Ihrem CRM hinzugefügt');
+          loadData(); // Reload data
+        }}
       />
 
       {/* Detail Modal */}
@@ -1949,7 +1759,7 @@ export default function EditorsPage() {
                     {detailJournalist.personalData.displayName}
                   </h3>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {detailJournalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
+                    {detailJournalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
                   </p>
                 </div>
               </div>
@@ -2002,8 +1812,8 @@ export default function EditorsPage() {
                       <UserIcon className="h-4 w-4 text-zinc-400" />
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
                         {detailJournalist.professionalData.employment?.position ||
-                         detailJournalist.professionalData.currentEmployment?.position ||
-                         'Unbekannte Position'}
+                         detailJournalist.professionalData.employment.position ||
+                         journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
                       </span>
                     </div>
                     {detailJournalist.professionalData.employment?.department && (
@@ -2074,7 +1884,7 @@ export default function EditorsPage() {
                         size="sm"
                         color="zinc"
                         className="text-xs"
-                        disabled={true} // TODO: Prüfe ob Company bereits importiert
+                        disabled={false}
                       >
                         Medienhaus ins CRM importieren
                       </Button>
