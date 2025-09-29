@@ -1175,9 +1175,8 @@ export default function EditorsPage() {
       // EINFACH: Nur globale Journalisten laden
       const globalJournalists = await journalistDatabaseService.search({
         filters: {},
-        organizationId: currentOrganization.id,
-        subscription: mockSubscription
-      });
+        organizationId: currentOrganization.id
+      }, mockSubscription);
 
       setJournalists(globalJournalists);
     } catch (error) {
