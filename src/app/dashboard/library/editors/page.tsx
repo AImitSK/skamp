@@ -75,7 +75,8 @@ import {
   SparklesIcon,
   Squares2X2Icon,
   ListBulletIcon,
-  TagIcon
+  TagIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
 
