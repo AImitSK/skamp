@@ -52,15 +52,14 @@ export function JournalistImportDialog({
 
   // Import Configuration
   const [companyStrategy, setCompanyStrategy] = useState<CompanyImportStrategy>('create_new');
-  const [publicationStrategy, setPublicationStrategy] = useState<PublicationImportStrategy>('import_all');
-  const [selectedPublicationIds, setSelectedPublicationIds] = useState<string[]>([]);
+  const [publicationStrategy] = useState<PublicationImportStrategy>('import_all'); // Immer alle importieren
+  const [selectedPublicationIds] = useState<string[]>([]); // Nicht mehr verwendet
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
 
   const handleClose = useCallback(() => {
     setCurrentStep('preview');
     setCompanyStrategy('create_new');
-    setPublicationStrategy('import_all');
-    setSelectedPublicationIds([]);
+    // publicationStrategy und selectedPublicationIds sind jetzt konstant
     setSelectedCompanyId('');
     setConflicts(null);
     onClose();
@@ -104,8 +103,8 @@ export function JournalistImportDialog({
     try {
       const config: MultiEntityImportConfig = {
         companyStrategy,
-        publicationStrategy,
-        selectedPublicationIds: publicationStrategy === 'import_selected' ? selectedPublicationIds : undefined,
+        publicationStrategy: 'import_all', // Immer alle importieren
+        selectedPublicationIds: undefined, // Alle importieren, keine Auswahl
         selectedCompanyId: companyStrategy === 'use_existing' ? selectedCompanyId : undefined,
         fieldMapping: {} // TODO: Implement field mapping
       };
@@ -179,9 +178,7 @@ export function JournalistImportDialog({
             companyStrategy={companyStrategy}
             setCompanyStrategy={setCompanyStrategy}
             publicationStrategy={publicationStrategy}
-            setPublicationStrategy={setPublicationStrategy}
             selectedPublicationIds={selectedPublicationIds}
-            setSelectedPublicationIds={setSelectedPublicationIds}
           />
         )}
 
@@ -312,18 +309,14 @@ function RelationsStep({
   companyStrategy,
   setCompanyStrategy,
   publicationStrategy,
-  setPublicationStrategy,
-  selectedPublicationIds,
-  setSelectedPublicationIds
+  selectedPublicationIds
 }: {
   journalist: JournalistDatabaseEntry;
   conflicts: ConflictCheck | null;
   companyStrategy: CompanyImportStrategy;
   setCompanyStrategy: (strategy: CompanyImportStrategy) => void;
   publicationStrategy: PublicationImportStrategy;
-  setPublicationStrategy: (strategy: PublicationImportStrategy) => void;
   selectedPublicationIds: string[];
-  setSelectedPublicationIds: (ids: string[]) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -334,69 +327,79 @@ function RelationsStep({
         </Text>
       </div>
 
-      {/* Company Strategy */}
-      <div className="border rounded-lg p-4">
-        <Text className="font-medium mb-3">Unternehmen-Strategie</Text>
+      {/* Company Strategy - IMPORT IST PFLICHT */}
+      <div className="border rounded-lg p-4 bg-green-50">
+        <div className="flex items-center mb-3">
+          <InformationCircleIcon className="w-5 h-5 text-green-600 mr-2" />
+          <Text className="font-medium text-green-900">
+            Medienhaus: {journalist.professionalData.employment.company?.name}
+          </Text>
+        </div>
+
         {conflicts?.hasCompanyConflict && (
           <div className="mb-3 p-3 bg-yellow-50 rounded-md flex items-start">
             <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500 mr-2 mt-0.5" />
             <Text className="text-yellow-800 text-sm">
-              Ähnliche Unternehmen bereits vorhanden
+              Ähnliche Unternehmen bereits vorhanden - Wählen Sie eine Import-Strategie
             </Text>
           </div>
         )}
 
+        <div className="mb-3 p-3 bg-green-100 rounded-md">
+          <Text className="text-green-800 text-sm">
+            <strong>Das Medienhaus wird automatisch verarbeitet.</strong><br/>
+            Wählen Sie aus, wie mit bestehenden Unternehmensdaten verfahren werden soll:
+          </Text>
+        </div>
+
         <RadioGroup value={companyStrategy} onChange={setCompanyStrategy}>
           <Radio value="create_new">
-            Neue Firma anlegen: {journalist.professionalData.employment.company?.name}
+            <div>
+              <Text className="font-medium">Neue Firma anlegen</Text>
+              <Text className="text-sm text-gray-600">Erstellt "{journalist.professionalData.employment.company?.name}" als neues Unternehmen</Text>
+            </div>
           </Radio>
           <Radio value="use_existing">
-            Mit bestehender Firma verknüpfen
+            <div>
+              <Text className="font-medium">Mit bestehender Firma verknüpfen</Text>
+              <Text className="text-sm text-gray-600">Journalist wird einer bereits vorhandenen Firma zugeordnet</Text>
+            </div>
           </Radio>
           <Radio value="merge">
-            Firmendaten zusammenführen
+            <div>
+              <Text className="font-medium">Firmendaten zusammenführen</Text>
+              <Text className="text-sm text-gray-600">Neue Daten werden mit bestehender Firma kombiniert</Text>
+            </div>
           </Radio>
         </RadioGroup>
       </div>
 
-      {/* Publication Strategy */}
-      <div className="border rounded-lg p-4">
-        <Text className="font-medium mb-3">Publikations-Strategie</Text>
+      {/* Publication Strategy - ALLE PUBLIKATIONEN SIND PFLICHT */}
+      <div className="border rounded-lg p-4 bg-blue-50">
+        <div className="flex items-center mb-3">
+          <InformationCircleIcon className="w-5 h-5 text-blue-600 mr-2" />
+          <Text className="font-medium text-blue-900">Publikationen (Pflicht-Import)</Text>
+        </div>
 
-        <RadioGroup value={publicationStrategy} onChange={setPublicationStrategy}>
-          <Radio value="import_all">
-            Alle {journalist.professionalData.publicationAssignments?.length || 0} Publikationen importieren
-          </Radio>
-          <Radio value="import_selected">
-            Ausgewählte Publikationen importieren
-          </Radio>
-          <Radio value="skip">
-            Publikationen überspringen
-          </Radio>
-        </RadioGroup>
+        <div className="mb-3 p-3 bg-blue-100 rounded-md">
+          <Text className="text-blue-800 text-sm">
+            <strong>Alle Publikationen werden automatisch importiert.</strong><br/>
+            Dies ist erforderlich, damit die CRM-Zuordnungen korrekt funktionieren.
+          </Text>
+        </div>
 
-        {/* Selected Publications */}
-        {publicationStrategy === 'import_selected' && (
-          <div className="mt-4 space-y-2">
-            {journalist.professionalData.publicationAssignments?.map((assignment, index) => (
-              <label key={index} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={selectedPublicationIds.includes(assignment.publication.globalPublicationId || '')}
-                  onChange={(checked) => {
-                    const id = assignment.publication.globalPublicationId || '';
-                    if (checked) {
-                      setSelectedPublicationIds([...selectedPublicationIds, id]);
-                    } else {
-                      setSelectedPublicationIds(selectedPublicationIds.filter(pid => pid !== id));
-                    }
-                  }}
-                />
-                <Text className="text-sm">{assignment.publication.title}</Text>
-                <Badge variant="outline" className="text-xs">{assignment.role}</Badge>
-              </label>
-            ))}
-          </div>
-        )}
+        <div className="space-y-2">
+          {journalist.professionalData.publicationAssignments?.map((assignment, index) => (
+            <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex items-center space-x-2">
+                <CheckIcon className="w-4 h-4 text-green-600" />
+                <Text className="text-sm font-medium">{assignment.publication.title}</Text>
+              </div>
+              <Badge variant="outline" className="text-xs">{assignment.role}</Badge>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
@@ -423,11 +426,7 @@ function ConfirmStep({
   };
 
   const getPublicationStrategyLabel = (strategy: PublicationImportStrategy) => {
-    switch (strategy) {
-      case 'import_all': return 'Alle importieren';
-      case 'import_selected': return `${selectedPublicationIds.length} ausgewählte importieren`;
-      case 'skip': return 'Überspringen';
-    }
+    return `Alle ${journalist.professionalData.publicationAssignments?.length || 0} Publikationen importieren`;
   };
 
   return (
@@ -446,7 +445,7 @@ function ConfirmStep({
         </div>
 
         <div className="flex items-center justify-between">
-          <Text className="font-medium">Unternehmen</Text>
+          <Text className="font-medium">Medienhaus</Text>
           <Text className="text-green-600">✓ {getCompanyStrategyLabel(companyStrategy)}</Text>
         </div>
 

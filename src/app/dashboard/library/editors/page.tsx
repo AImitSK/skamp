@@ -420,8 +420,8 @@ function JournalistCard({
       <div className="p-4 space-y-3">
         {/* Contact Info */}
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center text-gray-600">
-            <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400" />
+          <div className="flex items-center text-gray-600 min-w-0">
+            <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             {primaryEmail ? (
               <a href={`mailto:${primaryEmail}`} className="text-primary hover:text-primary-hover truncate">
                 {primaryEmail}
@@ -431,8 +431,8 @@ function JournalistCard({
             )}
           </div>
 
-          <div className="flex items-center text-gray-600">
-            <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
+          <div className="flex items-center text-gray-600 min-w-0">
+            <PhoneIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             {hasPhone ? (
               <span className="text-gray-600">Verfügbar</span>
             ) : (
@@ -461,13 +461,18 @@ function JournalistCard({
 
         {/* Media Types & Stats */}
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-2">
-            <div className="flex space-x-1">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
+            <div className="flex space-x-1 flex-wrap">
               {(journalist.professionalData.mediaTypes || []).slice(0, 3).map((type, index) => (
                 <Badge key={index} color="blue" className="text-xs">
                   {type}
                 </Badge>
               ))}
+              {(journalist.professionalData.mediaTypes || []).length > 3 && (
+                <Badge color="zinc" className="text-xs">
+                  +{(journalist.professionalData.mediaTypes || []).length - 3}
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -1660,9 +1665,6 @@ export default function EditorsPage() {
                 <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Publikationen
                 </div>
-                <div className="w-36 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Status
-                </div>
                 <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                   Score
                 </div>
@@ -1672,7 +1674,7 @@ export default function EditorsPage() {
                 <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kontakt
                 </div>
-                <div className="w-24"></div>
+                <div className="w-24 text-center"></div>
               </div>
             </div>
 
@@ -1741,23 +1743,6 @@ export default function EditorsPage() {
                         </div>
                       </div>
 
-                      {/* TODO: Remove Verification Status - only exists for publications */}
-                      {/* <div className="w-36 px-4">
-                        {journalist.metadata?.verification?.status === 'verified' ? (
-                          <Badge color="green" className="text-xs">
-                            <CheckBadgeIcon className="h-3 w-3 mr-1" />
-                            Verifiziert
-                          </Badge>
-                        ) : journalist.metadata?.verification?.status === 'pending' ? (
-                          <Badge color="yellow" className="text-xs">
-                            Ausstehend
-                          </Badge>
-                        ) : (
-                          <Badge color="gray" className="text-xs">
-                            Nicht verifiziert
-                          </Badge>
-                        )}
-                      </div> */}
 
                       {/* Quality Score */}
                       <div className="w-24 px-4 text-center">
