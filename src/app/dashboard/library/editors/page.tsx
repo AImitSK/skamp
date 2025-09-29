@@ -122,13 +122,13 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       publicationAssignments: contact.mediaProfile?.publicationIds?.map((pubId, index) => ({
         publication: {
           globalPublicationId: pubId,
-          title: `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
+          title: contact.companyName ? `${contact.companyName} Publikation` : `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
           type: 'newspaper' as any,
           format: 'online' as any,
           frequency: 'daily' as any,
           fullProfile: undefined
         },
-        role: 'reporter' as any,
+        role: (contact.position?.toLowerCase().includes('chef') || contact.position?.toLowerCase().includes('editor') || contact.position?.toLowerCase().includes('leiter')) ? 'editor' : 'reporter' as any,
         topics: contact.mediaProfile?.beats || [],
         isMainPublication: index === 0,
         contributionFrequency: 'daily' as any
@@ -139,8 +139,8 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
 
       // Fachgebiete & Themen
       expertise: {
-        primaryTopics: contact.mediaProfile?.beats || contact.topics || [],
-        secondaryTopics: contact.mediaProfile?.preferredTopics || [],
+        primaryTopics: contact.mediaProfile?.beats || contact.mediaProfile?.preferredTopics || contact.topics || contact.personalInfo?.interests || [],
+        secondaryTopics: contact.mediaProfile?.preferredTopics || contact.topics || [],
         industries: [],
         geographicFocus: []
       },
@@ -152,7 +152,7 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       communicationChannels: contact.preferences?.communicationChannels || ['email'],
       bestContactTime: contact.preferences?.bestContactTime,
       preferredLanguage: contact.preferences?.preferredLanguage || 'de',
-      topics: contact.mediaProfile?.topics || contact.topics || [],
+      topics: contact.mediaProfile?.beats || contact.mediaProfile?.preferredTopics || contact.topics || contact.personalInfo?.interests || [],
       frequency: contact.preferences?.frequency || 'weekly'
     },
     metadata: {
