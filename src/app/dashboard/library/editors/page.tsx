@@ -1044,13 +1044,13 @@ export default function EditorsPage() {
         const matches =
           journalist.personalData.displayName.toLowerCase().includes(searchLower) ||
           journalist.professionalData.currentEmployment.mediumName.toLowerCase().includes(searchLower) ||
-          journalist.professionalData.expertise.primaryTopics.some(t => t.toLowerCase().includes(searchLower));
+          (journalist.professionalData.expertise.primaryTopics || []).some(t => t.toLowerCase().includes(searchLower));
         if (!matches) return false;
       }
 
       // Topics filter
       if (selectedTopics.length > 0) {
-        const hasMatchingTopic = journalist.professionalData.expertise.primaryTopics.some(topic =>
+        const hasMatchingTopic = (journalist.professionalData.expertise.primaryTopics || []).some(topic =>
           selectedTopics.includes(topic)
         );
         if (!hasMatchingTopic) return false;
@@ -1058,7 +1058,7 @@ export default function EditorsPage() {
 
       // Media types filter
       if (selectedMediaTypes.length > 0) {
-        const hasMatchingMediaType = journalist.professionalData.mediaTypes.some(type =>
+        const hasMatchingMediaType = (journalist.professionalData.mediaTypes || []).some(type =>
           selectedMediaTypes.includes(type)
         );
         if (!hasMatchingMediaType) return false;
@@ -1086,7 +1086,9 @@ export default function EditorsPage() {
   const availableTopics = useMemo(() => {
     const topicsSet = new Set<string>();
     (journalists || []).forEach(j => {
-      j.professionalData.expertise.primaryTopics.forEach(topic => topicsSet.add(topic));
+      if (j?.professionalData?.expertise?.primaryTopics) {
+        j.professionalData.expertise.primaryTopics.forEach(topic => topicsSet.add(topic));
+      }
     });
     return Array.from(topicsSet).sort();
   }, [journalists]);
