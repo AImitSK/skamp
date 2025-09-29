@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
-import { ContactEnhanced, companyTypeLabels } from "@/types/crm-enhanced";
+import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { publicationService } from "@/lib/firebase/library-service";
+import { ContactEnhanced, CompanyEnhanced, companyTypeLabels } from "@/types/crm-enhanced";
+import { Publication } from "@/types/library";
 
 // Deutsche Übersetzungen
 const roleTranslations = {
@@ -52,11 +54,23 @@ import {
 import clsx from 'clsx';
 
 // Helper function to convert ContactEnhanced to JournalistDatabaseEntry
-function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabaseEntry | null {
+function convertContactToJournalist(
+  contact: ContactEnhanced,
+  companies: CompanyEnhanced[],
+  publications: Publication[]
+): JournalistDatabaseEntry | null {
   // Only include contacts that are journalists and global
   if (!contact.mediaProfile?.isJournalist || !contact.isGlobal) {
     return null;
   }
+
+  // Find real company data
+  const realCompany = companies.find(comp => comp.id === contact.companyId);
+
+  // Find real publications data
+  const realPublications = contact.mediaProfile?.publicationIds
+    ? publications.filter(pub => contact.mediaProfile?.publicationIds.includes(pub.id!))
+    : [];
 
   const primaryEmail = contact.emails?.find(e => e.isPrimary) || contact.emails?.[0];
   const primaryPhone = contact.phones?.find(p => p.isPrimary) || contact.phones?.[0];
@@ -112,41 +126,41 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       // NEUE Struktur: Employment mit Company-Daten
       employment: {
         company: {
-          globalCompanyId: contact.companyId || 'unknown',
-          name: contact.companyName || 'Unbekanntes Medium',
-          type: 'media_house' as any,
-          website: undefined,
-          fullProfile: undefined
+          globalCompanyId: realCompany?.id || contact.companyId || '',
+          name: realCompany?.name || contact.companyName || '',
+          type: realCompany?.type || 'other' as any,
+          website: realCompany?.website,
+          fullProfile: realCompany
         },
-        position: contact.position || 'Unbekannte Position',
-        department: undefined,
-        startDate: undefined,
-        isMainEmployer: true,
+        position: contact.position || '',
+        department: contact.department,
+        startDate: undefined, // TODO: Add to ContactEnhanced if needed
+        isMainEmployer: true, // TODO: Load from real data if available
         isFreelancer: contact.mediaProfile?.isFreelancer || false
       },
 
       // LEGACY Struktur für Backwards Compatibility
       currentEmployment: {
-        mediumName: contact.companyName || 'Unbekanntes Medium',
-        position: contact.position || 'Unbekannte Position',
+        mediumName: realCompany?.name || contact.companyName || '',
+        position: contact.position || '',
         isMainEmployer: true
       },
 
       // NEUE Struktur: Publication Assignments
-      publicationAssignments: contact.mediaProfile?.publicationIds?.map((pubId, index) => ({
+      publicationAssignments: realPublications.map((realPub, index) => ({
         publication: {
-          globalPublicationId: pubId,
-          title: `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
-          type: 'newspaper' as any,
-          format: 'online' as any,
-          frequency: 'daily' as any,
-          fullProfile: undefined
+          globalPublicationId: realPub.id!,
+          title: realPub.title,
+          type: realPub.type,
+          format: realPub.format,
+          frequency: realPub.frequency,
+          fullProfile: realPub
         },
         role: (contact.position?.toLowerCase().includes('chef') || contact.position?.toLowerCase().includes('editor') || contact.position?.toLowerCase().includes('leiter')) ? 'editor' : 'reporter' as any,
         topics: contact.mediaProfile?.beats || [],
         isMainPublication: index === 0,
-        contributionFrequency: 'daily' as any
-      })) || [],
+        contributionFrequency: realPub.frequency || 'unknown' as any
+      })),
 
       // Frühere Arbeitgeber (vereinfacht)
       employmentHistory: [],
@@ -160,14 +174,14 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       },
 
       // Medientypen (abgeleitet aus Publications)
-      mediaTypes: contact.mediaProfile?.mediaTypes || ['online']
+      mediaTypes: contact.mediaProfile?.mediaTypes || realPublications.map(pub => pub.format).filter(Boolean) as any[]
     },
     preferences: {
-      communicationChannels: contact.preferences?.communicationChannels || ['email'],
-      bestContactTime: contact.preferences?.bestContactTime,
-      preferredLanguage: contact.preferences?.preferredLanguage || 'de',
+      communicationChannels: contact.preferences?.communicationChannels || contact.communicationPreferences?.preferredChannel ? [contact.communicationPreferences.preferredChannel] : [],
+      bestContactTime: contact.preferences?.bestContactTime || contact.communicationPreferences?.preferredTime,
+      preferredLanguage: contact.preferences?.preferredLanguage || contact.communicationPreferences?.preferredLanguage,
       topics: contact.mediaProfile?.beats || contact.mediaProfile?.preferredTopics || contact.topics || contact.personalInfo?.interests || [],
-      frequency: contact.preferences?.frequency || 'weekly'
+      frequency: contact.preferences?.frequency
     },
     metadata: {
       // Verifizierungsstatus
@@ -1267,6 +1281,8 @@ export default function EditorsPage() {
   const { currentOrganization } = useOrganization();
 
   const [journalists, setJournalists] = useState<JournalistDatabaseEntry[]>([]);
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [subscription, setSubscription] = useState<JournalistSubscription | null>(null);
@@ -1341,12 +1357,20 @@ export default function EditorsPage() {
       setSubscription(mockSubscription);
 
       // Load real global journalists from all organizations
-      // For now, we load from current organization and filter global journalists
-      const allContacts = await contactsEnhancedService.getAll(currentOrganization.id);
+      // Load all required data from database
+      const [allContacts, allCompanies, allPublications] = await Promise.all([
+        contactsEnhancedService.getAll(currentOrganization.id),
+        companiesEnhancedService.getAll(currentOrganization.id),
+        publicationService.getAll(currentOrganization.id)
+      ]);
 
-      // Convert global journalist contacts to database entries
+      // Store in state
+      setCompanies(allCompanies);
+      setPublications(allPublications);
+
+      // Convert global journalist contacts to database entries with real data
       const globalJournalists = (allContacts || [])
-        .map(contact => convertContactToJournalist(contact))
+        .map(contact => convertContactToJournalist(contact, allCompanies, allPublications))
         .filter((journalist): journalist is JournalistDatabaseEntry => journalist !== null);
 
       setJournalists(globalJournalists);
