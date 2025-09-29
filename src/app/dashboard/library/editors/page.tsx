@@ -450,7 +450,7 @@ function JournalistCard({
                       journalist.personalData.emails[0]?.email;
 
   const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
-  const primaryTopics = journalist.professionalData.expertise.primaryTopics.slice(0, 3);
+  const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 3);
   const totalFollowers = journalist.socialMedia.influence.totalFollowers;
 
   const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
@@ -520,9 +520,9 @@ function JournalistCard({
                   {topic}
                 </Badge>
               ))}
-              {journalist.professionalData.expertise.primaryTopics.length > 3 && (
+              {(journalist.professionalData.expertise.primaryTopics || []).length > 3 && (
                 <Badge color="zinc" className="text-xs">
-                  +{journalist.professionalData.expertise.primaryTopics.length - 3}
+                  +{(journalist.professionalData.expertise.primaryTopics || []).length - 3}
                 </Badge>
               )}
             </div>
@@ -533,7 +533,7 @@ function JournalistCard({
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center space-x-2">
             <div className="flex space-x-1">
-              {journalist.professionalData.mediaTypes.slice(0, 3).map((type, index) => (
+              {(journalist.professionalData.mediaTypes || []).slice(0, 3).map((type, index) => (
                 <Badge key={index} color="blue" className="text-xs">
                   {type}
                 </Badge>
@@ -702,7 +702,7 @@ function ImportDialog({
                 <div className="mt-2 flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
                   <span>Score: {journalist.metadata.dataQuality.overallScore}</span>
                   <span>•</span>
-                  <span>{journalist.professionalData.expertise.primaryTopics.length} Themen</span>
+                  <span>{(journalist.professionalData.expertise.primaryTopics || []).length} Themen</span>
                 </div>
               </div>
             </div>
@@ -741,14 +741,14 @@ function ImportDialog({
             <div>
               <span className="font-medium text-zinc-700 dark:text-zinc-300 text-sm">Themen:</span>
               <div className="mt-1 flex flex-wrap gap-2">
-                {journalist.professionalData.expertise.primaryTopics.slice(0, 6).map((topic, index) => (
+                {(journalist.professionalData.expertise.primaryTopics || []).slice(0, 6).map((topic, index) => (
                   <Badge key={index} color="zinc" className="text-xs">
                     {topic}
                   </Badge>
                 ))}
-                {journalist.professionalData.expertise.primaryTopics.length > 6 && (
+                {(journalist.professionalData.expertise.primaryTopics || []).length > 6 && (
                   <span className="text-xs text-zinc-500">
-                    +{journalist.professionalData.expertise.primaryTopics.length - 6} weitere
+                    +{(journalist.professionalData.expertise.primaryTopics || []).length - 6} weitere
                   </span>
                 )}
               </div>
@@ -1391,7 +1391,7 @@ export default function EditorsPage() {
                 const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
                                     journalist.personalData.emails[0]?.email;
                 const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
-                const primaryTopics = journalist.professionalData.expertise.primaryTopics.slice(0, 2);
+                const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
                 const totalFollowers = journalist.socialMedia.influence.totalFollowers;
                 const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
 
@@ -1451,7 +1451,7 @@ export default function EditorsPage() {
                               <Popover.Button className="flex items-center justify-center p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                                 <TagIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                                 <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                  {journalist.professionalData.expertise.primaryTopics.length}
+                                  {(journalist.professionalData.expertise.primaryTopics || []).length}
                                 </span>
                               </Popover.Button>
                               <Transition
@@ -1466,10 +1466,10 @@ export default function EditorsPage() {
                                 <Popover.Panel className="absolute z-50 mt-2 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 p-3 min-w-[200px] left-1/2 transform -translate-x-1/2">
                                   <div className="space-y-1">
                                     <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                                      Themen ({journalist.professionalData.expertise.primaryTopics.length})
+                                      Themen ({(journalist.professionalData.expertise.primaryTopics || []).length})
                                     </div>
                                     <div className="flex flex-wrap gap-1">
-                                      {journalist.professionalData.expertise.primaryTopics.map((topic, index) => (
+                                      {(journalist.professionalData.expertise.primaryTopics || []).map((topic, index) => (
                                         <Badge key={index} color="zinc" className="text-xs">
                                           {topic}
                                         </Badge>
