@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
-import { ContactEnhanced } from "@/types/crm-enhanced";
+import { ContactEnhanced, companyTypeLabels } from "@/types/crm-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -156,9 +156,31 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       frequency: contact.preferences?.frequency || 'weekly'
     },
     metadata: {
-      qualityScore: contact.globalMetadata?.qualityScore || 0,
-      verificationStatus: contact.emailVerified ? 'verified' : 'unverified' as VerificationStatus,
-      lastVerified: contact.emailVerified ? contact.updatedAt : undefined,
+      // Verifizierungsstatus
+      verification: {
+        status: contact.emailVerified ? 'verified' : 'unverified' as 'unverified' | 'pending' | 'verified' | 'rejected' | 'expired',
+        method: contact.emailVerified ? 'email' : undefined,
+        verifiedAt: contact.emailVerified ? contact.updatedAt : undefined,
+        verifiedBy: contact.emailVerified ? contact.updatedBy : undefined
+      },
+
+      // Datenqualität
+      dataQuality: {
+        completeness: contact.globalMetadata?.qualityScore || 70,
+        accuracy: 85,
+        freshness: 90,
+        overallScore: contact.globalMetadata?.qualityScore || 0
+      },
+
+      // Datenquellen
+      sources: [{
+        type: 'import' as 'manual' | 'api' | 'crowdsource' | 'import' | 'partner',
+        name: 'CRM Import',
+        contributedAt: contact.createdAt,
+        contributedBy: contact.organizationId,
+        confidence: 80,
+        fields: ['personalData', 'professionalData']
+      }],
       dataPrivacy: {
         consentGiven: contact.gdprConsent?.marketing || false,
         consentDate: contact.gdprConsent?.consentDate,
@@ -1715,7 +1737,7 @@ export default function EditorsPage() {
                                'Unbekanntes Medium'}
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                              {journalist.professionalData.employment?.company?.type || 'media'}
+                              {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || 'Medienhaus'}
                             </div>
                           </div>
                         </div>
