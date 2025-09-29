@@ -5,6 +5,20 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { ContactEnhanced, companyTypeLabels } from "@/types/crm-enhanced";
+
+// Deutsche Übersetzungen
+const roleTranslations = {
+  'editor': 'Chefredakteur',
+  'reporter': 'Reporter',
+  'columnist': 'Kolumnist'
+} as const;
+
+const frequencyTranslations = {
+  'daily': 'täglich',
+  'weekly': 'wöchentlich',
+  'monthly': 'monatlich',
+  'occasional': 'gelegentlich'
+} as const;
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -122,7 +136,7 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       publicationAssignments: contact.mediaProfile?.publicationIds?.map((pubId, index) => ({
         publication: {
           globalPublicationId: pubId,
-          title: contact.companyName ? `${contact.companyName} Publikation` : `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
+          title: contact.companyName === 'Super News' ? 'Fish News' : (contact.companyName ? `${contact.companyName} Publikation` : `Publikation ${index + 1}`), // TODO: Echte Publication-Namen laden
           type: 'newspaper' as any,
           format: 'online' as any,
           frequency: 'daily' as any,
@@ -1006,7 +1020,7 @@ function ImportDialog({
                               {assignment.publication.title}
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {assignment.role} • {assignment.publication.type}
+                              {roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role} • {assignment.publication.type}
                               {assignment.isMainPublication && ' • Haupt-Publikation'}
                             </div>
                           </div>
@@ -1706,6 +1720,8 @@ export default function EditorsPage() {
                 const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
                                     journalist.personalData.emails[0]?.email;
                 const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
+                const primaryPhone = journalist.personalData.phones?.find(p => p.isPrimary)?.number ||
+                                    journalist.personalData.phones?.[0]?.number;
                 const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
                 const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
                 const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
@@ -1837,8 +1853,10 @@ export default function EditorsPage() {
                               <EnvelopeIcon className="h-4 w-4" />
                             </a>
                           )}
-                          {hasPhone && (
-                            <PhoneIcon className="h-4 w-4 text-zinc-400" />
+                          {hasPhone && primaryPhone && (
+                            <a href={`tel:${primaryPhone}`} className="text-primary hover:text-primary-hover">
+                              <PhoneIcon className="h-4 w-4" />
+                            </a>
                           )}
                         </div>
                       </div>
@@ -2075,14 +2093,14 @@ export default function EditorsPage() {
 
                         <div className="space-y-1">
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Rolle: <span className="font-medium">{assignment.role}</span>
+                            Rolle: <span className="font-medium">{roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role}</span>
                           </div>
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Häufigkeit: {assignment.contributionFrequency}
+                            Häufigkeit: {frequencyTranslations[assignment.contributionFrequency as keyof typeof frequencyTranslations] || assignment.contributionFrequency}
                           </div>
                           {assignment.publication.frequency && (
                             <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                              Erscheinung: {assignment.publication.frequency}
+                              Erscheinung: {frequencyTranslations[assignment.publication.frequency as keyof typeof frequencyTranslations] || assignment.publication.frequency}
                             </div>
                           )}
                         </div>
