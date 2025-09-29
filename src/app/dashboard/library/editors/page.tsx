@@ -451,7 +451,7 @@ function JournalistCard({
 
   const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
   const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 3);
-  const totalFollowers = journalist.socialMedia.influence.totalFollowers;
+  const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
 
   const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
 
@@ -1392,7 +1392,7 @@ export default function EditorsPage() {
                                     journalist.personalData.emails[0]?.email;
                 const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
                 const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
-                const totalFollowers = journalist.socialMedia.influence.totalFollowers;
+                const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
                 const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
 
                 return (
