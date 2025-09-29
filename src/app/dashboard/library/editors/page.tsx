@@ -355,7 +355,8 @@ function JournalistCard({
 
   const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
   const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 3);
-  const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
+  // TODO: Remove totalFollowers - not captured in CRM data
+  // const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
 
   const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
 
@@ -376,12 +377,13 @@ function JournalistCard({
           </div>
 
           <div className="flex items-center space-x-2">
-            {journalist.metadata?.verification?.status === 'verified' && (
+            {/* TODO: Remove verification status - only exists for publications, not contacts */}
+            {/* {journalist.metadata?.verification?.status === 'verified' && (
               <Badge color="green" className="text-xs">
                 <CheckBadgeIcon className="h-3 w-3 mr-1" />
                 Verifiziert
               </Badge>
-            )}
+            )} */}
 
             <div className="text-xs text-gray-500">
               Score: {journalist.metadata?.dataQuality?.overallScore || 0}
@@ -445,7 +447,8 @@ function JournalistCard({
             </div>
           </div>
 
-          {totalFollowers > 0 && (
+          {/* TODO: Remove totalFollowers display - not captured in CRM */}
+          {/* {totalFollowers > 0 && (
             <div className="flex items-center">
               <UserIcon className="h-3 w-3 mr-1" />
               {totalFollowers >= 1000 ?
@@ -453,7 +456,7 @@ function JournalistCard({
                 totalFollowers.toLocaleString()
               } Follower
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -550,7 +553,8 @@ function ImportDialog({
         topics: (journalist.professionalData.expertise.primaryTopics || []).join(', '),
         notes: `Importiert aus Journalisten-Datenbank\nScore: ${journalist.metadata?.dataQuality?.overallScore || 0}`
       });
-      setDuplicateWarning(Math.random() > 0.7); // 30% chance of duplicate warning
+      // TODO: Implement real duplicate detection logic
+      setDuplicateWarning(false); // Math.random() > 0.7 was mock - removed
     }
   }, [journalist]);
 
@@ -625,6 +629,7 @@ function ImportDialog({
               </div>
             </div>
 
+            {/* TODO: Implement real duplicate detection */}
             {duplicateWarning && (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
@@ -1225,7 +1230,8 @@ export default function EditorsPage() {
         },
         metadata: {
           dataQuality: { overallScore: contact.globalMetadata?.qualityScore || 85 },
-          verification: { status: 'verified' as any }
+          // TODO: Remove verification status - only for publications
+          // verification: { status: 'verified' as any }
         }
       }));
 
@@ -1270,12 +1276,12 @@ export default function EditorsPage() {
         if (!hasMatchingMediaType) return false;
       }
 
-      // Verification status filter
-      if (selectedVerificationStatus.length > 0) {
-        if (!selectedVerificationStatus.includes(journalist.metadata?.verification?.status)) {
-          return false;
-        }
-      }
+      // TODO: Remove verification status filter - not available for contacts
+      // if (selectedVerificationStatus.length > 0) {
+      //   if (!selectedVerificationStatus.includes(journalist.metadata?.verification?.status)) {
+      //     return false;
+      //   }
+      // }
 
       // Quality score filter
       if (minQualityScore > 0) {
@@ -1603,7 +1609,8 @@ export default function EditorsPage() {
                 const primaryPhone = journalist.personalData.phones?.find(p => p.isPrimary)?.number ||
                                     journalist.personalData.phones?.[0]?.number;
                 const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
-                const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
+                // TODO: Remove totalFollowers - not captured in CRM
+                // const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
                 const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
 
                 return (
@@ -1658,8 +1665,8 @@ export default function EditorsPage() {
                         </div>
                       </div>
 
-                      {/* Verification Status */}
-                      <div className="w-36 px-4">
+                      {/* TODO: Remove Verification Status - only exists for publications */}
+                      {/* <div className="w-36 px-4">
                         {journalist.metadata?.verification?.status === 'verified' ? (
                           <Badge color="green" className="text-xs">
                             <CheckBadgeIcon className="h-3 w-3 mr-1" />
@@ -1674,7 +1681,7 @@ export default function EditorsPage() {
                             Nicht verifiziert
                           </Badge>
                         )}
-                      </div>
+                      </div> */}
 
                       {/* Quality Score */}
                       <div className="w-24 px-4 text-center">
@@ -1815,12 +1822,13 @@ export default function EditorsPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {detailJournalist.metadata?.verification?.status === 'verified' && (
+                {/* TODO: Remove verification status - only exists for publications */}
+                {/* {detailJournalist.metadata?.verification?.status === 'verified' && (
                   <Badge color="green" className="text-xs">
                     <CheckBadgeIcon className="h-3 w-3 mr-1" />
                     Verifiziert
                   </Badge>
-                )}
+                )} */}
                 <div className="text-sm text-zinc-500 dark:text-zinc-400">
                   Score: {detailJournalist.metadata?.dataQuality?.overallScore || 0}
                 </div>
@@ -2085,8 +2093,8 @@ export default function EditorsPage() {
                 </div>
               </div>
 
-              {/* Verification Info */}
-              {detailJournalist.metadata?.verification?.status === 'verified' && detailJournalist.metadata?.verification?.verifiedAt && (
+              {/* TODO: Remove Verification Info - only exists for publications */}
+              {/* {detailJournalist.metadata?.verification?.status === 'verified' && detailJournalist.metadata?.verification?.verifiedAt && (
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                   <div className="flex items-center space-x-2">
                     <CheckBadgeIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -2100,7 +2108,7 @@ export default function EditorsPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
           </DialogBody>
 
