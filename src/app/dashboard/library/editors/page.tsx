@@ -1186,37 +1186,6 @@ export default function EditorsPage() {
       console.log('📊 Search result:', searchResult);
       console.log('👥 Found journalists:', searchResult.journalists?.length || 0);
 
-      // TEMP: Falls keine echten Daten, Mock-Daten zum Testen
-      if (!searchResult.journalists || searchResult.journalists.length === 0) {
-        console.log('⚠️ Keine Daten gefunden - verwende Mock-Daten für Testing');
-        const mockJournalists = [{
-          id: 'mock-1',
-          personalData: {
-            name: { first: 'Max', last: 'Mustermann' },
-            displayName: 'Max Mustermann',
-            emails: [{ email: 'max@example.com', isPrimary: true, type: 'business', isVerified: true }],
-            phones: [{ number: '+49123456789', isPrimary: true, type: 'business', countryCode: 'DE', isVerified: false }],
-            languages: ['de', 'en']
-          },
-          professionalData: {
-            employment: {
-              company: { name: 'Berliner Zeitung', type: 'newspaper' },
-              position: 'Redakteur'
-            },
-            expertise: { primaryTopics: ['Politik', 'Wirtschaft'] },
-            publicationAssignments: [{
-              publication: { title: 'Berliner Zeitung', type: 'newspaper', format: 'print', frequency: 'daily' },
-              role: 'editor'
-            }]
-          },
-          metadata: {
-            dataQuality: { overallScore: 85 },
-            verification: { status: 'verified' }
-          }
-        }];
-        setJournalists(mockJournalists as any);
-        return;
-      }
 
       setJournalists(searchResult.journalists);
     } catch (error) {
