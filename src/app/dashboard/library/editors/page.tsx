@@ -1019,7 +1019,7 @@ export default function EditorsPage() {
       const allContacts = await contactsEnhancedService.getAll(currentOrganization.id);
 
       // Convert global journalist contacts to database entries
-      const globalJournalists = allContacts
+      const globalJournalists = (allContacts || [])
         .map(contact => convertContactToJournalist(contact))
         .filter((journalist): journalist is JournalistDatabaseEntry => journalist !== null);
 
@@ -1037,7 +1037,7 @@ export default function EditorsPage() {
 
   // Filter journalists
   const filteredJournalists = useMemo(() => {
-    return journalists.filter(journalist => {
+    return (journalists || []).filter(journalist => {
       // Search term
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -1085,7 +1085,7 @@ export default function EditorsPage() {
   // Get unique topics for filter
   const availableTopics = useMemo(() => {
     const topicsSet = new Set<string>();
-    journalists.forEach(j => {
+    (journalists || []).forEach(j => {
       j.professionalData.expertise.primaryTopics.forEach(topic => topicsSet.add(topic));
     });
     return Array.from(topicsSet).sort();
