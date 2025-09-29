@@ -466,7 +466,7 @@ function JournalistCard({
                 {journalist.personalData.displayName}
               </h3>
               <p className="text-xs text-gray-500">
-                {journalist.professionalData.currentEmployment.position} bei {journalist.professionalData.currentEmployment.mediumName}
+                {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'} bei {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
               </p>
             </div>
           </div>
@@ -628,9 +628,9 @@ function ImportDialog({
         name: journalist.personalData.displayName,
         email: journalist.personalData.emails.find(e => e.isPrimary)?.email || journalist.personalData.emails[0]?.email || '',
         phone: journalist.personalData.phones?.[0]?.number || '',
-        company: journalist.professionalData.currentEmployment.mediumName,
-        position: journalist.professionalData.currentEmployment.position,
-        topics: journalist.professionalData.expertise.primaryTopics.join(', '),
+        company: journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium',
+        position: journalist.professionalData.currentEmployment?.position || 'Unbekannte Position',
+        topics: (journalist.professionalData.expertise.primaryTopics || []).join(', '),
         notes: `Importiert aus Journalisten-Datenbank\nScore: ${journalist.metadata.dataQuality.overallScore}`
       });
       // Mock duplicate check
@@ -697,7 +697,7 @@ function ImportDialog({
                   {journalist.personalData.displayName}
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {journalist.professionalData.currentEmployment.position} bei {journalist.professionalData.currentEmployment.mediumName}
+                  {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'} bei {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
                 </p>
                 <div className="mt-2 flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
                   <span>Score: {journalist.metadata.dataQuality.overallScore}</span>
@@ -1043,7 +1043,7 @@ export default function EditorsPage() {
         const searchLower = searchTerm.toLowerCase();
         const matches =
           journalist.personalData.displayName.toLowerCase().includes(searchLower) ||
-          journalist.professionalData.currentEmployment.mediumName.toLowerCase().includes(searchLower) ||
+          (journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium').toLowerCase().includes(searchLower) ||
           (journalist.professionalData.expertise.primaryTopics || []).some(t => t.toLowerCase().includes(searchLower));
         if (!matches) return false;
       }
@@ -1407,14 +1407,14 @@ export default function EditorsPage() {
                           {journalist.personalData.displayName}
                         </button>
                         <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-1">
-                          {journalist.professionalData.currentEmployment.position}
+                          {journalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
                         </div>
                       </div>
 
                       {/* Medium */}
                       <div className="w-48 px-4">
                         <div className="text-sm text-zinc-900 dark:text-white truncate">
-                          {journalist.professionalData.currentEmployment.mediumName}
+                          {journalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
                         </div>
                       </div>
 
@@ -1561,7 +1561,7 @@ export default function EditorsPage() {
                     {detailJournalist.personalData.displayName}
                   </h3>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {detailJournalist.professionalData.currentEmployment.position}
+                    {detailJournalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
                   </p>
                 </div>
               </div>
@@ -1613,16 +1613,16 @@ export default function EditorsPage() {
                     <div className="flex items-center space-x-2">
                       <NewspaperIcon className="h-4 w-4 text-zinc-400" />
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {detailJournalist.professionalData.currentEmployment.mediumName}
+                        {detailJournalist.professionalData.currentEmployment?.mediumName || 'Unbekanntes Medium'}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <UserIcon className="h-4 w-4 text-zinc-400" />
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                        {detailJournalist.professionalData.currentEmployment.position}
+                        {detailJournalist.professionalData.currentEmployment?.position || 'Unbekannte Position'}
                       </span>
                     </div>
-                    {detailJournalist.professionalData.currentEmployment.startDate && (
+                    {detailJournalist.professionalData.currentEmployment?.startDate && (
                       <div className="text-xs text-zinc-500 dark:text-zinc-400">
                         Seit: {new Date(detailJournalist.professionalData.currentEmployment.startDate).toLocaleDateString('de-DE')}
                       </div>
