@@ -106,7 +106,18 @@ class JournalistDatabaseService extends BaseService<JournalistDatabaseEntry> {
 
       // Query ausführen
       const q = query(collection(db, this.collectionName), ...constraints);
+      console.log('🔍 FIRESTORE QUERY:', {
+        collectionName: this.collectionName,
+        constraints: constraints.length,
+        organizationId: params.organizationId
+      });
+
       const snapshot = await getDocs(q);
+      console.log('📊 FIRESTORE SNAPSHOT:', {
+        size: snapshot.size,
+        empty: snapshot.empty,
+        docs: snapshot.docs.length
+      });
 
       // Client-seitige Filterung für komplexe Kriterien
       let journalists = snapshot.docs.map(doc => ({
