@@ -1331,7 +1331,7 @@ export default function EditorsPage() {
       {/* Results Info */}
       <div className="mb-4">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredJournalists.length} von {journalists.length} Journalisten
+          {filteredJournalists.length} von {(journalists || []).length} Journalisten
           {subscription && (
             <span className="ml-2">
               • {subscription.usage.currentPeriod.searches}/{subscription.limits.searchesPerMonth} Suchen diesen Monat
@@ -1634,10 +1634,10 @@ export default function EditorsPage() {
               {/* Topics */}
               <div>
                 <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">
-                  Themen ({detailJournalist.professionalData.expertise.primaryTopics.length})
+                  Themen ({(detailJournalist.professionalData.expertise.primaryTopics || []).length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {detailJournalist.professionalData.expertise.primaryTopics.map((topic, index) => (
+                  {(detailJournalist.professionalData.expertise.primaryTopics || []).map((topic, index) => (
                     <Badge key={index} color="zinc" className="text-sm">
                       {topic}
                     </Badge>
@@ -1646,18 +1646,18 @@ export default function EditorsPage() {
               </div>
 
               {/* Social Media */}
-              {detailJournalist.socialMedia.profiles.length > 0 && (
+              {(detailJournalist.socialMedia?.profiles || []).length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Social Media</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {detailJournalist.socialMedia.profiles.map((profile, index) => (
+                    {(detailJournalist.socialMedia?.profiles || []).map((profile, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg">
                         <div>
                           <div className="font-medium text-sm text-zinc-900 dark:text-white capitalize">
                             {profile.platform}
                           </div>
                           <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                            {profile.followerCount?.toLocaleString()} Follower
+                            {(profile.followerCount || profile.followers || 0).toLocaleString()} Follower
                           </div>
                         </div>
                         <a
