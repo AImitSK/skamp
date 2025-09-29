@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
+import { companyTypeLabels } from "@/types/crm-enhanced";
 
 // Deutsche Übersetzungen
 const roleTranslations = {
