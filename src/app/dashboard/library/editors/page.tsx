@@ -1203,7 +1203,7 @@ export default function EditorsPage() {
         professionalData: {
           employment: {
             company: {
-              name: contact.companyName || 'Unbekannt',
+              name: contact.companyName || 'Selbstständig',
               type: 'media_house' as any
             },
             position: contact.position || ''
