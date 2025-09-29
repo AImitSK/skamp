@@ -559,7 +559,7 @@ function ImportDialog({
   const [importConfig, setImportConfig] = useState<{
     companyStrategy: 'create_new' | 'use_existing' | 'merge';
     selectedCompanyId?: string;
-    publicationStrategy: 'import_all' | 'import_selected' | 'skip';
+    publicationStrategy: 'import_all'; // Immer alle importieren
     selectedPublicationIds: string[];
   }>({
     companyStrategy: 'create_new',
@@ -817,106 +817,39 @@ function ImportDialog({
               </div>
             )}
 
-            {/* Publications Strategy */}
+            {/* Publications - PFLICHT-IMPORT */}
             {journalist.professionalData.publicationAssignments &&
              journalist.professionalData.publicationAssignments.length > 0 && (
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4">
-                <h4 className="font-medium text-zinc-900 dark:text-white mb-3 flex items-center">
-                  <GlobeAltIcon className="h-4 w-4 mr-2" />
-                  Publikationen ({journalist.professionalData.publicationAssignments.length})
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+                  <InformationCircleIcon className="h-5 w-5 mr-2" />
+                  Publikationen ({journalist.professionalData.publicationAssignments.length}) - Pflicht-Import
                 </h4>
 
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="publicationStrategy"
-                      value="import_all"
-                      checked={importConfig.publicationStrategy === 'import_all'}
-                      onChange={(e) => setImportConfig({
-                        ...importConfig,
-                        publicationStrategy: e.target.value as any,
-                        selectedPublicationIds: journalist.professionalData.publicationAssignments?.map(a => a.publication.globalPublicationId) || []
-                      })}
-                      className="text-primary"
-                    />
-                    <div className="text-sm font-medium text-zinc-900 dark:text-white">
-                      Alle Publikationen importieren
-                    </div>
-                  </label>
+                <div className="mb-3 p-3 bg-blue-100 dark:bg-blue-900/50 rounded-md">
+                  <Text className="text-blue-800 dark:text-blue-200 text-sm">
+                    <strong>Alle Publikationen werden automatisch importiert.</strong><br/>
+                    Dies ist erforderlich, damit die CRM-Zuordnungen korrekt funktionieren.
+                  </Text>
+                </div>
 
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="publicationStrategy"
-                      value="import_selected"
-                      checked={importConfig.publicationStrategy === 'import_selected'}
-                      onChange={(e) => setImportConfig({
-                        ...importConfig,
-                        publicationStrategy: e.target.value as any
-                      })}
-                      className="text-primary"
-                    />
-                    <div className="text-sm font-medium text-zinc-900 dark:text-white">
-                      Ausgewählte Publikationen importieren
-                    </div>
-                  </label>
-
-                  {importConfig.publicationStrategy === 'import_selected' && (
-                    <div className="ml-6 mt-2 space-y-2">
-                      {journalist.professionalData.publicationAssignments.map((assignment, index) => (
-                        <label key={index} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={importConfig.selectedPublicationIds.includes(assignment.publication.globalPublicationId)}
-                            onChange={(e) => {
-                              const pubId = assignment.publication.globalPublicationId;
-                              const newSelected = e.target.checked
-                                ? [...importConfig.selectedPublicationIds, pubId]
-                                : importConfig.selectedPublicationIds.filter(id => id !== pubId);
-                              setImportConfig({
-                                ...importConfig,
-                                selectedPublicationIds: newSelected
-                              });
-                            }}
-                            className="text-primary"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm text-zinc-900 dark:text-white">
-                              {assignment.publication.title}
-                            </div>
-                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role} • {assignment.publication.type}
-                              {assignment.isMainPublication && ' • Haupt-Publikation'}
-                            </div>
+                <div className="space-y-2">
+                  {journalist.professionalData.publicationAssignments.map((assignment, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-zinc-800 rounded border border-blue-200 dark:border-blue-700">
+                      <div className="flex items-center space-x-2">
+                        <CheckIcon className="h-4 w-4 text-green-600" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-zinc-900 dark:text-white">
+                            {assignment.publication.title}
                           </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="publicationStrategy"
-                      value="skip"
-                      checked={importConfig.publicationStrategy === 'skip'}
-                      onChange={(e) => setImportConfig({
-                        ...importConfig,
-                        publicationStrategy: e.target.value as any,
-                        selectedPublicationIds: []
-                      })}
-                      className="text-primary"
-                    />
-                    <div>
-                      <div className="text-sm font-medium text-zinc-900 dark:text-white">
-                        Keine Publikationen importieren
-                      </div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Nur den Journalisten ohne Publications-Verknüpfungen importieren
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role} • {assignment.publication.type}
+                            {assignment.isMainPublication && ' • Haupt-Publikation'}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </label>
+                  ))}
                 </div>
               </div>
             )}
@@ -934,15 +867,7 @@ function ImportDialog({
                 {importConfig.companyStrategy === 'use_existing' && importConfig.selectedCompanyId && (
                   <div>• Journalist wird bestehender Firma zugeordnet</div>
                 )}
-                {importConfig.publicationStrategy === 'import_all' && (
-                  <div>• {journalist.professionalData.publicationAssignments?.length || 0} Publikationen werden importiert</div>
-                )}
-                {importConfig.publicationStrategy === 'import_selected' && (
-                  <div>• {importConfig.selectedPublicationIds.length} ausgewählte Publikationen werden importiert</div>
-                )}
-                {importConfig.publicationStrategy === 'skip' && (
-                  <div>• Keine Publikationen werden importiert</div>
-                )}
+                <div>• {journalist.professionalData.publicationAssignments?.length || 0} Publikationen werden automatisch importiert</div>
               </div>
             </div>
           </div>
@@ -1965,7 +1890,7 @@ export default function EditorsPage() {
                             {detailJournalist.professionalData.employment.company.name}
                           </h5>
                           <Badge color="blue" className="text-xs">
-                            {detailJournalist.professionalData.employment.company.type}
+                            {companyTypeLabels[detailJournalist.professionalData.employment.company.type as keyof typeof companyTypeLabels] || detailJournalist.professionalData.employment.company.type}
                           </Badge>
                         </div>
                         {detailJournalist.professionalData.employment.company.website && (
@@ -1998,16 +1923,12 @@ export default function EditorsPage() {
                       </div>
                     </div>
 
-                    {/* Import-Button für Company falls nicht im lokalen CRM vorhanden */}
+                    {/* Medienhaus wird automatisch beim Import übernommen */}
                     <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
-                      <Button
-                        size="sm"
-                        color="zinc"
-                        className="text-xs"
-                        disabled={false}
-                      >
-                        Medienhaus ins CRM importieren
-                      </Button>
+                      <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
+                        <CheckIcon className="h-4 w-4" />
+                        <span>Wird beim Import automatisch übernommen</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2080,18 +2001,12 @@ export default function EditorsPage() {
                           </div>
                         )}
 
-                        {/* Import-Checkbox für diese Publikation */}
+                        {/* Publikation wird automatisch beim Import übernommen */}
                         <div className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                          <label className="flex items-center space-x-2 text-xs">
-                            <input
-                              type="checkbox"
-                              defaultChecked={assignment.isMainPublication}
-                              className="rounded border-zinc-300 text-primary"
-                            />
-                            <span className="text-zinc-600 dark:text-zinc-400">
-                              Diese Publikation mit importieren
-                            </span>
-                          </label>
+                          <div className="flex items-center space-x-2 text-xs text-green-600 dark:text-green-400">
+                            <CheckIcon className="h-4 w-4" />
+                            <span>Wird beim Import automatisch übernommen</span>
+                          </div>
                         </div>
                       </div>
                     ))}
