@@ -1130,7 +1130,7 @@ export default function EditorsPage() {
     try {
       const mockSubscription: JournalistSubscription = {
         organizationId: currentOrganization.id,
-        plan: 'free', // Change to 'professional' to test premium features
+        plan: 'professional', // Set to professional for testing
         status: 'active',
         billing: {
           startDate: new Date() as any,
@@ -1175,7 +1175,8 @@ export default function EditorsPage() {
       // EINFACH: Nur globale Journalisten laden
       const globalJournalists = await journalistDatabaseService.search({
         filters: {},
-        organizationId: currentOrganization.id
+        organizationId: currentOrganization.id,
+        subscription: mockSubscription
       });
 
       setJournalists(globalJournalists);
