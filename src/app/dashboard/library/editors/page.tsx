@@ -6,7 +6,7 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
-import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { publicationService } from '@/lib/firebase/library-service';
