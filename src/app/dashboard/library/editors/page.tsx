@@ -1228,13 +1228,25 @@ export default function EditorsPage() {
 
 
       // Load companies for type lookup
-      const companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
+      let companiesData = [];
+      try {
+        companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
+        console.log('📊 Companies loaded:', companiesData.length);
+      } catch (error) {
+        console.error('❌ Error loading companies:', error);
+      }
 
       // Load publications for assignments
-      const publicationsData = await publicationService.getAll(currentOrganization.id);
+      let publicationsData = [];
+      try {
+        publicationsData = await publicationService.getAll(currentOrganization.id);
+        console.log('📊 Publications loaded:', publicationsData.length);
+      } catch (error) {
+        console.error('❌ Error loading publications:', error);
+      }
 
       // Konvertiere CRM-Kontakte zu JournalistDatabaseEntry Format
-      const convertedJournalists = await Promise.all(globalJournalists.map(async (contact) => {
+      const convertedJournalists = globalJournalists.map((contact) => {
         // Company Type Lookup
         const company = companiesData.find(c => c.id === contact.companyId);
         const companyType = company?.type || 'other';
@@ -1297,7 +1309,7 @@ export default function EditorsPage() {
             }
           }
         };
-      }));
+      });
 
       setJournalists(convertedJournalists as any);
     } catch (error) {
