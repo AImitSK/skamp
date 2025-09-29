@@ -139,20 +139,27 @@ graph TB
 - Kein manueller "Publish"-Schritt
 - Sofort verfügbar für alle Kunden
 
-### **4. Saubere Trennung**
+### **4. Saubere Datentrennung & Privacy**
 ```typescript
-// Kunden sehen nur ihre + globale Daten:
-const userContacts = query(contacts,
-  or(
-    where('organizationId', '==', userOrgId),
-    where('isGlobal', '==', true)
-  )
+// Normale Kunden in ihrem CRM: NUR ihre eigenen Daten
+const userCRMContacts = query(contacts,
+  where('organizationId', '==', userOrgId)       // NUR ihre eigenen!
 );
 
-// SuperAdmin sieht alles:
-const adminContacts = query(contacts,
-  where('organizationId', '==', 'superadmin-org')
+// Kunden in /library/editors/: Globale Daten zum Import
+const libraryJournalists = query(contacts,
+  where('isGlobal', '==', true),                 // Globale Journalisten
+  where('mediaProfile.isJournalist', '==', true)
 );
+
+// SuperAdmin sieht: NUR seine eigenen Daten (wie jeder andere User auch!)
+const adminContacts = query(contacts,
+  where('organizationId', '==', 'superadmin-org') // NUR SuperAdmin-Org Daten
+);
+
+// 🔐 WICHTIG: Globale Daten sind NUR in /library/editors/ sichtbar!
+// ❌ Globale Daten erscheinen NICHT im normalen CRM bis sie importiert werden
+// ✅ Nach Import: Kopie wird in Kunden-Organisation erstellt
 ```
 
 ---

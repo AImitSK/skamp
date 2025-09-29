@@ -59,8 +59,8 @@ Eine zentrale, kuratierte Journalisten-Datenbank mit 100.000+ verifizierten Medi
 ### Kernfunktionen
 1. **SuperAdmin Global-System**: SuperAdmin erstellt Journalisten, die automatisch global werden
 2. **Premium-Suche**: Kunden durchsuchen globale Journalisten (`isGlobal: true`)
-3. **Multi-Entity Import**: Journalist + Medienhaus + Publikationen in einem Schritt
-4. **DSGVO-Compliance**: Verifizierung und Opt-out-Management
+3. **Reference-System**: Intelligente Verweise statt Kopien - immer aktuelle Daten
+4. **DSGVO-Compliance**: Strikte Datentrennung durch Reference-Architektur
 5. **Quality Scoring**: Automatische Bewertung der Datenqualität (0-100 Punkte)
 
 ---
