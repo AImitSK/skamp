@@ -9,6 +9,30 @@ import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
 import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { publicationService } from '@/lib/firebase/library-service';
+
+// Quality Score Berechnung
+function calculateQualityScore(contact: any): number {
+  let score = 0;
+
+  // Basis-Kontaktdaten (40 Punkte)
+  if (contact.emails?.length) score += 15;
+  if (contact.phones?.length) score += 10;
+  if (contact.displayName) score += 10;
+  if (contact.position) score += 5;
+
+  // Unternehmensdaten (20 Punkte)
+  if (contact.companyId) score += 10;
+  if (contact.companyName) score += 10;
+
+  // Media Profile (40 Punkte)
+  if (contact.mediaProfile?.beats?.length) score += 15;
+  if (contact.mediaProfile?.mediaTypes?.length) score += 10;
+  if (contact.mediaProfile?.publicationIds?.length) score += 10;
+  if (contact.socialProfiles?.length) score += 5;
+
+  return Math.min(score, 100);
+}
 
 // Deutsche Übersetzungen
 const roleTranslations = {
@@ -1203,36 +1227,76 @@ export default function EditorsPage() {
       });
 
 
+      // Load companies for type lookup
+      const companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
+
+      // Load publications for assignments
+      const publicationsData = await publicationService.getAll(currentOrganization.id);
+
       // Konvertiere CRM-Kontakte zu JournalistDatabaseEntry Format
-      const convertedJournalists = globalJournalists.map(contact => ({
-        id: contact.id,
-        personalData: {
-          name: {
-            first: contact.name?.firstName || contact.displayName.split(' ')[0] || '',
-            last: contact.name?.lastName || contact.displayName.split(' ')[1] || ''
+      const convertedJournalists = await Promise.all(globalJournalists.map(async (contact) => {
+        // Company Type Lookup
+        const company = companiesData.find(c => c.id === contact.companyId);
+        const companyType = company?.type || 'other';
+
+        // Publications Lookup
+        const publicationIds = contact.mediaProfile?.publicationIds || [];
+        const contactPublications = publicationsData.filter(pub =>
+          publicationIds.includes(pub.id!)
+        );
+
+        const publicationAssignments = contactPublications.map(publication => ({
+          publication: {
+            title: publication.title,
+            type: publication.type,
+            globalPublicationId: publication.id
           },
-          displayName: contact.displayName,
-          emails: contact.emails || [],
-          phones: contact.phones || [],
-          languages: contact.languages || ['de']
-        },
-        professionalData: {
-          employment: {
-            company: {
-              name: contact.companyName || 'Selbstständig',
-              type: 'media_house' as any
+          role: 'reporter', // Default role from CRM
+          isMainPublication: false
+        }));
+
+        return {
+          id: contact.id,
+          personalData: {
+            name: {
+              first: contact.name?.firstName || contact.displayName.split(' ')[0] || '',
+              last: contact.name?.lastName || contact.displayName.split(' ')[1] || ''
             },
-            position: contact.position || ''
+            displayName: contact.displayName,
+            emails: contact.emails || [],
+            phones: contact.phones || [],
+            languages: contact.personalInfo?.languages || ['de']
           },
-          expertise: {
-            primaryTopics: contact.mediaProfile?.beats || contact.topics || []
+          professionalData: {
+            employment: {
+              company: {
+                name: contact.companyName || 'Selbstständig',
+                type: companyType
+              },
+              position: contact.position || ''
+            },
+            expertise: {
+              primaryTopics: contact.mediaProfile?.beats || []
+            },
+            mediaTypes: contact.mediaProfile?.mediaTypes || [],
+            publicationAssignments: publicationAssignments
+          },
+          socialMedia: {
+            profiles: contact.socialProfiles || [],
+            influence: {
+              totalFollowers: 0, // Not tracked
+              influenceScore: contact.mediaProfile?.influence?.score || 0,
+              reachScore: contact.mediaProfile?.influence?.reach || 0,
+              engagementScore: contact.mediaProfile?.influence?.engagement || 0,
+              lastCalculated: new Date()
+            }
+          },
+          metadata: {
+            dataQuality: {
+              overallScore: calculateQualityScore(contact)
+            }
           }
-        },
-        metadata: {
-          dataQuality: { overallScore: contact.globalMetadata?.qualityScore || 85 },
-          // TODO: Remove verification status - only for publications
-          // verification: { status: 'verified' as any }
-        }
+        };
       }));
 
       setJournalists(convertedJournalists as any);
