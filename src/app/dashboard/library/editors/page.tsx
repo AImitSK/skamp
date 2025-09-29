@@ -136,7 +136,7 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       publicationAssignments: contact.mediaProfile?.publicationIds?.map((pubId, index) => ({
         publication: {
           globalPublicationId: pubId,
-          title: contact.companyName === 'Super News' ? 'Fish News' : (contact.companyName ? `${contact.companyName} Publikation` : `Publikation ${index + 1}`), // TODO: Echte Publication-Namen laden
+          title: `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
           type: 'newspaper' as any,
           format: 'online' as any,
           frequency: 'daily' as any,
