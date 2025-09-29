@@ -35,69 +35,63 @@ Eine zentrale, kuratierte Journalisten-Datenbank mit 100.000+ verifizierten Medi
 - **UI/UX**: ✅ Professionelle Komponenten mit CeleroPress Design System v2.0
 - **Benutzerfreundlichkeit**: ✅ 3-Schritt Import-Prozess mit Feldmapping
 
-### Datenbank-Architektur: Zwei-Ebenen-System
+### Datenbank-Architektur: SuperAdmin Global-System
 
 #### 1. **Kunden-CRM** (Lokale Datenbank)
 ```
-/organizations/{orgId}/contacts/crm/contacts/
+/organizations/{orgId}/contacts_enhanced/
 ├── Eigene Redakteure (vom Kunden gepflegt)
-├── Importierte Premium-Kontakte (read-only + sync)
+├── Importierte Premium-Kontakte (aus Global-System)
 └── Lokale Anpassungen und Notizen
 ```
 
-#### 2. **Premium Journalisten-DB** (Master-Datenbank)
+#### 2. **SuperAdmin Global-System** (Quasi-Journalisten-DB)
 ```
-/journalistDatabase/master/
-├── 100.000+ kuratierte Journalisten
-├── Verifizierte Kontaktdaten
-├── Themen-Zuordnungen
-└── Kontinuierliche Updates
+/contacts_enhanced/ (mit isGlobal: true)
+├── SuperAdmin erstellt Medienhäuser automatisch global
+├── SuperAdmin erstellt Publikationen automatisch global
+├── SuperAdmin erstellt Journalisten automatisch global
+└── Query: WHERE isGlobal = true AND mediaProfile.isJournalist = true
 ```
 
+**Vorteil:** Keine separate Datenbank - SuperAdmin arbeitet im vertrauten CRM und macht Daten automatisch global verfügbar!
+
 ### Kernfunktionen
-1. **Premium-Datenbank**: Durchsuchen & Einzelimport von 100.000+ Journalisten
-2. **Crowdsourcing-Matching**: Kunden-CRM-Daten werden anonymisiert gematcht
-3. **Sync-System**: Automatische Updates für importierte Premium-Kontakte
+1. **SuperAdmin Global-System**: SuperAdmin erstellt Journalisten, die automatisch global werden
+2. **Premium-Suche**: Kunden durchsuchen globale Journalisten (`isGlobal: true`)
+3. **Multi-Entity Import**: Journalist + Medienhaus + Publikationen in einem Schritt
 4. **DSGVO-Compliance**: Verifizierung und Opt-out-Management
-5. **Intelligente Suche**: KI-gestützte Themen- und Relevanz-Filter
+5. **Quality Scoring**: Automatische Bewertung der Datenqualität (0-100 Punkte)
 
 ---
 
 ## 🏗️ Technische Architektur
 
-### Datenbank-Struktur: Drei-Schichten-System
+### Datenbank-Struktur: SuperAdmin Global-System
 
 #### **Schicht 1: Kunden-CRM (Pro Organisation)**
 ```
-/organizations/{orgId}/contacts/
-├── /crm/contacts/{contactId}              # Eigene Redakteure
+/organizations/{orgId}/contacts_enhanced/
+├── /contacts/{contactId}                  # Eigene + Importierte Kontakte
 │   ├── personalData: object
 │   ├── professionalData: object
-│   ├── isEditable: true                   # Vollständig editierbar
-│   └── createdBy: "user"
-│
-├── /premium-imports/{contactId}           # Importierte Premium-Kontakte
-│   ├── sourceType: "premium-database"    # Markierung als Import
-│   ├── sourceId: string                  # Referenz zur Master-DB
-│   ├── isEditable: false                 # Read-only
-│   ├── lastSyncAt: timestamp
-│   ├── syncStatus: 'synced' | 'outdated' | 'conflict'
-│   └── localNotes?: string               # Lokale Anmerkungen
+│   ├── isGlobal: boolean                  # false = lokal, true = aus Global-System
+│   ├── organizationId: string             # Ursprungs-Organisation
+│   └── sourceType?: "global-import"       # Markierung als Import
 ```
 
-#### **Schicht 2: Premium Master-Datenbank**
+#### **Schicht 2: SuperAdmin Global-System**
 ```
-/journalistDatabase/master/
-├── /journalists/{journalistId}
-│   ├── personalData
-│   │   ├── displayName: string
-│   │   ├── emails: Array<{email: string, isPrimary: boolean}>
-│   │   ├── phones?: Array<{number: string, type: string}>
-│   │   └── profileImage?: string
-│   ├── professionalData
-│   │   ├── currentEmployment: {
-│   │   │   ├── mediumName: string
-│   │   │   ├── position: string
+/contacts_enhanced/ (organisationsübergreifend)
+├── WHERE isGlobal = true                  # Globale Journalisten
+├── WHERE organizationId = "superadmin-org" # SuperAdmin-Daten
+└── WHERE mediaProfile.isJournalist = true  # Journalist-Filter
+
+/companies_enhanced/ (organisationsübergreifend)
+├── WHERE isGlobal = true                  # Globale Medienhäuser
+
+/publications/ (organisationsübergreifend)
+├── WHERE isGlobal = true                  # Globale Publikationen
 │   │   │   ├── startDate?: timestamp
 │   │   │   └── department?: string
 │   │   │}
