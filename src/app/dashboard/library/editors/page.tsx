@@ -1806,18 +1806,9 @@ export default function EditorsPage() {
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     {detailJournalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
                   </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {/* TODO: Remove verification status - only exists for publications */}
-                {/* {detailJournalist.metadata?.verification?.status === 'verified' && (
-                  <Badge color="green" className="text-xs">
-                    <CheckBadgeIcon className="h-3 w-3 mr-1" />
-                    Verifiziert
-                  </Badge>
-                )} */}
-                <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Score: {detailJournalist.metadata?.dataQuality?.overallScore || 0}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    Score: {detailJournalist.metadata?.dataQuality?.overallScore || 0}
+                  </p>
                 </div>
               </div>
             </div>
