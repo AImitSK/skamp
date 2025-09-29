@@ -201,7 +201,36 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
         contactsEnhancedService.getAll(currentOrganization.id),
         tagsEnhancedService.getAllAsLegacyTags(currentOrganization.id)
       ]);
-      
+
+      console.log('🏢 CRM DATA LOADED:', {
+        companies: companiesData.length,
+        contacts: contactsData.length,
+        tags: tagsData.length,
+        organizationId: currentOrganization.id
+      });
+
+      // Log alle Kontakte mit globalMetadata
+      const globalContacts = contactsData.filter(c => c.isGlobal);
+      const journalistContacts = contactsData.filter(c => c.mediaProfile?.isJournalist);
+      const globalJournalists = contactsData.filter(c => c.isGlobal && c.mediaProfile?.isJournalist);
+
+      console.log('📊 CRM CONTACT BREAKDOWN:', {
+        totalContacts: contactsData.length,
+        globalContacts: globalContacts.length,
+        journalistContacts: journalistContacts.length,
+        globalJournalists: globalJournalists.length
+      });
+
+      if (globalJournalists.length > 0) {
+        console.log('👥 GLOBAL JOURNALISTS in CRM:', globalJournalists.map(c => ({
+          id: c.id,
+          name: c.displayName,
+          isGlobal: c.isGlobal,
+          isJournalist: c.mediaProfile?.isJournalist,
+          globalMetadata: c.globalMetadata
+        })));
+      }
+
       setCompanies(companiesData);
       setContacts(contactsData);
       setTags(tagsData);
