@@ -515,7 +515,7 @@ function JournalistCard({
         {primaryTopics.length > 0 && (
           <div>
             <div className="flex flex-wrap gap-1">
-              {primaryTopics.map((topic, index) => (
+              {(primaryTopics || []).map((topic, index) => (
                 <Badge key={index} color="zinc" className="text-xs">
                   {topic}
                 </Badge>
@@ -1250,7 +1250,7 @@ export default function EditorsPage() {
                           Themen
                         </label>
                         <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {availableTopics.slice(0, 8).map((topic) => (
+                          {(availableTopics || []).slice(0, 8).map((topic) => (
                             <label key={topic} className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -1345,7 +1345,7 @@ export default function EditorsPage() {
         viewMode === 'grid' ? (
           // Grid View
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredJournalists.map((journalist) => (
+            {(filteredJournalists || []).map((journalist) => (
               <JournalistCard
                 key={journalist.id}
                 journalist={journalist}
@@ -1387,7 +1387,7 @@ export default function EditorsPage() {
 
             {/* Table Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {filteredJournalists.map((journalist) => {
+              {(filteredJournalists || []).map((journalist) => {
                 const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
                                     journalist.personalData.emails[0]?.email;
                 const hasPhone = journalist.personalData.phones && journalist.personalData.phones.length > 0;
@@ -1586,7 +1586,7 @@ export default function EditorsPage() {
                 <div>
                   <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Kontaktinformationen</h4>
                   <div className="space-y-2">
-                    {detailJournalist.personalData.emails.map((email, index) => (
+                    {(detailJournalist.personalData.emails || []).map((email, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <EnvelopeIcon className="h-4 w-4 text-zinc-400" />
                         <a href={`mailto:${email.email}`} className="text-sm text-primary hover:text-primary-hover">
@@ -1678,7 +1678,7 @@ export default function EditorsPage() {
               <div>
                 <h4 className="text-sm font-medium text-zinc-900 dark:text-white mb-3">Medientypen</h4>
                 <div className="flex flex-wrap gap-2">
-                  {detailJournalist.professionalData.mediaTypes.map((type, index) => (
+                  {(detailJournalist.professionalData.mediaTypes || []).map((type, index) => (
                     <Badge key={index} color="blue" className="text-sm capitalize">
                       {type}
                     </Badge>
