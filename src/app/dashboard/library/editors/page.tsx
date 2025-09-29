@@ -6,6 +6,7 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 import { companyTypeLabels } from "@/types/crm-enhanced";
+import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 
 // Deutsche Übersetzungen
 const roleTranslations = {
@@ -1172,23 +1173,52 @@ export default function EditorsPage() {
 
       setSubscription(mockSubscription);
 
-      // Load real global journalists from all organizations
-      // DEBUG: Console-Logs hinzufügen
-      console.log('🔍 Loading journalists with params:', {
-        organizationId: currentOrganization.id,
-        subscription: mockSubscription
+      // Load ALLE globalen Journalisten aus CRM (quer über alle Organisationen)
+      console.log('🔍 Loading global journalists from CRM...');
+
+      const allContacts = await contactsEnhancedService.getAllGlobal();
+      const globalJournalists = allContacts.filter(c =>
+        c.isGlobal && c.mediaProfile?.isJournalist
+      );
+
+      console.log('📊 Global journalists found:', {
+        totalGlobal: allContacts.length,
+        journalists: globalJournalists.length
       });
 
-      const searchResult = await journalistDatabaseService.search({
-        filters: {},
-        organizationId: currentOrganization.id
-      }, mockSubscription);
 
-      console.log('📊 Search result:', searchResult);
-      console.log('👥 Found journalists:', searchResult.journalists?.length || 0);
+      // Konvertiere CRM-Kontakte zu JournalistDatabaseEntry Format
+      const convertedJournalists = globalJournalists.map(contact => ({
+        id: contact.id,
+        personalData: {
+          name: {
+            first: contact.name?.firstName || contact.displayName.split(' ')[0] || '',
+            last: contact.name?.lastName || contact.displayName.split(' ')[1] || ''
+          },
+          displayName: contact.displayName,
+          emails: contact.emails || [],
+          phones: contact.phones || [],
+          languages: contact.languages || ['de']
+        },
+        professionalData: {
+          employment: {
+            company: {
+              name: contact.companyName || 'Unbekannt',
+              type: 'media_house' as any
+            },
+            position: contact.position || ''
+          },
+          expertise: {
+            primaryTopics: contact.mediaProfile?.beats || contact.topics || []
+          }
+        },
+        metadata: {
+          dataQuality: { overallScore: contact.globalMetadata?.qualityScore || 85 },
+          verification: { status: 'verified' as any }
+        }
+      }));
 
-
-      setJournalists(searchResult.journalists);
+      setJournalists(convertedJournalists as any);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
     } finally {
