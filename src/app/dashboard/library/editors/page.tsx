@@ -1176,7 +1176,7 @@ export default function EditorsPage() {
       // Load ALLE globalen Journalisten aus CRM (quer über alle Organisationen)
       console.log('🔍 Loading global journalists from CRM...');
 
-      const allContacts = await contactsEnhancedService.getAllGlobal();
+      const allContacts = await contactsEnhancedService.getAllGlobalContacts();
       const globalJournalists = allContacts.filter(c =>
         c.isGlobal && c.mediaProfile?.isJournalist
       );
