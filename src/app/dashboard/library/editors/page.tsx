@@ -95,25 +95,58 @@ function convertContactToJournalist(contact: ContactEnhanced): JournalistDatabas
       timezone: contact.timezone
     },
     professionalData: {
-      mediaProfiles: contact.mediaProfile ? [{
-        company: contact.companyName || contact.mediaProfile.outlet || '',
-        position: contact.position || contact.mediaProfile.position || '',
-        department: contact.mediaProfile.department,
-        outlet: contact.mediaProfile.outlet || contact.companyName || '',
-        mediaType: (contact.mediaProfile.mediaType as MediaType) || 'online',
-        reach: contact.mediaProfile.reach ? {
-          followers: contact.mediaProfile.reach.followers || 0,
-          subscribers: contact.mediaProfile.reach.subscribers || 0,
-          avgViews: contact.mediaProfile.reach.avgViews || 0,
-          engagementRate: contact.mediaProfile.reach.engagementRate || 0
-        } : undefined,
-        isPrimary: true
-      }] : [],
-      topics: contact.mediaProfile?.topics || contact.topics || [],
-      languages: contact.languages || [],
-      expertise: contact.mediaProfile?.expertise || [],
-      awards: contact.mediaProfile?.awards || [],
-      education: contact.education || []
+      // NEUE Struktur: Employment mit Company-Daten
+      employment: {
+        company: {
+          globalCompanyId: contact.companyId || 'unknown',
+          name: contact.companyName || 'Unbekanntes Medium',
+          type: 'media_house' as any,
+          website: undefined,
+          fullProfile: undefined
+        },
+        position: contact.position || 'Unbekannte Position',
+        department: undefined,
+        startDate: undefined,
+        isMainEmployer: true,
+        isFreelancer: contact.mediaProfile?.isFreelancer || false
+      },
+
+      // LEGACY Struktur für Backwards Compatibility
+      currentEmployment: {
+        mediumName: contact.companyName || 'Unbekanntes Medium',
+        position: contact.position || 'Unbekannte Position',
+        isMainEmployer: true
+      },
+
+      // NEUE Struktur: Publication Assignments
+      publicationAssignments: contact.mediaProfile?.publicationIds?.map((pubId, index) => ({
+        publication: {
+          globalPublicationId: pubId,
+          title: `Publikation ${index + 1}`, // TODO: Echte Publication-Namen laden
+          type: 'newspaper' as any,
+          format: 'online' as any,
+          frequency: 'daily' as any,
+          fullProfile: undefined
+        },
+        role: 'reporter' as any,
+        topics: contact.mediaProfile?.beats || [],
+        isMainPublication: index === 0,
+        contributionFrequency: 'daily' as any
+      })) || [],
+
+      // Frühere Arbeitgeber (vereinfacht)
+      employmentHistory: [],
+
+      // Fachgebiete & Themen
+      expertise: {
+        primaryTopics: contact.mediaProfile?.beats || contact.topics || [],
+        secondaryTopics: contact.mediaProfile?.preferredTopics || [],
+        industries: [],
+        geographicFocus: []
+      },
+
+      // Medientypen (abgeleitet aus Publications)
+      mediaTypes: contact.mediaProfile?.mediaTypes || ['online']
     },
     preferences: {
       communicationChannels: contact.preferences?.communicationChannels || ['email'],
