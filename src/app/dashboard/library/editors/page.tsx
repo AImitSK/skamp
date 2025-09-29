@@ -5,8 +5,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
-import { companyTypeLabels } from "@/types/crm-enhanced";
+import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
 import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 // Deutsche Übersetzungen
 const roleTranslations = {
@@ -1176,7 +1178,16 @@ export default function EditorsPage() {
       // Load ALLE globalen Journalisten aus CRM (quer über alle Organisationen)
       console.log('🔍 Loading global journalists from CRM...');
 
-      const allContacts = await contactsEnhancedService.getAllGlobalContacts();
+      // Direkte Firestore-Query für ALLE globalen Kontakte
+      const globalContactsQuery = query(
+        collection(db, 'contacts_enhanced'),
+        where('isGlobal', '==', true)
+      );
+      const snapshot = await getDocs(globalContactsQuery);
+      const allContacts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ContactEnhanced[];
       const globalJournalists = allContacts.filter(c =>
         c.isGlobal && c.mediaProfile?.isJournalist
       );
