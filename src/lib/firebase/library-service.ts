@@ -1110,10 +1110,92 @@ class MediaKitService extends BaseService<MediaKit> {
 }
 
 // ========================================
+// Extended Publication Service mit References
+// ========================================
+
+/**
+ * ✨ Extended Publication Service mit Multi-Entity References
+ *
+ * Inkludiert Publication-References transparent in getAll()
+ */
+class PublicationServiceExtended extends PublicationService {
+  /**
+   * ✨ ENHANCED: getAll() erweitert um Publication-References
+   */
+  async getAll(organizationId: string, options?: any): Promise<Publication[]> {
+    try {
+      // 1. Lade echte Publications (wie bisher)
+      const realPublications = await super.getAll(organizationId, options);
+
+      // 2. Lade Publication-References
+      const pubRefsQuery = query(
+        collection(db, 'organizations', organizationId, 'publication_references'),
+        where('isActive', '==', true)
+      );
+      const pubRefsSnapshot = await getDocs(pubRefsQuery);
+
+      // 3. Konvertiere References zu Publication-Format
+      const publicationReferences: Publication[] = [];
+      for (const refDoc of pubRefsSnapshot.docs) {
+        const ref = refDoc.data();
+
+        // Lade globale Publication-Daten
+        const globalPubDoc = await getDoc(doc(db, 'publications', ref.globalPublicationId));
+        if (!globalPubDoc.exists()) continue;
+
+        const globalPub = globalPubDoc.data();
+
+        // Erstelle Publication aus Reference + globalen Daten
+        publicationReferences.push({
+          id: ref.localPublicationId,
+          title: globalPub.title,
+          type: globalPub.type,
+          frequency: globalPub.frequency,
+          circulation: globalPub.circulation,
+          website: globalPub.website,
+          description: globalPub.description,
+
+          // Company-Zuordnung
+          companyId: ref.localCompanyId,
+          publisherId: ref.localCompanyId,
+
+          // Reference-Marker
+          _isReference: true,
+          _globalPublicationId: ref.globalPublicationId,
+
+          // Meta-Felder
+          organizationId: organizationId,
+          createdAt: ref.addedAt,
+          createdBy: ref.addedBy,
+          updatedAt: ref.addedAt,
+          updatedBy: ref.addedBy
+        } as Publication & { _isReference: boolean; _globalPublicationId: string });
+      }
+
+      // 4. Kombiniere echte Publications und References
+      const allPublications = [...realPublications, ...publicationReferences];
+
+      console.log('📊 ENHANCED PUBLICATIONS SERVICE:', {
+        realPublications: realPublications.length,
+        referencedPublications: publicationReferences.length,
+        totalPublications: allPublications.length,
+        organizationId
+      });
+
+      return allPublications;
+    } catch (error) {
+      console.error('Fehler in PublicationServiceExtended.getAll:', error);
+      // Fallback zu normaler getAll() wenn Fehler
+      return super.getAll(organizationId, options);
+    }
+  }
+}
+
+// ========================================
 // Export Service Instanzen
 // ========================================
 
-export const publicationService = new PublicationService();
+export const publicationService = new PublicationServiceExtended();
 export const advertisementService = new AdvertisementService();
 export const mediaKitService = new MediaKitService();
 
