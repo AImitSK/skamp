@@ -1091,6 +1091,7 @@ class MultiEntityReferenceService {
               id: pubRefDoc.id, // Document ID für Navigation
               ...globalPubData,
               organizationId,
+              publisherId: pubRefData.parentCompanyReferenceId, // Lokale Company-Reference ID verwenden
               publisherName,
               isReference: true,
               globalPublicationId: pubRefData.globalPublicationId,
@@ -1163,6 +1164,7 @@ class MultiEntityReferenceService {
         ...globalPubData,
         // Override mit lokalen Reference-Daten falls vorhanden
         organizationId,
+        publisherId: pubRefData.parentCompanyReferenceId, // Lokale Company-Reference ID verwenden
         publisherName, // Publisher-Name sicherstellen
         isReference: true,
         globalPublicationId: pubRefData.globalPublicationId,

@@ -1180,8 +1180,8 @@ class PublicationServiceExtended extends PublicationService {
           },
 
           // Company-Zuordnung
-          companyId: ref.localCompanyId,
-          publisherId: ref.localCompanyId,
+          companyId: ref.parentCompanyReferenceId,
+          publisherId: ref.parentCompanyReferenceId,
 
           // Reference-Marker
           _isReference: true,
