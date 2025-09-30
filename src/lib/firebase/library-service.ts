@@ -1243,8 +1243,8 @@ class PublicationServiceExtended extends PublicationService {
           hasMetrics: !!publicationReference.metrics,
           hasOnlineMetrics: !!publicationReference.metrics?.online,
           monthlyUniqueVisitors: publicationReference.metrics?.online?.monthlyUniqueVisitors,
-          // Identifikatoren & Links Debug
-          identifiers: publicationReference.identifiers,
+          // Identifikatoren & Links Debug (SICHER als Array)
+          identifiers: publicationReference.identifiers || [],
           websiteUrl: publicationReference.websiteUrl,
           socialMediaUrls: publicationReference.socialMediaUrls,
           hasIdentifiers: !!publicationReference.identifiers,
