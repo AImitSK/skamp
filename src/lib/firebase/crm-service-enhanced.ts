@@ -1503,13 +1503,16 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
 
         const globalCompany = globalCompanyDoc.data();
 
-        // Debug: Log globale Company-Daten
-        console.log('🔍 Global Company Data:', {
+        // Debug: Log globale Company-Daten (detailliert)
+        console.log('🔍 Global Company Data (detailliert):', {
           id: ref.globalCompanyId,
           name: globalCompany.name,
           type: globalCompany.type,
-          industryClassification: globalCompany.industryClassification,
-          mainAddress: globalCompany.mainAddress,
+          industryClassificationFull: globalCompany.industryClassification,
+          industryPrimary: globalCompany.industryClassification?.primary,
+          mainAddressFull: globalCompany.mainAddress,
+          addressCity: globalCompany.mainAddress?.city,
+          addressCountry: globalCompany.mainAddress?.countryCode,
           website: globalCompany.website
         });
 

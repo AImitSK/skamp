@@ -196,11 +196,21 @@ class MultiEntityReferenceService {
 
       // Finde Publications basierend auf Company-Zuordnung (wenn Company ein Media House/Publisher ist)
       let publicationIds = globalJournalist.publicationIds || [];
+      console.log('📊 Publication-IDs vom Journalist:', publicationIds);
+
       if ((!publicationIds.length) && globalCompany && ['publisher', 'media_house', 'agency'].includes(globalCompany.type)) {
         console.log('🔍 Company ist Media House/Publisher, suche nach Publications...');
+        console.log('🏢 Company Details:', { id: globalCompany.id, name: globalCompany.name, type: globalCompany.type });
+
         const companyPublications = await this.findPublicationsByCompany(globalCompany.id);
         publicationIds = companyPublications.map(pub => pub.id);
-        console.log('📰 Gefundene Publications für Company:', publicationIds);
+
+        console.log('📰 Gefundene Publications für Company:', {
+          companyId: globalCompany.id,
+          foundPublications: companyPublications.length,
+          publicationIds: publicationIds,
+          publications: companyPublications
+        });
       }
 
       const publicationsResult = await this.ensurePublicationReferences(
