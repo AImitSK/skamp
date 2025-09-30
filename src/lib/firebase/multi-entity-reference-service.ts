@@ -473,12 +473,14 @@ class MultiEntityReferenceService {
         isGlobal: globalDoc.exists() ? globalDoc.data()?.isGlobal : null
       });
 
-      if (globalDoc.exists() && globalDoc.data().isGlobal) {
+      if (globalDoc.exists()) {
+        // WORKAROUND: Akzeptiere Company auch ohne isGlobal Flag (SuperAdmin Problem)
+        const data = globalDoc.data();
         const result = {
           id: globalDoc.id,
-          ...globalDoc.data()
+          ...data
         };
-        console.log('✅ Company über ID gefunden:', result);
+        console.log('✅ Company über ID gefunden (ohne isGlobal Check):', result);
         return result;
       }
 
