@@ -1495,6 +1495,75 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
  */
 class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
   /**
+   * ✨ ENHANCED: getById() erweitert um Company-Reference-Support
+   */
+  async getById(id: string, organizationId: string): Promise<CompanyEnhanced | null> {
+    try {
+      // 1. Versuche zuerst echte Company zu laden
+      const realCompany = await super.getById(id, organizationId);
+      if (realCompany) {
+        return realCompany;
+      }
+
+      // 2. Versuche Company-Reference zu laden (für local-ref-* IDs)
+      if (id.startsWith('local-ref-company-')) {
+        const companyRefsQuery = query(
+          collection(db, 'organizations', organizationId, 'company_references'),
+          where('localCompanyId', '==', id),
+          where('isActive', '==', true)
+        );
+        const companyRefsSnapshot = await getDocs(companyRefsQuery);
+
+        if (!companyRefsSnapshot.empty) {
+          const ref = companyRefsSnapshot.docs[0].data();
+
+          // Lade globale Company-Daten
+          const globalCompanyDoc = await getDoc(doc(db, 'companies_enhanced', ref.globalCompanyId));
+          if (globalCompanyDoc.exists()) {
+            const globalCompany = globalCompanyDoc.data();
+
+            // Erstelle CompanyEnhanced aus Reference + globalen Daten (wie in getAll)
+            return {
+              id: ref.localCompanyId,
+              name: globalCompany.name || globalCompany.officialName,
+              officialName: globalCompany.officialName,
+              tradingName: globalCompany.tradingName,
+              type: globalCompany.type || 'other',
+              legalForm: globalCompany.legalForm,
+              industryClassification: globalCompany.industryClassification,
+              website: globalCompany.website,
+              description: globalCompany.description,
+              foundedDate: globalCompany.foundedDate,
+              emails: globalCompany.emails || [],
+              phones: globalCompany.phones || [],
+              mainAddress: globalCompany.mainAddress,
+              identifiers: globalCompany.identifiers || [],
+              financial: globalCompany.financial,
+              socialMedia: globalCompany.socialMedia || [],
+              status: globalCompany.status || 'active',
+              lifecycleStage: globalCompany.lifecycleStage,
+              parentCompanyId: globalCompany.parentCompanyId,
+              subsidiaryIds: globalCompany.subsidiaryIds || [],
+              _isReference: true,
+              _globalCompanyId: ref.globalCompanyId,
+              organizationId: organizationId,
+              createdAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
+              createdBy: ref.addedBy,
+              updatedAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
+              updatedBy: ref.addedBy
+            } as CompanyEnhanced & { _isReference: boolean; _globalCompanyId: string };
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Fehler beim Laden der Company (Enhanced):', error);
+      return null;
+    }
+  }
+
+  /**
    * ✨ ENHANCED: getAll() erweitert um Company-References
    */
   async getAll(organizationId: string): Promise<CompanyEnhanced[]> {
