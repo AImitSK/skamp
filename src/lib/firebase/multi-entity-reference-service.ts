@@ -461,17 +461,30 @@ class MultiEntityReferenceService {
    */
   private async loadGlobalCompany(globalCompanyIdOrName: string): Promise<any | null> {
     try {
+      console.log('🔍 loadGlobalCompany START:', { input: globalCompanyIdOrName });
+
       // Versuche zuerst über ID zu laden
+      console.log('📊 Versuche Company-Load über ID...');
       const globalDoc = await getDoc(doc(db, 'companies_enhanced', globalCompanyIdOrName));
 
+      console.log('📋 Company-Doc Ergebnis:', {
+        exists: globalDoc.exists(),
+        data: globalDoc.exists() ? globalDoc.data() : null,
+        isGlobal: globalDoc.exists() ? globalDoc.data()?.isGlobal : null
+      });
+
       if (globalDoc.exists() && globalDoc.data().isGlobal) {
-        return {
+        const result = {
           id: globalDoc.id,
           ...globalDoc.data()
         };
+        console.log('✅ Company über ID gefunden:', result);
+        return result;
       }
 
       // Falls nicht gefunden, suche nach Name in der superadmin Organization
+      console.log('🔍 Fallback: Suche Company über Name...', { name: globalCompanyIdOrName });
+
       const companiesQuery = query(
         collection(db, 'companies_enhanced'),
         where('isGlobal', '==', true),
@@ -479,17 +492,26 @@ class MultiEntityReferenceService {
       );
 
       const snapshot = await getDocs(companiesQuery);
+      console.log('📊 Name-Search Ergebnis:', {
+        found: !snapshot.empty,
+        count: snapshot.docs.length,
+        docs: snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, isGlobal: doc.data().isGlobal }))
+      });
+
       if (!snapshot.empty) {
         const companyDoc = snapshot.docs[0];
-        return {
+        const result = {
           id: companyDoc.id,
           ...companyDoc.data()
         };
+        console.log('✅ Company über Name gefunden:', result);
+        return result;
       }
 
+      console.log('❌ Company nicht gefunden!');
       return null;
     } catch (error) {
-      console.error('Fehler beim Laden der globalen Company:', error);
+      console.error('💥 Fehler beim Laden der globalen Company:', error);
       return null;
     }
   }
