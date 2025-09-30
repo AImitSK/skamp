@@ -1143,17 +1143,6 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
 
       // Globale Journalist-Daten (read-only)
       displayName: reference.displayName,
-      emails: reference.email ? [{
-        email: reference.email,
-        isPrimary: true,
-        type: 'work' as any,
-        isVerified: false
-      }] : [],
-      phones: reference.phone ? [{
-        number: reference.phone,
-        isPrimary: true,
-        type: 'work' as any
-      }] : [],
       position: reference.position,
 
       // Fehlende Pflichtfelder für Detail-Seite
@@ -1166,7 +1155,8 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       emails: reference.email ? [{
         email: reference.email,
         type: 'work',
-        isPrimary: true
+        isPrimary: true,
+        isVerified: false
       }] : [],
       phones: reference.phone ? [{
         number: reference.phone,
@@ -1177,6 +1167,17 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       socialMedia: [],
       tags: reference._localMeta?.tags || [],
       customFields: {},
+
+      // Zusätzliche Felder für vollständige ContactEnhanced-Kompatibilität
+      identifiers: [], // Contact-References haben keine Identifiers
+      socialProfiles: [], // Contact-References haben keine Social Media Profile
+      gdprConsents: [], // Contact-References haben keine GDPR-Einwilligungen
+      tagIds: reference._localMeta?.tags || [], // Tag-IDs für Kompatibilität
+      communicationPreferences: undefined, // Keine Kommunikationspräferenzen
+      personalInfo: undefined, // Keine persönlichen Informationen
+      professionalInfo: undefined, // Keine beruflichen Informationen
+      internalNotes: reference._localMeta?.notes || '', // Lokale Notizen
+      status: 'active', // Standard-Status
 
       // ✅ KRITISCH: Lokale Relations für Listen/Projekte/etc!
       companyId: reference.companyId, // Lokale Company-Reference-ID!
