@@ -367,7 +367,8 @@ function JournalistCard({
   onViewDetails,
   onUpgrade,
   subscription,
-  isImporting = false
+  isImporting = false,
+  isSuperAdmin = false
 }: {
   journalist: JournalistDatabaseEntry;
   onImport: (journalist: JournalistDatabaseEntry) => void;
@@ -375,6 +376,7 @@ function JournalistCard({
   onUpgrade: (journalist: JournalistDatabaseEntry) => void;
   subscription: JournalistSubscription | null;
   isImporting?: boolean;
+  isSuperAdmin?: boolean;
 }) {
   const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
                       journalist.personalData.emails[0]?.email;
@@ -384,7 +386,7 @@ function JournalistCard({
   // TODO: Remove totalFollowers - not captured in CRM data
   // const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
 
-  const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
+  const canImport = subscription?.status === 'active' && subscription.features.importEnabled && !isSuperAdmin;
 
   return (
     <div className="rounded-lg border bg-white overflow-hidden hover:shadow-sm transition-shadow">
@@ -518,6 +520,13 @@ function JournalistCard({
                   Als Verweis
                 </>
               )}
+            </Button>
+          ) : isSuperAdmin ? (
+            <Button
+              disabled
+              className="!bg-gray-100 !border !border-gray-200 !text-gray-400 text-sm px-4 py-1.5 cursor-not-allowed"
+            >
+              Im CRM verfügbar
             </Button>
           ) : (
             <Button
@@ -1313,8 +1322,17 @@ export default function EditorsPage() {
     return Array.from(topicsSet).sort();
   }, [journalists]);
 
+  // Check if current user is SuperAdmin
+  const isSuperAdmin = currentOrganization?.id === "superadmin-org";
+
   // Reference Import handlers
   const handleImportReference = async (journalist: JournalistDatabaseEntry) => {
+    // SuperAdmin sollte sich nicht selbst referenzieren
+    if (isSuperAdmin) {
+      showAlert('info', 'SuperAdmin-Hinweis', 'Als SuperAdmin verwalten Sie diese Journalisten direkt im CRM. Ein Verweis ist nicht nötig.');
+      return;
+    }
+
     if (!subscription?.features.importEnabled) {
       showAlert('warning', 'Premium-Feature', 'Das Importieren von Journalisten ist nur mit einem Premium-Abo verfügbar.');
       return;
@@ -1605,6 +1623,7 @@ export default function EditorsPage() {
                 onUpgrade={handleUpgrade}
                 subscription={subscription}
                 isImporting={importingIds.has(journalist.id!)}
+                isSuperAdmin={isSuperAdmin}
               />
             ))}
           </div>
@@ -1647,7 +1666,7 @@ export default function EditorsPage() {
                 const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
                 // TODO: Remove totalFollowers - not captured in CRM
                 // const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
-                const canImport = subscription?.status === 'active' && subscription.features.importEnabled;
+                const canImport = subscription?.status === 'active' && subscription.features.importEnabled && !isSuperAdmin;
 
                 return (
                   <div key={journalist.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
@@ -1778,6 +1797,13 @@ export default function EditorsPage() {
                             ) : (
                               <ArrowUpTrayIcon className="h-3 w-3" />
                             )}
+                          </Button>
+                        ) : isSuperAdmin ? (
+                          <Button
+                            disabled
+                            className="!bg-gray-100 !border !border-gray-200 !text-gray-400 text-xs px-3 py-1.5 cursor-not-allowed"
+                          >
+                            Im CRM
                           </Button>
                         ) : (
                           <Button
