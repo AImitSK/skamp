@@ -531,7 +531,7 @@ function JournalistCard({
               ) : (
                 <>
                   <StarIcon className={`h-4 w-4 mr-1 ${
-                    isImported ? 'text-black' : 'text-white'
+                    isImported ? 'text-black' : 'text-gray-500'
                   }`}
                   fill={isImported ? 'currentColor' : 'none'} />
                   {isImported ? 'Entfernen' : 'Als Verweis'}
@@ -1937,7 +1937,7 @@ export default function EditorsPage() {
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                             ) : (
                               <StarIcon className={`h-3 w-3 ${
-                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-white'
+                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-gray-500'
                               }`}
                               fill={importedJournalistIds.has(journalist.id) ? 'currentColor' : 'none'} />
                             )}
@@ -2294,7 +2294,7 @@ export default function EditorsPage() {
               }}
             >
               <StarIcon className={`h-4 w-4 mr-2 ${
-                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-white'
+                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-gray-500'
               }`}
               fill={importedJournalistIds.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
               {importedJournalistIds.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
