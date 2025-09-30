@@ -1008,17 +1008,25 @@ const getContactCount = (companyId: string) => {
                               <EyeIcon className="h-4 w-4" />
                               Anzeigen
                             </DropdownItem>
-                            <DropdownItem onClick={() => {
-                              setSelectedCompany(company);
-                              setShowCompanyModal(true);
-                            }}>
+                            <DropdownItem
+                              onClick={() => {
+                                setSelectedCompany(company);
+                                setShowCompanyModal(true);
+                              }}
+                              disabled={(company as any)?._isReference}
+                              className={(company as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
+                            >
                               <PencilIcon className="h-4 w-4" />
-                              Bearbeiten
+                              Bearbeiten {(company as any)?._isReference && '(Verweis)'}
                             </DropdownItem>
                             <DropdownDivider />
-                            <DropdownItem onClick={() => handleDelete(company.id!, company.name, 'company')}>
+                            <DropdownItem
+                              onClick={() => handleDelete(company.id!, company.name, 'company')}
+                              disabled={(company as any)?._isReference}
+                              className={(company as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
+                            >
                               <TrashIcon className="h-4 w-4" />
-                              <span className="text-red-600">Löschen</span>
+                              <span className="text-red-600">Löschen {(company as any)?._isReference && '(Verweis)'}</span>
                             </DropdownItem>
                           </DropdownMenu>
                         </Dropdown>
@@ -1164,17 +1172,25 @@ const getContactCount = (companyId: string) => {
                               <EyeIcon className="h-4 w-4" />
                               Anzeigen
                             </DropdownItem>
-                            <DropdownItem onClick={() => {
-                              setSelectedContact(contact);
-                              setShowContactModal(true);
-                            }}>
+                            <DropdownItem
+                              onClick={() => {
+                                setSelectedContact(contact);
+                                setShowContactModal(true);
+                              }}
+                              disabled={(contact as any)?._isReference}
+                              className={(contact as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
+                            >
                               <PencilIcon className="h-4 w-4" />
-                              Bearbeiten
+                              Bearbeiten {(contact as any)?._isReference && '(Verweis)'}
                             </DropdownItem>
                             <DropdownDivider />
-                            <DropdownItem onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}>
+                            <DropdownItem
+                              onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}
+                              disabled={(contact as any)?._isReference}
+                              className={(contact as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
+                            >
                               <TrashIcon className="h-4 w-4" />
-                              <span className="text-red-600">Löschen</span>
+                              <span className="text-red-600">Löschen {(contact as any)?._isReference && '(Verweis)'}</span>
                             </DropdownItem>
                           </DropdownMenu>
                         </Dropdown>

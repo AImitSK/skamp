@@ -1084,7 +1084,7 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
                   Identifikatoren
                 </h3>
                 <dl className="space-y-3">
-                  {publication.identifiers.map((identifier, index) => (
+                  {(publication.identifiers || []).map((identifier, index) => (
                     <InfoRow
                       key={index}
                       label={identifier.type}

@@ -614,7 +614,7 @@ export default function CompanyDetailPage() {
             {company.identifiers && company.identifiers.length > 0 && (
               <InfoCard title="Geschäftliche Kennungen" icon={IdentificationIcon}>
                 <div className="space-y-2">
-                  {company.identifiers.map((identifier, index) => (
+                  {(company.identifiers || []).map((identifier, index) => (
                     <div key={index} className="flex items-start justify-between py-2 border-b last:border-0">
                       <div>
                         <Text className="font-medium">
