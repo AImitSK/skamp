@@ -1077,7 +1077,13 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       // 1. Lade kombinierte Contact-References
       const combinedRefs = await multiEntityReferenceService.getAllContactReferences(organizationId);
 
-      // 2. Konvertiere zu ContactEnhanced-Format
+      // 2. Sicherheitsprüfung für undefined/null
+      if (!combinedRefs || !Array.isArray(combinedRefs)) {
+        console.warn('getAllContactReferences returned invalid data:', combinedRefs);
+        return [];
+      }
+
+      // 3. Konvertiere zu ContactEnhanced-Format
       return combinedRefs.map(this.convertReferenceToContact.bind(this));
 
     } catch (error) {

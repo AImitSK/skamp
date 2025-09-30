@@ -259,12 +259,16 @@ class MultiEntityReferenceService {
       const globalJournalistIds = journalistRefs.map(ref => ref.globalJournalistId);
       const globalJournalists = await this.batchLoadGlobalJournalists(globalJournalistIds);
 
-      // 3. Lade Company-References für lokale IDs
-      const companyRefIds = journalistRefs.map(ref => ref.companyReferenceId);
+      // 3. Lade Company-References für lokale IDs (nur valide IDs)
+      const companyRefIds = journalistRefs
+        .map(ref => ref.companyReferenceId)
+        .filter(id => id && typeof id === 'string');
       const companyRefs = await this.batchLoadCompanyReferences(companyRefIds, organizationId);
 
-      // 4. Lade Publication-References für lokale IDs
-      const allPublicationRefIds = journalistRefs.flatMap(ref => ref.publicationReferenceIds);
+      // 4. Lade Publication-References für lokale IDs (nur valide IDs)
+      const allPublicationRefIds = journalistRefs
+        .flatMap(ref => ref.publicationReferenceIds || [])
+        .filter(id => id && typeof id === 'string');
       const publicationRefs = await this.batchLoadPublicationReferences(allPublicationRefIds, organizationId);
 
       // 5. Kombiniere alle Daten
