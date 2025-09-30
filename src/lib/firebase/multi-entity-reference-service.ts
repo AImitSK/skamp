@@ -277,7 +277,7 @@ class MultiEntityReferenceService {
       for (const journalistRef of journalistRefs) {
         const globalJournalist = globalJournalists.get(journalistRef.globalJournalistId);
         const companyRef = companyRefs.get(journalistRef.companyReferenceId);
-        const journalistPublicationRefs = journalistRef.publicationReferenceIds
+        const journalistPublicationRefs = (journalistRef.publicationReferenceIds || [])
           .map(id => publicationRefs.get(id))
           .filter(Boolean);
 
