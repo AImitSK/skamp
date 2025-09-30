@@ -1186,11 +1186,33 @@ export default function EditorsPage() {
       });
 
 
-      // Load companies for type lookup
+      // Load companies for type lookup (lokale + globale)
       let companiesData = [];
       try {
-        companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
-        console.log('📊 Companies loaded:', companiesData.length);
+        // Lokale Companies der aktuellen Organisation
+        const localCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
+
+        // Globale Companies für globale Journalisten
+        const globalCompaniesQuery = query(
+          collection(db, 'companies_enhanced'),
+          where('isGlobal', '==', true)
+        );
+        const globalSnapshot = await getDocs(globalCompaniesQuery);
+        const globalCompanies = globalSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as CompanyEnhanced[];
+
+        // Kombiniere beide ohne Duplikate
+        const allCompanies = [...localCompanies];
+        globalCompanies.forEach(globalComp => {
+          if (!allCompanies.find(localComp => localComp.id === globalComp.id)) {
+            allCompanies.push(globalComp);
+          }
+        });
+
+        companiesData = allCompanies;
+        console.log('📊 Companies loaded:', companiesData.length, '(local:', localCompanies.length, 'global:', globalCompanies.length, ')');
       } catch (error) {
         console.error('❌ Error loading companies:', error);
       }
@@ -1226,6 +1248,12 @@ export default function EditorsPage() {
 
         // Publications Lookup - Hierarchie: Company -> Publications -> Redakteure
         let publicationAssignments = [];
+        console.log('🔍 Publication Resolution für:', contact.displayName, {
+          company: company?.name,
+          companyType,
+          hasDirectPublicationIds: (contact.mediaProfile?.publicationIds || []).length > 0,
+          publicationsDataCount: publicationsData.length
+        });
 
         // 1. Direkte Publication-IDs (falls vorhanden)
         const directPublicationIds = contact.mediaProfile?.publicationIds || [];
@@ -1263,6 +1291,7 @@ export default function EditorsPage() {
             }));
           } else {
             // Erstelle Placeholder-Publication aus Company-Daten
+            console.log('📝 Erstelle Placeholder-Publication aus Company:', company.name);
             publicationAssignments = [{
               publication: {
                 title: company.name,
