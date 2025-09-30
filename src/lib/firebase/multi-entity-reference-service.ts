@@ -143,20 +143,17 @@ class MultiEntityReferenceService {
     userId: string,
     initialNotes?: string
   ): Promise<MultiEntityImportResult> {
-    console.log('🚀 [createJournalistReference] Start für:', { globalJournalistId, organizationId, userId });
     const batch = writeBatch(db);
 
     try {
       // 1. Lade globale Journalist-Daten
       const globalJournalist = await this.loadGlobalJournalist(globalJournalistId);
       if (!globalJournalist) {
-        console.log('❌ [createJournalistReference] Globaler Journalist nicht gefunden:', globalJournalistId);
         return {
           success: false,
           errors: ['Globaler Journalist nicht gefunden']
         };
       }
-      console.log('✅ [createJournalistReference] Globaler Journalist geladen:', globalJournalist.displayName);
 
       // 2. Prüfe auf existierende Journalist-Reference
       const existingJournalistRef = await this.findExistingJournalistReference(
@@ -242,8 +239,6 @@ class MultiEntityReferenceService {
    */
   async getAllContactReferences(organizationId: string): Promise<CombinedContactReference[]> {
     try {
-      console.log('🔍 [getAllContactReferences] Start für organizationId:', organizationId);
-
       // 1. Lade alle aktiven Journalist-References
       const journalistRefsQuery = query(
         collection(db, 'organizations', organizationId, this.journalistRefsCollection),
@@ -251,10 +246,7 @@ class MultiEntityReferenceService {
       );
 
       const journalistRefsSnapshot = await getDocs(journalistRefsQuery);
-      console.log('📊 [getAllContactReferences] Journalist-References gefunden:', journalistRefsSnapshot.size);
-
       if (journalistRefsSnapshot.empty) {
-        console.log('❌ [getAllContactReferences] Keine Journalist-References vorhanden');
         return [];
       }
 
@@ -265,25 +257,19 @@ class MultiEntityReferenceService {
 
       // 2. Batch-lade alle benötigten globalen Daten
       const globalJournalistIds = journalistRefs.map(ref => ref.globalJournalistId);
-      console.log('🔍 [getAllContactReferences] Global Journalist IDs:', globalJournalistIds);
       const globalJournalists = await this.batchLoadGlobalJournalists(globalJournalistIds);
-      console.log('📊 [getAllContactReferences] Global Journalists geladen:', globalJournalists.size);
 
       // 3. Lade Company-References für lokale IDs (nur valide IDs)
       const companyRefIds = journalistRefs
         .map(ref => ref.companyReferenceId)
         .filter(id => id && typeof id === 'string');
-      console.log('🏢 [getAllContactReferences] Company Ref IDs:', companyRefIds);
       const companyRefs = await this.batchLoadCompanyReferences(companyRefIds, organizationId);
-      console.log('📊 [getAllContactReferences] Company References geladen:', companyRefs.size);
 
       // 4. Lade Publication-References für lokale IDs (nur valide IDs)
       const allPublicationRefIds = journalistRefs
         .flatMap(ref => ref.publicationReferenceIds || [])
         .filter(id => id && typeof id === 'string');
-      console.log('📰 [getAllContactReferences] Publication Ref IDs:', allPublicationRefIds);
       const publicationRefs = await this.batchLoadPublicationReferences(allPublicationRefIds, organizationId);
-      console.log('📊 [getAllContactReferences] Publication References geladen:', publicationRefs.size);
 
       // 5. Kombiniere alle Daten
       const combinedReferences: CombinedContactReference[] = [];
@@ -294,13 +280,6 @@ class MultiEntityReferenceService {
         const journalistPublicationRefs = (journalistRef.publicationReferenceIds || [])
           .map(id => publicationRefs.get(id))
           .filter(Boolean);
-
-        console.log('🔄 [getAllContactReferences] Processing Reference:', {
-          journalistRefId: journalistRef.id,
-          hasGlobalJournalist: !!globalJournalist,
-          hasCompanyRef: !!companyRef,
-          companyReferenceId: journalistRef.companyReferenceId
-        });
 
         if (globalJournalist && companyRef) {
           combinedReferences.push({
@@ -334,11 +313,6 @@ class MultiEntityReferenceService {
           });
         }
       }
-
-      console.log('✅ [getAllContactReferences] Final Result:', {
-        foundReferences: journalistRefs.length,
-        combinedReferences: combinedReferences.length
-      });
 
       return combinedReferences;
 
