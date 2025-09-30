@@ -203,7 +203,7 @@ class MultiEntityReferenceService {
       // 5. Journalist-Reference mit korrekten Relations erstellen
       const journalistResult = await this.createJournalistReferenceWithRelations(
         globalJournalist,
-        companyResult.localCompanyId!,
+        companyResult.documentId!,  // Document ID statt localCompanyId
         publicationsResult.localPublicationIds,
         organizationId,
         userId,
@@ -224,7 +224,7 @@ class MultiEntityReferenceService {
       return {
         success: true,
         journalistReferenceId: journalistResult.localJournalistId,
-        companyReferenceId: companyResult.localCompanyId,
+        companyReferenceId: companyResult.documentId!,
         publicationReferenceIds: publicationsResult.localPublicationIds
       };
 
@@ -447,7 +447,7 @@ class MultiEntityReferenceService {
     organizationId: string,
     userId: string,
     batch: any
-  ): Promise<{ success: boolean; localCompanyId?: string; error?: string }> {
+  ): Promise<{ success: boolean; localCompanyId?: string; documentId?: string; error?: string }> {
     try {
       // Prüfe ob Company-Reference bereits existiert
       const existingCompanyRef = await this.findCompanyReferenceByGlobalId(
@@ -457,7 +457,8 @@ class MultiEntityReferenceService {
       if (existingCompanyRef) {
         return {
           success: true,
-          localCompanyId: existingCompanyRef.localCompanyId
+          localCompanyId: existingCompanyRef.localCompanyId,
+          documentId: existingCompanyRef.id
         };
       }
 
@@ -481,7 +482,8 @@ class MultiEntityReferenceService {
 
       return {
         success: true,
-        localCompanyId
+        localCompanyId,
+        documentId: companyRefDoc.id
       };
 
     } catch (error) {
@@ -556,7 +558,7 @@ class MultiEntityReferenceService {
    */
   private async createJournalistReferenceWithRelations(
     globalJournalist: any,
-    localCompanyId: string,
+    companyReferenceDocumentId: string,  // Document ID der Company Reference
     localPublicationIds: string[],
     organizationId: string,
     userId: string,
@@ -576,7 +578,7 @@ class MultiEntityReferenceService {
         localJournalistId,
 
         // KRITISCH: Lokale Relations!
-        companyReferenceId: localCompanyId,
+        companyReferenceId: companyReferenceDocumentId,
         publicationReferenceIds: localPublicationIds,
 
         // Lokale Daten
