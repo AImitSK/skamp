@@ -373,6 +373,46 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
     }
   }, [publication]);
 
+  // Fix Publisher-ID Inkonsistenz: Suche Publisher nach Name wenn ID nicht gefunden
+  useEffect(() => {
+    if (publication && publishers.length > 0) {
+      const currentPublisherId = formData.publisherId;
+      const currentPublisherName = formData.publisherName;
+
+      // Prüfe ob Publisher-ID in der Liste existiert
+      const publisherById = publishers.find(p => p.id === currentPublisherId);
+
+      if (!publisherById && currentPublisherName) {
+        // Suche Publisher nach Name
+        const publisherByName = publishers.find(p =>
+          (p.name === currentPublisherName) ||
+          (p.companyName === currentPublisherName)
+        );
+
+        if (publisherByName) {
+          console.log('🔧 Publisher-ID Fix: Gefunden nach Name:', {
+            oldId: currentPublisherId,
+            newId: publisherByName.id,
+            name: currentPublisherName
+          });
+
+          setFormData(prev => ({
+            ...prev,
+            publisherId: publisherByName.id!,
+            publisherName: publisherByName.name || publisherByName.companyName || ''
+          }));
+        } else {
+          console.warn('⚠️ Publisher nicht gefunden:', {
+            suchName: currentPublisherName,
+            verfügbare: publishers.map(p => ({ id: p.id, name: p.name || p.companyName }))
+          });
+        }
+      } else if (publisherById) {
+        console.log('✅ Publisher-ID gefunden:', publisherById.name || publisherById.companyName);
+      }
+    }
+  }, [publication, publishers, formData.publisherId, formData.publisherName]);
+
 const loadPublishers = async () => {
   if (!user) return;
   
