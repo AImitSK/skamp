@@ -187,7 +187,7 @@ class MultiEntityReferenceService {
       // 4. Publication-References erstellen oder finden
       const publicationsResult = await this.ensurePublicationReferences(
         globalJournalist.publicationIds || [],
-        companyResult.localCompanyId!,
+        companyResult.documentId!,  // Document ID statt localCompanyId
         organizationId,
         userId,
         batch
@@ -204,7 +204,7 @@ class MultiEntityReferenceService {
       const journalistResult = await this.createJournalistReferenceWithRelations(
         globalJournalist,
         companyResult.documentId!,  // Document ID statt localCompanyId
-        publicationsResult.localPublicationIds,
+        publicationsResult.documentIds,  // Document IDs verwenden
         organizationId,
         userId,
         initialNotes,
@@ -225,7 +225,7 @@ class MultiEntityReferenceService {
         success: true,
         journalistReferenceId: journalistResult.localJournalistId,
         companyReferenceId: companyResult.documentId!,
-        publicationReferenceIds: publicationsResult.localPublicationIds
+        publicationReferenceIds: publicationsResult.documentIds  // Document IDs verwenden
       };
 
     } catch (error) {
@@ -499,13 +499,13 @@ class MultiEntityReferenceService {
    */
   private async ensurePublicationReferences(
     globalPublicationIds: string[],
-    localCompanyId: string,
+    companyReferenceDocumentId: string,  // Document ID der Company Reference
     organizationId: string,
     userId: string,
     batch: any
-  ): Promise<{ success: boolean; localPublicationIds: string[]; error?: string }> {
+  ): Promise<{ success: boolean; documentIds: string[]; error?: string }> {
     try {
-      const localPublicationIds: string[] = [];
+      const documentIds: string[] = [];  // Document IDs sammeln
 
       for (const globalPubId of globalPublicationIds) {
         // Prüfe ob Publication-Reference bereits existiert
@@ -514,7 +514,7 @@ class MultiEntityReferenceService {
         );
 
         if (existingPubRef) {
-          localPublicationIds.push(existingPubRef.localPublicationId);
+          documentIds.push(existingPubRef.id!);  // Document ID, nicht localPublicationId
           continue;
         }
 
@@ -529,25 +529,25 @@ class MultiEntityReferenceService {
           organizationId,
           globalPublicationId: globalPubId,
           localPublicationId,
-          parentCompanyReferenceId: localCompanyId,
+          parentCompanyReferenceId: companyReferenceDocumentId,  // Document ID verwenden
           addedAt: serverTimestamp(),
           addedBy: userId,
           isActive: true
         };
 
         batch.set(pubRefDoc, pubRefData);
-        localPublicationIds.push(localPublicationId);
+        documentIds.push(pubRefDoc.id);  // Document ID sammeln, nicht localPublicationId
       }
 
       return {
         success: true,
-        localPublicationIds
+        documentIds  // Document IDs zurückgeben
       };
 
     } catch (error) {
       return {
         success: false,
-        localPublicationIds: [],
+        documentIds: [],  // Leer bei Fehler
         error: error instanceof Error ? error.message : 'Publication-References Fehler'
       };
     }
@@ -559,7 +559,7 @@ class MultiEntityReferenceService {
   private async createJournalistReferenceWithRelations(
     globalJournalist: any,
     companyReferenceDocumentId: string,  // Document ID der Company Reference
-    localPublicationIds: string[],
+    publicationReferenceDocumentIds: string[],  // Document IDs der Publication References
     organizationId: string,
     userId: string,
     initialNotes: string | undefined,
@@ -579,7 +579,7 @@ class MultiEntityReferenceService {
 
         // KRITISCH: Lokale Relations!
         companyReferenceId: companyReferenceDocumentId,
-        publicationReferenceIds: localPublicationIds,
+        publicationReferenceIds: publicationReferenceDocumentIds,  // Document IDs verwenden
 
         // Lokale Daten
         localNotes: initialNotes || '',
