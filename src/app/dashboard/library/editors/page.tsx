@@ -510,9 +510,13 @@ function JournalistCard({
               disabled={isImporting}
               className={`text-sm px-4 py-1.5 flex items-center gap-1 ${
                 isImported
-                  ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                  ? 'border border-gray-300 hover:bg-gray-50'
                   : 'bg-primary hover:bg-primary-hover text-white'
               }`}
+              style={isImported ? {
+                backgroundColor: '#DEDC00',
+                color: '#000000'
+              } : {}}
             >
               {isImporting ? (
                 <>
@@ -522,7 +526,7 @@ function JournalistCard({
               ) : (
                 <>
                   <StarIcon className={`h-4 w-4 mr-1 ${
-                    isImported ? 'text-yellow-600' : 'text-white'
+                    isImported ? 'text-black' : 'text-white'
                   }`}
                   fill={isImported ? 'currentColor' : 'none'} />
                   {isImported ? 'Entfernen' : 'Als Verweis'}
@@ -1859,15 +1863,19 @@ export default function EditorsPage() {
                             disabled={importingIds.has(journalist.id!)}
                             className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
                               importedJournalistIds.has(journalist.id)
-                                ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                                ? 'border border-gray-300 hover:bg-gray-50'
                                 : 'bg-primary hover:bg-primary-hover text-white'
                             }`}
+                            style={importedJournalistIds.has(journalist.id) ? {
+                              backgroundColor: '#DEDC00',
+                              color: '#000000'
+                            } : {}}
                           >
                             {importingIds.has(journalist.id!) ? (
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                             ) : (
                               <StarIcon className={`h-3 w-3 ${
-                                importedJournalistIds.has(journalist.id) ? 'text-yellow-600' : 'text-white'
+                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-white'
                               }`}
                               fill={importedJournalistIds.has(journalist.id) ? 'currentColor' : 'none'} />
                             )}
@@ -2210,12 +2218,16 @@ export default function EditorsPage() {
               disabled={!subscription?.features.importEnabled}
               className={`${
                 importedJournalistIds.has(detailJournalist?.id)
-                  ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                  ? 'border border-gray-300 hover:bg-gray-50'
                   : 'bg-primary hover:bg-primary-hover text-white'
               }`}
+              style={importedJournalistIds.has(detailJournalist?.id) ? {
+                backgroundColor: '#DEDC00',
+                color: '#000000'
+              } : {}}
             >
               <StarIcon className={`h-4 w-4 mr-2 ${
-                importedJournalistIds.has(detailJournalist?.id) ? 'text-yellow-600' : 'text-white'
+                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-white'
               }`}
               fill={importedJournalistIds.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
               {importedJournalistIds.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
