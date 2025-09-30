@@ -200,6 +200,15 @@ export default function ContactModalEnhanced({
         phonesStructure: contact.phones?.map(p => ({ number: p.number, type: p.type, isPrimary: p.isPrimary }))
       });
 
+      // Debug: Prüfe auch FormData nach Initialisierung
+      setTimeout(() => {
+        console.log('📞 ContactModalEnhanced - FormData Debug:', {
+          contactId: contact.id,
+          formDataPhones: (window as any).debugFormData?.phones,
+          formDataPhonesLength: (window as any).debugFormData?.phones?.length || 0
+        });
+      }, 100);
+
       // Directly use enhanced contact data
       setFormData({
         ...contact,
@@ -231,7 +240,13 @@ export default function ContactModalEnhanced({
         personalInfo: contact.personalInfo || {},
         gdprConsents: contact.gdprConsents || []
       });
-      
+
+      // Debug: FormData für Debugging verfügbar machen
+      (window as any).debugFormData = {
+        ...contact,
+        phones: contact.phones || []
+      };
+
       if (contact.companyId) {
         const company = companies.find(c => c.id === contact.companyId);
         setSelectedCompany(company || null);

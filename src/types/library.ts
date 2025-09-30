@@ -52,12 +52,12 @@ export interface Publication extends BaseEntity {
   publisherId: string; // CompanyId des Verlags/Medienhauses
   publisherName?: string; // Denormalisiert für Performance
   
-  // Identifikatoren
-  identifiers?: {
+  // Identifikatoren (Array für UI-Kompatibilität)
+  identifiers?: Array<{
     type: 'ISSN' | 'ISBN' | 'DOI' | 'URL' | 'DOMAIN' | 'SOCIAL_HANDLE' | 'OTHER';
     value: string;
     description?: string;
-  }[];
+  }>;
   
   // Klassifizierung
   type: PublicationType;
