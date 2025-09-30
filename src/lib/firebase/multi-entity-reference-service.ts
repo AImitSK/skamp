@@ -479,18 +479,50 @@ class MultiEntityReferenceService {
    */
   private async findPublicationsByCompany(companyId: string): Promise<any[]> {
     try {
-      // Suche in der SuperAdmin Organization nach Publications mit dieser publisherId
-      const publicationsQuery = query(
-        collection(db, 'publications'),
-        where('organizationId', '==', 'superadmin'),
-        where('publisherId', '==', companyId)
-      );
+      console.log('🔍 Suche Publications für Company ID:', companyId);
 
-      const snapshot = await getDocs(publicationsQuery);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Versuche verschiedene SuperAdmin Organization IDs
+      const superAdminOrgIds = ['superadmin', 'superadmin-org'];
+      let allPublications: any[] = [];
+
+      for (const orgId of superAdminOrgIds) {
+        console.log(`📊 Suche in Organization: ${orgId}`);
+
+        const publicationsQuery = query(
+          collection(db, 'publications'),
+          where('organizationId', '==', orgId),
+          where('publisherId', '==', companyId)
+        );
+
+        const snapshot = await getDocs(publicationsQuery);
+        const publications = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        console.log(`📰 Gefundene Publications in ${orgId}:`, publications.length);
+        allPublications.push(...publications);
+      }
+
+      // Falls keine gefunden, versuche allgemeine Suche nach publisherId
+      if (allPublications.length === 0) {
+        console.log('🔍 Fallback: Suche alle Publications mit publisherId:', companyId);
+
+        const fallbackQuery = query(
+          collection(db, 'publications'),
+          where('publisherId', '==', companyId)
+        );
+
+        const fallbackSnapshot = await getDocs(fallbackQuery);
+        allPublications = fallbackSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        console.log('📰 Fallback Publications gefunden:', allPublications.length);
+      }
+
+      return allPublications;
     } catch (error) {
       console.error('Fehler beim Laden der Company Publications:', error);
       return [];
