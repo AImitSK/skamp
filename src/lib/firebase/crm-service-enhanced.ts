@@ -1520,9 +1520,9 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
 
           // Meta-Felder (leer für References)
           organizationId: organizationId,
-          createdAt: ref.addedAt,
+          createdAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
           createdBy: ref.addedBy,
-          updatedAt: ref.addedAt,
+          updatedAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
           updatedBy: ref.addedBy
         } as CompanyEnhanced & { _isReference: boolean; _globalCompanyId: string });
       }

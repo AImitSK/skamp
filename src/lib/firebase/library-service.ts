@@ -1165,9 +1165,9 @@ class PublicationServiceExtended extends PublicationService {
 
           // Meta-Felder
           organizationId: organizationId,
-          createdAt: ref.addedAt,
+          createdAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
           createdBy: ref.addedBy,
-          updatedAt: ref.addedAt,
+          updatedAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
           updatedBy: ref.addedBy
         } as Publication & { _isReference: boolean; _globalPublicationId: string });
       }

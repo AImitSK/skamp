@@ -980,7 +980,11 @@ const getContactCount = (companyId: string) => {
                           const lastContact = getLastContactDate(company.id!);
                           return lastContact ? (
                             <span className="text-zinc-600 dark:text-zinc-400">
-                              {new Date(lastContact.toDate()).toLocaleDateString('de-DE')}
+                              {lastContact?.toDate
+                                ? new Date(lastContact.toDate()).toLocaleDateString('de-DE')
+                                : lastContact instanceof Date
+                                  ? lastContact.toLocaleDateString('de-DE')
+                                  : 'Nie'}
                             </span>
                           ) : (
                             <span className="text-zinc-400">Nie</span>
