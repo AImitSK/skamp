@@ -7,6 +7,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
+import { referenceService } from "@/lib/firebase/reference-service";
+import { ReferencedJournalist } from "@/types/reference";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +133,37 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
   return primary?.number || phones[0].number;
 };
 
+// Konvertiert ReferencedJournalist zu ContactEnhanced Format für CRM-Anzeige
+const convertReferenceToContact = (reference: ReferencedJournalist): ContactEnhanced => {
+  return {
+    id: reference._referenceId, // Verwende Reference-ID als lokale ID
+    organizationId: '', // Wird vom CRM nicht benötigt für Anzeige
+    displayName: reference.displayName,
+    emails: reference.email ? [{ email: reference.email, isPrimary: true, type: 'work' as any }] : [],
+    phones: reference.phone ? [{ number: reference.phone, isPrimary: true, type: 'work' as any }] : [],
+    companyName: reference.companyName,
+    position: reference.position,
+    mediaProfile: {
+      isJournalist: true,
+      publicationIds: reference.publicationIds || [],
+      beats: reference.beats || [],
+      mediaTypes: reference.mediaTypes || [],
+      preferredTopics: reference.beats || []
+    },
+    // Reference-spezifische Marker
+    _isReference: true,
+    _globalJournalistId: reference.id,
+    _localNotes: reference._localMeta.notes,
+    _localTags: reference._localMeta.tags || [],
+
+    // Pflichtfelder für CRM-Kompatibilität
+    createdAt: reference._localMeta.addedAt,
+    updatedAt: reference._localMeta.addedAt,
+    createdBy: 'reference-import',
+    updatedBy: 'reference-import'
+  } as any; // Type assertion da wir Reference-Felder hinzufügen
+};
+
 export default function ContactsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -143,6 +176,7 @@ export default function ContactsPage() {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
+  const [referencedJournalists, setReferencedJournalists] = useState<ReferencedJournalist[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,15 +230,17 @@ export default function ContactsPage() {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-const [companiesData, contactsData, tagsData] = await Promise.all([
+const [companiesData, contactsData, referencesData, tagsData] = await Promise.all([
         companiesEnhancedService.getAll(currentOrganization.id),
         contactsEnhancedService.getAll(currentOrganization.id),
+        referenceService.getReferencesWithData(currentOrganization.id),
         tagsEnhancedService.getAllAsLegacyTags(currentOrganization.id)
       ]);
 
       console.log('🏢 CRM DATA LOADED:', {
         companies: companiesData.length,
         contacts: contactsData.length,
+        references: referencesData.length,
         tags: tagsData.length,
         organizationId: currentOrganization.id
       });
@@ -233,6 +269,7 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
 
       setCompanies(companiesData);
       setContacts(contactsData);
+      setReferencedJournalists(referencesData);
       setTags(tagsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
@@ -278,22 +315,30 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
   }, [companies, searchTerm, selectedTypes, selectedCompanyTagIds]);
 
   const filteredContacts = useMemo(() => {
-    return contacts.filter(contact => {
-      const searchMatch = contact.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    // Kombiniere echte Kontakte mit References
+    const referencesAsContacts = referencedJournalists.map(convertReferenceToContact);
+    const allContacts = [...contacts, ...referencesAsContacts];
+
+    return allContacts.filter(contact => {
+      const searchMatch = contact.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           getPrimaryEmail(contact.emails).toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
 
-      const companyMatch = selectedContactCompanyIds.length === 0 || 
+      const companyMatch = selectedContactCompanyIds.length === 0 ||
                            (contact.companyId && selectedContactCompanyIds.includes(contact.companyId));
       if (!companyMatch) return false;
-      
-      const tagMatch = selectedContactTagIds.length === 0 || 
+
+      const tagMatch = selectedContactTagIds.length === 0 ||
                        contact.tagIds?.some(tagId => selectedContactTagIds.includes(tagId));
       if (!tagMatch) return false;
 
       return true;
+    }).sort((a, b) => {
+      const aDate = new Date((a.updatedAt as any)?.seconds ? (a.updatedAt as any).seconds * 1000 : a.updatedAt);
+      const bDate = new Date((b.updatedAt as any)?.seconds ? (b.updatedAt as any).seconds * 1000 : b.updatedAt);
+      return bDate.getTime() - aDate.getTime();
     });
-  }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactTagIds]);
+  }, [contacts, referencedJournalists, searchTerm, selectedContactCompanyIds, selectedContactTagIds]);
 
   // Paginated Data
   const paginatedCompanies = useMemo(() => {
@@ -1037,11 +1082,18 @@ const getContactCount = (companyId: string) => {
                           >
                             {contact.displayName}
                           </button>
-                          {contact.mediaProfile?.isJournalist && (
-                            <Badge color="purple" className="text-xs mt-1">
-                              Journalist
-                            </Badge>
-                          )}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {contact.mediaProfile?.isJournalist && (
+                              <Badge color="purple" className="text-xs">
+                                Journalist
+                              </Badge>
+                            )}
+                            {(contact as any)._isReference && (
+                              <Badge color="blue" className="text-xs">
+                                🌐 Verweis
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
 
