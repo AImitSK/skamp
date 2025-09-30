@@ -900,7 +900,7 @@ export class PublicationsAPIService {
       publisher,
       type: publication.type,
       format: publication.format,
-      frequency: publication.metrics.frequency,
+      frequency: publication.metrics?.frequency || 'monthly',
       metrics: {
         circulation: publication.metrics.print?.circulation,
         circulationType: publication.metrics.print?.circulationType,

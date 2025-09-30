@@ -1145,15 +1145,24 @@ class PublicationServiceExtended extends PublicationService {
 
         const globalPub = globalPubDoc.data();
 
-        // Erstelle Publication aus Reference + globalen Daten (mit Safe-Defaults)
+        // Erstelle Publication aus Reference + globalen Daten (mit korrektem Schema)
         publicationReferences.push({
           id: ref.localPublicationId,
           title: globalPub.title || 'Unbekannte Publikation',
           type: globalPub.type || 'magazine',
-          frequency: globalPub.frequency || 'monthly',
-          circulation: globalPub.circulation || 0,
           website: globalPub.website || '',
           description: globalPub.description || '',
+
+          // Metrics-Schema (verschachtelt wie erwartet)
+          metrics: {
+            frequency: globalPub.frequency || 'monthly',
+            print: {
+              circulation: globalPub.circulation || 0
+            },
+            online: {
+              monthlyUniqueVisitors: globalPub.readership || 0
+            }
+          },
 
           // Company-Zuordnung
           companyId: ref.localCompanyId,

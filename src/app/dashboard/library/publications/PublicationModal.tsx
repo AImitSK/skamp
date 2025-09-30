@@ -308,7 +308,7 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
         verified: publication.verified || false,
         status: publication.status,
         metrics: {
-          frequency: publication.metrics.frequency,
+          frequency: publication.metrics?.frequency || 'monthly',
           targetAudience: publication.metrics.targetAudience,
           targetAgeGroup: publication.metrics.targetAgeGroup,
           targetGender: publication.metrics.targetGender
@@ -321,7 +321,7 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
       // Metriken
       if (publication.metrics) {
         setMetrics({
-          frequency: publication.metrics.frequency || 'daily',
+          frequency: publication.metrics?.frequency || 'daily',
           targetAudience: publication.metrics.targetAudience || '',
           targetAgeGroup: publication.metrics.targetAgeGroup || '',
           targetGender: publication.metrics.targetGender || 'all',

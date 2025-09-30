@@ -237,8 +237,8 @@ export const listsService = {
       
       // Erweiterte Filterung für Eigenschaften, die searchPublications nicht abdeckt
       if (filters.publications.frequencies?.length) {
-        publications = publications.filter(pub => 
-          filters.publications!.frequencies!.includes(pub.metrics.frequency)
+        publications = publications.filter(pub =>
+          pub.metrics?.frequency && filters.publications!.frequencies!.includes(pub.metrics.frequency)
         );
       }
       
