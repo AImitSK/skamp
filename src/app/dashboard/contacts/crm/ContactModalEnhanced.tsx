@@ -752,6 +752,12 @@ export default function ContactModalEnhanced({
                   
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-2">
+                      {/* Debug: Telefonnummer-Rendering */}
+                      {console.log('🔍 Phone Rendering Debug:', {
+                        formDataPhones: formData.phones,
+                        phonesCount: formData.phones.length,
+                        firstPhone: formData.phones[0]
+                      })}
                       {formData.phones.map((phone, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-2">
