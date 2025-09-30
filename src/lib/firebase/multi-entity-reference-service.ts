@@ -143,17 +143,20 @@ class MultiEntityReferenceService {
     userId: string,
     initialNotes?: string
   ): Promise<MultiEntityImportResult> {
+    console.log('🚀 [createJournalistReference] Start für:', { globalJournalistId, organizationId, userId });
     const batch = writeBatch(db);
 
     try {
       // 1. Lade globale Journalist-Daten
       const globalJournalist = await this.loadGlobalJournalist(globalJournalistId);
       if (!globalJournalist) {
+        console.log('❌ [createJournalistReference] Globaler Journalist nicht gefunden:', globalJournalistId);
         return {
           success: false,
           errors: ['Globaler Journalist nicht gefunden']
         };
       }
+      console.log('✅ [createJournalistReference] Globaler Journalist geladen:', globalJournalist.displayName);
 
       // 2. Prüfe auf existierende Journalist-Reference
       const existingJournalistRef = await this.findExistingJournalistReference(
@@ -239,6 +242,8 @@ class MultiEntityReferenceService {
    */
   async getAllContactReferences(organizationId: string): Promise<CombinedContactReference[]> {
     try {
+      console.log('🔍 [getAllContactReferences] Start für organizationId:', organizationId);
+
       // 1. Lade alle aktiven Journalist-References
       const journalistRefsQuery = query(
         collection(db, 'organizations', organizationId, this.journalistRefsCollection),
@@ -246,7 +251,10 @@ class MultiEntityReferenceService {
       );
 
       const journalistRefsSnapshot = await getDocs(journalistRefsQuery);
+      console.log('📊 [getAllContactReferences] Journalist-References gefunden:', journalistRefsSnapshot.size);
+
       if (journalistRefsSnapshot.empty) {
+        console.log('❌ [getAllContactReferences] Keine Journalist-References vorhanden');
         return [];
       }
 
