@@ -192,7 +192,17 @@ class MultiEntityReferenceService {
       });
 
       // Lade globale Company um Typ zu prüfen und Publications zu finden
+      console.log('🔍 Lade globale Company:', {
+        companyId: globalJournalist.companyId,
+        companyName: globalJournalist.companyName
+      });
+
       const globalCompany = await this.loadGlobalCompany(globalJournalist.companyId || globalJournalist.companyName);
+
+      console.log('📊 Globale Company geladen:', {
+        found: !!globalCompany,
+        company: globalCompany ? { id: globalCompany.id, name: globalCompany.name, type: globalCompany.type } : null
+      });
 
       // Finde Publications basierend auf Company-Zuordnung (wenn Company ein Media House/Publisher ist)
       let publicationIds = globalJournalist.publicationIds || [];
