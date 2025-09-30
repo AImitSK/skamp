@@ -1144,6 +1144,16 @@ class PublicationServiceExtended extends PublicationService {
         if (!globalPubDoc.exists()) continue;
 
         const globalPub = globalPubDoc.data();
+        console.log('🔍 Debug: Globale Publication Rohdaten:', {
+          title: globalPub.title,
+          frequency: globalPub.frequency,
+          circulation: globalPub.circulation,
+          readership: globalPub.readership,
+          monthlyUniqueVisitors: globalPub.monthlyUniqueVisitors,
+          monthlyPageViews: globalPub.monthlyPageViews,
+          metricsObject: globalPub.metrics,
+          allFields: Object.keys(globalPub)
+        });
 
         // Lade Publisher-Name (Company-Daten) direkt aus Firestore
         let publisherName = globalPub.publisherName || '';
@@ -1160,7 +1170,7 @@ class PublicationServiceExtended extends PublicationService {
         }
 
         // Erstelle Publication aus Reference + globalen Daten (mit korrektem Schema)
-        publicationReferences.push({
+        const publicationReference = {
           id: refDoc.id, // Document ID für Navigation verwenden
           title: globalPub.title || 'Unbekannte Publikation',
           subtitle: globalPub.subtitle || '',
@@ -1213,7 +1223,18 @@ class PublicationServiceExtended extends PublicationService {
           createdBy: ref.addedBy,
           updatedAt: ref.addedAt instanceof Timestamp ? ref.addedAt : Timestamp.now(),
           updatedBy: ref.addedBy
-        } as Publication & { _isReference: boolean; _globalPublicationId: string });
+        } as Publication & { _isReference: boolean; _globalPublicationId: string };
+
+        console.log('📊 Debug: Erstellte Publication-Reference:', {
+          title: publicationReference.title,
+          metrics: publicationReference.metrics,
+          geographicTargets: publicationReference.geographicTargets,
+          hasMetrics: !!publicationReference.metrics,
+          hasOnlineMetrics: !!publicationReference.metrics?.online,
+          monthlyUniqueVisitors: publicationReference.metrics?.online?.monthlyUniqueVisitors
+        });
+
+        publicationReferences.push(publicationReference);
       }
 
       // 4. Kombiniere echte Publications und References
