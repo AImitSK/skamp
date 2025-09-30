@@ -415,13 +415,25 @@ export default function ContactDetailPage() {
                 )}
               </div>
             </div>
-            <Button 
-              onClick={() => setShowEditModal(true)}
-              className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap inline-flex items-center gap-x-2"
-            >
-              <PencilIcon className="h-4 w-4" />
-              Person bearbeiten
-            </Button>
+            {(contact as any)?._isReference ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <span className="text-amber-600">🔗</span>
+                  <span className="font-medium">Globaler Verweis</span>
+                </div>
+                <p className="text-amber-700 mt-1">
+                  Dieser Kontakt ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
+                </p>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setShowEditModal(true)}
+                className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap inline-flex items-center gap-x-2"
+              >
+                <PencilIcon className="h-4 w-4" />
+                Person bearbeiten
+              </Button>
+            )}
           </div>
         </div>
 
@@ -1002,8 +1014,8 @@ export default function ContactDetailPage() {
         </div>
       </div>
 
-      {/* Edit Modal */}
-      {showEditModal && (
+      {/* Edit Modal - nur für echte Kontakte, nicht für References */}
+      {showEditModal && !(contact as any)?._isReference && (
         <ContactModalEnhanced
           contact={contact}
           companies={companies}
