@@ -333,13 +333,10 @@ class MultiEntityReferenceService {
 
     try {
       // 1. Finde Journalist-Reference
-      console.log('🔍 Suche Journalist-Reference für:', globalJournalistId, 'in Org:', organizationId);
       const journalistRef = await this.findJournalistReferenceByGlobalId(globalJournalistId, organizationId);
       if (!journalistRef) {
-        console.log('❌ Journalist-Reference nicht gefunden');
         throw new Error('Journalist-Reference nicht gefunden');
       }
-      console.log('✅ Journalist-Reference gefunden:', journalistRef.id);
 
       // 2. Soft-Delete Journalist-Reference
       const journalistRefDoc = doc(
@@ -383,9 +380,7 @@ class MultiEntityReferenceService {
       }
 
       // 5. Atomisch committen
-      console.log('💾 Committe Batch-Operation...');
       await batch.commit();
-      console.log('✅ Batch-Operation erfolgreich committed');
 
     } catch (error) {
       console.error('Fehler beim Entfernen der Journalist-Reference:', error);

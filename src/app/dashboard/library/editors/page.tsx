@@ -511,7 +511,7 @@ function JournalistCard({
               className={`text-sm px-4 py-1.5 flex items-center gap-1 ${
                 isImported
                   ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
-                  : 'bg-primary hover:bg-primary-hover text-white'
+                  : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
               }`}
               style={isImported ? {
                 backgroundColor: '#DEDC00',
@@ -527,7 +527,7 @@ function JournalistCard({
               ) : (
                 <>
                   <StarIcon className={`h-4 w-4 mr-1 ${
-                    isImported ? 'text-black' : 'text-white'
+                    isImported ? 'text-black' : 'text-gray-600'
                   }`}
                   fill={isImported ? 'currentColor' : 'none'} />
                   {isImported ? 'Entfernen' : 'Als Verweis'}
@@ -1425,6 +1425,9 @@ export default function EditorsPage() {
       );
 
       if (result.success) {
+        // State sofort aktualisieren
+        setImportedJournalistIds(prev => new Set([...prev, journalist.id]));
+
         showAlert('success', 'Multi-Entity Verweis erstellt',
           `${journalist.personalData.displayName} wurde mit Company und Publications als Verweis hinzugefügt.`);
       } else {
@@ -1865,7 +1868,7 @@ export default function EditorsPage() {
                             className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
                               importedJournalistIds.has(journalist.id)
                                 ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
-                                : 'bg-primary hover:bg-primary-hover text-white'
+                                : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
                             }`}
                             style={importedJournalistIds.has(journalist.id) ? {
                               backgroundColor: '#DEDC00',
@@ -1877,7 +1880,7 @@ export default function EditorsPage() {
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                             ) : (
                               <StarIcon className={`h-3 w-3 ${
-                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-white'
+                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-gray-600'
                               }`}
                               fill={importedJournalistIds.has(journalist.id) ? 'currentColor' : 'none'} />
                             )}
@@ -2221,7 +2224,7 @@ export default function EditorsPage() {
               className={`${
                 importedJournalistIds.has(detailJournalist?.id)
                   ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
-                  : 'bg-primary hover:bg-primary-hover text-white'
+                  : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
               }`}
               style={importedJournalistIds.has(detailJournalist?.id) ? {
                 backgroundColor: '#DEDC00',
@@ -2230,7 +2233,7 @@ export default function EditorsPage() {
               } : {}}
             >
               <StarIcon className={`h-4 w-4 mr-2 ${
-                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-white'
+                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-gray-600'
               }`}
               fill={importedJournalistIds.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
               {importedJournalistIds.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
