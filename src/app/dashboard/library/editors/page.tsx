@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { referenceService } from "@/lib/firebase/reference-service";
-import { ReferencedJournalist } from "@/types/reference";
+import { multiEntityReferenceService } from "@/lib/firebase/multi-entity-reference-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
 import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -1338,28 +1337,24 @@ export default function EditorsPage() {
       return;
     }
 
-    // Prüfe ob bereits referenziert
-    const isAlreadyReferenced = await referenceService.isReferenced(
-      journalist.id,
-      currentOrganization!.id
-    );
-
-    if (isAlreadyReferenced) {
-      showAlert('info', 'Bereits hinzugefügt', 'Dieser Journalist wurde bereits als Verweis hinzugefügt.');
-      return;
-    }
-
     setImportingIds(prev => new Set([...prev, journalist.id!]));
 
     try {
-      await referenceService.createReference(
+      // Multi-Entity Reference erstellen (Company + Publications + Journalist)
+      const result = await multiEntityReferenceService.createJournalistReference(
         journalist.id,
         currentOrganization!.id,
         user!.uid,
         `Importiert als Verweis am ${new Date().toLocaleDateString('de-DE')}`
       );
 
-      showAlert('success', 'Verweis erstellt', `${journalist.personalData.displayName} wurde als Verweis zu Ihrem CRM hinzugefügt.`);
+      if (result.success) {
+        showAlert('success', 'Multi-Entity Verweis erstellt',
+          `${journalist.personalData.displayName} wurde mit Company und Publications als Verweis hinzugefügt.`);
+      } else {
+        showAlert('error', 'Import fehlgeschlagen',
+          result.errors?.join(', ') || 'Unbekannter Fehler');
+      }
     } catch (error) {
       showAlert('error', 'Import fehlgeschlagen', error instanceof Error ? error.message : 'Unbekannter Fehler');
     } finally {

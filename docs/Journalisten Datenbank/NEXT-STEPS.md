@@ -28,11 +28,22 @@
 ### ✅ Was bereits fertig ist:
 - **Frontend UI** (95%): Editors-Page, Filter, Tabellen, Cards
 - **Globale Daten** werden angezeigt (direkt aus Firestore)
-- **Mock-Subscription** für Premium-Gates
+- **Basic Reference-System** (30%): Journalist-Verweise funktionieren
+- **CRM Integration** (30%): References werden im CRM angezeigt
 
-### 🚧 HÖCHSTE PRIORITÄT: Reference-System implementieren
+### 🚨 KRITISCHES PROBLEM IDENTIFIZIERT:
 
-**Was fehlt**: Das eigentliche Reference-Import Feature!
+**Single-Entity References sind unbrauchbar!**
+- ❌ Keine Company/Publication-Relations
+- ❌ Listen finden References nicht
+- ❌ Projekte/Kampagnen funktionieren nicht
+- ❌ 8 von 9 Services ignorieren References
+
+### 🚧 HÖCHSTE PRIORITÄT: Multi-Entity Reference-System
+
+**Siehe: [MULTI-ENTITY-REFERENCE-SYSTEM.md](./MULTI-ENTITY-REFERENCE-SYSTEM.md)**
+
+**Lösung**: Automatische Company/Publication-References beim Journalist-Import
 
 #### 1. Reference-Service implementieren (2-3 Stunden)
 ```typescript

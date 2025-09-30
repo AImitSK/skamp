@@ -7,8 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
-import { referenceService } from "@/lib/firebase/reference-service";
-import { ReferencedJournalist } from "@/types/reference";
+// References werden jetzt automatisch durch Enhanced ContactsService geladen!
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -176,7 +175,6 @@ export default function ContactsPage() {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
-  const [referencedJournalists, setReferencedJournalists] = useState<ReferencedJournalist[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -230,17 +228,15 @@ export default function ContactsPage() {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-const [companiesData, contactsData, referencesData, tagsData] = await Promise.all([
+const [companiesData, contactsData, tagsData] = await Promise.all([
         companiesEnhancedService.getAll(currentOrganization.id),
-        contactsEnhancedService.getAll(currentOrganization.id),
-        referenceService.getReferencesWithData(currentOrganization.id),
+        contactsEnhancedService.getAll(currentOrganization.id), // ✨ Jetzt automatisch mit References!
         tagsEnhancedService.getAllAsLegacyTags(currentOrganization.id)
       ]);
 
       console.log('🏢 CRM DATA LOADED:', {
         companies: companiesData.length,
-        contacts: contactsData.length,
-        references: referencesData.length,
+        contacts: contactsData.length, // Enthält jetzt auch References!
         tags: tagsData.length,
         organizationId: currentOrganization.id
       });
@@ -268,8 +264,7 @@ const [companiesData, contactsData, referencesData, tagsData] = await Promise.al
       }
 
       setCompanies(companiesData);
-      setContacts(contactsData);
-      setReferencedJournalists(referencesData);
+      setContacts(contactsData); // Enthält jetzt automatisch References!
       setTags(tagsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
@@ -315,11 +310,8 @@ const [companiesData, contactsData, referencesData, tagsData] = await Promise.al
   }, [companies, searchTerm, selectedTypes, selectedCompanyTagIds]);
 
   const filteredContacts = useMemo(() => {
-    // Kombiniere echte Kontakte mit References
-    const referencesAsContacts = referencedJournalists.map(convertReferenceToContact);
-    const allContacts = [...contacts, ...referencesAsContacts];
-
-    return allContacts.filter(contact => {
+    // ✨ Contacts enthält jetzt automatisch References durch Enhanced Service!
+    return contacts.filter(contact => {
       const searchMatch = contact.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           getPrimaryEmail(contact.emails).toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
@@ -338,7 +330,7 @@ const [companiesData, contactsData, referencesData, tagsData] = await Promise.al
       const bDate = new Date((b.updatedAt as any)?.seconds ? (b.updatedAt as any).seconds * 1000 : b.updatedAt);
       return bDate.getTime() - aDate.getTime();
     });
-  }, [contacts, referencedJournalists, searchTerm, selectedContactCompanyIds, selectedContactTagIds]);
+  }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactTagIds]);
 
   // Paginated Data
   const paginatedCompanies = useMemo(() => {

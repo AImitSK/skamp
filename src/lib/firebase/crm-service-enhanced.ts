@@ -15,14 +15,15 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { BaseService, QueryOptions, FilterOptions, PaginationResult } from './service-base';
-import { 
-  CompanyEnhanced, 
+import {
+  CompanyEnhanced,
   ContactEnhanced,
   CompanyEnhancedListView,
   ContactEnhancedListView
 } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
 import { BaseEntity, GdprConsent, BusinessIdentifier, InternationalAddress } from '@/types/international';
+import { multiEntityReferenceService, CombinedContactReference } from './multi-entity-reference-service';
 
 // ========================================
 // Enhanced Company Service
@@ -1005,8 +1006,160 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
 // PLAN 5/9: MONITORING-IMPLEMENTIERUNG
 // ========================================
 
-// Erweiterte ContactEnhancedService für Journalist-Tracking
+// Erweiterte ContactEnhancedService für Journalist-Tracking + Multi-Entity References
 class ContactEnhancedServiceExtended extends ContactEnhancedService {
+
+  /**
+   * ✨ ENHANCED: getAll() erweitert um Multi-Entity References
+   *
+   * Diese Methode kombiniert echte Kontakte mit References transparent.
+   * ALLE bestehenden Services funktionieren dadurch automatisch!
+   */
+  async getAll(organizationId: string): Promise<ContactEnhanced[]> {
+    try {
+      // 1. Lade echte Kontakte (wie bisher)
+      const realContacts = await super.getAll(organizationId);
+
+      // 2. Lade Contact-References und konvertiere zu ContactEnhanced-Format
+      const referencedContacts = await this.getReferencedContacts(organizationId);
+
+      // 3. Kombiniere transparent - für andere Services unsichtbar!
+      const allContacts = [...realContacts, ...referencedContacts];
+
+      console.log('📊 ENHANCED CONTACTS SERVICE:', {
+        realContacts: realContacts.length,
+        referencedContacts: referencedContacts.length,
+        totalContacts: allContacts.length,
+        organizationId
+      });
+
+      return allContacts;
+
+    } catch (error) {
+      console.error('Fehler beim Laden der erweiterten Kontakte:', error);
+      // Fallback: Nur echte Kontakte zurückgeben
+      return await super.getAll(organizationId);
+    }
+  }
+
+  /**
+   * ✨ ENHANCED: getById() erweitert um Reference-Support
+   *
+   * Unterstützt sowohl echte Contact-IDs als auch Reference-IDs
+   */
+  async getById(id: string, organizationId: string): Promise<ContactEnhanced | null> {
+    try {
+      // 1. Versuche zuerst echten Kontakt zu laden
+      const realContact = await super.getById(id, organizationId);
+      if (realContact) {
+        return realContact;
+      }
+
+      // 2. Versuche Reference-ID zu laden
+      const referencedContact = await this.getReferencedContactById(id, organizationId);
+      if (referencedContact) {
+        return referencedContact;
+      }
+
+      return null;
+
+    } catch (error) {
+      console.error('Fehler beim Laden des Kontakts (Enhanced):', error);
+      return null;
+    }
+  }
+
+  /**
+   * Lädt Contact-References und konvertiert sie zu ContactEnhanced-Format
+   */
+  private async getReferencedContacts(organizationId: string): Promise<ContactEnhanced[]> {
+    try {
+      // 1. Lade kombinierte Contact-References
+      const combinedRefs = await multiEntityReferenceService.getAllContactReferences(organizationId);
+
+      // 2. Konvertiere zu ContactEnhanced-Format
+      return combinedRefs.map(this.convertReferenceToContact.bind(this));
+
+    } catch (error) {
+      console.error('Fehler beim Laden der Reference-Kontakte:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Lädt einen einzelnen Reference-Kontakt nach ID
+   */
+  private async getReferencedContactById(
+    localJournalistId: string,
+    organizationId: string
+  ): Promise<ContactEnhanced | null> {
+    try {
+      // Lade alle References und finde die passende
+      const combinedRefs = await multiEntityReferenceService.getAllContactReferences(organizationId);
+      const targetRef = combinedRefs.find(ref => ref.id === localJournalistId);
+
+      if (!targetRef) {
+        return null;
+      }
+
+      return this.convertReferenceToContact(targetRef);
+
+    } catch (error) {
+      console.error('Fehler beim Laden der einzelnen Reference:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Konvertiert CombinedContactReference zu ContactEnhanced für Service-Kompatibilität
+   */
+  private convertReferenceToContact(reference: CombinedContactReference): ContactEnhanced {
+    return {
+      // Verwende lokale Reference-ID als Contact-ID
+      id: reference.id,
+      organizationId: '', // Wird von Service nicht für Anzeige benötigt
+
+      // Globale Journalist-Daten (read-only)
+      displayName: reference.displayName,
+      emails: reference.email ? [{
+        email: reference.email,
+        isPrimary: true,
+        type: 'work' as any,
+        isVerified: false
+      }] : [],
+      phones: reference.phone ? [{
+        number: reference.phone,
+        isPrimary: true,
+        type: 'work' as any
+      }] : [],
+      position: reference.position,
+
+      // ✅ KRITISCH: Lokale Relations für Listen/Projekte/etc!
+      companyId: reference.companyId, // Lokale Company-Reference-ID!
+      companyName: reference.companyName,
+
+      // Media-Profil mit lokalen Publication-IDs
+      mediaProfile: {
+        isJournalist: true,
+        publicationIds: reference.publicationIds, // Lokale Publication-Reference-IDs!
+        beats: reference.beats || [],
+        mediaTypes: reference.mediaTypes || [],
+        preferredTopics: reference.beats || []
+      },
+
+      // Reference-spezifische Marker für UI
+      _isReference: true,
+      _globalJournalistId: reference._globalJournalistId,
+      _localNotes: reference._localMeta.notes,
+      _localTags: reference._localMeta.tags || [],
+
+      // Pflichtfelder für Service-Kompatibilität
+      createdAt: reference._localMeta.addedAt,
+      updatedAt: reference._localMeta.addedAt,
+      createdBy: 'reference-import',
+      updatedBy: 'reference-import'
+    } as any; // Type assertion da wir Reference-Felder hinzufügen
+  }
   /**
    * Aktualisiert Journalist-Metriken basierend auf einem neuen Clipping
    */

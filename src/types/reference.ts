@@ -288,24 +288,4 @@ export interface ReferencePermissions {
 // ========================================
 // EXPORT ALL
 // ========================================
-
-export type {
-  // Core
-  JournalistReference,
-  ReferencedJournalist,
-
-  // Requests/Responses
-  CreateReferenceRequest,
-  UpdateReferenceRequest,
-  BatchCreateReferencesRequest,
-  BatchCreateReferencesResponse,
-
-  // UI
-  ReferenceImportStatus,
-  ReferenceFilters,
-  ReferenceSorting,
-
-  // Business
-  ReferenceStats,
-  ReferencePermissions
-};
+// All interfaces are already exported above with 'export interface'
