@@ -1191,11 +1191,25 @@ export default function EditorsPage() {
         console.error('❌ Error loading companies:', error);
       }
 
-      // Load publications for assignments
+      // Load publications for assignments (lokale + globale)
       let publicationsData = [];
       try {
-        publicationsData = await publicationService.getAll(currentOrganization.id);
-        console.log('📊 Publications loaded:', publicationsData.length);
+        // Lokale Publications der aktuellen Organisation
+        const localPublications = await publicationService.getAll(currentOrganization.id);
+
+        // Globale Publications der SuperAdmin-Organisation (für globale Journalisten)
+        const globalPublications = await publicationService.getAll('superadmin-org');
+
+        // Kombiniere beide, aber vermeide Duplikate
+        const allPublications = [...localPublications];
+        globalPublications.forEach(globalPub => {
+          if (!allPublications.find(localPub => localPub.id === globalPub.id)) {
+            allPublications.push(globalPub);
+          }
+        });
+
+        publicationsData = allPublications;
+        console.log('📊 Publications loaded:', publicationsData.length, '(local:', localPublications.length, 'global:', globalPublications.length, ')');
       } catch (error) {
         console.error('❌ Error loading publications:', error);
       }
