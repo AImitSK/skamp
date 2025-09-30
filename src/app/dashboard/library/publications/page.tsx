@@ -729,20 +729,30 @@ export default function PublicationsPage() {
                             setSelectedPublication(pub);
                             setShowPublicationModal(true);
                           }}
+                          disabled={(pub as any)?._isReference}
+                          className={(pub as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                         >
                           <PencilIcon className="h-4 w-4 mr-2" />
-                          Bearbeiten
+                          Bearbeiten {(pub as any)?._isReference && '(Verweis)'}
                         </DropdownItem>
-                        <DropdownItem onClick={() => handleDuplicate(pub)}>
+                        <DropdownItem
+                          onClick={() => handleDuplicate(pub)}
+                          disabled={(pub as any)?._isReference}
+                          className={(pub as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
+                        >
                           <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-                          Duplizieren
+                          Duplizieren {(pub as any)?._isReference && '(Verweis)'}
                         </DropdownItem>
                         <DropdownDivider />
                         <DropdownItem
                           onClick={() => handleDelete(pub.id!, pub.title)}
+                          disabled={(pub as any)?._isReference}
+                          className={(pub as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                         >
                           <TrashIcon className="h-4 w-4 mr-2" />
-                          <span className="text-red-600">Löschen</span>
+                          <span className={(pub as any)?._isReference ? 'text-gray-400' : 'text-red-600'}>
+                            Löschen {(pub as any)?._isReference && '(Verweis)'}
+                          </span>
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
