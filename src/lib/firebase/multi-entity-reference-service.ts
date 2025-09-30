@@ -1086,25 +1086,44 @@ class MultiEntityReferenceService {
               }
             }
 
-            // Kombiniere Reference-Daten mit globalen Daten
+            // Kombiniere Reference-Daten mit globalen Daten (vollständiges Mapping)
             const combinedData = {
               id: pubRefDoc.id, // Document ID für Navigation
               ...globalPubData,
               organizationId,
               publisherId: pubRefData.parentCompanyReferenceId, // Lokale Company-Reference ID verwenden
               publisherName,
+
+              // Sicherstelle vollständige Datenübernahme
+              geographicTargets: globalPubData.geographicTargets || [],
+              geographicScope: globalPubData.geographicScope || 'national',
+              languages: globalPubData.languages || [],
+              focusAreas: globalPubData.focusAreas || [],
+              verified: globalPubData.verified || false,
+              status: globalPubData.status || 'active',
+              format: globalPubData.format || 'online',
+              websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
+
+              // Reference-Marker
               isReference: true,
               globalPublicationId: pubRefData.globalPublicationId,
               localPublicationId: pubRefData.localPublicationId,
               addedAt: pubRefData.addedAt,
               addedBy: pubRefData.addedBy,
+
+              // Vollständiges Metrics-Schema
               metrics: {
                 frequency: globalPubData.frequency || 'monthly',
+                targetAudience: globalPubData.targetAudience || '',
+                targetAgeGroup: globalPubData.targetAgeGroup || '',
+                targetGender: globalPubData.targetGender || 'all',
                 print: {
-                  circulation: globalPubData.circulation || 0
+                  circulation: globalPubData.circulation || 0,
+                  circulationType: globalPubData.circulationType || ''
                 },
                 online: {
-                  monthlyUniqueVisitors: globalPubData.readership || 0
+                  monthlyUniqueVisitors: globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
+                  monthlyPageViews: globalPubData.monthlyPageViews || 0
                 }
               }
             };
@@ -1158,7 +1177,7 @@ class MultiEntityReferenceService {
         }
       }
 
-      // 4. Kombiniere Reference-Daten mit globalen Daten (ähnlich wie in getAll())
+      // 4. Kombiniere Reference-Daten mit globalen Daten (vollständiges Mapping)
       const combinedData = {
         id: pubRefDoc.id, // Document ID für Navigation
         ...globalPubData,
@@ -1166,19 +1185,37 @@ class MultiEntityReferenceService {
         organizationId,
         publisherId: pubRefData.parentCompanyReferenceId, // Lokale Company-Reference ID verwenden
         publisherName, // Publisher-Name sicherstellen
+
+        // Sicherstelle vollständige Datenübernahme
+        geographicTargets: globalPubData.geographicTargets || [],
+        geographicScope: globalPubData.geographicScope || 'national',
+        languages: globalPubData.languages || [],
+        focusAreas: globalPubData.focusAreas || [],
+        verified: globalPubData.verified || false,
+        status: globalPubData.status || 'active',
+        format: globalPubData.format || 'online',
+        websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
+
+        // Reference-Marker
         isReference: true,
         globalPublicationId: pubRefData.globalPublicationId,
         localPublicationId: pubRefData.localPublicationId,
         addedAt: pubRefData.addedAt,
         addedBy: pubRefData.addedBy,
-        // Metrics schema korrigieren
+
+        // Vollständiges Metrics schema
         metrics: {
           frequency: globalPubData.frequency || 'monthly',
+          targetAudience: globalPubData.targetAudience || '',
+          targetAgeGroup: globalPubData.targetAgeGroup || '',
+          targetGender: globalPubData.targetGender || 'all',
           print: {
-            circulation: globalPubData.circulation || 0
+            circulation: globalPubData.circulation || 0,
+            circulationType: globalPubData.circulationType || ''
           },
           online: {
-            monthlyUniqueVisitors: globalPubData.readership || 0
+            monthlyUniqueVisitors: globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
+            monthlyPageViews: globalPubData.monthlyPageViews || 0
           }
         }
       };

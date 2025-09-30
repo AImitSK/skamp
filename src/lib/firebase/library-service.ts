@@ -1163,19 +1163,39 @@ class PublicationServiceExtended extends PublicationService {
         publicationReferences.push({
           id: refDoc.id, // Document ID für Navigation verwenden
           title: globalPub.title || 'Unbekannte Publikation',
+          subtitle: globalPub.subtitle || '',
           type: globalPub.type || 'magazine',
+          format: globalPub.format || 'online',
           website: globalPub.website || '',
+          websiteUrl: globalPub.websiteUrl || globalPub.website || '',
           description: globalPub.description || '',
           publisherName, // Publisher-Name hinzufügen
+
+          // Geografische und sprachliche Daten
+          geographicTargets: globalPub.geographicTargets || [],
+          geographicScope: globalPub.geographicScope || 'national',
+          languages: globalPub.languages || [],
+
+          // Content-Kategorien
+          focusAreas: globalPub.focusAreas || [],
+
+          // Status und Verifikation
+          verified: globalPub.verified || false,
+          status: globalPub.status || 'active',
 
           // Metrics-Schema (verschachtelt wie erwartet)
           metrics: {
             frequency: globalPub.frequency || 'monthly',
+            targetAudience: globalPub.targetAudience || '',
+            targetAgeGroup: globalPub.targetAgeGroup || '',
+            targetGender: globalPub.targetGender || 'all',
             print: {
-              circulation: globalPub.circulation || 0
+              circulation: globalPub.circulation || 0,
+              circulationType: globalPub.circulationType || ''
             },
             online: {
-              monthlyUniqueVisitors: globalPub.readership || 0
+              monthlyUniqueVisitors: globalPub.readership || globalPub.monthlyUniqueVisitors || 0,
+              monthlyPageViews: globalPub.monthlyPageViews || 0
             }
           },
 
