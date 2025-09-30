@@ -1193,19 +1193,19 @@ class PublicationServiceExtended extends PublicationService {
           verified: globalPub.verified || false,
           status: globalPub.status || 'active',
 
-          // Metrics-Schema (verschachtelt wie erwartet)
+          // Metrics-Schema (von globalPub.metrics lesen)
           metrics: {
-            frequency: globalPub.frequency || 'monthly',
-            targetAudience: globalPub.targetAudience || '',
-            targetAgeGroup: globalPub.targetAgeGroup || '',
-            targetGender: globalPub.targetGender || 'all',
+            frequency: globalPub.metrics?.frequency || globalPub.frequency || 'monthly',
+            targetAudience: globalPub.metrics?.targetAudience || globalPub.targetAudience || '',
+            targetAgeGroup: globalPub.metrics?.targetAgeGroup || globalPub.targetAgeGroup || '',
+            targetGender: globalPub.metrics?.targetGender || globalPub.targetGender || 'all',
             print: {
-              circulation: globalPub.circulation || 0,
-              circulationType: globalPub.circulationType || ''
+              circulation: globalPub.metrics?.print?.circulation || globalPub.circulation || 0,
+              circulationType: globalPub.metrics?.print?.circulationType || globalPub.circulationType || ''
             },
             online: {
-              monthlyUniqueVisitors: globalPub.readership || globalPub.monthlyUniqueVisitors || 0,
-              monthlyPageViews: globalPub.monthlyPageViews || 0
+              monthlyUniqueVisitors: globalPub.metrics?.online?.monthlyUniqueVisitors || globalPub.readership || globalPub.monthlyUniqueVisitors || 0,
+              monthlyPageViews: globalPub.metrics?.online?.monthlyPageViews || globalPub.monthlyPageViews || 0
             }
           },
 

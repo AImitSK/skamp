@@ -1111,19 +1111,19 @@ class MultiEntityReferenceService {
               addedAt: pubRefData.addedAt,
               addedBy: pubRefData.addedBy,
 
-              // Vollständiges Metrics-Schema
+              // Vollständiges Metrics-Schema (von globalPubData.metrics lesen)
               metrics: {
-                frequency: globalPubData.frequency || 'monthly',
-                targetAudience: globalPubData.targetAudience || '',
-                targetAgeGroup: globalPubData.targetAgeGroup || '',
-                targetGender: globalPubData.targetGender || 'all',
+                frequency: globalPubData.metrics?.frequency || globalPubData.frequency || 'monthly',
+                targetAudience: globalPubData.metrics?.targetAudience || globalPubData.targetAudience || '',
+                targetAgeGroup: globalPubData.metrics?.targetAgeGroup || globalPubData.targetAgeGroup || '',
+                targetGender: globalPubData.metrics?.targetGender || globalPubData.targetGender || 'all',
                 print: {
-                  circulation: globalPubData.circulation || 0,
-                  circulationType: globalPubData.circulationType || ''
+                  circulation: globalPubData.metrics?.print?.circulation || globalPubData.circulation || 0,
+                  circulationType: globalPubData.metrics?.print?.circulationType || globalPubData.circulationType || ''
                 },
                 online: {
-                  monthlyUniqueVisitors: globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
-                  monthlyPageViews: globalPubData.monthlyPageViews || 0
+                  monthlyUniqueVisitors: globalPubData.metrics?.online?.monthlyUniqueVisitors || globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
+                  monthlyPageViews: globalPubData.metrics?.online?.monthlyPageViews || globalPubData.monthlyPageViews || 0
                 }
               }
             };
@@ -1203,19 +1203,19 @@ class MultiEntityReferenceService {
         addedAt: pubRefData.addedAt,
         addedBy: pubRefData.addedBy,
 
-        // Vollständiges Metrics schema
+        // Vollständiges Metrics schema (von globalPubData.metrics lesen)
         metrics: {
-          frequency: globalPubData.frequency || 'monthly',
-          targetAudience: globalPubData.targetAudience || '',
-          targetAgeGroup: globalPubData.targetAgeGroup || '',
-          targetGender: globalPubData.targetGender || 'all',
+          frequency: globalPubData.metrics?.frequency || globalPubData.frequency || 'monthly',
+          targetAudience: globalPubData.metrics?.targetAudience || globalPubData.targetAudience || '',
+          targetAgeGroup: globalPubData.metrics?.targetAgeGroup || globalPubData.targetAgeGroup || '',
+          targetGender: globalPubData.metrics?.targetGender || globalPubData.targetGender || 'all',
           print: {
-            circulation: globalPubData.circulation || 0,
-            circulationType: globalPubData.circulationType || ''
+            circulation: globalPubData.metrics?.print?.circulation || globalPubData.circulation || 0,
+            circulationType: globalPubData.metrics?.print?.circulationType || globalPubData.circulationType || ''
           },
           online: {
-            monthlyUniqueVisitors: globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
-            monthlyPageViews: globalPubData.monthlyPageViews || 0
+            monthlyUniqueVisitors: globalPubData.metrics?.online?.monthlyUniqueVisitors || globalPubData.readership || globalPubData.monthlyUniqueVisitors || 0,
+            monthlyPageViews: globalPubData.metrics?.online?.monthlyPageViews || globalPubData.monthlyPageViews || 0
           }
         }
       };
