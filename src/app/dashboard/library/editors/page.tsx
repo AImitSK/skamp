@@ -367,7 +367,8 @@ function JournalistCard({
   onUpgrade,
   subscription,
   isImporting = false,
-  isSuperAdmin = false
+  isSuperAdmin = false,
+  isImported = false
 }: {
   journalist: JournalistDatabaseEntry;
   onImport: (journalist: JournalistDatabaseEntry) => void;
@@ -376,6 +377,7 @@ function JournalistCard({
   subscription: JournalistSubscription | null;
   isImporting?: boolean;
   isSuperAdmin?: boolean;
+  isImported?: boolean;
 }) {
   const primaryEmail = journalist.personalData.emails.find(e => e.isPrimary)?.email ||
                       journalist.personalData.emails[0]?.email;
@@ -506,17 +508,24 @@ function JournalistCard({
             <Button
               onClick={() => onImport(journalist)}
               disabled={isImporting}
-              className="bg-primary hover:bg-primary-hover text-white text-sm px-4 py-1.5"
+              className={`text-sm px-4 py-1.5 flex items-center gap-1 ${
+                isImported
+                  ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                  : 'bg-primary hover:bg-primary-hover text-white'
+              }`}
             >
               {isImporting ? (
                 <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                  Importiere...
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-2"></div>
+                  {isImported ? 'Entferne...' : 'Importiere...'}
                 </>
               ) : (
                 <>
-                  <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
-                  Als Verweis
+                  <StarIcon className={`h-4 w-4 mr-1 ${
+                    isImported ? 'text-yellow-600' : 'text-white'
+                  }`}
+                  fill={isImported ? 'currentColor' : 'none'} />
+                  {isImported ? 'Entfernen' : 'Als Verweis'}
                 </>
               )}
             </Button>
@@ -1086,6 +1095,7 @@ export default function EditorsPage() {
   const [selectedJournalist, setSelectedJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [detailJournalist, setDetailJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
+  const [importedJournalistIds, setImportedJournalistIds] = useState<Set<string>>(new Set());
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importDialogJournalist, setImportDialogJournalist] = useState<JournalistDatabaseEntry | null>(null);
 
@@ -1323,6 +1333,67 @@ export default function EditorsPage() {
 
   // Check if current user is SuperAdmin
   const isSuperAdmin = currentOrganization?.id === "superadmin-org";
+
+  // Lade importierte Journalist-IDs
+  const loadImportedJournalists = useCallback(async () => {
+    if (!currentOrganization) return;
+
+    try {
+      const references = await multiEntityReferenceService.getAllContactReferences(currentOrganization.id);
+      const importedIds = new Set(references.map(ref => ref._globalJournalistId));
+      setImportedJournalistIds(importedIds);
+    } catch (error) {
+      console.error('Fehler beim Laden der importierten Journalisten:', error);
+    }
+  }, [currentOrganization]);
+
+  // Lade importierte Journalisten beim Mount und bei Organization-Wechsel
+  useEffect(() => {
+    loadImportedJournalists();
+  }, [loadImportedJournalists]);
+
+  // Reference Remove Handler
+  const handleRemoveReference = async (journalist: JournalistDatabaseEntry) => {
+    if (!currentOrganization || !user) return;
+
+    setImportingIds(prev => new Set([...prev, journalist.id!]));
+
+    try {
+      await multiEntityReferenceService.removeJournalistReference(
+        journalist.id,
+        currentOrganization.id
+      );
+
+      setImportedJournalistIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(journalist.id);
+        return newSet;
+      });
+
+      showAlert('success', 'Verweis entfernt',
+        `${journalist.personalData.displayName} wurde aus Ihren Verweisen entfernt.`);
+    } catch (error) {
+      console.error('Fehler beim Entfernen der Reference:', error);
+      showAlert('error', 'Fehler', 'Der Verweis konnte nicht entfernt werden.');
+    } finally {
+      setImportingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(journalist.id!);
+        return newSet;
+      });
+    }
+  };
+
+  // Toggle-Funktion für Import/Remove
+  const handleToggleReference = async (journalist: JournalistDatabaseEntry) => {
+    const isImported = importedJournalistIds.has(journalist.id);
+
+    if (isImported) {
+      await handleRemoveReference(journalist);
+    } else {
+      await handleImportReference(journalist);
+    }
+  };
 
   // Reference Import handlers
   const handleImportReference = async (journalist: JournalistDatabaseEntry) => {
@@ -1613,10 +1684,11 @@ export default function EditorsPage() {
               <JournalistCard
                 key={journalist.id}
                 journalist={journalist}
-                onImport={handleImportReference}
+                onImport={handleToggleReference}
                 onViewDetails={handleViewDetails}
                 onUpgrade={handleUpgrade}
                 subscription={subscription}
+                isImported={importedJournalistIds.has(journalist.id)}
                 isImporting={importingIds.has(journalist.id!)}
                 isSuperAdmin={isSuperAdmin}
               />
@@ -1783,14 +1855,21 @@ export default function EditorsPage() {
                       <div className="w-24 px-4">
                         {canImport ? (
                           <Button
-                            onClick={() => handleImportReference(journalist)}
+                            onClick={() => handleToggleReference(journalist)}
                             disabled={importingIds.has(journalist.id!)}
-                            className="bg-primary hover:bg-primary-hover text-white text-xs px-3 py-1.5"
+                            className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
+                              importedJournalistIds.has(journalist.id)
+                                ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                                : 'bg-primary hover:bg-primary-hover text-white'
+                            }`}
                           >
                             {importingIds.has(journalist.id!) ? (
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                             ) : (
-                              <ArrowUpTrayIcon className="h-3 w-3" />
+                              <StarIcon className={`h-3 w-3 ${
+                                importedJournalistIds.has(journalist.id) ? 'text-yellow-600' : 'text-white'
+                              }`}
+                              fill={importedJournalistIds.has(journalist.id) ? 'currentColor' : 'none'} />
                             )}
                           </Button>
                         ) : isSuperAdmin ? (
@@ -2125,14 +2204,21 @@ export default function EditorsPage() {
             </Button>
             <Button
               onClick={() => {
-                handleImportReference(detailJournalist);
+                handleToggleReference(detailJournalist);
                 setDetailJournalist(null);
               }}
               disabled={!subscription?.features.importEnabled}
-              className="bg-primary hover:bg-primary-hover text-white"
+              className={`${
+                importedJournalistIds.has(detailJournalist?.id)
+                  ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                  : 'bg-primary hover:bg-primary-hover text-white'
+              }`}
             >
-              <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-              Als Verweis hinzufügen
+              <StarIcon className={`h-4 w-4 mr-2 ${
+                importedJournalistIds.has(detailJournalist?.id) ? 'text-yellow-600' : 'text-white'
+              }`}
+              fill={importedJournalistIds.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
+              {importedJournalistIds.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
             </Button>
           </DialogActions>
         </Dialog>
