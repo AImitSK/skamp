@@ -326,14 +326,14 @@ class MultiEntityReferenceService {
    * Entfernt alle Entity-References eines Journalisten atomisch
    */
   async removeJournalistReference(
-    localJournalistId: string,
+    globalJournalistId: string,
     organizationId: string
   ): Promise<void> {
     const batch = writeBatch(db);
 
     try {
       // 1. Finde Journalist-Reference
-      const journalistRef = await this.findJournalistReferenceByLocalId(localJournalistId, organizationId);
+      const journalistRef = await this.findJournalistReferenceByGlobalId(globalJournalistId, organizationId);
       if (!journalistRef) {
         throw new Error('Journalist-Reference nicht gefunden');
       }
@@ -776,6 +776,33 @@ class MultiEntityReferenceService {
       const q = query(
         collection(db, 'organizations', organizationId, this.journalistRefsCollection),
         where('localJournalistId', '==', localId),
+        where('isActive', '==', true)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return null;
+
+      return {
+        id: snapshot.docs[0].id,
+        ...snapshot.docs[0].data()
+      } as JournalistReference;
+    } catch (error) {
+      console.error('Fehler beim Suchen der Journalist-Reference:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Findet Journalist-Reference nach globaler ID
+   */
+  private async findJournalistReferenceByGlobalId(
+    globalId: string,
+    organizationId: string
+  ): Promise<JournalistReference | null> {
+    try {
+      const q = query(
+        collection(db, 'organizations', organizationId, this.journalistRefsCollection),
+        where('globalJournalistId', '==', globalId),
         where('isActive', '==', true)
       );
 
