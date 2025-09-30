@@ -1104,6 +1104,11 @@ class MultiEntityReferenceService {
               format: globalPubData.format || 'online',
               websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
 
+              // Identifikatoren & Links
+              identifiers: globalPubData.identifiers || {},
+              socialMediaUrls: globalPubData.socialMediaUrls || {},
+              internalNotes: globalPubData.internalNotes || '',
+
               // Reference-Marker
               isReference: true,
               globalPublicationId: pubRefData.globalPublicationId,
@@ -1195,6 +1200,11 @@ class MultiEntityReferenceService {
         status: globalPubData.status || 'active',
         format: globalPubData.format || 'online',
         websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
+
+        // Identifikatoren & Links
+        identifiers: globalPubData.identifiers || {},
+        socialMediaUrls: globalPubData.socialMediaUrls || {},
+        internalNotes: globalPubData.internalNotes || '',
 
         // Reference-Marker
         isReference: true,

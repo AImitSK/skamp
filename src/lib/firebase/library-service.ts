@@ -1152,6 +1152,10 @@ class PublicationServiceExtended extends PublicationService {
           monthlyUniqueVisitors: globalPub.monthlyUniqueVisitors,
           monthlyPageViews: globalPub.monthlyPageViews,
           metricsObject: globalPub.metrics,
+          // Identifikatoren & Links Debug
+          identifiers: globalPub.identifiers,
+          websiteUrl: globalPub.websiteUrl,
+          socialMediaUrls: globalPub.socialMediaUrls,
           allFields: Object.keys(globalPub)
         });
 
@@ -1188,6 +1192,13 @@ class PublicationServiceExtended extends PublicationService {
 
           // Content-Kategorien
           focusAreas: globalPub.focusAreas || [],
+
+          // Identifikatoren & Links
+          identifiers: globalPub.identifiers || {},
+          socialMediaUrls: globalPub.socialMediaUrls || {},
+
+          // Weitere optionale Felder
+          internalNotes: globalPub.internalNotes || '',
 
           // Status und Verifikation
           verified: globalPub.verified || false,
@@ -1231,7 +1242,13 @@ class PublicationServiceExtended extends PublicationService {
           geographicTargets: publicationReference.geographicTargets,
           hasMetrics: !!publicationReference.metrics,
           hasOnlineMetrics: !!publicationReference.metrics?.online,
-          monthlyUniqueVisitors: publicationReference.metrics?.online?.monthlyUniqueVisitors
+          monthlyUniqueVisitors: publicationReference.metrics?.online?.monthlyUniqueVisitors,
+          // Identifikatoren & Links Debug
+          identifiers: publicationReference.identifiers,
+          websiteUrl: publicationReference.websiteUrl,
+          socialMediaUrls: publicationReference.socialMediaUrls,
+          hasIdentifiers: !!publicationReference.identifiers,
+          hasSocialMedia: !!publicationReference.socialMediaUrls
         });
 
         publicationReferences.push(publicationReference);
