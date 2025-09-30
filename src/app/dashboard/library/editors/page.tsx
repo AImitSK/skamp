@@ -1193,15 +1193,34 @@ export default function EditorsPage() {
         const localCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
 
         // Globale Companies für globale Journalisten
-        const globalCompaniesQuery = query(
-          collection(db, 'companies_enhanced'),
-          where('isGlobal', '==', true)
-        );
-        const globalSnapshot = await getDocs(globalCompaniesQuery);
-        const globalCompanies = globalSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as CompanyEnhanced[];
+        // Versuche verschiedene Ansätze für globale Companies
+        let globalCompanies = [];
+
+        // 1. Versuche mit isGlobal flag
+        try {
+          const globalCompaniesQuery = query(
+            collection(db, 'companies_enhanced'),
+            where('isGlobal', '==', true)
+          );
+          const globalSnapshot = await getDocs(globalCompaniesQuery);
+          globalCompanies = globalSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as CompanyEnhanced[];
+          console.log('🔍 Globale Companies mit isGlobal flag:', globalCompanies.length);
+        } catch (e) {
+          console.log('❌ Fehler beim Laden globaler Companies mit isGlobal:', e);
+        }
+
+        // 2. Falls keine gefunden, versuche Companies von SuperAdmin zu laden
+        if (globalCompanies.length === 0) {
+          try {
+            globalCompanies = await companiesEnhancedService.getAll('superadmin-org');
+            console.log('🔍 SuperAdmin Companies geladen:', globalCompanies.length);
+          } catch (e) {
+            console.log('❌ Fehler beim Laden von SuperAdmin Companies:', e);
+          }
+        }
 
         // Kombiniere beide ohne Duplikate
         const allCompanies = [...localCompanies];
@@ -1243,8 +1262,12 @@ export default function EditorsPage() {
       // Konvertiere CRM-Kontakte zu JournalistDatabaseEntry Format
       const convertedJournalists = globalJournalists.map((contact) => {
         // Company Type Lookup
+        console.log('🔍 Suche Company für Kontakt:', contact.displayName, 'CompanyId:', contact.companyId);
         const company = companiesData.find(c => c.id === contact.companyId);
         const companyType = company?.type || 'other';
+        if (!company && contact.companyId) {
+          console.log('⚠️ Company nicht gefunden für ID:', contact.companyId);
+        }
 
         // Publications Lookup - Hierarchie: Company -> Publications -> Redakteure
         let publicationAssignments = [];
