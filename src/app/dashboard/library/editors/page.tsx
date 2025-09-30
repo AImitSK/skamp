@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { multiEntityReferenceService } from "@/lib/firebase/multi-entity-reference-service";
+import { multiEntityService } from "@/lib/firebase/multi-entity-reference-service";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
 import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -1462,7 +1462,7 @@ export default function EditorsPage() {
     if (!currentOrganization) return;
 
     try {
-      const references = await multiEntityReferenceService.getAllContactReferences(currentOrganization.id);
+      const references = await multiEntityService.getAllContactReferences(currentOrganization.id);
       const importedIds = new Set(references.map(ref => ref._globalJournalistId));
       setImportedJournalistIds(importedIds);
     } catch (error) {
@@ -1482,7 +1482,7 @@ export default function EditorsPage() {
     setImportingIds(prev => new Set([...prev, journalist.id!]));
 
     try {
-      await multiEntityReferenceService.removeJournalistReference(
+      await multiEntityService.removeJournalistReference(
         journalist.id,
         currentOrganization.id
       );
@@ -1535,7 +1535,7 @@ export default function EditorsPage() {
 
     try {
       // Multi-Entity Reference erstellen (Company + Publications + Journalist)
-      const result = await multiEntityReferenceService.createJournalistReference(
+      const result = await multiEntityService.createJournalistReference(
         journalist.id,
         currentOrganization!.id,
         user!.uid,

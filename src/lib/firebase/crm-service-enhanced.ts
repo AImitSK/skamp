@@ -23,7 +23,7 @@ import {
 } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
 import { BaseEntity, GdprConsent, BusinessIdentifier, InternationalAddress } from '@/types/international';
-import { multiEntityReferenceService, CombinedContactReference } from './multi-entity-reference-service';
+import { multiEntityService, CombinedContactReference } from './multi-entity-reference-service';
 
 // ========================================
 // Enhanced Company Service
@@ -1091,7 +1091,7 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
   private async getReferencedContacts(organizationId: string): Promise<ContactEnhanced[]> {
     try {
       // 1. Lade kombinierte Contact-References
-      const combinedRefs = await multiEntityReferenceService.getAllContactReferences(organizationId);
+      const combinedRefs = await multiEntityService.getAllContactReferences(organizationId);
 
       // 2. Sicherheitsprüfung für undefined/null
       if (!combinedRefs || !Array.isArray(combinedRefs)) {
@@ -1117,7 +1117,7 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
   ): Promise<ContactEnhanced | null> {
     try {
       // Lade alle References und finde die passende
-      const combinedRefs = await multiEntityReferenceService.getAllContactReferences(organizationId);
+      const combinedRefs = await multiEntityService.getAllContactReferences(organizationId);
       const targetRef = combinedRefs.find(ref => ref.id === localJournalistId);
 
       if (!targetRef) {

@@ -1049,10 +1049,67 @@ class MultiEntityReferenceService {
     try {
       console.log('🔍 Suche Publication-Reference:', { publicationId, organizationId });
 
-      // 1. Suche in Publication-References nach Document ID
+      // 1. Versuche zuerst direkte Document ID Suche
+      try {
+        const pubRefDoc = await getDoc(doc(db, 'organizations', organizationId, this.publicationRefsCollection, publicationId));
+        if (pubRefDoc.exists()) {
+          const pubRefData = pubRefDoc.data() as PublicationReference;
+          console.log('✅ Publication-Reference über Document ID gefunden:', pubRefData);
+
+          // Lade globale Publication-Daten
+          const globalPubDoc = await getDoc(doc(db, 'publications', pubRefData.globalPublicationId));
+          if (globalPubDoc.exists()) {
+            const globalPubData = globalPubDoc.data();
+            console.log('📊 Globale Publication-Daten geladen:', globalPubData.title);
+
+            // Publisher-Name laden
+            let publisherName = globalPubData.publisherName || '';
+            if (globalPubData.publisherId && !publisherName) {
+              try {
+                const companyDoc = await getDoc(doc(db, 'companies', globalPubData.publisherId));
+                if (companyDoc.exists()) {
+                  const companyData = companyDoc.data();
+                  publisherName = companyData?.companyName || companyData?.name || '';
+                  console.log('📊 Publisher-Name aus Company geladen:', publisherName);
+                }
+              } catch (error) {
+                console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
+              }
+            }
+
+            // Kombiniere Reference-Daten mit globalen Daten
+            const combinedData = {
+              id: pubRefDoc.id, // Document ID für Navigation
+              ...globalPubData,
+              organizationId,
+              publisherName,
+              isReference: true,
+              globalPublicationId: pubRefData.globalPublicationId,
+              localPublicationId: pubRefData.localPublicationId,
+              addedAt: pubRefData.addedAt,
+              addedBy: pubRefData.addedBy,
+              metrics: {
+                frequency: globalPubData.frequency || 'monthly',
+                print: {
+                  circulation: globalPubData.circulation || 0
+                },
+                online: {
+                  monthlyUniqueVisitors: globalPubData.readership || 0
+                }
+              }
+            };
+
+            return combinedData;
+          }
+        }
+      } catch (error) {
+        console.log('🔍 Document ID Suche fehlgeschlagen, versuche localPublicationId Suche...');
+      }
+
+      // 2. Fallback: Suche nach localPublicationId
       const pubRefsQuery = query(
         collection(db, 'organizations', organizationId, this.publicationRefsCollection),
-        where('globalPublicationId', '==', publicationId)
+        where('localPublicationId', '==', publicationId)
       );
 
       const snapshot = await getDocs(pubRefsQuery);
