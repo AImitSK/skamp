@@ -1140,6 +1140,17 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       }] : [],
       position: reference.position,
 
+      // Fehlende Pflichtfelder für Detail-Seite
+      academicTitle: '', // Leer, da nicht von Reference unterstützt
+      name: {
+        firstName: '',
+        lastName: reference.displayName || 'Reference'
+      },
+      addresses: [],
+      socialMedia: [],
+      tags: [],
+      customFields: {},
+
       // ✅ KRITISCH: Lokale Relations für Listen/Projekte/etc!
       companyId: reference.companyId, // Lokale Company-Reference-ID!
       companyName: reference.companyName,
