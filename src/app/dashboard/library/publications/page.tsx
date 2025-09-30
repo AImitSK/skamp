@@ -670,12 +670,19 @@ export default function PublicationsPage() {
                       >
                         {pub.title}
                       </Link>
-                      {pub.verified && (
-                        <div className="flex items-center mt-1">
-                          <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-1" />
-                          <span className="text-xs text-green-600">Verifiziert</span>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {pub.verified && (
+                          <div className="flex items-center">
+                            <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-1" />
+                            <span className="text-xs text-green-600">Verifiziert</span>
+                          </div>
+                        )}
+                        {(pub as any)._isReference && (
+                          <Badge color="blue" className="text-xs">
+                            🌐 Verweis
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   

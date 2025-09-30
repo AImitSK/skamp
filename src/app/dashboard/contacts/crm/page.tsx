@@ -927,6 +927,11 @@ const getContactCount = (companyId: string) => {
                             <Badge color="zinc" className="text-xs whitespace-nowrap">
                               {companyTypeLabels[company.type]}
                             </Badge>
+                            {(company as any)._isReference && (
+                              <Badge color="blue" className="text-xs">
+                                🌐 Verweis
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </div>
