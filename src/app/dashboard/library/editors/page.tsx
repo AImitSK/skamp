@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { journalistDatabaseService } from "@/lib/firebase/journalist-database-service";
+import { referenceService } from "@/lib/firebase/reference-service";
+import { ReferencedJournalist } from "@/types/reference";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
 import { companyTypeLabels, ContactEnhanced } from "@/types/crm-enhanced";
 import { contactsEnhancedService, companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -514,7 +515,7 @@ function JournalistCard({
               ) : (
                 <>
                   <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
-                  Importieren
+                  Als Verweis
                 </>
               )}
             </Button>
@@ -524,7 +525,7 @@ function JournalistCard({
               className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 text-sm px-4 py-1.5"
             >
               <StarIcon className="h-4 w-4 mr-1" />
-              Premium
+              Verweis
             </Button>
           )}
         </div>
@@ -1312,13 +1313,44 @@ export default function EditorsPage() {
     return Array.from(topicsSet).sort();
   }, [journalists]);
 
-  // Import handlers
-  const handleImport = (journalist: JournalistDatabaseEntry) => {
+  // Reference Import handlers
+  const handleImportReference = async (journalist: JournalistDatabaseEntry) => {
     if (!subscription?.features.importEnabled) {
       showAlert('warning', 'Premium-Feature', 'Das Importieren von Journalisten ist nur mit einem Premium-Abo verfügbar.');
       return;
     }
-    setSelectedJournalist(journalist);
+
+    // Prüfe ob bereits referenziert
+    const isAlreadyReferenced = await referenceService.isReferenced(
+      journalist.id,
+      currentOrganization!.id
+    );
+
+    if (isAlreadyReferenced) {
+      showAlert('info', 'Bereits hinzugefügt', 'Dieser Journalist wurde bereits als Verweis hinzugefügt.');
+      return;
+    }
+
+    setImportingIds(prev => new Set([...prev, journalist.id!]));
+
+    try {
+      await referenceService.createReference(
+        journalist.id,
+        currentOrganization!.id,
+        user!.uid,
+        `Importiert als Verweis am ${new Date().toLocaleDateString('de-DE')}`
+      );
+
+      showAlert('success', 'Verweis erstellt', `${journalist.personalData.displayName} wurde als Verweis zu Ihrem CRM hinzugefügt.`);
+    } catch (error) {
+      showAlert('error', 'Import fehlgeschlagen', error instanceof Error ? error.message : 'Unbekannter Fehler');
+    } finally {
+      setImportingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(journalist.id!);
+        return newSet;
+      });
+    }
   };
 
   const handleConfirmImport = async () => {
@@ -1568,7 +1600,7 @@ export default function EditorsPage() {
               <JournalistCard
                 key={journalist.id}
                 journalist={journalist}
-                onImport={handleImport}
+                onImport={handleImportReference}
                 onViewDetails={handleViewDetails}
                 onUpgrade={handleUpgrade}
                 subscription={subscription}
@@ -1737,7 +1769,7 @@ export default function EditorsPage() {
                       <div className="w-24 px-4">
                         {canImport ? (
                           <Button
-                            onClick={() => handleImport(journalist)}
+                            onClick={() => handleImportReference(journalist)}
                             disabled={importingIds.has(journalist.id!)}
                             className="bg-primary hover:bg-primary-hover text-white text-xs px-3 py-1.5"
                           >
@@ -2072,14 +2104,14 @@ export default function EditorsPage() {
             </Button>
             <Button
               onClick={() => {
-                handleImport(detailJournalist);
+                handleImportReference(detailJournalist);
                 setDetailJournalist(null);
               }}
               disabled={!subscription?.features.importEnabled}
               className="bg-primary hover:bg-primary-hover text-white"
             >
               <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-              Importieren
+              Als Verweis hinzufügen
             </Button>
           </DialogActions>
         </Dialog>

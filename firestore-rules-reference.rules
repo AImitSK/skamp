@@ -1,24 +1,9 @@
+// Firestore Security Rules für Reference-System
+// Diese Rules müssen in die bestehenden firestore.rules integriert werden
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ========================================
-    // GLOBALE JOURNALISTEN (Neue Reference-System Rules)
-    // ========================================
-
-    // Globale Kontakte - READ für alle, WRITE nur für SuperAdmin
-    match /contacts_enhanced/{contactId} {
-      // LESEN: Alle authentifizierten User können globale Kontakte sehen
-      allow read: if request.auth != null
-                  && (resource.data.isGlobal == true ||
-                      resource.data.organizationId == request.auth.token.organizationId);
-
-      // SCHREIBEN: Nur für eigene Org oder SuperAdmin für globale
-      allow write: if request.auth != null
-                   && (resource.data.organizationId == request.auth.token.organizationId ||
-                       (request.auth.token.organizationId == "superadmin-org" &&
-                        request.resource.data.isGlobal == true));
-    }
 
     // ========================================
     // JOURNALIST REFERENCES (Neue Collection)
@@ -26,6 +11,7 @@ service cloud.firestore {
 
     // References werden in der Organisation des Kunden gespeichert
     match /organizations/{orgId}/journalist_references/{referenceId} {
+
       // LESEN: Nur Mitglieder der Organisation
       allow read: if request.auth != null
                   && request.auth.token.organizationId == orgId;
@@ -33,39 +19,33 @@ service cloud.firestore {
       // ERSTELLEN: Nur Mitglieder der Organisation
       allow create: if request.auth != null
                     && request.auth.token.organizationId == orgId
-                    && validateReferenceCreate(request.resource.data);
+                    && validateReferenceCreate(resource.data);
 
       // AKTUALISIEREN: Nur lokale Daten (Notes, Tags)
       allow update: if request.auth != null
                     && request.auth.token.organizationId == orgId
                     && validateReferenceUpdate(resource.data, request.resource.data);
 
-      // LÖSCHEN: Nur eigene References
+      // LÖSCHEN: Nur eigene References (Soft-Delete bevorzugt)
       allow delete: if request.auth != null
                     && request.auth.token.organizationId == orgId;
     }
 
     // ========================================
-    // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
+    // GLOBALE JOURNALISTEN (Erweiterte Rules)
     // ========================================
 
-    // Organisations-spezifische Collections
-    match /organizations/{orgId}/{collection}/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.organizationId == orgId;
-    }
+    // Globale Kontakte - READ für alle, WRITE nur für SuperAdmin
+    match /contacts_enhanced/{contactId} {
 
-    // Publikationen in der Bibliothek - Globale Sichtbarkeit für SuperAdmin-Publikationen
-    match /publications/{pubId} {
-      allow read: if request.auth != null;
+      // LESEN: Alle authentifizierten User können globale Kontakte sehen
+      allow read: if request.auth != null
+                  && resource.data.isGlobal == true;
+
+      // SCHREIBEN: Nur SuperAdmin Organisation
       allow write: if request.auth != null
-                   && (resource.data.organizationId == request.auth.token.organizationId ||
-                       request.auth.token.organizationId == "superadmin-org");
-    }
-
-    // Fallback für andere Collections (temporär permissiv für Development)
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+                   && request.auth.token.organizationId == "superadmin-org"
+                   && validateGlobalJournalist(request.resource.data);
     }
 
     // ========================================
@@ -94,6 +74,36 @@ service cloud.firestore {
              && (!('localNotes' in after) || after.localNotes is string)
              && (!('localTags' in after) || after.localTags is list)
              && (!('customLabel' in after) || after.customLabel is string);
+    }
+
+    // Validiert globale Journalisten
+    function validateGlobalJournalist(data) {
+      return data.isGlobal == true
+             && data.displayName is string
+             && data.organizationId is string
+             && ('mediaProfile' in data ? data.mediaProfile.isJournalist == true : true);
+    }
+
+    // ========================================
+    // HELPER FUNCTIONS
+    // ========================================
+
+    // Prüft ob User SuperAdmin ist
+    function isSuperAdmin() {
+      return request.auth != null
+             && request.auth.token.organizationId == "superadmin-org";
+    }
+
+    // Prüft ob User zur Organisation gehört
+    function belongsToOrg(orgId) {
+      return request.auth != null
+             && request.auth.token.organizationId == orgId;
+    }
+
+    // Prüft ob User Premium-Features nutzen darf
+    function canUseReferences() {
+      // TODO: Implement subscription check
+      return request.auth != null;
     }
   }
 }

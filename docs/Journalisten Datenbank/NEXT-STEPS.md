@@ -23,40 +23,63 @@
 
 ---
 
-## 🎯 Was wäre als Nächstes zu tun?
+## 🎯 Was als Nächstes zu tun ist
 
-### ✅ Option 1: Frontend-Komponenten (**ABGESCHLOSSEN**)
-~~**Was**: Die Benutzeroberfläche für das neue Feature erstellen~~
+### ✅ Was bereits fertig ist:
+- **Frontend UI** (95%): Editors-Page, Filter, Tabellen, Cards
+- **Globale Daten** werden angezeigt (direkt aus Firestore)
+- **Mock-Subscription** für Premium-Gates
 
-**Status: FERTIG IMPLEMENTIERT** ✅
-- [x] JournalistSearch.tsx (in EditorsPage integriert)
-- [x] JournalistImportDialog.tsx (3-Schritt-Prozess)
-- [x] JournalistCard.tsx (Grid- und Tabellen-Komponenten)
-- [x] Premium-Banner und Subscription-Handling
-- [x] Detail-Modals mit vollständigen Profil-Informationen
+### 🚧 HÖCHSTE PRIORITÄT: Reference-System implementieren
 
-**Ergebnis**: Vollständige, benutzerfreundliche UI ist bereits einsatzbereit!
+**Was fehlt**: Das eigentliche Reference-Import Feature!
 
----
-
-### 🚧 Option 2: API-Endpoints (Backend-Logik) - **HÖCHSTE PRIORITÄT**
-**Was**: REST API für Frontend-Service-Kommunikation
-
-**Status: 70% komplett** (Service-Logik vorhanden, API-Routes fehlen)
-
+#### 1. Reference-Service implementieren (2-3 Stunden)
 ```typescript
-// Diese API Routes brauchen wir JETZT:
-/api/journalists/search        // ✅ Service vorhanden, Route fehlt
-/api/journalists/import        // ✅ Service vorhanden, Route fehlt
-/api/journalists/subscription  // ⚠️ Mocking im Frontend, echte Logic fehlt
+// Neuer Service für Verweise (KEINE Kopien!)
+class ReferenceService {
+  // Verweis erstellen
+  async createReference(globalJournalistId, orgId) {
+    return firestore.collection('journalist_references').add({
+      globalJournalistId,  // NUR Verweis-ID!
+      organizationId: orgId,
+      localNotes: '',
+      localTags: [],
+      addedAt: new Date()
+    });
+  }
+
+  // References mit globalen Daten kombinieren
+  async getReferencesWithData(orgId) {
+    const refs = await getReferences(orgId);
+    const globalData = await getGlobalJournalists(refs.map(r => r.globalJournalistId));
+    return combineReferencesWithGlobal(refs, globalData);
+  }
+}
 ```
 
-**Aufwand**: 2-3 Stunden
-**Ergebnis**: Vollständig funktionierendes MVP
+#### 2. Import-Funktion aktivieren (1 Stunde)
+```typescript
+// In EditorsPage.tsx beim Stern-Click:
+const handleImportReference = async (journalist) => {
+  // KEIN Copy, nur Reference!
+  await referenceService.createReference(
+    journalist.id,
+    currentOrganization.id
+  );
+  showAlert('success', 'Als Verweis hinzugefügt');
+};
+```
+
+#### 3. UI für References anpassen (1 Stunde)
+- Badge "Globaler Verweis" bei referenzierten Kontakten
+- Lokale Notizen-Editor einbauen
+- "Verweis entfernen" statt "Löschen"
+- Read-only Felder visuell kennzeichnen
 
 ---
 
-### 📋 Option 3: Subscription & Payment (Monetarisierung)
+### 📋 Option 2: Subscription & Payment (Später)
 **Was**: Echte Premium-Features mit Stripe-Integration
 
 **Status: 20% komplett** (Mock-Subscriptions vorhanden)
@@ -74,60 +97,56 @@
 
 ---
 
-### 📋 Option 4: Global-System Integration
-**Was**: SuperAdmin-System in CRM-Bereiche integrieren
+### 📋 Option 3: SuperAdmin-Integration verbessern
+**Was**: GlobalModeBanner in weitere CRM-Bereiche
 
-**Status: 5% komplett** (Komponenten vorhanden, Integration fehlt)
+**Status**: Banner existiert, muss nur integriert werden
 
 ```typescript
-// GlobalModeBanner integrieren in:
+// GlobalModeBanner einbauen in:
 - /dashboard/contacts/crm/contacts/
 - /dashboard/contacts/crm/companies/
-- Save-Interceptor in CRM-Services aktivieren
+- Auto-Global bei Save aktivieren
 ```
 
-**Aufwand**: 1 Tag
-**Ergebnis**: SuperAdmin kann Journalisten direkt über CRM global machen
+**Aufwand**: 4 Stunden
+**Ergebnis**: SuperAdmin kann überall global pflegen
 
 ---
 
-## 🚨 **NEUE PRIORITÄT: Relations-Architektur fixen!**
+## 📌 **WICHTIG: Fokus auf Reference-System!**
 
-### **KRITISCHES PROBLEM ENTDECKT:**
-1. **Journalisten werden OHNE Company/Publications importiert** ❌
-2. **CRM-Workflows sind dadurch GEBROCHEN** ❌
-3. **MUSS vor allen anderen Features gefixt werden** ⚠️
+### **Das Kernkonzept verstehen:**
+1. **References sind VERWEISE, keine Kopien** ✅
+2. **Globale Daten bleiben beim SuperAdmin** ✅
+3. **Kunden können nur lokale Notizen hinzufügen** ✅
 
-### **Sofort-Maßnahmen (HEUTE):**
+### **Klare Trennung beachten:**
 
-#### 1. Datenstruktur erweitern (2 Stunden)
+#### Was SuperAdmin macht:
 ```typescript
-// JournalistDatabaseEntry erweitern mit:
-- employment.company (vollständige Company-Daten)
-- publicationAssignments[] (alle Publications)
-- Relationen zu Medienhaus und Publikationen
+// Im normalen CRM eingeben:
+- Journalist anlegen → wird automatisch global
+- Company/Medienhaus pflegen
+- Publikationen verwalten
 ```
 
-#### 2. Import-Service fixen (3 Stunden)
+#### Was Kunden machen:
 ```typescript
-// Multi-Entity-Import implementieren:
-1. Company erstellen/finden
-2. Publications erstellen/verknüpfen
-3. Journalist MIT korrekten Relationen erstellen
+// In der Library:
+- Globale Journalisten durchsuchen
+- Mit Stern-Icon als Reference importieren
+- Lokale Notizen/Tags hinzufügen
+- Für Verteilerlisten nutzen
 ```
 
-#### 3. UI-Komponenten anpassen (2 Stunden)
+#### Was das System macht:
 ```typescript
-// Tabelle & Modal erweitern:
-- Company-Spalte mit Medienhaus-Info
-- Publications-Badges in Tabelle
-- Relations-Visualisierung im Detail-Modal
-- Import-Dialog: Neuer "Relations"-Step
+// Automatisch:
+- Globale Änderungen sofort propagieren
+- References mit globalen Daten kombinieren
+- Read-only Status enforced
 ```
-
-**Nach 7 Stunden: Funktionierende Relations!**
-
-### 📋 **Siehe [RELATIONS-ARCHITECTURE.md](./RELATIONS-ARCHITECTURE.md) für vollständige Details**
 
 ---
 
@@ -142,28 +161,28 @@
 
 ---
 
-## 🚀 **SOFORTIGER Quick Start: MVP fertigstellen**
+## 🚀 **Quick Start: Reference-System in 3 Stunden**
 
-**Das kannst du HEUTE in 2-3 Stunden machen:**
+### ⏱️ **Schritt-für-Schritt Plan:**
 
-### ⏱️ **90 Minuten Plan:**
+#### **Schritt 1: Reference Collection anlegen** (30 Min)
+1. Firestore Structure planen
+2. TypeScript Types definieren
+3. Security Rules für References
 
-#### **Schritt 1: Search API** (30 Min)
-1. Erstelle `src/app/api/journalists/search/route.ts`
-2. Wrapper um `journalistDatabaseService.search()`
-3. Frontend von Mock-Daten auf echte API umstellen
+#### **Schritt 2: Reference-Service** (90 Min)
+1. `createReference()` - Verweis erstellen
+2. `getReferences()` - Alle References einer Org
+3. `combineWithGlobal()` - Mit globalen Daten kombinieren
+4. `removeReference()` - Verweis entfernen
 
-#### **Schritt 2: Import API** (45 Min)
-1. Erstelle `src/app/api/journalists/import/route.ts`
-2. Wrapper um `journalistDatabaseService.import()`
-3. Basic Subscription-Check einbauen
+#### **Schritt 3: UI Integration** (60 Min)
+1. Stern-Icon Click → `createReference()`
+2. Badge für referenzierte Kontakte
+3. Lokale Notizen Editor
+4. Test mit echten Daten
 
-#### **Schritt 3: Premium aktivieren** (15 Min)
-1. In `/library/editors/page.tsx`: `plan: 'professional'` setzen
-2. Import-Button aktivieren
-3. Ende-zu-Ende Test
-
-**Ergebnis nach 90 Minuten: Vollständig funktionierendes MVP!** 🎉
+**Ergebnis: Funktionierendes Reference-System!** 🎉
 
 ### **Was dann funktioniert:**
 - ✅ Journalisten suchen und filtern
@@ -174,36 +193,36 @@
 
 ---
 
-## 💡 Alternative: Admin-First Approach
+## 💡 Wichtige Klarstellungen
 
-Falls du erstmal **ohne User-Frontend** starten willst:
+### Was wir NICHT brauchen:
+- ❌ API Routes (direkter Firestore ist OK)
+- ❌ Import/Export mit Kopien
+- ❌ Sync zwischen Duplikaten
+- ❌ Complex Matching (erst Phase 2)
 
-1. **Admin-Panel** zum manuellen Befüllen der DB
-2. **CSV-Import** für Massen-Daten
-3. **Verifizierungs-Queue** für Admin-Review
-4. **Matching-Dashboard** für Crowdsourcing-Kandidaten
-
-Vorteil: Datenbank wächst, während Frontend entwickelt wird.
-
----
-
-## ❓ Entscheidungshilfe
-
-**Frontend-First wenn**:
-- User-Experience im Fokus
-- Schnelles Feedback wichtig
-- Demo für Stakeholder nötig
-
-**Backend-First wenn**:
-- Datenqualität kritisch
-- Integration mit externen APIs geplant
-- Sicherheit absolute Priorität
-
-**Admin-First wenn**:
-- Erstmal Daten sammeln
-- Manueller Prozess OK für Start
-- Zeit für perfektes Frontend später
+### Was wir BRAUCHEN:
+- ✅ Reference-Service (Verweise verwalten)
+- ✅ UI-Updates (Read-only Kennzeichnung)
+- ✅ Lokale Notizen Feature
+- ✅ Klare Trennung global/lokal
 
 ---
 
-Was spricht dich am meisten an?
+## ✅ Erfolgs-Kriterien für Phase 1
+
+**Das System funktioniert wenn:**
+1. SuperAdmin pflegt Journalist → wird global sichtbar
+2. Kunde sieht ihn in `/library/editors/`
+3. Kunde klickt Stern → Reference wird erstellt
+4. Journalist erscheint im Kunden-CRM (als Verweis)
+5. Kunde kann lokale Notizen hinzufügen
+6. SuperAdmin ändert Daten → Kunde sieht Änderung sofort
+
+**Dann ist Phase 1 fertig!**
+
+---
+
+## 🎯 Nächster konkreter Schritt?
+
+**Implementiere den Reference-Service!** Das ist der fehlende Baustein.
