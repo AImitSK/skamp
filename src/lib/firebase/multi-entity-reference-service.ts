@@ -88,6 +88,8 @@ export interface CombinedContactReference {
   // Journalist-Daten (aus globaler Quelle)
   id: string; // Lokale Journalist-Reference-ID
   displayName: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   phone?: string;
   position?: string;
@@ -288,6 +290,8 @@ class MultiEntityReferenceService {
 
             // Globale Journalist-Daten
             displayName: globalJournalist.displayName,
+            firstName: globalJournalist.name?.firstName || globalJournalist.displayName?.split(' ')[0],
+            lastName: globalJournalist.name?.lastName || globalJournalist.displayName?.split(' ').slice(1).join(' '),
             email: globalJournalist.emails?.[0]?.email,
             phone: globalJournalist.phones?.[0]?.number,
             position: globalJournalist.position,

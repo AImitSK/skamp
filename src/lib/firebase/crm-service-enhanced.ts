@@ -1143,12 +1143,23 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       // Fehlende Pflichtfelder für Detail-Seite
       academicTitle: '', // Leer, da nicht von Reference unterstützt
       name: {
-        firstName: '',
-        lastName: reference.displayName || 'Reference'
+        // Verwende firstName/lastName wenn vorhanden, sonst splitten
+        firstName: reference.firstName || reference.displayName?.split(' ')[0] || '',
+        lastName: reference.lastName || reference.displayName?.split(' ').slice(1).join(' ') || 'Reference'
       },
+      emails: reference.email ? [{
+        email: reference.email,
+        type: 'work',
+        isPrimary: true
+      }] : [],
+      phones: reference.phone ? [{
+        number: reference.phone,
+        type: 'mobile',
+        isPrimary: true
+      }] : [],
       addresses: [],
       socialMedia: [],
-      tags: [],
+      tags: reference._localMeta?.tags || [],
       customFields: {},
 
       // ✅ KRITISCH: Lokale Relations für Listen/Projekte/etc!
