@@ -1104,8 +1104,8 @@ class MultiEntityReferenceService {
               format: globalPubData.format || 'online',
               websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
 
-              // Identifikatoren & Links
-              identifiers: globalPubData.identifiers || {},
+              // Identifikatoren & Links (sicherstellen dass Arrays für UI)
+              identifiers: globalPubData.identifiers || [],
               socialMediaUrls: globalPubData.socialMediaUrls || {},
               internalNotes: globalPubData.internalNotes || '',
 
@@ -1201,8 +1201,8 @@ class MultiEntityReferenceService {
         format: globalPubData.format || 'online',
         websiteUrl: globalPubData.websiteUrl || globalPubData.website || '',
 
-        // Identifikatoren & Links
-        identifiers: globalPubData.identifiers || {},
+        // Identifikatoren & Links (sicherstellen dass Arrays für UI)
+        identifiers: globalPubData.identifiers || [],
         socialMediaUrls: globalPubData.socialMediaUrls || {},
         internalNotes: globalPubData.internalNotes || '',
 

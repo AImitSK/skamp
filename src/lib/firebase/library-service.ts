@@ -1152,8 +1152,8 @@ class PublicationServiceExtended extends PublicationService {
           monthlyUniqueVisitors: globalPub.monthlyUniqueVisitors,
           monthlyPageViews: globalPub.monthlyPageViews,
           metricsObject: globalPub.metrics,
-          // Identifikatoren & Links Debug
-          identifiers: globalPub.identifiers,
+          // Identifikatoren & Links Debug (sicherstellen dass Array für UI)
+          identifiers: globalPub.identifiers || [],
           websiteUrl: globalPub.websiteUrl,
           socialMediaUrls: globalPub.socialMediaUrls,
           allFields: Object.keys(globalPub)
@@ -1193,8 +1193,8 @@ class PublicationServiceExtended extends PublicationService {
           // Content-Kategorien
           focusAreas: globalPub.focusAreas || [],
 
-          // Identifikatoren & Links
-          identifiers: globalPub.identifiers || {},
+          // Identifikatoren & Links (sicherstellen dass Arrays für UI)
+          identifiers: globalPub.identifiers || [],
           socialMediaUrls: globalPub.socialMediaUrls || {},
 
           // Weitere optionale Felder

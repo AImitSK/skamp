@@ -191,6 +191,15 @@ export default function ContactModalEnhanced({
   // Initialize form data when contact changes
   useEffect(() => {
     if (contact) {
+      // Debug: Prüfe Contact-Struktur für Telefonnummern
+      console.log('📞 ContactModalEnhanced - Contact Debug:', {
+        contactId: contact.id,
+        isReference: (contact as any)?._isReference,
+        phonesRaw: contact.phones,
+        phonesLength: contact.phones?.length || 0,
+        phonesStructure: contact.phones?.map(p => ({ number: p.number, type: p.type, isPrimary: p.isPrimary }))
+      });
+
       // Directly use enhanced contact data
       setFormData({
         ...contact,
