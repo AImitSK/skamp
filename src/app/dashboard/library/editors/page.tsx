@@ -510,12 +510,13 @@ function JournalistCard({
               disabled={isImporting}
               className={`text-sm px-4 py-1.5 flex items-center gap-1 ${
                 isImported
-                  ? 'border border-gray-300 hover:bg-gray-50'
+                  ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
                   : 'bg-primary hover:bg-primary-hover text-white'
               }`}
               style={isImported ? {
                 backgroundColor: '#DEDC00',
-                color: '#000000'
+                color: '#000000',
+                borderColor: '#DEDC00'
               } : {}}
             >
               {isImporting ? (
@@ -1863,12 +1864,13 @@ export default function EditorsPage() {
                             disabled={importingIds.has(journalist.id!)}
                             className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
                               importedJournalistIds.has(journalist.id)
-                                ? 'border border-gray-300 hover:bg-gray-50'
+                                ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
                                 : 'bg-primary hover:bg-primary-hover text-white'
                             }`}
                             style={importedJournalistIds.has(journalist.id) ? {
                               backgroundColor: '#DEDC00',
-                              color: '#000000'
+                              color: '#000000',
+                              borderColor: '#DEDC00'
                             } : {}}
                           >
                             {importingIds.has(journalist.id!) ? (
@@ -2218,12 +2220,13 @@ export default function EditorsPage() {
               disabled={!subscription?.features.importEnabled}
               className={`${
                 importedJournalistIds.has(detailJournalist?.id)
-                  ? 'border border-gray-300 hover:bg-gray-50'
+                  ? 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
                   : 'bg-primary hover:bg-primary-hover text-white'
               }`}
               style={importedJournalistIds.has(detailJournalist?.id) ? {
                 backgroundColor: '#DEDC00',
-                color: '#000000'
+                color: '#000000',
+                borderColor: '#DEDC00'
               } : {}}
             >
               <StarIcon className={`h-4 w-4 mr-2 ${
