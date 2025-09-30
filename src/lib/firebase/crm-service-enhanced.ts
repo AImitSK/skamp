@@ -1510,9 +1510,35 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
           officialName: globalCompany.officialName,
           tradingName: globalCompany.tradingName,
           type: globalCompany.type || 'other',
-          industry: globalCompany.industry,
+
+          // Vollständige Company-Daten übertragen
+          legalForm: globalCompany.legalForm,
+          industryClassification: globalCompany.industryClassification,
           website: globalCompany.website,
           description: globalCompany.description,
+          foundedDate: globalCompany.foundedDate,
+
+          // Kontaktdaten
+          emails: globalCompany.emails || [],
+          phones: globalCompany.phones || [],
+          mainAddress: globalCompany.mainAddress,
+
+          // Business-Identifikatoren
+          identifiers: globalCompany.identifiers || [],
+
+          // Finanzinformationen
+          financial: globalCompany.financial,
+
+          // Social Media
+          socialMedia: globalCompany.socialMedia || [],
+
+          // Status-Felder
+          status: globalCompany.status || 'active',
+          lifecycleStage: globalCompany.lifecycleStage,
+
+          // Konzernstruktur
+          parentCompanyId: globalCompany.parentCompanyId,
+          subsidiaryIds: globalCompany.subsidiaryIds || [],
 
           // Reference-Marker
           _isReference: true,

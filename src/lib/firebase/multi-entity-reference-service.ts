@@ -184,8 +184,27 @@ class MultiEntityReferenceService {
       }
 
       // 4. Publication-References erstellen oder finden
+      console.log('🔍 Checking for Publications:', {
+        journalistName: globalJournalist.displayName,
+        publicationIds: globalJournalist.publicationIds || [],
+        companyName: globalJournalist.companyName,
+        companyId: globalJournalist.companyId
+      });
+
+      // Lade globale Company um Typ zu prüfen und Publications zu finden
+      const globalCompany = await this.loadGlobalCompany(globalJournalist.companyId || globalJournalist.companyName);
+
+      // Finde Publications basierend auf Company-Zuordnung (wenn Company ein Media House/Publisher ist)
+      let publicationIds = globalJournalist.publicationIds || [];
+      if ((!publicationIds.length) && globalCompany && ['publisher', 'media_house', 'agency'].includes(globalCompany.type)) {
+        console.log('🔍 Company ist Media House/Publisher, suche nach Publications...');
+        const companyPublications = await this.findPublicationsByCompany(globalCompany.id);
+        publicationIds = companyPublications.map(pub => pub.id);
+        console.log('📰 Gefundene Publications für Company:', publicationIds);
+      }
+
       const publicationsResult = await this.ensurePublicationReferences(
-        globalJournalist.publicationIds || [],
+        publicationIds,
         companyResult.documentId!,  // Document ID statt localCompanyId
         organizationId,
         userId,
@@ -414,6 +433,67 @@ class MultiEntityReferenceService {
     } catch (error) {
       console.error('Fehler beim Laden des globalen Journalisten:', error);
       return null;
+    }
+  }
+
+  /**
+   * Lädt globale Company-Daten
+   */
+  private async loadGlobalCompany(globalCompanyIdOrName: string): Promise<any | null> {
+    try {
+      // Versuche zuerst über ID zu laden
+      const globalDoc = await getDoc(doc(db, 'companies_enhanced', globalCompanyIdOrName));
+
+      if (globalDoc.exists() && globalDoc.data().isGlobal) {
+        return {
+          id: globalDoc.id,
+          ...globalDoc.data()
+        };
+      }
+
+      // Falls nicht gefunden, suche nach Name in der superadmin Organization
+      const companiesQuery = query(
+        collection(db, 'companies_enhanced'),
+        where('isGlobal', '==', true),
+        where('name', '==', globalCompanyIdOrName)
+      );
+
+      const snapshot = await getDocs(companiesQuery);
+      if (!snapshot.empty) {
+        const companyDoc = snapshot.docs[0];
+        return {
+          id: companyDoc.id,
+          ...companyDoc.data()
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Fehler beim Laden der globalen Company:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Findet Publications einer bestimmten Company
+   */
+  private async findPublicationsByCompany(companyId: string): Promise<any[]> {
+    try {
+      // Suche in der SuperAdmin Organization nach Publications mit dieser publisherId
+      const publicationsQuery = query(
+        collection(db, 'publications'),
+        where('organizationId', '==', 'superadmin'),
+        where('publisherId', '==', companyId)
+      );
+
+      const snapshot = await getDocs(publicationsQuery);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Fehler beim Laden der Company Publications:', error);
+      return [];
     }
   }
 
