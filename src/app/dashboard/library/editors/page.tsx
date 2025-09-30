@@ -517,7 +517,11 @@ function JournalistCard({
                 backgroundColor: '#DEDC00',
                 color: '#000000',
                 borderColor: '#DEDC00'
-              } : {}}
+              } : {
+                backgroundColor: '#f3f4f6',
+                color: '#4b5563',
+                border: '1px solid #d1d5db'
+              }}
             >
               {isImporting ? (
                 <>
@@ -527,7 +531,7 @@ function JournalistCard({
               ) : (
                 <>
                   <StarIcon className={`h-4 w-4 mr-1 ${
-                    isImported ? 'text-black' : 'text-gray-600'
+                    isImported ? 'text-black' : 'text-white'
                   }`}
                   fill={isImported ? 'currentColor' : 'none'} />
                   {isImported ? 'Entfernen' : 'Als Verweis'}
@@ -1888,13 +1892,17 @@ export default function EditorsPage() {
                               backgroundColor: '#DEDC00',
                               color: '#000000',
                               borderColor: '#DEDC00'
-                            } : {}}
+                            } : {
+                              backgroundColor: '#f3f4f6',
+                              color: '#4b5563',
+                              border: '1px solid #d1d5db'
+                            }}
                           >
                             {importingIds.has(journalist.id!) ? (
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                             ) : (
                               <StarIcon className={`h-3 w-3 ${
-                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-gray-600'
+                                importedJournalistIds.has(journalist.id) ? 'text-black' : 'text-white'
                               }`}
                               fill={importedJournalistIds.has(journalist.id) ? 'currentColor' : 'none'} />
                             )}
@@ -2244,10 +2252,14 @@ export default function EditorsPage() {
                 backgroundColor: '#DEDC00',
                 color: '#000000',
                 borderColor: '#DEDC00'
-              } : {}}
+              } : {
+                backgroundColor: '#f3f4f6',
+                color: '#4b5563',
+                border: '1px solid #d1d5db'
+              }}
             >
               <StarIcon className={`h-4 w-4 mr-2 ${
-                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-gray-600'
+                importedJournalistIds.has(detailJournalist?.id) ? 'text-black' : 'text-white'
               }`}
               fill={importedJournalistIds.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
               {importedJournalistIds.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
