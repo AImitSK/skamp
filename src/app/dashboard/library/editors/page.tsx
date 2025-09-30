@@ -1104,7 +1104,7 @@ export default function EditorsPage() {
         },
         features: {
           searchEnabled: true,
-          importEnabled: false, // Set to true for premium
+          importEnabled: true, // Aktiviert für Reference-System Testing
           exportEnabled: false,
           apiAccess: false,
           advancedFilters: false,
