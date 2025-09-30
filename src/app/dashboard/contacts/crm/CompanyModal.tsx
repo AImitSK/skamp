@@ -414,7 +414,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         });
       }
 
-      const context = { organizationId: organizationId, userId: userId };
+      const context = { organizationId: organizationId, userId: userId, autoGlobalMode };
       
       if (company?.id) {
         // Update existing company

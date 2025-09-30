@@ -39,7 +39,7 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
    */
   async create(
     data: Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'deletedAt' | 'deletedBy'>,
-    context: { organizationId: string; userId: string }
+    context: { organizationId: string; userId: string; autoGlobalMode?: boolean }
   ): Promise<string> {
     // Validierung
     if (!data.officialName?.trim()) {
@@ -49,6 +49,22 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
     // Setze Display-Name falls nicht vorhanden
     if (!data.name) {
       data.name = data.tradingName || data.officialName;
+    }
+
+    // Global-Interceptor anwenden wenn SuperAdmin/autoGlobalMode
+    if (context.autoGlobalMode) {
+      const { interceptSave } = await import('@/lib/utils/global-interceptor');
+      const globalizedData = interceptSave(data, 'company', { email: context.userId }, {
+        autoGlobalMode: context.autoGlobalMode
+      });
+
+      console.log('🌟 Company wird als global erstellt:', {
+        name: data.name,
+        isGlobal: globalizedData.isGlobal,
+        autoGlobalMode: context.autoGlobalMode
+      });
+
+      return super.create(globalizedData, context);
     }
 
     return super.create(data, context);
