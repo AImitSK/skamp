@@ -357,8 +357,8 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
         });
       }
 
-      // Identifikatoren
-      if (publication.identifiers) {
+      // Identifikatoren (SICHER als Array behandeln)
+      if (publication.identifiers && Array.isArray(publication.identifiers)) {
         setIdentifiers(publication.identifiers.map(id => ({
           type: id.type,
           value: id.value,
