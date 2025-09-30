@@ -1471,6 +1471,81 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
   }
 }
 
-export const companiesEnhancedService = new CompanyEnhancedService();
+/**
+ * ✨ Extended Company Service mit Multi-Entity References
+ *
+ * Inkludiert Company-References transparent in getAll()
+ */
+class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
+  /**
+   * ✨ ENHANCED: getAll() erweitert um Company-References
+   */
+  async getAll(organizationId: string): Promise<CompanyEnhanced[]> {
+    try {
+      // 1. Lade echte Companies (wie bisher)
+      const realCompanies = await super.getAll(organizationId);
+
+      // 2. Lade Company-References
+      const companyRefsQuery = query(
+        collection(db, 'organizations', organizationId, 'company_references'),
+        where('isActive', '==', true)
+      );
+      const companyRefsSnapshot = await getDocs(companyRefsQuery);
+
+      // 3. Konvertiere References zu CompanyEnhanced-Format
+      const companyReferences: CompanyEnhanced[] = [];
+      for (const refDoc of companyRefsSnapshot.docs) {
+        const ref = refDoc.data();
+
+        // Lade globale Company-Daten
+        const globalCompanyDoc = await getDoc(doc(db, 'companies_enhanced', ref.globalCompanyId));
+        if (!globalCompanyDoc.exists()) continue;
+
+        const globalCompany = globalCompanyDoc.data();
+
+        // Erstelle CompanyEnhanced aus Reference + globalen Daten
+        companyReferences.push({
+          id: ref.localCompanyId,
+          name: globalCompany.name || globalCompany.officialName,
+          officialName: globalCompany.officialName,
+          tradingName: globalCompany.tradingName,
+          type: globalCompany.type || 'other',
+          industry: globalCompany.industry,
+          website: globalCompany.website,
+          description: globalCompany.description,
+
+          // Reference-Marker
+          _isReference: true,
+          _globalCompanyId: ref.globalCompanyId,
+
+          // Meta-Felder (leer für References)
+          organizationId: organizationId,
+          createdAt: ref.addedAt,
+          createdBy: ref.addedBy,
+          updatedAt: ref.addedAt,
+          updatedBy: ref.addedBy
+        } as CompanyEnhanced & { _isReference: boolean; _globalCompanyId: string });
+      }
+
+      // 4. Kombiniere echte Companies und References
+      const allCompanies = [...realCompanies, ...companyReferences];
+
+      console.log('📊 ENHANCED COMPANIES SERVICE:', {
+        realCompanies: realCompanies.length,
+        referencedCompanies: companyReferences.length,
+        totalCompanies: allCompanies.length,
+        organizationId
+      });
+
+      return allCompanies;
+    } catch (error) {
+      console.error('Fehler in CompanyEnhancedServiceExtended.getAll:', error);
+      // Fallback zu normaler getAll() wenn Fehler
+      return super.getAll(organizationId);
+    }
+  }
+}
+
+export const companiesEnhancedService = new CompanyEnhancedServiceExtended();
 export const contactsEnhancedService = new ContactEnhancedServiceExtended();
 export const tagsEnhancedService = new TagEnhancedService();
