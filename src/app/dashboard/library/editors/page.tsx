@@ -1224,21 +1224,56 @@ export default function EditorsPage() {
         const company = companiesData.find(c => c.id === contact.companyId);
         const companyType = company?.type || 'other';
 
-        // Publications Lookup
-        const publicationIds = contact.mediaProfile?.publicationIds || [];
-        const contactPublications = publicationsData.filter(pub =>
-          publicationIds.includes(pub.id!)
+        // Publications Lookup - Hierarchie: Company -> Publications -> Redakteure
+        let publicationAssignments = [];
+
+        // 1. Direkte Publication-IDs (falls vorhanden)
+        const directPublicationIds = contact.mediaProfile?.publicationIds || [];
+        const directPublications = publicationsData.filter(pub =>
+          directPublicationIds.includes(pub.id!)
         );
 
-        const publicationAssignments = contactPublications.map(publication => ({
-          publication: {
-            title: publication.title,
-            type: publication.type,
-            globalPublicationId: publication.id
-          },
-          role: 'reporter', // Default role from CRM
-          isMainPublication: false
-        }));
+        if (directPublications.length > 0) {
+          publicationAssignments = directPublications.map(publication => ({
+            publication: {
+              title: publication.title,
+              type: publication.type,
+              globalPublicationId: publication.id
+            },
+            role: contact.position || 'reporter',
+            isMainPublication: false
+          }));
+        }
+        // 2. Fallback: Publications über Company-Zuordnung (Medienhaus/Verlag)
+        else if (company && ['publisher', 'media_house', 'newspaper', 'magazine', 'online_media'].includes(companyType)) {
+          // Finde Publications, die zu dieser Company gehören
+          const companyPublications = publicationsData.filter(pub =>
+            pub.companyId === company.id || pub.publisherId === company.id
+          );
+
+          if (companyPublications.length > 0) {
+            publicationAssignments = companyPublications.map(publication => ({
+              publication: {
+                title: publication.title,
+                type: publication.type,
+                globalPublicationId: publication.id
+              },
+              role: contact.position || 'Redakteur',
+              isMainPublication: false
+            }));
+          } else {
+            // Erstelle Placeholder-Publication aus Company-Daten
+            publicationAssignments = [{
+              publication: {
+                title: company.name,
+                type: companyTypeLabels[companyType] || 'Sonstige',
+                globalPublicationId: `company-${company.id}`
+              },
+              role: contact.position || 'Mitarbeiter',
+              isMainPublication: true
+            }];
+          }
+        }
 
         return {
           id: contact.id,
