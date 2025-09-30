@@ -1064,13 +1064,22 @@ class MultiEntityReferenceService {
 
             // Publisher-Name laden
             let publisherName = globalPubData.publisherName || '';
+            console.log('🔍 Publisher-Name Debug:', {
+              existingPublisherName: publisherName,
+              publisherId: globalPubData.publisherId,
+              willTryCompanyLoad: globalPubData.publisherId && !publisherName
+            });
+
             if (globalPubData.publisherId && !publisherName) {
               try {
+                console.log('🔍 Versuche Company zu laden für publisherId:', globalPubData.publisherId);
                 const companyDoc = await getDoc(doc(db, 'companies', globalPubData.publisherId));
                 if (companyDoc.exists()) {
                   const companyData = companyDoc.data();
                   publisherName = companyData?.companyName || companyData?.name || '';
-                  console.log('📊 Publisher-Name aus Company geladen:', publisherName);
+                  console.log('📊 Publisher-Name aus Company geladen:', publisherName, 'von Company:', companyData);
+                } else {
+                  console.warn('❌ Company Document nicht gefunden für publisherId:', globalPubData.publisherId);
                 }
               } catch (error) {
                 console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
