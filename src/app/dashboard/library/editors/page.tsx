@@ -1263,11 +1263,23 @@ export default function EditorsPage() {
       const convertedJournalists = globalJournalists.map((contact) => {
         // Company Type Lookup
         console.log('🔍 Suche Company für Kontakt:', contact.displayName, 'CompanyId:', contact.companyId);
-        const company = companiesData.find(c => c.id === contact.companyId);
-        const companyType = company?.type || 'other';
-        if (!company && contact.companyId) {
-          console.log('⚠️ Company nicht gefunden für ID:', contact.companyId);
+        let company = companiesData.find(c => c.id === contact.companyId);
+
+        // Fallback: Erstelle Company-Objekt aus Contact-Daten wenn nicht gefunden
+        if (!company && contact.companyId && contact.companyName) {
+          console.log('⚠️ Company nicht gefunden, erstelle aus Contact-Daten:', contact.companyName);
+          company = {
+            id: contact.companyId,
+            name: contact.companyName,
+            type: contact.companyType || 'media_house', // Vermutlich ein Medienhaus
+            isGlobal: true
+          } as CompanyEnhanced;
+
+          // Füge zur companiesData hinzu für weitere Verwendung
+          companiesData.push(company);
         }
+
+        const companyType = company?.type || 'other';
 
         // Publications Lookup - Hierarchie: Company -> Publications -> Redakteure
         let publicationAssignments = [];
@@ -1295,12 +1307,12 @@ export default function EditorsPage() {
             isMainPublication: false
           }));
         }
-        // 2. Fallback: Publications über Company-Zuordnung (Medienhaus/Verlag)
-        else if (company && ['publisher', 'media_house', 'newspaper', 'magazine', 'online_media'].includes(companyType)) {
+        // 2. Fallback: Erstelle aus Company/Contact-Daten wenn keine Publications gefunden
+        else if (company || contact.companyName) {
           // Finde Publications, die zu dieser Company gehören
-          const companyPublications = publicationsData.filter(pub =>
+          const companyPublications = company ? publicationsData.filter(pub =>
             pub.companyId === company.id || pub.publisherId === company.id
-          );
+          ) : [];
 
           if (companyPublications.length > 0) {
             publicationAssignments = companyPublications.map(publication => ({
@@ -1314,12 +1326,13 @@ export default function EditorsPage() {
             }));
           } else {
             // Erstelle Placeholder-Publication aus Company-Daten
-            console.log('📝 Erstelle Placeholder-Publication aus Company:', company.name);
+            const companyName = company?.name || contact.companyName || 'Unbekannt';
+            console.log('📝 Erstelle Placeholder-Publication aus Company:', companyName);
             publicationAssignments = [{
               publication: {
-                title: company.name,
+                title: companyName,
                 type: companyTypeLabels[companyType] || 'Sonstige',
-                globalPublicationId: `company-${company.id}`
+                globalPublicationId: company ? `company-${company.id}` : `company-${contact.companyId}`
               },
               role: contact.position || 'Mitarbeiter',
               isMainPublication: true
