@@ -1041,11 +1041,91 @@ class MultiEntityReferenceService {
     }
     return chunks;
   }
+
+  /**
+   * Lädt eine Publication-Reference und kombiniert sie mit globalen Daten
+   */
+  async loadPublicationReference(publicationId: string, organizationId: string): Promise<any | null> {
+    try {
+      console.log('🔍 Suche Publication-Reference:', { publicationId, organizationId });
+
+      // 1. Suche in Publication-References nach Document ID
+      const pubRefsQuery = query(
+        collection(db, 'organizations', organizationId, this.publicationRefsCollection),
+        where('globalPublicationId', '==', publicationId)
+      );
+
+      const snapshot = await getDocs(pubRefsQuery);
+      if (snapshot.empty) {
+        console.log('❌ Keine Publication-Reference gefunden für:', publicationId);
+        return null;
+      }
+
+      const pubRefDoc = snapshot.docs[0];
+      const pubRefData = pubRefDoc.data() as PublicationReference;
+
+      console.log('✅ Publication-Reference gefunden:', pubRefData);
+
+      // 2. Lade globale Publication-Daten
+      const globalPubDoc = await getDoc(doc(db, 'publications', pubRefData.globalPublicationId));
+      if (!globalPubDoc.exists()) {
+        console.error('❌ Globale Publication nicht gefunden:', pubRefData.globalPublicationId);
+        return null;
+      }
+
+      const globalPubData = globalPubDoc.data();
+      console.log('📊 Globale Publication-Daten geladen:', globalPubData.title);
+
+      // 3. Lade Publisher-Daten (Company) für publisherName
+      let publisherName = globalPubData.publisherName || '';
+      if (globalPubData.publisherId && !publisherName) {
+        try {
+          const companyDoc = await getDoc(doc(db, 'companies', globalPubData.publisherId));
+          if (companyDoc.exists()) {
+            const companyData = companyDoc.data();
+            publisherName = companyData?.companyName || companyData?.name || '';
+            console.log('📊 Publisher-Name aus Company geladen:', publisherName);
+          }
+        } catch (error) {
+          console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
+        }
+      }
+
+      // 4. Kombiniere Reference-Daten mit globalen Daten (ähnlich wie in getAll())
+      const combinedData = {
+        id: pubRefDoc.id, // Document ID für Navigation
+        ...globalPubData,
+        // Override mit lokalen Reference-Daten falls vorhanden
+        organizationId,
+        publisherName, // Publisher-Name sicherstellen
+        isReference: true,
+        globalPublicationId: pubRefData.globalPublicationId,
+        localPublicationId: pubRefData.localPublicationId,
+        addedAt: pubRefData.addedAt,
+        addedBy: pubRefData.addedBy,
+        // Metrics schema korrigieren
+        metrics: {
+          frequency: globalPubData.frequency || 'monthly',
+          print: {
+            circulation: globalPubData.circulation || 0
+          },
+          online: {
+            monthlyUniqueVisitors: globalPubData.readership || 0
+          }
+        }
+      };
+
+      return combinedData;
+    } catch (error) {
+      console.error('Fehler beim Laden der Publication-Reference:', error);
+      return null;
+    }
+  }
 }
 
 // ========================================
 // EXPORT
 // ========================================
 
-export const multiEntityReferenceService = new MultiEntityReferenceService();
+export const multiEntityService = new MultiEntityReferenceService();
 // All interfaces are already exported above with 'export interface'

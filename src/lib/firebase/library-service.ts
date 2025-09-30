@@ -1145,6 +1145,20 @@ class PublicationServiceExtended extends PublicationService {
 
         const globalPub = globalPubDoc.data();
 
+        // Lade Publisher-Name (Company-Daten) direkt aus Firestore
+        let publisherName = globalPub.publisherName || '';
+        if (globalPub.publisherId && !publisherName) {
+          try {
+            const companyDoc = await getDoc(doc(db, 'companies', globalPub.publisherId));
+            if (companyDoc.exists()) {
+              const companyData = companyDoc.data();
+              publisherName = companyData?.companyName || companyData?.name || '';
+            }
+          } catch (error) {
+            console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
+          }
+        }
+
         // Erstelle Publication aus Reference + globalen Daten (mit korrektem Schema)
         publicationReferences.push({
           id: ref.localPublicationId,
@@ -1152,6 +1166,7 @@ class PublicationServiceExtended extends PublicationService {
           type: globalPub.type || 'magazine',
           website: globalPub.website || '',
           description: globalPub.description || '',
+          publisherName, // Publisher-Name hinzufügen
 
           // Metrics-Schema (verschachtelt wie erwartet)
           metrics: {
@@ -1196,6 +1211,38 @@ class PublicationServiceExtended extends PublicationService {
       console.error('Fehler in PublicationServiceExtended.getAll:', error);
       // Fallback zu normaler getAll() wenn Fehler
       return super.getAll(organizationId, options);
+    }
+  }
+
+  /**
+   * ✨ ENHANCED: getById() erweitert um Publication-References
+   */
+  async getById(publicationId: string, organizationId: string): Promise<Publication | null> {
+    try {
+      console.log('🔍 Enhanced getById für Publication:', { publicationId, organizationId });
+
+      // 1. Versuche zuerst echte Publication zu laden
+      const realPublication = await super.getById(publicationId, organizationId);
+      if (realPublication) {
+        console.log('✅ Echte Publication gefunden:', realPublication.title);
+        return realPublication;
+      }
+
+      // 2. Suche in Publication-References
+      const { multiEntityService } = await import('./multi-entity-reference-service');
+      const referenceData = await multiEntityService.loadPublicationReference(publicationId, organizationId);
+
+      if (referenceData) {
+        console.log('✅ Publication-Reference gefunden:', referenceData.title);
+        return referenceData;
+      }
+
+      console.log('❌ Keine Publication oder Reference gefunden für ID:', publicationId);
+      return null;
+    } catch (error) {
+      console.error('Fehler in PublicationServiceExtended.getById:', error);
+      // Fallback zu normaler getById() wenn Fehler
+      return super.getById(publicationId, organizationId);
     }
   }
 }
