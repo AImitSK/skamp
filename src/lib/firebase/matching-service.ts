@@ -94,28 +94,38 @@ function generateMatchKey(contact: ContactEnhanced): MatchKeyResult {
  * Konvertiert ContactEnhanced zu MatchingCandidateContactData (Snapshot)
  */
 function createContactSnapshot(contact: ContactEnhanced): MatchingCandidateContactData {
-  return {
+  const snapshot: any = {
     name: {
       firstName: contact.name?.firstName || '',
-      lastName: contact.name?.lastName || '',
-      title: contact.name?.title,
-      suffix: contact.name?.suffix
+      lastName: contact.name?.lastName || ''
     },
-    displayName: contact.displayName,
+    displayName: contact.displayName || '',
     emails: contact.emails || [],
-    phones: contact.phones,
-    position: contact.position,
-    department: contact.department,
-    companyName: contact.companyName,
-    companyId: contact.companyId,
     hasMediaProfile: !!contact.mediaProfile,
-    beats: contact.mediaProfile?.beats,
-    mediaTypes: contact.mediaProfile?.mediaTypes,
-    publications: [], // TODO: Publikations-Namen laden
-    socialProfiles: contact.socialProfiles,
-    photoUrl: contact.photoUrl,
-    website: contact.website
+    publications: [] // TODO: Publikations-Namen laden
   };
+
+  // Nur definierte Felder hinzufügen
+  if (contact.name?.title) snapshot.name.title = contact.name.title;
+  if (contact.name?.suffix) snapshot.name.suffix = contact.name.suffix;
+  if (contact.phones && contact.phones.length > 0) snapshot.phones = contact.phones;
+  if (contact.position) snapshot.position = contact.position;
+  if (contact.department) snapshot.department = contact.department;
+  if (contact.companyName) snapshot.companyName = contact.companyName;
+  if (contact.companyId) snapshot.companyId = contact.companyId;
+  if (contact.mediaProfile?.beats && contact.mediaProfile.beats.length > 0) {
+    snapshot.beats = contact.mediaProfile.beats;
+  }
+  if (contact.mediaProfile?.mediaTypes && contact.mediaProfile.mediaTypes.length > 0) {
+    snapshot.mediaTypes = contact.mediaProfile.mediaTypes;
+  }
+  if (contact.socialProfiles && contact.socialProfiles.length > 0) {
+    snapshot.socialProfiles = contact.socialProfiles;
+  }
+  if (contact.photoUrl) snapshot.photoUrl = contact.photoUrl;
+  if (contact.website) snapshot.website = contact.website;
+
+  return snapshot;
 }
 
 /**
@@ -455,7 +465,11 @@ class MatchingCandidatesService {
         status: 'failed',
         completedAt: serverTimestamp(),
         error: error instanceof Error ? error.message : 'Unknown error',
-        errorDetails: error
+        errorDetails: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : { error: String(error) }
       });
 
       throw error;
