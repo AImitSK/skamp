@@ -35,7 +35,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import toast from 'react-hot-toast';
 import CandidateDetailModal from './CandidateDetailModal';
-import SimpleModal from './SimpleModal';
 
 interface CandidateRowProps {
   candidate: MatchingCandidate;
@@ -230,7 +229,7 @@ function CandidateRow({
       {/* Score */}
       <TableCell>
         <Badge color={getScoreColor(candidate.score)}>
-          <span className="font-semibold">{candidate.score}</span> / 100
+          {`${candidate.score} / 100`}
         </Badge>
       </TableCell>
 
@@ -338,11 +337,14 @@ export default function CandidateRowWithModal(props: CandidateRowProps) {
     <>
       <CandidateRow {...props} onViewDetails={() => setShowDetailModal(true)} />
 
-      <SimpleModal
-        isOpen={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        candidate={props.candidate}
-      />
+      {showDetailModal && (
+        <CandidateDetailModal
+          candidate={props.candidate}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          onUpdate={props.onUpdate}
+        />
+      )}
     </>
   );
 }
