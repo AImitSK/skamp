@@ -10,6 +10,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -37,6 +39,8 @@ export default function CandidateDetailPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [candidate, setCandidate] = useState<MatchingCandidate | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -81,6 +85,14 @@ export default function CandidateDetailPage({
    */
   const handleImport = async () => {
     if (!candidate) return;
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+    if (!currentOrganization) {
+      toast.error('Keine Organisation ausgewählt');
+      return;
+    }
 
     if (!confirm('Kandidat als Premium-Journalist importieren?')) return;
 
@@ -92,7 +104,8 @@ export default function CandidateDetailPage({
       const result = await matchingService.importCandidate({
         candidateId: candidate.id!,
         selectedVariantIndex,
-        userId: 'current-user' // TODO: Get from auth
+        userId: user.uid,
+        organizationId: currentOrganization.id // ✅ DEINE SuperAdmin Org
       });
 
       if (result.success) {

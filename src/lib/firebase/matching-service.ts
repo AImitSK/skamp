@@ -587,7 +587,7 @@ class MatchingCandidatesService {
   /**
    * Importiert einen Kandidaten als globalen Kontakt
    */
-  async importCandidate(request: ImportCandidateRequest): Promise<ImportCandidateResponse> {
+  async importCandidate(request: ImportCandidateRequest & { organizationId?: string }): Promise<ImportCandidateResponse> {
     try {
       // Lade Kandidat
       const candidate = await this.getCandidateById(request.candidateId);
@@ -601,35 +601,22 @@ class MatchingCandidatesService {
         throw new Error('Variante nicht gefunden');
       }
 
-      // Finde die ECHTE SuperAdmin Organization (die des eingeloggten Users)
-      // Für Premium-Kontakte müssen wir die Org des Users verwenden
-      // Der User ist bereits als SuperAdmin eingeloggt, also ist seine Org die SuperAdmin-Org
+      // SuperAdmin Org ID aus Request verwenden (vom Frontend übergeben)
+      const superAdminOrgId = request.organizationId;
 
-      console.log('🔍 Suche SuperAdmin Org über User:', request.userId);
+      if (!superAdminOrgId) {
+        throw new Error('organizationId fehlt - kann Kontakt nicht erstellen');
+      }
 
-      // WICHTIG: Wir nutzen die organizationId des eingeloggten SuperAdmin-Users
-      // Das ist die korrekte SuperAdmin-Org, nicht eine Test-Org!
-
-      // Fallback: Wenn wir die User-Org nicht haben, erstellen wir den Kontakt OHNE organizationId
-      // aber mit isGlobal=true, damit er nur in der Premium-Bibliothek erscheint
-
-      let superAdminOrgId: string | null = null;
-
-      // Versuche die Org des aktuellen Users zu laden
-      // TODO: Implementiere User-zu-Org Mapping
-      // Für jetzt: Erstelle Kontakt OHNE organizationId (nur isGlobal)
-
-      console.log('⚠️ TEMPORÄR: Erstelle globalen Kontakt OHNE organizationId');
-      console.log('   → Kontakt erscheint NUR in Premium-Bibliothek');
-      console.log('   → NICHT im CRM einer spezifischen Org');
+      console.log('✅ Verwende SuperAdmin Org:', superAdminOrgId);
 
       // Erstelle Kontakt-Daten für Import (nur definierte Felder)
       const contactData: any = {
         name: selectedVariant.contactData.name,
         displayName: selectedVariant.contactData.displayName,
         emails: selectedVariant.contactData.emails,
-        // KEINE organizationId - das ist ein reiner Premium-Kontakt
-        isGlobal: true, // ✅ Global verfügbar in Premium-Bibliothek
+        organizationId: superAdminOrgId, // ✅ Gehört zu SuperAdmin-Org
+        isGlobal: true, // ✅ Aber global verfügbar für alle
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: request.userId,
