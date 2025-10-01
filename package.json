@@ -17,6 +17,8 @@
     "migrate:all": "npx ts-node scripts/migrate-team-folders.ts all",
     "migrate:org": "npx ts-node scripts/migrate-team-folders.ts org",
     "migrate:dry": "npx ts-node scripts/migrate-team-folders.ts all --dry-run",
+    "seed:matching-test": "npx tsx scripts/seed-matching-test-data.ts",
+    "cleanup:matching-test": "npx tsx scripts/cleanup-matching-test-data.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

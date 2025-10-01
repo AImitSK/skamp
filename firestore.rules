@@ -46,6 +46,23 @@ service cloud.firestore {
     }
 
     // ========================================
+    // MATCHING CANDIDATES (SuperAdmin Only)
+    // ========================================
+
+    // Matching-Kandidaten - Nur SuperAdmin kann lesen/schreiben
+    match /matching_candidates/{candidateId} {
+      allow read, write: if request.auth != null
+                         && isSuperAdmin();
+    }
+
+    // Matching Scan-Jobs - Nur SuperAdmin kann lesen
+    match /matching_scan_jobs/{jobId} {
+      allow read: if request.auth != null && isSuperAdmin();
+      // Nur Cloud Functions können schreiben (via Admin SDK)
+      allow write: if false;
+    }
+
+    // ========================================
     // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
     // ========================================
 
@@ -71,6 +88,12 @@ service cloud.firestore {
     // ========================================
     // VALIDATION FUNCTIONS
     // ========================================
+
+    // Prüft ob User SuperAdmin ist
+    function isSuperAdmin() {
+      return request.auth.token.organizationId == "superadmin-org"
+             || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
 
     // Validiert das Erstellen einer Reference
     function validateReferenceCreate(data) {
