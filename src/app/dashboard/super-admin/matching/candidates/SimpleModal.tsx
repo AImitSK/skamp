@@ -5,7 +5,7 @@
 'use client';
 
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CheckIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MatchingCandidate, MATCHING_STATUS_COLORS } from '@/types/matching';
@@ -30,7 +30,7 @@ export default function SimpleModal({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
-                Step 2: Mit Badges
+                Step 3: Mit Icon-Buttons
               </DialogTitle>
 
               <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
@@ -58,7 +58,22 @@ export default function SimpleModal({
 
           <div className="flex justify-end gap-2">
             <Button color="light" onClick={onClose}>
-              Schließen
+              Abbrechen
+            </Button>
+
+            <Button color="red" onClick={onClose}>
+              <XMarkIcon className="size-4" />
+              <span>Ablehnen</span>
+            </Button>
+
+            <Button color="light" onClick={onClose}>
+              <ForwardIcon className="size-4" />
+              <span>Überspringen</span>
+            </Button>
+
+            <Button color="green" onClick={onClose}>
+              <CheckIcon className="size-4" />
+              <span>Importieren</span>
             </Button>
           </div>
         </DialogPanel>
