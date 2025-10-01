@@ -49,7 +49,7 @@ export default function SuperAdminSettingsPage() {
   }, []);
 
   /**
-   * Erstellt Test-Daten
+   * Erstellt Test-Daten (direkt via Client SDK)
    */
   const handleSeedTestData = async () => {
     if (!confirm('Test-Daten erstellen? Dies erstellt 4 Test-Organisationen und 6 Test-Kontakte.')) {
@@ -60,31 +60,27 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/matching/seed', {
-        method: 'POST'
-      });
+      // Import dynamisch um nur beim Klick zu laden
+      const { seedTestData } = await import('@/lib/matching/seed-test-data');
+      const result = await seedTestData();
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(
-          `Test-Daten erstellt! ${result.data.organizations} Orgs, ${result.data.contacts} Kontakte`,
-          { id: toastId, duration: 5000 }
-        );
-      } else {
-        console.error('Seed error details:', result);
-        toast.error(`Fehler: ${result.message || result.error}`, { id: toastId });
-      }
+      toast.success(
+        `Test-Daten erstellt! ${result.organizations} Orgs, ${result.contacts} Kontakte`,
+        { id: toastId, duration: 5000 }
+      );
     } catch (error) {
       console.error('Seed failed:', error);
-      toast.error('Fehler beim Erstellen der Test-Daten', { id: toastId });
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Löscht Test-Daten
+   * Löscht Test-Daten (direkt via Client SDK)
    */
   const handleCleanupTestData = async () => {
     if (!confirm('Test-Daten löschen? Dies entfernt alle Test-Organisationen, Kontakte und Matching-Kandidaten.')) {
@@ -95,24 +91,21 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/matching/cleanup', {
-        method: 'POST'
-      });
+      // Import dynamisch um nur beim Klick zu laden
+      const { cleanupTestData } = await import('@/lib/matching/cleanup-test-data');
+      const result = await cleanupTestData();
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(
-          `Test-Daten gelöscht! ${result.data.organizations} Orgs, ${result.data.contacts} Kontakte, ${result.data.candidates} Kandidaten`,
-          { id: toastId, duration: 5000 }
-        );
-        await loadLastScan(); // Refresh scan status
-      } else {
-        toast.error(`Fehler: ${result.message}`, { id: toastId });
-      }
+      toast.success(
+        `Test-Daten gelöscht! ${result.organizations} Orgs, ${result.contacts} Kontakte, ${result.candidates} Kandidaten`,
+        { id: toastId, duration: 5000 }
+      );
+      await loadLastScan(); // Refresh scan status
     } catch (error) {
       console.error('Cleanup failed:', error);
-      toast.error('Fehler beim Löschen der Test-Daten', { id: toastId });
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setLoading(false);
     }
