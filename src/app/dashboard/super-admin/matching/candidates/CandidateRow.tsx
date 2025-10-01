@@ -31,6 +31,7 @@ import {
   MATCHING_STATUS_COLORS,
   MATCH_TYPE_LABELS
 } from '@/types/matching';
+import CandidateDetailModal from './CandidateDetailModal';
 
 interface CandidateRowProps {
   candidate: MatchingCandidate;
@@ -43,6 +44,7 @@ export default function CandidateRow({
 }: CandidateRowProps) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   /**
    * Score-Farbe basierend auf Wert
@@ -73,11 +75,10 @@ export default function CandidateRow({
   };
 
   /**
-   * Öffnet Detail-Modal (TODO: implementieren in Sprint 3)
+   * Öffnet Detail-Modal
    */
   const handleViewDetails = () => {
-    // TODO: Open CandidateDetailModal
-    console.log('Open details for:', candidate.id);
+    setShowDetailModal(true);
   };
 
   /**
@@ -290,6 +291,14 @@ export default function CandidateRow({
           )}
         </div>
       </TableCell>
+
+      {/* Detail Modal */}
+      <CandidateDetailModal
+        candidate={candidate}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        onUpdate={onUpdate}
+      />
     </TableRow>
   );
 }
