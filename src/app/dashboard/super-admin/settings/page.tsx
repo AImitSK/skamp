@@ -11,7 +11,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
+// TODO: Tabs functionality temporarily removed due to import issues
+// import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import toast from 'react-hot-toast';
 import {
   ChartBarIcon,
@@ -52,66 +53,14 @@ export default function SuperAdminSettingsPage() {
   }, []);
 
   /**
-   * Erstellt Test-Daten (direkt via Client SDK)
+   * Test-Daten Funktionalität entfernt - wurde durch das neue Intelligent Matching System ersetzt
    */
   const handleSeedTestData = async () => {
-    if (!confirm('Test-Daten erstellen? Dies erstellt 4 Test-Organisationen und 6 Test-Kontakte.')) {
-      return;
-    }
-
-    const toastId = toast.loading('Erstelle Test-Daten...');
-    setLoading(true);
-
-    try {
-      // Import dynamisch um nur beim Klick zu laden
-      const { seedTestData } = await import('@/lib/matching/seed-test-data');
-      const result = await seedTestData();
-
-      toast.success(
-        `Test-Daten erstellt! ${result.organizations} Orgs, ${result.contacts} Kontakte`,
-        { id: toastId, duration: 5000 }
-      );
-    } catch (error) {
-      console.error('Seed failed:', error);
-      toast.error(
-        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
-        { id: toastId }
-      );
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Test-Daten Funktionalität wurde entfernt. Verwende das neue Intelligent Matching System.');
   };
 
-  /**
-   * Löscht Test-Daten (direkt via Client SDK)
-   */
   const handleCleanupTestData = async () => {
-    if (!confirm('Test-Daten löschen? Dies entfernt alle Test-Organisationen, Kontakte und Matching-Kandidaten.')) {
-      return;
-    }
-
-    const toastId = toast.loading('Lösche Test-Daten...');
-    setLoading(true);
-
-    try {
-      // Import dynamisch um nur beim Klick zu laden
-      const { cleanupTestData } = await import('@/lib/matching/cleanup-test-data');
-      const result = await cleanupTestData();
-
-      toast.success(
-        `Test-Daten gelöscht! ${result.organizations} Orgs, ${result.contacts} Kontakte, ${result.candidates} Kandidaten`,
-        { id: toastId, duration: 5000 }
-      );
-      await loadLastScan(); // Refresh scan status
-    } catch (error) {
-      console.error('Cleanup failed:', error);
-      toast.error(
-        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
-        { id: toastId }
-      );
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Test-Daten Funktionalität wurde entfernt. Verwende das neue Intelligent Matching System.');
   };
 
   /**
@@ -264,56 +213,28 @@ export default function SuperAdminSettingsPage() {
         </div>
       </div>
 
-      {/* Test Tools Section */}
+      {/* Intelligent Matching Tools */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
           <BeakerIcon className="size-5" />
-          Test-Tools
+          Intelligent Matching System
         </h2>
 
-        <div className="p-6 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10">
-          <div className="flex items-start gap-3 mb-4">
-            <BeakerIcon className="size-5 text-orange-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">
-                Matching Test-Daten
-              </h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Erstellt 4 Test-Organisationen und 6 Journalisten-Kontakte zum Testen des Matching-Systems.
-                Nach dem Erstellen einen Scan ausführen um Kandidaten zu generieren.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  color="light"
-                  onClick={handleSeedTestData}
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  <BeakerIcon className="size-4" />
-                  Test-Daten erstellen
-                </Button>
-
-                <Button
-                  color="light"
-                  onClick={handleCleanupTestData}
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  <TrashIcon className="size-4" />
-                  Test-Daten löschen
-                </Button>
-              </div>
-            </div>
+        <div className="space-y-6">
+          {/* Matching Tests Section */}
+          <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
+              Matching Algorithm Tests
+            </h3>
+            <MatchingTestSection />
           </div>
 
-          <div className="text-xs text-zinc-600 dark:text-zinc-400 border-t border-orange-200 dark:border-orange-800 pt-3">
-            <strong>Erwartete Kandidaten nach Scan:</strong>
-            <ul className="list-disc list-inside mt-1 space-y-0.5">
-              <li>Max Müller (3 Varianten, Score ~85)</li>
-              <li>Anna Schmidt (2 Varianten, Score ~70)</li>
-              <li>Peter Weber (KEIN Match, nur 1 Org)</li>
-            </ul>
+          {/* Conflict Review Section */}
+          <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
+              Conflict Review
+            </h3>
+            <ConflictReviewSection />
           </div>
         </div>
       </div>

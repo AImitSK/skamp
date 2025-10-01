@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TextArea } from '@/components/ui/textarea';
+// TODO: TextArea import issue - using textarea element directly
+// import { TextArea } from '@/components/ui/textarea';
 import {
   CheckCircleIcon,
   XMarkIcon,
@@ -192,7 +193,7 @@ export default function ConflictReviewSection() {
               <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 block">
                 Notizen (optional):
               </label>
-              <TextArea
+              <textarea
                 value={reviewNotes[conflict.id!] || ''}
                 onChange={(e) => setReviewNotes({
                   ...reviewNotes,
@@ -200,6 +201,7 @@ export default function ConflictReviewSection() {
                 })}
                 placeholder="Grund für Entscheidung..."
                 rows={2}
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white"
               />
             </div>
 
