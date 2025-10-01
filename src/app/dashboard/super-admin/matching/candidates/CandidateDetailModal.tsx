@@ -13,6 +13,8 @@ import { MatchingCandidate, MATCHING_STATUS_COLORS, CandidateRecommendation } fr
 import { matchingService } from '@/lib/firebase/matching-service';
 import CandidateRecommendationBox from './CandidateRecommendation';
 import CandidateVariantCard from './CandidateVariantCard';
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
 
 interface CandidateDetailModalProps {
   isOpen: boolean;
@@ -27,8 +29,10 @@ export default function CandidateDetailModal({
   candidate,
   onUpdate
 }: CandidateDetailModalProps) {
+  const { user } = useAuth();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [recommendation, setRecommendation] = useState<CandidateRecommendation | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && candidate) {
@@ -37,6 +41,39 @@ export default function CandidateDetailModal({
       setSelectedVariantIndex(rec.recommendedIndex);
     }
   }, [isOpen, candidate]);
+
+  /**
+   * Skip-Handler
+   */
+  const handleSkip = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+
+    if (!confirm('Kandidat überspringen?')) return;
+
+    const toastId = toast.loading('Überspringe Kandidat...');
+
+    try {
+      setActionLoading(true);
+
+      await matchingService.skipCandidate({
+        candidateId: candidate.id!,
+        userId: user.uid,
+        reason: 'Manually skipped'
+      });
+
+      toast.success('Kandidat übersprungen', { id: toastId });
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Skip failed:', error);
+      toast.error('Fehler beim Überspringen', { id: toastId });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -106,7 +143,7 @@ export default function CandidateDetailModal({
               <span>Ablehnen</span>
             </Button>
 
-            <Button color="light" onClick={onClose}>
+            <Button color="light" onClick={handleSkip} disabled={actionLoading}>
               <ForwardIcon className="size-4" />
               <span>Überspringen</span>
             </Button>
