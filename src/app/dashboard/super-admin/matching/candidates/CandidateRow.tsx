@@ -31,6 +31,10 @@ import {
   MATCHING_STATUS_COLORS,
   MATCH_TYPE_LABELS
 } from '@/types/matching';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
+import toast from 'react-hot-toast';
+
 interface CandidateRowProps {
   candidate: MatchingCandidate;
   onUpdate: () => void;
@@ -41,6 +45,8 @@ export default function CandidateRow({
   onUpdate
 }: CandidateRowProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [actionLoading, setActionLoading] = useState(false);
 
   /**
@@ -82,21 +88,29 @@ export default function CandidateRow({
    * Skip-Aktion
    */
   const handleSkip = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+
     if (!confirm('Kandidat überspringen?')) return;
+
+    const toastId = toast.loading('Überspringe Kandidat...');
 
     try {
       setActionLoading(true);
 
       await matchingService.skipCandidate({
         candidateId: candidate.id!,
-        userId: 'current-user', // TODO: Get from auth
+        userId: user.uid,
         reason: 'Manually skipped'
       });
 
+      toast.success('Kandidat übersprungen', { id: toastId });
       onUpdate();
     } catch (error) {
       console.error('Skip failed:', error);
-      alert('Fehler beim Überspringen');
+      toast.error('Fehler beim Überspringen', { id: toastId });
     } finally {
       setActionLoading(false);
     }
@@ -106,22 +120,30 @@ export default function CandidateRow({
    * Reject-Aktion
    */
   const handleReject = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+
     const reason = prompt('Grund für Ablehnung:');
     if (!reason) return;
+
+    const toastId = toast.loading('Lehne Kandidat ab...');
 
     try {
       setActionLoading(true);
 
       await matchingService.rejectCandidate({
         candidateId: candidate.id!,
-        userId: 'current-user', // TODO: Get from auth
+        userId: user.uid,
         reason
       });
 
+      toast.success('Kandidat abgelehnt', { id: toastId });
       onUpdate();
     } catch (error) {
       console.error('Reject failed:', error);
-      alert('Fehler beim Ablehnen');
+      toast.error('Fehler beim Ablehnen', { id: toastId });
     } finally {
       setActionLoading(false);
     }
@@ -131,21 +153,41 @@ export default function CandidateRow({
    * Import-Aktion (Quick-Import mit erster Variante)
    */
   const handleQuickImport = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+    if (!currentOrganization) {
+      toast.error('Keine Organisation ausgewählt');
+      return;
+    }
+
     if (!confirm('Kandidat mit erster Variante importieren?')) return;
+
+    const toastId = toast.loading('Importiere Kandidat...');
 
     try {
       setActionLoading(true);
 
-      await matchingService.importCandidate({
+      const result = await matchingService.importCandidate({
         candidateId: candidate.id!,
         selectedVariantIndex: 0,
-        userId: 'current-user' // TODO: Get from auth
+        userId: user.uid,
+        organizationId: currentOrganization.id
       });
 
-      onUpdate();
+      if (result.success) {
+        toast.success('Kandidat importiert!', { id: toastId });
+        onUpdate();
+      } else {
+        toast.error(`Fehler: ${result.error}`, { id: toastId });
+      }
     } catch (error) {
       console.error('Import failed:', error);
-      alert('Fehler beim Importieren');
+      toast.error(
+        `Import fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setActionLoading(false);
     }
