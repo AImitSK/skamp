@@ -490,7 +490,10 @@ export default function DashboardLayout({
                 {/* SuperAdmin Dropdown - only for SuperAdmin */}
                 {isSuperAdmin && (
                   <Dropdown>
-                    <DropdownButton className="hidden lg:flex items-center gap-1 p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <DropdownButton
+                      as="button"
+                      className="hidden lg:flex items-center gap-1 p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    >
                       <ShieldCheckIcon className="size-5" />
                       <span className="text-sm font-medium">Super Admin</span>
                       <ChevronDownIcon className="size-4" />
