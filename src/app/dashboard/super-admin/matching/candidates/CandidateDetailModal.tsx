@@ -1,5 +1,10 @@
 /**
- * Simple Test Modal - Step by Step Testing
+ * Candidate Detail Modal
+ *
+ * Zeigt Details eines Matching-Kandidaten:
+ * - Empfehlung für beste Variante
+ * - Alle Varianten mit Kontakt-Details
+ * - Import/Skip/Reject Aktionen
  */
 
 'use client';
@@ -165,7 +170,7 @@ export default function CandidateDetailModal({
           <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
-                Step 5: Mit VariantCards
+                Kandidat Details
               </DialogTitle>
 
               <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
