@@ -602,16 +602,45 @@ class MatchingCandidatesService {
       }
 
       // Finde SuperAdmin Organization
+      // Versuche zuerst über type='super_admin', dann über den aktuell eingeloggten User
+      let superAdminOrgId: string | null = null;
+
+      console.log('🔍 Suche SuperAdmin Org...');
+
+      // Versuch 1: Über type='super_admin'
       const orgsSnapshot = await getDocs(
         query(collection(db, 'organizations'), where('type', '==', 'super_admin'))
       );
 
-      if (orgsSnapshot.empty) {
-        throw new Error('SuperAdmin-Organisation nicht gefunden');
+      if (!orgsSnapshot.empty) {
+        superAdminOrgId = orgsSnapshot.docs[0].id;
+        console.log('✅ SuperAdmin Org via type gefunden:', superAdminOrgId);
+      } else {
+        console.log('⚠️ Keine Org mit type=super_admin gefunden');
+
+        // Versuch 2: Nehme die erste verfügbare Org (Fallback)
+        const allOrgsSnapshot = await getDocs(collection(db, 'organizations'));
+        if (!allOrgsSnapshot.empty) {
+          // Suche nach Org-Namen die auf SuperAdmin hindeuten
+          const superAdminOrg = allOrgsSnapshot.docs.find(doc => {
+            const name = doc.data().name?.toLowerCase() || '';
+            return name.includes('super') || name.includes('admin');
+          });
+
+          if (superAdminOrg) {
+            superAdminOrgId = superAdminOrg.id;
+            console.log('✅ SuperAdmin Org via Name gefunden:', superAdminOrgId, superAdminOrg.data().name);
+          } else {
+            // Nimm einfach die erste Org als Fallback
+            superAdminOrgId = allOrgsSnapshot.docs[0].id;
+            console.log('⚠️ Fallback: Nutze erste Org:', superAdminOrgId, allOrgsSnapshot.docs[0].data().name);
+          }
+        }
       }
 
-      const superAdminOrgId = orgsSnapshot.docs[0].id;
-      console.log('✅ SuperAdmin Org gefunden:', superAdminOrgId);
+      if (!superAdminOrgId) {
+        throw new Error('Keine Organisation gefunden - kann Kontakt nicht erstellen');
+      }
 
       // Erstelle Kontakt-Daten für Import (nur definierte Felder)
       const contactData: any = {

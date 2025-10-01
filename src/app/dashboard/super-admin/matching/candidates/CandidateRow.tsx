@@ -31,8 +31,6 @@ import {
   MATCHING_STATUS_COLORS,
   MATCH_TYPE_LABELS
 } from '@/types/matching';
-import CandidateDetailModal from './CandidateDetailModal';
-
 interface CandidateRowProps {
   candidate: MatchingCandidate;
   onUpdate: () => void;
@@ -44,7 +42,6 @@ export default function CandidateRow({
 }: CandidateRowProps) {
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
 
   /**
    * Score-Farbe basierend auf Wert
@@ -75,10 +72,10 @@ export default function CandidateRow({
   };
 
   /**
-   * Öffnet Detail-Modal
+   * Öffnet Detail-Seite
    */
   const handleViewDetails = () => {
-    setShowDetailModal(true);
+    router.push(`/dashboard/super-admin/matching/candidates/${candidate.id}`);
   };
 
   /**
@@ -291,14 +288,6 @@ export default function CandidateRow({
           )}
         </div>
       </TableCell>
-
-      {/* Detail Modal */}
-      <CandidateDetailModal
-        candidate={candidate}
-        isOpen={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        onUpdate={onUpdate}
-      />
     </TableRow>
   );
 }
