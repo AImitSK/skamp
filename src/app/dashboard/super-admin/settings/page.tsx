@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import toast from 'react-hot-toast';
 import {
   ChartBarIcon,
@@ -26,6 +27,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { matchingService } from '@/lib/firebase/matching-service';
 import type { MatchingScanJob } from '@/types/matching';
+import MatchingTestSection from './MatchingTestSection';
+import ConflictReviewSection from './ConflictReviewSection';
 
 export default function SuperAdminSettingsPage() {
   const router = useRouter();

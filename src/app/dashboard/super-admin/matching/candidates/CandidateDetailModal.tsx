@@ -136,7 +136,7 @@ export default function CandidateDetailModal({
     try {
       setActionLoading(true);
 
-      const result = await matchingService.importCandidate({
+      const result = await matchingService.importCandidateWithAutoMatching({
         candidateId: candidate.id!,
         selectedVariantIndex,
         userId: user.uid,
@@ -144,7 +144,39 @@ export default function CandidateDetailModal({
       });
 
       if (result.success) {
-        toast.success('Kandidat importiert!', { id: toastId });
+        // Detailliertes Erfolgs-Feedback
+        let message = '✅ Kandidat erfolgreich importiert!\n\n';
+
+        // Firma
+        if (result.companyMatch) {
+          const { companyName, matchType, wasCreated, wasEnriched } = result.companyMatch;
+
+          if (wasCreated) {
+            message += `🏢 Neue Firma erstellt: ${companyName}\n`;
+          } else {
+            message += `🏢 Firma verlinkt: ${companyName}\n`;
+            if (wasEnriched) {
+              message += `   ↳ Firmendaten wurden ergänzt\n`;
+            }
+          }
+        }
+
+        // Publikationen
+        if (result.publicationMatches && result.publicationMatches.length > 0) {
+          message += `📰 Publikationen (${result.publicationMatches.length}):\n`;
+          for (const pub of result.publicationMatches) {
+            if (pub.wasCreated) {
+              message += `   • Neue Publikation: ${pub.publicationName}\n`;
+            } else {
+              message += `   • Verlinkt: ${pub.publicationName}\n`;
+            }
+          }
+        }
+
+        // Kontakt
+        message += `👤 Kontakt erstellt: ID ${result.contactId}`;
+
+        toast.success(message, { id: toastId, duration: 6000 });
         onUpdate();
         onClose();
       } else {

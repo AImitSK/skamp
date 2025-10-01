@@ -1,16 +1,8 @@
-# Intelligent Matching - Teil 3: String Similarity Utils ✅
-
-## Übersicht ✅
-
-Dieses Dokument beschreibt die String-Similarity-Utilities, die für das Fuzzy Matching von Firmen- und Publikationsnamen verwendet werden.
-
-## 1. Levenshtein Distance ✅
-
-### Implementation
-
-```typescript
 /**
- * src/lib/matching/string-similarity.ts
+ * String Similarity Utils für Intelligent Matching
+ *
+ * Implementierung basierend auf intelligent-matching-part3-string-similarity.md
+ * Zeilen 1-489
  */
 
 /**
@@ -47,11 +39,7 @@ export function levenshteinDistance(a: string, b: string): number {
 
   return matrix[b.length][a.length];
 }
-```
 
-## 2. Similarity Score (0-100) ✅
-
-```typescript
 /**
  * Berechnet Similarity Score von 0-100
  * 100 = identisch, 0 = komplett unterschiedlich
@@ -74,11 +62,7 @@ export function calculateSimilarity(a: string, b: string): number {
   const similarity = ((maxLength - distance) / maxLength) * 100;
   return Math.round(similarity);
 }
-```
 
-## 3. String Normalization ✅
-
-```typescript
 /**
  * Normalisiert einen String für besseres Matching:
  * - Lowercase
@@ -136,11 +120,7 @@ export function normalizeString(input: string): string {
 
   return normalized;
 }
-```
 
-## 4. Domain Extraction ✅ & Normalization
-
-```typescript
 /**
  * Extrahiert Domain aus URL oder E-Mail
  *
@@ -191,11 +171,7 @@ export function domainsMatch(domain1: string, domain2: string): boolean {
 
   return normalized1 === normalized2;
 }
-```
 
-## 5. Company Name Matching ✅
-
-```typescript
 /**
  * Prüft ob zwei Firmennamen matchen (inkl. Fuzzy Matching)
  *
@@ -265,11 +241,7 @@ export function findBestCompanyMatches(
   // Limitiere Ergebnisse
   return results.slice(0, maxResults);
 }
-```
 
-## 6. Publication Name Matching ✅
-
-```typescript
 /**
  * Prüft ob zwei Publikationsnamen matchen
  *
@@ -322,93 +294,9 @@ export function matchPublicationNames(
     score
   };
 }
-```
 
-## 7. Tests
+// Performance-Optimierungen
 
-```typescript
-/**
- * src/lib/matching/__tests__/string-similarity.test.ts
- */
-
-describe('String Similarity Utils', () => {
-  describe('normalizeString', () => {
-    it('should normalize company names', () => {
-      expect(normalizeString('Süddeutsche Zeitung GmbH')).toBe('sueddeutsche zeitung');
-      expect(normalizeString('Der Spiegel AG & Co. KG')).toBe('der spiegel');
-      expect(normalizeString('BILD-Zeitung')).toBe('bild zeitung');
-    });
-
-    it('should handle umlauts', () => {
-      expect(normalizeString('Müller & Söhne GmbH')).toBe('mueller soehne');
-    });
-  });
-
-  describe('calculateSimilarity', () => {
-    it('should return 100 for identical strings', () => {
-      expect(calculateSimilarity('Spiegel', 'Spiegel')).toBe(100);
-    });
-
-    it('should handle typos', () => {
-      expect(calculateSimilarity('Spiegel', 'Spiegle')).toBeGreaterThan(85);
-    });
-
-    it('should normalize before comparing', () => {
-      expect(calculateSimilarity('Süddeutsche Zeitung GmbH', 'Sueddeutsche Zeitung AG')).toBeGreaterThan(90);
-    });
-  });
-
-  describe('extractDomain', () => {
-    it('should extract domain from URL', () => {
-      expect(extractDomain('https://www.spiegel.de/wirtschaft')).toBe('spiegel.de');
-      expect(extractDomain('http://bild.de')).toBe('bild.de');
-    });
-
-    it('should extract domain from email', () => {
-      expect(extractDomain('max@spiegel.de')).toBe('spiegel.de');
-    });
-
-    it('should handle invalid input', () => {
-      expect(extractDomain('invalid')).toBeNull();
-      expect(extractDomain('')).toBeNull();
-    });
-  });
-
-  describe('matchCompanyNames', () => {
-    it('should match similar names', () => {
-      const result = matchCompanyNames('Spiegel Verlag', 'Der Spiegel Verlag GmbH');
-      expect(result.match).toBe(true);
-      expect(result.score).toBeGreaterThan(80);
-    });
-
-    it('should not match different names', () => {
-      const result = matchCompanyNames('Spiegel', 'BILD');
-      expect(result.match).toBe(false);
-    });
-  });
-
-  describe('matchPublicationNames', () => {
-    it('should match abbreviations', () => {
-      const result = matchPublicationNames('SZ', 'Süddeutsche Zeitung');
-      expect(result.match).toBe(true);
-      expect(result.score).toBe(95);
-    });
-
-    it('should match with/without articles', () => {
-      const result = matchPublicationNames('Spiegel', 'Der Spiegel');
-      expect(result.match).toBe(true);
-    });
-  });
-});
-```
-
-## 8. Performance-Überlegungen
-
-### Caching
-
-Für häufig gesuchte Namen kann ein Cache implementiert werden:
-
-```typescript
 const similarityCache = new Map<string, number>();
 
 function getCacheKey(a: string, b: string): string {
@@ -428,13 +316,7 @@ export function calculateSimilarityWithCache(a: string, b: string): number {
 
   return score;
 }
-```
 
-### Batch-Processing
-
-Bei großen Datenmengen sollte Batch-Processing verwendet werden:
-
-```typescript
 export async function findMatchesInBatches(
   searchName: string,
   allCompanies: Array<{ id: string; name: string }>,
@@ -460,29 +342,3 @@ export async function findMatchesInBatches(
 
   return results.sort((a, b) => b.score - a.score);
 }
-```
-
-## 9. Export
-
-```typescript
-/**
- * src/lib/matching/string-similarity.ts
- */
-
-export {
-  levenshteinDistance,
-  calculateSimilarity,
-  normalizeString,
-  extractDomain,
-  domainsMatch,
-  matchCompanyNames,
-  matchPublicationNames,
-  findBestCompanyMatches,
-  calculateSimilarityWithCache,
-  findMatchesInBatches
-};
-```
-
-## Nächster Schritt
-
-→ **Teil 4**: Publication Finder (Wie funktioniert das Matching für Publikationen)

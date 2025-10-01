@@ -48,6 +48,273 @@ import {
   MATCHING_DEFAULTS
 } from '@/types/matching';
 
+// Intelligent Matching Imports
+import { findOrCreateCompany } from '@/lib/matching/company-finder';
+import { findPublications, createPublication } from '@/lib/matching/publication-finder';
+import { mergeVariantsWithAI } from '@/lib/matching/data-merger';
+import { enrichCompany } from '@/lib/matching/enrichment-engine';
+
+/**
+ * Erweiterte Import-Funktion mit vollständigem Auto-Matching
+ */
+export async function importCandidateWithAutoMatching(params: {
+  candidateId: string;
+  selectedVariantIndex: number;
+  userId: string;
+  organizationId: string;
+}): Promise<{
+  success: boolean;
+  contactId?: string;
+  companyMatch?: {
+    companyId: string;
+    companyName: string;
+    matchType: string;
+    confidence: number;
+    wasCreated: boolean;
+    wasEnriched: boolean;
+  };
+  publicationMatches?: Array<{
+    publicationId: string;
+    publicationName: string;
+    matchType: string;
+    confidence: number;
+    wasCreated: boolean;
+    wasEnriched: boolean;
+  }>;
+  error?: string;
+}> {
+  try {
+    // 1. Lade Kandidat
+    // 1. Lade Kandidat direkt aus Firestore
+    const candidateDoc = await getDoc(doc(db, 'matching_candidates', params.candidateId));
+
+    if (!candidateDoc.exists()) {
+      return { success: false, error: 'Kandidat nicht gefunden' };
+    }
+
+    const candidate = { id: candidateDoc.id, ...candidateDoc.data() } as MatchingCandidate;
+
+    const selectedVariant = candidate.variants[params.selectedVariantIndex];
+
+    // 2. COMPANY MATCHING
+    let companyResult: {
+      companyId: string;
+      companyName: string;
+      matchType: string;
+      confidence: number;
+      wasCreated: boolean;
+      wasEnriched: boolean;
+    } | undefined;
+
+    if (selectedVariant.contactData.companyName) {
+      companyResult = await handleCompanyMatching({
+        variants: candidate.variants,
+        selectedVariantIndex: params.selectedVariantIndex,
+        organizationId: params.organizationId,
+        userId: params.userId
+      });
+    }
+
+    // 3. PUBLICATION MATCHING
+    // ⚠️ KRITISCH: Publications NUR wenn Company gefunden wurde!
+    let publicationResults: Array<{
+      publicationId: string;
+      publicationName: string;
+      matchType: string;
+      confidence: number;
+      wasCreated: boolean;
+      wasEnriched: boolean;
+    }> = [];
+
+    if (selectedVariant.contactData.hasMediaProfile && companyResult) {
+      // ✅ Publications NUR wenn Company vorhanden!
+      publicationResults = await handlePublicationMatching({
+        companyId: companyResult.companyId,  // ✅ PFLICHT - nicht null!
+        variants: candidate.variants,
+        organizationId: params.organizationId,
+        userId: params.userId
+      });
+    }
+
+    // 4. KONTAKT ERSTELLEN
+    const contactData = selectedVariant.contactData;
+
+    // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
+    const contactId = await contactsEnhancedService.createContact({
+      ...contactData,
+      companyId: companyResult?.companyId || null,
+      publications: publicationResults.map(p => p.publicationId),
+      organizationId: params.organizationId,
+      createdBy: params.userId,
+      source: 'matching_import',
+      matchingCandidateId: params.candidateId
+    });
+
+    // 5. KANDIDAT ALS IMPORTED MARKIEREN
+    await updateDoc(doc(db, 'matching_candidates', params.candidateId), {
+      status: 'imported',
+      importedAt: Timestamp.now(),
+      importedBy: params.userId,
+      importedContactId: contactId,
+      selectedVariantIndex: params.selectedVariantIndex
+    });
+
+    return {
+      success: true,
+      contactId,
+      companyMatch: companyResult,
+      publicationMatches: publicationResults.length > 0 ? publicationResults : undefined
+    };
+
+  } catch (error) {
+    console.error('Import with auto-matching failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+    };
+  }
+}
+
+/**
+ * Handled das komplette Company Matching inkl. Erstellung & Enrichment
+ */
+async function handleCompanyMatching(params: {
+  variants: MatchingCandidateVariant[];
+  selectedVariantIndex: number;
+  organizationId: string;
+  userId: string;
+}): Promise<{
+  companyId: string;
+  companyName: string;
+  matchType: string;
+  confidence: number;
+  wasCreated: boolean;
+  wasEnriched: boolean;
+}> {
+  const { variants, selectedVariantIndex, organizationId, userId } = params;
+
+  // 1. Suche nach bestehender Firma oder erstelle neue
+  const companyMatch = await findOrCreateCompany(variants, organizationId, userId);
+
+  if (!companyMatch.wasCreated) {
+    // Firma gefunden → Prüfe ob Enrichment sinnvoll ist
+    const existingCompany = await getDoc(doc(db, 'companies_enhanced', companyMatch.companyId!));
+
+    if (existingCompany.exists()) {
+      const enrichmentResult = await enrichCompany(
+        companyMatch.companyId!,
+        existingCompany.data(),
+        {}, // newData - TODO: extract from variants
+        variants,
+        0.8, // confidence
+        userId
+      );
+
+      return {
+        companyId: companyMatch.companyId!,
+        companyName: companyMatch.companyName!,
+        matchType: companyMatch.method,
+        confidence: companyMatch.confidence === 'high' ? 0.9 : companyMatch.confidence === 'medium' ? 0.7 : 0.5,
+        wasCreated: false,
+        wasEnriched: enrichmentResult.enriched
+      };
+    }
+  }
+
+  // Neue Company erstellt
+  return {
+    companyId: companyMatch.companyId!,
+    companyName: companyMatch.companyName!,
+    matchType: companyMatch.method,
+    confidence: 1.0,
+    wasCreated: true,
+    wasEnriched: false
+  };
+}
+
+/**
+ * Handled das komplette Publication Matching inkl. Erstellung
+ */
+async function handlePublicationMatching(params: {
+  companyId: string;  // ✅ PFLICHT - nicht null!
+  variants: MatchingCandidateVariant[];
+  organizationId: string;
+  userId: string;
+}): Promise<Array<{
+  publicationId: string;
+  publicationName: string;
+  matchType: string;
+  confidence: number;
+  wasCreated: boolean;
+  wasEnriched: boolean;
+}>> {
+  const { companyId, variants, organizationId, userId } = params;
+
+  // 1. Finde bestehende Publikationen DIESER Company
+  const publicationMatches = await findPublications(
+    companyId,  // ✅ PFLICHT - sucht nur Publications dieser Company!
+    variants,
+    organizationId
+  );
+
+  const results: Array<{
+    publicationId: string;
+    publicationName: string;
+    matchType: string;
+    confidence: number;
+    wasCreated: boolean;
+    wasEnriched: boolean;
+  }> = [];
+
+  if (publicationMatches.length > 0) {
+    // Publikationen gefunden
+    for (const match of publicationMatches) {
+      results.push({
+        publicationId: match.publicationId,
+        publicationName: match.publicationName,
+        matchType: match.matchType,
+        confidence: match.confidence,
+        wasCreated: false,
+        wasEnriched: false // TODO: Publication enrichment not implemented yet
+      });
+    }
+
+    return results;
+  }
+
+  // 2. Keine Publikation gefunden → Erstelle neue Publication FÜR DIESE Company
+  // Extrahiere Publication-Namen aus Varianten
+  const publicationNames = new Set<string>();
+
+  for (const variant of variants) {
+    if (variant.contactData.hasMediaProfile && variant.contactData.publications) {
+      variant.contactData.publications.forEach(pub => publicationNames.add(pub));
+    }
+  }
+
+  // Erstelle Publications
+  for (const pubName of publicationNames) {
+    const newPubId = await createPublication({
+      name: pubName,
+      companyId: companyId,  // ✅ PFLICHT - Publication gehört zu dieser Company!
+      organizationId: organizationId,
+      createdBy: userId,
+      source: 'auto_matching'
+    });
+
+    results.push({
+      publicationId: newPubId,
+      publicationName: pubName,
+      matchType: 'created',
+      confidence: 1.0,
+      wasCreated: true,
+      wasEnriched: false
+    });
+  }
+
+  return results;
+}
+
 // ========================================
 // HELPER FUNCTIONS
 // ========================================
