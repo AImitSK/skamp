@@ -601,54 +601,35 @@ class MatchingCandidatesService {
         throw new Error('Variante nicht gefunden');
       }
 
-      // Finde SuperAdmin Organization
-      // Versuche zuerst über type='super_admin', dann über den aktuell eingeloggten User
+      // Finde die ECHTE SuperAdmin Organization (die des eingeloggten Users)
+      // Für Premium-Kontakte müssen wir die Org des Users verwenden
+      // Der User ist bereits als SuperAdmin eingeloggt, also ist seine Org die SuperAdmin-Org
+
+      console.log('🔍 Suche SuperAdmin Org über User:', request.userId);
+
+      // WICHTIG: Wir nutzen die organizationId des eingeloggten SuperAdmin-Users
+      // Das ist die korrekte SuperAdmin-Org, nicht eine Test-Org!
+
+      // Fallback: Wenn wir die User-Org nicht haben, erstellen wir den Kontakt OHNE organizationId
+      // aber mit isGlobal=true, damit er nur in der Premium-Bibliothek erscheint
+
       let superAdminOrgId: string | null = null;
 
-      console.log('🔍 Suche SuperAdmin Org...');
+      // Versuche die Org des aktuellen Users zu laden
+      // TODO: Implementiere User-zu-Org Mapping
+      // Für jetzt: Erstelle Kontakt OHNE organizationId (nur isGlobal)
 
-      // Versuch 1: Über type='super_admin'
-      const orgsSnapshot = await getDocs(
-        query(collection(db, 'organizations'), where('type', '==', 'super_admin'))
-      );
-
-      if (!orgsSnapshot.empty) {
-        superAdminOrgId = orgsSnapshot.docs[0].id;
-        console.log('✅ SuperAdmin Org via type gefunden:', superAdminOrgId);
-      } else {
-        console.log('⚠️ Keine Org mit type=super_admin gefunden');
-
-        // Versuch 2: Nehme die erste verfügbare Org (Fallback)
-        const allOrgsSnapshot = await getDocs(collection(db, 'organizations'));
-        if (!allOrgsSnapshot.empty) {
-          // Suche nach Org-Namen die auf SuperAdmin hindeuten
-          const superAdminOrg = allOrgsSnapshot.docs.find(doc => {
-            const name = doc.data().name?.toLowerCase() || '';
-            return name.includes('super') || name.includes('admin');
-          });
-
-          if (superAdminOrg) {
-            superAdminOrgId = superAdminOrg.id;
-            console.log('✅ SuperAdmin Org via Name gefunden:', superAdminOrgId, superAdminOrg.data().name);
-          } else {
-            // Nimm einfach die erste Org als Fallback
-            superAdminOrgId = allOrgsSnapshot.docs[0].id;
-            console.log('⚠️ Fallback: Nutze erste Org:', superAdminOrgId, allOrgsSnapshot.docs[0].data().name);
-          }
-        }
-      }
-
-      if (!superAdminOrgId) {
-        throw new Error('Keine Organisation gefunden - kann Kontakt nicht erstellen');
-      }
+      console.log('⚠️ TEMPORÄR: Erstelle globalen Kontakt OHNE organizationId');
+      console.log('   → Kontakt erscheint NUR in Premium-Bibliothek');
+      console.log('   → NICHT im CRM einer spezifischen Org');
 
       // Erstelle Kontakt-Daten für Import (nur definierte Felder)
       const contactData: any = {
         name: selectedVariant.contactData.name,
         displayName: selectedVariant.contactData.displayName,
         emails: selectedVariant.contactData.emails,
-        organizationId: superAdminOrgId, // ✅ Gehört zu SuperAdmin-Org
-        isGlobal: true, // ✅ Aber global verfügbar für alle
+        // KEINE organizationId - das ist ein reiner Premium-Kontakt
+        isGlobal: true, // ✅ Global verfügbar in Premium-Bibliothek
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: request.userId,
@@ -704,9 +685,10 @@ class MatchingCandidatesService {
       const globalContactRef = await addDoc(collection(db, 'contacts_enhanced'), contactData);
 
       const globalContactId = globalContactRef.id;
-      console.log('✅ Candidate imported as global contact:', globalContactId);
-      console.log('   → SuperAdmin Org:', superAdminOrgId);
-      console.log('   → isGlobal:', true);
+      console.log('✅ Candidate imported as PREMIUM contact:', globalContactId);
+      console.log('   → organizationId: NONE (reiner Premium-Kontakt)');
+      console.log('   → isGlobal: true');
+      console.log('   → Sichtbar in: Premium-Bibliothek (Redakteure)');
 
       // Markiere Kandidat als imported
       await updateDoc(doc(db, this.candidatesCollection, request.candidateId), {
