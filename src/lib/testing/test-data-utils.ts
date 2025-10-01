@@ -93,9 +93,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'max.mueller@spiegel.de', isPrimary: true }],
         companyName: 'Der Spiegel',
         position: 'Redakteur',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik', 'Wirtschaft'],
+          publicationIds: [],
+          mediaTypes: ['Print', 'Online'],
+          socialProfiles: []
+        },
         publications: ['Der Spiegel'],
-        beats: ['Politik', 'Wirtschaft'],
         isTestData: true,
         createdAt: new Date()
       },
@@ -106,9 +111,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'max@spiegel.de', isPrimary: true }],
         companyName: 'Spiegel Verlag GmbH',
         position: 'Senior Journalist',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik'],
+          publicationIds: [],
+          mediaTypes: ['Online'],
+          socialProfiles: []
+        },
         publications: ['Spiegel Online'],
-        beats: ['Politik'],
         isTestData: true,
         createdAt: new Date()
       },
@@ -119,9 +129,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'mueller@spiegel.de', isPrimary: true }],
         companyName: 'SPIEGEL',
         position: 'Chefredakteur',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik', 'International'],
+          publicationIds: [],
+          mediaTypes: ['Print'],
+          socialProfiles: []
+        },
         publications: ['DER SPIEGEL'],
-        beats: ['Politik', 'International'],
         isTestData: true,
         createdAt: new Date()
       },
@@ -134,9 +149,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'anna.schmidt@zeit.de', isPrimary: true }],
         companyName: 'Die Zeit',
         position: 'Reporterin',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Kultur'],
+          publicationIds: [],
+          mediaTypes: ['Print'],
+          socialProfiles: []
+        },
         publications: ['Die Zeit'],
-        beats: ['Kultur'],
         isTestData: true,
         createdAt: new Date()
       },
@@ -147,9 +167,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'a.schmidt@zeit.de', isPrimary: true }],
         companyName: 'ZEIT Verlagsgruppe',
         position: 'Kulturredakteurin',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Kultur', 'Gesellschaft'],
+          publicationIds: [],
+          mediaTypes: ['Online'],
+          socialProfiles: []
+        },
         publications: ['ZEIT Online'],
-        beats: ['Kultur', 'Gesellschaft'],
         isTestData: true,
         createdAt: new Date()
       },
@@ -162,9 +187,14 @@ export async function seedTestData(): Promise<TestDataResult> {
         emails: [{ email: 'peter.weber@freelancer.com', isPrimary: true }],
         companyName: 'Freelancer',
         position: 'Freier Journalist',
-        hasMediaProfile: true,
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Sport'],
+          publicationIds: [],
+          mediaTypes: ['Print', 'Online'],
+          socialProfiles: []
+        },
         publications: ['Verschiedene'],
-        beats: ['Sport'],
         isTestData: true,
         createdAt: new Date()
       }
