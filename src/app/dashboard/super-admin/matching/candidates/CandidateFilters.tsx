@@ -1,25 +1,26 @@
 /**
- * Candidate Filters Komponente
+ * Candidate Filters Komponente - CRM Pattern
  *
- * Filter-Leiste für Kandidaten:
- * - Status-Filter (Multi-Select)
- * - Score-Range Filter
- * - Search (Name/E-Mail)
- * - Development-Mode Toggle
+ * Kompakte Filter-Leiste mit:
+ * - SearchInput (flex-1)
+ * - Filter-Button (Popover)
+ * - Scan-Button
+ * - Actions-Dropdown (3 Punkte)
  */
 
 'use client';
 
-import { useState } from 'react';
+import { Fragment } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
-  XMarkIcon
+  ArrowPathIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import { Popover, Transition } from '@headlessui/react';
+import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import clsx from 'clsx';
 import {
   MatchingCandidateFilters,
   MATCHING_STATUS_LABELS,
@@ -33,6 +34,8 @@ interface CandidateFiltersProps {
   onSearchChange: (query: string) => void;
   devMode: boolean;
   onDevModeChange: (devMode: boolean) => void;
+  scanning: boolean;
+  onScan: () => Promise<void>;
 }
 
 export default function CandidateFilters({
@@ -41,9 +44,30 @@ export default function CandidateFilters({
   searchQuery,
   onSearchChange,
   devMode,
-  onDevModeChange
+  onDevModeChange,
+  scanning,
+  onScan
 }: CandidateFiltersProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  /**
+   * Zählt aktive Filter
+   */
+  const getActiveFilterCount = (): number => {
+    let count = 0;
+
+    // Status (default ist ['pending'], zählt nicht)
+    if (filters.status &&
+        filters.status.length > 0 &&
+        !(filters.status.length === 1 && filters.status[0] === 'pending')) {
+      count++;
+    }
+
+    if (filters.minScore && filters.minScore !== MATCHING_DEFAULTS.MIN_SCORE) count++;
+    if (filters.maxScore) count++;
+    if (filters.minVariants) count++;
+    if (filters.matchType) count++;
+
+    return count;
+  };
 
   /**
    * Status Toggle
@@ -52,14 +76,12 @@ export default function CandidateFilters({
     const currentStatuses = filters.status || [];
 
     if (currentStatuses.includes(status)) {
-      // Remove
       const newStatuses = currentStatuses.filter(s => s !== status);
       onFiltersChange({
         ...filters,
         status: newStatuses.length > 0 ? newStatuses : undefined
       });
     } else {
-      // Add
       onFiltersChange({
         ...filters,
         status: [...currentStatuses, status]
@@ -68,214 +90,240 @@ export default function CandidateFilters({
   };
 
   /**
-   * Reset alle Filter
+   * Reset Filter
    */
   const resetFilters = () => {
     onFiltersChange({
       status: ['pending'],
       minScore: MATCHING_DEFAULTS.MIN_SCORE
     });
-    onSearchChange('');
-  };
-
-  /**
-   * Zählt aktive Filter
-   */
-  const getActiveFilterCount = (): number => {
-    let count = 0;
-
-    if (filters.status && filters.status.length > 0 && !(filters.status.length === 1 && filters.status[0] === 'pending')) {
-      count++;
-    }
-
-    if (filters.minScore && filters.minScore !== MATCHING_DEFAULTS.MIN_SCORE) {
-      count++;
-    }
-
-    if (filters.maxScore) count++;
-    if (filters.minVariants) count++;
-    if (filters.matchType) count++;
-    if (searchQuery) count++;
-
-    return count;
   };
 
   const activeFilterCount = getActiveFilterCount();
 
   return (
-    <div className="space-y-4">
-      {/* Haupt-Filter-Zeile */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
-        <div className="flex-1">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder="Suche nach Name oder E-Mail..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+    <div className="flex items-center gap-2">
+      {/* Search Input */}
+      <SearchInput
+        value={searchQuery}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="Kandidaten durchsuchen..."
+        className="flex-1"
+      />
 
-        {/* Score Filter */}
-        <div className="w-full sm:w-48">
-          <Select
-            value={filters.minScore?.toString() || ''}
-            onChange={(e) => onFiltersChange({
-              ...filters,
-              minScore: e.target.value ? parseInt(e.target.value) : undefined
-            })}
-          >
-            <option value="">Alle Scores</option>
-            <option value="50">Min. 50 Punkte</option>
-            <option value="60">Min. 60 Punkte</option>
-            <option value="70">Min. 70 Punkte</option>
-            <option value="80">Min. 80 Punkte</option>
-            <option value="90">Min. 90 Punkte</option>
-          </Select>
-        </div>
-
-        {/* Advanced Filter Toggle */}
-        <Button
-          color="light"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          <FunnelIcon className="size-4" />
-          Filter
-          {activeFilterCount > 0 && (
-            <Badge color="blue" className="ml-1">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
-
-        {/* Reset Button */}
-        {activeFilterCount > 0 && (
-          <Button
-            color="light"
-            onClick={resetFilters}
-            title="Filter zurücksetzen"
-          >
-            <XMarkIcon className="size-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* Status-Filter Badges (Always Visible) */}
-      <div className="flex flex-wrap gap-2">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-          Status:
-        </span>
-
-        {(['pending', 'imported', 'skipped', 'rejected'] as const).map((status) => {
-          const isActive = filters.status?.includes(status);
-
-          return (
-            <button
-              key={status}
-              onClick={() => toggleStatus(status)}
-              className={`
-                px-3 py-1 rounded-md text-sm font-medium transition-colors
-                ${isActive
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
-                }
-              `}
-            >
-              {MATCHING_STATUS_LABELS[status]}
-              {isActive && (
-                <XMarkIcon className="inline-block ml-1 size-3" />
+      {/* Filter Button - nur Icon */}
+      <Popover className="relative">
+        {({ open }) => (
+          <>
+            <Popover.Button
+              className={clsx(
+                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
+                activeFilterCount > 0
+                  ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
               )}
-            </button>
-          );
-        })}
-      </div>
+              aria-label="Filter"
+            >
+              <FunnelIcon className="h-5 w-5" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Popover.Button>
 
-      {/* Advanced Filters (Collapsible) */}
-      {showAdvanced && (
-        <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Match Type */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                Match-Type
-              </label>
-              <Select
-                value={filters.matchType || ''}
-                onChange={(e) => onFiltersChange({
-                  ...filters,
-                  matchType: e.target.value as 'email' | 'name' | undefined
-                })}
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="space-y-4">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={resetFilters}
+                        className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      >
+                        Zurücksetzen
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Multi-Select */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Status
+                    </label>
+                    <div className="space-y-2">
+                      {(['pending', 'imported', 'skipped', 'rejected'] as const).map((status) => {
+                        const isChecked = filters.status?.includes(status) || false;
+                        return (
+                          <label
+                            key={status}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleStatus(status)}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                              {MATCHING_STATUS_LABELS[status]}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Score Range */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Min. Score
+                    </label>
+                    <select
+                      value={filters.minScore?.toString() || ''}
+                      onChange={(e) => onFiltersChange({
+                        ...filters,
+                        minScore: e.target.value ? parseInt(e.target.value) : undefined
+                      })}
+                      className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                    >
+                      <option value="">Alle</option>
+                      <option value="50">Min. 50 Punkte</option>
+                      <option value="60">Min. 60 Punkte</option>
+                      <option value="70">Min. 70 Punkte</option>
+                      <option value="80">Min. 80 Punkte</option>
+                      <option value="90">Min. 90 Punkte</option>
+                    </select>
+                  </div>
+
+                  {/* Match Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Match-Type
+                    </label>
+                    <select
+                      value={filters.matchType || ''}
+                      onChange={(e) => onFiltersChange({
+                        ...filters,
+                        matchType: e.target.value as 'email' | 'name' | undefined
+                      })}
+                      className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                    >
+                      <option value="">Alle</option>
+                      <option value="email">E-Mail</option>
+                      <option value="name">Name</option>
+                    </select>
+                  </div>
+
+                  {/* Min Varianten */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                      Min. Organisationen
+                    </label>
+                    <select
+                      value={filters.minVariants?.toString() || ''}
+                      onChange={(e) => onFiltersChange({
+                        ...filters,
+                        minVariants: e.target.value ? parseInt(e.target.value) : undefined
+                      })}
+                      className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                    >
+                      <option value="">Alle</option>
+                      <option value="2">Min. 2</option>
+                      <option value="3">Min. 3</option>
+                      <option value="4">Min. 4</option>
+                      <option value="5">Min. 5</option>
+                    </select>
+                  </div>
+
+                  {/* Development Mode */}
+                  <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={devMode}
+                        onChange={(e) => onDevModeChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          🔧 Development-Modus
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          Min 1 Org, min Score: 40
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </>
+        )}
+      </Popover>
+
+      {/* Scan Button */}
+      <Button
+        color="blue"
+        onClick={onScan}
+        disabled={scanning}
+        className="whitespace-nowrap h-10"
+      >
+        {scanning ? (
+          <>
+            <ArrowPathIcon className="size-5 animate-spin" />
+            Scanne...
+          </>
+        ) : (
+          <>
+            <ArrowPathIcon className="size-5" />
+            Scan
+          </>
+        )}
+      </Button>
+
+      {/* Actions Dropdown - nur 3 Punkte */}
+      <Popover className="relative">
+        <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800 h-10 w-10">
+          <EllipsisVerticalIcon className="h-5 w-5" />
+        </Popover.Button>
+
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-200"
+          enterFrom="opacity-0 translate-y-1"
+          enterTo="opacity-100 translate-y-0"
+          leave="transition ease-in duration-150"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 translate-y-1"
+        >
+          <Popover.Panel className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+            <div className="py-1">
+              {devMode && (
+                <div className="px-4 py-2 text-xs text-zinc-500 border-b border-zinc-200 dark:border-zinc-700">
+                  🔧 Dev-Mode aktiv
+                </div>
+              )}
+              <button
+                onClick={() => window.open('/dashboard/super-admin/matching/analytics', '_blank')}
+                className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
-                <option value="">Alle</option>
-                <option value="email">E-Mail</option>
-                <option value="name">Name</option>
-              </Select>
+                Analytics öffnen
+              </button>
             </div>
-
-            {/* Min Varianten */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                Min. Organisationen
-              </label>
-              <Select
-                value={filters.minVariants?.toString() || ''}
-                onChange={(e) => onFiltersChange({
-                  ...filters,
-                  minVariants: e.target.value ? parseInt(e.target.value) : undefined
-                })}
-              >
-                <option value="">Alle</option>
-                <option value="2">Min. 2</option>
-                <option value="3">Min. 3</option>
-                <option value="4">Min. 4</option>
-                <option value="5">Min. 5</option>
-              </Select>
-            </div>
-
-            {/* Max Score */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                Max. Score
-              </label>
-              <Select
-                value={filters.maxScore?.toString() || ''}
-                onChange={(e) => onFiltersChange({
-                  ...filters,
-                  maxScore: e.target.value ? parseInt(e.target.value) : undefined
-                })}
-              >
-                <option value="">Alle</option>
-                <option value="60">Max. 60</option>
-                <option value="70">Max. 70</option>
-                <option value="80">Max. 80</option>
-                <option value="90">Max. 90</option>
-              </Select>
-            </div>
-          </div>
-
-          {/* Development Mode Toggle */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={devMode}
-                onChange={(e) => onDevModeChange(e.target.checked)}
-                className="rounded border-zinc-300 dark:border-zinc-700"
-              />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                🔧 Development-Modus
-              </span>
-              <span className="text-xs text-zinc-500">
-                (zeigt Kandidaten mit 1 Org, min Score: 40)
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
+          </Popover.Panel>
+        </Transition>
+      </Popover>
     </div>
   );
 }

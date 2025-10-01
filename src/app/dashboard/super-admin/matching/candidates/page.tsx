@@ -32,7 +32,6 @@ import {
 } from '@/types/matching';
 import CandidatesTable from './CandidatesTable';
 import CandidateFilters from './CandidateFilters';
-import ScanButton from './ScanButton';
 
 export default function MatchingCandidatesPage() {
   const router = useRouter();
@@ -163,74 +162,64 @@ export default function MatchingCandidatesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-              Matching-Kandidaten
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Journalisten die von mehreren Organisationen erfasst wurden
-            </p>
-          </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
+          Matching-Kandidaten
+        </h1>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          Journalisten die von mehreren Organisationen erfasst wurden
+        </p>
+      </div>
 
-          <ScanButton
-            onScan={handleScan}
-            scanning={scanning}
-            devMode={devMode}
-          />
+      {/* Statistics Cards */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Gesamt
+          </div>
+          <div className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
+            {stats.total}
+          </div>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Gesamt
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-white">
-              {stats.total}
-            </div>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Pending
           </div>
-
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Pending
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-yellow-600">
-              {stats.pending}
-            </div>
+          <div className="mt-1 text-2xl font-semibold text-yellow-600">
+            {stats.pending}
           </div>
+        </div>
 
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Importiert
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-green-600">
-              {stats.imported}
-            </div>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Importiert
           </div>
-
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Übersprungen
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-zinc-500">
-              {stats.skipped}
-            </div>
+          <div className="mt-1 text-2xl font-semibold text-green-600">
+            {stats.imported}
           </div>
+        </div>
 
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Abgelehnt
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-red-600">
-              {stats.rejected}
-            </div>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Übersprungen
+          </div>
+          <div className="mt-1 text-2xl font-semibold text-zinc-500">
+            {stats.skipped}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Abgelehnt
+          </div>
+          <div className="mt-1 text-2xl font-semibold text-red-600">
+            {stats.rejected}
           </div>
         </div>
       </div>
 
-      {/* Filters & Search */}
+      {/* Compact Toolbar */}
       <div className="mb-6">
         <CandidateFilters
           filters={filters}
@@ -239,6 +228,8 @@ export default function MatchingCandidatesPage() {
           onSearchChange={setSearchQuery}
           devMode={devMode}
           onDevModeChange={setDevMode}
+          scanning={scanning}
+          onScan={handleScan}
         />
       </div>
 
