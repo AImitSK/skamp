@@ -53,14 +53,64 @@ export default function SuperAdminSettingsPage() {
   }, []);
 
   /**
-   * Test-Daten Funktionalität entfernt - wurde durch das neue Intelligent Matching System ersetzt
+   * Erstellt Test-Daten für das Intelligent Matching System
    */
   const handleSeedTestData = async () => {
-    toast.error('Test-Daten Funktionalität wurde entfernt. Verwende das neue Intelligent Matching System.');
+    if (!confirm('Test-Daten erstellen? Dies erstellt 3 Test-Organisationen und 6 Test-Kontakte für das Intelligent Matching System.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Erstelle Test-Daten...');
+    setLoading(true);
+
+    try {
+      const { seedTestData } = await import('@/lib/testing/test-data-utils');
+      const result = await seedTestData();
+
+      toast.success(
+        `Test-Daten erstellt! ${result.organizations} Orgs, ${result.contacts} Kontakte`,
+        { id: toastId, duration: 5000 }
+      );
+    } catch (error) {
+      console.error('Seed failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
+  /**
+   * Löscht Test-Daten
+   */
   const handleCleanupTestData = async () => {
-    toast.error('Test-Daten Funktionalität wurde entfernt. Verwende das neue Intelligent Matching System.');
+    if (!confirm('Test-Daten löschen? Dies entfernt alle Test-Organisationen, Kontakte und Matching-Kandidaten.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Lösche Test-Daten...');
+    setLoading(true);
+
+    try {
+      const { cleanupTestData } = await import('@/lib/testing/test-data-utils');
+      const result = await cleanupTestData();
+
+      toast.success(
+        `Test-Daten gelöscht! ${result.organizations} Orgs, ${result.contacts} Kontakte, ${result.candidates || 0} Kandidaten`,
+        { id: toastId, duration: 5000 }
+      );
+      await loadLastScan(); // Refresh scan status
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   /**
@@ -221,6 +271,53 @@ export default function SuperAdminSettingsPage() {
         </h2>
 
         <div className="space-y-6">
+          {/* Test Data Tools */}
+          <div className="p-6 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10">
+            <div className="flex items-start gap-3 mb-4">
+              <BeakerIcon className="size-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">
+                  Test-Daten für Intelligent Matching
+                </h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Erstellt 3 Test-Organisationen und 6 Journalisten-Kontakte zum Testen des neuen
+                  Intelligent Matching Systems. Nach dem Erstellen einen Scan ausführen um Kandidaten zu generieren.
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    color="light"
+                    onClick={handleSeedTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <BeakerIcon className="size-4" />
+                    Test-Daten erstellen
+                  </Button>
+
+                  <Button
+                    color="light"
+                    onClick={handleCleanupTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <TrashIcon className="size-4" />
+                    Test-Daten löschen
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-zinc-600 dark:text-zinc-400 border-t border-orange-200 dark:border-orange-800 pt-3">
+              <strong>Erwartete Kandidaten nach Scan:</strong>
+              <ul className="list-disc list-inside mt-1 space-y-0.5">
+                <li>Max Müller (3 Varianten, Score ~85-95) → <strong>Automatic Match</strong></li>
+                <li>Anna Schmidt (2 Varianten, Score ~70-80) → <strong>Good Match</strong></li>
+                <li>Peter Weber (1 Variante) → <strong>Kein Match</strong></li>
+              </ul>
+            </div>
+          </div>
+
           {/* Matching Tests Section */}
           <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-4">
