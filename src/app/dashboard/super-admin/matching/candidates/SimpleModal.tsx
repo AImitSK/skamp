@@ -7,7 +7,8 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
-import { MatchingCandidate } from '@/types/matching';
+import { Badge } from '@/components/ui/badge';
+import { MatchingCandidate, MATCHING_STATUS_COLORS } from '@/types/matching';
 
 interface SimpleModalProps {
   isOpen: boolean;
@@ -27,9 +28,19 @@ export default function SimpleModal({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="mx-auto max-w-md w-full rounded-lg bg-white dark:bg-zinc-900 shadow-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
-              Step 1: Basis Modal
-            </DialogTitle>
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
+                Step 2: Mit Badges
+              </DialogTitle>
+
+              <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
+                {candidate.status}
+              </Badge>
+
+              <Badge color="blue">
+                {`Score: ${candidate.score} / 100`}
+              </Badge>
+            </div>
 
             <button
               onClick={onClose}
