@@ -291,7 +291,7 @@ export default function CandidateDetailModal({
                   disabled={actionLoading}
                 >
                   <XMarkIcon className="size-4" />
-                  Ablehnen
+                  <span>Ablehnen</span>
                 </Button>
 
                 <Button
@@ -300,7 +300,7 @@ export default function CandidateDetailModal({
                   disabled={actionLoading}
                 >
                   <ForwardIcon className="size-4" />
-                  Überspringen
+                  <span>Überspringen</span>
                 </Button>
 
                 {actionLoading ? (
@@ -309,7 +309,7 @@ export default function CandidateDetailModal({
                     disabled={true}
                   >
                     <ArrowPathIcon className="size-4 animate-spin" />
-                    Importiere...
+                    <span>Importiere...</span>
                   </Button>
                 ) : (
                   <Button
@@ -317,7 +317,7 @@ export default function CandidateDetailModal({
                     onClick={handleImport}
                   >
                     <CheckIcon className="size-4" />
-                    Als Premium importieren
+                    <span>Als Premium importieren</span>
                   </Button>
                 )}
               </div>

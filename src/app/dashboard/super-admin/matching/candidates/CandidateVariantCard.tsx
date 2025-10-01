@@ -138,7 +138,7 @@ export default function CandidateVariantCard({
           {isRecommended && (
             <Badge color="blue" className="flex items-center gap-1">
               <SparklesIcon className="size-3" />
-              Empfohlen
+              <span>Empfohlen</span>
             </Badge>
           )}
 
@@ -146,7 +146,7 @@ export default function CandidateVariantCard({
           {isSelected && (
             <Badge color="green" className="flex items-center gap-1">
               <CheckCircleIcon className="size-3" />
-              Ausgewählt
+              <span>Ausgewählt</span>
             </Badge>
           )}
 
