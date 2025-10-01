@@ -490,23 +490,16 @@ export default function DashboardLayout({
                 {/* SuperAdmin Dropdown - only for SuperAdmin */}
                 {isSuperAdmin && (
                   <Dropdown>
-                    <DropdownButton className="hidden lg:flex items-center gap-1 p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <DropdownButton className="hidden lg:flex items-center gap-1 p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                       <ShieldCheckIcon className="size-5" />
                       <span className="text-sm font-medium">Super Admin</span>
                       <ChevronDownIcon className="size-4" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="min-w-60">
                       <DropdownItem
-                        href="/super-admin/journalists"
-                        icon={UsersIcon}
-                        description="Premium-Journalisten verwalten"
-                      >
-                        Journalisten-Datenbank
-                      </DropdownItem>
-                      <DropdownItem
-                        href="/super-admin/matching/duplicates"
+                        href="/super-admin/matching/candidates"
                         icon={AdjustmentsHorizontalIcon}
-                        description="Duplikate zusammenführen"
+                        description="Neue Premium-Kandidaten prüfen"
                       >
                         Matching-Kandidaten
                       </DropdownItem>
