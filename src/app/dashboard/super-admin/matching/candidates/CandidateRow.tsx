@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import toast from 'react-hot-toast';
+import CandidateDetailModal from './CandidateDetailModal';
 
 interface CandidateRowProps {
   candidate: MatchingCandidate;
@@ -77,12 +78,7 @@ export default function CandidateRow({
     }
   };
 
-  /**
-   * Öffnet Detail-Seite
-   */
-  const handleViewDetails = () => {
-    router.push(`/dashboard/super-admin/matching/candidates/${candidate.id}`);
-  };
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   /**
    * Skip-Aktion
@@ -277,7 +273,7 @@ export default function CandidateRow({
           {/* Details Button */}
           <Button
             color="light"
-            onClick={handleViewDetails}
+            onClick={() => setShowDetailModal(true)}
             disabled={actionLoading}
             title="Details anzeigen"
             className="px-2 py-1"
@@ -330,6 +326,16 @@ export default function CandidateRow({
           )}
         </div>
       </TableCell>
+
+      {/* Detail Modal */}
+      {showDetailModal && (
+        <CandidateDetailModal
+          candidate={candidate}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          onUpdate={onUpdate}
+        />
+      )}
     </TableRow>
   );
 }
