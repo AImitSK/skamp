@@ -191,15 +191,20 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
       setPreviewCount(0);
       return;
     }
+
+    console.log('🔍 Loading static preview for contactIds:', formData.contactIds);
     setLoadingPreview(true);
+
     try {
       // Pass organizationId to support Reference contacts
       const contacts = await listsService.getContactsByIds(formData.contactIds, organizationId);
+      console.log('✅ Loaded contacts:', contacts.length, 'from', formData.contactIds.length, 'IDs');
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
-      console.error('Error loading static preview:', error);
-      // Error handled silently - user will see loading state timeout
+      console.error('❌ Error loading static preview:', error);
+      // Set count to 0 on error
+      setPreviewCount(0);
     } finally {
       setLoadingPreview(false);
     }
@@ -210,6 +215,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
   };
 
   const handleSaveContactSelection = (selectedIds: string[]) => {
+    console.log('💾 Saving contact selection:', selectedIds.length, 'contacts');
     setFormData(prev => ({ ...prev, contactIds: selectedIds }));
     setIsContactSelectorOpen(false);
   };
