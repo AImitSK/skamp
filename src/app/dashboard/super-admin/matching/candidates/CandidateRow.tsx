@@ -35,7 +35,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import toast from 'react-hot-toast';
 import CandidateDetailModal from './CandidateDetailModal';
-import SimpleModal from './SimpleModal';
 
 interface CandidateRowProps {
   candidate: MatchingCandidate;
@@ -338,11 +337,14 @@ export default function CandidateRowWithModal(props: CandidateRowProps) {
     <>
       <CandidateRow {...props} onViewDetails={() => setShowDetailModal(true)} />
 
-      <SimpleModal
-        candidate={props.candidate}
-        isOpen={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-      />
+      {showDetailModal && (
+        <CandidateDetailModal
+          candidate={props.candidate}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          onUpdate={props.onUpdate}
+        />
+      )}
     </>
   );
 }
