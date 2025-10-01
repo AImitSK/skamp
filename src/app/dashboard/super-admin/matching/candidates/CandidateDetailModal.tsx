@@ -205,7 +205,7 @@ export default function CandidateDetailModal({
               </Badge>
 
               <Badge color="blue">
-                Score: {candidate.score} / 100
+                {`Score: ${candidate.score} / 100`}
               </Badge>
             </div>
 

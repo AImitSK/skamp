@@ -153,7 +153,7 @@ export default function CandidateVariantCard({
           {/* Completeness Badge */}
           <Badge color="zinc">
             <span className={getCompletenessColor(completeness)}>
-              {completeness}%
+              {`${completeness}%`}
             </span>
           </Badge>
         </div>
@@ -167,7 +167,7 @@ export default function CandidateVariantCard({
           <div>
             <div className="font-medium text-zinc-900 dark:text-white">
               {data.name.title && <span className="text-zinc-500">{data.name.title} </span>}
-              {data.name.firstName} {data.name.lastName}
+              {`${data.name.firstName || ''} ${data.name.lastName || ''}`.trim()}
               {data.name.suffix && <span className="text-zinc-500">, {data.name.suffix}</span>}
             </div>
             <div className="text-sm text-zinc-600 dark:text-zinc-400">

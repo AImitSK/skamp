@@ -53,7 +53,7 @@ export default function CandidateRecommendationBox({
               💡 Empfehlung
             </h3>
             <Badge color="blue" className="text-xs">
-              Variante #{recommendation.recommendedIndex + 1}
+              {`Variante #${recommendation.recommendedIndex + 1}`}
             </Badge>
           </div>
 
@@ -64,7 +64,7 @@ export default function CandidateRecommendationBox({
           <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
             <CheckCircleIcon className="size-4" />
             <span>
-              Vollständigkeits-Score: {recommendation.score} / 100
+              {`Vollständigkeits-Score: ${recommendation.score} / 100`}
             </span>
           </div>
         </div>
