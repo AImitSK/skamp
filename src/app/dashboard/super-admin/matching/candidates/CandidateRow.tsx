@@ -39,11 +39,13 @@ import CandidateDetailModal from './CandidateDetailModal';
 interface CandidateRowProps {
   candidate: MatchingCandidate;
   onUpdate: () => void;
+  onViewDetails?: () => void;
 }
 
-export default function CandidateRow({
+function CandidateRow({
   candidate,
-  onUpdate
+  onUpdate,
+  onViewDetails
 }: CandidateRowProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -77,8 +79,6 @@ export default function CandidateRow({
       return '-';
     }
   };
-
-  const [showDetailModal, setShowDetailModal] = useState(false);
 
   /**
    * Skip-Aktion
@@ -273,7 +273,7 @@ export default function CandidateRow({
           {/* Details Button */}
           <Button
             color="light"
-            onClick={() => setShowDetailModal(true)}
+            onClick={onViewDetails}
             disabled={actionLoading}
             title="Details anzeigen"
             className="px-2 py-1"
@@ -326,16 +326,25 @@ export default function CandidateRow({
           )}
         </div>
       </TableCell>
+    </TableRow>
+  );
+}
 
-      {/* Detail Modal */}
+export default function CandidateRowWithModal(props: CandidateRowProps) {
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  return (
+    <>
+      <CandidateRow {...props} onViewDetails={() => setShowDetailModal(true)} />
+
       {showDetailModal && (
         <CandidateDetailModal
-          candidate={candidate}
+          candidate={props.candidate}
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
-          onUpdate={onUpdate}
+          onUpdate={props.onUpdate}
         />
       )}
-    </TableRow>
+    </>
   );
 }
