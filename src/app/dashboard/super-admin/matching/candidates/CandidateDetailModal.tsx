@@ -261,7 +261,7 @@ export default function CandidateDetailModal({
             {candidate.status === 'pending' && (
               <div className="mb-6">
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Notizen (optional)
+                  <span>Notizen (optional)</span>
                 </label>
                 <TextArea
                   value={reviewNotes}
