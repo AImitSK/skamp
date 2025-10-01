@@ -20,7 +20,7 @@ import {
   SparklesIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { Dialog, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TextArea } from '@/components/ui/textarea';
@@ -185,30 +185,29 @@ export default function CandidateDetailModal({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} size="5xl">
-      <div>
-        {/* Header */}
-        <div className="px-6 py-4">
-          <div className="flex items-center gap-3 mb-2">
-            <DialogTitle className="!text-2xl !font-semibold !text-zinc-900 dark:!text-white !p-0">
-              {selectedVariant.contactData.displayName}
-            </DialogTitle>
+      <DialogTitle>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-2xl font-semibold text-zinc-900 dark:text-white">
+            {selectedVariant.contactData.displayName}
+          </span>
 
-            <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
-              {candidate.status}
-            </Badge>
+          <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
+            {candidate.status}
+          </Badge>
 
-            <Badge color="blue">
-              Score: {candidate.score} / 100
-            </Badge>
-          </div>
-
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            {candidate.variants.length} Varianten aus verschiedenen Organisationen
-          </div>
+          <Badge color="blue">
+            Score: {candidate.score} / 100
+          </Badge>
         </div>
 
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+          {candidate.variants.length} Varianten aus verschiedenen Organisationen
+        </div>
+      </DialogTitle>
+
+      <DialogBody className="max-h-[70vh] overflow-y-auto">
         {/* Empfehlung */}
-        <div className="px-6">
+        <div>
           {recommendation && (
             <CandidateRecommendationBox
               recommendation={recommendation}
@@ -219,7 +218,7 @@ export default function CandidateDetailModal({
         </div>
 
         {/* Varianten */}
-        <div className="px-6 mb-6">
+        <div>
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
             <SparklesIcon className="size-5 text-blue-600" />
             Gefundene Varianten
@@ -241,7 +240,7 @@ export default function CandidateDetailModal({
 
         {/* Review-Notizen */}
         {candidate.status === 'pending' && (
-          <div className="px-6 mb-6">
+          <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               📝 Notizen (optional)
             </label>
@@ -253,19 +252,19 @@ export default function CandidateDetailModal({
             />
           </div>
         )}
+      </DialogBody>
 
-        {/* Actions */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-200 dark:border-zinc-800">
-          <Button
-            color="light"
-            onClick={handleClose}
-            disabled={loading}
-          >
-            Abbrechen
-          </Button>
+      <DialogActions>
+        <Button
+          color="light"
+          onClick={handleClose}
+          disabled={loading}
+        >
+          Abbrechen
+        </Button>
 
-          {candidate.status === 'pending' && (
-            <div className="flex items-center gap-2">
+        {candidate.status === 'pending' && (
+          <div className="flex items-center gap-2">
               {/* Reject */}
               <Button
                 color="red"
@@ -307,13 +306,12 @@ export default function CandidateDetailModal({
             </div>
           )}
 
-          {candidate.status !== 'pending' && (
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Dieser Kandidat wurde bereits reviewt.
-            </div>
-          )}
-        </div>
-      </div>
+        {candidate.status !== 'pending' && (
+          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+            Dieser Kandidat wurde bereits reviewt.
+          </div>
+        )}
+      </DialogActions>
     </Dialog>
   );
 }
