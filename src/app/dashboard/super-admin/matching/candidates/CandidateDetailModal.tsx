@@ -20,7 +20,7 @@ import {
   SparklesIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { Dialog, DialogPanel, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TextArea } from '@/components/ui/textarea';
@@ -185,7 +185,7 @@ export default function CandidateDetailModal({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} size="5xl">
-      <DialogPanel>
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
@@ -320,7 +320,7 @@ export default function CandidateDetailModal({
             </div>
           )}
         </div>
-      </DialogPanel>
+      </div>
     </Dialog>
   );
 }
