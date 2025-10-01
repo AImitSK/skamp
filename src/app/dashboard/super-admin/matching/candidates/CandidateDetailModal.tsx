@@ -12,6 +12,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   XMarkIcon,
   CheckIcon,
@@ -80,6 +81,8 @@ export default function CandidateDetailModal({
 
     if (!confirm('Kandidat als Premium-Journalist importieren?')) return;
 
+    const toastId = toast.loading('Importiere Kandidat...');
+
     try {
       setLoading(true);
 
@@ -90,15 +93,24 @@ export default function CandidateDetailModal({
       });
 
       if (result.success) {
-        alert('✅ Kandidat erfolgreich importiert!');
+        toast.success(
+          'Kandidat erfolgreich als Premium-Journalist importiert!',
+          { id: toastId, duration: 5000 }
+        );
         onUpdate();
         handleClose();
       } else {
-        alert('❌ Fehler beim Import: ' + result.error);
+        toast.error(
+          `Fehler beim Import: ${result.error}`,
+          { id: toastId }
+        );
       }
     } catch (error) {
       console.error('Import failed:', error);
-      alert('❌ Import fehlgeschlagen');
+      toast.error(
+        `Import fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setLoading(false);
     }
@@ -110,6 +122,8 @@ export default function CandidateDetailModal({
   const handleSkip = async () => {
     if (!candidate) return;
 
+    const toastId = toast.loading('Überspringe Kandidat...');
+
     try {
       setLoading(true);
 
@@ -119,11 +133,12 @@ export default function CandidateDetailModal({
         reason: reviewNotes || 'Manually skipped'
       });
 
+      toast.success('Kandidat übersprungen', { id: toastId });
       onUpdate();
       handleClose();
     } catch (error) {
       console.error('Skip failed:', error);
-      alert('❌ Fehler beim Überspringen');
+      toast.error('Fehler beim Überspringen', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -136,11 +151,13 @@ export default function CandidateDetailModal({
     if (!candidate) return;
 
     if (!reviewNotes.trim()) {
-      alert('Bitte gib einen Grund für die Ablehnung an.');
+      toast.error('Bitte gib einen Grund für die Ablehnung an.');
       return;
     }
 
     if (!confirm('Kandidat ablehnen?')) return;
+
+    const toastId = toast.loading('Lehne Kandidat ab...');
 
     try {
       setLoading(true);
@@ -151,11 +168,12 @@ export default function CandidateDetailModal({
         reason: reviewNotes
       });
 
+      toast.success('Kandidat abgelehnt', { id: toastId });
       onUpdate();
       handleClose();
     } catch (error) {
       console.error('Reject failed:', error);
-      alert('❌ Fehler beim Ablehnen');
+      toast.error('Fehler beim Ablehnen', { id: toastId });
     } finally {
       setLoading(false);
     }

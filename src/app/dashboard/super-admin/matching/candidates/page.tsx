@@ -12,6 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -111,6 +112,7 @@ export default function MatchingCandidatesPage() {
       });
     } catch (error) {
       console.error('Error loading candidates:', error);
+      toast.error('Fehler beim Laden der Kandidaten');
     } finally {
       setLoading(false);
     }
@@ -120,10 +122,12 @@ export default function MatchingCandidatesPage() {
    * Führt Scan aus
    */
   const handleScan = async () => {
+    const toastId = toast.loading('Scanne nach Kandidaten...');
+
     try {
       setScanning(true);
 
-      await matchingService.scanForCandidates({
+      const job = await matchingService.scanForCandidates({
         developmentMode: devMode,
         minScore: devMode ? MATCHING_DEFAULTS.DEV_MIN_SCORE : MATCHING_DEFAULTS.MIN_SCORE,
         minOrganizations: devMode ? MATCHING_DEFAULTS.DEV_MIN_ORGANIZATIONS : MATCHING_DEFAULTS.MIN_ORGANIZATIONS
@@ -131,9 +135,18 @@ export default function MatchingCandidatesPage() {
 
       // Reload nach Scan
       await loadCandidates();
+
+      // Success Toast
+      toast.success(
+        `Scan abgeschlossen! ${job.stats?.candidatesCreated || 0} neue, ${job.stats?.candidatesUpdated || 0} aktualisierte Kandidaten`,
+        { id: toastId, duration: 5000 }
+      );
     } catch (error) {
       console.error('Scan failed:', error);
-      alert('Scan fehlgeschlagen: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error(
+        `Scan fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setScanning(false);
     }
