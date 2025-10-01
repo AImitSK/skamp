@@ -195,7 +195,7 @@ export default function CandidateDetailModal({
             {candidate.status === 'pending' && (
               <div className="mt-6">
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  <span>Notizen (optional)</span>
+                  Notizen (optional)
                 </label>
                 <TextArea
                   value={reviewNotes}
@@ -209,7 +209,7 @@ export default function CandidateDetailModal({
 
           <div className="flex items-center justify-between p-6 border-t border-zinc-200 dark:border-zinc-800">
             <Button color="light" onClick={onClose} disabled={actionLoading}>
-              <span>Abbrechen</span>
+              Abbrechen
             </Button>
 
             {candidate.status === 'pending' && (
@@ -240,7 +240,7 @@ export default function CandidateDetailModal({
 
             {candidate.status !== 'pending' && (
               <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                <span>Dieser Kandidat wurde bereits reviewt.</span>
+                Dieser Kandidat wurde bereits reviewt.
               </div>
             )}
           </div>
