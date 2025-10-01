@@ -1168,6 +1168,19 @@ class MatchingCandidatesService {
       return null;
     }
   }
+
+  /**
+   * Importiert einen Kandidaten mit automatischem Intelligent Matching
+   */
+  async importCandidateWithAutoMatching(params: {
+    candidateId: string;
+    selectedVariantIndex: number;
+    userId: string;
+    organizationId: string;
+  }) {
+    // Delegiere an die externe Funktion
+    return await importCandidateWithAutoMatching(params);
+  }
 }
 
 // Export singleton instance
