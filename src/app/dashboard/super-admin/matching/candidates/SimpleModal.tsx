@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { MatchingCandidate, MATCHING_STATUS_COLORS, CandidateRecommendation } from '@/types/matching';
 import { matchingService } from '@/lib/firebase/matching-service';
 import CandidateRecommendationBox from './CandidateRecommendation';
+import CandidateVariantCard from './CandidateVariantCard';
 
 interface SimpleModalProps {
   isOpen: boolean;
@@ -40,11 +41,11 @@ export default function SimpleModal({
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="mx-auto max-w-md w-full rounded-lg bg-white dark:bg-zinc-900 shadow-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+        <DialogPanel className="mx-auto max-w-4xl w-full max-h-[90vh] rounded-lg bg-white dark:bg-zinc-900 shadow-xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-xl font-semibold text-zinc-900 dark:text-white">
-                Step 4: Mit Recommendation
+                Step 5: Mit VariantCards
               </DialogTitle>
 
               <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
@@ -64,21 +65,36 @@ export default function SimpleModal({
             </button>
           </div>
 
-          <div className="mb-4">
+          <div className="flex-1 overflow-y-auto p-6">
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               Kandidat: {candidate.variants[0]?.contactData.displayName || 'Unbekannt'}
             </p>
 
             {recommendation && (
-              <CandidateRecommendationBox
-                recommendation={recommendation}
-                variantIndex={selectedVariantIndex}
-                onSelectVariant={setSelectedVariantIndex}
-              />
+              <div className="mb-6">
+                <CandidateRecommendationBox
+                  recommendation={recommendation}
+                  variantIndex={selectedVariantIndex}
+                  onSelectVariant={setSelectedVariantIndex}
+                />
+              </div>
             )}
+
+            <div className="space-y-4">
+              {candidate.variants.map((variant, index) => (
+                <CandidateVariantCard
+                  key={index}
+                  variant={variant}
+                  index={index}
+                  isSelected={selectedVariantIndex === index}
+                  isRecommended={recommendation?.recommendedIndex === index}
+                  onSelect={() => setSelectedVariantIndex(index)}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 p-6 border-t border-zinc-200 dark:border-zinc-800">
             <Button color="light" onClick={onClose}>
               Abbrechen
             </Button>
