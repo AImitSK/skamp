@@ -601,12 +601,25 @@ class MatchingCandidatesService {
         throw new Error('Variante nicht gefunden');
       }
 
+      // Finde SuperAdmin Organization
+      const orgsSnapshot = await getDocs(
+        query(collection(db, 'organizations'), where('type', '==', 'super_admin'))
+      );
+
+      if (orgsSnapshot.empty) {
+        throw new Error('SuperAdmin-Organisation nicht gefunden');
+      }
+
+      const superAdminOrgId = orgsSnapshot.docs[0].id;
+      console.log('✅ SuperAdmin Org gefunden:', superAdminOrgId);
+
       // Erstelle Kontakt-Daten für Import (nur definierte Felder)
       const contactData: any = {
         name: selectedVariant.contactData.name,
         displayName: selectedVariant.contactData.displayName,
         emails: selectedVariant.contactData.emails,
-        isGlobal: true,
+        organizationId: superAdminOrgId, // ✅ Gehört zu SuperAdmin-Org
+        isGlobal: true, // ✅ Aber global verfügbar für alle
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: request.userId,
@@ -658,11 +671,13 @@ class MatchingCandidatesService {
         });
       }
 
-      // Erstelle als globalen Kontakt direkt in contacts_enhanced
+      // Erstelle als globalen Kontakt in contacts_enhanced
       const globalContactRef = await addDoc(collection(db, 'contacts_enhanced'), contactData);
 
       const globalContactId = globalContactRef.id;
       console.log('✅ Candidate imported as global contact:', globalContactId);
+      console.log('   → SuperAdmin Org:', superAdminOrgId);
+      console.log('   → isGlobal:', true);
 
       // Markiere Kandidat als imported
       await updateDoc(doc(db, this.candidatesCollection, request.candidateId), {
