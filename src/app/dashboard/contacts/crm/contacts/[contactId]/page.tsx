@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { GlobalModeBanner } from '@/components/super-admin/GlobalModeBanner';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { listsService } from "@/lib/firebase/lists-service";
@@ -367,14 +366,6 @@ export default function ContactDetailPage() {
           <div className="mb-4">
             <Alert type={alert.type} title={alert.title} message={alert.message} />
           </div>
-        )}
-
-        {/* Global Mode Banner */}
-        {autoGlobalMode && (
-          <GlobalModeBanner
-            context="contact"
-            className="mb-6"
-          />
         )}
 
         {/* Header */}

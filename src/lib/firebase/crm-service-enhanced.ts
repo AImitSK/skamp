@@ -264,7 +264,7 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
    */
   async import(
     companies: Partial<CompanyEnhanced>[],
-    context: { organizationId: string; userId: string },
+    context: { organizationId: string; userId: string; autoGlobalMode?: boolean },
     options: {
       duplicateCheck?: boolean;
       updateExisting?: boolean;
@@ -708,7 +708,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
    */
   async import(
     contacts: Partial<ContactEnhanced>[],
-    context: { organizationId: string; userId: string },
+    context: { organizationId: string; userId: string; autoGlobalMode?: boolean },
     options: {
       duplicateCheck?: boolean;
       updateExisting?: boolean;

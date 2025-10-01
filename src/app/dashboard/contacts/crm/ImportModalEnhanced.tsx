@@ -16,6 +16,7 @@ import { ImportResult, ImportProgress, ImportTab, ImportModalEnhancedProps } fro
 import { CSV_MAX_FILE_SIZE, CSV_CHUNK_SIZE, STATUS_MESSAGES, ERROR_MESSAGES } from '@/lib/constants/crm-constants';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import {
   InformationCircleIcon,
   ArrowUpTrayIcon,
@@ -131,6 +132,7 @@ interface Props {
 export default function ImportModalEnhanced({ onClose, onImportSuccess }: Props) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const { autoGlobalMode } = useAutoGlobal();
   const [activeTab, setActiveTab] = useState<ImportTab>('companies');
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -635,7 +637,22 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
 
   const handleImport = async () => {
     if (!file || !user || !currentOrganization) return;
-    
+
+    // SuperAdmin Bestätigung: Warnung bei globalem Import
+    if (autoGlobalMode) {
+      const entityType = activeTab === 'companies' ? 'Firmen' : 'Kontakte';
+      const confirmed = window.confirm(
+        `⚠️ GLOBAL-IMPORT WARNUNG\n\n` +
+        `Du bist als SuperAdmin angemeldet!\n\n` +
+        `Die importierten ${entityType} werden GLOBAL und sind sofort für alle Premium-Kunden sichtbar.\n\n` +
+        `Möchtest du wirklich fortfahren?`
+      );
+
+      if (!confirmed) {
+        return; // Import abbrechen
+      }
+    }
+
     setIsImporting(true);
     setError('');
     setImportResult(null);
@@ -712,7 +729,11 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
 
             const result = await companiesEnhancedService.import(
               companies,
-              { organizationId: currentOrganization!.id, userId: user.uid },
+              {
+                organizationId: currentOrganization!.id,
+                userId: user.uid,
+                autoGlobalMode: autoGlobalMode
+              },
               {
                 duplicateCheck: true,
                 updateExisting: duplicateHandling === 'update'
@@ -796,7 +817,11 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
 
             const result = await contactsEnhancedService.import(
               contacts,
-              { organizationId: currentOrganization!.id, userId: user.uid },
+              {
+                organizationId: currentOrganization!.id,
+                userId: user.uid,
+                autoGlobalMode: autoGlobalMode
+              },
               {
                 duplicateCheck: true,
                 updateExisting: duplicateHandling === 'update'
@@ -852,6 +877,11 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold">Daten importieren</span>
           <div className="flex items-center gap-2">
+            {autoGlobalMode && (
+              <Badge color="orange" className="text-xs font-semibold">
+                🌐 GLOBAL-MODUS
+              </Badge>
+            )}
             <Badge color="blue">{file ? '1 Datei ausgewählt' : 'Keine Datei'}</Badge>
           </div>
         </div>
@@ -907,6 +937,26 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         <div className="p-6">
           {!importResult ? (
             <div className="space-y-6">
+              {/* SuperAdmin Warnung */}
+              {autoGlobalMode && (
+                <div className="rounded-lg bg-orange-50 border-2 border-orange-300 p-4">
+                  <div className="flex">
+                    <div className="shrink-0">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="ml-3">
+                      <Text className="text-sm font-semibold text-orange-800">
+                        ⚠️ GLOBAL-IMPORT AKTIV
+                      </Text>
+                      <Text className="mt-1 text-sm text-orange-700">
+                        Du bist als SuperAdmin angemeldet. Alle importierten {activeTab === 'companies' ? 'Firmen' : 'Kontakte'} werden
+                        <strong> automatisch global</strong> und sind sofort für alle Premium-Kunden in der Bibliothek sichtbar!
+                      </Text>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Instructions */}
               <div className="rounded-lg bg-blue-50 p-4">
                 <div className="flex">
