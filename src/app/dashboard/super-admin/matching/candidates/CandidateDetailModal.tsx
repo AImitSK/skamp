@@ -14,6 +14,7 @@ import { matchingService } from '@/lib/firebase/matching-service';
 import CandidateRecommendationBox from './CandidateRecommendation';
 import CandidateVariantCard from './CandidateVariantCard';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import toast from 'react-hot-toast';
 
 interface CandidateDetailModalProps {
@@ -30,6 +31,7 @@ export default function CandidateDetailModal({
   onUpdate
 }: CandidateDetailModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [recommendation, setRecommendation] = useState<CandidateRecommendation | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -109,6 +111,51 @@ export default function CandidateDetailModal({
     }
   };
 
+  /**
+   * Import-Handler
+   */
+  const handleImport = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+    if (!currentOrganization) {
+      toast.error('Keine Organisation ausgewählt');
+      return;
+    }
+
+    if (!confirm(`Kandidat mit Variante #${selectedVariantIndex + 1} importieren?`)) return;
+
+    const toastId = toast.loading('Importiere Kandidat...');
+
+    try {
+      setActionLoading(true);
+
+      const result = await matchingService.importCandidate({
+        candidateId: candidate.id!,
+        selectedVariantIndex,
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
+
+      if (result.success) {
+        toast.success('Kandidat importiert!', { id: toastId });
+        onUpdate();
+        onClose();
+      } else {
+        toast.error(`Fehler: ${result.error}`, { id: toastId });
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      toast.error(
+        `Import fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -182,7 +229,7 @@ export default function CandidateDetailModal({
               <span>Überspringen</span>
             </Button>
 
-            <Button color="green" onClick={onClose}>
+            <Button color="green" onClick={handleImport} disabled={actionLoading}>
               <CheckIcon className="size-4" />
               <span>Importieren</span>
             </Button>
