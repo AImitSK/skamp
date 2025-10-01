@@ -112,33 +112,28 @@ export default function SuperAdminSettingsPage() {
   };
 
   /**
-   * Triggert Matching-Scan
+   * Triggert Matching-Scan (direkt via Client SDK)
    */
   const handleTriggerScan = async () => {
     const toastId = toast.loading('Starte Matching-Scan...');
     setLoading(true);
 
     try {
-      const response = await fetch('/api/matching/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ devMode: false })
+      const job = await matchingService.scanForCandidates({
+        developmentMode: false
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(
-          `Scan abgeschlossen! ${result.job.stats?.candidatesCreated || 0} neue Kandidaten`,
-          { id: toastId, duration: 5000 }
-        );
-        await loadLastScan();
-      } else {
-        toast.error(`Fehler: ${result.message}`, { id: toastId });
-      }
+      toast.success(
+        `Scan abgeschlossen! ${job.stats?.candidatesCreated || 0} neue, ${job.stats?.candidatesUpdated || 0} aktualisierte Kandidaten`,
+        { id: toastId, duration: 5000 }
+      );
+      await loadLastScan();
     } catch (error) {
       console.error('Scan failed:', error);
-      toast.error('Fehler beim Starten des Scans', { id: toastId });
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
     } finally {
       setLoading(false);
     }
