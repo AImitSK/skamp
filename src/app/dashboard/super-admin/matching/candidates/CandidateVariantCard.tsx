@@ -187,7 +187,7 @@ export default function CandidateVariantCard({
                   {email.isPrimary && (
                     <Badge color="blue" className="ml-2 text-xs">Primary</Badge>
                   )}
-                  <span className="text-zinc-500 ml-2">({email.type})</span>
+                  {email.type && <span className="text-zinc-500 ml-2">({email.type})</span>}
                 </div>
               ))}
             </div>
@@ -205,7 +205,7 @@ export default function CandidateVariantCard({
                   {phone.isPrimary && (
                     <Badge color="blue" className="ml-2 text-xs">Primary</Badge>
                   )}
-                  <span className="text-zinc-500 ml-2">({phone.type})</span>
+                  {phone.type && <span className="text-zinc-500 ml-2">({phone.type})</span>}
                 </div>
               ))}
             </div>
@@ -271,10 +271,11 @@ export default function CandidateVariantCard({
             <div className="flex-1">
               {data.socialProfiles.map((profile, idx) => (
                 <div key={idx} className="text-sm">
-                  <span className="font-medium text-zinc-900 dark:text-white">
-                    {profile.platform}:
-                  </span>
-                  {' '}
+                  {profile.platform && (
+                    <span className="font-medium text-zinc-900 dark:text-white">
+                      {profile.platform}:{' '}
+                    </span>
+                  )}
                   <a
                     href={profile.url}
                     target="_blank"
