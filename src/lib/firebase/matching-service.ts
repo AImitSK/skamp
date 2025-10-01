@@ -835,6 +835,19 @@ class MatchingCandidatesService {
       throw error;
     }
   }
+
+  /**
+   * Lädt den letzten Scan Job
+   */
+  async getLastScanJob(): Promise<MatchingScanJob | null> {
+    try {
+      const jobs = await this.getRecentScanJobs(1);
+      return jobs.length > 0 ? jobs[0] : null;
+    } catch (error) {
+      console.error('Error fetching last scan job:', error);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance
