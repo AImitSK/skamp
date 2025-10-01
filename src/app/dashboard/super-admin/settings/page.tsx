@@ -72,7 +72,8 @@ export default function SuperAdminSettingsPage() {
           { id: toastId, duration: 5000 }
         );
       } else {
-        toast.error(`Fehler: ${result.message}`, { id: toastId });
+        console.error('Seed error details:', result);
+        toast.error(`Fehler: ${result.message || result.error}`, { id: toastId });
       }
     } catch (error) {
       console.error('Seed failed:', error);

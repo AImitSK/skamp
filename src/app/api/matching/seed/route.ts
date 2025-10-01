@@ -18,6 +18,7 @@ import { db } from '@/lib/firebase/config';
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Starting test data seed...');
+    console.log('Firebase db instance:', db ? 'OK' : 'MISSING');
 
     // 1. Create Test Organizations
     const orgs = [
@@ -164,11 +165,14 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Seed failed:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
     return NextResponse.json(
       {
         success: false,
         error: 'Seed fehlgeschlagen',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error)
       },
       { status: 500 }
     );
