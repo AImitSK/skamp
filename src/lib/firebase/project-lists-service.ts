@@ -233,14 +233,14 @@ export const projectListsService = {
           if (listData.filters) {
             return await this.getFilteredContacts(listData.filters, listData.organizationId);
           } else if (listData.contactIds) {
-            return await this.getContactsByIds(listData.contactIds);
+            return await this.getContactsByIds(listData.contactIds, listData.organizationId);
           }
           break;
 
         case 'combined':
           // Kontakte aus Cache oder neu berechnen
           if (listData.cachedContactsSnapshot) {
-            return await this.getContactsByIds(listData.cachedContactsSnapshot);
+            return await this.getContactsByIds(listData.cachedContactsSnapshot, listData.organizationId);
           } else {
             // Neu berechnen falls kein Cache
             const allContacts: ContactEnhanced[] = [];
@@ -263,7 +263,8 @@ export const projectListsService = {
 
             if (listData.additionalContacts) {
               const additional = await this.getContactsByIds(
-                listData.additionalContacts.filter(id => !contactIds.has(id))
+                listData.additionalContacts.filter(id => !contactIds.has(id)),
+                listData.organizationId
               );
               allContacts.push(...additional);
             }
@@ -334,33 +335,9 @@ export const projectListsService = {
     }
   },
 
-  async getContactsByIds(contactIds: string[]): Promise<ContactEnhanced[]> {
-    try {
-      const contacts: ContactEnhanced[] = [];
-
-      // In Batches abrufen (max 10 pro Batch für Firestore 'in' Query)
-      const batchSize = 10;
-      for (let i = 0; i < contactIds.length; i += batchSize) {
-        const batch = contactIds.slice(i, i + batchSize);
-        const q = query(
-          collection(db, 'contacts'),
-          where('__name__', 'in', batch)
-        );
-        const snapshot = await getDocs(q);
-
-        snapshot.docs.forEach(doc => {
-          contacts.push({
-            id: doc.id,
-            ...doc.data()
-          } as ContactEnhanced);
-        });
-      }
-
-      return contacts;
-    } catch (error) {
-      console.error('Fehler beim Abrufen der Kontakte nach IDs:', error);
-      return [];
-    }
+  async getContactsByIds(contactIds: string[], organizationId?: string): Promise<ContactEnhanced[]> {
+    // Nutze listsService.getContactsByIds() - unterstützt References automatisch
+    return await listsService.getContactsByIds(contactIds, organizationId);
   },
 
   // Master-Listen mit Details abrufen
