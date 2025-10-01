@@ -75,6 +75,40 @@ export default function CandidateDetailModal({
     }
   };
 
+  /**
+   * Reject-Handler
+   */
+  const handleReject = async () => {
+    if (!user) {
+      toast.error('Nicht eingeloggt');
+      return;
+    }
+
+    const reason = prompt('Grund für Ablehnung:');
+    if (!reason) return;
+
+    const toastId = toast.loading('Lehne Kandidat ab...');
+
+    try {
+      setActionLoading(true);
+
+      await matchingService.rejectCandidate({
+        candidateId: candidate.id!,
+        userId: user.uid,
+        reason
+      });
+
+      toast.success('Kandidat abgelehnt', { id: toastId });
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Reject failed:', error);
+      toast.error('Fehler beim Ablehnen', { id: toastId });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -138,7 +172,7 @@ export default function CandidateDetailModal({
               Abbrechen
             </Button>
 
-            <Button color="red" onClick={onClose}>
+            <Button color="red" onClick={handleReject} disabled={actionLoading}>
               <XMarkIcon className="size-4" />
               <span>Ablehnen</span>
             </Button>
