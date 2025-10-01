@@ -193,10 +193,12 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
     }
     setLoadingPreview(true);
     try {
-      const contacts = await listsService.getContactsByIds(formData.contactIds);
+      // Pass organizationId to support Reference contacts
+      const contacts = await listsService.getContactsByIds(formData.contactIds, organizationId);
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
+      console.error('Error loading static preview:', error);
       // Error handled silently - user will see loading state timeout
     } finally {
       setLoadingPreview(false);

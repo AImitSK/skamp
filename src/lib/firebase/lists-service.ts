@@ -174,7 +174,8 @@ export const listsService = {
 
   async getContacts(list: DistributionList): Promise<ContactEnhanced[]> {
     if (list.type === 'static' && list.contactIds) {
-      return await this.getContactsByIds(list.contactIds);
+      const organizationId = list.organizationId || list.userId;
+      return await this.getContactsByIds(list.contactIds, organizationId);
     } else if (list.type === 'dynamic' && list.filters) {
       const organizationId = list.organizationId || list.userId;
       return await this.getContactsByFilters(list.filters, organizationId);
@@ -406,68 +407,69 @@ export const listsService = {
     });
   },
 
-  async getContactsByIds(contactIds: string[]): Promise<ContactEnhanced[]> {
+  async getContactsByIds(contactIds: string[], organizationId?: string): Promise<ContactEnhanced[]> {
     if (contactIds.length === 0) return [];
-
-    // Batch-Abfragen für große Listen (Firestore limit ist 10 pro "in" query)
-    const batches = [];
-    for (let i = 0; i < contactIds.length; i += 10) {
-      batches.push(contactIds.slice(i, i + 10));
-    }
 
     const allContacts: ContactEnhanced[] = [];
 
-    for (const batch of batches) {
-      // Zuerst in contacts_enhanced suchen
-      const q = query(
-        collection(db, 'contacts_enhanced'),
-        where('__name__', 'in', batch)
-      );
+    // Nutze contactsEnhancedService.getById() für jeden Kontakt
+    // Dies unterstützt automatisch References (local-ref-journalist-*)
+    for (const contactId of contactIds) {
+      try {
+        // Wenn organizationId vorhanden, nutze enhanced Service mit Context
+        if (organizationId) {
+          const contact = await contactsEnhancedService.getById(contactId, organizationId);
+          if (contact) {
+            allContacts.push(contact);
+          }
+        } else {
+          // Fallback: Direkter Firestore Query für Legacy-Support
+          const contactRef = doc(db, 'contacts_enhanced', contactId);
+          const contactSnap = await getDoc(contactRef);
 
-      const snapshot = await getDocs(q);
+          if (contactSnap.exists()) {
+            allContacts.push({
+              id: contactSnap.id,
+              ...contactSnap.data()
+            } as ContactEnhanced);
+          } else {
+            // Legacy Fallback
+            const legacyRef = doc(db, 'contacts', contactId);
+            const legacySnap = await getDoc(legacyRef);
 
-      // Wenn keine Kontakte gefunden, in der alten contacts Collection suchen (Fallback)
-      if (snapshot.empty) {
-        console.log('⚠️ No contacts found in contacts_enhanced, trying contacts collection...');
-        const fallbackQ = query(
-          collection(db, 'contacts'),
-          where('__name__', 'in', batch)
-        );
-
-        const fallbackSnapshot = await getDocs(fallbackQ);
-        fallbackSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          // Konvertiere alte Contact zu ContactEnhanced
-          const enhancedContact: ContactEnhanced = {
-            id: doc.id,
-            organizationId: data.userId || data.organizationId,
-            createdBy: data.userId,
-            name: {
-              firstName: data.firstName || '',
-              lastName: data.lastName || ''
-            },
-            displayName: data.displayName || `${data.firstName} ${data.lastName}`,
-            emails: data.email ? [{
-              type: 'business',
-              email: data.email,
-              isPrimary: true
-            }] : [],
-            phones: data.phone ? [{
-              type: 'business',
-              number: data.phone,
-              isPrimary: true
-            }] : [],
-            companyName: data.companyName,
-            position: data.position || data.title,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt
-          };
-          allContacts.push(enhancedContact);
-        });
-      } else {
-        snapshot.docs.forEach(doc => {
-          allContacts.push({ id: doc.id, ...doc.data() } as ContactEnhanced);
-        });
+            if (legacySnap.exists()) {
+              const data = legacySnap.data();
+              // Konvertiere alte Contact zu ContactEnhanced
+              const enhancedContact: ContactEnhanced = {
+                id: legacySnap.id,
+                organizationId: data.userId || data.organizationId,
+                createdBy: data.userId,
+                name: {
+                  firstName: data.firstName || '',
+                  lastName: data.lastName || ''
+                },
+                displayName: data.displayName || `${data.firstName} ${data.lastName}`,
+                emails: data.email ? [{
+                  type: 'business',
+                  email: data.email,
+                  isPrimary: true
+                }] : [],
+                phones: data.phone ? [{
+                  type: 'business',
+                  number: data.phone,
+                  isPrimary: true
+                }] : [],
+                companyName: data.companyName,
+                position: data.position || data.title,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt
+              };
+              allContacts.push(enhancedContact);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error loading contact ${contactId}:`, error);
       }
     }
 
