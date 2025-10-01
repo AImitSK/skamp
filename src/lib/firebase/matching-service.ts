@@ -612,41 +612,67 @@ class MatchingCandidatesService {
         throw new Error('Variante nicht gefunden');
       }
 
-      // Erstelle Kontakt-Daten für Import
-      const contactData: Partial<ContactEnhanced> = {
+      // Erstelle Kontakt-Daten für Import (nur definierte Felder)
+      const contactData: any = {
         name: selectedVariant.contactData.name,
         displayName: selectedVariant.contactData.displayName,
         emails: selectedVariant.contactData.emails,
-        phones: selectedVariant.contactData.phones,
-        position: selectedVariant.contactData.position,
-        department: selectedVariant.contactData.department,
-        companyName: selectedVariant.contactData.companyName,
-        companyId: selectedVariant.contactData.companyId,
-        socialProfiles: selectedVariant.contactData.socialProfiles,
-        photoUrl: selectedVariant.contactData.photoUrl,
-        website: selectedVariant.contactData.website,
-        mediaProfile: selectedVariant.contactData.hasMediaProfile ? {
+        isGlobal: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: request.userId,
+        updatedBy: request.userId,
+        deletedAt: null
+      };
+
+      // Nur definierte optionale Felder hinzufügen
+      if (selectedVariant.contactData.phones && selectedVariant.contactData.phones.length > 0) {
+        contactData.phones = selectedVariant.contactData.phones;
+      }
+      if (selectedVariant.contactData.position) {
+        contactData.position = selectedVariant.contactData.position;
+      }
+      if (selectedVariant.contactData.department) {
+        contactData.department = selectedVariant.contactData.department;
+      }
+      if (selectedVariant.contactData.companyName) {
+        contactData.companyName = selectedVariant.contactData.companyName;
+      }
+      if (selectedVariant.contactData.companyId) {
+        contactData.companyId = selectedVariant.contactData.companyId;
+      }
+      if (selectedVariant.contactData.socialProfiles && selectedVariant.contactData.socialProfiles.length > 0) {
+        contactData.socialProfiles = selectedVariant.contactData.socialProfiles;
+      }
+      if (selectedVariant.contactData.photoUrl) {
+        contactData.photoUrl = selectedVariant.contactData.photoUrl;
+      }
+      if (selectedVariant.contactData.website) {
+        contactData.website = selectedVariant.contactData.website;
+      }
+      if (selectedVariant.contactData.hasMediaProfile) {
+        contactData.mediaProfile = {
           isJournalist: true,
           beats: selectedVariant.contactData.beats || [],
           mediaTypes: selectedVariant.contactData.mediaTypes || [],
           publicationIds: []
-        } : undefined,
-        ...request.overrides
-      };
+        };
+      }
 
-      // Importiere mit autoGlobalMode
-      // TODO: SuperAdmin OrganizationId ermitteln
-      const superAdminOrgId = 'super-admin-org'; // Placeholder
+      // Overrides anwenden (nur definierte)
+      if (request.overrides) {
+        Object.keys(request.overrides).forEach(key => {
+          const value = (request.overrides as any)[key];
+          if (value !== undefined) {
+            contactData[key] = value;
+          }
+        });
+      }
 
-      const globalContactId = await contactsEnhancedService.create(
-        contactData as any,
-        {
-          organizationId: superAdminOrgId,
-          userId: request.userId,
-          autoGlobalMode: true
-        }
-      );
+      // Erstelle als globalen Kontakt direkt in contacts_enhanced
+      const globalContactRef = await addDoc(collection(db, 'contacts_enhanced'), contactData);
 
+      const globalContactId = globalContactRef.id;
       console.log('✅ Candidate imported as global contact:', globalContactId);
 
       // Markiere Kandidat als imported

@@ -185,48 +185,41 @@ export default function CandidateDetailModal({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} size="5xl">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg p-6">
+      <>
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <DialogTitle className="text-2xl font-semibold text-zinc-900 dark:text-white">
-                {selectedVariant.contactData.displayName}
-              </DialogTitle>
+        <div className="px-6 py-4">
+          <div className="flex items-center gap-3 mb-2">
+            <DialogTitle className="!text-2xl !font-semibold !text-zinc-900 dark:!text-white !p-0">
+              {selectedVariant.contactData.displayName}
+            </DialogTitle>
 
-              <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
-                {candidate.status}
-              </Badge>
+            <Badge color={MATCHING_STATUS_COLORS[candidate.status]}>
+              {candidate.status}
+            </Badge>
 
-              <Badge color="blue">
-                Score: {candidate.score} / 100
-              </Badge>
-            </div>
-
-            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              {candidate.variants.length} Varianten aus verschiedenen Organisationen
-            </div>
+            <Badge color="blue">
+              Score: {candidate.score} / 100
+            </Badge>
           </div>
 
-          <button
-            onClick={handleClose}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-          >
-            <XMarkIcon className="size-6" />
-          </button>
+          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+            {candidate.variants.length} Varianten aus verschiedenen Organisationen
+          </div>
         </div>
 
         {/* Empfehlung */}
-        {recommendation && (
-          <CandidateRecommendationBox
-            recommendation={recommendation}
-            variantIndex={selectedVariantIndex}
-            onSelectVariant={setSelectedVariantIndex}
-          />
-        )}
+        <div className="px-6">
+          {recommendation && (
+            <CandidateRecommendationBox
+              recommendation={recommendation}
+              variantIndex={selectedVariantIndex}
+              onSelectVariant={setSelectedVariantIndex}
+            />
+          )}
+        </div>
 
         {/* Varianten */}
-        <div className="mb-6">
+        <div className="px-6 mb-6">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
             <SparklesIcon className="size-5 text-blue-600" />
             Gefundene Varianten
@@ -248,7 +241,7 @@ export default function CandidateDetailModal({
 
         {/* Review-Notizen */}
         {candidate.status === 'pending' && (
-          <div className="mb-6">
+          <div className="px-6 mb-6">
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               📝 Notizen (optional)
             </label>
@@ -262,7 +255,7 @@ export default function CandidateDetailModal({
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-200 dark:border-zinc-800">
           <Button
             color="light"
             onClick={handleClose}
@@ -320,7 +313,7 @@ export default function CandidateDetailModal({
             </div>
           )}
         </div>
-      </div>
+      </>
     </Dialog>
   );
 }
