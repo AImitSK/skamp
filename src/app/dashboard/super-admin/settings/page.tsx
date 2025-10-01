@@ -64,7 +64,7 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const { seedTestData } = await import('@/lib/testing/test-data-utils');
+      const { seedTestData } = await import('@/lib/matching/seed-test-data');
       const result = await seedTestData();
 
       toast.success(
@@ -94,7 +94,7 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const { cleanupTestData } = await import('@/lib/testing/test-data-utils');
+      const { cleanupTestData } = await import('@/lib/matching/cleanup-test-data');
       const result = await cleanupTestData();
 
       toast.success(
