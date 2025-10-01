@@ -1,10 +1,14 @@
 # Matching-Kandidaten für Premium-Datenbank
 
+> 📚 **Siehe auch:** [Wiederverwendung bestehender Systeme](./matching-kandidaten-wiederverwendung.md) - Dokumentation welche existierenden Typen, Services und Komponenten wir für dieses Feature wiederverwenden.
+
 ## 📋 Übersicht
 
 **Ziel:** Automatisch hochwertige Journalisten-Kontakte identifizieren, die von mehreren Organisationen unabhängig erfasst wurden, und diese nach manuellem Review in die globale Premium-Datenbank aufnehmen.
 
 **Kern-Idee:** Wenn 2+ Organisationen denselben Journalisten in ihr CRM eingeben, ist das ein starker Qualitäts-Indikator (Crowd-Sourcing).
+
+**Code-Wiederverwendung:** Ca. 70% des Codes nutzt bestehende Services, Typen und Patterns. Nur 30% ist matching-spezifische Logik.
 
 ---
 
