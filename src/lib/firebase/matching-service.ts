@@ -485,10 +485,6 @@ class MatchingCandidatesService {
     pagination?: MatchingCandidatePagination
   ): Promise<MatchingCandidate[]> {
     try {
-      console.log('getCandidates called with:', { filters, sorting, pagination });
-      console.log('db instance:', db);
-      console.log('candidatesCollection:', this.candidatesCollection);
-
       const constraints: QueryConstraint[] = [];
 
       // Status Filter
@@ -522,15 +518,8 @@ class MatchingCandidatesService {
         constraints.push(firestoreLimit(pagination.limit));
       }
 
-      console.log('Building query with constraints:', constraints.length);
-      const collectionRef = collection(db, this.candidatesCollection);
-      console.log('Collection ref created:', collectionRef);
-
-      const q = query(collectionRef, ...constraints);
-      console.log('Query created:', q);
-
+      const q = query(collection(db, this.candidatesCollection), ...constraints);
       const snapshot = await getDocs(q);
-      console.log('Snapshot received:', snapshot.docs.length, 'docs');
 
       let candidates = snapshot.docs.map(doc => ({
         id: doc.id,
