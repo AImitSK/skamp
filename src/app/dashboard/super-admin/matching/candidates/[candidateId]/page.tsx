@@ -322,23 +322,25 @@ export default function CandidateDetailPage({
             </Button>
 
             {/* Import */}
-            <Button
-              color="green"
-              onClick={handleImport}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <>
-                  <ArrowPathIcon className="size-4 animate-spin" />
-                  Importiere...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="size-4" />
-                  Als Premium importieren
-                </>
-              )}
-            </Button>
+            {actionLoading ? (
+              <Button
+                color="green"
+                onClick={handleImport}
+                disabled={actionLoading}
+              >
+                <ArrowPathIcon className="size-4 animate-spin" />
+                Importiere...
+              </Button>
+            ) : (
+              <Button
+                color="green"
+                onClick={handleImport}
+                disabled={actionLoading}
+              >
+                <CheckIcon className="size-4" />
+                Als Premium importieren
+              </Button>
+            )}
           </div>
         )}
 
