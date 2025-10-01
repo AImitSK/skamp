@@ -19,10 +19,10 @@ import {
   SparklesIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { Dialog, DialogPanel, DialogTitle } from '@/components/catalyst/dialog';
-import { Button } from '@/components/catalyst/button';
-import { Badge } from '@/components/catalyst/badge';
-import { TextArea } from '@/components/catalyst/textarea';
+import { Dialog, DialogPanel, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { TextArea } from '@/components/ui/textarea';
 import { matchingService } from '@/lib/firebase/matching-service';
 import {
   MatchingCandidate,

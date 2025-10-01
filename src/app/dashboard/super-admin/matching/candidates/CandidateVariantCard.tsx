@@ -22,8 +22,8 @@ import {
   SparklesIcon,
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
-import { Badge } from '@/components/catalyst/badge';
-import { Button } from '@/components/catalyst/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { MatchingCandidateVariant } from '@/types/matching';
 
 interface CandidateVariantCardProps {

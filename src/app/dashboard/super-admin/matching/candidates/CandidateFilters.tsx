@@ -16,10 +16,10 @@ import {
   FunnelIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { Input } from '@/components/catalyst/input';
-import { Select } from '@/components/catalyst/select';
-import { Button } from '@/components/catalyst/button';
-import { Badge } from '@/components/catalyst/badge';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   MatchingCandidateFilters,
   MATCHING_STATUS_LABELS,

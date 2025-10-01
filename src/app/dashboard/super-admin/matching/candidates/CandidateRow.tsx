@@ -21,9 +21,9 @@ import {
   CheckIcon,
   ForwardIcon
 } from '@heroicons/react/24/outline';
-import { TableRow, TableCell } from '@/components/catalyst/table';
-import { Badge } from '@/components/catalyst/badge';
-import { Button } from '@/components/catalyst/button';
+import { TableRow, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { matchingService } from '@/lib/firebase/matching-service';
 import {
   MatchingCandidate,

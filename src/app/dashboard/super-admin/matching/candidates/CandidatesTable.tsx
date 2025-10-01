@@ -18,9 +18,9 @@ import {
   UserGroupIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/catalyst/table';
-import { Badge } from '@/components/catalyst/badge';
-import { Button } from '@/components/catalyst/button';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   MatchingCandidate,
   MatchingCandidateSorting,

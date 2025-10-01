@@ -17,10 +17,10 @@ import {
   FunnelIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { Button } from '@/components/catalyst/button';
-import { Input } from '@/components/catalyst/input';
-import { Select } from '@/components/catalyst/select';
-import { Badge } from '@/components/catalyst/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { matchingService } from '@/lib/firebase/matching-service';
 import {
   MatchingCandidate,
