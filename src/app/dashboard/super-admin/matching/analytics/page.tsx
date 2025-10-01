@@ -59,8 +59,12 @@ export default function MatchingAnalyticsPage() {
     try {
       setLoading(true);
 
-      // Alle Kandidaten laden
-      const candidates = await matchingService.getCandidates({}, {}, { limit: 1000 });
+      // Alle Kandidaten laden (ohne Filter, Standard-Sortierung, hohes Limit)
+      const candidates = await matchingService.getCandidates(
+        undefined,
+        undefined,
+        { limit: 1000 }
+      );
 
       // Statistiken berechnen
       const byStatus = {
