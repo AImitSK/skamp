@@ -784,6 +784,602 @@ logger.info('Candidate imported', {
 
 ---
 
+## 🧪 Development & Testing
+
+### Test-Strategie
+
+**Kontext:** Die Software ist in Entwicklung und wir arbeiten mit echten Firebase-Daten. Das vereinfacht das Testing erheblich!
+
+**Ansatz:**
+- ✅ Seed-Scripts zum Erstellen von Test-Organisationen und Kontakten
+- ✅ Development-Modus mit niedrigeren Schwellwerten
+- ✅ Manuelle Tests mit echten Daten
+- ✅ Cleanup-Scripts zum Aufräumen
+
+### Seed-Scripts
+
+#### 1. `seed-matching-test-data.ts`
+
+**Zweck:** Erstellt 3-5 Test-Organisationen mit ähnlichen Journalisten-Kontakten für Matching-Tests.
+
+```typescript
+// scripts/seed-matching-test-data.ts
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { contactsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { firebaseConfig } from '@/lib/firebase/config';
+
+// Firebase initialisieren
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+interface TestOrganization {
+  id?: string;
+  name: string;
+  email: string;
+  plan: 'free' | 'premium';
+}
+
+interface JournalistVariant {
+  organizationId: string;
+  data: {
+    name: { firstName: string; lastName: string };
+    displayName?: string;
+    emails: Array<{ type: string; email: string; isPrimary: boolean }>;
+    phones?: Array<{ type: string; number: string; isPrimary: boolean }>;
+    position?: string;
+    companyName?: string;
+    companyId?: string;
+    mediaProfile?: {
+      isJournalist: boolean;
+      beats?: string[];
+      publicationIds?: string[];
+    };
+  };
+}
+
+/**
+ * Erstellt Test-Organisationen
+ */
+async function createTestOrganizations(): Promise<TestOrganization[]> {
+  const orgs: TestOrganization[] = [
+    { name: 'Premium Media GmbH', email: 'admin@premium-media.de', plan: 'premium' },
+    { name: 'StartUp PR AG', email: 'info@startup-pr.de', plan: 'free' },
+    { name: 'Agency Communications Ltd', email: 'contact@agency-comms.de', plan: 'free' },
+    { name: 'Digital Media House', email: 'hello@digital-media.de', plan: 'premium' }
+  ];
+
+  const createdOrgs: TestOrganization[] = [];
+
+  for (const org of orgs) {
+    try {
+      const docRef = await addDoc(collection(db, 'organizations'), {
+        ...org,
+        type: 'agency',
+        status: 'active',
+        features: org.plan === 'premium' ? ['premium_library', 'analytics'] : [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      createdOrgs.push({ ...org, id: docRef.id });
+      console.log(`✅ Organisation erstellt: ${org.name} (${docRef.id})`);
+    } catch (error) {
+      console.error(`❌ Fehler beim Erstellen von ${org.name}:`, error);
+    }
+  }
+
+  return createdOrgs;
+}
+
+/**
+ * Erstellt ähnliche Journalisten-Kontakte in mehreren Organisationen
+ */
+async function createJournalistVariants(orgs: TestOrganization[]): Promise<void> {
+  // Journalist 1: Max Müller (Der Spiegel)
+  const maxMuellerVariants: JournalistVariant[] = [
+    {
+      organizationId: orgs[0].id!,
+      data: {
+        name: { firstName: 'Max', lastName: 'Müller' },
+        displayName: 'Max Müller',
+        emails: [{ type: 'business', email: 'm.mueller@spiegel.de', isPrimary: true }],
+        phones: [{ type: 'business', number: '+49 40 1234567', isPrimary: true }],
+        position: 'Politikredakteur',
+        companyName: 'Der Spiegel',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik', 'Wirtschaft', 'Europa'],
+          publicationIds: []
+        }
+      }
+    },
+    {
+      organizationId: orgs[1].id!,
+      data: {
+        name: { firstName: 'Maximilian', lastName: 'Müller' },
+        displayName: 'Maximilian Müller',
+        emails: [{ type: 'business', email: 'mueller@spiegel.de', isPrimary: true }],
+        position: 'Redakteur',
+        companyName: 'Spiegel Verlag',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik'],
+          publicationIds: []
+        }
+      }
+    },
+    {
+      organizationId: orgs[2].id!,
+      data: {
+        name: { firstName: 'M.', lastName: 'Müller' },
+        displayName: 'M. Müller',
+        emails: [{ type: 'business', email: 'max.mueller@spiegel.de', isPrimary: true }],
+        phones: [{ type: 'business', number: '+49 40 9876543', isPrimary: true }],
+        position: 'Senior Journalist',
+        companyName: 'Axel Springer',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Politik', 'Wirtschaft'],
+          publicationIds: []
+        }
+      }
+    }
+  ];
+
+  // Journalist 2: Anna Schmidt (Die Zeit)
+  const annaSchmidtVariants: JournalistVariant[] = [
+    {
+      organizationId: orgs[0].id!,
+      data: {
+        name: { firstName: 'Anna', lastName: 'Schmidt' },
+        displayName: 'Anna Schmidt',
+        emails: [{ type: 'business', email: 'a.schmidt@zeit.de', isPrimary: true }],
+        phones: [{ type: 'business', number: '+49 40 3280 123', isPrimary: true }],
+        position: 'Wirtschaftsredakteurin',
+        companyName: 'Die Zeit',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Wirtschaft', 'Finanzen', 'Startups'],
+          publicationIds: []
+        }
+      }
+    },
+    {
+      organizationId: orgs[3].id!,
+      data: {
+        name: { firstName: 'Anna', lastName: 'Schmidt' },
+        displayName: 'Anna Schmidt',
+        emails: [{ type: 'business', email: 'schmidt@zeit.de', isPrimary: true }],
+        position: 'Redakteurin',
+        companyName: 'Zeit Online',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Wirtschaft', 'Technologie'],
+          publicationIds: []
+        }
+      }
+    }
+  ];
+
+  // Journalist 3: Peter Weber (nur in 1 Org - sollte NICHT matchen)
+  const peterWeberVariant: JournalistVariant[] = [
+    {
+      organizationId: orgs[1].id!,
+      data: {
+        name: { firstName: 'Peter', lastName: 'Weber' },
+        displayName: 'Peter Weber',
+        emails: [{ type: 'business', email: 'p.weber@faz.net', isPrimary: true }],
+        position: 'Technikredakteur',
+        companyName: 'FAZ',
+        mediaProfile: {
+          isJournalist: true,
+          beats: ['Technologie', 'Digital'],
+          publicationIds: []
+        }
+      }
+    }
+  ];
+
+  // Alle Varianten kombinieren
+  const allVariants = [
+    ...maxMuellerVariants,
+    ...annaSchmidtVariants,
+    ...peterWeberVariant
+  ];
+
+  // Kontakte erstellen
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const variant of allVariants) {
+    try {
+      await contactsEnhancedService.create(variant.data as any, {
+        organizationId: variant.organizationId,
+        userId: 'seed-script-admin',
+        autoGlobalMode: false // WICHTIG: Nicht global!
+      });
+
+      console.log(`✅ Kontakt erstellt: ${variant.data.displayName} in Org ${variant.organizationId}`);
+      successCount++;
+    } catch (error) {
+      console.error(`❌ Fehler beim Erstellen von ${variant.data.displayName}:`, error);
+      errorCount++;
+    }
+  }
+
+  console.log(`\n📊 Zusammenfassung:`);
+  console.log(`   ✅ Erfolgreich: ${successCount}`);
+  console.log(`   ❌ Fehler: ${errorCount}`);
+}
+
+/**
+ * Haupt-Funktion
+ */
+async function main() {
+  console.log('🚀 Starte Matching Test-Daten Seed...\n');
+
+  try {
+    // 1. Organisationen erstellen
+    console.log('📁 Erstelle Test-Organisationen...');
+    const orgs = await createTestOrganizations();
+    console.log(`\n✅ ${orgs.length} Organisationen erstellt\n`);
+
+    if (orgs.length === 0) {
+      throw new Error('Keine Organisationen erstellt. Abbruch.');
+    }
+
+    // 2. Journalisten-Kontakte erstellen
+    console.log('👥 Erstelle Journalisten-Kontakte...');
+    await createJournalistVariants(orgs);
+
+    console.log('\n🎉 Seed erfolgreich abgeschlossen!\n');
+    console.log('📋 Nächste Schritte:');
+    console.log('   1. Führe Matching-Scan aus (manuell oder automatisch)');
+    console.log('   2. Öffne /super-admin/matching/candidates');
+    console.log('   3. Erwartete Kandidaten:');
+    console.log('      - Max Müller (3 Varianten)');
+    console.log('      - Anna Schmidt (2 Varianten)');
+    console.log('      - Peter Weber (KEIN Kandidat - nur 1 Org)');
+
+  } catch (error) {
+    console.error('❌ Seed fehlgeschlagen:', error);
+    process.exit(1);
+  }
+}
+
+// Script ausführen
+main();
+```
+
+**Usage:**
+```bash
+# Füge zu package.json hinzu:
+"scripts": {
+  "seed:matching-test": "tsx scripts/seed-matching-test-data.ts"
+}
+
+# Ausführen:
+npm run seed:matching-test
+```
+
+---
+
+#### 2. `cleanup-matching-test-data.ts`
+
+**Zweck:** Löscht alle Test-Organisationen und deren Kontakte.
+
+```typescript
+// scripts/cleanup-matching-test-data.ts
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc
+} from 'firebase/firestore';
+import { firebaseConfig } from '@/lib/firebase/config';
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const TEST_ORG_NAMES = [
+  'Premium Media GmbH',
+  'StartUp PR AG',
+  'Agency Communications Ltd',
+  'Digital Media House'
+];
+
+/**
+ * Löscht Test-Organisationen
+ */
+async function deleteTestOrganizations(): Promise<string[]> {
+  const deletedOrgIds: string[] = [];
+
+  for (const orgName of TEST_ORG_NAMES) {
+    try {
+      const q = query(
+        collection(db, 'organizations'),
+        where('name', '==', orgName)
+      );
+
+      const snapshot = await getDocs(q);
+
+      for (const docSnap of snapshot.docs) {
+        await deleteDoc(doc(db, 'organizations', docSnap.id));
+        deletedOrgIds.push(docSnap.id);
+        console.log(`✅ Organisation gelöscht: ${orgName} (${docSnap.id})`);
+      }
+    } catch (error) {
+      console.error(`❌ Fehler beim Löschen von ${orgName}:`, error);
+    }
+  }
+
+  return deletedOrgIds;
+}
+
+/**
+ * Löscht Kontakte der Test-Organisationen
+ */
+async function deleteTestContacts(orgIds: string[]): Promise<number> {
+  let deletedCount = 0;
+
+  for (const orgId of orgIds) {
+    try {
+      const q = query(
+        collection(db, 'contacts_enhanced'),
+        where('organizationId', '==', orgId)
+      );
+
+      const snapshot = await getDocs(q);
+
+      for (const docSnap of snapshot.docs) {
+        await deleteDoc(doc(db, 'contacts_enhanced', docSnap.id));
+        deletedCount++;
+      }
+
+      console.log(`✅ ${snapshot.size} Kontakte gelöscht für Org ${orgId}`);
+    } catch (error) {
+      console.error(`❌ Fehler beim Löschen von Kontakten für Org ${orgId}:`, error);
+    }
+  }
+
+  return deletedCount;
+}
+
+/**
+ * Löscht Matching-Kandidaten (falls erstellt)
+ */
+async function deleteMatchingCandidates(): Promise<number> {
+  let deletedCount = 0;
+
+  try {
+    const q = query(collection(db, 'matching_candidates'));
+    const snapshot = await getDocs(q);
+
+    for (const docSnap of snapshot.docs) {
+      // Prüfe ob Kandidat Test-Org-Kontakte enthält
+      const candidate = docSnap.data();
+      const hasTestOrgVariant = candidate.variants?.some((v: any) =>
+        TEST_ORG_NAMES.includes(v.organizationName)
+      );
+
+      if (hasTestOrgVariant) {
+        await deleteDoc(doc(db, 'matching_candidates', docSnap.id));
+        deletedCount++;
+        console.log(`✅ Matching-Kandidat gelöscht: ${docSnap.id}`);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Fehler beim Löschen von Matching-Kandidaten:', error);
+  }
+
+  return deletedCount;
+}
+
+/**
+ * Haupt-Funktion
+ */
+async function main() {
+  console.log('🧹 Starte Cleanup von Test-Daten...\n');
+
+  try {
+    // 1. Organisationen löschen
+    console.log('📁 Lösche Test-Organisationen...');
+    const deletedOrgIds = await deleteTestOrganizations();
+    console.log(`\n✅ ${deletedOrgIds.length} Organisationen gelöscht\n`);
+
+    // 2. Kontakte löschen
+    if (deletedOrgIds.length > 0) {
+      console.log('👥 Lösche Kontakte...');
+      const deletedContacts = await deleteTestContacts(deletedOrgIds);
+      console.log(`\n✅ ${deletedContacts} Kontakte gelöscht\n`);
+    }
+
+    // 3. Matching-Kandidaten löschen
+    console.log('🎯 Lösche Matching-Kandidaten...');
+    const deletedCandidates = await deleteMatchingCandidates();
+    console.log(`\n✅ ${deletedCandidates} Kandidaten gelöscht\n`);
+
+    console.log('🎉 Cleanup erfolgreich abgeschlossen!');
+
+  } catch (error) {
+    console.error('❌ Cleanup fehlgeschlagen:', error);
+    process.exit(1);
+  }
+}
+
+// Script ausführen
+main();
+```
+
+**Usage:**
+```bash
+# Füge zu package.json hinzu:
+"scripts": {
+  "cleanup:matching-test": "tsx scripts/cleanup-matching-test-data.ts"
+}
+
+# Ausführen:
+npm run cleanup:matching-test
+```
+
+---
+
+### Development-Modus
+
+**Zweck:** Erleichtert das Testen während der Entwicklung durch niedrigere Schwellwerte.
+
+#### Im Service:
+```typescript
+// src/lib/firebase/matching-candidates-service.ts
+
+export const matchingCandidatesService = {
+
+  async scanForCandidates(options?: {
+    developmentMode?: boolean; // NEU
+    minOrganizations?: number;
+    minScore?: number;
+  }) {
+    // Entwicklungs-freundliche Defaults
+    const minOrgs = options?.developmentMode
+      ? 1  // Im Dev: auch einzelne Orgs zeigen
+      : (options?.minOrganizations || 2);
+
+    const minScore = options?.developmentMode
+      ? 40 // Im Dev: niedrigerer Score
+      : (options?.minScore || 60);
+
+    // ... Rest der Logik
+  }
+}
+```
+
+#### Im UI:
+```tsx
+// src/app/super-admin/matching/candidates/page.tsx
+
+export default function MatchingCandidatesPage() {
+  const [devMode, setDevMode] = useState(
+    process.env.NODE_ENV === 'development'
+  );
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={devMode}
+            onChange={(e) => setDevMode(e.target.checked)}
+          />
+          <span className="text-sm">🔧 Development-Modus</span>
+        </label>
+        {devMode && (
+          <span className="text-xs text-gray-500">
+            (zeigt auch 1-Org Kandidaten, min Score: 40)
+          </span>
+        )}
+      </div>
+
+      {/* Rest der UI */}
+    </div>
+  );
+}
+```
+
+---
+
+### Test-Checkliste
+
+**Vor dem Testen:**
+- [ ] Firebase-Config korrekt (`.env.local`)
+- [ ] SuperAdmin-Account erstellt
+- [ ] Seed-Script erfolgreich ausgeführt
+- [ ] Test-Organisationen in Firestore sichtbar
+
+**Test-Szenarien:**
+
+1. **Basic Matching (E-Mail)**
+   - [ ] Max Müller wird als Kandidat erkannt
+   - [ ] 3 Varianten werden angezeigt
+   - [ ] Score ist > 70
+
+2. **Scoring**
+   - [ ] Kandidat mit mehr Orgs hat höheren Score
+   - [ ] Vollständiges Profil erhöht Score
+   - [ ] Verifizierte E-Mail-Domain erhöht Score
+
+3. **Import-Flow**
+   - [ ] "Als Premium importieren" öffnet CRM-Import
+   - [ ] Daten sind vorausgefüllt
+   - [ ] autoGlobalMode ist aktiv
+   - [ ] Nach Import: Kandidat ist "imported"
+   - [ ] Kontakt ist in global-journalists sichtbar
+
+4. **Edge Cases**
+   - [ ] Peter Weber (nur 1 Org) ist KEIN Kandidat (ohne Dev-Modus)
+   - [ ] Mit Dev-Modus: Peter Weber wird angezeigt
+   - [ ] Keine Duplikate in Kandidaten-Liste
+
+5. **Cleanup**
+   - [ ] Cleanup-Script löscht alle Test-Daten
+   - [ ] Keine Test-Orgs in Firestore
+   - [ ] Keine Test-Kontakte in Firestore
+   - [ ] Keine Test-Kandidaten in Firestore
+
+---
+
+### Debugging-Tipps
+
+**Problem:** Kein Kandidat wird erstellt
+```typescript
+// Prüfe:
+1. Haben Test-Kontakte mediaProfile? ✅
+2. Sind sie in verschiedenen Organisationen? ✅
+3. Ist matchKey identisch?
+   - Console.log in generateMatchKey() einfügen
+4. Ist minOrganizations korrekt gesetzt?
+```
+
+**Problem:** Score zu niedrig
+```typescript
+// Prüfe Scoring-Faktoren:
+1. Anzahl Organisationen (50+ Punkte)
+2. mediaProfile vorhanden (+10)
+3. E-Mail-Domain verifiziert (+10)
+4. Beats definiert (+5)
+```
+
+**Problem:** Import funktioniert nicht
+```typescript
+// Prüfe:
+1. Ist SuperAdmin eingeloggt? ✅
+2. Ist autoGlobalMode aktiv? ✅
+3. Check Firestore Rules für global-journalists
+4. Check Console für Fehler
+```
+
+---
+
+### Performance-Tests
+
+**Scan mit vielen Kontakten:**
+```typescript
+// Test mit 1.000 Kontakten über 10 Orgs
+// Erwartete Dauer: < 30 Sekunden
+
+// Test mit 10.000 Kontakten über 50 Orgs
+// Erwartete Dauer: < 5 Minuten
+
+// Bei Timeout: Pagination einbauen
+```
+
+---
+
 ## 📚 Anhang
 
 ### Beispiel: Match-Key Generierung
