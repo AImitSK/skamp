@@ -500,21 +500,21 @@ export default function DashboardLayout({
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="min-w-60">
                       <DropdownItem
-                        href="/super-admin/matching/candidates"
+                        href="/dashboard/super-admin/matching/candidates"
                         icon={AdjustmentsHorizontalIcon}
                         description="Neue Premium-Kandidaten prüfen"
                       >
                         Matching-Kandidaten
                       </DropdownItem>
                       <DropdownItem
-                        href="/super-admin/matching/analytics"
+                        href="/dashboard/super-admin/matching/analytics"
                         icon={ChartBarIcon}
                         description="Datenqualität und Statistiken"
                       >
                         Analytics
                       </DropdownItem>
                       <DropdownItem
-                        href="/super-admin/settings"
+                        href="/dashboard/super-admin/settings"
                         icon={Cog6ToothIcon}
                         description="Global-System konfigurieren"
                       >
