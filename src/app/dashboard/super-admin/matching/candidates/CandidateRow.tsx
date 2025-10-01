@@ -341,7 +341,7 @@ export default function CandidateRowWithModal(props: CandidateRowProps) {
       <SimpleModal
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        title={props.candidate.variants[0]?.contactData.displayName || 'Kandidat'}
+        candidate={props.candidate}
       />
     </>
   );
