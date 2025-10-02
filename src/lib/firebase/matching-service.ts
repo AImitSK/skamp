@@ -139,16 +139,31 @@ export async function importCandidateWithAutoMatching(params: {
     // 4. KONTAKT ERSTELLEN
     const contactData = selectedVariant.contactData;
 
-    // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
-    const contactId = await contactsEnhancedService.create({
+    // Bereite Kontakt-Daten vor mit mediaProfile wenn Journalist
+    const contactToCreate: any = {
       ...contactData,
       companyId: companyResult?.companyId || null,
-      publications: publicationResults.map(p => p.publicationId),
       organizationId: params.organizationId,
       createdBy: params.userId,
       source: 'matching_import',
       matchingCandidateId: params.candidateId
-    }, { organizationId: params.organizationId, userId: params.userId });
+    };
+
+    // WICHTIG: Setze mediaProfile wenn hasMediaProfile = true
+    if (contactData.hasMediaProfile) {
+      contactToCreate.mediaProfile = {
+        isJournalist: true,
+        beats: contactData.beats || [],
+        mediaTypes: contactData.mediaTypes || [],
+        publicationIds: publicationResults.map(p => p.publicationId) || []
+      };
+    }
+
+    // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
+    const contactId = await contactsEnhancedService.create(
+      contactToCreate,
+      { organizationId: params.organizationId, userId: params.userId }
+    );
 
     // 5. KANDIDAT ALS IMPORTED MARKIEREN
     await updateDoc(doc(db, 'matching_candidates', params.candidateId), {
