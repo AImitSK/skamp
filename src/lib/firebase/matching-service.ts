@@ -140,7 +140,7 @@ export async function importCandidateWithAutoMatching(params: {
     const contactData = selectedVariant.contactData;
 
     // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
-    const contactId = await contactsEnhancedService.createContact({
+    const contactId = await contactsEnhancedService.create({
       ...contactData,
       companyId: companyResult?.companyId || null,
       publications: publicationResults.map(p => p.publicationId),
@@ -148,7 +148,7 @@ export async function importCandidateWithAutoMatching(params: {
       createdBy: params.userId,
       source: 'matching_import',
       matchingCandidateId: params.candidateId
-    });
+    }, { organizationId: params.organizationId, userId: params.userId });
 
     // 5. KANDIDAT ALS IMPORTED MARKIEREN
     await updateDoc(doc(db, 'matching_candidates', params.candidateId), {
