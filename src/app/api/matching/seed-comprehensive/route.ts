@@ -1,7 +1,7 @@
 // API Route zum Seeden umfangreicher Test-Daten
 
 import { NextRequest, NextResponse } from 'next/server';
-import { seedComprehensiveTestData, cleanupTestData } from '@/scripts/seed-matching-comprehensive-test-data';
+import { seedComprehensiveTestData, cleanupTestData } from '@/lib/matching/seed-comprehensive-test-data';
 
 export async function POST(request: NextRequest) {
   try {
