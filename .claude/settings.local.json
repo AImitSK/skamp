@@ -89,7 +89,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(dir:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(if exist node_modules rmdir /s /q node_modules)",
+      "Bash(if exist package-lock.json del package-lock.json)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
