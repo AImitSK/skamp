@@ -297,6 +297,7 @@ async function analyzePublicationDatabase(
 export interface CreatePublicationParams {
   name: string;
   companyId?: string | null;  // ✅ OPTIONAL: Publication kann zu Company gehören (oder nicht)
+  companyName?: string;  // ✅ OPTIONAL: Name des Verlags für publisherName
   website?: string;
   organizationId: string;
   createdBy: string;
@@ -319,7 +320,7 @@ export async function createPublication(params: CreatePublicationParams): Promis
     name: params.name, // ✅ Legacy-Kompatibilität
     companyId: params.companyId || null,
     publisherId: params.companyId || null, // ✅ Für Kompatibilität
-    publisherName: null, // Wird später gesetzt wenn Company-Daten verfügbar
+    publisherName: params.companyName || null, // ✅ Verlagsname für Anzeige
     website: params.website || null,
     organizationId: params.organizationId,
     createdBy: params.createdBy,

@@ -174,6 +174,7 @@ export async function importCandidateWithAutoMatching(params: {
       // ✅ Publications NUR wenn Company vorhanden!
       publicationResults = await handlePublicationMatching({
         companyId: companyResult.companyId,  // ✅ PFLICHT - nicht null!
+        companyName: companyResult.companyName, // ✅ Für publisherName Feld
         variants: candidate.variants,
         organizationId: params.organizationId,
         userId: params.userId,
@@ -339,6 +340,7 @@ async function handleCompanyMatching(params: {
  */
 async function handlePublicationMatching(params: {
   companyId: string;  // ✅ PFLICHT - nicht null!
+  companyName: string; // ✅ Für publisherName Feld
   variants: MatchingCandidateVariant[];
   organizationId: string;
   userId: string;
@@ -351,7 +353,7 @@ async function handlePublicationMatching(params: {
   wasCreated: boolean;
   wasEnriched: boolean;
 }>> {
-  const { companyId, variants, organizationId, userId, autoGlobalMode } = params;
+  const { companyId, companyName, variants, organizationId, userId, autoGlobalMode } = params;
 
   // 1. Finde bestehende Publikationen DIESER Company
   const publicationMatches = await findPublications(
@@ -400,6 +402,7 @@ async function handlePublicationMatching(params: {
     const newPubId = await createPublication({
       name: pubName,
       companyId: companyId,  // ✅ PFLICHT - Publication gehört zu dieser Company!
+      companyName: companyName,
       organizationId: organizationId,
       createdBy: userId,
       source: 'auto_matching',
