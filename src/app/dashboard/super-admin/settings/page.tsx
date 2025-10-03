@@ -159,18 +159,15 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/matching/seed-realistic', { method: 'POST' });
-      const result = await response.json();
+      // Führe direkt im Browser aus (nicht über API Route) wegen Firebase Auth
+      const { seedRealisticTestData } = await import('@/lib/matching/seed-realistic-test-data');
+      const stats = await seedRealisticTestData();
 
-      if (result.success) {
-        const totalScenarios = Object.values(result.stats.scenarios || {}).reduce((a: number, b: number) => a + b, 0);
-        toast.success(
-          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.companies} Companies, ${result.stats.publications} Publications, ${result.stats.contacts} Kontakte → ${totalScenarios} Szenarien`,
-          { id: toastId, duration: 10000 }
-        );
-      } else {
-        throw new Error(result.error || 'Unbekannter Fehler');
-      }
+      const totalScenarios = Object.values(stats.scenarios || {}).reduce((a: number, b: number) => a + b, 0);
+      toast.success(
+        `Realistische Test-Daten erstellt! ${stats.organizations} Orgs, ${stats.companies} Companies, ${stats.publications} Publications, ${stats.contacts} Kontakte → ${totalScenarios} Szenarien`,
+        { id: toastId, duration: 10000 }
+      );
     } catch (error) {
       console.error('Realistic seed failed:', error);
       toast.error(
@@ -194,14 +191,11 @@ export default function SuperAdminSettingsPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/matching/seed-realistic', { method: 'DELETE' });
-      const result = await response.json();
+      // Führe direkt im Browser aus (nicht über API Route) wegen Firebase Auth
+      const { cleanupRealisticTestData } = await import('@/lib/matching/seed-realistic-test-data');
+      await cleanupRealisticTestData();
 
-      if (result.success) {
-        toast.success('Realistische Test-Daten gelöscht!', { id: toastId, duration: 5000 });
-      } else {
-        throw new Error(result.error || 'Unbekannter Fehler');
-      }
+      toast.success('Realistische Test-Daten gelöscht!', { id: toastId, duration: 5000 });
     } catch (error) {
       console.error('Realistic cleanup failed:', error);
       toast.error(
