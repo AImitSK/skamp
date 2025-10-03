@@ -532,38 +532,76 @@ class MultiEntityReferenceService {
       for (const orgId of superAdminOrgIds) {
         console.log(`📊 Suche in Organization: ${orgId}`);
 
-        const publicationsQuery = query(
+        // Versuche mit publisherId
+        let publicationsQuery = query(
           collection(db, 'publications'),
           where('organizationId', '==', orgId),
           where('publisherId', '==', companyId)
         );
 
-        const snapshot = await getDocs(publicationsQuery);
-        const publications = snapshot.docs.map(doc => ({
+        let snapshot = await getDocs(publicationsQuery);
+        let publications = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
 
-        console.log(`📰 Gefundene Publications in ${orgId}:`, publications.length);
+        console.log(`📰 Gefundene Publications mit publisherId in ${orgId}:`, publications.length);
+
+        // Falls keine gefunden, versuche mit companyId
+        if (publications.length === 0) {
+          console.log(`🔍 Fallback: Suche mit companyId in ${orgId}`);
+          publicationsQuery = query(
+            collection(db, 'publications'),
+            where('organizationId', '==', orgId),
+            where('companyId', '==', companyId)
+          );
+
+          snapshot = await getDocs(publicationsQuery);
+          publications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
+          console.log(`📰 Gefundene Publications mit companyId in ${orgId}:`, publications.length);
+        }
+
         allPublications.push(...publications);
       }
 
-      // Falls keine gefunden, versuche allgemeine Suche nach publisherId
+      // Falls keine gefunden, versuche allgemeine Suche nach publisherId ODER companyId
       if (allPublications.length === 0) {
-        console.log('🔍 Fallback: Suche alle Publications mit publisherId:', companyId);
+        console.log('🔍 Fallback: Suche alle Publications mit publisherId oder companyId:', companyId);
 
-        const fallbackQuery = query(
+        // Erst publisherId
+        let fallbackQuery = query(
           collection(db, 'publications'),
           where('publisherId', '==', companyId)
         );
 
-        const fallbackSnapshot = await getDocs(fallbackQuery);
+        let fallbackSnapshot = await getDocs(fallbackQuery);
         allPublications = fallbackSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
 
-        console.log('📰 Fallback Publications gefunden:', allPublications.length);
+        console.log('📰 Fallback Publications mit publisherId gefunden:', allPublications.length);
+
+        // Falls noch keine gefunden, versuche companyId
+        if (allPublications.length === 0) {
+          console.log('🔍 Letzter Fallback: Suche mit companyId');
+          fallbackQuery = query(
+            collection(db, 'publications'),
+            where('companyId', '==', companyId)
+          );
+
+          fallbackSnapshot = await getDocs(fallbackQuery);
+          allPublications = fallbackSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
+          console.log('📰 Fallback Publications mit companyId gefunden:', allPublications.length);
+        }
       }
 
       return allPublications;
