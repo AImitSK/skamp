@@ -890,7 +890,23 @@ class MatchingCandidatesService {
         throw new Error('organizationId fehlt - kann Kontakt nicht erstellen');
       }
 
-      console.log('✅ Verwende SuperAdmin Org:', superAdminOrgId);
+      console.log('\n🔄 ===== IMPORT STARTEN =====');
+      console.log('📋 Kandidat:', {
+        id: request.candidateId,
+        matchKey: candidate.matchKey,
+        matchType: candidate.matchType,
+        score: candidate.score?.total,
+        variantenAnzahl: candidate.variants.length,
+        ausgewählteVariante: request.selectedVariantIndex
+      });
+      console.log('👤 Ausgewählte Variante:', {
+        organization: selectedVariant.organizationName,
+        name: selectedVariant.contactData.displayName,
+        email: selectedVariant.contactData.emails?.[0]?.email,
+        position: selectedVariant.contactData.position,
+        companyName: selectedVariant.contactData.companyName
+      });
+      console.log('🏢 SuperAdmin Org:', superAdminOrgId);
 
       // Erstelle Kontakt-Daten für Import (nur definierte Felder)
       const contactData: any = {
@@ -950,14 +966,33 @@ class MatchingCandidatesService {
         });
       }
 
+      console.log('📝 Erstelle Contact-Daten mit folgenden Feldern:', {
+        name: contactData.name,
+        displayName: contactData.displayName,
+        emails: contactData.emails?.length || 0,
+        phones: contactData.phones?.length || 0,
+        position: contactData.position || 'keine',
+        companyName: contactData.companyName || 'keine',
+        companyId: contactData.companyId || 'keine',
+        mediaProfile: contactData.mediaProfile ? 'vorhanden' : 'keine',
+        isGlobal: contactData.isGlobal,
+        organizationId: contactData.organizationId
+      });
+
       // Erstelle als globalen Kontakt in contacts_enhanced
       const globalContactRef = await addDoc(collection(db, 'contacts_enhanced'), contactData);
 
       const globalContactId = globalContactRef.id;
-      console.log('✅ Candidate imported as PREMIUM contact:', globalContactId);
-      console.log('   → organizationId: NONE (reiner Premium-Kontakt)');
-      console.log('   → isGlobal: true');
-      console.log('   → Sichtbar in: Premium-Bibliothek (Redakteure)');
+      console.log('\n✅ ===== IMPORT ERFOLGREICH =====');
+      console.log('🎯 Neuer Premium-Contact erstellt:');
+      console.log('   ID:', globalContactId);
+      console.log('   Name:', contactData.displayName);
+      console.log('   E-Mail:', contactData.emails?.[0]?.email || 'keine');
+      console.log('   Organization:', superAdminOrgId, '(SuperAdmin)');
+      console.log('   isGlobal:', true);
+      console.log('   Sichtbar in: Premium-Bibliothek (Redakteure-Seite)');
+      console.log('   Collection: contacts_enhanced');
+      console.log('================================\n');
 
       // Markiere Kandidat als imported
       await updateDoc(doc(db, this.candidatesCollection, request.candidateId), {
