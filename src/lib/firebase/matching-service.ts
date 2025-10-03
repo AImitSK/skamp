@@ -447,7 +447,7 @@ function generateMatchKey(contact: ContactEnhanced): MatchKeyResult {
 /**
  * Konvertiert ContactEnhanced zu MatchingCandidateContactData (Snapshot)
  */
-function createContactSnapshot(contact: ContactEnhanced): MatchingCandidateContactData {
+async function createContactSnapshot(contact: ContactEnhanced): Promise<MatchingCandidateContactData> {
   const snapshot: any = {
     name: {
       firstName: contact.name?.firstName || '',
@@ -456,8 +456,29 @@ function createContactSnapshot(contact: ContactEnhanced): MatchingCandidateConta
     displayName: contact.displayName || '',
     emails: contact.emails || [],
     hasMediaProfile: !!contact.mediaProfile,
-    publications: [] // TODO: Publikations-Namen laden
+    publications: []
   };
+
+  // Lade Publication-Namen wenn verfügbar
+  if (contact.mediaProfile?.publicationIds && contact.mediaProfile.publicationIds.length > 0) {
+    const publicationNames: string[] = [];
+
+    for (const pubId of contact.mediaProfile.publicationIds) {
+      try {
+        const pubDoc = await getDoc(doc(db, 'publications', pubId));
+        if (pubDoc.exists()) {
+          const pubName = pubDoc.data().title || pubDoc.data().name;
+          if (pubName) publicationNames.push(pubName);
+        }
+      } catch (error) {
+        console.warn(`Could not load publication ${pubId}:`, error);
+      }
+    }
+
+    if (publicationNames.length > 0) {
+      snapshot.publications = publicationNames;
+    }
+  }
 
   // Nur definierte Felder hinzufügen
   if (contact.name?.title) snapshot.name.title = contact.name.title;
@@ -728,13 +749,17 @@ class MatchingCandidatesService {
           continue;
         }
 
-        // Erstelle Varianten
-        const variants: MatchingCandidateVariant[] = contacts.map(c => ({
-          organizationId: c.organizationId,
-          organizationName: c.organizationName,
-          contactId: c.contact.id!,
-          contactData: createContactSnapshot(c.contact)
-        }));
+        // Erstelle Varianten (async wegen Publication-Namen laden)
+        const variants: MatchingCandidateVariant[] = [];
+        for (const c of contacts) {
+          const contactData = await createContactSnapshot(c.contact);
+          variants.push({
+            organizationId: c.organizationId,
+            organizationName: c.organizationName,
+            contactId: c.contact.id!,
+            contactData
+          });
+        }
 
         // Berechne Score
         const scoreCalc = scoreCandidate(variants);
