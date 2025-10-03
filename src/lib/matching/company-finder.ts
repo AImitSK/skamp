@@ -6,7 +6,7 @@
  */
 
 import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { MatchingCandidateVariant } from '@/types/matching';
 import { findBestCompanyMatches } from './string-similarity';
 import { analyzeDatabaseSignals } from './database-analyzer';
@@ -30,7 +30,8 @@ export interface CompanyMatchResult {
 export async function findOrCreateCompany(
   variants: MatchingCandidateVariant[],
   organizationId: string,
-  userId: string
+  userId: string,
+  autoGlobalMode: boolean = false
 ): Promise<CompanyMatchResult> {
 
   console.log('🔍 Starting company matching...');
@@ -45,7 +46,7 @@ export async function findOrCreateCompany(
 
   if (ownCompanies.length === 0) {
     console.log('⚠️ Keine eigenen Companies gefunden - erstelle neue');
-    return await createNewCompany(variants, organizationId, userId);
+    return await createNewCompany(variants, organizationId, userId, autoGlobalMode);
   }
 
   // SCHRITT 3: Datenbank-Analyse
@@ -115,7 +116,7 @@ export async function findOrCreateCompany(
 
   // SCHRITT 6: Neue Firma erstellen
   console.log('❌ Keine Übereinstimmung gefunden - erstelle neue Firma');
-  return await createNewCompany(variants, organizationId, userId);
+  return await createNewCompany(variants, organizationId, userId, autoGlobalMode);
 }
 
 /**
@@ -228,7 +229,8 @@ function normalizeUrl(url: string): string {
 async function createNewCompany(
   variants: MatchingCandidateVariant[],
   organizationId: string,
-  userId: string
+  userId: string,
+  autoGlobalMode: boolean = false
 ): Promise<CompanyMatchResult> {
 
   // Wähle beste Variante für Company-Name
@@ -248,27 +250,32 @@ async function createNewCompany(
   console.log(`🏢 Erstelle neue Company: ${companyName}`);
 
   try {
-    const companyData = {
+    // ✅ Nutze companiesEnhancedService für automatisches isGlobal-Handling
+    const { companiesEnhancedService } = await import('@/lib/firebase/crm-service-enhanced');
+
+    const companyData: any = {
       name: companyName,
       officialName: companyName,
       type: 'publisher' as const,
       organizationId,
-      isGlobal: true,
       isReference: false, // ✅ Explizit markieren: NICHT Reference!
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      createdBy: userId,
-      updatedBy: userId,
-      deletedAt: null,
+      // isGlobal wird automatisch durch autoGlobalMode gesetzt
 
       // Optionale Felder aus Varianten
       website: bestVariant.contactData.website || null
     };
 
-    const docRef = await addDoc(collection(db, 'companies_enhanced'), companyData);
+    const companyId = await companiesEnhancedService.create(
+      companyData,
+      {
+        organizationId,
+        userId,
+        autoGlobalMode // ✅ SuperAdmin → automatisch global
+      }
+    );
 
     return {
-      companyId: docRef.id,
+      companyId,
       companyName,
       confidence: 'low',
       method: 'created_new',

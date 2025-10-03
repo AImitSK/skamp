@@ -397,7 +397,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
    */
   async create(
     data: Omit<ContactEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'deletedAt' | 'deletedBy'>,
-    context: { organizationId: string; userId: string }
+    context: { organizationId: string; userId: string; autoGlobalMode?: boolean }
   ): Promise<string> {
     // Validierung
     if (!data.name?.firstName || !data.name?.lastName) {
@@ -408,7 +408,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     if (!data.displayName) {
       data.displayName = this.formatDisplayName(data.name);
     }
-    
+
     // Clean personalInfo to remove any undefined values
     if (data.personalInfo) {
       const cleanedPersonalInfo: any = {};
@@ -422,6 +422,22 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
       } else {
         delete data.personalInfo;
       }
+    }
+
+    // Global-Interceptor anwenden wenn SuperAdmin/autoGlobalMode
+    if (context.autoGlobalMode) {
+      const { interceptSave } = await import('@/lib/utils/global-interceptor');
+      const globalizedData = interceptSave(data, 'contact', { email: context.userId }, {
+        autoGlobalMode: context.autoGlobalMode
+      });
+
+      console.log('🌟 Contact wird als global erstellt:', {
+        name: data.displayName,
+        isGlobal: globalizedData.isGlobal,
+        autoGlobalMode: context.autoGlobalMode
+      });
+
+      return super.create(globalizedData, context);
     }
 
     return super.create(data, context);

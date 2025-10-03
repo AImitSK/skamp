@@ -140,7 +140,8 @@ export default function CandidateDetailModal({
         candidateId: candidate.id!,
         selectedVariantIndex,
         userId: user.uid,
-        organizationId: 'superadmin-org' // ✅ Immer SuperAdmin für Premium-Bibliothek
+        userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
+        organizationId: currentOrganization?.id || user.uid
       });
 
       if (result.success) {

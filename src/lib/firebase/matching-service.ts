@@ -61,6 +61,7 @@ export async function importCandidateWithAutoMatching(params: {
   candidateId: string;
   selectedVariantIndex: number;
   userId: string;
+  userEmail: string; // ✅ Für SuperAdmin-Erkennung
   organizationId: string;
 }): Promise<{
   success: boolean;
@@ -84,12 +85,18 @@ export async function importCandidateWithAutoMatching(params: {
   error?: string;
 }> {
   try {
+    // ✅ SuperAdmin-Erkennung via Email
+    const { SUPER_ADMIN_EMAIL } = await import('@/lib/hooks/useAutoGlobal');
+    const autoGlobalMode = params.userEmail === SUPER_ADMIN_EMAIL;
+
     console.log('\n🔄 ===== IMPORT MIT AUTO-MATCHING STARTEN =====');
     console.log('📋 Request:', {
       candidateId: params.candidateId,
       selectedVariantIndex: params.selectedVariantIndex,
       userId: params.userId,
-      organizationId: params.organizationId
+      userEmail: params.userEmail,
+      organizationId: params.organizationId,
+      autoGlobalMode: autoGlobalMode
     });
 
     // 1. Lade Kandidat
@@ -136,7 +143,8 @@ export async function importCandidateWithAutoMatching(params: {
         variants: candidate.variants,
         selectedVariantIndex: params.selectedVariantIndex,
         organizationId: params.organizationId,
-        userId: params.userId
+        userId: params.userId,
+        autoGlobalMode: autoGlobalMode
       });
       console.log('✅ Company Match:', {
         companyId: companyResult.companyId,
@@ -168,7 +176,8 @@ export async function importCandidateWithAutoMatching(params: {
         companyId: companyResult.companyId,  // ✅ PFLICHT - nicht null!
         variants: candidate.variants,
         organizationId: params.organizationId,
-        userId: params.userId
+        userId: params.userId,
+        autoGlobalMode: autoGlobalMode
       });
       console.log('✅ Publication Matches:', publicationResults.map(p => ({
         publicationName: p.publicationName,
@@ -185,18 +194,15 @@ export async function importCandidateWithAutoMatching(params: {
     console.log('\n👤 ===== KONTAKT ERSTELLEN =====');
     const contactData = selectedVariant.contactData;
 
-    // Prüfe ob SuperAdmin (für Premium-Import)
-    const isSuperAdmin = params.organizationId === 'superadmin-org';
-
     // Bereite Kontakt-Daten vor mit mediaProfile wenn Journalist
     const contactToCreate: any = {
       ...contactData,
       companyId: companyResult?.companyId || null,
-      organizationId: isSuperAdmin ? 'superadmin-org' : params.organizationId,
-      isGlobal: isSuperAdmin, // ✅ Global für SuperAdmin, lokal für normale User
+      organizationId: params.organizationId,
       createdBy: params.userId,
       source: 'matching_import',
       matchingCandidateId: params.candidateId
+      // isGlobal wird automatisch durch useAutoGlobal() + interceptSave() gesetzt
     };
 
     // WICHTIG: Setze mediaProfile wenn hasMediaProfile = true
@@ -222,7 +228,11 @@ export async function importCandidateWithAutoMatching(params: {
     // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
     const contactId = await contactsEnhancedService.create(
       contactToCreate,
-      { organizationId: params.organizationId, userId: params.userId }
+      {
+        organizationId: params.organizationId,
+        userId: params.userId,
+        autoGlobalMode: autoGlobalMode // ✅ SuperAdmin → automatisch global
+      }
     );
 
     console.log('✅ Contact erstellt:', contactId);
@@ -274,6 +284,7 @@ async function handleCompanyMatching(params: {
   selectedVariantIndex: number;
   organizationId: string;
   userId: string;
+  autoGlobalMode: boolean;
 }): Promise<{
   companyId: string;
   companyName: string;
@@ -282,10 +293,10 @@ async function handleCompanyMatching(params: {
   wasCreated: boolean;
   wasEnriched: boolean;
 }> {
-  const { variants, selectedVariantIndex, organizationId, userId } = params;
+  const { variants, selectedVariantIndex, organizationId, userId, autoGlobalMode } = params;
 
   // 1. Suche nach bestehender Firma oder erstelle neue
-  const companyMatch = await findOrCreateCompany(variants, organizationId, userId);
+  const companyMatch = await findOrCreateCompany(variants, organizationId, userId, autoGlobalMode);
 
   if (!companyMatch.wasCreated) {
     // Firma gefunden → Prüfe ob Enrichment sinnvoll ist
@@ -331,6 +342,7 @@ async function handlePublicationMatching(params: {
   variants: MatchingCandidateVariant[];
   organizationId: string;
   userId: string;
+  autoGlobalMode: boolean;
 }): Promise<Array<{
   publicationId: string;
   publicationName: string;
@@ -339,7 +351,7 @@ async function handlePublicationMatching(params: {
   wasCreated: boolean;
   wasEnriched: boolean;
 }>> {
-  const { companyId, variants, organizationId, userId } = params;
+  const { companyId, variants, organizationId, userId, autoGlobalMode } = params;
 
   // 1. Finde bestehende Publikationen DIESER Company
   const publicationMatches = await findPublications(
@@ -390,7 +402,8 @@ async function handlePublicationMatching(params: {
       companyId: companyId,  // ✅ PFLICHT - Publication gehört zu dieser Company!
       organizationId: organizationId,
       createdBy: userId,
-      source: 'auto_matching'
+      source: 'auto_matching',
+      autoGlobalMode: autoGlobalMode
     });
 
     results.push({

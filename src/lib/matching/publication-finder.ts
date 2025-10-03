@@ -301,6 +301,7 @@ export interface CreatePublicationParams {
   organizationId: string;
   createdBy: string;
   source: 'auto_matching'; // Markiert als automatisch erstellt
+  autoGlobalMode?: boolean; // ✅ Für SuperAdmin-Erkennung
 }
 
 /**
@@ -313,12 +314,11 @@ export interface CreatePublicationParams {
 export async function createPublication(params: CreatePublicationParams): Promise<string> {
   const publicationsRef = collection(db, 'publications');
 
-  const publicationData = {
+  let publicationData: any = {
     name: params.name,
     companyId: params.companyId || null,  // ✅ Optional: Kann null sein!
     website: params.website || null,
     organizationId: params.organizationId,
-    isGlobal: params.organizationId === 'superadmin-org', // ✅ Global für SuperAdmin
     createdBy: params.createdBy,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -331,7 +331,16 @@ export async function createPublication(params: CreatePublicationParams): Promis
     frequency: null,
     beats: [],
     mediaType: []
+    // isGlobal wird durch interceptSave gesetzt wenn autoGlobalMode = true
   };
+
+  // ✅ Nutze interceptSave für automatisches isGlobal-Handling
+  if (params.autoGlobalMode) {
+    const { interceptSave } = await import('@/lib/utils/global-interceptor');
+    publicationData = interceptSave(publicationData, 'publication', { email: params.createdBy }, {
+      autoGlobalMode: params.autoGlobalMode
+    });
+  }
 
   const docRef = await addDoc(publicationsRef, publicationData);
   console.log(`✅ New publication created: ${params.name} (ID: ${docRef.id})`);

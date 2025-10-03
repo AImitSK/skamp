@@ -169,7 +169,8 @@ function CandidateRow({
         candidateId: candidate.id!,
         selectedVariantIndex: 0,
         userId: user.uid,
-        organizationId: 'superadmin-org' // ✅ Immer SuperAdmin für Premium-Bibliothek
+        userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
+        organizationId: currentOrganization?.id || user.uid
       });
 
       if (result.success) {
