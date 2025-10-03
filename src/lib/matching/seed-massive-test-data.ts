@@ -273,6 +273,11 @@ export async function seedMassiveTestData() {
         updatedAt: Timestamp.now()
       };
 
+      // Schreibe in BEIDE Collections für volle Kompatibilität
+      batch.set(doc(db, 'companies_enhanced', companyId), {
+        ...companyData,
+        isGlobal: true  // Für Premium-Datenbank
+      });
       batch.set(doc(db, 'superadmin_companies', companyId), companyData);
       createdCompanies.push(companyData);
       operationCount++;
@@ -308,7 +313,13 @@ export async function seedMassiveTestData() {
         updatedAt: Timestamp.now()
       };
 
-      batch.set(doc(db, 'superadmin_publications', publicationId), publicationData);
+      // Publications in normale Collection mit userId (Legacy-Support)
+      batch.set(doc(db, 'publications', publicationId), {
+        ...publicationData,
+        userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Default org für Test
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Auch neue Format
+        isGlobal: true  // Für Premium-Datenbank
+      });
       createdPublications.push(publicationData);
       operationCount++;
 
@@ -389,6 +400,12 @@ export async function seedMassiveTestData() {
         updatedAt: Timestamp.now()
       };
 
+      // Schreibe in BEIDE Collections für volle Kompatibilität
+      batch.set(doc(db, 'contacts_enhanced', contactId), {
+        ...contactData,
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Default org
+        isGlobal: true  // Für Premium-Datenbank
+      });
       batch.set(doc(db, 'superadmin_contacts', contactId), contactData);
       createdContacts.push(contactData);
       operationCount++;
@@ -415,6 +432,12 @@ export async function seedMassiveTestData() {
           notes: `Mögliches Duplikat von ${contactData.displayName}`
         };
 
+        // Duplikate auch in beide Collections
+        batch.set(doc(db, 'contacts_enhanced', duplicateId), {
+          ...duplicateData,
+          organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',
+          isGlobal: true
+        });
         batch.set(doc(db, 'superadmin_contacts', duplicateId), duplicateData);
         operationCount++;
 
@@ -462,7 +485,17 @@ export async function cleanupMassiveTestData() {
   try {
     let deletedCount = 0;
 
-    // Lösche Test-Contacts
+    // Lösche Test-Contacts aus beiden Collections
+    const contactsQuery1 = query(
+      collection(db, 'contacts_enhanced'),
+      where('isTestData', '==', true)
+    );
+    const contactsSnapshot1 = await getDocs(contactsQuery1);
+    for (const doc of contactsSnapshot1.docs) {
+      await deleteDoc(doc.ref);
+      deletedCount++;
+    }
+
     const contactsQuery = query(
       collection(db, 'superadmin_contacts'),
       where('isTestData', '==', true)
@@ -474,7 +507,17 @@ export async function cleanupMassiveTestData() {
       deletedCount++;
     }
 
-    // Lösche Test-Companies
+    // Lösche Test-Companies aus beiden Collections
+    const companiesQuery1 = query(
+      collection(db, 'companies_enhanced'),
+      where('isTestData', '==', true)
+    );
+    const companiesSnapshot1 = await getDocs(companiesQuery1);
+    for (const doc of companiesSnapshot1.docs) {
+      await deleteDoc(doc.ref);
+      deletedCount++;
+    }
+
     const companiesQuery = query(
       collection(db, 'superadmin_companies'),
       where('isTestData', '==', true)
@@ -486,7 +529,17 @@ export async function cleanupMassiveTestData() {
       deletedCount++;
     }
 
-    // Lösche Test-Publications
+    // Lösche Test-Publications aus beiden Collections
+    const publicationsQuery1 = query(
+      collection(db, 'publications'),
+      where('isTestData', '==', true)
+    );
+    const publicationsSnapshot1 = await getDocs(publicationsQuery1);
+    for (const doc of publicationsSnapshot1.docs) {
+      await deleteDoc(doc.ref);
+      deletedCount++;
+    }
+
     const publicationsQuery = query(
       collection(db, 'superadmin_publications'),
       where('isTestData', '==', true)
