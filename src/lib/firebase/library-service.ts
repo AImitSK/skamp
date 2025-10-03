@@ -1176,7 +1176,7 @@ class PublicationServiceExtended extends PublicationService {
         // Erstelle Publication aus Reference + globalen Daten (mit korrektem Schema)
         const publicationReference = {
           id: refDoc.id, // Document ID für Navigation verwenden
-          title: globalPub.title || 'Unbekannte Publikation',
+          title: globalPub.title || globalPub.name || 'Unbekannte Publikation',
           subtitle: globalPub.subtitle || '',
           type: globalPub.type || 'magazine',
           format: globalPub.format || 'online',

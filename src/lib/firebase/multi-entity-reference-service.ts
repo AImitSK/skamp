@@ -223,6 +223,12 @@ class MultiEntityReferenceService {
         });
       }
 
+      console.log('📋 Erstelle Publication-References:', {
+        publicationIds,
+        count: publicationIds.length,
+        companyReferenceId: companyResult.documentId
+      });
+
       const publicationsResult = await this.ensurePublicationReferences(
         publicationIds,
         companyResult.documentId!,  // Document ID statt localCompanyId
@@ -230,6 +236,12 @@ class MultiEntityReferenceService {
         userId,
         batch
       );
+
+      console.log('✅ Publication-References Ergebnis:', {
+        success: publicationsResult.success,
+        documentIds: publicationsResult.documentIds,
+        count: publicationsResult.documentIds.length
+      });
 
       if (!publicationsResult.success) {
         return {
@@ -677,15 +689,24 @@ class MultiEntityReferenceService {
     batch: any
   ): Promise<{ success: boolean; documentIds: string[]; error?: string }> {
     try {
+      console.log('🏗️ ensurePublicationReferences Start:', {
+        globalPublicationIds,
+        companyReferenceId: companyReferenceDocumentId,
+        organizationId
+      });
+
       const documentIds: string[] = [];  // Document IDs sammeln
 
       for (const globalPubId of globalPublicationIds) {
+        console.log(`  📖 Verarbeite Publication: ${globalPubId}`);
+
         // Prüfe ob Publication-Reference bereits existiert
         const existingPubRef = await this.findPublicationReferenceByGlobalId(
           globalPubId, organizationId
         );
 
         if (existingPubRef) {
+          console.log(`    ✓ Existierende Reference gefunden: ${existingPubRef.id}`);
           documentIds.push(existingPubRef.id!);  // Document ID, nicht localPublicationId
           continue;
         }
@@ -707,9 +728,21 @@ class MultiEntityReferenceService {
           isActive: true
         };
 
+        console.log(`    ➕ Erstelle neue Reference:`, {
+          docId: pubRefDoc.id,
+          localPublicationId,
+          globalPublicationId: globalPubId
+        });
+
         batch.set(pubRefDoc, pubRefData);
         documentIds.push(pubRefDoc.id);  // Document ID sammeln, nicht localPublicationId
       }
+
+      console.log('✅ ensurePublicationReferences Fertig:', {
+        totalProcessed: globalPublicationIds.length,
+        documentIds,
+        count: documentIds.length
+      });
 
       return {
         success: true,
