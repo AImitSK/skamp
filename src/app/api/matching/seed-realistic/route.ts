@@ -6,13 +6,13 @@
  */
 
 import { NextResponse } from 'next/server';
-import { seedRealisticTestData, cleanupRealisticTestData } from '@/lib/matching/seed-realistic-test-data';
+import { seedRealisticTestDataSimple, cleanupRealisticTestDataSimple } from '@/lib/matching/seed-realistic-test-data-simple';
 
 export async function POST() {
   try {
-    console.log('🚀 API: Starte realistischen Test-Daten Generator...');
+    console.log('🚀 API: Starte vereinfachten realistischen Test-Daten Generator...');
 
-    const stats = await seedRealisticTestData();
+    const stats = await seedRealisticTestDataSimple();
 
     return NextResponse.json({
       success: true,
@@ -36,7 +36,7 @@ export async function DELETE() {
   try {
     console.log('🧹 API: Starte Cleanup von realistischen Test-Daten...');
 
-    await cleanupRealisticTestData();
+    await cleanupRealisticTestDataSimple();
 
     return NextResponse.json({
       success: true,

@@ -164,8 +164,8 @@ export default function SuperAdminSettingsPage() {
 
       if (result.success) {
         toast.success(
-          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.companies} Companies, ${result.stats.publications} Publications, ${result.stats.contacts} Kontakte → ${Object.values(result.stats.scenarios).reduce((a: number, b: number) => a + b, 0)} Szenarien`,
-          { id: toastId, duration: 10000 }
+          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.contacts} Kontakte für Matching-Tests`,
+          { id: toastId, duration: 8000 }
         );
       } else {
         throw new Error(result.error || 'Unbekannter Fehler');
