@@ -84,19 +84,43 @@ export async function importCandidateWithAutoMatching(params: {
   error?: string;
 }> {
   try {
+    console.log('\n🔄 ===== IMPORT MIT AUTO-MATCHING STARTEN =====');
+    console.log('📋 Request:', {
+      candidateId: params.candidateId,
+      selectedVariantIndex: params.selectedVariantIndex,
+      userId: params.userId,
+      organizationId: params.organizationId
+    });
+
     // 1. Lade Kandidat
     // 1. Lade Kandidat direkt aus Firestore
     const candidateDoc = await getDoc(doc(db, 'matching_candidates', params.candidateId));
 
     if (!candidateDoc.exists()) {
+      console.error('❌ Kandidat nicht gefunden:', params.candidateId);
       return { success: false, error: 'Kandidat nicht gefunden' };
     }
 
     const candidate = { id: candidateDoc.id, ...candidateDoc.data() } as MatchingCandidate;
+    console.log('✅ Kandidat geladen:', {
+      matchKey: candidate.matchKey,
+      matchType: candidate.matchType,
+      score: candidate.score?.total,
+      variantenAnzahl: candidate.variants.length
+    });
 
     const selectedVariant = candidate.variants[params.selectedVariantIndex];
+    console.log('👤 Ausgewählte Variante:', {
+      organization: selectedVariant.organizationName,
+      name: selectedVariant.contactData.displayName,
+      email: selectedVariant.contactData.emails?.[0]?.email,
+      position: selectedVariant.contactData.position,
+      companyName: selectedVariant.contactData.companyName,
+      hasMediaProfile: selectedVariant.contactData.hasMediaProfile
+    });
 
     // 2. COMPANY MATCHING
+    console.log('\n🏢 ===== COMPANY MATCHING =====');
     let companyResult: {
       companyId: string;
       companyName: string;
@@ -107,15 +131,26 @@ export async function importCandidateWithAutoMatching(params: {
     } | undefined;
 
     if (selectedVariant.contactData.companyName) {
+      console.log('🔍 Suche Company:', selectedVariant.contactData.companyName);
       companyResult = await handleCompanyMatching({
         variants: candidate.variants,
         selectedVariantIndex: params.selectedVariantIndex,
         organizationId: params.organizationId,
         userId: params.userId
       });
+      console.log('✅ Company Match:', {
+        companyId: companyResult.companyId,
+        companyName: companyResult.companyName,
+        matchType: companyResult.matchType,
+        wasCreated: companyResult.wasCreated,
+        wasEnriched: companyResult.wasEnriched
+      });
+    } else {
+      console.log('⚠️ Keine Company vorhanden (Freier Journalist)');
     }
 
     // 3. PUBLICATION MATCHING
+    console.log('\n📰 ===== PUBLICATION MATCHING =====');
     // ⚠️ KRITISCH: Publications NUR wenn Company gefunden wurde!
     let publicationResults: Array<{
       publicationId: string;
@@ -127,6 +162,7 @@ export async function importCandidateWithAutoMatching(params: {
     }> = [];
 
     if (selectedVariant.contactData.hasMediaProfile && companyResult) {
+      console.log('🔍 Suche Publications für Company:', companyResult.companyName);
       // ✅ Publications NUR wenn Company vorhanden!
       publicationResults = await handlePublicationMatching({
         companyId: companyResult.companyId,  // ✅ PFLICHT - nicht null!
@@ -134,9 +170,19 @@ export async function importCandidateWithAutoMatching(params: {
         organizationId: params.organizationId,
         userId: params.userId
       });
+      console.log('✅ Publication Matches:', publicationResults.map(p => ({
+        publicationName: p.publicationName,
+        wasCreated: p.wasCreated,
+        matchType: p.matchType
+      })));
+    } else if (selectedVariant.contactData.hasMediaProfile && !companyResult) {
+      console.log('⚠️ Journalist OHNE Company → Keine Publications');
+    } else {
+      console.log('ℹ️ Kein Journalist → Keine Publications');
     }
 
     // 4. KONTAKT ERSTELLEN
+    console.log('\n👤 ===== KONTAKT ERSTELLEN =====');
     const contactData = selectedVariant.contactData;
 
     // Bereite Kontakt-Daten vor mit mediaProfile wenn Journalist
@@ -159,13 +205,26 @@ export async function importCandidateWithAutoMatching(params: {
       };
     }
 
+    console.log('📝 Contact-Daten:', {
+      name: contactToCreate.displayName,
+      email: contactToCreate.emails?.[0]?.email,
+      position: contactToCreate.position,
+      companyId: contactToCreate.companyId,
+      organizationId: contactToCreate.organizationId,
+      hasMediaProfile: !!contactToCreate.mediaProfile,
+      publicationIds: contactToCreate.mediaProfile?.publicationIds?.length || 0
+    });
+
     // 4. KONTAKT ERSTELLEN - verwende contactsEnhancedService
     const contactId = await contactsEnhancedService.create(
       contactToCreate,
       { organizationId: params.organizationId, userId: params.userId }
     );
 
+    console.log('✅ Contact erstellt:', contactId);
+
     // 5. KANDIDAT ALS IMPORTED MARKIEREN
+    console.log('\n📌 Markiere Kandidat als importiert...');
     await updateDoc(doc(db, 'matching_candidates', params.candidateId), {
       status: 'imported',
       importedAt: Timestamp.now(),
@@ -173,6 +232,19 @@ export async function importCandidateWithAutoMatching(params: {
       importedContactId: contactId,
       selectedVariantIndex: params.selectedVariantIndex
     });
+
+    console.log('\n✅ ===== IMPORT ERFOLGREICH ABGESCHLOSSEN =====');
+    console.log('📊 Zusammenfassung:', {
+      contactId,
+      company: companyResult ? {
+        name: companyResult.companyName,
+        wasCreated: companyResult.wasCreated,
+        wasEnriched: companyResult.wasEnriched
+      } : 'keine',
+      publications: publicationResults.length,
+      organizationId: params.organizationId
+    });
+    console.log('==============================================\n');
 
     return {
       success: true,

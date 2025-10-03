@@ -151,9 +151,9 @@ export default function PublicationsPage() {
   const filteredPublications = useMemo(() => {
     return publications.filter(pub => {
       // Search
-      const searchMatch = pub.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const searchMatch = pub.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           pub.publisherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          pub.focusAreas?.some(area => area.toLowerCase().includes(searchTerm.toLowerCase()));
+                          pub.focusAreas?.some(area => area?.toLowerCase().includes(searchTerm.toLowerCase()));
       if (!searchMatch) return false;
       
       // Type Filter
