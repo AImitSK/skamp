@@ -292,52 +292,25 @@ export async function seedMassiveTestData() {
       }
     }
 
-    // 2. Erstelle Publications
-    console.log('📰 Erstelle Publications...');
+    // 2. Bereite Publication-Namen vor (NICHT in DB schreiben!)
+    // Publications werden erst beim Import durch Auto-Matching erstellt
+    console.log('📰 Bereite Publication-Namen vor (für Kontakt-Daten)...');
+    const publicationTemplates: Array<{ name: string; companyId: string }> = [];
+
     for (let i = 0; i < PUBLICATIONS.length; i++) {
       const pub = PUBLICATIONS[i];
-      const publicationId = `test-pub-${Date.now()}-${i}`;
       const company = randomElement(createdCompanies);
 
-      const publicationData = {
-        id: publicationId,
-        companyId: company.id,
+      publicationTemplates.push({
         name: pub.name,
-        type: pub.type,
-        topics: pub.topics,
-        frequency: randomElement(['Täglich', 'Wöchentlich', 'Monatlich', 'Online']),
-        circulation: Math.floor(Math.random() * 500000) + 10000,
-        website: `https://www.${pub.name.toLowerCase().replace(/\s+/g, '-')}.de`,
-        language: 'Deutsch',
-        printISSN: `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
-        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',
-        deletedAt: null,
-        isReference: false,
-        isTestData: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
-      };
-
-      // Publications in BEIDE Collections schreiben
-      // 1. superadmin_publications für den Publication-Finder (Auto-Matching)
-      batch.set(doc(db, 'superadmin_publications', publicationId), publicationData);
-
-      // 2. publications mit isGlobal für Premium-Datenbank (Redakteure-Seite)
-      batch.set(doc(db, 'publications', publicationId), {
-        ...publicationData,
-        isGlobal: true,
-        userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'  // Legacy-Support
+        companyId: company.id
       });
-
-      createdPublications.push(publicationData);
-      operationCount += 2;  // 2 writes pro Publication
-
-      if (operationCount >= MAX_BATCH_SIZE) {
-        await batch.commit();
-        operationCount = 0;
-        console.log(`  ✓ Batch committed (${createdPublications.length} publications so far)`);
-      }
     }
+
+    console.log(`  ✅ ${publicationTemplates.length} Publication-Namen vorbereitet (werden beim Import erstellt)`);
+
+    // Für Kompatibilität mit bestehendem Code
+    const createdPublications = publicationTemplates;
 
     // 3. Erstelle viele Journalisten (300+)
     console.log('👥 Erstelle Journalisten...');
@@ -479,7 +452,8 @@ export async function seedMassiveTestData() {
       success: true,
       stats: {
         companies: createdCompanies.length,
-        publications: createdPublications.length,
+        publications: 0,  // Publications werden beim Import erstellt
+        publicationTemplates: publicationTemplates.length,
         contacts: createdContacts.length,
         duration: duration
       }
