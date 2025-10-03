@@ -177,12 +177,8 @@ async function getOwnCompanies(organizationId: string): Promise<Array<{ id: stri
       where('deletedAt', '==', null)
     ];
 
-    // ✅ WICHTIG: Keine References!
-    // isReference == false statt != true (vermeidet Composite Index Problem)
-    constraints.push(where('isReference', '==', false));
-
-    // Option 2: ID-Pattern (falls References spezielle IDs haben)
-    // IDs wie "ref-abc123" oder "local-ref-xyz" ausschließen
+    // ⚠️ NICHT in Query: isReference Filter kann undefined/null sein!
+    // Stattdessen im Code filtern
 
     const q = query(collection(db, 'companies_enhanced'), ...constraints);
     const snapshot = await getDocs(q);
@@ -191,12 +187,18 @@ async function getOwnCompanies(organizationId: string): Promise<Array<{ id: stri
       .map(doc => ({
         id: doc.id,
         name: doc.data().name,
-        website: doc.data().website
+        website: doc.data().website,
+        isReference: doc.data().isReference
       }))
       .filter(c => {
-        // Zusätzlicher Filter: Schließe Reference-Pattern in ID aus
+        // Filter 1: Keine References (isReference === true)
+        if (c.isReference === true) {
+          console.log(`⏭️  Skipping reference: ${c.name}`);
+          return false;
+        }
+        // Filter 2: Keine Reference-Pattern in ID
         if (c.id.startsWith('ref-') || c.id.startsWith('local-ref-')) {
-          console.log(`⏭️  Skipping reference company: ${c.name}`);
+          console.log(`⏭️  Skipping reference ID pattern: ${c.name}`);
           return false;
         }
         return true;

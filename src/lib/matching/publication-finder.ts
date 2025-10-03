@@ -78,8 +78,8 @@ async function getOwnPublications(
 
   const constraints = [
     where('organizationId', '==', organizationId),
-    where('deletedAt', '==', null),
-    where('isReference', '==', false)  // ✅ CRITICAL: Keine Referenzen! (== false vermeidet Index-Problem)
+    where('deletedAt', '==', null)
+    // ⚠️ NICHT in Query: isReference Filter kann undefined/null sein!
   ];
 
   // ✅ Optional: Nur Publications einer bestimmten Company
@@ -95,10 +95,15 @@ async function getOwnPublications(
       id: doc.id,
       name: doc.data().name,
       website: doc.data().website,
-      companyId: doc.data().companyId || null
+      companyId: doc.data().companyId || null,
+      isReference: doc.data().isReference
     }))
     .filter(p => {
-      // Zusätzlicher Filter: Exclude reference patterns in ID
+      // Filter 1: Keine References
+      if (p.isReference === true) {
+        return false;
+      }
+      // Filter 2: Exclude reference patterns in ID
       if (p.id.startsWith('ref-') || p.id.startsWith('local-ref-')) {
         return false;
       }
