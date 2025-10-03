@@ -1236,25 +1236,14 @@ export default function EditorsPage() {
         console.error('❌ Error loading companies:', error);
       }
 
-      // Load publications for assignments (lokale + globale)
+      // Load publications for assignments (lokale + globale via References)
       let publicationsData = [];
       try {
-        // Lokale Publications der aktuellen Organisation
-        const localPublications = await publicationService.getAll(currentOrganization.id);
-
-        // Globale Publications der SuperAdmin-Organisation (für globale Journalisten)
-        const globalPublications = await publicationService.getAll('superadmin-org');
-
-        // Kombiniere beide, aber vermeide Duplikate
-        const allPublications = [...localPublications];
-        globalPublications.forEach(globalPub => {
-          if (!allPublications.find(localPub => localPub.id === globalPub.id)) {
-            allPublications.push(globalPub);
-          }
-        });
+        // ✅ publicationService lädt automatisch lokale + referenced publications
+        const allPublications = await publicationService.getAll(currentOrganization.id);
 
         publicationsData = allPublications;
-        console.log('📊 Publications loaded:', publicationsData.length, '(local:', localPublications.length, 'global:', globalPublications.length, ')');
+        console.log('📊 Publications loaded:', publicationsData.length, '(inkl. References)');
       } catch (error) {
         console.error('❌ Error loading publications:', error);
       }
@@ -2117,7 +2106,7 @@ export default function EditorsPage() {
                       <span className="text-sm text-zinc-700 dark:text-zinc-300">
                         {detailJournalist.professionalData.employment?.position ||
                          detailJournalist.professionalData.employment.position ||
-                         journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
+                         detailJournalist.personalData.name.first + ' ' + detailJournalist.personalData.name.last}
                       </span>
                     </div>
                     {detailJournalist.professionalData.employment?.department && (
