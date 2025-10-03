@@ -178,9 +178,8 @@ async function getOwnCompanies(organizationId: string): Promise<Array<{ id: stri
     ];
 
     // ✅ WICHTIG: Keine References!
-    // References haben spezielle Markierung oder ID-Pattern
-    // Option 1: Field-basiert
-    constraints.push(where('isReference', '!=', true));
+    // isReference == false statt != true (vermeidet Composite Index Problem)
+    constraints.push(where('isReference', '==', false));
 
     // Option 2: ID-Pattern (falls References spezielle IDs haben)
     // IDs wie "ref-abc123" oder "local-ref-xyz" ausschließen

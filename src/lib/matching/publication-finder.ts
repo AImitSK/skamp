@@ -74,12 +74,12 @@ async function getOwnPublications(
   organizationId: string,
   companyId?: string | null  // ✅ Optional! Wenn gesetzt: nur Publications dieser Company
 ): Promise<Array<{ id: string; name: string; website?: string; companyId?: string | null }>> {
-  const publicationsRef = collection(db, 'superadmin_publications');
+  const publicationsRef = collection(db, 'publications');
 
   const constraints = [
     where('organizationId', '==', organizationId),
     where('deletedAt', '==', null),
-    where('isReference', '!=', true)  // ✅ CRITICAL: Keine Referenzen!
+    where('isReference', '==', false)  // ✅ CRITICAL: Keine Referenzen! (== false vermeidet Index-Problem)
   ];
 
   // ✅ Optional: Nur Publications einer bestimmten Company
