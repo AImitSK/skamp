@@ -40,12 +40,14 @@ interface CandidateRowProps {
   candidate: MatchingCandidate;
   onUpdate: () => void;
   onViewDetails?: () => void;
+  useAiMerge: boolean;
 }
 
 function CandidateRow({
   candidate,
   onUpdate,
-  onViewDetails
+  onViewDetails,
+  useAiMerge
 }: CandidateRowProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -171,7 +173,7 @@ function CandidateRow({
         userId: user.uid,
         userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
         organizationId: currentOrganization?.id || user.uid,
-        useAiMerge: false // ✅ Quick-Import ohne KI (nur erste Variante)
+        useAiMerge: useAiMerge // ✅ Nutzt globalen Toggle
       });
 
       if (result.success) {
@@ -345,6 +347,7 @@ export default function CandidateRowWithModal(props: CandidateRowProps) {
           isOpen={showDetailModal}
           onClose={() => setShowDetailModal(false)}
           onUpdate={props.onUpdate}
+          useAiMerge={props.useAiMerge}
         />
       )}
     </>

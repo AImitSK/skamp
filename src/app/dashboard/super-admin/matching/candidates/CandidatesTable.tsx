@@ -36,6 +36,7 @@ interface CandidatesTableProps {
   sorting: MatchingCandidateSorting;
   onSortingChange: (sorting: MatchingCandidateSorting) => void;
   onRefresh: () => void;
+  useAiMerge: boolean;
 }
 
 export default function CandidatesTable({
@@ -43,7 +44,8 @@ export default function CandidatesTable({
   loading,
   sorting,
   onSortingChange,
-  onRefresh
+  onRefresh,
+  useAiMerge
 }: CandidatesTableProps) {
 
   /**
@@ -152,6 +154,7 @@ export default function CandidatesTable({
                 key={candidate.id}
                 candidate={candidate}
                 onUpdate={onRefresh}
+                useAiMerge={useAiMerge}
               />
             ))}
           </TableBody>

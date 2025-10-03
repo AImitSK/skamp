@@ -62,6 +62,9 @@ export default function MatchingCandidatesPage() {
     process.env.NODE_ENV === 'development'
   );
 
+  // KI-Daten-Merge Global Toggle
+  const [useAiMerge, setUseAiMerge] = useState(false);
+
   // Statistics
   const [stats, setStats] = useState<{
     total: number;
@@ -241,6 +244,8 @@ export default function MatchingCandidatesPage() {
           onSearchChange={setSearchQuery}
           devMode={devMode}
           onDevModeChange={setDevMode}
+          useAiMerge={useAiMerge}
+          onUseAiMergeChange={setUseAiMerge}
           scanning={scanning}
           onScan={handleScan}
         />
@@ -254,6 +259,7 @@ export default function MatchingCandidatesPage() {
           sorting={sorting}
           onSortingChange={setSorting}
           onRefresh={loadCandidates}
+          useAiMerge={useAiMerge}
         />
       </div>
 

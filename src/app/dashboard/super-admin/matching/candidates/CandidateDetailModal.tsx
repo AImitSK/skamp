@@ -27,20 +27,21 @@ interface CandidateDetailModalProps {
   onClose: () => void;
   candidate: MatchingCandidate;
   onUpdate: () => void;
+  useAiMerge: boolean;
 }
 
 export default function CandidateDetailModal({
   isOpen,
   onClose,
   candidate,
-  onUpdate
+  onUpdate,
+  useAiMerge
 }: CandidateDetailModalProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [recommendation, setRecommendation] = useState<CandidateRecommendation | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [useAiMerge, setUseAiMerge] = useState(false); // KI-Daten-Merge Toggle
 
   useEffect(() => {
     if (isOpen && candidate) {
@@ -240,25 +241,20 @@ export default function CandidateDetailModal({
               </div>
             )}
 
-            {/* KI-Daten-Merge Toggle */}
-            {candidate.variants.length > 1 && (
+            {/* KI-Daten-Merge Info */}
+            {candidate.variants.length > 1 && useAiMerge && (
               <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useAiMerge}
-                    onChange={(e) => setUseAiMerge(e.target.checked)}
-                    className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 size-4"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 text-2xl">🤖</div>
                   <div className="flex-1">
                     <div className="font-medium text-zinc-900 dark:text-white">
-                      🤖 KI-Daten-Merge verwenden
+                      KI-Daten-Merge aktiviert
                     </div>
                     <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Nutzt Gemini KI um die besten Werte aus allen {candidate.variants.length} Varianten intelligent zu kombinieren
+                      Gemini kombiniert automatisch die besten Werte aus allen {candidate.variants.length} Varianten
                     </div>
                   </div>
-                </label>
+                </div>
               </div>
             )}
 

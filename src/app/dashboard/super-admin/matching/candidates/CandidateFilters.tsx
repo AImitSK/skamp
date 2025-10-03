@@ -34,6 +34,8 @@ interface CandidateFiltersProps {
   onSearchChange: (query: string) => void;
   devMode: boolean;
   onDevModeChange: (devMode: boolean) => void;
+  useAiMerge: boolean;
+  onUseAiMergeChange: (useAiMerge: boolean) => void;
   scanning: boolean;
   onScan: () => Promise<void>;
 }
@@ -45,6 +47,8 @@ export default function CandidateFilters({
   onSearchChange,
   devMode,
   onDevModeChange,
+  useAiMerge,
+  onUseAiMergeChange,
   scanning,
   onScan
 }: CandidateFiltersProps) {
@@ -261,6 +265,26 @@ export default function CandidateFilters({
                         </span>
                         <span className="text-xs text-zinc-500">
                           Min 1 Org, min Score: 40
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* KI-Daten-Merge Global */}
+                  <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useAiMerge}
+                        onChange={(e) => onUseAiMergeChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          🤖 KI-Daten-Merge
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          Nutzt Gemini für alle Importe (bei 2+ Varianten)
                         </span>
                       </div>
                     </label>
