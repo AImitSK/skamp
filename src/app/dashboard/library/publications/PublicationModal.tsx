@@ -317,9 +317,9 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
         status: publication.status,
         metrics: {
           frequency: publication.metrics?.frequency || 'monthly',
-          targetAudience: publication.metrics.targetAudience,
-          targetAgeGroup: publication.metrics.targetAgeGroup,
-          targetGender: publication.metrics.targetGender
+          targetAudience: publication.metrics?.targetAudience,
+          targetAgeGroup: publication.metrics?.targetAgeGroup,
+          targetGender: publication.metrics?.targetGender
         },
         geographicScope: publication.geographicScope,
         websiteUrl: publication.websiteUrl,

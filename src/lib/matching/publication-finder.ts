@@ -319,6 +319,7 @@ export async function createPublication(params: CreatePublicationParams): Promis
     name: params.name, // ✅ Legacy-Kompatibilität
     companyId: params.companyId || null,
     publisherId: params.companyId || null, // ✅ Für Kompatibilität
+    publisherName: null, // Wird später gesetzt wenn Company-Daten verfügbar
     website: params.website || null,
     organizationId: params.organizationId,
     createdBy: params.createdBy,
@@ -329,14 +330,24 @@ export async function createPublication(params: CreatePublicationParams): Promis
     isReference: false,
     type: 'newspaper', // ✅ Sinnvoller Default als 'unknown'
     country: 'DE',
-    reach: null,
-    frequency: null,
+    status: 'active',
+    verified: false,
     focusAreas: [], // ✅ Statt beats
     languages: ['de'], // ✅ Default Deutsch
-    mediaType: [],
-    // Mindest-Struktur für Modal
-    targetAudience: null,
-    geographicTargets: ['DE']
+    geographicTargets: ['DE'],
+    // ✅ WICHTIG: metrics Objekt für Modal-Kompatibilität
+    metrics: {
+      frequency: 'monthly',
+      targetAudience: null,
+      print: {
+        circulation: null,
+        reach: null
+      },
+      online: {
+        monthlyPageViews: null,
+        monthlyUniqueVisitors: null
+      }
+    }
     // isGlobal wird durch interceptSave gesetzt wenn autoGlobalMode = true
   };
 
