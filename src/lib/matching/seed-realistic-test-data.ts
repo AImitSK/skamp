@@ -681,36 +681,39 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     orgIndexA++;
   }
 
-  // Contacts
+  // Contacts - Jeder Contact in 3 Orgs (Perfect Match = hohe Übereinstimmung)
   for (const contact of CATEGORY_A_PERFECT_MATCHES.contacts) {
-    const currentOrg = orgsForA[orgIndexA % orgsForA.length];
-
     // Find companyId from publicationId
     const publication = CATEGORY_A_PERFECT_MATCHES.publications.find(p => p.id === contact.publicationId);
     const companyId = publication?.companyId;
 
-    const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, removeUndefinedFields({
-      ...contact,
-      companyId,
-      organizationId: currentOrg,
-      mediaProfile: {
-        isJournalist: true,
-        beats: [],
-        publicationIds: contact.publicationId ? [contact.publicationId] : [],
-        mediaTypes: ['print', 'online']
-      },
-      deletedAt: null,
-      isReference: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-    operationCount++;
-    stats.contacts++;
-    stats.scenarios.perfectMatches++;
+    // Erstelle Contact in 3 verschiedenen Orgs
+    for (let orgIdx = 0; orgIdx < 3; orgIdx++) {
+      const currentOrg = orgsForA[orgIdx];
+      const uniqueId = `${contact.id}-${currentOrg}`;
 
-    if (operationCount >= MAX_BATCH_SIZE) await commitBatch();
-    orgIndexA++;
+      const contactRef = doc(db, 'contacts_enhanced', uniqueId);
+      batch.set(contactRef, removeUndefinedFields({
+        ...contact,
+        companyId,
+        organizationId: currentOrg,
+        mediaProfile: {
+          isJournalist: true,
+          beats: [],
+          publicationIds: contact.publicationId ? [contact.publicationId] : [],
+          mediaTypes: ['print', 'online']
+        },
+        deletedAt: null,
+        isReference: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      operationCount++;
+      stats.contacts++;
+
+      if (operationCount >= MAX_BATCH_SIZE) await commitBatch();
+    }
+    stats.scenarios.perfectMatches++;
   }
 
   await commitBatch();
@@ -770,34 +773,38 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     orgIndexB++;
   }
 
+  // Contacts - Jeder Contact in 3 Orgs (Fuzzy Match)
   for (const contact of CATEGORY_B_FUZZY_MATCHES.contacts) {
-    const currentOrg = orgsForB[orgIndexB % orgsForB.length];
-
     const publication = CATEGORY_B_FUZZY_MATCHES.publications.find(p => p.id === contact.publicationId);
     const companyId = publication?.companyId;
 
-    const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, removeUndefinedFields({
-      ...contact,
-      companyId,
-      organizationId: currentOrg,
-      mediaProfile: {
-        isJournalist: true,
-        beats: [],
-        publicationIds: contact.publicationId ? [contact.publicationId] : [],
-        mediaTypes: ['print', 'online']
-      },
-      deletedAt: null,
-      isReference: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-    operationCount++;
-    stats.contacts++;
-    stats.scenarios.fuzzyMatches++;
+    // Erstelle Contact in 3 verschiedenen Orgs
+    for (let orgIdx = 0; orgIdx < 3; orgIdx++) {
+      const currentOrg = orgsForB[orgIdx];
+      const uniqueId = `${contact.id}-${currentOrg}`;
 
-    if (operationCount >= MAX_BATCH_SIZE) await commitBatch();
-    orgIndexB++;
+      const contactRef = doc(db, 'contacts_enhanced', uniqueId);
+      batch.set(contactRef, removeUndefinedFields({
+        ...contact,
+        companyId,
+        organizationId: currentOrg,
+        mediaProfile: {
+          isJournalist: true,
+          beats: [],
+          publicationIds: contact.publicationId ? [contact.publicationId] : [],
+          mediaTypes: ['print', 'online']
+        },
+        deletedAt: null,
+        isReference: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      operationCount++;
+      stats.contacts++;
+
+      if (operationCount >= MAX_BATCH_SIZE) await commitBatch();
+    }
+    stats.scenarios.fuzzyMatches++;
   }
 
   await commitBatch();
@@ -1351,23 +1358,31 @@ export async function cleanupRealisticTestData(): Promise<void> {
   // ============================================================================
   console.log('\n🗑️  Lösche Contacts...');
 
-  // Category A Contacts
+  // Category A Contacts (über 3 Orgs)
+  const orgsForCleanupA = testOrgIds.slice(0, 3);
   for (const contact of CATEGORY_A_PERFECT_MATCHES.contacts) {
-    try {
-      await deleteDoc(doc(db, 'contacts_enhanced', contact.id));
-      deletedContacts++;
-    } catch (error) {
-      console.error(`Fehler beim Löschen von Contact ${contact.id}:`, error);
+    for (const orgId of orgsForCleanupA) {
+      const uniqueId = `${contact.id}-${orgId}`;
+      try {
+        await deleteDoc(doc(db, 'contacts_enhanced', uniqueId));
+        deletedContacts++;
+      } catch (error) {
+        console.error(`Fehler beim Löschen von Contact ${uniqueId}:`, error);
+      }
     }
   }
 
-  // Category B Contacts
+  // Category B Contacts (über 3 Orgs)
+  const orgsForCleanupB = testOrgIds.slice(2, 6);
   for (const contact of CATEGORY_B_FUZZY_MATCHES.contacts) {
-    try {
-      await deleteDoc(doc(db, 'contacts_enhanced', contact.id));
-      deletedContacts++;
-    } catch (error) {
-      console.error(`Fehler beim Löschen von Contact ${contact.id}:`, error);
+    for (const orgId of orgsForCleanupB) {
+      const uniqueId = `${contact.id}-${orgId}`;
+      try {
+        await deleteDoc(doc(db, 'contacts_enhanced', uniqueId));
+        deletedContacts++;
+      } catch (error) {
+        console.error(`Fehler beim Löschen von Contact ${uniqueId}:`, error);
+      }
     }
   }
 
