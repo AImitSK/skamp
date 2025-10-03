@@ -165,7 +165,7 @@ function CandidateRow({
     try {
       setActionLoading(true);
 
-      const result = await matchingService.importCandidate({
+      const result = await matchingService.importCandidateWithAutoMatching({
         candidateId: candidate.id!,
         selectedVariantIndex: 0,
         userId: user.uid,

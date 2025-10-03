@@ -361,7 +361,7 @@ export async function seedMassiveTestData() {
           generatePhone(),
           ...(Math.random() > 0.5 ? [generateMobile()] : [])
         ],
-        companyId: company.id,
+        companyId: company.id,  // WICHTIG: Verweis auf die Company
         companyName: company.name,
         jobTitle: randomElement(JOB_TITLES),
         department: randomElement(['Redaktion', 'Politik', 'Wirtschaft', 'Kultur', 'Sport', 'Digital']),
