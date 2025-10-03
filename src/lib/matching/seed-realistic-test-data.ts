@@ -683,9 +683,11 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
   // Contacts - Jeder Contact in 3 Orgs (Perfect Match = hohe Übereinstimmung)
   for (const contact of CATEGORY_A_PERFECT_MATCHES.contacts) {
-    // Find companyId from publicationId
+    // Find companyId and companyName from publicationId
     const publication = CATEGORY_A_PERFECT_MATCHES.publications.find(p => p.id === contact.publicationId);
     const companyId = publication?.companyId;
+    const company = companyId ? CATEGORY_A_PERFECT_MATCHES.companies.find(c => c.id === companyId) : undefined;
+    const companyName = company?.name;
 
     // Erstelle Contact in 3 verschiedenen Orgs
     for (let orgIdx = 0; orgIdx < 3; orgIdx++) {
@@ -704,6 +706,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         phones: [],
         position: contact.position,
         companyId,
+        companyName,
         organizationId: currentOrg,
         mediaProfile: {
           isJournalist: true,
@@ -787,6 +790,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   for (const contact of CATEGORY_B_FUZZY_MATCHES.contacts) {
     const publication = CATEGORY_B_FUZZY_MATCHES.publications.find(p => p.id === contact.publicationId);
     const companyId = publication?.companyId;
+    const company = companyId ? CATEGORY_B_FUZZY_MATCHES.companies.find(c => c.id === companyId) : undefined;
+    const companyName = company?.name;
 
     // Erstelle Contact in 3 verschiedenen Orgs
     for (let orgIdx = 0; orgIdx < 3; orgIdx++) {
@@ -805,6 +810,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         phones: [],
         position: contact.position,
         companyId,
+        companyName,
         organizationId: currentOrg,
         mediaProfile: {
           isJournalist: true,
@@ -950,6 +956,10 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       const publicationUniqueId = publication ? `${publication.id}-${currentOrg}` : undefined;
       const companyUniqueId = publication ? `${publication.companyId}-${currentOrg}` : undefined;
 
+      // Hole Company Name
+      const company = publication ? CATEGORY_D_CONFLICTS.companies.find(c => c.id === publication.companyId) : undefined;
+      const companyName = company?.name;
+
       // Für Keep Existing: Leichte Variationen in den Daten
       let contactData = { ...contact };
       if (contactIndex >= 31 && orgIdx % 3 === 0) {
@@ -991,6 +1001,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
       if (publicationUniqueId) cleanedData.publicationId = publicationUniqueId;
       if (companyUniqueId) cleanedData.companyId = companyUniqueId;
+      if (companyName) cleanedData.companyName = companyName;
 
       // Entferne undefined Felder aus contactData
       Object.keys(cleanedData).forEach(key => {
@@ -1110,11 +1121,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
     const publication = CATEGORY_E_EDGE_CASES.abbreviations.publications.find(p => p.id === contact.publicationId);
     const companyId = publication?.companyId;
+    const company = companyId ? CATEGORY_E_EDGE_CASES.abbreviations.companies.find(c => c.id === companyId) : undefined;
+    const companyName = company?.name;
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
     batch.set(contactRef, removeUndefinedFields({
       ...contact,
       companyId,
+      companyName,
       organizationId: currentOrg,
       mediaProfile: {
         isJournalist: true,
