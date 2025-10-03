@@ -906,16 +906,28 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       }
 
       const contactRef = doc(db, 'contacts_enhanced', uniqueId);
-      batch.set(contactRef, {
+
+      // Entferne undefined Felder für Firestore
+      const cleanedData: any = {
         ...contactData,
-        publicationId: publicationUniqueId,
-        companyId: companyUniqueId,
         organizationId: currentOrg,
         deletedAt: null,
         isReference: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+      };
+
+      if (publicationUniqueId) cleanedData.publicationId = publicationUniqueId;
+      if (companyUniqueId) cleanedData.companyId = companyUniqueId;
+
+      // Entferne undefined Felder aus contactData
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === undefined) {
+          delete cleanedData[key];
+        }
       });
+
+      batch.set(contactRef, cleanedData);
       operationCount++;
       stats.contacts++;
 
