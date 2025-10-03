@@ -309,8 +309,9 @@ export async function seedMassiveTestData() {
 
     console.log(`  ✅ ${publicationTemplates.length} Publication-Namen vorbereitet (werden beim Import erstellt)`);
 
-    // Für Kompatibilität mit bestehendem Code
-    const createdPublications = publicationTemplates;
+    // Für Kompatibilität mit bestehendem Code - überschreibe Array
+    createdPublications.length = 0;
+    createdPublications.push(...publicationTemplates);
 
     // 3. Erstelle viele Journalisten (300+)
     console.log('👥 Erstelle Journalisten...');
