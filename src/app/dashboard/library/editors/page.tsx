@@ -1299,7 +1299,7 @@ export default function EditorsPage() {
         if (directPublications.length > 0) {
           publicationAssignments = directPublications.map(publication => ({
             publication: {
-              title: publication.title,
+              title: publication.title || (publication as any).name || 'Unbekannt',
               type: publication.type,
               globalPublicationId: publication.id
             },
@@ -1317,7 +1317,7 @@ export default function EditorsPage() {
           if (companyPublications.length > 0) {
             publicationAssignments = companyPublications.map(publication => ({
               publication: {
-                title: publication.title,
+                title: publication.title || (publication as any).name || 'Unbekannt',
                 type: publication.type,
                 globalPublicationId: publication.id
               },
@@ -2071,7 +2071,7 @@ export default function EditorsPage() {
                     {detailJournalist.personalData.displayName}
                   </h3>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {detailJournalist.professionalData.employment.position || journalist.personalData.name.first + ' ' + journalist.personalData.name.last}
+                    {detailJournalist.professionalData.employment.position || detailJournalist.personalData.name.first + ' ' + detailJournalist.personalData.name.last}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                     Score: {detailJournalist.metadata?.dataQuality?.overallScore || 0}
