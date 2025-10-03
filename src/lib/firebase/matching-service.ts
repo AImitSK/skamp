@@ -63,6 +63,7 @@ export async function importCandidateWithAutoMatching(params: {
   userId: string;
   userEmail: string; // ✅ Für SuperAdmin-Erkennung
   organizationId: string;
+  useAiMerge?: boolean; // ✅ KI-Daten-Merge Toggle
 }): Promise<{
   success: boolean;
   contactId?: string;
@@ -116,14 +117,61 @@ export async function importCandidateWithAutoMatching(params: {
       variantenAnzahl: candidate.variants.length
     });
 
+    // 🤖 KI-DATEN-MERGE (falls aktiviert UND mehrere Varianten)
+    let contactDataToUse: any;
+
+    if (params.useAiMerge && candidate.variants.length > 1) {
+      console.log('\n🤖 ===== KI-DATEN-MERGE AKTIVIERT =====');
+      console.log(`📊 Merge ${candidate.variants.length} Varianten mit Gemini AI...`);
+
+      try {
+        const response = await fetch('/api/ai/merge-variants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variants: candidate.variants })
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.mergedData) {
+          console.log('✅ AI-Merge erfolgreich!');
+          console.log('📋 Gemergter Datensatz:', {
+            name: result.mergedData.displayName,
+            emails: result.mergedData.emails?.length || 0,
+            phones: result.mergedData.phones?.length || 0,
+            beats: result.mergedData.beats?.length || 0
+          });
+
+          contactDataToUse = result.mergedData;
+        } else {
+          console.error('❌ AI-Merge fehlgeschlagen:', result.error);
+          console.log('⤵️  Fallback: Nutze ausgewählte Variante');
+          contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
+        }
+      } catch (error) {
+        console.error('❌ AI-Merge Error:', error);
+        console.log('⤵️  Fallback: Nutze ausgewählte Variante');
+        contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
+      }
+    } else {
+      if (params.useAiMerge && candidate.variants.length === 1) {
+        console.log('ℹ️  KI-Merge übersprungen (nur 1 Variante)');
+      } else {
+        console.log('ℹ️  KI-Merge deaktiviert');
+      }
+      contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
+    }
+
+    // Log finale Contact-Daten
     const selectedVariant = candidate.variants[params.selectedVariantIndex];
-    console.log('👤 Ausgewählte Variante:', {
+    console.log('👤 Finale Kontakt-Daten:', {
+      usedAiMerge: params.useAiMerge && candidate.variants.length > 1,
       organization: selectedVariant.organizationName,
-      name: selectedVariant.contactData.displayName,
-      email: selectedVariant.contactData.emails?.[0]?.email,
-      position: selectedVariant.contactData.position,
-      companyName: selectedVariant.contactData.companyName,
-      hasMediaProfile: selectedVariant.contactData.hasMediaProfile
+      name: contactDataToUse.displayName,
+      email: contactDataToUse.emails?.[0]?.email,
+      position: contactDataToUse.position,
+      companyName: contactDataToUse.companyName,
+      hasMediaProfile: contactDataToUse.hasMediaProfile
     });
 
     // 2. COMPANY MATCHING
@@ -137,8 +185,8 @@ export async function importCandidateWithAutoMatching(params: {
       wasEnriched: boolean;
     } | undefined;
 
-    if (selectedVariant.contactData.companyName) {
-      console.log('🔍 Suche Company:', selectedVariant.contactData.companyName);
+    if (contactDataToUse.companyName) {
+      console.log('🔍 Suche Company:', contactDataToUse.companyName);
       companyResult = await handleCompanyMatching({
         variants: candidate.variants,
         selectedVariantIndex: params.selectedVariantIndex,
@@ -169,7 +217,7 @@ export async function importCandidateWithAutoMatching(params: {
       wasEnriched: boolean;
     }> = [];
 
-    if (selectedVariant.contactData.hasMediaProfile && companyResult) {
+    if (contactDataToUse.hasMediaProfile && companyResult) {
       console.log('🔍 Suche Publications für Company:', companyResult.companyName);
       // ✅ Publications NUR wenn Company vorhanden!
       publicationResults = await handlePublicationMatching({
@@ -185,7 +233,7 @@ export async function importCandidateWithAutoMatching(params: {
         wasCreated: p.wasCreated,
         matchType: p.matchType
       })));
-    } else if (selectedVariant.contactData.hasMediaProfile && !companyResult) {
+    } else if (contactDataToUse.hasMediaProfile && !companyResult) {
       console.log('⚠️ Journalist OHNE Company → Keine Publications');
     } else {
       console.log('ℹ️ Kein Journalist → Keine Publications');
@@ -193,7 +241,7 @@ export async function importCandidateWithAutoMatching(params: {
 
     // 4. KONTAKT ERSTELLEN
     console.log('\n👤 ===== KONTAKT ERSTELLEN =====');
-    const contactData = selectedVariant.contactData;
+    const contactData = contactDataToUse;
 
     // Bereite Kontakt-Daten vor mit mediaProfile wenn Journalist
     const contactToCreate: any = {

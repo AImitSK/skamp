@@ -170,7 +170,8 @@ function CandidateRow({
         selectedVariantIndex: 0,
         userId: user.uid,
         userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
-        organizationId: currentOrganization?.id || user.uid
+        organizationId: currentOrganization?.id || user.uid,
+        useAiMerge: false // ✅ Quick-Import ohne KI (nur erste Variante)
       });
 
       if (result.success) {

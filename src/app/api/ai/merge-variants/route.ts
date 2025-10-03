@@ -17,6 +17,7 @@ if (!GEMINI_API_KEY) {
 export async function POST(request: NextRequest) {
   try {
     if (!GEMINI_API_KEY) {
+      console.error('❌ GEMINI_API_KEY nicht gesetzt');
       return NextResponse.json(
         { error: 'KI-Service nicht konfiguriert' },
         { status: 500 }
@@ -25,15 +26,32 @@ export async function POST(request: NextRequest) {
 
     const { variants } = await request.json();
 
+    console.log('🤖 AI Merge Request erhalten');
+    console.log(`📊 Anzahl Varianten: ${variants?.length || 0}`);
+
     if (!variants || variants.length === 0) {
+      console.error('❌ Keine Varianten übergeben');
       return NextResponse.json(
         { error: 'Varianten erforderlich' },
         { status: 400 }
       );
     }
 
+    // Bei nur einer Variante: Direkt zurückgeben (kein Merge nötig)
+    if (variants.length === 1) {
+      console.log('ℹ️  Nur 1 Variante → Kein Merge nötig, gebe Original zurück');
+      return NextResponse.json({
+        success: true,
+        mergedData: variants[0].contactData,
+        usedAi: false,
+        reason: 'single_variant'
+      });
+    }
+
+    console.log('🚀 Starte Gemini 2.0 Flash Merge...');
+
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     const prompt = `
 Du bist ein Daten-Merge-Experte. Analysiere diese ${variants.length} Varianten eines Journalisten und erstelle die bestmögliche zusammengeführte Version.
@@ -92,36 +110,69 @@ Gib NUR ein gültiges JSON-Objekt zurück (kein Markdown, kein Text):
 WICHTIG: NUR das JSON-Objekt zurückgeben, keine Erklärungen!
 `;
 
+    console.log('📤 Sende Prompt an Gemini...');
+    const startTime = Date.now();
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
+    const duration = Date.now() - startTime;
+    console.log(`⏱️  Gemini Antwort-Zeit: ${duration}ms`);
+    console.log(`📥 Gemini Raw Response (erste 500 Zeichen):\n${text.substring(0, 500)}...`);
+
     // Parse JSON aus Response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error('❌ KI hat kein gültiges JSON zurückgegeben');
+      console.error('Antwort:', text);
       throw new Error('KI hat kein gültiges JSON zurückgegeben');
     }
 
     const mergedData = JSON.parse(jsonMatch[0]);
 
+    console.log('✅ AI Merge erfolgreich!');
+    console.log('📋 Gemergter Datensatz:');
+    console.log(`   - Name: ${mergedData.displayName}`);
+    console.log(`   - E-Mails: ${mergedData.emails?.length || 0}`);
+    console.log(`   - Telefone: ${mergedData.phones?.length || 0}`);
+    console.log(`   - Position: ${mergedData.position || 'N/A'}`);
+    console.log(`   - Beats: ${mergedData.beats?.length || 0}`);
+    console.log(`   - Social Profiles: ${mergedData.socialProfiles?.length || 0}`);
+
     return NextResponse.json({
       success: true,
       mergedData,
-      aiProvider: 'gemini',
+      usedAi: true,
+      aiProvider: 'gemini-2.0-flash-exp',
+      duration,
       timestamp: new Date().toISOString()
     });
 
   } catch (error: any) {
-    console.error('Error merging variants with AI:', error);
+    console.error('❌ Error merging variants with AI:', error);
+    console.error('Stack:', error.stack);
 
     if (error.message?.includes('API_KEY_INVALID')) {
-      return NextResponse.json({ error: 'Ungültiger API Key' }, { status: 401 });
+      console.error('API Key ist ungültig');
+      return NextResponse.json({
+        success: false,
+        error: 'Ungültiger API Key'
+      }, { status: 401 });
     } else if (error.message?.includes('QUOTA_EXCEEDED')) {
-      return NextResponse.json({ error: 'Quota erreicht' }, { status: 429 });
+      console.error('Gemini Quota überschritten');
+      return NextResponse.json({
+        success: false,
+        error: 'Quota erreicht'
+      }, { status: 429 });
     }
 
+    console.error(`Genereller Fehler: ${error.message}`);
     return NextResponse.json(
-      { error: `KI-Merge fehlgeschlagen: ${error.message}` },
+      {
+        success: false,
+        error: `KI-Merge fehlgeschlagen: ${error.message}`
+      },
       { status: 500 }
     );
   }
