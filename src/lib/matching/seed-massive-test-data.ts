@@ -388,6 +388,9 @@ export async function seedMassiveTestData() {
           awards: Math.random() > 0.95 ? [`${randomElement(['Journalist', 'Reporter', 'Autor'])} des Jahres ${2020 + Math.floor(Math.random() * 4)}`] : undefined
         },
 
+        // ✅ WICHTIG: publications (Namen) für Matching-System
+        publications: publications.map(p => p.name),
+
         addresses: [{
           type: 'work',
           street: company.addresses?.[0]?.street,
