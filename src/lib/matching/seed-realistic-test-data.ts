@@ -17,6 +17,23 @@ import { db } from '@/lib/firebase/config';
 import { collection, doc, writeBatch, deleteDoc, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Entfernt alle undefined Felder aus einem Object (für Firestore)
+ */
+function removeUndefinedFields(obj: any): any {
+  const cleaned: any = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  });
+  return cleaned;
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -619,14 +636,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
     // Company in companies_enhanced
     const companyRef = doc(db, 'companies_enhanced', company.id);
-    batch.set(companyRef, {
+    batch.set(companyRef, removeUndefinedFields({
       ...company,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.companies++;
 
@@ -638,14 +655,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   for (const publication of CATEGORY_A_PERFECT_MATCHES.publications) {
     const currentOrg = orgsForA[orgIndexA % orgsForA.length];
 
-    const publicationData = {
+    const publicationData = removeUndefinedFields({
       ...publication,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
 
     // 1. superadmin_publications für Auto-Matching
     batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
@@ -673,7 +690,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const companyId = publication?.companyId;
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       companyId,
       organizationId: currentOrg,
@@ -681,7 +698,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.perfectMatches++;
@@ -705,14 +722,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForB[orgIndexB % orgsForB.length];
 
     const companyRef = doc(db, 'companies_enhanced', company.id);
-    batch.set(companyRef, {
+    batch.set(companyRef, removeUndefinedFields({
       ...company,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.companies++;
 
@@ -723,14 +740,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   for (const publication of CATEGORY_B_FUZZY_MATCHES.publications) {
     const currentOrg = orgsForB[orgIndexB % orgsForB.length];
 
-    const publicationData = {
+    const publicationData = removeUndefinedFields({
       ...publication,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
 
     batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
     operationCount++;
@@ -754,7 +771,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const companyId = publication?.companyId;
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       companyId,
       organizationId: currentOrg,
@@ -762,7 +779,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.fuzzyMatches++;
@@ -787,7 +804,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForC[orgIndexC % orgsForC.length];
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
       deletedAt: null,
@@ -795,7 +812,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       createdAt: new Date(),
       updatedAt: new Date(),
       // Kein companyId, kein publicationId - soll neu angelegt werden
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.createNew++;
@@ -846,7 +863,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       const uniqueId = `${publication.id}-${currentOrg}`;
       const companyUniqueId = `${publication.companyId}-${currentOrg}`;
 
-      const publicationData = {
+      const publicationData = removeUndefinedFields({
         ...publication,
         companyId: companyUniqueId,
         organizationId: currentOrg,
@@ -854,7 +871,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         isReference: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      });
 
       batch.set(doc(db, 'superadmin_publications', uniqueId), publicationData);
       operationCount++;
@@ -952,14 +969,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.edgeCases++;
@@ -973,14 +990,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
     const companyRef = doc(db, 'companies_enhanced', company.id);
-    batch.set(companyRef, {
+    batch.set(companyRef, removeUndefinedFields({
       ...company,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.companies++;
 
@@ -992,14 +1009,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   for (const publication of CATEGORY_E_EDGE_CASES.abbreviations.publications) {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
-    const publicationData = {
+    const publicationData = removeUndefinedFields({
       ...publication,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
 
     batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
     operationCount++;
@@ -1024,7 +1041,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const companyId = publication?.companyId;
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       companyId,
       organizationId: currentOrg,
@@ -1032,7 +1049,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.edgeCases++;
@@ -1056,14 +1073,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       };
 
       const contactRef = doc(db, 'contacts_enhanced', uniqueId);
-      batch.set(contactRef, {
+      batch.set(contactRef, removeUndefinedFields({
         ...variantData,
         organizationId: currentOrg,
         deletedAt: null,
         isReference: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      }));
       operationCount++;
       stats.contacts++;
 
@@ -1078,14 +1095,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.edgeCases++;
@@ -1099,14 +1116,14 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
     const contactRef = doc(db, 'contacts_enhanced', contact.id);
-    batch.set(contactRef, {
+    batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    }));
     operationCount++;
     stats.contacts++;
     stats.scenarios.edgeCases++;
