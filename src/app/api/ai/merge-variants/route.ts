@@ -144,7 +144,10 @@ WICHTIG: NUR das JSON-Objekt zurückgeben, keine Erklärungen!
     console.log(`   - E-Mails: ${mergedData.emails?.length || 0}`);
     console.log(`   - Telefone: ${mergedData.phones?.length || 0}`);
     console.log(`   - Position: ${mergedData.position || 'N/A'}`);
+    console.log(`   - Company: ${mergedData.companyName || 'N/A'}`);
     console.log(`   - Beats: ${mergedData.beats?.length || 0}`);
+    console.log(`   - Publications: ${mergedData.publications?.length || 0}`);
+    console.log(`   - hasMediaProfile: ${mergedData.hasMediaProfile || false}`);
     console.log(`   - Social Profiles: ${mergedData.socialProfiles?.length || 0}`);
 
     return NextResponse.json({
