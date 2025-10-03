@@ -173,30 +173,41 @@ async function getOwnCompanies(organizationId: string): Promise<Array<{ id: stri
 
   try {
     const constraints = [
-      where('organizationId', '==', organizationId),
-      where('deletedAt', '==', null)
+      where('organizationId', '==', organizationId)
+      // ⚠️ deletedAt Filter entfernt - kann undefined sein statt null!
     ];
 
-    // ⚠️ NICHT in Query: isReference Filter kann undefined/null sein!
+    // ⚠️ NICHT in Query: isReference/deletedAt Filter können undefined/null sein!
     // Stattdessen im Code filtern
 
     const q = query(collection(db, 'companies_enhanced'), ...constraints);
     const snapshot = await getDocs(q);
+
+    console.log(`📊 Query returned ${snapshot.docs.length} companies (before filter)`);
+    if (snapshot.docs.length > 0) {
+      console.log('📋 First company sample:', snapshot.docs[0].data());
+    }
 
     const companies = snapshot.docs
       .map(doc => ({
         id: doc.id,
         name: doc.data().name,
         website: doc.data().website,
-        isReference: doc.data().isReference
+        isReference: doc.data().isReference,
+        deletedAt: doc.data().deletedAt
       }))
       .filter(c => {
-        // Filter 1: Keine References (isReference === true)
+        // Filter 1: Keine gelöschten (deletedAt gesetzt)
+        if (c.deletedAt) {
+          console.log(`⏭️  Skipping deleted: ${c.name}`);
+          return false;
+        }
+        // Filter 2: Keine References (isReference === true)
         if (c.isReference === true) {
           console.log(`⏭️  Skipping reference: ${c.name}`);
           return false;
         }
-        // Filter 2: Keine Reference-Pattern in ID
+        // Filter 3: Keine Reference-Pattern in ID
         if (c.id.startsWith('ref-') || c.id.startsWith('local-ref-')) {
           console.log(`⏭️  Skipping reference ID pattern: ${c.name}`);
           return false;
