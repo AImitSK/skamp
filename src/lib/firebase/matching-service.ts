@@ -139,10 +139,24 @@ export async function importCandidateWithAutoMatching(params: {
             name: result.mergedData.displayName,
             emails: result.mergedData.emails?.length || 0,
             phones: result.mergedData.phones?.length || 0,
-            beats: result.mergedData.beats?.length || 0
+            beats: result.mergedData.beats?.length || 0,
+            publications: result.mergedData.publications?.length || 0
           });
 
           contactDataToUse = result.mergedData;
+
+          // ✅ WICHTIG: Stelle sicher, dass publications-Array existiert
+          // Falls KI es nicht zurückgibt, sammle aus allen Varianten
+          if (!contactDataToUse.publications || contactDataToUse.publications.length === 0) {
+            const allPublications = new Set<string>();
+            for (const variant of candidate.variants) {
+              if (variant.contactData.publications) {
+                variant.contactData.publications.forEach(pub => allPublications.add(pub));
+              }
+            }
+            contactDataToUse.publications = Array.from(allPublications);
+            console.log(`⚠️  KI gab keine Publications zurück → ${contactDataToUse.publications.length} aus Varianten gesammelt`);
+          }
         } else {
           console.error('❌ AI-Merge fehlgeschlagen:', result.error);
           console.log('⤵️  Fallback: Nutze ausgewählte Variante');
