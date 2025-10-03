@@ -318,10 +318,19 @@ export async function seedMassiveTestData() {
         updatedAt: Timestamp.now()
       };
 
-      // Publications in RICHTIGE Collection schreiben: superadmin_publications
+      // Publications in BEIDE Collections schreiben
+      // 1. superadmin_publications für den Publication-Finder (Auto-Matching)
       batch.set(doc(db, 'superadmin_publications', publicationId), publicationData);
+
+      // 2. publications mit isGlobal für Premium-Datenbank (Redakteure-Seite)
+      batch.set(doc(db, 'publications', publicationId), {
+        ...publicationData,
+        isGlobal: true,
+        userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'  // Legacy-Support
+      });
+
       createdPublications.push(publicationData);
-      operationCount++;
+      operationCount += 2;  // 2 writes pro Publication
 
       if (operationCount >= MAX_BATCH_SIZE) {
         await batch.commit();
@@ -530,14 +539,23 @@ export async function cleanupMassiveTestData() {
       deletedCount++;
     }
 
-    // Lösche Test-Publications
-    const publicationsQuery = query(
+    // Lösche Test-Publications aus BEIDEN Collections
+    const publicationsQuery1 = query(
       collection(db, 'superadmin_publications'),
       where('isTestData', '==', true)
     );
-    const publicationsSnapshot = await getDocs(publicationsQuery);
+    const publicationsSnapshot1 = await getDocs(publicationsQuery1);
+    for (const doc of publicationsSnapshot1.docs) {
+      await deleteDoc(doc.ref);
+      deletedCount++;
+    }
 
-    for (const doc of publicationsSnapshot.docs) {
+    const publicationsQuery2 = query(
+      collection(db, 'publications'),
+      where('isTestData', '==', true)
+    );
+    const publicationsSnapshot2 = await getDocs(publicationsQuery2);
+    for (const doc of publicationsSnapshot2.docs) {
       await deleteDoc(doc.ref);
       deletedCount++;
     }
