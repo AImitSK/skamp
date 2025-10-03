@@ -315,8 +315,10 @@ export async function createPublication(params: CreatePublicationParams): Promis
   const publicationsRef = collection(db, 'publications');
 
   let publicationData: any = {
-    name: params.name,
-    companyId: params.companyId || null,  // ✅ Optional: Kann null sein!
+    title: params.name, // ✅ Neues Schema: title statt name
+    name: params.name, // ✅ Legacy-Kompatibilität
+    companyId: params.companyId || null,
+    publisherId: params.companyId || null, // ✅ Für Kompatibilität
     website: params.website || null,
     organizationId: params.organizationId,
     createdBy: params.createdBy,
@@ -324,13 +326,17 @@ export async function createPublication(params: CreatePublicationParams): Promis
     updatedAt: serverTimestamp(),
     deletedAt: null,
     source: params.source,
-    isReference: false, // ✅ Wichtig: Wir erstellen eigene Publikationen!
-    type: 'unknown', // Kann später manuell angepasst werden
-    country: 'DE', // Default
+    isReference: false,
+    type: 'newspaper', // ✅ Sinnvoller Default als 'unknown'
+    country: 'DE',
     reach: null,
     frequency: null,
-    beats: [],
-    mediaType: []
+    focusAreas: [], // ✅ Statt beats
+    languages: ['de'], // ✅ Default Deutsch
+    mediaType: [],
+    // Mindest-Struktur für Modal
+    targetAudience: null,
+    geographicTargets: ['DE']
     // isGlobal wird durch interceptSave gesetzt wenn autoGlobalMode = true
   };
 
