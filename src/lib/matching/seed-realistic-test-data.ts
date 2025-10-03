@@ -1559,6 +1559,31 @@ export async function cleanupRealisticTestData(): Promise<void> {
   console.log(`✅ ${deletedContacts} Contacts gelöscht`);
 
   // ============================================================================
+  // 5. MATCHING CANDIDATES LÖSCHEN (ALLE!)
+  // ============================================================================
+  console.log('\n🗑️  Lösche ALLE Matching Candidates...');
+
+  let deletedCandidates = 0;
+
+  try {
+    const candidatesSnapshot = await getDocs(collection(db, 'matching_candidates'));
+    console.log(`   Gefunden: ${candidatesSnapshot.size} Kandidaten`);
+
+    for (const candidateDoc of candidatesSnapshot.docs) {
+      try {
+        await deleteDoc(candidateDoc.ref);
+        deletedCandidates++;
+      } catch (error) {
+        console.error(`Fehler beim Löschen von Candidate ${candidateDoc.id}:`, error);
+      }
+    }
+
+    console.log(`✅ ${deletedCandidates} Matching Candidates gelöscht`);
+  } catch (error) {
+    console.error('❌ Fehler beim Löschen der Matching Candidates:', error);
+  }
+
+  // ============================================================================
   // FINAL STATS
   // ============================================================================
   console.log('\n✅ Cleanup abgeschlossen!');
@@ -1567,5 +1592,6 @@ export async function cleanupRealisticTestData(): Promise<void> {
   console.log(`   Companies: ${deletedCompanies}`);
   console.log(`   Publications: ${deletedPublications}`);
   console.log(`   Contacts: ${deletedContacts}`);
-  console.log(`   📈 TOTAL: ${deletedOrgs + deletedCompanies + deletedPublications + deletedContacts} Dokumente`);
+  console.log(`   Matching Candidates: ${deletedCandidates}`);
+  console.log(`   📈 TOTAL: ${deletedOrgs + deletedCompanies + deletedPublications + deletedContacts + deletedCandidates} Dokumente`);
 }
