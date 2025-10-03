@@ -694,6 +694,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       ...contact,
       companyId,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: contact.publicationId ? [contact.publicationId] : [],
+        mediaTypes: ['print', 'online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
@@ -775,6 +781,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       ...contact,
       companyId,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: contact.publicationId ? [contact.publicationId] : [],
+        mediaTypes: ['print', 'online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
@@ -928,6 +940,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       const cleanedData: any = {
         ...contactData,
         organizationId: currentOrg,
+        mediaProfile: {
+          isJournalist: true,
+          beats: [],
+          publicationIds: publicationUniqueId ? [publicationUniqueId] : [],
+          mediaTypes: ['print', 'online']
+        },
         deletedAt: null,
         isReference: false,
         createdAt: new Date(),
@@ -972,6 +990,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: [],
+        mediaTypes: ['online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
@@ -1045,6 +1069,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       ...contact,
       companyId,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: contact.publicationId ? [contact.publicationId] : [],
+        mediaTypes: ['print', 'online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
@@ -1076,6 +1106,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       batch.set(contactRef, removeUndefinedFields({
         ...variantData,
         organizationId: currentOrg,
+        mediaProfile: {
+          isJournalist: true,
+          beats: [],
+          publicationIds: [],
+          mediaTypes: ['online']
+        },
         deletedAt: null,
         isReference: false,
         createdAt: new Date(),
@@ -1098,6 +1134,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: [],
+        mediaTypes: ['online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
@@ -1119,6 +1161,12 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     batch.set(contactRef, removeUndefinedFields({
       ...contact,
       organizationId: currentOrg,
+      mediaProfile: {
+        isJournalist: true,
+        beats: [],
+        publicationIds: [],
+        mediaTypes: ['online']
+      },
       deletedAt: null,
       isReference: false,
       createdAt: new Date(),
