@@ -114,6 +114,74 @@ export default function SuperAdminSettingsPage() {
   };
 
   /**
+   * Erstellt massive Test-Daten (350+ Journalisten)
+   */
+  const handleSeedMassiveTestData = async () => {
+    if (!confirm('Massive Test-Daten erstellen? Dies erstellt 35+ Companies, 60+ Publications und 350+ Journalisten für realistisches Testing.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Erstelle massive Test-Daten... Dies kann 30-60 Sekunden dauern.');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/matching/seed-massive', { method: 'POST' });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(
+          `Massive Test-Daten erstellt! ${result.stats.companies} Companies, ${result.stats.publications} Publications, ${result.stats.contacts}+ Journalisten`,
+          { id: toastId, duration: 8000 }
+        );
+      } else {
+        throw new Error(result.error || 'Unbekannter Fehler');
+      }
+    } catch (error) {
+      console.error('Massive seed failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Löscht massive Test-Daten
+   */
+  const handleCleanupMassiveTestData = async () => {
+    if (!confirm('Massive Test-Daten löschen? Dies entfernt alle Test-Companies, Publications und Journalisten.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Lösche massive Test-Daten...');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/matching/seed-massive', { method: 'DELETE' });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(
+          `Massive Test-Daten gelöscht! ${result.deletedCount} Einträge entfernt`,
+          { id: toastId, duration: 5000 }
+        );
+      } else {
+        throw new Error(result.error || 'Unbekannter Fehler');
+      }
+    } catch (error) {
+      console.error('Massive cleanup failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Triggert Matching-Scan (direkt via Client SDK)
    */
   const handleTriggerScan = async () => {
@@ -271,16 +339,68 @@ export default function SuperAdminSettingsPage() {
         </h2>
 
         <div className="space-y-6">
-          {/* Test Data Tools */}
+          {/* Massive Test Data Tools - PREMIUM DATABASE */}
+          <div className="p-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10">
+            <div className="flex items-start gap-3 mb-4">
+              <UsersIcon className="size-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-1 flex items-center gap-2">
+                  Massive Test-Daten (Premium-Datenbank)
+                  <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                    350+ Journalisten
+                  </span>
+                </h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Erstellt realistische Test-Daten für die Premium-Datenbank:<br/>
+                  <strong>35+ Companies, 60+ Publications, 350+ Journalisten</strong> mit vollständigen Profilen.
+                  Erscheint automatisch unter "Redakteure" und kann per Quick-Import importiert werden.
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    color="blue"
+                    onClick={handleSeedMassiveTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <UsersIcon className="size-4" />
+                    Massive Test-Daten erstellen
+                  </Button>
+
+                  <Button
+                    color="light"
+                    onClick={handleCleanupMassiveTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <TrashIcon className="size-4" />
+                    Massive Test-Daten löschen
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-zinc-600 dark:text-zinc-400 border-t border-blue-200 dark:border-blue-800 pt-3">
+              <strong>📊 Enthält:</strong>
+              <ul className="list-disc list-inside mt-1 space-y-0.5">
+                <li>35+ Medien-Companies (Spiegel, Zeit, FAZ, etc.)</li>
+                <li>60+ Publications (Zeitungen, Magazine, Online-Portale)</li>
+                <li>350+ Journalisten mit vollständigen Profilen und Publications</li>
+                <li>Automatische Duplikate für Matching-Tests (~15%)</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Small Test Data Tools */}
           <div className="p-6 rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10">
             <div className="flex items-start gap-3 mb-4">
               <BeakerIcon className="size-5 text-orange-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">
-                  Test-Daten für Intelligent Matching
+                  Klein Test-Daten (Matching-Tests)
                 </h3>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                  Erstellt 3 Test-Organisationen und 6 Journalisten-Kontakte zum Testen des neuen
+                  Erstellt 3 Test-Organisationen und 6 Journalisten-Kontakte zum Testen des
                   Intelligent Matching Systems. Nach dem Erstellen einen Scan ausführen um Kandidaten zu generieren.
                 </p>
 
