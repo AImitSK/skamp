@@ -694,7 +694,15 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
       const contactRef = doc(db, 'contacts_enhanced', uniqueId);
       batch.set(contactRef, removeUndefinedFields({
-        ...contact,
+        id: uniqueId,
+        name: {
+          firstName: contact.firstName,
+          lastName: contact.lastName
+        },
+        displayName: `${contact.firstName} ${contact.lastName}`,
+        emails: contact.email ? [{ type: 'business' as const, email: contact.email, isPrimary: true }] : [],
+        phones: [],
+        position: contact.position,
         companyId,
         organizationId: currentOrg,
         mediaProfile: {
@@ -707,6 +715,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         isReference: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        createdBy: 'seed-realistic',
+        updatedBy: 'seed-realistic',
       }));
       operationCount++;
       stats.contacts++;
@@ -785,7 +795,15 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
 
       const contactRef = doc(db, 'contacts_enhanced', uniqueId);
       batch.set(contactRef, removeUndefinedFields({
-        ...contact,
+        id: uniqueId,
+        name: {
+          firstName: contact.firstName,
+          lastName: contact.lastName
+        },
+        displayName: `${contact.firstName} ${contact.lastName}`,
+        emails: contact.email ? [{ type: 'business' as const, email: contact.email, isPrimary: true }] : [],
+        phones: [],
+        position: contact.position,
         companyId,
         organizationId: currentOrg,
         mediaProfile: {
@@ -798,6 +816,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         isReference: false,
         createdAt: new Date(),
         updatedAt: new Date(),
+        createdBy: 'seed-realistic',
+        updatedBy: 'seed-realistic',
       }));
       operationCount++;
       stats.contacts++;
