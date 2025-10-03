@@ -268,6 +268,8 @@ export async function seedMassiveTestData() {
         }],
         phones: [generatePhone()],
         emails: [`info@${company.name.toLowerCase().replace(/\s+/g, '-')}.de`],
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',
+        deletedAt: null,
         isTestData: true,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
@@ -308,18 +310,16 @@ export async function seedMassiveTestData() {
         website: `https://www.${pub.name.toLowerCase().replace(/\s+/g, '-')}.de`,
         language: 'Deutsch',
         printISSN: `${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',
+        deletedAt: null,
+        isReference: false,
         isTestData: true,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
 
-      // Publications in normale Collection mit userId (Legacy-Support)
-      batch.set(doc(db, 'publications', publicationId), {
-        ...publicationData,
-        userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Default org für Test
-        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Auch neue Format
-        isGlobal: true  // Für Premium-Datenbank
-      });
+      // Publications in RICHTIGE Collection schreiben: superadmin_publications
+      batch.set(doc(db, 'superadmin_publications', publicationId), publicationData);
       createdPublications.push(publicationData);
       operationCount++;
 
@@ -365,6 +365,8 @@ export async function seedMassiveTestData() {
         companyName: company.name,
         jobTitle: randomElement(JOB_TITLES),
         department: randomElement(['Redaktion', 'Politik', 'Wirtschaft', 'Kultur', 'Sport', 'Digital']),
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',
+        deletedAt: null,
 
         // WICHTIG: mediaProfile für Journalisten
         mediaProfile: {
@@ -403,7 +405,6 @@ export async function seedMassiveTestData() {
       // Schreibe in BEIDE Collections für volle Kompatibilität
       batch.set(doc(db, 'contacts_enhanced', contactId), {
         ...contactData,
-        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3',  // Default org
         isGlobal: true  // Für Premium-Datenbank
       });
       batch.set(doc(db, 'superadmin_contacts', contactId), contactData);
@@ -529,17 +530,7 @@ export async function cleanupMassiveTestData() {
       deletedCount++;
     }
 
-    // Lösche Test-Publications aus beiden Collections
-    const publicationsQuery1 = query(
-      collection(db, 'publications'),
-      where('isTestData', '==', true)
-    );
-    const publicationsSnapshot1 = await getDocs(publicationsQuery1);
-    for (const doc of publicationsSnapshot1.docs) {
-      await deleteDoc(doc.ref);
-      deletedCount++;
-    }
-
+    // Lösche Test-Publications
     const publicationsQuery = query(
       collection(db, 'superadmin_publications'),
       where('isTestData', '==', true)
