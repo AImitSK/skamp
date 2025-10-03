@@ -148,6 +148,71 @@ export default function SuperAdminSettingsPage() {
   };
 
   /**
+   * Erstellt realistische Test-Daten (200+ Szenarien)
+   */
+  const handleSeedRealisticTestData = async () => {
+    if (!confirm('Realistische Test-Daten erstellen? Dies erstellt 10 Organisationen mit 200+ Test-Szenarien für umfassendes Matching-Testing.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Erstelle realistische Test-Daten... Dies kann 60-90 Sekunden dauern.');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/matching/seed-realistic', { method: 'POST' });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(
+          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.companies} Companies, ${result.stats.publications} Publications, ${result.stats.contacts} Kontakte → ${Object.values(result.stats.scenarios).reduce((a: number, b: number) => a + b, 0)} Szenarien`,
+          { id: toastId, duration: 10000 }
+        );
+      } else {
+        throw new Error(result.error || 'Unbekannter Fehler');
+      }
+    } catch (error) {
+      console.error('Realistic seed failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Löscht realistische Test-Daten
+   */
+  const handleCleanupRealisticTestData = async () => {
+    if (!confirm('Realistische Test-Daten löschen? Dies entfernt alle Test-Organisationen, Companies, Publications und Kontakte.')) {
+      return;
+    }
+
+    const toastId = toast.loading('Lösche realistische Test-Daten...');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/matching/seed-realistic', { method: 'DELETE' });
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Realistische Test-Daten gelöscht!', { id: toastId, duration: 5000 });
+      } else {
+        throw new Error(result.error || 'Unbekannter Fehler');
+      }
+    } catch (error) {
+      console.error('Realistic cleanup failed:', error);
+      toast.error(
+        `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        { id: toastId }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Löscht massive Test-Daten
    */
   const handleCleanupMassiveTestData = async () => {
@@ -388,6 +453,61 @@ export default function SuperAdminSettingsPage() {
                 <li>350+ Journalisten mit vollständigen Profilen und Publications</li>
                 <li>Automatische Duplikate für Matching-Tests (~15%)</li>
               </ul>
+            </div>
+          </div>
+
+          {/* Realistic Test Data Tools - NEW */}
+          <div className="p-6 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10">
+            <div className="flex items-start gap-3 mb-4">
+              <BeakerIcon className="size-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-1 flex items-center gap-2">
+                  🎯 Realistische Test-Daten (Matching-System Testing)
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-green-600 text-white rounded-full">
+                    NEU
+                  </span>
+                </h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Erstellt <strong>200+ Test-Szenarien</strong> über <strong>10 Organisationen</strong> für umfassendes Matching-Testing.
+                  Simuliert alle Matching-Szenarien: Perfect Matches, Fuzzy Matches, Konflikte, Edge Cases.
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    color="green"
+                    onClick={handleSeedRealisticTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <UsersIcon className="size-4" />
+                    Realistische Test-Daten erstellen
+                  </Button>
+
+                  <Button
+                    color="light"
+                    onClick={handleCleanupRealisticTestData}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    <TrashIcon className="size-4" />
+                    Realistische Test-Daten löschen
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-zinc-600 dark:text-zinc-400 border-t border-green-200 dark:border-green-800 pt-3">
+              <strong>📊 5 Test-Kategorien (200+ Szenarien):</strong>
+              <ul className="list-disc list-inside mt-1 space-y-0.5">
+                <li><strong>Category A:</strong> 50 Perfect Matches (Spiegel, FAZ, Zeit, etc.)</li>
+                <li><strong>Category B:</strong> 50 Fuzzy Matches (DPA, Focus, WirtschaftsWoche)</li>
+                <li><strong>Category C:</strong> 30 Create New (Tech-Blogger, Nischen-Medien)</li>
+                <li><strong>Category D:</strong> 40 Conflicts (Super/Medium Majority, Keep Existing)</li>
+                <li><strong>Category E:</strong> 30 Edge Cases (Freie Journalisten, Abkürzungen, AI-Merge)</li>
+              </ul>
+              <div className="mt-2 text-zinc-500">
+                📈 Total: 10 Organisationen, 150+ Companies, 200+ Publications, 450+ Kontakte
+              </div>
             </div>
           </div>
 
