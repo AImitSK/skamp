@@ -163,9 +163,10 @@ export default function SuperAdminSettingsPage() {
       const result = await response.json();
 
       if (result.success) {
+        const totalScenarios = Object.values(result.stats.scenarios || {}).reduce((a: number, b: number) => a + b, 0);
         toast.success(
-          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.contacts} Kontakte für Matching-Tests`,
-          { id: toastId, duration: 8000 }
+          `Realistische Test-Daten erstellt! ${result.stats.organizations} Orgs, ${result.stats.companies} Companies, ${result.stats.publications} Publications, ${result.stats.contacts} Kontakte → ${totalScenarios} Szenarien`,
+          { id: toastId, duration: 10000 }
         );
       } else {
         throw new Error(result.error || 'Unbekannter Fehler');
