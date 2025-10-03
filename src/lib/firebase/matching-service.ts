@@ -185,11 +185,15 @@ export async function importCandidateWithAutoMatching(params: {
     console.log('\n👤 ===== KONTAKT ERSTELLEN =====');
     const contactData = selectedVariant.contactData;
 
+    // Prüfe ob SuperAdmin (für Premium-Import)
+    const isSuperAdmin = params.organizationId === 'superadmin-org';
+
     // Bereite Kontakt-Daten vor mit mediaProfile wenn Journalist
     const contactToCreate: any = {
       ...contactData,
       companyId: companyResult?.companyId || null,
-      organizationId: params.organizationId,
+      organizationId: isSuperAdmin ? 'superadmin-org' : params.organizationId,
+      isGlobal: isSuperAdmin, // ✅ Global für SuperAdmin, lokal für normale User
       createdBy: params.userId,
       source: 'matching_import',
       matchingCandidateId: params.candidateId

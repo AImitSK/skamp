@@ -318,6 +318,7 @@ export async function createPublication(params: CreatePublicationParams): Promis
     companyId: params.companyId || null,  // ✅ Optional: Kann null sein!
     website: params.website || null,
     organizationId: params.organizationId,
+    isGlobal: params.organizationId === 'superadmin-org', // ✅ Global für SuperAdmin
     createdBy: params.createdBy,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
