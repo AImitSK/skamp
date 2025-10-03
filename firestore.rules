@@ -61,7 +61,12 @@ service cloud.firestore {
     // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
     // ========================================
 
-    // Organisations-spezifische Collections
+    // Organizations - Root Collection (für Development offen)
+    match /organizations/{orgId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Organisations-spezifische Sub-Collections
     match /organizations/{orgId}/{collection}/{docId} {
       allow read, write: if request.auth != null
                          && request.auth.token.organizationId == orgId;
