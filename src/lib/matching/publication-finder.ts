@@ -311,7 +311,7 @@ export interface CreatePublicationParams {
  * - OHNE companyId: Freie Publikation ohne Company-Zuordnung
  */
 export async function createPublication(params: CreatePublicationParams): Promise<string> {
-  const publicationsRef = collection(db, 'superadmin_publications');
+  const publicationsRef = collection(db, 'publications');
 
   const publicationData = {
     name: params.name,
