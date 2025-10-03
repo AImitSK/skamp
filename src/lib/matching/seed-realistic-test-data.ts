@@ -14,7 +14,7 @@
  */
 
 import { db } from '@/lib/firebase/config';
-import { collection, doc, writeBatch, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, writeBatch, deleteDoc, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // ============================================================================
 // TYPES
@@ -584,18 +584,25 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   // 1. ORGANIZATIONS ERSTELLEN (10 Test-Organisationen)
   // ============================================================================
   console.log('\n📋 Erstelle Test-Organisationen...');
+
+  const createdOrgIds: string[] = [];
+
   for (const org of TEST_ORGANIZATIONS) {
-    const orgRef = doc(db, 'organizations', org.id);
-    batch.set(orgRef, {
+    // Verwende addDoc() wie in der funktionierenden seed-test-data.ts
+    const orgRef = await addDoc(collection(db, 'organizations'), {
       name: org.name,
       ownerId: org.ownerId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      type: 'agency',
+      status: 'active',
+      features: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
-    operationCount++;
+    createdOrgIds.push(orgRef.id);
     stats.organizations++;
+    console.log(`  ✅ Org ${stats.organizations}/10: ${org.name}`);
   }
-  await commitBatch();
+
   console.log(`✅ ${stats.organizations} Organisationen erstellt`);
 
   // ============================================================================
@@ -603,8 +610,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   // ============================================================================
   console.log('\n📊 Category A: Perfect Matches...');
 
-  // Verteile Companies auf Org 1-3
-  const orgsForA = ['org-test-001', 'org-test-002', 'org-test-003'];
+  // Verteile Companies auf Org 0-2
+  const orgsForA = [createdOrgIds[0], createdOrgIds[1], createdOrgIds[2]];
   let orgIndexA = 0;
 
   for (const company of CATEGORY_A_PERFECT_MATCHES.companies) {
@@ -691,7 +698,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   // ============================================================================
   console.log('\n📊 Category B: Fuzzy Matches...');
 
-  const orgsForB = ['org-test-003', 'org-test-004', 'org-test-005', 'org-test-006'];
+  const orgsForB = [createdOrgIds[2], createdOrgIds[3], createdOrgIds[4], createdOrgIds[5]];
   let orgIndexB = 0;
 
   for (const company of CATEGORY_B_FUZZY_MATCHES.companies) {
@@ -772,7 +779,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   // ============================================================================
   console.log('\n📊 Category C: Create New...');
 
-  const orgsForC = ['org-test-005', 'org-test-006', 'org-test-007', 'org-test-008', 'org-test-009'];
+  const orgsForC = [createdOrgIds[4], createdOrgIds[5], createdOrgIds[6], createdOrgIds[7], createdOrgIds[8]];
   let orgIndexC = 0;
 
   // Contacts ohne Company/Publication (sollen neu angelegt werden)
@@ -810,8 +817,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const company = CATEGORY_D_CONFLICTS.companies[i];
 
     // Jede Company wird von MEHREREN Orgs erstellt (für Konflikte)
-    for (let orgIdx = 0; orgIdx < TEST_ORGANIZATIONS.length; orgIdx++) {
-      const currentOrg = TEST_ORGANIZATIONS[orgIdx].id;
+    for (let orgIdx = 0; orgIdx < createdOrgIds.length; orgIdx++) {
+      const currentOrg = createdOrgIds[orgIdx];
       const uniqueId = `${company.id}-${currentOrg}`;
 
       const companyRef = doc(db, 'companies_enhanced', uniqueId);
@@ -834,8 +841,8 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   for (let i = 0; i < CATEGORY_D_CONFLICTS.publications.length; i++) {
     const publication = CATEGORY_D_CONFLICTS.publications[i];
 
-    for (let orgIdx = 0; orgIdx < TEST_ORGANIZATIONS.length; orgIdx++) {
-      const currentOrg = TEST_ORGANIZATIONS[orgIdx].id;
+    for (let orgIdx = 0; orgIdx < createdOrgIds.length; orgIdx++) {
+      const currentOrg = createdOrgIds[orgIdx];
       const uniqueId = `${publication.id}-${currentOrg}`;
       const companyUniqueId = `${publication.companyId}-${currentOrg}`;
 
@@ -880,7 +887,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     }
 
     for (let orgIdx = 0; orgIdx < numOrgs; orgIdx++) {
-      const currentOrg = TEST_ORGANIZATIONS[orgIdx].id;
+      const currentOrg = createdOrgIds[orgIdx];
       const uniqueId = `${contact.id}-${currentOrg}`;
 
       const publication = CATEGORY_D_CONFLICTS.publications.find(p => p.id === contact.publicationId);
@@ -925,7 +932,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
   // ============================================================================
   console.log('\n📊 Category E: Edge Cases...');
 
-  const orgsForE = ['org-test-007', 'org-test-008', 'org-test-009', 'org-test-010'];
+  const orgsForE = [createdOrgIds[6], createdOrgIds[7], createdOrgIds[8], createdOrgIds[9]];
   let orgIndexE = 0;
 
   // Freie Journalisten (ohne Company/Publication)
@@ -1132,15 +1139,28 @@ export async function cleanupRealisticTestData(): Promise<void> {
   let deletedContacts = 0;
 
   // ============================================================================
-  // 1. ORGANIZATIONS LÖSCHEN
+  // 1. ORGANIZATIONS LÖSCHEN - Finde alle mit "PR Agentur", "Tech Startup", etc.
   // ============================================================================
   console.log('\n🗑️  Lösche Test-Organisationen...');
-  for (const org of TEST_ORGANIZATIONS) {
+
+  // Finde alle Organisationen mit Test-Namen
+  const testOrgNames = TEST_ORGANIZATIONS.map(org => org.name);
+  const orgsSnapshot = await getDocs(collection(db, 'organizations'));
+  const testOrgIds: string[] = [];
+
+  orgsSnapshot.forEach((doc) => {
+    const orgData = doc.data();
+    if (testOrgNames.includes(orgData.name)) {
+      testOrgIds.push(doc.id);
+    }
+  });
+
+  for (const orgId of testOrgIds) {
     try {
-      await deleteDoc(doc(db, 'organizations', org.id));
+      await deleteDoc(doc(db, 'organizations', orgId));
       deletedOrgs++;
     } catch (error) {
-      console.error(`Fehler beim Löschen von Organization ${org.id}:`, error);
+      console.error(`Fehler beim Löschen von Organization ${orgId}:`, error);
     }
   }
   console.log(`✅ ${deletedOrgs} Organisationen gelöscht`);
@@ -1172,8 +1192,8 @@ export async function cleanupRealisticTestData(): Promise<void> {
 
   // Category D Companies (über alle Orgs)
   for (const company of CATEGORY_D_CONFLICTS.companies) {
-    for (const org of TEST_ORGANIZATIONS) {
-      const uniqueId = `${company.id}-${org.id}`;
+    for (const orgId of testOrgIds) {
+      const uniqueId = `${company.id}-${orgId}`;
       try {
         await deleteDoc(doc(db, 'companies_enhanced', uniqueId));
         deletedCompanies++;
@@ -1224,8 +1244,8 @@ export async function cleanupRealisticTestData(): Promise<void> {
 
   // Category D Publications (über alle Orgs)
   for (const publication of CATEGORY_D_CONFLICTS.publications) {
-    for (const org of TEST_ORGANIZATIONS) {
-      const uniqueId = `${publication.id}-${org.id}`;
+    for (const orgId of testOrgIds) {
+      const uniqueId = `${publication.id}-${orgId}`;
       try {
         await deleteDoc(doc(db, 'superadmin_publications', uniqueId));
         await deleteDoc(doc(db, 'publications', uniqueId));
@@ -1295,8 +1315,8 @@ export async function cleanupRealisticTestData(): Promise<void> {
       numOrgs = 10; // Keep Existing
     }
 
-    for (let orgIdx = 0; orgIdx < numOrgs; orgIdx++) {
-      const currentOrg = TEST_ORGANIZATIONS[orgIdx].id;
+    for (let orgIdx = 0; orgIdx < Math.min(numOrgs, testOrgIds.length); orgIdx++) {
+      const currentOrg = testOrgIds[orgIdx];
       const uniqueId = `${contact.id}-${currentOrg}`;
       try {
         await deleteDoc(doc(db, 'contacts_enhanced', uniqueId));
