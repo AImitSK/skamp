@@ -77,6 +77,9 @@ Erstelle EINE optimale Version mit folgenden Regeln:
 6. **Media Types:** KOMBINIERE alle einzigartigen Types
 7. **Social Profiles:** Nimm alle einzigartigen Profile (keine Duplikate)
 8. **Webseite:** Nimm geschäftliche Webseite (Firmen-Webseite, nicht private)
+9. **Publications:** KOMBINIERE alle einzigartigen Publikations-Namen aus allen Varianten
+10. **Company:** Wähle vollständigsten Firmennamen und behalte companyId bei
+11. **hasMediaProfile:** true wenn IRGENDEINE Variante es hat
 
 **ANTWORT-FORMAT:**
 
@@ -104,7 +107,11 @@ Gib NUR ein gültiges JSON-Objekt zurück (kein Markdown, kein Text):
     { "platform": "Twitter", "url": "https://twitter.com/mmueller", "handle": "@mmueller" }
   ],
   "website": "https://www.spiegel.de",
-  "photoUrl": null
+  "photoUrl": null,
+  "companyName": "Spiegel Verlag",
+  "companyId": "comp-id-123",
+  "hasMediaProfile": true,
+  "publications": ["Der Spiegel", "Spiegel Online"]
 }
 
 WICHTIG: NUR das JSON-Objekt zurückgeben, keine Erklärungen!
