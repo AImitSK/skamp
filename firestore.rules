@@ -41,6 +41,16 @@ service cloud.firestore {
     }
 
     // ========================================
+    // DEFAULT FALLBACK (MUSS GANZ OBEN STEHEN!)
+    // ========================================
+
+    // Fallback für andere Collections (temporär permissiv für Development)
+    // WICHTIG: Diese Rule steht OBEN, damit spezifische Rules sie überschreiben können!
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ========================================
     // MATCHING CANDIDATES (SuperAdmin Only)
     // ========================================
 
@@ -96,11 +106,6 @@ service cloud.firestore {
     match /companies_enhanced/{companyId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
-    }
-
-    // Fallback für andere Collections (temporär permissiv für Development)
-    match /{document=**} {
-      allow read, write: if request.auth != null;
     }
 
     // ========================================
