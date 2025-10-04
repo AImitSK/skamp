@@ -44,17 +44,20 @@ service cloud.firestore {
     // MATCHING CANDIDATES (SuperAdmin Only)
     // ========================================
 
-    // Matching-Kandidaten - Nur SuperAdmin kann lesen/schreiben
+    // Matching-Kandidaten - SuperAdmin + Cron Jobs
     match /matching_candidates/{candidateId} {
-      allow read, write: if request.auth != null
-                         && isSuperAdmin();
+      // Lesen: Nur SuperAdmin
+      allow read: if request.auth != null && isSuperAdmin();
+      // Schreiben: SuperAdmin ODER unauthenticated (für Cron Jobs)
+      allow write: if (request.auth != null && isSuperAdmin()) || request.auth == null;
     }
 
-    // Matching Scan-Jobs - Nur SuperAdmin kann lesen
+    // Matching Scan-Jobs - SuperAdmin + Cron Jobs
     match /matching_scan_jobs/{jobId} {
+      // Lesen: Nur SuperAdmin
       allow read: if request.auth != null && isSuperAdmin();
-      // Nur Cloud Functions können schreiben (via Admin SDK)
-      allow write: if false;
+      // Schreiben: SuperAdmin ODER unauthenticated (für Cron Jobs)
+      allow write: if (request.auth != null && isSuperAdmin()) || request.auth == null;
     }
 
     // ========================================
