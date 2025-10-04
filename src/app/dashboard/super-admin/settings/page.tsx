@@ -46,6 +46,8 @@ export default function SuperAdminSettingsPage() {
   const [useAiMerge, setUseAiMerge] = useState(false);
   const [autoScanEnabled, setAutoScanEnabled] = useState(false);
   const [autoScanInterval, setAutoScanInterval] = useState<AutoScanInterval>('weekly');
+  const [autoImportEnabled, setAutoImportEnabled] = useState(false);
+  const [autoImportScore, setAutoImportScore] = useState(60);
 
   /**
    * Lädt globale Settings
@@ -56,6 +58,8 @@ export default function SuperAdminSettingsPage() {
       setUseAiMerge(settings.useAiMerge);
       setAutoScanEnabled(settings.autoScan.enabled);
       setAutoScanInterval(settings.autoScan.interval);
+      setAutoImportEnabled(settings.autoImport.enabled);
+      setAutoImportScore(settings.autoImport.minScore);
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -189,6 +193,39 @@ export default function SuperAdminSettingsPage() {
     }
   };
 
+  /**
+   * Toggle Auto-Import
+   */
+  const handleAutoImportToggle = async (enabled: boolean) => {
+    if (!user) return;
+
+    try {
+      setAutoImportEnabled(enabled);
+      await matchingSettingsService.updateAutoImport(enabled, autoImportScore, user.uid);
+      toast.success(enabled ? 'Automatischer Import aktiviert' : 'Automatischer Import deaktiviert');
+    } catch (error) {
+      console.error('Error updating auto import setting:', error);
+      toast.error('Fehler beim Speichern der Einstellung');
+      setAutoImportEnabled(!enabled); // Rollback
+    }
+  };
+
+  /**
+   * Ändere Auto-Import Score
+   */
+  const handleScoreChange = async (score: number) => {
+    if (!user) return;
+
+    try {
+      setAutoImportScore(score);
+      await matchingSettingsService.updateAutoImport(autoImportEnabled, score, user.uid);
+      toast.success(`Score-Schwellwert auf ${score} geändert`);
+    } catch (error) {
+      console.error('Error updating auto import score:', error);
+      toast.error('Fehler beim Speichern der Einstellung');
+    }
+  };
+
 
   /**
    * Triggert Matching-Scan (direkt via Client SDK)
@@ -301,6 +338,56 @@ export default function SuperAdminSettingsPage() {
                 </select>
                 <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                   ⏱️ Nächster Scan: {autoScanEnabled ? 'In Planung...' : 'Deaktiviert'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Auto-Import Toggle */}
+          <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <CheckCircleIcon className="size-5 text-purple-600" />
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
+                    Automatischer Import
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 ml-8">
+                  Importiert Kandidaten automatisch wenn sie den Score-Schwellwert erreichen. Läuft täglich um 04:00 Uhr (1h nach dem Scan).
+                </p>
+              </div>
+              <div className="ml-4">
+                <SimpleSwitch
+                  checked={autoImportEnabled}
+                  onChange={handleAutoImportToggle}
+                />
+              </div>
+            </div>
+
+            {/* Score Threshold Slider */}
+            {autoImportEnabled && (
+              <div className="ml-8 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+                  Score-Schwellwert: <span className="text-purple-600 font-semibold">{autoImportScore}</span> / 100
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={autoImportScore}
+                  onChange={(e) => handleScoreChange(parseInt(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700 accent-purple-600"
+                />
+                <div className="mt-2 flex justify-between text-xs text-zinc-500">
+                  <span>0 (alle)</span>
+                  <span>50</span>
+                  <span>100 (nur perfekte)</span>
+                </div>
+                <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                  💡 Kandidaten mit Score ≥ {autoImportScore} werden automatisch importiert.
+                  {useAiMerge ? ' Mit KI-Merge aktiviert.' : ' Erste Variante wird verwendet.'}
                 </p>
               </div>
             )}
