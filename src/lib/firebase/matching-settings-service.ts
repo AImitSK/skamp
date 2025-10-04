@@ -89,12 +89,18 @@ class MatchingSettingsService {
   ): Promise<void> {
     const nextRun = enabled ? this.calculateNextRun(interval) : undefined;
 
+    const autoScanData: any = {
+      enabled,
+      interval
+    };
+
+    // Nur nextRun hinzufügen wenn nicht undefined (Firestore erlaubt kein undefined)
+    if (nextRun !== undefined) {
+      autoScanData.nextRun = nextRun;
+    }
+
     await this.saveSettings({
-      autoScan: {
-        enabled,
-        interval,
-        nextRun
-      }
+      autoScan: autoScanData
     }, userId);
   }
 
@@ -113,12 +119,18 @@ class MatchingSettingsService {
 
     const nextRun = enabled ? this.calculateNextImportRun() : undefined;
 
+    const autoImportData: any = {
+      enabled,
+      minScore
+    };
+
+    // Nur nextRun hinzufügen wenn nicht undefined (Firestore erlaubt kein undefined)
+    if (nextRun !== undefined) {
+      autoImportData.nextRun = nextRun;
+    }
+
     await this.saveSettings({
-      autoImport: {
-        enabled,
-        minScore,
-        nextRun
-      }
+      autoImport: autoImportData
     }, userId);
   }
 
