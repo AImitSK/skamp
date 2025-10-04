@@ -285,9 +285,11 @@ export const contactsService = {
         ...doc.data()
       } as Contact));
 
+      console.log('🔍 [CRM-Service] Erstes Kontakt-Objekt (RAW):', allContacts[0]);
       console.log('📋 [CRM-Service] Kontakt-Emails:', allContacts.map(c => ({
         name: `${c.firstName} ${c.lastName}`,
-        email: c.email
+        email: c.email,
+        rawData: c
       })));
 
       const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
