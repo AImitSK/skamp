@@ -15,6 +15,14 @@ interface StructuredGenerateRequest {
     audience?: string;
     companyName?: string;
   };
+  // NEU: Dokumenten-Kontext
+  documentContext?: {
+    documents: Array<{
+      fileName: string;
+      plainText: string;
+      excerpt: string;
+    }>;
+  };
 }
 
 interface StructuredPressRelease {
@@ -567,13 +575,35 @@ export async function POST(request: NextRequest) {
     }
 
     const data: StructuredGenerateRequest = await request.json();
-    const { prompt, context } = data;
+    const { prompt, context, documentContext } = data;
 
     if (!prompt || prompt.trim() === '') {
       return NextResponse.json(
         { error: 'Prompt ist erforderlich' },
         { status: 400 }
       );
+    }
+
+    // NEU: Validierung Dokumenten-Kontext
+    if (documentContext?.documents) {
+      if (documentContext.documents.length > 3) {
+        return NextResponse.json(
+          { error: 'Maximal 3 Dokumente erlaubt' },
+          { status: 400 }
+        );
+      }
+
+      const totalSize = documentContext.documents.reduce(
+        (sum, doc) => sum + doc.plainText.length,
+        0
+      );
+
+      if (totalSize > 15000) {
+        return NextResponse.json(
+          { error: 'Dokumente-Kontext zu groß (max. 15000 Zeichen)' },
+          { status: 400 }
+        );
+      }
     }
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -591,7 +621,38 @@ export async function POST(request: NextRequest) {
       contextInfo += `\nUNTERNEHMEN: ${context.companyName}`;
     }
 
-    const userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${prompt}${contextInfo}`;
+    // NEU: Enhanced Prompt mit Dokumenten-Kontext
+    let enhancedPrompt = prompt;
+
+    if (documentContext?.documents && documentContext.documents.length > 0) {
+      const documentsContext = documentContext.documents.map(doc => `
+--- ${doc.fileName} ---
+${doc.plainText.substring(0, 2000)}${doc.plainText.length > 2000 ? '...' : ''}
+      `).join('\n\n');
+
+      enhancedPrompt = `
+PLANUNGSDOKUMENTE ALS KONTEXT:
+
+${documentsContext}
+
+---
+
+AUFGABE:
+${prompt}
+
+ANWEISUNG:
+Nutze die Informationen aus den Planungsdokumenten oben, um eine zielgruppengerechte
+und strategisch passende Pressemitteilung zu erstellen. Beachte dabei:
+- Die definierten Zielgruppen
+- Die Key Messages/Kernbotschaften
+- Das Alleinstellungsmerkmal (USP)
+- Den Ton und Stil aus den Dokumenten
+
+Erstelle eine professionelle Pressemitteilung nach journalistischen Standards.
+      `.trim();
+    }
+
+    const userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${enhancedPrompt}${contextInfo}`;
 
     // Gemini Anfrage mit dynamischem Prompt
     const result = await model.generateContent([
@@ -633,7 +694,10 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
       htmlContent: htmlContent.trim(),
       rawText: generatedText,
       aiProvider: 'gemini',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      // NEU: Metadaten
+      usedDocuments: documentContext?.documents?.length || 0,
+      documentNames: documentContext?.documents?.map(d => d.fileName) || []
     });
 
   } catch (error: any) {

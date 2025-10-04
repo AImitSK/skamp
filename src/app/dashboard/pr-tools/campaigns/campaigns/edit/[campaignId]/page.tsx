@@ -159,6 +159,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // ✅ PROJEKT-INTEGRATION STATE
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  // NEU: Dokumente-Ordner für KI-Kontext
+  const [dokumenteFolderId, setDokumenteFolderId] = useState<string | undefined>();
 
   // State für bisherigen Feedback-Verlauf
   const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
@@ -447,6 +449,15 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           });
           if (project) {
             setSelectedProject(project);
+
+            // NEU: Lade Dokumente-Ordner für KI-Kontext
+            const projectFolders = await projectService.getProjectFolders(selectedProjectId, currentOrganization.id);
+            const dokumenteFolder = projectFolders?.subfolders?.find(
+              (folder: any) => folder.name === 'Dokumente'
+            );
+            if (dokumenteFolder) {
+              setDokumenteFolderId(dokumenteFolder.id);
+            }
           }
         } catch (error) {
           console.error('Fehler beim Laden des Projekts:', error);
@@ -2204,6 +2215,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             title: campaignTitle,
             content: ''
           }}
+          organizationId={currentOrganization?.id}
+          dokumenteFolderId={dokumenteFolderId}
         />
       )}
 

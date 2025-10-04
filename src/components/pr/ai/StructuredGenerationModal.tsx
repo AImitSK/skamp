@@ -32,8 +32,11 @@ import {
   GenerationContext,
   GenerationResult,
   AITemplate,
-  StructuredGenerateResponse
+  StructuredGenerateResponse,
+  DocumentContext,
+  EnrichedGenerationContext
 } from '@/types/ai';
+import DocumentPickerModal from './DocumentPickerModal';
 
 // Lokale Types
 type GenerationStep = 'context' | 'content' | 'generating' | 'review';
@@ -45,6 +48,9 @@ interface Props {
     title?: string;
     content?: string;
   };
+  // NEU: Für Dokumenten-Kontext
+  organizationId?: string;
+  dokumenteFolderId?: string;
 }
 
 // Template Dropdown Component
@@ -249,23 +255,28 @@ function useKeyboardShortcuts({
   }, [onGenerate, onClose, currentStep]);
 }
 
-export default function StructuredGenerationModal({ onClose, onGenerate, existingContent }: Props) {
+export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: Props) {
   const { user } = useAuth();
-  
+
   // Workflow State
   const [currentStep, setCurrentStep] = useState<GenerationStep>('context');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Generation Data
   const [context, setContext] = useState<GenerationContext>({});
   const [prompt, setPrompt] = useState('');
   const [generatedResult, setGeneratedResult] = useState<StructuredGenerateResponse | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<AITemplate | null>(null);
-  
+
   // Templates von API laden
   const [templates, setTemplates] = useState<AITemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
+
+  // NEU: Planungsdokumente State
+  const [selectedDocuments, setSelectedDocuments] = useState<DocumentContext[]>([]);
+  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [enrichedContext, setEnrichedContext] = useState<EnrichedGenerationContext | null>(null);
 
   // DEBUG
   useEffect(() => {
@@ -327,6 +338,80 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
     return firstLine.substring(0, 100) + '...';
   };
 
+  // NEU: Handler für Dokument-Auswahl
+  const handleDocumentsSelected = (documents: DocumentContext[]) => {
+    setSelectedDocuments(documents);
+
+    // Auto-Extract Basic Context
+    const extractedContext = extractBasicContext(documents);
+    setEnrichedContext(extractedContext);
+
+    setShowDocumentPicker(false);
+  };
+
+  // NEU: Context-Extraktion
+  const extractBasicContext = (documents: DocumentContext[]): EnrichedGenerationContext => {
+    const combinedText = documents.map(d => d.plainText).join('\n\n');
+
+    // Basis-Extraktion (einfache Keyword-Suche)
+    const keyMessages = extractKeyMessages(combinedText);
+    const targetGroups = extractTargetGroups(combinedText);
+    const usp = extractUSP(combinedText);
+
+    return {
+      ...context,
+      keyMessages,
+      targetGroups,
+      usp,
+      documentContext: {
+        documents,
+        documentSummary: `${documents.length} Dokumente: ${documents.map(d => d.fileName).join(', ')}`
+      }
+    };
+  };
+
+  // NEU: Hilfsfunktionen für Extraktion
+  const extractKeyMessages = (text: string): string[] => {
+    const keywords = ['key message', 'kernbotschaft', 'hauptbotschaft', 'wichtig'];
+    const messages: string[] = [];
+
+    const paragraphs = text.split('\n').filter(p => p.trim());
+    paragraphs.forEach((para, i) => {
+      if (keywords.some(kw => para.toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
+        messages.push(paragraphs[i + 1]);
+      }
+    });
+
+    return messages.slice(0, 3);
+  };
+
+  const extractTargetGroups = (text: string): string[] => {
+    const keywords = ['zielgruppe', 'target', 'persona', 'audience'];
+    const groups: string[] = [];
+
+    const paragraphs = text.split('\n').filter(p => p.trim());
+    paragraphs.forEach((para, i) => {
+      if (keywords.some(kw => para.toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
+        groups.push(paragraphs[i + 1]);
+      }
+    });
+
+    return groups.slice(0, 3);
+  };
+
+  const extractUSP = (text: string): string => {
+    const keywords = ['usp', 'alleinstellungsmerkmal', 'einzigartig', 'unique'];
+
+    const paragraphs = text.split('\n').filter(p => p.trim());
+    for (let i = 0; i < paragraphs.length; i++) {
+      if (keywords.some(kw => paragraphs[i].toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
+        return paragraphs[i + 1];
+      }
+    }
+
+    return '';
+  };
+
   async function handleGenerate() {
     if (!prompt.trim()) {
       setError('Bitte gib eine Beschreibung ein.');
@@ -338,15 +423,24 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
     setError(null);
 
     try {
+      const requestBody: any = {
+        prompt: prompt,
+        context: enrichedContext || context
+      };
+
+      // NEU: Dokumenten-Kontext hinzufügen
+      if (selectedDocuments.length > 0) {
+        requestBody.documentContext = {
+          documents: selectedDocuments
+        };
+      }
+
       const response = await fetch('/api/ai/generate-structured', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: prompt,
-          context: context
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -524,9 +618,12 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
             {/* Step Content */}
             {currentStep === 'context' && (
-              <ContextSetupStep 
-                context={context} 
+              <ContextSetupStep
+                context={context}
                 onChange={setContext}
+                // NEU: Dokumenten-Props
+                selectedDocuments={selectedDocuments}
+                onOpenDocumentPicker={() => setShowDocumentPicker(true)}
               />
             )}
 
@@ -627,6 +724,17 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
         </DialogPanel>
       </div>
 
+      {/* NEU: DocumentPickerModal */}
+      {showDocumentPicker && organizationId && dokumenteFolderId && (
+        <DocumentPickerModal
+          isOpen={showDocumentPicker}
+          onClose={() => setShowDocumentPicker(false)}
+          onSelect={handleDocumentsSelected}
+          organizationId={organizationId}
+          dokumenteFolderId={dokumenteFolderId}
+        />
+      )}
+
       {/* CSS für Animationen */}
       <style jsx global>{`
         @keyframes fade-in-down {
@@ -659,12 +767,16 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 }
 
 // Step Components
-function ContextSetupStep({ 
-  context, 
-  onChange
+function ContextSetupStep({
+  context,
+  onChange,
+  selectedDocuments,
+  onOpenDocumentPicker
 }: {
   context: GenerationContext;
   onChange: (context: GenerationContext) => void;
+  selectedDocuments?: DocumentContext[];
+  onOpenDocumentPicker?: () => void;
 }) {
   const industries = [
     'Technologie & Software',
@@ -792,6 +904,53 @@ function ContextSetupStep({
           className="mt-2"
         />
       </Field>
+
+      {/* NEU: Planungsdokumente Sektion */}
+      {onOpenDocumentPicker && (
+        <Field>
+          <Label className="text-base font-semibold mb-3">
+            Planungsdokumente (optional)
+          </Label>
+
+          {selectedDocuments && selectedDocuments.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-900">
+                    {selectedDocuments.length} Dokumente ausgewählt
+                  </span>
+                </div>
+                <Button
+                  plain
+                  onClick={onOpenDocumentPicker}
+                  className="text-sm text-green-700"
+                >
+                  Ändern
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {selectedDocuments.map(doc => (
+                  <div key={doc.id} className="p-2 bg-gray-50 rounded text-sm">
+                    <p className="font-medium">{doc.fileName.replace('.celero-doc', '')}</p>
+                    <p className="text-xs text-gray-600">{doc.wordCount} Wörter</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Button
+              outline
+              onClick={onOpenDocumentPicker}
+              className="w-full"
+            >
+              <DocumentTextIcon className="h-5 w-5 mr-2" />
+              Planungsdokumente auswählen
+            </Button>
+          )}
+        </Field>
+      )}
     </div>
   );
 }

@@ -183,3 +183,37 @@ export interface EmailResponseSuggestionResponse {
   timestamp: string;
   processingTime: number;
 }
+
+// ===============================================
+// PLANUNGSDOKUMENTE TYPES - KI-Assistent Kontext
+// ===============================================
+
+export interface DocumentContext {
+  id: string;
+  fileName: string;
+  plainText: string;
+  excerpt: string;
+  wordCount: number;
+  createdAt: Date;
+}
+
+export interface EnrichedGenerationContext extends GenerationContext {
+  // Aus Dokumenten extrahiert
+  keyMessages?: string[];
+  targetGroups?: string[];
+  usp?: string;
+
+  // Dokumente-Referenz
+  documentContext?: {
+    documents: DocumentContext[];
+    documentSummary?: string;
+  };
+}
+
+export interface EnhancedGenerationRequest {
+  prompt: string;
+  context: EnrichedGenerationContext;
+  documentContext?: {
+    documents: DocumentContext[];
+  };
+}
