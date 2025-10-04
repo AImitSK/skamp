@@ -413,8 +413,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   };
 
   async function handleGenerate() {
-    if (!prompt.trim()) {
-      setError('Bitte gib eine Beschreibung ein.');
+    // Validierung: Prompt ist nur erforderlich wenn KEINE Dokumente ausgewählt wurden
+    if (!prompt.trim() && selectedDocuments.length === 0) {
+      setError('Bitte gib eine Beschreibung ein oder wähle Planungsdokumente aus.');
       return;
     }
 
@@ -423,8 +424,13 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
     setError(null);
 
     try {
+      // NEU: Wenn Dokumente vorhanden aber kein Prompt, nutze Standard-Prompt
+      const finalPrompt = prompt.trim() || (selectedDocuments.length > 0
+        ? 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Planungsdokumenten.'
+        : '');
+
       const requestBody: any = {
-        prompt: prompt,
+        prompt: finalPrompt,
         context: enrichedContext || context
       };
 
@@ -628,7 +634,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
             )}
 
             {currentStep === 'content' && (
-              <ContentInputStep 
+              <ContentInputStep
                 prompt={prompt}
                 onChange={setPrompt}
                 templates={templates}
@@ -636,6 +642,8 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 context={context}
                 loadingTemplates={loadingTemplates}
                 selectedTemplate={selectedTemplate}
+                hasDocuments={selectedDocuments.length > 0}
+                documentCount={selectedDocuments.length}
               />
             )}
 
@@ -693,9 +701,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
               )}
               
               {currentStep === 'content' && (
-                <Button 
+                <Button
                   onClick={handleGenerate}
-                  disabled={!prompt.trim() || isGenerating}
+                  disabled={(!prompt.trim() && selectedDocuments.length === 0) || isGenerating}
                   className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                 >
                   <SparklesIcon className="h-4 w-4 mr-2" />
@@ -955,14 +963,16 @@ function ContextSetupStep({
   );
 }
 
-function ContentInputStep({ 
-  prompt, 
-  onChange, 
-  templates, 
+function ContentInputStep({
+  prompt,
+  onChange,
+  templates,
   onTemplateSelect,
   context,
   loadingTemplates,
-  selectedTemplate
+  selectedTemplate,
+  hasDocuments,
+  documentCount
 }: {
   prompt: string;
   onChange: (prompt: string) => void;
@@ -971,6 +981,8 @@ function ContentInputStep({
   context: GenerationContext;
   loadingTemplates: boolean;
   selectedTemplate?: AITemplate | null;
+  hasDocuments?: boolean;
+  documentCount?: number;
 }) {
   const tipExamples = [
     "Nenne konkrete Zahlen und Fakten (z.B. 50% Wachstum, 10.000 Nutzer)",
@@ -983,7 +995,7 @@ function ContentInputStep({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Context Pills */}
-      {(context.industry || context.tone || context.audience) && (
+      {(context.industry || context.tone || context.audience || hasDocuments) && (
         <div className="mb-6 flex flex-wrap gap-2 justify-center">
           {context.industry && (
             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
@@ -997,27 +1009,53 @@ function ContentInputStep({
           )}
           {context.audience && (
             <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-              {context.audience === 'b2b' ? 'B2B' : 
+              {context.audience === 'b2b' ? 'B2B' :
                context.audience === 'consumer' ? 'Verbraucher' : 'Medien'}
+            </span>
+          )}
+          {hasDocuments && (
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              📄 {documentCount} Planungsdokument{documentCount !== 1 ? 'e' : ''} angehängt
             </span>
           )}
         </div>
       )}
 
       <div className="space-y-6">
-        {/* Template Dropdown */}
-        <TemplateDropdown
-          templates={templates}
-          onSelect={onTemplateSelect}
-          loading={loadingTemplates}
-          selectedTemplate={selectedTemplate}
-        />
+        {/* NEU: Dokumenten-Modus Hinweis */}
+        {hasDocuments ? (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-green-900 mb-2">
+                  Kontext-basierte Generierung aktiviert
+                </h3>
+                <p className="text-sm text-green-700 mb-3">
+                  Die KI nutzt die {documentCount} ausgewählten Planungsdokumente als Kontext.
+                  Gib optional weitere Anweisungen oder lasse das Feld leer für eine automatische Generierung.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Template Dropdown nur ohne Dokumente */
+          <TemplateDropdown
+            templates={templates}
+            onSelect={onTemplateSelect}
+            loading={loadingTemplates}
+            selectedTemplate={selectedTemplate}
+          />
+        )}
 
         {/* Main Input */}
         <Field>
           <div className="flex items-center justify-between mb-2">
             <Label className="text-base font-semibold">
-              Beschreibe deine Pressemitteilung *
+              {hasDocuments
+                ? 'Weitere Anweisungen oder spezifische Schwerpunkte (optional)'
+                : 'Beschreibe deine Pressemitteilung *'
+              }
             </Label>
             {prompt.length > 0 && (
               <span className={clsx(
@@ -1028,14 +1066,23 @@ function ContentInputStep({
               </span>
             )}
           </div>
-          
+
           <Textarea
             value={prompt}
             onChange={(e) => onChange(e.target.value)}
-            rows={12}
-            placeholder="Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter deine Beschreibung, desto besser wird das Ergebnis.
+            rows={hasDocuments ? 8 : 12}
+            placeholder={hasDocuments
+              ? `Optionale Anweisungen für die KI...
 
-Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unternehmensdaten 10x schneller analysiert als herkömmliche Tools. Die Plattform nutzt maschinelles Lernen und kann..."
+Beispiele:
+- "Fokussiere auf die technischen Innovationen"
+- "Zielgruppe sind Investoren und Finanzmedien"
+- "Betone die Nachhaltigkeitsaspekte besonders"
+- Leer lassen für automatische Generierung basierend auf den Planungsdokumenten`
+              : `Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter deine Beschreibung, desto besser wird das Ergebnis.
+
+Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unternehmensdaten 10x schneller analysiert als herkömmliche Tools. Die Plattform nutzt maschinelles Lernen und kann...`
+            }
             className="w-full font-mono text-sm"
           />
         </Field>
