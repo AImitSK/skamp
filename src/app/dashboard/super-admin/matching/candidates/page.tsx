@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { matchingService } from '@/lib/firebase/matching-service';
+import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
 import {
   MatchingCandidate,
   MatchingCandidateFilters,
@@ -62,7 +63,7 @@ export default function MatchingCandidatesPage() {
     process.env.NODE_ENV === 'development'
   );
 
-  // KI-Daten-Merge Global Toggle
+  // KI-Daten-Merge Global Toggle (aus Settings geladen)
   const [useAiMerge, setUseAiMerge] = useState(false);
 
   // Statistics
@@ -79,6 +80,18 @@ export default function MatchingCandidatesPage() {
     skipped: 0,
     rejected: 0
   });
+
+  /**
+   * Lädt globale Settings (AI-Merge Toggle)
+   */
+  const loadSettings = async () => {
+    try {
+      const settings = await matchingSettingsService.getSettings();
+      setUseAiMerge(settings.useAiMerge);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   /**
    * Lädt Kandidaten
@@ -158,6 +171,10 @@ export default function MatchingCandidatesPage() {
   /**
    * Initial Load
    */
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   useEffect(() => {
     loadCandidates();
   }, [filters, sorting]);
@@ -245,7 +262,6 @@ export default function MatchingCandidatesPage() {
           devMode={devMode}
           onDevModeChange={setDevMode}
           useAiMerge={useAiMerge}
-          onUseAiMergeChange={setUseAiMerge}
           scanning={scanning}
           onScan={handleScan}
         />

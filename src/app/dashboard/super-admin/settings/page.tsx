@@ -139,6 +139,56 @@ export default function SuperAdminSettingsPage() {
     }
   };
 
+  /**
+   * Toggle AI-Merge
+   */
+  const handleAiMergeToggle = async (enabled: boolean) => {
+    if (!user) return;
+
+    try {
+      setUseAiMerge(enabled);
+      await matchingSettingsService.updateAiMerge(enabled, user.uid);
+      toast.success(enabled ? 'KI-Daten-Merge aktiviert' : 'KI-Daten-Merge deaktiviert');
+    } catch (error) {
+      console.error('Error updating AI merge setting:', error);
+      toast.error('Fehler beim Speichern der Einstellung');
+      setUseAiMerge(!enabled); // Rollback
+    }
+  };
+
+  /**
+   * Toggle Auto-Scan
+   */
+  const handleAutoScanToggle = async (enabled: boolean) => {
+    if (!user) return;
+
+    try {
+      setAutoScanEnabled(enabled);
+      await matchingSettingsService.updateAutoScan(enabled, autoScanInterval, user.uid);
+      toast.success(enabled ? 'Automatischer Scan aktiviert' : 'Automatischer Scan deaktiviert');
+    } catch (error) {
+      console.error('Error updating auto scan setting:', error);
+      toast.error('Fehler beim Speichern der Einstellung');
+      setAutoScanEnabled(!enabled); // Rollback
+    }
+  };
+
+  /**
+   * Ändere Auto-Scan Intervall
+   */
+  const handleIntervalChange = async (interval: AutoScanInterval) => {
+    if (!user) return;
+
+    try {
+      setAutoScanInterval(interval);
+      await matchingSettingsService.updateAutoScan(autoScanEnabled, interval, user.uid);
+      toast.success(`Intervall auf "${interval}" geändert`);
+    } catch (error) {
+      console.error('Error updating auto scan interval:', error);
+      toast.error('Fehler beim Speichern der Einstellung');
+    }
+  };
+
 
   /**
    * Triggert Matching-Scan (direkt via Client SDK)
@@ -178,6 +228,84 @@ export default function SuperAdminSettingsPage() {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Verwaltung und Test-Tools für SuperAdmin-Features
         </p>
+      </div>
+
+      {/* Globale Einstellungen Section */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+          <Cog6ToothIcon className="size-5" />
+          Globale Einstellungen
+        </h2>
+
+        <div className="space-y-4">
+          {/* AI-Merge Toggle */}
+          <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <SparklesIcon className="size-5 text-blue-600" />
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
+                    KI-Daten-Merge
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 ml-8">
+                  Nutzt Gemini 2.0 Flash zum intelligenten Zusammenführen von Varianten beim Import.
+                  Kombiniert automatisch Name, E-Mails, Telefone, Position, Beats und Publications.
+                </p>
+              </div>
+              <div className="ml-4">
+                <SimpleSwitch
+                  checked={useAiMerge}
+                  onChange={handleAiMergeToggle}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Auto-Scan Toggle */}
+          <div className="p-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <ArrowPathIcon className="size-5 text-green-600" />
+                  <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
+                    Automatischer Matching-Scan
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 ml-8">
+                  Führt automatisch Scans durch um neue Matching-Kandidaten zu finden.
+                </p>
+              </div>
+              <div className="ml-4">
+                <SimpleSwitch
+                  checked={autoScanEnabled}
+                  onChange={handleAutoScanToggle}
+                />
+              </div>
+            </div>
+
+            {/* Intervall-Auswahl */}
+            {autoScanEnabled && (
+              <div className="ml-8 mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Scan-Intervall
+                </label>
+                <select
+                  value={autoScanInterval}
+                  onChange={(e) => handleIntervalChange(e.target.value as AutoScanInterval)}
+                  className="block w-full max-w-xs px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="daily">Täglich (02:00 Uhr)</option>
+                  <option value="weekly">Wöchentlich (02:00 Uhr)</option>
+                  <option value="monthly">Monatlich (01. des Monats, 02:00 Uhr)</option>
+                </select>
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  ⏱️ Nächster Scan: {autoScanEnabled ? 'In Planung...' : 'Deaktiviert'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Matching System Section */}

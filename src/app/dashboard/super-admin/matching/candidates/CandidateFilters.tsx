@@ -34,8 +34,7 @@ interface CandidateFiltersProps {
   onSearchChange: (query: string) => void;
   devMode: boolean;
   onDevModeChange: (devMode: boolean) => void;
-  useAiMerge: boolean;
-  onUseAiMergeChange: (useAiMerge: boolean) => void;
+  useAiMerge: boolean; // Read-only, kommt aus globalen Settings
   scanning: boolean;
   onScan: () => Promise<void>;
 }
@@ -48,7 +47,6 @@ export default function CandidateFilters({
   devMode,
   onDevModeChange,
   useAiMerge,
-  onUseAiMergeChange,
   scanning,
   onScan
 }: CandidateFiltersProps) {
@@ -270,24 +268,19 @@ export default function CandidateFilters({
                     </label>
                   </div>
 
-                  {/* KI-Daten-Merge Global */}
+                  {/* KI-Daten-Merge Info (read-only, gesteuert in Settings) */}
                   <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={useAiMerge}
-                        onChange={(e) => onUseAiMergeChange(e.target.checked)}
-                        className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                      />
+                    <div className="flex items-center gap-2">
+                      <div className={`h-4 w-4 rounded ${useAiMerge ? 'bg-blue-600' : 'bg-zinc-300'}`} />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          🤖 KI-Daten-Merge
+                          🤖 KI-Daten-Merge {useAiMerge ? 'aktiviert' : 'deaktiviert'}
                         </span>
                         <span className="text-xs text-zinc-500">
-                          Nutzt Gemini für alle Importe (bei 2+ Varianten)
+                          Einstellung ändern in → SuperAdmin Settings
                         </span>
                       </div>
-                    </label>
+                    </div>
                   </div>
                 </div>
               </Popover.Panel>
