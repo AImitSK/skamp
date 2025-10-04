@@ -257,6 +257,8 @@ export const contactsService = {
 
   // NEU: Kontakt via Email finden
   async findByEmail(email: string, organizationId: string): Promise<Contact | null> {
+    console.log('🔎 [CRM-Service] findByEmail called:', { email, organizationId });
+
     // KONSISTENZ-FIX: Verwende contacts_enhanced wie in getByCompanyId
     const q = query(
       collection(db, 'contacts_enhanced'),
@@ -264,15 +266,25 @@ export const contactsService = {
       where('email', '==', email)
     );
     const snapshot = await getDocs(q);
+    console.log('📧 [CRM-Service] Firestore Query Result:', { empty: snapshot.empty, size: snapshot.size });
 
     if (snapshot.empty) {
+      console.log('⚠️ [CRM-Service] Keine Treffer in contacts_enhanced, versuche Fallback...');
       // Fallback: Legacy-Suche mit userId
       const allContacts = await this.getAll(organizationId);
+      console.log('📋 [CRM-Service] Alle Kontakte geladen:', allContacts.length);
+      console.log('📋 [CRM-Service] Kontakt-Emails:', allContacts.map(c => ({
+        name: `${c.firstName} ${c.lastName}`,
+        email: c.email
+      })));
+
       const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
+      console.log('🔍 [CRM-Service] Fallback-Match gefunden:', contact ? `${contact.firstName} ${contact.lastName}` : 'NEIN');
       return contact || null;
     }
 
     const contact = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Contact;
+    console.log('✅ [CRM-Service] Kontakt aus Firestore:', `${contact.firstName} ${contact.lastName}`);
     if (contact.companyId) {
       const company = await companiesService.getById(contact.companyId);
       contact.companyName = company?.name;
