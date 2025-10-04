@@ -9,8 +9,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
 import { matchingService } from '@/lib/firebase/matching-service';
 import { MATCHING_DEFAULTS } from '@/types/matching';
 
@@ -50,25 +48,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Authentifiziere als SuperAdmin für Cron Job
-    const superAdminEmail = process.env.SUPERADMIN_EMAIL;
-    const superAdminPassword = process.env.SUPERADMIN_PASSWORD;
-
-    if (!superAdminEmail || !superAdminPassword) {
-      return NextResponse.json(
-        {
-          error: 'SuperAdmin credentials not configured',
-          message: 'Set SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD environment variables'
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log('🔐 Authenticating as SuperAdmin for cron job...');
-    await signInWithEmailAndPassword(auth, superAdminEmail, superAdminPassword);
-    console.log('✅ SuperAdmin authenticated');
-
-    // Führe Scan aus
+    // Führe Scan aus (ohne Auth - läuft mit Firestore Rules)
     console.log('🔍 Starting matching scan', {
       devMode,
       triggeredBy: secret ? 'cron' : 'manual',
@@ -148,25 +128,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Authentifiziere als SuperAdmin für Cron Job
-    const superAdminEmail = process.env.SUPERADMIN_EMAIL;
-    const superAdminPassword = process.env.SUPERADMIN_PASSWORD;
-
-    if (!superAdminEmail || !superAdminPassword) {
-      return NextResponse.json(
-        {
-          error: 'SuperAdmin credentials not configured',
-          message: 'Set SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD environment variables'
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log('🔐 Authenticating as SuperAdmin for cron job (POST)...');
-    await signInWithEmailAndPassword(auth, superAdminEmail, superAdminPassword);
-    console.log('✅ SuperAdmin authenticated (POST)');
-
-    // Führe Scan aus
+    // Führe Scan aus (ohne Auth - läuft mit Firestore Rules)
     console.log('🔍 Starting matching scan (POST)', {
       devMode,
       triggeredBy: secret ? 'cron' : 'manual',
