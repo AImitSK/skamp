@@ -27,14 +27,10 @@ export async function handleRecipientLookup(
   organizationId: string
 ): Promise<PublicationLookupResult> {
   try {
-    console.log('🔍 [publication-matcher] Suche Kontakt für Email:', recipientEmail);
-
     // 1. Kontakt via Email suchen
     const contact = await contactsService.findByEmail(recipientEmail, organizationId);
-    console.log('👤 [publication-matcher] Kontakt gefunden:', contact ? `${contact.firstName} ${contact.lastName}` : 'NEIN');
 
     if (!contact) {
-      console.log('⚠️ [publication-matcher] Kein Kontakt gefunden - return empty');
       return {
         contact: null,
         company: null,
@@ -43,21 +39,16 @@ export async function handleRecipientLookup(
     }
 
     // 2. Medienhaus/Verlag des Kontakts laden
-    console.log('🏢 [publication-matcher] Lade Company für companyId:', contact.companyId);
     const company = contact.companyId
       ? await companiesService.getById(contact.companyId)
       : null;
-    console.log('🏢 [publication-matcher] Company gefunden:', company?.name || 'NEIN');
 
     // 3. Publikationen sammeln
     const matchedPublications: MatchedPublication[] = [];
-    console.log('📚 [publication-matcher] Contact.mediaInfo.publications:', contact.mediaInfo?.publications);
 
     // 3a. Publikationen aus Contact.mediaInfo.publications (string[])
     if (contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0) {
-      console.log('📖 [publication-matcher] Verarbeite', contact.mediaInfo.publications.length, 'Publikationen vom Kontakt');
       for (const pubName of contact.mediaInfo.publications) {
-        console.log('  🔎 [publication-matcher] Suche Match für:', pubName);
         // Versuche, die Publikation in den Company-Publications zu finden
         let matched = false;
 
@@ -95,36 +86,20 @@ export async function handleRecipientLookup(
     }
 
     // 3b. Falls keine Publikationen beim Kontakt: Alle Publikationen des Medienhauses anbieten
-    if (matchedPublications.length === 0) {
-      console.log('⚠️ [publication-matcher] Keine Kontakt-Publikationen gefunden');
-      console.log('🔍 [publication-matcher] Company mediaInfo:', company?.mediaInfo);
-      console.log('🔍 [publication-matcher] Company mediaInfo.publications:', company?.mediaInfo?.publications);
-
-      if (company?.mediaInfo?.publications && company.mediaInfo.publications.length > 0) {
-        console.log('📰 [publication-matcher] Nutze Company-Publikationen:', company.mediaInfo.publications.length);
-        for (const pub of company.mediaInfo.publications) {
-          matchedPublications.push({
-            name: pub.name,
-            id: pub.id,
-            type: mapPublicationTypeToMonitoring(pub.type, pub.format),
-            reach: pub.reach,
-            circulation: pub.circulation,
-            format: pub.format,
-            source: 'company',
-            focusAreas: pub.focusAreas
-          });
-        }
-      } else {
-        console.log('❌ [publication-matcher] Company hat keine Publikationen in mediaInfo.publications');
+    if (matchedPublications.length === 0 && company?.mediaInfo?.publications) {
+      for (const pub of company.mediaInfo.publications) {
+        matchedPublications.push({
+          name: pub.name,
+          id: pub.id,
+          type: mapPublicationTypeToMonitoring(pub.type, pub.format),
+          reach: pub.reach,
+          circulation: pub.circulation,
+          format: pub.format,
+          source: 'company',
+          focusAreas: pub.focusAreas
+        });
       }
     }
-
-    console.log('✅ [publication-matcher] Final result:', {
-      contact: contact.firstName + ' ' + contact.lastName,
-      company: company?.name,
-      publicationsCount: matchedPublications.length,
-      publications: matchedPublications
-    });
 
     return {
       contact,

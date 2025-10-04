@@ -62,30 +62,21 @@ export const companiesService = {
   },
 
   async getById(id: string): Promise<Company | null> {
-    console.log('🔍 [companiesService.getById] Suche Company:', id);
-
     // KONSISTENZ-FIX: Versuche zuerst companies_enhanced (wie bei contacts)
     let docRef = doc(db, 'companies_enhanced', id);
     let docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      const company = { id: docSnap.id, ...docSnap.data() } as Company;
-      console.log('✅ [companiesService.getById] Gefunden in companies_enhanced:', company.name);
-      return company;
+      return { id: docSnap.id, ...docSnap.data() } as Company;
     }
-
-    console.log('⚠️ [companiesService.getById] Nicht in companies_enhanced, versuche companies...');
 
     // Fallback: Legacy companies collection
     docRef = doc(db, 'companies', id);
     docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      const company = { id: docSnap.id, ...docSnap.data() } as Company;
-      console.log('✅ [companiesService.getById] Gefunden in companies (legacy):', company.name);
-      return company;
+      return { id: docSnap.id, ...docSnap.data() } as Company;
     }
 
-    console.log('❌ [companiesService.getById] Company nicht gefunden:', id);
     return null;
   },
 
@@ -276,8 +267,6 @@ export const contactsService = {
 
   // NEU: Kontakt via Email finden
   async findByEmail(email: string, organizationId: string): Promise<Contact | null> {
-    console.log('🔎 [CRM-Service] findByEmail called:', { email, organizationId });
-
     // KONSISTENZ-FIX: Verwende contacts_enhanced wie in getByCompanyId
     const q = query(
       collection(db, 'contacts_enhanced'),
@@ -285,19 +274,14 @@ export const contactsService = {
       where('email', '==', email)
     );
     const snapshot = await getDocs(q);
-    console.log('📧 [CRM-Service] Firestore Query Result:', { empty: snapshot.empty, size: snapshot.size });
 
     if (snapshot.empty) {
-      console.log('⚠️ [CRM-Service] Keine Treffer in contacts_enhanced mit exakter Email');
-      console.log('🔍 [CRM-Service] Lade ALLE Kontakte für Case-Insensitive Suche...');
-
       // Fallback: Lade alle Kontakte der Organisation für case-insensitive Suche
       const allContactsQuery = query(
         collection(db, 'contacts_enhanced'),
         where('organizationId', '==', organizationId)
       );
       const allSnapshot = await getDocs(allContactsQuery);
-      console.log('📋 [CRM-Service] Gefundene Kontakte in contacts_enhanced:', allSnapshot.size);
 
       const allContacts = allSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -311,13 +295,6 @@ export const contactsService = {
           emailValue = data.emails[0]?.email || data.emails[0]?.value || data.emails[0]?.address || emailValue;
         }
 
-        console.log('  📧 Mapping Kontakt:', {
-          firstName,
-          lastName,
-          emailsArray: data.emails,
-          extractedEmail: emailValue
-        });
-
         return {
           id: doc.id,
           ...data,
@@ -327,15 +304,7 @@ export const contactsService = {
         } as Contact;
       });
 
-      console.log('🔍 [CRM-Service] Erstes Kontakt-Objekt (RAW):', allContacts[0]);
-      console.log('📋 [CRM-Service] Kontakt-Emails:', allContacts.map(c => ({
-        name: `${c.firstName} ${c.lastName}`,
-        email: c.email,
-        displayName: c.displayName
-      })));
-
       const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
-      console.log('🔍 [CRM-Service] Case-Insensitive Match gefunden:', contact ? `${contact.firstName} ${contact.lastName} (${contact.email})` : 'NEIN');
 
       if (contact && contact.companyId) {
         const company = await companiesService.getById(contact.companyId);
@@ -346,7 +315,6 @@ export const contactsService = {
     }
 
     const contact = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Contact;
-    console.log('✅ [CRM-Service] Kontakt aus Firestore:', `${contact.firstName} ${contact.lastName}`);
     if (contact.companyId) {
       const company = await companiesService.getById(contact.companyId);
       contact.companyName = company?.name;
