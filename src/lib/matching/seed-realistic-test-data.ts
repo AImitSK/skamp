@@ -912,11 +912,9 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         updatedAt: new Date(),
       });
 
-      // Publications mit isGlobal für Premium-Datenbank (SuperAdmin)
+      // Publications nur lokal (NICHT isGlobal) - nur für Matching-Tests
       batch.set(doc(db, 'publications', uniqueId), {
-        ...publicationData,
-        isGlobal: true,
-        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
+        ...publicationData
       });
       operationCount++;
       stats.publications++;
