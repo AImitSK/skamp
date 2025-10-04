@@ -95,19 +95,27 @@ export async function handleRecipientLookup(
     }
 
     // 3b. Falls keine Publikationen beim Kontakt: Alle Publikationen des Medienhauses anbieten
-    if (matchedPublications.length === 0 && company?.mediaInfo?.publications) {
-      console.log('📰 [publication-matcher] Keine Kontakt-Publikationen, nutze Company-Publikationen:', company.mediaInfo.publications.length);
-      for (const pub of company.mediaInfo.publications) {
-        matchedPublications.push({
-          name: pub.name,
-          id: pub.id,
-          type: mapPublicationTypeToMonitoring(pub.type, pub.format),
-          reach: pub.reach,
-          circulation: pub.circulation,
-          format: pub.format,
-          source: 'company',
-          focusAreas: pub.focusAreas
-        });
+    if (matchedPublications.length === 0) {
+      console.log('⚠️ [publication-matcher] Keine Kontakt-Publikationen gefunden');
+      console.log('🔍 [publication-matcher] Company mediaInfo:', company?.mediaInfo);
+      console.log('🔍 [publication-matcher] Company mediaInfo.publications:', company?.mediaInfo?.publications);
+
+      if (company?.mediaInfo?.publications && company.mediaInfo.publications.length > 0) {
+        console.log('📰 [publication-matcher] Nutze Company-Publikationen:', company.mediaInfo.publications.length);
+        for (const pub of company.mediaInfo.publications) {
+          matchedPublications.push({
+            name: pub.name,
+            id: pub.id,
+            type: mapPublicationTypeToMonitoring(pub.type, pub.format),
+            reach: pub.reach,
+            circulation: pub.circulation,
+            format: pub.format,
+            source: 'company',
+            focusAreas: pub.focusAreas
+          });
+        }
+      } else {
+        console.log('❌ [publication-matcher] Company hat keine Publikationen in mediaInfo.publications');
       }
     }
 
