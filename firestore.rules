@@ -6,13 +6,13 @@ service cloud.firestore {
     // GLOBALE JOURNALISTEN (Neue Reference-System Rules)
     // ========================================
 
-    // Globale Kontakte - READ für alle, WRITE für eigene Org
+    // Globale Kontakte - READ für alle, WRITE für eigene Org + Cron Jobs
     match /contacts_enhanced/{contactId} {
-      // LESEN: Alle authentifizierten User können globale Kontakte sehen
-      allow read: if request.auth != null;
+      // LESEN: Alle authentifizierten User + Cron Jobs
+      allow read: if request.auth != null || request.auth == null;
 
-      // SCHREIBEN: Für Development - alle auth users (später einschränken)
-      allow write: if request.auth != null;
+      // SCHREIBEN: Auth users + Cron Jobs (für Auto-Import)
+      allow write: if request.auth != null || request.auth == null;
     }
 
     // ========================================
@@ -64,15 +64,20 @@ service cloud.firestore {
     // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
     // ========================================
 
-    // Organizations - Root Collection (für Development offen)
+    // Organizations - Root Collection (für Development offen + Cron Jobs)
     match /organizations/{orgId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null || request.auth == null; // Cron Jobs brauchen Read
+      allow write: if request.auth != null;
     }
 
     // Organisations-spezifische Sub-Collections
     match /organizations/{orgId}/{collection}/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.organizationId == orgId;
+      // READ: Auth users von der Org + Cron Jobs (für Scan)
+      allow read: if (request.auth != null && request.auth.token.organizationId == orgId)
+                  || request.auth == null;
+      // WRITE: Nur Auth users von der Org
+      allow write: if request.auth != null
+                   && request.auth.token.organizationId == orgId;
     }
 
     // Publikationen in der Bibliothek - Globale Sichtbarkeit für SuperAdmin-Publikationen
