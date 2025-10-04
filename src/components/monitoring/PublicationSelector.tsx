@@ -38,7 +38,16 @@ export function PublicationSelector({
     async function lookup() {
       setLoading(true);
       try {
+        console.log('🔍 [PublicationSelector] Starte Lookup für:', recipientEmail);
         const data = await handleRecipientLookup(recipientEmail, organizationId);
+        console.log('📊 [PublicationSelector] Lookup Result:', {
+          hasContact: !!data?.contact,
+          contactName: data?.contact ? `${data.contact.firstName} ${data.contact.lastName}` : null,
+          hasCompany: !!data?.company,
+          companyName: data?.company?.name,
+          publicationsCount: data?.publications?.length || 0,
+          publications: data?.publications
+        });
         setLookupData(data);
 
         if (onDataLoad) {
@@ -47,11 +56,12 @@ export function PublicationSelector({
 
         // Auto-Select wenn nur eine Publikation vorhanden
         if (data?.publications?.length === 1) {
+          console.log('✅ [PublicationSelector] Auto-Select:', data.publications[0]);
           setSelectedIndex(0);
           onPublicationSelect(data.publications[0]);
         }
       } catch (error) {
-        console.error('Fehler beim Lookup:', error);
+        console.error('❌ [PublicationSelector] Fehler beim Lookup:', error);
       } finally {
         setLoading(false);
       }
