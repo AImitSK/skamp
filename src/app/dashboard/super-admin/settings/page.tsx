@@ -23,18 +23,43 @@ import {
   TrashIcon,
   ClockIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
+import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { matchingService } from '@/lib/firebase/matching-service';
+import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
+import { useAuth } from '@/hooks/useAuth';
 import type { MatchingScanJob } from '@/types/matching';
+import type { AutoScanInterval } from '@/types/matching-settings';
 import MatchingTestSection from './MatchingTestSection';
 import ConflictReviewSection from './ConflictReviewSection';
 
 export default function SuperAdminSettingsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [lastScan, setLastScan] = useState<MatchingScanJob | null>(null);
+
+  // Global Settings
+  const [useAiMerge, setUseAiMerge] = useState(false);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(false);
+  const [autoScanInterval, setAutoScanInterval] = useState<AutoScanInterval>('weekly');
+
+  /**
+   * Lädt globale Settings
+   */
+  const loadSettings = async () => {
+    try {
+      const settings = await matchingSettingsService.getSettings();
+      setUseAiMerge(settings.useAiMerge);
+      setAutoScanEnabled(settings.autoScan.enabled);
+      setAutoScanInterval(settings.autoScan.interval);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   /**
    * Lädt letzten Scan-Job
@@ -49,6 +74,7 @@ export default function SuperAdminSettingsPage() {
   };
 
   useEffect(() => {
+    loadSettings();
     loadLastScan();
   }, []);
 
