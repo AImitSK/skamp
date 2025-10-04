@@ -178,7 +178,6 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
               onClick={handleSend}
               color="secondary"
               className="text-xs px-3 py-1"
-              disabled={campaign.status !== 'approved'}
             >
               <PaperAirplaneIcon className="h-3 w-3 mr-1" />
               Versenden
