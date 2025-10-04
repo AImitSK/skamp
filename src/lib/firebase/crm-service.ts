@@ -62,11 +62,30 @@ export const companiesService = {
   },
 
   async getById(id: string): Promise<Company | null> {
-    const docRef = doc(db, 'companies', id);
-    const docSnap = await getDoc(docRef);
+    console.log('🔍 [companiesService.getById] Suche Company:', id);
+
+    // KONSISTENZ-FIX: Versuche zuerst companies_enhanced (wie bei contacts)
+    let docRef = doc(db, 'companies_enhanced', id);
+    let docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Company;
+      const company = { id: docSnap.id, ...docSnap.data() } as Company;
+      console.log('✅ [companiesService.getById] Gefunden in companies_enhanced:', company.name);
+      return company;
     }
+
+    console.log('⚠️ [companiesService.getById] Nicht in companies_enhanced, versuche companies...');
+
+    // Fallback: Legacy companies collection
+    docRef = doc(db, 'companies', id);
+    docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const company = { id: docSnap.id, ...docSnap.data() } as Company;
+      console.log('✅ [companiesService.getById] Gefunden in companies (legacy):', company.name);
+      return company;
+    }
+
+    console.log('❌ [companiesService.getById] Company nicht gefunden:', id);
     return null;
   },
 
