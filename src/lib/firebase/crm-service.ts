@@ -269,17 +269,35 @@ export const contactsService = {
     console.log('📧 [CRM-Service] Firestore Query Result:', { empty: snapshot.empty, size: snapshot.size });
 
     if (snapshot.empty) {
-      console.log('⚠️ [CRM-Service] Keine Treffer in contacts_enhanced, versuche Fallback...');
-      // Fallback: Legacy-Suche mit userId
-      const allContacts = await this.getAll(organizationId);
-      console.log('📋 [CRM-Service] Alle Kontakte geladen:', allContacts.length);
+      console.log('⚠️ [CRM-Service] Keine Treffer in contacts_enhanced mit exakter Email');
+      console.log('🔍 [CRM-Service] Lade ALLE Kontakte für Case-Insensitive Suche...');
+
+      // Fallback: Lade alle Kontakte der Organisation für case-insensitive Suche
+      const allContactsQuery = query(
+        collection(db, 'contacts_enhanced'),
+        where('organizationId', '==', organizationId)
+      );
+      const allSnapshot = await getDocs(allContactsQuery);
+      console.log('📋 [CRM-Service] Gefundene Kontakte in contacts_enhanced:', allSnapshot.size);
+
+      const allContacts = allSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Contact));
+
       console.log('📋 [CRM-Service] Kontakt-Emails:', allContacts.map(c => ({
         name: `${c.firstName} ${c.lastName}`,
         email: c.email
       })));
 
       const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
-      console.log('🔍 [CRM-Service] Fallback-Match gefunden:', contact ? `${contact.firstName} ${contact.lastName}` : 'NEIN');
+      console.log('🔍 [CRM-Service] Case-Insensitive Match gefunden:', contact ? `${contact.firstName} ${contact.lastName}` : 'NEIN');
+
+      if (contact && contact.companyId) {
+        const company = await companiesService.getById(contact.companyId);
+        contact.companyName = company?.name;
+      }
+
       return contact || null;
     }
 
