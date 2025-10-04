@@ -547,11 +547,33 @@ async function createContactSnapshot(contact: ContactEnhanced): Promise<Matching
 
     for (const pubId of contact.mediaProfile.publicationIds) {
       try {
-        const pubDoc = await getDoc(doc(db, 'publications', pubId));
-        if (pubDoc.exists()) {
-          const pubName = pubDoc.data().title || pubDoc.data().name;
-          if (pubName) publicationNames.push(pubName);
+        let pubName: string | undefined;
+
+        // Check if this is a reference (local-ref-*)
+        if (pubId.startsWith('local-ref-')) {
+          // Extract organizationId from contact
+          const orgId = contact.organizationId;
+          if (orgId) {
+            // Load reference to get globalPublicationId
+            const refDoc = await getDoc(doc(db, 'organizations', orgId, 'publication_references', pubId));
+            if (refDoc.exists()) {
+              const globalPubId = refDoc.data().globalPublicationId;
+              // Load actual publication
+              const globalPubDoc = await getDoc(doc(db, 'publications', globalPubId));
+              if (globalPubDoc.exists()) {
+                pubName = globalPubDoc.data().title || globalPubDoc.data().name;
+              }
+            }
+          }
+        } else {
+          // Normal publication
+          const pubDoc = await getDoc(doc(db, 'publications', pubId));
+          if (pubDoc.exists()) {
+            pubName = pubDoc.data().title || pubDoc.data().name;
+          }
         }
+
+        if (pubName) publicationNames.push(pubName);
       } catch (error) {
         console.warn(`Could not load publication ${pubId}:`, error);
       }

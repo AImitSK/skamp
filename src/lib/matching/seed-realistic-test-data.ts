@@ -664,15 +664,11 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       updatedAt: new Date(),
     });
 
-    // 1. superadmin_publications für Auto-Matching
-    batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
-    operationCount++;
-
-    // 2. publications mit isGlobal für Premium-Datenbank
+    // Publications mit isGlobal für Premium-Datenbank (SuperAdmin)
     batch.set(doc(db, 'publications', publication.id), {
       ...publicationData,
       isGlobal: true,
-      userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
+      organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
     });
     operationCount++;
     stats.publications++;
@@ -771,13 +767,11 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       updatedAt: new Date(),
     });
 
-    batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
-    operationCount++;
-
+    // Publications mit isGlobal für Premium-Datenbank (SuperAdmin)
     batch.set(doc(db, 'publications', publication.id), {
       ...publicationData,
       isGlobal: true,
-      userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
+      organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
     });
     operationCount++;
     stats.publications++;
@@ -918,13 +912,11 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
         updatedAt: new Date(),
       });
 
-      batch.set(doc(db, 'superadmin_publications', uniqueId), publicationData);
-      operationCount++;
-
+      // Publications mit isGlobal für Premium-Datenbank (SuperAdmin)
       batch.set(doc(db, 'publications', uniqueId), {
         ...publicationData,
         isGlobal: true,
-        userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
+        organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
       });
       operationCount++;
       stats.publications++;
@@ -1100,13 +1092,11 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       updatedAt: new Date(),
     });
 
-    batch.set(doc(db, 'superadmin_publications', publication.id), publicationData);
-    operationCount++;
-
+    // Publications mit isGlobal für Premium-Datenbank (SuperAdmin)
     batch.set(doc(db, 'publications', publication.id), {
       ...publicationData,
       isGlobal: true,
-      userId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
+      organizationId: 'kqUJumpKKVPQIY87GP1cgO0VaKC3'
     });
     operationCount++;
     stats.publications++;
@@ -1391,7 +1381,6 @@ export async function cleanupRealisticTestData(): Promise<void> {
   // Category A Publications
   for (const publication of CATEGORY_A_PERFECT_MATCHES.publications) {
     try {
-      await deleteDoc(doc(db, 'superadmin_publications', publication.id));
       await deleteDoc(doc(db, 'publications', publication.id));
       deletedPublications++;
     } catch (error) {
@@ -1402,7 +1391,6 @@ export async function cleanupRealisticTestData(): Promise<void> {
   // Category B Publications
   for (const publication of CATEGORY_B_FUZZY_MATCHES.publications) {
     try {
-      await deleteDoc(doc(db, 'superadmin_publications', publication.id));
       await deleteDoc(doc(db, 'publications', publication.id));
       deletedPublications++;
     } catch (error) {
@@ -1415,7 +1403,6 @@ export async function cleanupRealisticTestData(): Promise<void> {
     for (const orgId of testOrgIds) {
       const uniqueId = `${publication.id}-${orgId}`;
       try {
-        await deleteDoc(doc(db, 'superadmin_publications', uniqueId));
         await deleteDoc(doc(db, 'publications', uniqueId));
         deletedPublications++;
       } catch (error) {
@@ -1427,7 +1414,6 @@ export async function cleanupRealisticTestData(): Promise<void> {
   // Category E Publications (Abbreviations)
   for (const publication of CATEGORY_E_EDGE_CASES.abbreviations.publications) {
     try {
-      await deleteDoc(doc(db, 'superadmin_publications', publication.id));
       await deleteDoc(doc(db, 'publications', publication.id));
       deletedPublications++;
     } catch (error) {
@@ -1435,7 +1421,7 @@ export async function cleanupRealisticTestData(): Promise<void> {
     }
   }
 
-  console.log(`✅ ${deletedPublications} Publications gelöscht (aus beiden Collections)`);
+  console.log(`✅ ${deletedPublications} Publications gelöscht`);
 
   // ============================================================================
   // 4. CONTACTS LÖSCHEN
