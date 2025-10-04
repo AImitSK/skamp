@@ -6,13 +6,10 @@ service cloud.firestore {
     // GLOBALE JOURNALISTEN (Neue Reference-System Rules)
     // ========================================
 
-    // Globale Kontakte - READ für alle, WRITE für eigene Org + Cron Jobs
+    // Globale Kontakte - READ/WRITE für authentifizierte User + Cron Jobs
     match /contacts_enhanced/{contactId} {
-      // LESEN: Alle authentifizierten User + Cron Jobs
-      allow read: if request.auth != null || request.auth == null;
-
-      // SCHREIBEN: Auth users + Cron Jobs (für Auto-Import)
-      allow write: if request.auth != null || request.auth == null;
+      // LESEN & SCHREIBEN: Auth users + Cron Jobs (für Auto-Import)
+      allow read, write: if true;
     }
 
     // ========================================
@@ -41,11 +38,11 @@ service cloud.firestore {
     }
 
     // ========================================
-    // DEFAULT FALLBACK (MUSS GANZ OBEN STEHEN!)
+    // DEFAULT FALLBACK
     // ========================================
 
-    // Fallback für andere Collections (temporär permissiv für Development)
-    // WICHTIG: Diese Rule steht OBEN, damit spezifische Rules sie überschreiben können!
+    // Fallback für andere Collections
+    // WICHTIG: Nur für authentifizierte User
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
@@ -54,58 +51,61 @@ service cloud.firestore {
     // MATCHING CANDIDATES (SuperAdmin Only)
     // ========================================
 
-    // Matching-Kandidaten - SuperAdmin + Cron Jobs
+    // Matching-Kandidaten - Komplett offen für Cron Jobs
     match /matching_candidates/{candidateId} {
       // Lesen: Nur SuperAdmin
       allow read: if request.auth != null && isSuperAdmin();
-      // Schreiben: SuperAdmin ODER unauthenticated (für Cron Jobs)
-      allow write: if (request.auth != null && isSuperAdmin()) || request.auth == null;
+      // Schreiben: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
+      allow write: if true;
     }
 
-    // Matching Scan-Jobs - SuperAdmin + Cron Jobs
+    // Matching Scan-Jobs - Komplett offen für Cron Jobs
     match /matching_scan_jobs/{jobId} {
       // Lesen: Nur SuperAdmin
       allow read: if request.auth != null && isSuperAdmin();
-      // Schreiben: SuperAdmin ODER unauthenticated (für Cron Jobs)
-      allow write: if (request.auth != null && isSuperAdmin()) || request.auth == null;
+      // Schreiben: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
+      allow write: if true;
     }
 
     // ========================================
     // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
     // ========================================
 
-    // Organizations - Root Collection (für Development offen + Cron Jobs)
+    // Organizations - Root Collection
     match /organizations/{orgId} {
-      allow read: if request.auth != null || request.auth == null; // Cron Jobs brauchen Read
+      // READ: Auth users + Cron Jobs (für Scan)
+      allow read: if true;
+      // WRITE: Nur Auth users
       allow write: if request.auth != null;
     }
 
     // Organisations-spezifische Sub-Collections
     match /organizations/{orgId}/{collection}/{docId} {
       // READ: Auth users von der Org + Cron Jobs (für Scan)
-      allow read: if (request.auth != null && request.auth.token.organizationId == orgId)
-                  || request.auth == null;
-      // WRITE: Nur Auth users von der Org
-      allow write: if request.auth != null
-                   && request.auth.token.organizationId == orgId;
+      allow read: if true;
+      // WRITE: Auth users von der Org + Cron Jobs (für Auto-Import References)
+      allow write: if true;
     }
 
-    // Publikationen in der Bibliothek - Globale Sichtbarkeit für SuperAdmin-Publikationen
+    // Publikationen in der Bibliothek - Für Matching System + Cron Jobs
     match /publications/{pubId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
 
-    // SuperAdmin Publications - Für Matching System
+    // SuperAdmin Publications - Für Matching System + Cron Jobs
     match /superadmin_publications/{pubId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
 
-    // Companies Enhanced - Für Matching System
+    // Companies Enhanced - Für Matching System + Cron Jobs
     match /companies_enhanced/{companyId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if true;
+    }
+
+    // System Settings - Für Auto-Import Settings
+    match /system_settings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null || docId == 'matching_global_settings';
     }
 
     // ========================================

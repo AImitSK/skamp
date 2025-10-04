@@ -1437,6 +1437,105 @@ class MatchingCandidatesService {
     // Delegiere an die externe Funktion
     return await importCandidateWithAutoMatching(params);
   }
+
+  /**
+   * Automatischer Import von Kandidaten basierend auf Score-Threshold
+   *
+   * @param minScore - Minimaler Score (0-100) für Auto-Import
+   * @param useAiMerge - Ob KI-Merge verwendet werden soll
+   * @param userId - SuperAdmin User ID für Import-Attribution
+   * @returns Import-Statistiken
+   */
+  async autoImportCandidates(params: {
+    minScore: number;
+    useAiMerge: boolean;
+    userId: string;
+    userEmail: string;
+    organizationId: string;
+  }): Promise<{
+    success: boolean;
+    stats: {
+      candidatesProcessed: number;
+      candidatesImported: number;
+      candidatesFailed: number;
+      errors: string[];
+    };
+  }> {
+    console.log('🤖 Starting auto-import...', {
+      minScore: params.minScore,
+      useAiMerge: params.useAiMerge,
+      timestamp: new Date().toISOString()
+    });
+
+    const stats = {
+      candidatesProcessed: 0,
+      candidatesImported: 0,
+      candidatesFailed: 0,
+      errors: [] as string[]
+    };
+
+    try {
+      // Hole alle pending Kandidaten mit Score >= minScore
+      const candidates = await this.getCandidates(
+        {
+          status: ['pending'],
+          minScore: params.minScore
+        },
+        { field: 'score', direction: 'desc' },
+        { limit: 100, offset: 0 }
+      );
+
+      console.log(`📊 Found ${candidates.length} candidates with score >= ${params.minScore}`);
+
+      // Importiere jeden Kandidaten
+      for (const candidate of candidates) {
+        stats.candidatesProcessed++;
+
+        try {
+          console.log(`🔄 Auto-importing candidate ${candidate.id} (Score: ${candidate.score})...`);
+
+          // Wähle Variante:
+          // - Mit AI-Merge: Nutze AI-gemergete Daten (Index wird ignoriert, AI merged alle)
+          // - Ohne AI-Merge: Nutze erste Variante (höchste Datenqualität)
+          const selectedVariantIndex = 0;
+
+          // Importiere mit Auto-Matching
+          const result = await importCandidateWithAutoMatching({
+            candidateId: candidate.id!,
+            selectedVariantIndex,
+            userId: params.userId,
+            userEmail: params.userEmail,
+            organizationId: params.organizationId,
+            useAiMerge: params.useAiMerge
+          });
+
+          if (result.success) {
+            stats.candidatesImported++;
+            console.log(`✅ Auto-imported candidate ${candidate.id} → Contact ${result.contactId}`);
+          } else {
+            stats.candidatesFailed++;
+            stats.errors.push(`${candidate.id}: ${result.error || 'Unknown error'}`);
+            console.error(`❌ Failed to auto-import ${candidate.id}:`, result.error);
+          }
+        } catch (error) {
+          stats.candidatesFailed++;
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          stats.errors.push(`${candidate.id}: ${errorMsg}`);
+          console.error(`❌ Auto-import error for ${candidate.id}:`, error);
+        }
+      }
+
+      console.log('✅ Auto-import completed', stats);
+
+      return {
+        success: true,
+        stats
+      };
+    } catch (error) {
+      console.error('❌ Auto-import failed:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

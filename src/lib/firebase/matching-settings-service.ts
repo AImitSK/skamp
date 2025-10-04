@@ -30,6 +30,12 @@ class MatchingSettingsService {
             lastRun: data.autoScan?.lastRun?.toDate?.() ?? undefined,
             nextRun: data.autoScan?.nextRun?.toDate?.() ?? undefined
           },
+          autoImport: {
+            enabled: data.autoImport?.enabled ?? DEFAULT_MATCHING_SETTINGS.autoImport.enabled,
+            minScore: data.autoImport?.minScore ?? DEFAULT_MATCHING_SETTINGS.autoImport.minScore,
+            lastRun: data.autoImport?.lastRun?.toDate?.() ?? undefined,
+            nextRun: data.autoImport?.nextRun?.toDate?.() ?? undefined
+          },
           updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
           updatedBy: data.updatedBy ?? ''
         };
@@ -93,6 +99,30 @@ class MatchingSettingsService {
   }
 
   /**
+   * Aktualisiert die Auto-Import Einstellungen
+   */
+  async updateAutoImport(
+    enabled: boolean,
+    minScore: number,
+    userId: string
+  ): Promise<void> {
+    // Validiere Score
+    if (minScore < 0 || minScore > 100) {
+      throw new Error('minScore muss zwischen 0 und 100 liegen');
+    }
+
+    const nextRun = enabled ? this.calculateNextImportRun() : undefined;
+
+    await this.saveSettings({
+      autoImport: {
+        enabled,
+        minScore,
+        nextRun
+      }
+    }, userId);
+  }
+
+  /**
    * Berechnet den nächsten Scan-Zeitpunkt
    */
   private calculateNextRun(interval: AutoScanInterval): Date | undefined {
@@ -116,6 +146,20 @@ class MatchingSettingsService {
         nextRun.setHours(2, 0, 0, 0); // 02:00 Uhr
         break;
     }
+
+    return nextRun;
+  }
+
+  /**
+   * Berechnet den nächsten Import-Zeitpunkt (täglich um 04:00)
+   */
+  private calculateNextImportRun(): Date {
+    const now = new Date();
+    const nextRun = new Date(now);
+
+    // Nächster Tag um 04:00 Uhr
+    nextRun.setDate(now.getDate() + 1);
+    nextRun.setHours(4, 0, 0, 0);
 
     return nextRun;
   }

@@ -16,6 +16,14 @@ export interface MatchingGlobalSettings {
     nextRun?: Date;
   };
 
+  // Automatischer Import
+  autoImport: {
+    enabled: boolean;
+    minScore: number; // Schwellwert 0-100
+    lastRun?: Date;
+    nextRun?: Date;
+  };
+
   // Metadaten
   updatedAt: Date;
   updatedBy: string;
@@ -26,6 +34,10 @@ export const DEFAULT_MATCHING_SETTINGS: MatchingGlobalSettings = {
   autoScan: {
     enabled: false,
     interval: 'weekly'
+  },
+  autoImport: {
+    enabled: false,
+    minScore: 60 // Default: 60/100
   },
   updatedAt: new Date(),
   updatedBy: ''
