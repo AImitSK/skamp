@@ -451,7 +451,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             setSelectedProject(project);
 
             // NEU: Lade Dokumente-Ordner für KI-Kontext
-            const projectFolders = await projectService.getProjectFolders(selectedProjectId, currentOrganization.id);
+            const projectFolders = await projectService.getProjectFolderStructure(
+              selectedProjectId,
+              { organizationId: currentOrganization.id }
+            );
             const dokumenteFolder = projectFolders?.subfolders?.find(
               (folder: any) => folder.name === 'Dokumente'
             );
