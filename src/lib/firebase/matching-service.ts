@@ -238,6 +238,8 @@ export async function importCandidateWithAutoMatching(params: {
         companyId: companyResult.companyId,  // ✅ PFLICHT - nicht null!
         companyName: companyResult.companyName, // ✅ Für publisherName Feld
         variants: candidate.variants,
+        selectedVariantIndex: params.selectedVariantIndex, // ✅ Nur ausgewählte Variante verwenden
+        contactDataToUse: contactDataToUse, // ✅ Finale Contact-Daten (ggf. AI-gemerged)
         organizationId: params.organizationId,
         userId: params.userId,
         autoGlobalMode: autoGlobalMode
@@ -404,6 +406,8 @@ async function handlePublicationMatching(params: {
   companyId: string;  // ✅ PFLICHT - nicht null!
   companyName: string; // ✅ Für publisherName Feld
   variants: MatchingCandidateVariant[];
+  selectedVariantIndex: number; // ✅ Index der ausgewählten Variante
+  contactDataToUse: any; // ✅ Finale Contact-Daten (ggf. AI-gemerged)
   organizationId: string;
   userId: string;
   autoGlobalMode: boolean;
@@ -415,7 +419,7 @@ async function handlePublicationMatching(params: {
   wasCreated: boolean;
   wasEnriched: boolean;
 }>> {
-  const { companyId, companyName, variants, organizationId, userId, autoGlobalMode } = params;
+  const { companyId, companyName, variants, selectedVariantIndex, contactDataToUse, organizationId, userId, autoGlobalMode } = params;
 
   // 1. Finde bestehende Publikationen DIESER Company
   const publicationMatches = await findPublications(
@@ -450,13 +454,14 @@ async function handlePublicationMatching(params: {
   }
 
   // 2. Keine Publikation gefunden → Erstelle neue Publication FÜR DIESE Company
-  // Extrahiere Publication-Namen aus Varianten
+  // ✅ NUR Publications aus den finalen Contact-Daten verwenden (ausgewählte Variante oder AI-Merge)
   const publicationNames = new Set<string>();
 
-  for (const variant of variants) {
-    if (variant.contactData.hasMediaProfile && variant.contactData.publications) {
-      variant.contactData.publications.forEach(pub => publicationNames.add(pub));
-    }
+  if (contactDataToUse.publications && contactDataToUse.publications.length > 0) {
+    contactDataToUse.publications.forEach((pub: string) => publicationNames.add(pub));
+    console.log(`📋 Verwende ${publicationNames.size} Publications aus ${contactDataToUse.usedAiMerge ? 'AI-Merge' : 'ausgewählter Variante'}`);
+  } else {
+    console.log('⚠️ Keine Publications in Contact-Daten gefunden');
   }
 
   // Erstelle Publications
