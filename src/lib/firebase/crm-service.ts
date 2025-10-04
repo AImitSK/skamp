@@ -286,10 +286,10 @@ export const contactsService = {
         const firstName = data.name?.firstName || data.firstName;
         const lastName = data.name?.lastName || data.lastName;
 
-        // emails ist ein Array von {type, value, isPrimary} oder {type, address, isPrimary}
+        // emails ist ein Array von {type, email, isPrimary}
         let emailValue = data.email; // Legacy Fallback
         if (data.emails && Array.isArray(data.emails) && data.emails.length > 0) {
-          emailValue = data.emails[0]?.value || data.emails[0]?.address || emailValue;
+          emailValue = data.emails[0]?.email || data.emails[0]?.value || data.emails[0]?.address || emailValue;
         }
 
         console.log('  📧 Mapping Kontakt:', {
