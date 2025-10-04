@@ -280,20 +280,33 @@ export const contactsService = {
       const allSnapshot = await getDocs(allContactsQuery);
       console.log('📋 [CRM-Service] Gefundene Kontakte in contacts_enhanced:', allSnapshot.size);
 
-      const allContacts = allSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Contact));
+      const allContacts = allSnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Enhanced CRM Schema: name.firstName, name.lastName, emails[]
+        const firstName = data.name?.firstName || data.firstName;
+        const lastName = data.name?.lastName || data.lastName;
+
+        // emails ist ein Array von {type, value, isPrimary}
+        const emailValue = data.emails?.[0]?.value || data.email;
+
+        return {
+          id: doc.id,
+          ...data,
+          firstName,
+          lastName,
+          email: emailValue
+        } as Contact;
+      });
 
       console.log('🔍 [CRM-Service] Erstes Kontakt-Objekt (RAW):', allContacts[0]);
       console.log('📋 [CRM-Service] Kontakt-Emails:', allContacts.map(c => ({
         name: `${c.firstName} ${c.lastName}`,
         email: c.email,
-        rawData: c
+        displayName: c.displayName
       })));
 
       const contact = allContacts.find(c => c.email?.toLowerCase() === email.toLowerCase());
-      console.log('🔍 [CRM-Service] Case-Insensitive Match gefunden:', contact ? `${contact.firstName} ${contact.lastName}` : 'NEIN');
+      console.log('🔍 [CRM-Service] Case-Insensitive Match gefunden:', contact ? `${contact.firstName} ${contact.lastName} (${contact.email})` : 'NEIN');
 
       if (contact && contact.companyId) {
         const company = await companiesService.getById(contact.companyId);
