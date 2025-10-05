@@ -187,7 +187,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
   const [loading, setLoading] = useState(false);
 const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
 const [loadingPublishers, setLoadingPublishers] = useState(true);
-  const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers' | 'monitoring'>('basic');
   
   // Form State
   const [formData, setFormData] = useState<{
@@ -259,13 +259,24 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
   });
 
   // Identifikatoren State
-  const [identifiers, setIdentifiers] = useState<Array<{ 
-    type: 'ISSN' | 'ISBN' | 'DOI' | 'URL' | 'DOMAIN' | 'SOCIAL_HANDLE' | 'OTHER'; 
+  const [identifiers, setIdentifiers] = useState<Array<{
+    type: 'ISSN' | 'ISBN' | 'DOI' | 'URL' | 'DOMAIN' | 'SOCIAL_HANDLE' | 'OTHER';
     value: string;
     description?: string;
   }>>([
     { type: 'ISSN', value: '' }
   ]);
+
+  // Monitoring State
+  const [monitoringConfig, setMonitoringConfig] = useState({
+    isEnabled: true,
+    websiteUrl: '',
+    rssFeedUrls: [] as string[],
+    autoDetectRss: true,
+    checkFrequency: 'daily' as 'daily' | 'twice_daily',
+    keywords: [] as string[],
+    totalArticlesFound: 0
+  });
 
   // Social Media URLs
   const [socialMediaUrls, setSocialMediaUrls] = useState<Array<{
@@ -369,6 +380,19 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
       // Social Media URLs
       if (publication.socialMediaUrls) {
         setSocialMediaUrls(publication.socialMediaUrls);
+      }
+
+      // Monitoring Config
+      if (publication.monitoringConfig) {
+        setMonitoringConfig({
+          isEnabled: publication.monitoringConfig.isEnabled ?? true,
+          websiteUrl: publication.monitoringConfig.websiteUrl || '',
+          rssFeedUrls: publication.monitoringConfig.rssFeedUrls || [],
+          autoDetectRss: publication.monitoringConfig.autoDetectRss ?? true,
+          checkFrequency: publication.monitoringConfig.checkFrequency || 'daily',
+          keywords: publication.monitoringConfig.keywords || [],
+          totalArticlesFound: publication.monitoringConfig.totalArticlesFound || 0
+        });
       }
     }
   }, [publication]);
@@ -605,9 +629,18 @@ const loadPublishers = async () => {
         }),
         socialMediaUrls: socialMediaUrls.filter(s => s.url),
         verified: formData.verified,
-        status: formData.status
+        status: formData.status,
+        monitoringConfig: {
+          isEnabled: monitoringConfig.isEnabled,
+          websiteUrl: monitoringConfig.websiteUrl || undefined,
+          rssFeedUrls: monitoringConfig.rssFeedUrls.filter(url => url.trim() !== ''),
+          autoDetectRss: monitoringConfig.autoDetectRss,
+          checkFrequency: monitoringConfig.checkFrequency,
+          keywords: monitoringConfig.keywords.filter(k => k.trim() !== ''),
+          totalArticlesFound: monitoringConfig.totalArticlesFound || 0
+        }
       };
-      
+
       // Optionale Felder nur hinzufügen wenn vorhanden
       if (formData.subtitle) {
         publicationData.subtitle = formData.subtitle;
@@ -700,12 +733,22 @@ const loadPublishers = async () => {
             <button
               onClick={() => setActiveTab('identifiers')}
               className={`${
-                activeTab === 'identifiers' 
-                  ? 'border-[#005fab] text-[#005fab]' 
+                activeTab === 'identifiers'
+                  ? 'border-[#005fab] text-[#005fab]'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Identifikatoren & Links
+            </button>
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`${
+                activeTab === 'monitoring'
+                  ? 'border-[#005fab] text-[#005fab]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+            >
+              Monitoring
             </button>
           </nav>
         </div>
@@ -1305,6 +1348,210 @@ const loadPublishers = async () => {
                   </Button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Monitoring Tab */}
+          {activeTab === 'monitoring' && (
+            <div className="space-y-6">
+              {/* Enable Monitoring */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-gray-900">Monitoring aktivieren</h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Überwache automatisch neue Veröffentlichungen dieser Publikation
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={monitoringConfig.isEnabled}
+                    onChange={(e) => setMonitoringConfig({
+                      ...monitoringConfig,
+                      isEnabled: e.target.checked
+                    })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005fab]"></div>
+                </label>
+              </div>
+
+              {monitoringConfig.isEnabled && (
+                <>
+                  {/* Website URL */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Website URL
+                    </label>
+                    <Input
+                      type="url"
+                      value={monitoringConfig.websiteUrl}
+                      onChange={(e) => setMonitoringConfig({
+                        ...monitoringConfig,
+                        websiteUrl: e.target.value
+                      })}
+                      placeholder="https://www.example.com"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Wird für automatische RSS Feed Erkennung verwendet
+                    </p>
+                  </div>
+
+                  {/* RSS Feed URLs */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      RSS Feed URLs
+                    </label>
+                    <div className="space-y-2">
+                      {monitoringConfig.rssFeedUrls.map((url, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            type="url"
+                            value={url}
+                            onChange={(e) => {
+                              const updated = [...monitoringConfig.rssFeedUrls];
+                              updated[index] = e.target.value;
+                              setMonitoringConfig({
+                                ...monitoringConfig,
+                                rssFeedUrls: updated
+                              });
+                            }}
+                            placeholder="https://www.example.com/feed"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            plain
+                            onClick={() => {
+                              const updated = monitoringConfig.rssFeedUrls.filter((_, i) => i !== index);
+                              setMonitoringConfig({
+                                ...monitoringConfig,
+                                rssFeedUrls: updated
+                              });
+                            }}
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        plain
+                        onClick={() => {
+                          setMonitoringConfig({
+                            ...monitoringConfig,
+                            rssFeedUrls: [...monitoringConfig.rssFeedUrls, '']
+                          });
+                        }}
+                      >
+                        <PlusIcon className="h-4 w-4 mr-2" />
+                        RSS Feed hinzufügen
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Auto-Detect RSS */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="autoDetectRss"
+                      checked={monitoringConfig.autoDetectRss}
+                      onChange={(e) => setMonitoringConfig({
+                        ...monitoringConfig,
+                        autoDetectRss: e.target.checked
+                      })}
+                      className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                    />
+                    <label htmlFor="autoDetectRss" className="ml-2 text-sm text-gray-700">
+                      RSS Feeds automatisch erkennen
+                      <span className="text-gray-500 ml-1">(testet /feed, /rss, etc.)</span>
+                    </label>
+                  </div>
+
+                  {/* Check Frequency */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Prüf-Frequenz
+                    </label>
+                    <Select
+                      value={monitoringConfig.checkFrequency}
+                      onChange={(e) => setMonitoringConfig({
+                        ...monitoringConfig,
+                        checkFrequency: e.target.value as 'daily' | 'twice_daily'
+                      })}
+                    >
+                      <option value="daily">Täglich</option>
+                      <option value="twice_daily">Zweimal täglich</option>
+                    </Select>
+                  </div>
+
+                  {/* Keywords */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Keywords (optional)
+                    </label>
+                    <div className="space-y-2">
+                      {monitoringConfig.keywords.map((keyword, index) => (
+                        <div key={index} className="flex gap-2">
+                          <Input
+                            type="text"
+                            value={keyword}
+                            onChange={(e) => {
+                              const updated = [...monitoringConfig.keywords];
+                              updated[index] = e.target.value;
+                              setMonitoringConfig({
+                                ...monitoringConfig,
+                                keywords: updated
+                              });
+                            }}
+                            placeholder="z.B. Technologie, Politik"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            plain
+                            onClick={() => {
+                              const updated = monitoringConfig.keywords.filter((_, i) => i !== index);
+                              setMonitoringConfig({
+                                ...monitoringConfig,
+                                keywords: updated
+                              });
+                            }}
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        plain
+                        onClick={() => {
+                          setMonitoringConfig({
+                            ...monitoringConfig,
+                            keywords: [...monitoringConfig.keywords, '']
+                          });
+                        }}
+                      >
+                        <PlusIcon className="h-4 w-4 mr-2" />
+                        Keyword hinzufügen
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Optionale Filter für relevante Artikel (zusätzlich zur Kampagnen-basierten Suche)
+                    </p>
+                  </div>
+
+                  {/* Statistics (read-only) */}
+                  {publication && monitoringConfig.totalArticlesFound > 0 && (
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-1">Statistiken</h4>
+                      <p className="text-sm text-blue-700">
+                        {monitoringConfig.totalArticlesFound} Artikel gefunden
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 

@@ -22,7 +22,7 @@
 - [x] 3.2 spam-pattern-service.ts erstellen
 
 ### Phase 4: UI Komponenten
-- [ ] 4.1 Publication Modal - Monitoring Tab
+- [x] 4.1 Publication Modal - Monitoring Tab
 - [ ] 4.2 Globale Spam-Blocklist Settings Page
 - [ ] 4.3 Monitoring Suggestions UI
 
