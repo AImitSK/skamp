@@ -92,7 +92,8 @@
       "WebSearch",
       "Bash(if exist node_modules rmdir /s /q node_modules)",
       "Bash(if exist package-lock.json del package-lock.json)",
-      "Bash(npm cache clean:*)"
+      "Bash(npm cache clean:*)",
+      "Bash(vercel env:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
