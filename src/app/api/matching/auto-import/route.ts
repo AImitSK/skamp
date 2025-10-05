@@ -3,55 +3,14 @@
  *
  * Importiert automatisch alle Kandidaten die den Score-Threshold erreichen
  * - Wird von Vercel Cron Job getriggert (täglich um 04:00)
- * - Nutzt Client SDK (kein Admin SDK)
+ * - Nutzt Firebase Admin SDK (Server-Side)
  * - Lädt Settings aus Firestore
- *
- * WICHTIG: Nur Client SDK, KEIN Admin SDK!
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { matchingService } from '@/lib/firebase/matching-service';
 import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
-import { signInWithCustomToken, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase/client-init';
-
-/**
- * Authentifiziert Service User via Firebase REST API
- * WICHTIG: Kein Admin SDK - nur REST API!
- * Nutzt signInWithPassword statt signInWithEmailAndPassword (kein reCAPTCHA!)
- */
-async function authenticateServiceUser(email: string, password: string): Promise<{ idToken: string; refreshToken: string }> {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY not configured');
-  }
-
-  // Login mit Email/Password via REST API (kein reCAPTCHA!)
-  const signInResponse = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password,
-        returnSecureToken: true
-      })
-    }
-  );
-
-  if (!signInResponse.ok) {
-    const error = await signInResponse.json();
-    throw new Error(`Failed to sign in: ${error.error?.message || 'Unknown error'}`);
-  }
-
-  const data = await signInResponse.json();
-  return {
-    idToken: data.idToken,
-    refreshToken: data.refreshToken
-  };
-}
+import { adminAuth } from '@/lib/firebase/admin-init';
 
 /**
  * GET /api/matching/auto-import
@@ -92,40 +51,10 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Authentifiziere als Service User für Firestore-Zugriff
-    const serviceUid = process.env.CRON_SERVICE_UID;
-    const serviceEmail = process.env.CRON_SERVICE_EMAIL;
-    const servicePassword = process.env.CRON_SERVICE_PASSWORD;
+    // Admin SDK ist bereits authentifiziert (kein Login nötig!)
+    console.log('✅ Using Firebase Admin SDK');
 
-    if (!serviceUid || !serviceEmail || !servicePassword) {
-      return NextResponse.json(
-        {
-          error: 'Service credentials not configured',
-          message: 'Set CRON_SERVICE_UID, CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD environment variables'
-        },
-        { status: 500 }
-      );
-    }
-
-    try {
-      // Authentifiziere via REST API (kein reCAPTCHA!)
-      const { idToken } = await authenticateServiceUser(serviceEmail, servicePassword);
-
-      // Login mit ID Token
-      await signInWithCustomToken(auth, idToken);
-      console.log('✅ Service user authenticated');
-    } catch (authError) {
-      console.error('❌ Service user authentication failed:', authError);
-      return NextResponse.json(
-        {
-          error: 'Service authentication failed',
-          message: authError instanceof Error ? authError.message : 'Unknown error'
-        },
-        { status: 500 }
-      );
-    }
-
-    // Lade Settings (jetzt mit Auth)
+    // Lade Settings
     const settings = await matchingSettingsService.getSettings();
 
     // Prüfe ob Auto-Import aktiviert ist
@@ -174,10 +103,6 @@ export async function GET(request: NextRequest) {
       }
     }, SUPER_ADMIN_USER_ID);
 
-    // Logout Service User
-    await signOut(auth);
-    console.log('✅ Service user logged out');
-
     return NextResponse.json({
       success: true,
       stats: result.stats,
@@ -189,13 +114,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Auto-import failed', error);
-
-    // Logout auch bei Fehler
-    try {
-      await signOut(auth);
-    } catch (logoutError) {
-      console.error('⚠️ Service user logout failed:', logoutError);
-    }
 
     return NextResponse.json(
       {
@@ -242,38 +160,8 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Authentifiziere als Service User
-    const serviceUid = process.env.CRON_SERVICE_UID;
-    const serviceEmail = process.env.CRON_SERVICE_EMAIL;
-    const servicePassword = process.env.CRON_SERVICE_PASSWORD;
-
-    if (!serviceUid || !serviceEmail || !servicePassword) {
-      return NextResponse.json(
-        {
-          error: 'Service credentials not configured',
-          message: 'Set CRON_SERVICE_UID, CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD'
-        },
-        { status: 500 }
-      );
-    }
-
-    try {
-      // Authentifiziere via REST API (kein reCAPTCHA!)
-      const { idToken } = await authenticateServiceUser(serviceEmail, servicePassword);
-
-      // Login mit ID Token
-      await signInWithCustomToken(auth, idToken);
-      console.log('✅ Service user authenticated (POST)');
-    } catch (authError) {
-      console.error('❌ Service user authentication failed (POST):', authError);
-      return NextResponse.json(
-        {
-          error: 'Service authentication failed',
-          message: authError instanceof Error ? authError.message : 'Unknown error'
-        },
-        { status: 500 }
-      );
-    }
+    // Admin SDK ist bereits authentifiziert
+    console.log('✅ Using Firebase Admin SDK (POST)');
 
     // Lade Settings
     const settings = await matchingSettingsService.getSettings();
@@ -323,10 +211,6 @@ export async function POST(request: NextRequest) {
       }
     }, SUPER_ADMIN_USER_ID);
 
-    // Logout Service User
-    await signOut(auth);
-    console.log('✅ Service user logged out (POST)');
-
     return NextResponse.json({
       success: true,
       stats: result.stats,
@@ -338,13 +222,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Auto-import failed (POST)', error);
-
-    // Logout auch bei Fehler
-    try {
-      await signOut(auth);
-    } catch (logoutError) {
-      console.error('⚠️ Service user logout failed (POST):', logoutError);
-    }
 
     return NextResponse.json(
       {

@@ -55,7 +55,7 @@
     "dompurify": "^3.2.6",
     "dotenv": "^17.2.1",
     "firebase": "^11.9.1",
-    "firebase-admin": "^13.4.0",
+    "firebase-admin": "^13.5.0",
     "framer-motion": "^12.18.1",
     "i18n-iso-countries": "^7.14.0",
     "mustache": "^4.2.0",

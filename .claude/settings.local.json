@@ -94,7 +94,8 @@
       "Bash(if exist package-lock.json del package-lock.json)",
       "Bash(npm cache clean:*)",
       "Bash(vercel env:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
