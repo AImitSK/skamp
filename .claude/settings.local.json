@@ -93,7 +93,8 @@
       "Bash(if exist node_modules rmdir /s /q node_modules)",
       "Bash(if exist package-lock.json del package-lock.json)",
       "Bash(npm cache clean:*)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
