@@ -18,23 +18,8 @@ service cloud.firestore {
 
     // References werden in der Organisation des Kunden gespeichert
     match /organizations/{orgId}/journalist_references/{referenceId} {
-      // LESEN: Nur Mitglieder der Organisation
-      allow read: if request.auth != null
-                  && request.auth.token.organizationId == orgId;
-
-      // ERSTELLEN: Nur Mitglieder der Organisation
-      allow create: if request.auth != null
-                    && request.auth.token.organizationId == orgId
-                    && validateReferenceCreate(request.resource.data);
-
-      // AKTUALISIEREN: Nur lokale Daten (Notes, Tags)
-      allow update: if request.auth != null
-                    && request.auth.token.organizationId == orgId
-                    && validateReferenceUpdate(resource.data, request.resource.data);
-
-      // LÖSCHEN: Nur eigene References
-      allow delete: if request.auth != null
-                    && request.auth.token.organizationId == orgId;
+      // READ & WRITE: Komplett offen für Cron Jobs (Auto-Import)
+      allow read, write: if true;
     }
 
     // ========================================
@@ -53,18 +38,14 @@ service cloud.firestore {
 
     // Matching-Kandidaten - Komplett offen für Cron Jobs
     match /matching_candidates/{candidateId} {
-      // Lesen: Nur SuperAdmin
-      allow read: if request.auth != null && isSuperAdmin();
-      // Schreiben: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
-      allow write: if true;
+      // READ & WRITE: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
+      allow read, write: if true;
     }
 
     // Matching Scan-Jobs - Komplett offen für Cron Jobs
     match /matching_scan_jobs/{jobId} {
-      // Lesen: Nur SuperAdmin
-      allow read: if request.auth != null && isSuperAdmin();
-      // Schreiben: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
-      allow write: if true;
+      // READ & WRITE: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
+      allow read, write: if true;
     }
 
     // ========================================
