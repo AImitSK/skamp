@@ -14,8 +14,8 @@
 - [x] 1.5.4 Test-Daten Script erweitern
 
 ### Phase 2: Helper Functions & Utils
-- [ ] 2.1 publication-helpers.ts erstellen
-- [ ] 2.2 url-normalizer.ts erstellen
+- [x] 2.1 publication-helpers.ts erstellen
+- [x] 2.2 url-normalizer.ts erstellen
 
 ### Phase 3: Firebase Services
 - [ ] 3.1 campaign-monitoring-service.ts erstellen

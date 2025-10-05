@@ -1,11 +1,62 @@
 /**
- * Publication Monitoring Helpers
+ * Publication Helpers
  *
- * Phase 5: Helper-Funktionen für monitoringConfig Migration und Merge
+ * Phase 2.1: Helper-Funktionen für Publication Monitoring
+ * - Backward-Compatible Getter-Funktionen
+ * - Migration alte → neue Struktur
+ * - Merge mehrerer monitoringConfigs
  */
 
-import { PublicationMonitoringConfig } from '@/types/library';
+import { Publication, PublicationMonitoringConfig } from '@/types/library';
 import { Timestamp } from 'firebase/firestore';
+
+// ============================================================================
+// BACKWARD-COMPATIBLE GETTER FUNCTIONS
+// ============================================================================
+
+/**
+ * Gibt Website URL zurück (Backward Compatible)
+ * Prüft erst monitoringConfig, dann alte Felder
+ */
+export function getWebsiteUrl(pub: Publication): string | null {
+  return pub.monitoringConfig?.websiteUrl || pub.websiteUrl || null;
+}
+
+/**
+ * Gibt RSS Feed URLs zurück (Backward Compatible)
+ * Prüft erst monitoringConfig, dann alte Felder
+ */
+export function getRssFeedUrls(pub: Publication): string[] {
+  if (pub.monitoringConfig?.rssFeedUrls?.length) {
+    return pub.monitoringConfig.rssFeedUrls;
+  }
+  return pub.rssFeedUrl ? [pub.rssFeedUrl] : [];
+}
+
+/**
+ * Prüft ob Monitoring für Publication aktiviert ist
+ */
+export function isMonitoringEnabled(pub: Publication): boolean {
+  return pub.monitoringConfig?.isEnabled ?? false;
+}
+
+/**
+ * Gibt Check-Frequenz zurück (mit Default)
+ */
+export function getCheckFrequency(pub: Publication): 'daily' | 'twice_daily' {
+  return pub.monitoringConfig?.checkFrequency || 'daily';
+}
+
+/**
+ * Gibt Keywords zurück (mit Empty Array Fallback)
+ */
+export function getKeywords(pub: Publication): string[] {
+  return pub.monitoringConfig?.keywords || [];
+}
+
+// ============================================================================
+// MIGRATION & MERGE FUNCTIONS
+// ============================================================================
 
 /**
  * Migriert alte Publication Felder zu monitoringConfig
@@ -56,7 +107,7 @@ export function mergeMonitoringConfigs(configs: PublicationMonitoringConfig[]): 
     // Fallback: Leeres Config
     return {
       isEnabled: false,
-      websiteUrl: null,
+      websiteUrl: undefined,
       rssFeedUrls: [],
       autoDetectRss: true,
       checkFrequency: 'daily',
@@ -75,7 +126,7 @@ export function mergeMonitoringConfigs(configs: PublicationMonitoringConfig[]): 
     isEnabled: configs.some(c => c.isEnabled),
 
     // websiteUrl: Nimm ersten non-null Wert
-    websiteUrl: configs.find(c => c.websiteUrl)?.websiteUrl || null,
+    websiteUrl: configs.find(c => c.websiteUrl)?.websiteUrl || undefined,
 
     // rssFeedUrls: Kombiniere alle URLs, dedupliziere
     rssFeedUrls: [
@@ -119,7 +170,7 @@ export function createDefaultMonitoringConfig(
 ): PublicationMonitoringConfig {
   return {
     isEnabled: true,
-    websiteUrl: website || null,
+    websiteUrl: website || undefined,
     rssFeedUrls: rssFeedUrl ? [rssFeedUrl] : [],
     autoDetectRss: true,
     checkFrequency: 'daily',

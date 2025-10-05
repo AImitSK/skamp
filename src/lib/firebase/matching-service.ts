@@ -439,7 +439,7 @@ async function handlePublicationMatching(params: {
 
   if (publicationMatches.length > 0) {
     // Publikationen gefunden - prüfe ob Migration/Enrichment nötig
-    const { migrateToMonitoringConfig } = await import('@/lib/matching/publication-monitoring-helpers');
+    const { migrateToMonitoringConfig } = await import('@/lib/utils/publication-helpers');
 
     for (const match of publicationMatches) {
       let wasEnriched = false;
