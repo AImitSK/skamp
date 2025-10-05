@@ -696,7 +696,7 @@ const loadPublishers = async () => {
         status: formData.status,
         monitoringConfig: {
           isEnabled: monitoringConfig.isEnabled,
-          websiteUrl: monitoringConfig.websiteUrl || undefined,
+          websiteUrl: monitoringConfig.websiteUrl || '',
           rssFeedUrls: monitoringConfig.rssFeedUrls.filter(url => url.trim() !== ''),
           autoDetectRss: monitoringConfig.autoDetectRss,
           checkFrequency: monitoringConfig.checkFrequency,

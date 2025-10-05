@@ -33,7 +33,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  RssIcon
 } from "@heroicons/react/24/outline";
 import Papa from 'papaparse';
 import clsx from 'clsx';
@@ -649,6 +650,9 @@ export default function PublicationsPage() {
             <div className="hidden xl:block w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               Frequenz
             </div>
+            <div className="hidden xl:block w-[5%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+              RSS
+            </div>
             <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               Zielgebiet
             </div>
@@ -718,7 +722,17 @@ export default function PublicationsPage() {
                   <div className="hidden xl:block w-[10%] text-sm text-zinc-600 dark:text-zinc-400">
                     {pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : "—"}
                   </div>
-                  
+
+                  <div className="hidden xl:block w-[5%] text-center">
+                    {pub.monitoringConfig?.rssFeedUrls && pub.monitoringConfig.rssFeedUrls.length > 0 ? (
+                      <div className="inline-flex items-center justify-center">
+                        <div className="w-2 h-2 bg-green-500 rounded-full" title={`${pub.monitoringConfig.rssFeedUrls.length} RSS Feed(s) aktiv`}></div>
+                      </div>
+                    ) : (
+                      <span className="text-zinc-400">—</span>
+                    )}
+                  </div>
+
                   <div className="hidden xl:block flex-1">
                     <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
                       <GlobeAltIcon className="mr-1 h-4 w-4 text-zinc-400" />
