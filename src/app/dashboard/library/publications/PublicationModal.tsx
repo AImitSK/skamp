@@ -389,15 +389,28 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
 
       // Monitoring Config
       if (publication.monitoringConfig) {
+        const savedRssFeeds = publication.monitoringConfig.rssFeedUrls || [];
+
         setMonitoringConfig({
           isEnabled: publication.monitoringConfig.isEnabled ?? true,
           websiteUrl: publication.monitoringConfig.websiteUrl || '',
-          rssFeedUrls: publication.monitoringConfig.rssFeedUrls || [],
+          rssFeedUrls: savedRssFeeds,
           autoDetectRss: publication.monitoringConfig.autoDetectRss ?? true,
           checkFrequency: publication.monitoringConfig.checkFrequency || 'daily',
           keywords: publication.monitoringConfig.keywords || [],
           totalArticlesFound: publication.monitoringConfig.totalArticlesFound || 0
         });
+
+        // Wenn RSS Feeds gespeichert sind, setze Detection Status auf "found"
+        if (savedRssFeeds.length > 0) {
+          setDetectedFeeds(savedRssFeeds);
+          setRssDetectionStatus('found');
+          setShowManualRssInput(false);
+        } else {
+          setDetectedFeeds([]);
+          setRssDetectionStatus('idle');
+          setShowManualRssInput(false);
+        }
       }
     }
   }, [publication]);

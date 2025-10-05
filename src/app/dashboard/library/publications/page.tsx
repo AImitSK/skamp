@@ -724,7 +724,7 @@ export default function PublicationsPage() {
                   </div>
 
                   <div className="hidden xl:block w-[5%] text-center">
-                    {pub.monitoringConfig?.rssFeedUrls && pub.monitoringConfig.rssFeedUrls.length > 0 ? (
+                    {pub.monitoringConfig?.isEnabled && pub.monitoringConfig?.rssFeedUrls && pub.monitoringConfig.rssFeedUrls.length > 0 ? (
                       <div className="inline-flex items-center justify-center">
                         <div className="w-2 h-2 bg-green-500 rounded-full" title={`${pub.monitoringConfig.rssFeedUrls.length} RSS Feed(s) aktiv`}></div>
                       </div>
