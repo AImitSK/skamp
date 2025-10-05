@@ -139,6 +139,19 @@ export default function PublicationsPage() {
     setLoading(true);
     try {
       const pubsData = await publicationService.getAll(currentOrganization.id);
+
+      // 🆕 Phase 5: Console Log für monitoringConfig Testing
+      const withMonitoring = pubsData.filter(p => p.monitoringConfig);
+      console.log('📰 Publications geladen:', {
+        total: pubsData.length,
+        withMonitoringConfig: withMonitoring.length,
+        examples: withMonitoring.slice(0, 3).map(p => ({
+          id: p.id,
+          name: p.name,
+          monitoringConfig: p.monitoringConfig
+        }))
+      });
+
       setPublications(pubsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');

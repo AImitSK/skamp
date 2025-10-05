@@ -190,6 +190,15 @@ export default function PublicationDetailPage() {
         router.push('/dashboard/library/publications');
         return;
       }
+
+      // 🆕 Phase 5: Console Log für monitoringConfig Testing
+      console.log('📰 Publication geladen:', {
+        id: pubData.id,
+        name: pubData.name,
+        hasMonitoringConfig: !!pubData.monitoringConfig,
+        monitoringConfig: pubData.monitoringConfig
+      });
+
       setPublication(pubData);
 
       // Lade Publisher (Verlag)
