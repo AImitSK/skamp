@@ -37,6 +37,10 @@ const settingsItems = [
     name: "PDF Templates",
     href: "/dashboard/settings/templates",
   },
+  {
+    name: "Spam-Blocklist",
+    href: "/dashboard/settings/spam-blocklist",
+  },
 ];
 
 // Hilfsfunktion zum Verketten von CSS-Klassen

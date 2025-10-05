@@ -199,6 +199,20 @@ export default function PublicationDetailPage() {
         monitoringConfig: pubData.monitoringConfig
       });
 
+      // 🔍 Detaillierter Log für RSS Feed Testing
+      if (pubData.monitoringConfig) {
+        console.log('📡 Monitoring Config Details:', {
+          isEnabled: pubData.monitoringConfig.isEnabled,
+          websiteUrl: pubData.monitoringConfig.websiteUrl,
+          rssFeedUrls: pubData.monitoringConfig.rssFeedUrls,
+          rssFeedCount: pubData.monitoringConfig.rssFeedUrls?.length || 0,
+          autoDetectRss: pubData.monitoringConfig.autoDetectRss,
+          checkFrequency: pubData.monitoringConfig.checkFrequency,
+          keywords: pubData.monitoringConfig.keywords,
+          totalArticlesFound: pubData.monitoringConfig.totalArticlesFound
+        });
+      }
+
       setPublication(pubData);
 
       // Lade Publisher (Verlag)
