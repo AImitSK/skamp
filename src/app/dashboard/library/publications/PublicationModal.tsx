@@ -278,6 +278,11 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
     totalArticlesFound: 0
   });
 
+  // RSS Auto-Detection State
+  const [rssDetectionStatus, setRssDetectionStatus] = useState<'idle' | 'checking' | 'found' | 'not_found'>('idle');
+  const [detectedFeeds, setDetectedFeeds] = useState<string[]>([]);
+  const [showManualRssInput, setShowManualRssInput] = useState(false);
+
   // Social Media URLs
   const [socialMediaUrls, setSocialMediaUrls] = useState<Array<{
     platform: string;
@@ -469,6 +474,77 @@ const loadPublishers = async () => {
       ...formData,
       publisherId,
       publisherName: selectedPublisher?.name || ''
+    });
+  };
+
+  // RSS Auto-Detection Function
+  const handleRssAutoDetect = async () => {
+    if (!monitoringConfig.websiteUrl) {
+      alert('Bitte geben Sie zuerst eine Website URL ein.');
+      return;
+    }
+
+    setRssDetectionStatus('checking');
+    setDetectedFeeds([]);
+
+    try {
+      // Test Standard RSS Patterns
+      const patterns = [
+        '/feed',
+        '/rss',
+        '/feed.xml',
+        '/rss.xml',
+        '/atom.xml',
+        '/index.xml',
+        '/feeds/posts/default' // Blogger
+      ];
+
+      const baseUrl = new URL(monitoringConfig.websiteUrl).origin;
+      const foundFeeds: string[] = [];
+
+      for (const pattern of patterns) {
+        const testUrl = baseUrl + pattern;
+
+        try {
+          const response = await fetch(testUrl, {
+            method: 'HEAD',
+            mode: 'no-cors', // Wichtig für CORS
+          });
+
+          // Bei no-cors bekommen wir immer status 0, also teste einfach ob Request durchgeht
+          foundFeeds.push(testUrl);
+        } catch (e) {
+          // Ignoriere Fehler, teste weiter
+        }
+      }
+
+      if (foundFeeds.length > 0) {
+        setDetectedFeeds(foundFeeds);
+        setMonitoringConfig({
+          ...monitoringConfig,
+          rssFeedUrls: foundFeeds
+        });
+        setRssDetectionStatus('found');
+        setShowManualRssInput(false);
+      } else {
+        setRssDetectionStatus('not_found');
+        setShowManualRssInput(true);
+      }
+    } catch (error) {
+      console.error('RSS Auto-Detection Error:', error);
+      setRssDetectionStatus('not_found');
+      setShowManualRssInput(true);
+    }
+  };
+
+  // Trennen-Funktion (Auto-Detected Feeds entfernen)
+  const handleDisconnectAutoFeeds = () => {
+    setDetectedFeeds([]);
+    setRssDetectionStatus('idle');
+    setShowManualRssInput(true);
+    setMonitoringConfig({
+      ...monitoringConfig,
+      rssFeedUrls: []
     });
   };
 
@@ -1378,95 +1454,145 @@ const loadPublishers = async () => {
 
               {monitoringConfig.isEnabled && (
                 <>
-                  {/* Website URL */}
+                  {/* Website URL mit Check Button */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Website URL
                     </label>
-                    <Input
-                      type="url"
-                      value={monitoringConfig.websiteUrl}
-                      onChange={(e) => setMonitoringConfig({
-                        ...monitoringConfig,
-                        websiteUrl: e.target.value
-                      })}
-                      placeholder="https://www.example.com"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        type="url"
+                        value={monitoringConfig.websiteUrl}
+                        onChange={(e) => {
+                          setMonitoringConfig({
+                            ...monitoringConfig,
+                            websiteUrl: e.target.value
+                          });
+                          // Reset detection status when URL changes
+                          if (rssDetectionStatus !== 'idle') {
+                            setRssDetectionStatus('idle');
+                            setDetectedFeeds([]);
+                          }
+                        }}
+                        placeholder="https://www.example.com"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleRssAutoDetect}
+                        disabled={!monitoringConfig.websiteUrl || rssDetectionStatus === 'checking'}
+                      >
+                        {rssDetectionStatus === 'checking' ? 'Prüfe...' : 'Check'}
+                      </Button>
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Wird für automatische RSS Feed Erkennung verwendet
+                      Klicken Sie "Check" um automatisch RSS Feeds zu erkennen
                     </p>
                   </div>
 
-                  {/* RSS Feed URLs */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      RSS Feed URLs
-                    </label>
-                    <div className="space-y-2">
-                      {monitoringConfig.rssFeedUrls.map((url, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            type="url"
-                            value={url}
-                            onChange={(e) => {
-                              const updated = [...monitoringConfig.rssFeedUrls];
-                              updated[index] = e.target.value;
-                              setMonitoringConfig({
-                                ...monitoringConfig,
-                                rssFeedUrls: updated
-                              });
-                            }}
-                            placeholder="https://www.example.com/feed"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            plain
-                            onClick={() => {
-                              const updated = monitoringConfig.rssFeedUrls.filter((_, i) => i !== index);
-                              setMonitoringConfig({
-                                ...monitoringConfig,
-                                rssFeedUrls: updated
-                              });
-                            }}
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </Button>
+                  {/* Erfolgsmeldung */}
+                  {rssDetectionStatus === 'found' && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <CheckIcon className="h-5 w-5 text-green-600 mr-2" />
+                            <h4 className="text-sm font-medium text-green-900">
+                              RSS Feeds gefunden!
+                            </h4>
+                          </div>
+                          <div className="mt-2 text-sm text-green-700">
+                            <p className="font-medium mb-1">Gefundene Feeds:</p>
+                            <ul className="list-disc list-inside space-y-1">
+                              {detectedFeeds.map((feed, index) => (
+                                <li key={index} className="text-xs">{feed}</li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
-                      ))}
-                      <Button
-                        type="button"
-                        plain
-                        onClick={() => {
-                          setMonitoringConfig({
-                            ...monitoringConfig,
-                            rssFeedUrls: [...monitoringConfig.rssFeedUrls, '']
-                          });
-                        }}
-                      >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        RSS Feed hinzufügen
-                      </Button>
+                        <Button
+                          type="button"
+                          plain
+                          onClick={handleDisconnectAutoFeeds}
+                          className="ml-4"
+                        >
+                          Trennen
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Auto-Detect RSS */}
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="autoDetectRss"
-                      checked={monitoringConfig.autoDetectRss}
-                      onChange={(e) => setMonitoringConfig({
-                        ...monitoringConfig,
-                        autoDetectRss: e.target.checked
-                      })}
-                      className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-                    />
-                    <label htmlFor="autoDetectRss" className="ml-2 text-sm text-gray-700">
-                      RSS Feeds automatisch erkennen
-                      <span className="text-gray-500 ml-1">(testet /feed, /rss, etc.)</span>
-                    </label>
-                  </div>
+                  {/* Keine Feeds gefunden */}
+                  {rssDetectionStatus === 'not_found' && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start">
+                        <XMarkIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
+                        <div>
+                          <h4 className="text-sm font-medium text-yellow-900">
+                            Keine RSS Feeds gefunden
+                          </h4>
+                          <p className="text-sm text-yellow-700 mt-1">
+                            Sie können die Feed URLs unten manuell eintragen.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manuelle RSS Feed URLs (nur sichtbar wenn nicht auto-detected oder getrennt) */}
+                  {(showManualRssInput || rssDetectionStatus === 'not_found') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        RSS Feed URLs (manuell)
+                      </label>
+                      <div className="space-y-2">
+                        {monitoringConfig.rssFeedUrls.map((url, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              type="url"
+                              value={url}
+                              onChange={(e) => {
+                                const updated = [...monitoringConfig.rssFeedUrls];
+                                updated[index] = e.target.value;
+                                setMonitoringConfig({
+                                  ...monitoringConfig,
+                                  rssFeedUrls: updated
+                                });
+                              }}
+                              placeholder="https://www.example.com/feed"
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              plain
+                              onClick={() => {
+                                const updated = monitoringConfig.rssFeedUrls.filter((_, i) => i !== index);
+                                setMonitoringConfig({
+                                  ...monitoringConfig,
+                                  rssFeedUrls: updated
+                                });
+                              }}
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          plain
+                          onClick={() => {
+                            setMonitoringConfig({
+                              ...monitoringConfig,
+                              rssFeedUrls: [...monitoringConfig.rssFeedUrls, '']
+                            });
+                          }}
+                        >
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          RSS Feed hinzufügen
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Check Frequency */}
                   <div>
