@@ -34,20 +34,17 @@ function removeUndefinedFields(obj: any): any {
 }
 
 /**
- * Konvertiert monitoringConfig Timestamps für Firestore
+ * Konvertiert monitoringConfig für Firestore
  * Phase 5: Helper für Test-Daten
+ *
+ * WICHTIG: Keine Timestamps in monitoringConfig!
+ * Firestore entfernt nested undefined/serverTimestamp values
  */
 function preparePublicationForFirestore(publication: any): any {
   const prepared = { ...publication };
 
-  // Konvertiere monitoringConfig Timestamps wenn vorhanden
-  if (prepared.monitoringConfig) {
-    prepared.monitoringConfig = {
-      ...prepared.monitoringConfig,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  }
+  // monitoringConfig wird direkt übernommen
+  // (ohne Timestamps - die kommen vom Publication-Level)
 
   return prepared;
 }

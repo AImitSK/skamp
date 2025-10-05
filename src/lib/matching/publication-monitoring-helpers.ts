@@ -36,9 +36,8 @@ export function migrateToMonitoringConfig(publication: any): PublicationMonitori
     autoDetectRss: true,
     checkFrequency: 'daily',
     keywords: [],
-    totalArticlesFound: 0,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
+    totalArticlesFound: 0
+    // createdAt und updatedAt von Publication-Level übernehmen
   };
 
   return config;
@@ -62,9 +61,7 @@ export function mergeMonitoringConfigs(configs: PublicationMonitoringConfig[]): 
       autoDetectRss: true,
       checkFrequency: 'daily',
       keywords: [],
-      totalArticlesFound: 0,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      totalArticlesFound: 0
     };
   }
 
@@ -103,16 +100,7 @@ export function mergeMonitoringConfigs(configs: PublicationMonitoringConfig[]): 
     ],
 
     // totalArticlesFound: Summe aller Artikel
-    totalArticlesFound: configs.reduce((sum, c) => sum + (c.totalArticlesFound || 0), 0),
-
-    // Timestamps: Verwende ältestes createdAt, neuestes updatedAt
-    createdAt: configs.reduce((oldest, c) => {
-      if (!c.createdAt) return oldest;
-      if (!oldest) return c.createdAt;
-      return c.createdAt.toMillis() < oldest.toMillis() ? c.createdAt : oldest;
-    }, configs[0].createdAt || Timestamp.now()),
-
-    updatedAt: Timestamp.now()
+    totalArticlesFound: configs.reduce((sum, c) => sum + (c.totalArticlesFound || 0), 0)
   };
 
   return merged;
@@ -136,8 +124,6 @@ export function createDefaultMonitoringConfig(
     autoDetectRss: true,
     checkFrequency: 'daily',
     keywords: [],
-    totalArticlesFound: 0,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
+    totalArticlesFound: 0
   };
 }

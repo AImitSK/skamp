@@ -367,9 +367,8 @@ export async function createPublication(params: CreatePublicationParams): Promis
       autoDetectRss: true,
       checkFrequency: 'daily' as const,
       keywords: [],
-      totalArticlesFound: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      totalArticlesFound: 0
+      // createdAt und updatedAt werden von Top-Level übernommen
     }
     // isGlobal wird durch interceptSave gesetzt wenn autoGlobalMode = true
   };
