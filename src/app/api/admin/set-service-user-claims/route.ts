@@ -7,8 +7,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase/client-init';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -28,41 +26,39 @@ export async function GET(request: NextRequest) {
     }
 
     const serviceEmail = process.env.CRON_SERVICE_EMAIL;
-    const servicePassword = process.env.CRON_SERVICE_PASSWORD;
+    const serviceUid = process.env.CRON_SERVICE_UID;
 
-    if (!serviceEmail || !servicePassword) {
+    if (!serviceEmail) {
       return NextResponse.json(
-        { error: 'Service credentials not configured' },
+        { error: 'CRON_SERVICE_EMAIL not configured' },
         { status: 500 }
       );
     }
 
-    // Login als Service User
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      serviceEmail,
-      servicePassword
-    );
+    if (!serviceUid) {
+      return NextResponse.json(
+        {
+          error: 'CRON_SERVICE_UID not configured',
+          message: 'Gehe zu Firebase Console → Authentication → Users, finde cron-service@celeropress.com und kopiere die User UID. Dann setze CRON_SERVICE_UID Environment Variable.'
+        },
+        { status: 500 }
+      );
+    }
 
-    const uid = userCredential.user.uid;
-
-    // Custom Claims können wir nicht direkt setzen (braucht Admin SDK)
-    // WORKAROUND: Speichere organizationId in users/{uid} Document
-    await setDoc(doc(db, 'users', uid), {
+    // Speichere organizationId in users/{uid} Document
+    await setDoc(doc(db, 'users', serviceUid), {
       email: serviceEmail,
       organizationId: 'superadmin-org',
       role: 'service',
       displayName: 'Cron Service User',
       createdAt: new Date(),
       updatedAt: new Date()
-    });
-
-    await signOut(auth);
+    }, { merge: true });
 
     return NextResponse.json({
       success: true,
       message: 'Service user configured successfully',
-      userId: uid,
+      userId: serviceUid,
       organizationId: 'superadmin-org'
     });
 
