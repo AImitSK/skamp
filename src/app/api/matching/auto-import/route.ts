@@ -12,8 +12,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { matchingService } from '@/lib/firebase/matching-service';
 import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithCustomToken, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
+
+/**
+ * Erstellt Custom Token via Firebase REST API
+ * WICHTIG: Kein Admin SDK - nur REST API!
+ */
+async function createCustomToken(uid: string, email: string, password: string): Promise<string> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY not configured');
+  }
+
+  // Schritt 1: Login mit Email/Password um ID Token zu bekommen
+  const signInResponse = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        returnSecureToken: true
+      })
+    }
+  );
+
+  if (!signInResponse.ok) {
+    const error = await signInResponse.json();
+    throw new Error(`Failed to sign in: ${error.error?.message || 'Unknown error'}`);
+  }
+
+  const { idToken } = await signInResponse.json();
+  return idToken;
+}
 
 /**
  * GET /api/matching/auto-import
@@ -55,22 +89,26 @@ export async function GET(request: NextRequest) {
     });
 
     // Authentifiziere als Service User für Firestore-Zugriff
+    const serviceUid = process.env.CRON_SERVICE_UID;
     const serviceEmail = process.env.CRON_SERVICE_EMAIL;
     const servicePassword = process.env.CRON_SERVICE_PASSWORD;
 
-    if (!serviceEmail || !servicePassword) {
+    if (!serviceUid || !serviceEmail || !servicePassword) {
       return NextResponse.json(
         {
           error: 'Service credentials not configured',
-          message: 'Set CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD environment variables'
+          message: 'Set CRON_SERVICE_UID, CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD environment variables'
         },
         { status: 500 }
       );
     }
 
     try {
-      // Login als Service User
-      await signInWithEmailAndPassword(auth, serviceEmail, servicePassword);
+      // Erstelle Custom Token via REST API (kein reCAPTCHA!)
+      const customToken = await createCustomToken(serviceUid, serviceEmail, servicePassword);
+
+      // Login mit Custom Token (funktioniert server-side!)
+      await signInWithCustomToken(auth, customToken);
       console.log('✅ Service user authenticated');
     } catch (authError) {
       console.error('❌ Service user authentication failed:', authError);
@@ -201,21 +239,26 @@ export async function POST(request: NextRequest) {
     });
 
     // Authentifiziere als Service User
+    const serviceUid = process.env.CRON_SERVICE_UID;
     const serviceEmail = process.env.CRON_SERVICE_EMAIL;
     const servicePassword = process.env.CRON_SERVICE_PASSWORD;
 
-    if (!serviceEmail || !servicePassword) {
+    if (!serviceUid || !serviceEmail || !servicePassword) {
       return NextResponse.json(
         {
           error: 'Service credentials not configured',
-          message: 'Set CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD'
+          message: 'Set CRON_SERVICE_UID, CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD'
         },
         { status: 500 }
       );
     }
 
     try {
-      await signInWithEmailAndPassword(auth, serviceEmail, servicePassword);
+      // Erstelle Custom Token via REST API (kein reCAPTCHA!)
+      const customToken = await createCustomToken(serviceUid, serviceEmail, servicePassword);
+
+      // Login mit Custom Token (funktioniert server-side!)
+      await signInWithCustomToken(auth, customToken);
       console.log('✅ Service user authenticated (POST)');
     } catch (authError) {
       console.error('❌ Service user authentication failed (POST):', authError);
