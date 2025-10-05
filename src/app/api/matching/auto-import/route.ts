@@ -16,17 +16,18 @@ import { signInWithCustomToken, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 
 /**
- * Erstellt Custom Token via Firebase REST API
+ * Authentifiziert Service User via Firebase REST API
  * WICHTIG: Kein Admin SDK - nur REST API!
+ * Nutzt signInWithPassword statt signInWithEmailAndPassword (kein reCAPTCHA!)
  */
-async function createCustomToken(uid: string, email: string, password: string): Promise<string> {
+async function authenticateServiceUser(email: string, password: string): Promise<{ idToken: string; refreshToken: string }> {
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
   if (!apiKey) {
     throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY not configured');
   }
 
-  // Schritt 1: Login mit Email/Password um ID Token zu bekommen
+  // Login mit Email/Password via REST API (kein reCAPTCHA!)
   const signInResponse = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
     {
@@ -45,8 +46,11 @@ async function createCustomToken(uid: string, email: string, password: string): 
     throw new Error(`Failed to sign in: ${error.error?.message || 'Unknown error'}`);
   }
 
-  const { idToken } = await signInResponse.json();
-  return idToken;
+  const data = await signInResponse.json();
+  return {
+    idToken: data.idToken,
+    refreshToken: data.refreshToken
+  };
 }
 
 /**
@@ -104,11 +108,11 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Erstelle Custom Token via REST API (kein reCAPTCHA!)
-      const customToken = await createCustomToken(serviceUid, serviceEmail, servicePassword);
+      // Authentifiziere via REST API (kein reCAPTCHA!)
+      const { idToken } = await authenticateServiceUser(serviceEmail, servicePassword);
 
-      // Login mit Custom Token (funktioniert server-side!)
-      await signInWithCustomToken(auth, customToken);
+      // Login mit ID Token
+      await signInWithCustomToken(auth, idToken);
       console.log('✅ Service user authenticated');
     } catch (authError) {
       console.error('❌ Service user authentication failed:', authError);
@@ -254,11 +258,11 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Erstelle Custom Token via REST API (kein reCAPTCHA!)
-      const customToken = await createCustomToken(serviceUid, serviceEmail, servicePassword);
+      // Authentifiziere via REST API (kein reCAPTCHA!)
+      const { idToken } = await authenticateServiceUser(serviceEmail, servicePassword);
 
-      // Login mit Custom Token (funktioniert server-side!)
-      await signInWithCustomToken(auth, customToken);
+      // Login mit ID Token
+      await signInWithCustomToken(auth, idToken);
       console.log('✅ Service user authenticated (POST)');
     } catch (authError) {
       console.error('❌ Service user authentication failed (POST):', authError);
