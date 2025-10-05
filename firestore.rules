@@ -3,114 +3,149 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ========================================
-    // GLOBALE JOURNALISTEN (Neue Reference-System Rules)
+    // HELPER FUNCTIONS
     // ========================================
 
-    // Globale Kontakte - READ/WRITE für authentifizierte User + Cron Jobs
-    match /contacts_enhanced/{contactId} {
-      // LESEN & SCHREIBEN: Auth users + Cron Jobs (für Auto-Import)
-      allow read, write: if true;
+    // Prüft ob User authentifiziert ist
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
+    function isSuperAdmin() {
+      return request.auth != null
+             && request.auth.token.organizationId == "superadmin-org";
+    }
+
+    // Prüft ob User zur Organisation gehört
+    function belongsToOrg(orgId) {
+      return request.auth != null
+             && request.auth.token.organizationId == orgId;
     }
 
     // ========================================
-    // JOURNALIST REFERENCES (Neue Collection)
+    // GLOBALE JOURNALISTEN (Enhanced CRM)
     // ========================================
 
-    // References werden in der Organisation des Kunden gespeichert
+    // Globale Kontakte - Nur SuperAdmin (für Cron Jobs & Admin)
+    match /contacts_enhanced/{contactId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // ========================================
+    // JOURNALIST REFERENCES
+    // ========================================
+
+    // References - Org-Mitglieder oder SuperAdmin
     match /organizations/{orgId}/journalist_references/{referenceId} {
-      // READ & WRITE: Komplett offen für Cron Jobs (Auto-Import)
-      allow read, write: if true;
+      allow read: if belongsToOrg(orgId) || isSuperAdmin();
+      allow create: if belongsToOrg(orgId) || isSuperAdmin();
+      allow update: if belongsToOrg(orgId) || isSuperAdmin();
+      allow delete: if belongsToOrg(orgId) || isSuperAdmin();
+    }
+
+    // ========================================
+    // MATCHING SYSTEM
+    // ========================================
+
+    // Matching-Kandidaten - Nur SuperAdmin (Cron Jobs)
+    match /matching_candidates/{candidateId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // Matching Scan-Jobs - Nur SuperAdmin (Cron Jobs)
+    match /matching_scan_jobs/{jobId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // System Settings - Lesen: Auth, Schreiben: SuperAdmin
+    match /system_settings/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // ========================================
+    // ORGANIZATIONS
+    // ========================================
+
+    // Organizations Root - Lesen: Alle Auth, Schreiben: Org-Member oder SuperAdmin
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated();
+      allow write: if belongsToOrg(orgId) || isSuperAdmin();
+    }
+
+    // Organizations Sub-Collections - Org-Member oder SuperAdmin
+    match /organizations/{orgId}/{collection}/{docId} {
+      allow read: if belongsToOrg(orgId) || isSuperAdmin();
+      allow write: if belongsToOrg(orgId) || isSuperAdmin();
+    }
+
+    // Organizations Deep Sub-Collections (z.B. contacts_enhanced)
+    match /organizations/{orgId}/{collection}/{docId}/{subcollection}/{subdocId} {
+      allow read: if belongsToOrg(orgId) || isSuperAdmin();
+      allow write: if belongsToOrg(orgId) || isSuperAdmin();
+    }
+
+    // ========================================
+    // PUBLICATIONS & MEDIA
+    // ========================================
+
+    // Publikationen in der Bibliothek - Lesen: Alle, Schreiben: SuperAdmin
+    match /publications/{pubId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // SuperAdmin Publications - Nur SuperAdmin
+    match /superadmin_publications/{pubId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // Companies Enhanced - Lesen: Alle, Schreiben: SuperAdmin
+    match /companies_enhanced/{companyId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // ========================================
+    // LEGACY COLLECTIONS
+    // ========================================
+
+    // Legacy Companies - Org-basiert oder SuperAdmin
+    match /companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Legacy Contacts - Org-basiert oder SuperAdmin
+    match /contacts/{contactId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Tags - User-basiert
+    match /tags/{tagId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // ========================================
+    // USER DATA
+    // ========================================
+
+    // Users Collection - Nur eigener User oder SuperAdmin
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isSuperAdmin();
+      allow write: if request.auth.uid == userId || isSuperAdmin();
     }
 
     // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
-    // Fallback für andere Collections
-    // TEMPORÄR: Komplett offen für Cron Job Debugging
+    // Fallback: Nur authenticated users
     match /{document=**} {
-      allow read, write: if true;
-    }
-
-    // ========================================
-    // MATCHING CANDIDATES (SuperAdmin Only)
-    // ========================================
-
-    // Matching-Kandidaten - Komplett offen für Cron Jobs
-    match /matching_candidates/{candidateId} {
-      // READ & WRITE: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
-      allow read, write: if true;
-    }
-
-    // Matching Scan-Jobs - Komplett offen für Cron Jobs
-    match /matching_scan_jobs/{jobId} {
-      // READ & WRITE: KOMPLETT OFFEN (für Cron Jobs ohne Auth)
-      allow read, write: if true;
-    }
-
-    // ========================================
-    // BESTEHENDE RULES (Erweitert für bessere Sicherheit)
-    // ========================================
-
-    // Organizations - KOMPLETT OFFEN für Cron Jobs
-    match /organizations/{orgId}/{document=**} {
-      allow read, write: if true;
-    }
-
-    // Publikationen in der Bibliothek - Für Matching System + Cron Jobs
-    match /publications/{pubId} {
-      allow read, write: if true;
-    }
-
-    // SuperAdmin Publications - Für Matching System + Cron Jobs
-    match /superadmin_publications/{pubId} {
-      allow read, write: if true;
-    }
-
-    // Companies Enhanced - Für Matching System + Cron Jobs
-    match /companies_enhanced/{companyId} {
-      allow read, write: if true;
-    }
-
-    // System Settings - Für Auto-Import Settings
-    match /system_settings/{docId} {
-      allow read: if true;
-      // WRITE: Auth users + Cron Jobs (für lastRun Updates)
-      allow write: if true;
-    }
-
-    // ========================================
-    // VALIDATION FUNCTIONS
-    // ========================================
-
-    // Prüft ob User SuperAdmin ist
-    function isSuperAdmin() {
-      return request.auth.token.organizationId == "superadmin-org"
-             || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
-    }
-
-    // Validiert das Erstellen einer Reference
-    function validateReferenceCreate(data) {
-      return data.keys().hasAll(['organizationId', 'globalJournalistId', 'addedAt', 'addedBy', 'isActive'])
-             && data.organizationId is string
-             && data.globalJournalistId is string
-             && data.addedBy is string
-             && data.isActive == true
-             && (!('localNotes' in data) || data.localNotes is string)
-             && (!('localTags' in data) || data.localTags is list);
-    }
-
-    // Validiert das Update einer Reference (nur lokale Daten)
-    function validateReferenceUpdate(before, after) {
-      return // Unveränderliche Felder
-             after.organizationId == before.organizationId
-             && after.globalJournalistId == before.globalJournalistId
-             && after.addedAt == before.addedAt
-             && after.addedBy == before.addedBy
-             // Nur lokale Felder dürfen geändert werden
-             && (!('localNotes' in after) || after.localNotes is string)
-             && (!('localTags' in after) || after.localTags is list)
-             && (!('customLabel' in after) || after.customLabel is string);
+      allow read, write: if isAuthenticated();
     }
   }
 }

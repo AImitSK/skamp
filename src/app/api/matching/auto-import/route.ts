@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { matchingService } from '@/lib/firebase/matching-service';
 import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client-init';
 
 /**
  * GET /api/matching/auto-import
@@ -52,7 +54,36 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-    // Lade Settings
+    // Authentifiziere als Service User für Firestore-Zugriff
+    const serviceEmail = process.env.CRON_SERVICE_EMAIL;
+    const servicePassword = process.env.CRON_SERVICE_PASSWORD;
+
+    if (!serviceEmail || !servicePassword) {
+      return NextResponse.json(
+        {
+          error: 'Service credentials not configured',
+          message: 'Set CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD environment variables'
+        },
+        { status: 500 }
+      );
+    }
+
+    try {
+      // Login als Service User
+      await signInWithEmailAndPassword(auth, serviceEmail, servicePassword);
+      console.log('✅ Service user authenticated');
+    } catch (authError) {
+      console.error('❌ Service user authentication failed:', authError);
+      return NextResponse.json(
+        {
+          error: 'Service authentication failed',
+          message: authError instanceof Error ? authError.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
+    }
+
+    // Lade Settings (jetzt mit Auth)
     const settings = await matchingSettingsService.getSettings();
 
     // Prüfe ob Auto-Import aktiviert ist
@@ -101,6 +132,10 @@ export async function GET(request: NextRequest) {
       }
     }, SUPER_ADMIN_USER_ID);
 
+    // Logout Service User
+    await signOut(auth);
+    console.log('✅ Service user logged out');
+
     return NextResponse.json({
       success: true,
       stats: result.stats,
@@ -112,6 +147,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Auto-import failed', error);
+
+    // Logout auch bei Fehler
+    try {
+      await signOut(auth);
+    } catch (logoutError) {
+      console.error('⚠️ Service user logout failed:', logoutError);
+    }
 
     return NextResponse.json(
       {
@@ -157,6 +199,34 @@ export async function POST(request: NextRequest) {
       triggeredBy: 'manual',
       timestamp: new Date().toISOString()
     });
+
+    // Authentifiziere als Service User
+    const serviceEmail = process.env.CRON_SERVICE_EMAIL;
+    const servicePassword = process.env.CRON_SERVICE_PASSWORD;
+
+    if (!serviceEmail || !servicePassword) {
+      return NextResponse.json(
+        {
+          error: 'Service credentials not configured',
+          message: 'Set CRON_SERVICE_EMAIL and CRON_SERVICE_PASSWORD'
+        },
+        { status: 500 }
+      );
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, serviceEmail, servicePassword);
+      console.log('✅ Service user authenticated (POST)');
+    } catch (authError) {
+      console.error('❌ Service user authentication failed (POST):', authError);
+      return NextResponse.json(
+        {
+          error: 'Service authentication failed',
+          message: authError instanceof Error ? authError.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
+    }
 
     // Lade Settings
     const settings = await matchingSettingsService.getSettings();
@@ -206,6 +276,10 @@ export async function POST(request: NextRequest) {
       }
     }, SUPER_ADMIN_USER_ID);
 
+    // Logout Service User
+    await signOut(auth);
+    console.log('✅ Service user logged out (POST)');
+
     return NextResponse.json({
       success: true,
       stats: result.stats,
@@ -217,6 +291,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Auto-import failed (POST)', error);
+
+    // Logout auch bei Fehler
+    try {
+      await signOut(auth);
+    } catch (logoutError) {
+      console.error('⚠️ Service user logout failed (POST):', logoutError);
+    }
 
     return NextResponse.json(
       {
