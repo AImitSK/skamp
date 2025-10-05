@@ -306,6 +306,18 @@ export interface PRCampaign {
     password?: string;
   };
 
+  // 🆕 AUTOMATED MONITORING CONFIG (Phase 5)
+  monitoringConfig?: {
+    isEnabled: boolean;
+    monitoringPeriod: 30 | 90 | 365; // Tage nach Kampagnen-Start
+    keywords: string[]; // Suchbegriffe für Google News
+    sources: {
+      googleNews: boolean;
+      rssFeeds: string[]; // IDs der zu überwachenden RSS Feeds
+    };
+    minMatchScore: number; // 0-100, Mindest-Score für Vorschläge
+  };
+
   // --- FREIGABE-WORKFLOW FELDER ---
   approvalRequired: boolean;
   approvalData?: ApprovalData | EnhancedApprovalData; // Legacy + Enhanced Support

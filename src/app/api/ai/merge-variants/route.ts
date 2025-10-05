@@ -80,6 +80,12 @@ Erstelle EINE optimale Version mit folgenden Regeln:
 9. **Publications:** KOMBINIERE alle einzigartigen Publikations-Namen aus allen Varianten
 10. **Company:** Wähle vollständigsten Firmennamen und behalte companyId bei
 11. **hasMediaProfile:** true wenn IRGENDEINE Variante es hat
+12. **monitoringConfig (NEU):** Wenn vorhanden, merge wie folgt:
+    - rssFeedUrls: KOMBINIERE alle URLs, entferne Duplikate
+    - keywords: KOMBINIERE alle Keywords, entferne Duplikate
+    - checkFrequency: Nimm höchste Frequenz (twice_daily > daily)
+    - isEnabled: true wenn mind. 1 Variante es aktiviert hat
+    - websiteUrl: Nimm ersten non-null Wert
 
 **ANTWORT-FORMAT:**
 

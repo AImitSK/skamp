@@ -312,6 +312,7 @@ export interface CreatePublicationParams {
   createdBy: string;
   source: 'auto_matching'; // Markiert als automatisch erstellt
   autoGlobalMode?: boolean; // ✅ Für SuperAdmin-Erkennung
+  rssFeedUrl?: string; // 🆕 Phase 5: RSS Feed URL für Monitoring
 }
 
 /**
@@ -357,6 +358,18 @@ export async function createPublication(params: CreatePublicationParams): Promis
         monthlyPageViews: null,
         monthlyUniqueVisitors: null
       }
+    },
+    // 🆕 Phase 5: Monitoring Configuration
+    monitoringConfig: {
+      isEnabled: true, // Default für neue Publications
+      websiteUrl: params.website || null,
+      rssFeedUrls: params.rssFeedUrl ? [params.rssFeedUrl] : [],
+      autoDetectRss: true,
+      checkFrequency: 'daily' as const,
+      keywords: [],
+      totalArticlesFound: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     }
     // isGlobal wird durch interceptSave gesetzt wenn autoGlobalMode = true
   };

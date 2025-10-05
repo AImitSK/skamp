@@ -248,15 +248,21 @@ export interface Publication extends BaseEntity {
     totalSubmissions?: number;
     totalPublications?: number;
   };
-  
+
   // URLs & Online-Präsenz
+  /** @deprecated Verwende monitoringConfig.websiteUrl stattdessen */
   websiteUrl?: string;
+  /** @deprecated Wird in Phase 5 nicht mehr verwendet (Social Media Crawling = Phase 6+) */
   socialMediaUrls?: {
     platform: string;
     url: string;
   }[];
+  /** @deprecated Verwende monitoringConfig.rssFeedUrls stattdessen */
   rssFeedUrl?: string;
-  
+
+  // 🆕 NEU: Monitoring Configuration (Phase 5)
+  monitoringConfig?: PublicationMonitoringConfig;
+
   // Status & Verwaltung
   status: 'active' | 'inactive' | 'discontinued' | 'planned';
   launchDate?: Date;
@@ -711,6 +717,54 @@ export interface PublicationImportData {
   languages?: string;
   focusAreas?: string;
   [key: string]: any;
+}
+
+// ========================================
+// Phase 5: Monitoring Configuration
+// ========================================
+
+/**
+ * Monitoring Configuration für Publications
+ *
+ * Definiert wie eine Publication auf Veröffentlichungen überwacht wird:
+ * - RSS Feeds (primär)
+ * - Website URL (für Auto-Detection)
+ * - Keywords (publication-spezifisch)
+ *
+ * HINWEIS: Social Media wurde bewusst entfernt (APIs nicht verfügbar/zu teuer)
+ * Google News wird kampagnen-weit, nicht pro Publication konfiguriert
+ */
+export interface PublicationMonitoringConfig {
+  /** Monitoring für diese Publication aktiviert */
+  isEnabled: boolean;
+
+  // Website & RSS
+  /** Website URL (für Auto-Detection und Fallback) */
+  websiteUrl?: string;
+
+  /** Array von RSS Feed URLs (manche Publications haben mehrere Feeds) */
+  rssFeedUrls: string[];
+
+  /** Soll automatisch nach RSS Feeds gesucht werden? (testet /feed, /rss, etc.) */
+  autoDetectRss: boolean;
+
+  // Monitoring Settings
+  /** Wie oft soll gecrawlt werden? */
+  checkFrequency: 'daily' | 'twice_daily';
+
+  /** Publication-spezifische Keywords (zusätzlich zu Kampagnen-Keywords) */
+  keywords: string[];
+
+  // Statistiken
+  /** Letzter Crawl-Zeitpunkt */
+  lastChecked?: Timestamp;
+
+  /** Anzahl gefundener Artikel über alle Kampagnen */
+  totalArticlesFound: number;
+
+  // Metadata
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 // Validation

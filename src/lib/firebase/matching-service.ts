@@ -438,15 +438,47 @@ async function handlePublicationMatching(params: {
   }> = [];
 
   if (publicationMatches.length > 0) {
-    // Publikationen gefunden
+    // Publikationen gefunden - prüfe ob Migration/Enrichment nötig
+    const { migrateToMonitoringConfig } = await import('@/lib/matching/publication-monitoring-helpers');
+
     for (const match of publicationMatches) {
+      let wasEnriched = false;
+
+      // Lade Publication um monitoringConfig zu prüfen
+      try {
+        const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/config');
+
+        const pubRef = doc(db, 'publications', match.publicationId);
+        const pubSnap = await getDoc(pubRef);
+
+        if (pubSnap.exists()) {
+          const pubData = pubSnap.data();
+
+          // Migration: Alte Felder → monitoringConfig
+          const migratedConfig = migrateToMonitoringConfig(pubData);
+
+          if (migratedConfig) {
+            await updateDoc(pubRef, {
+              monitoringConfig: migratedConfig,
+              updatedAt: new Date()
+            });
+
+            wasEnriched = true;
+            console.log(`✅ Publication ${match.publicationName} migriert zu monitoringConfig`);
+          }
+        }
+      } catch (error) {
+        console.error(`⚠️ Fehler beim Enrichment von Publication ${match.publicationId}:`, error);
+      }
+
       results.push({
         publicationId: match.publicationId,
         publicationName: match.publicationName,
         matchType: match.matchType,
         confidence: match.confidence,
         wasCreated: false,
-        wasEnriched: false // TODO: Publication enrichment not implemented yet
+        wasEnriched
       });
     }
 

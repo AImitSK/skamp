@@ -33,6 +33,25 @@ function removeUndefinedFields(obj: any): any {
   return cleaned;
 }
 
+/**
+ * Konvertiert monitoringConfig Timestamps für Firestore
+ * Phase 5: Helper für Test-Daten
+ */
+function preparePublicationForFirestore(publication: any): any {
+  const prepared = { ...publication };
+
+  // Konvertiere monitoringConfig Timestamps wenn vorhanden
+  if (prepared.monitoringConfig) {
+    prepared.monitoringConfig = {
+      ...prepared.monitoringConfig,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
+  return prepared;
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -62,6 +81,16 @@ interface TestPublication {
   deletedAt: null;
   isReference: boolean;
   createdAt: Date;
+  // 🆕 Phase 5: Monitoring Configuration
+  monitoringConfig?: {
+    isEnabled: boolean;
+    websiteUrl: string | null;
+    rssFeedUrls: string[];
+    autoDetectRss: boolean;
+    checkFrequency: 'daily' | 'twice_daily';
+    keywords: string[];
+    totalArticlesFound: number;
+  };
 }
 
 interface TestContact {
@@ -131,18 +160,122 @@ const CATEGORY_A_PERFECT_MATCHES = {
   ],
 
   publications: [
-    { id: 'pub-a-001', name: 'Der Spiegel', companyId: 'comp-a-001', website: 'spiegel.de' },
-    { id: 'pub-a-002', name: 'Spiegel Online', companyId: 'comp-a-001', website: 'spiegel.de' },
-    { id: 'pub-a-003', name: 'Die Welt', companyId: 'comp-a-002', website: 'welt.de' },
-    { id: 'pub-a-004', name: 'BILD', companyId: 'comp-a-002', website: 'bild.de' },
-    { id: 'pub-a-005', name: 'Süddeutsche Zeitung', companyId: 'comp-a-003', website: 'sueddeutsche.de' },
-    { id: 'pub-a-006', name: 'Die Zeit', companyId: 'comp-a-004', website: 'zeit.de' },
+    {
+      id: 'pub-a-001',
+      name: 'Der Spiegel',
+      companyId: 'comp-a-001',
+      website: 'spiegel.de',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.spiegel.de',
+        rssFeedUrls: ['https://www.spiegel.de/schlagzeilen/index.rss', 'https://www.spiegel.de/politik/index.rss'],
+        autoDetectRss: true,
+        checkFrequency: 'twice_daily' as const,
+        keywords: ['Politik', 'Wirtschaft'],
+        totalArticlesFound: 0
+      }
+    },
+    {
+      id: 'pub-a-002',
+      name: 'Spiegel Online',
+      companyId: 'comp-a-001',
+      website: 'spiegel.de',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.spiegel.de',
+        rssFeedUrls: ['https://www.spiegel.de/schlagzeilen/index.rss'],
+        autoDetectRss: true,
+        checkFrequency: 'twice_daily' as const,
+        keywords: [],
+        totalArticlesFound: 0
+      }
+    },
+    {
+      id: 'pub-a-003',
+      name: 'Die Welt',
+      companyId: 'comp-a-002',
+      website: 'welt.de',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.welt.de',
+        rssFeedUrls: ['https://www.welt.de/feeds/latest.rss'],
+        autoDetectRss: true,
+        checkFrequency: 'daily' as const,
+        keywords: ['Nachrichten'],
+        totalArticlesFound: 0
+      }
+    },
+    {
+      id: 'pub-a-004',
+      name: 'BILD',
+      companyId: 'comp-a-002',
+      website: 'bild.de'
+      // ❌ KEIN monitoringConfig (testet Migration von alten Publications)
+    },
+    {
+      id: 'pub-a-005',
+      name: 'Süddeutsche Zeitung',
+      companyId: 'comp-a-003',
+      website: 'sueddeutsche.de',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.sueddeutsche.de',
+        rssFeedUrls: ['https://rss.sueddeutsche.de/rss/TopThemen'],
+        autoDetectRss: true,
+        checkFrequency: 'twice_daily' as const,
+        keywords: ['Politik', 'Kultur'],
+        totalArticlesFound: 0
+      }
+    },
+    {
+      id: 'pub-a-006',
+      name: 'Die Zeit',
+      companyId: 'comp-a-004',
+      website: 'zeit.de',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.zeit.de',
+        rssFeedUrls: ['https://newsfeed.zeit.de/index'],
+        autoDetectRss: true,
+        checkFrequency: 'daily' as const,
+        keywords: [],
+        totalArticlesFound: 0
+      }
+    },
     { id: 'pub-a-007', name: 'Zeit Online', companyId: 'comp-a-004', website: 'zeit.de' },
-    { id: 'pub-a-008', name: 'Frankfurter Allgemeine Zeitung', companyId: 'comp-a-005', website: 'faz.net' },
+    {
+      id: 'pub-a-008',
+      name: 'Frankfurter Allgemeine Zeitung',
+      companyId: 'comp-a-005',
+      website: 'faz.net',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.faz.net',
+        rssFeedUrls: ['https://www.faz.net/rss/aktuell/'],
+        autoDetectRss: true,
+        checkFrequency: 'twice_daily' as const,
+        keywords: ['Wirtschaft', 'Politik'],
+        totalArticlesFound: 0
+      }
+    },
     { id: 'pub-a-009', name: 'FAZ.NET', companyId: 'comp-a-005', website: 'faz.net' },
     { id: 'pub-a-010', name: 'RTL Aktuell', companyId: 'comp-a-006', website: 'rtl.de' },
     { id: 'pub-a-011', name: 'ProSieben Newstime', companyId: 'comp-a-007', website: 'prosieben.de' },
-    { id: 'pub-a-012', name: 'Handelsblatt', companyId: 'comp-a-008', website: 'handelsblatt.com' },
+    {
+      id: 'pub-a-012',
+      name: 'Handelsblatt',
+      companyId: 'comp-a-008',
+      website: 'handelsblatt.com',
+      monitoringConfig: {
+        isEnabled: true,
+        websiteUrl: 'https://www.handelsblatt.com',
+        rssFeedUrls: ['https://www.handelsblatt.com/contentexport/feed/schlagzeilen'],
+        autoDetectRss: true,
+        checkFrequency: 'daily' as const,
+        keywords: ['Wirtschaft', 'Finanzen'],
+        totalArticlesFound: 0
+      }
+    },
     { id: 'pub-a-013', name: 'Stern', companyId: 'comp-a-009', website: 'stern.de' },
     { id: 'pub-a-014', name: 'GEO', companyId: 'comp-a-009', website: 'geo.de' },
     { id: 'pub-a-015', name: 'WAZ', companyId: 'comp-a-010', website: 'waz.de' },
@@ -656,7 +789,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForA[orgIndexA % orgsForA.length];
 
     const publicationData = removeUndefinedFields({
-      ...publication,
+      ...preparePublicationForFirestore(publication),
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
@@ -757,7 +890,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForB[orgIndexB % orgsForB.length];
 
     const publicationData = removeUndefinedFields({
-      ...publication,
+      ...preparePublicationForFirestore(publication),
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
@@ -899,7 +1032,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       const companyUniqueId = `${publication.companyId}-${currentOrg}`;
 
       const publicationData = removeUndefinedFields({
-        ...publication,
+        ...preparePublicationForFirestore(publication),
         companyId: companyUniqueId,
         organizationId: currentOrg,
         deletedAt: null,
@@ -1078,7 +1211,7 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
     const currentOrg = orgsForE[orgIndexE % orgsForE.length];
 
     const publicationData = removeUndefinedFields({
-      ...publication,
+      ...preparePublicationForFirestore(publication),
       organizationId: currentOrg,
       deletedAt: null,
       isReference: false,
