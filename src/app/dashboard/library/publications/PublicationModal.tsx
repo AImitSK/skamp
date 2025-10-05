@@ -488,41 +488,28 @@ const loadPublishers = async () => {
     setDetectedFeeds([]);
 
     try {
-      // Test Standard RSS Patterns
-      const patterns = [
-        '/feed',
-        '/rss',
-        '/feed.xml',
-        '/rss.xml',
-        '/atom.xml',
-        '/index.xml',
-        '/feeds/posts/default' // Blogger
-      ];
+      // Rufe Server-Side API für RSS Detection auf
+      const response = await fetch('/api/rss-detect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          websiteUrl: monitoringConfig.websiteUrl,
+        }),
+      });
 
-      const baseUrl = new URL(monitoringConfig.websiteUrl).origin;
-      const foundFeeds: string[] = [];
+      const data = await response.json();
 
-      for (const pattern of patterns) {
-        const testUrl = baseUrl + pattern;
-
-        try {
-          const response = await fetch(testUrl, {
-            method: 'HEAD',
-            mode: 'no-cors', // Wichtig für CORS
-          });
-
-          // Bei no-cors bekommen wir immer status 0, also teste einfach ob Request durchgeht
-          foundFeeds.push(testUrl);
-        } catch (e) {
-          // Ignoriere Fehler, teste weiter
-        }
+      if (!response.ok) {
+        throw new Error(data.error || 'Fehler bei der RSS Feed Erkennung');
       }
 
-      if (foundFeeds.length > 0) {
-        setDetectedFeeds(foundFeeds);
+      if (data.foundFeeds && data.foundFeeds.length > 0) {
+        setDetectedFeeds(data.foundFeeds);
         setMonitoringConfig({
           ...monitoringConfig,
-          rssFeedUrls: foundFeeds
+          rssFeedUrls: data.foundFeeds
         });
         setRssDetectionStatus('found');
         setShowManualRssInput(false);
@@ -532,6 +519,7 @@ const loadPublishers = async () => {
       }
     } catch (error) {
       console.error('RSS Auto-Detection Error:', error);
+      alert('Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut.');
       setRssDetectionStatus('not_found');
       setShowManualRssInput(true);
     }
@@ -1482,11 +1470,11 @@ const loadPublishers = async () => {
                         onClick={handleRssAutoDetect}
                         disabled={!monitoringConfig.websiteUrl || rssDetectionStatus === 'checking'}
                       >
-                        {rssDetectionStatus === 'checking' ? 'Prüfe...' : 'Check'}
+                        {rssDetectionStatus === 'checking' ? 'Suche...' : 'RSS-Feed suchen'}
                       </Button>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Klicken Sie "Check" um automatisch RSS Feeds zu erkennen
+                      Klicken Sie "RSS-Feed suchen" um automatisch Feeds zu erkennen
                     </p>
                   </div>
 
@@ -1516,7 +1504,7 @@ const loadPublishers = async () => {
                           onClick={handleDisconnectAutoFeeds}
                           className="ml-4"
                         >
-                          Trennen
+                          Zurücksetzen
                         </Button>
                       </div>
                     </div>
