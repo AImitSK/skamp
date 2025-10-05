@@ -18,8 +18,8 @@
 - [x] 2.2 url-normalizer.ts erstellen
 
 ### Phase 3: Firebase Services
-- [ ] 3.1 campaign-monitoring-service.ts erstellen
-- [ ] 3.2 spam-pattern-service.ts erstellen
+- [x] 3.1 campaign-monitoring-service.ts erstellen
+- [x] 3.2 spam-pattern-service.ts erstellen
 
 ### Phase 4: UI Komponenten
 - [ ] 4.1 Publication Modal - Monitoring Tab
