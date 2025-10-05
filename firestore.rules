@@ -14,7 +14,8 @@ service cloud.firestore {
     // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
     function isSuperAdmin() {
       return request.auth != null
-             && request.auth.token.organizationId == "superadmin-org";
+             && (request.auth.token.organizationId == "superadmin-org"
+                 || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == "superadmin-org");
     }
 
     // Prüft ob User zur Organisation gehört
