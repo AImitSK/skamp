@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, TableCellsIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, TableCellsIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
@@ -15,9 +15,11 @@ import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
+import { MonitoringSuggestionsTable } from '@/components/monitoring/MonitoringSuggestionsTable';
 import { EmailCampaignSend } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
-import { MediaClipping } from '@/types/monitoring';
+import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
+import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
 import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -36,7 +38,8 @@ export default function MonitoringDetailPage() {
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [sends, setSends] = useState<EmailCampaignSend[]>([]);
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings'>('dashboard');
+  const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>('dashboard');
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
@@ -63,19 +66,21 @@ export default function MonitoringDetailPage() {
     try {
       setLoading(true);
 
-      const [campaignData, sendsData, clippingsData] = await Promise.all([
+      const [campaignData, sendsData, clippingsData, suggestionsData] = await Promise.all([
         prService.getById(campaignId),
         emailCampaignService.getSends(campaignId, {
           organizationId: currentOrganization.id
         }),
         clippingService.getByCampaignId(campaignId, {
           organizationId: currentOrganization.id
-        })
+        }),
+        monitoringSuggestionService.getByCampaignId(campaignId, currentOrganization.id)
       ]);
 
       setCampaign(campaignData);
       setSends(sendsData);
       setClippings(clippingsData);
+      setSuggestions(suggestionsData);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
     } finally {
@@ -205,6 +210,60 @@ export default function MonitoringDetailPage() {
     }
   };
 
+  const handleConfirmSuggestion = async (suggestion: MonitoringSuggestion) => {
+    if (!user?.uid || !currentOrganization?.id) return;
+
+    try {
+      const clippingId = await monitoringSuggestionService.confirmSuggestion(
+        suggestion.id!,
+        {
+          userId: user.uid,
+          organizationId: currentOrganization.id
+        }
+      );
+
+      setSuccessMessage('Vorschlag erfolgreich übernommen und als Clipping gespeichert');
+      setShowSuccessDialog(true);
+
+      // Reload data
+      await loadData();
+    } catch (error) {
+      console.error('Fehler beim Bestätigen:', error);
+      setSuccessMessage('Fehler beim Übernehmen des Vorschlags');
+      setShowSuccessDialog(true);
+    }
+  };
+
+  const handleMarkSpam = async (suggestion: MonitoringSuggestion) => {
+    if (!user?.uid || !currentOrganization?.id) return;
+
+    try {
+      // Optional: Pattern-Dialog könnte hier geöffnet werden
+      // Für jetzt: Automatisch URL-Domain Pattern erstellen
+      await monitoringSuggestionService.markAsSpam(
+        suggestion.id!,
+        {
+          userId: user.uid,
+          organizationId: currentOrganization.id
+        },
+        {
+          type: 'url_domain',
+          description: `Spam-Domain aus Vorschlag: ${suggestion.articleTitle}`
+        }
+      );
+
+      setSuccessMessage('Vorschlag als Spam markiert und Pattern erstellt');
+      setShowSuccessDialog(true);
+
+      // Reload data
+      await loadData();
+    } catch (error) {
+      console.error('Fehler beim Spam-Markieren:', error);
+      setSuccessMessage('Fehler beim Markieren als Spam');
+      setShowSuccessDialog(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -314,6 +373,18 @@ export default function MonitoringDetailPage() {
                 <NewspaperIcon className="w-4 h-4 mr-2" />
                 Clipping-Archiv ({clippings.length})
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('suggestions')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'suggestions'
+                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <SparklesIcon className="w-4 h-4 mr-2" />
+                Auto-Funde ({suggestions.filter(s => s.status === 'pending').length})
+              </button>
             </div>
           </div>
         </div>
@@ -398,6 +469,15 @@ export default function MonitoringDetailPage() {
 
           {activeTab === 'clippings' && (
             <ClippingArchive clippings={clippings} />
+          )}
+
+          {activeTab === 'suggestions' && (
+            <MonitoringSuggestionsTable
+              suggestions={suggestions}
+              onConfirm={handleConfirmSuggestion}
+              onMarkSpam={handleMarkSpam}
+              loading={loading}
+            />
           )}
         </div>
       </div>
