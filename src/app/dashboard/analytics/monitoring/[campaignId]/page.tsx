@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -29,17 +29,19 @@ import Link from 'next/link';
 export default function MonitoringDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
   const campaignId = params.campaignId as string;
+  const tabParam = searchParams.get('tab') as 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions' | null;
 
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [sends, setSends] = useState<EmailCampaignSend[]>([]);
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
   const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>(tabParam || 'dashboard');
   const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
@@ -53,6 +55,12 @@ export default function MonitoringDetailPage() {
   useEffect(() => {
     loadData();
   }, [campaignId, currentOrganization?.id]);
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   useEffect(() => {
     if (activeTab === 'dashboard' && campaign && currentOrganization?.id) {
