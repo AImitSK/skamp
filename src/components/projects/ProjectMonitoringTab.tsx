@@ -95,13 +95,17 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         })
       );
 
-      const sentCampaigns = campaignsWithData.filter(({ sends }) => sends.length > 0);
+      // Zeige Kampagnen die ENTWEDER Sends ODER Clippings ODER Suggestions haben
+      const activeCampaigns = campaignsWithData.filter(
+        ({ sends, clippings, suggestions }) =>
+          sends.length > 0 || clippings.length > 0 || suggestions.length > 0
+      );
 
-      const allSendsArr = sentCampaigns.flatMap(({ sends }) => sends);
-      const allClippingsArr = sentCampaigns.flatMap(({ clippings }) => clippings);
-      const allSuggestionsArr = sentCampaigns.flatMap(({ suggestions }) => suggestions);
+      const allSendsArr = activeCampaigns.flatMap(({ sends }) => sends);
+      const allClippingsArr = activeCampaigns.flatMap(({ clippings }) => clippings);
+      const allSuggestionsArr = activeCampaigns.flatMap(({ suggestions }) => suggestions);
 
-      setCampaigns(sentCampaigns.map(({ campaign, sends, clippings }) => ({
+      setCampaigns(activeCampaigns.map(({ campaign, sends, clippings }) => ({
         ...campaign,
         stats: {
           total: sends.length,
@@ -144,8 +148,8 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
         <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <Subheading>Noch keine versendeten Kampagnen</Subheading>
-        <Text className="text-gray-500">Versende deine erste Kampagne in diesem Projekt</Text>
+        <Subheading>Noch keine Monitoring-Aktivitäten</Subheading>
+        <Text className="text-gray-500">Versende eine Kampagne oder erfasse eine Veröffentlichung</Text>
       </div>
     );
   }
