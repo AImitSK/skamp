@@ -141,6 +141,37 @@ service cloud.firestore {
     }
 
     // ========================================
+    // MONITORING SYSTEM
+    // ========================================
+
+    // Campaign Monitoring Trackers
+    match /campaign_monitoring_trackers/{trackerId} {
+      allow read: if isAuthenticated()
+                  && (resource.data.organizationId == request.auth.token.organizationId
+                      || isSuperAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Monitoring Suggestions
+    match /monitoring_suggestions/{suggestionId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Spam Patterns
+    match /spam_patterns/{patternId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create, update, delete: if isAuthenticated()
+                                    && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 

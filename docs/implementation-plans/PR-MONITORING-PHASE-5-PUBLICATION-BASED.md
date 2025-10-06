@@ -35,8 +35,8 @@
 - [x] 6.2 Manual Publication Entry (geprüft - bleibt unverändert)
 
 ### Phase 7: Testing & Rollout
-- [ ] 7.1 Testing durchführen
-- [ ] 7.2 Produktiv-Rollout
+- [x] 7.1 Testing durchführen (Dependency-Fix, Firestore Rules)
+- [x] 7.2 Produktiv-Rollout (Vercel Auto-Deploy)
 
 ---
 
