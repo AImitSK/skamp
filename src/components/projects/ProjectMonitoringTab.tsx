@@ -18,7 +18,6 @@ import { RecipientTrackingList } from '@/components/monitoring/RecipientTracking
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
 import { ProjectMonitoringOverview } from '@/components/projects/monitoring/ProjectMonitoringOverview';
 import { MonitoringSuggestion } from '@/types/monitoring';
-import { MarkPublishedModal } from '@/components/monitoring/MarkPublishedModal';
 
 interface ProjectMonitoringTabProps {
   projectId: string;
@@ -34,8 +33,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const [allClippings, setAllClippings] = useState<any[]>([]);
   const [allSuggestions, setAllSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [activeView, setActiveView] = useState<'overview' | 'recipients' | 'clippings'>('overview');
-  const [showAddPublicationModal, setShowAddPublicationModal] = useState(false);
-  const [selectedCampaignForPublication, setSelectedCampaignForPublication] = useState<any | null>(null);
 
   useEffect(() => {
     loadData();
@@ -165,15 +162,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     loadData();
   };
 
-  const handleAddPublication = () => {
-    // Nimm erste Kampagne oder öffne Selection
-    if (campaigns.length > 0) {
-      setSelectedCampaignForPublication(campaigns[0]);
-      setShowAddPublicationModal(true);
-    } else {
-      alert('Keine Kampagnen vorhanden');
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -195,7 +183,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           }}
           onConfirmSuggestion={handleConfirmSuggestion}
           onRejectSuggestion={handleRejectSuggestion}
-          onAddPublication={handleAddPublication}
         />
       )}
 
@@ -235,22 +222,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
         </div>
       )}
 
-      {/* Mark Published Modal */}
-      {showAddPublicationModal && selectedCampaignForPublication && allSends.length > 0 && (
-        <MarkPublishedModal
-          send={allSends[0]} // Dummy send - we just need campaign context
-          campaignId={selectedCampaignForPublication.id}
-          onClose={() => {
-            setShowAddPublicationModal(false);
-            setSelectedCampaignForPublication(null);
-          }}
-          onSuccess={() => {
-            setShowAddPublicationModal(false);
-            setSelectedCampaignForPublication(null);
-            loadData();
-          }}
-        />
-      )}
     </div>
   );
 }

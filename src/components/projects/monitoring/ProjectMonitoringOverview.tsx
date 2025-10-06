@@ -43,7 +43,6 @@ interface ProjectMonitoringOverviewProps {
   onViewSuggestion: (suggestion: MonitoringSuggestion) => void;
   onConfirmSuggestion?: (suggestionId: string) => void;
   onRejectSuggestion?: (suggestionId: string) => void;
-  onAddPublication?: () => void; // Handler für manuelles Erfassen
 }
 
 export function ProjectMonitoringOverview({
@@ -55,8 +54,7 @@ export function ProjectMonitoringOverview({
   onViewAllRecipients,
   onViewSuggestion,
   onConfirmSuggestion,
-  onRejectSuggestion,
-  onAddPublication
+  onRejectSuggestion
 }: ProjectMonitoringOverviewProps) {
   // Pending Suggestions
   const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
@@ -160,20 +158,10 @@ export function ProjectMonitoringOverview({
       <div className="flex justify-between items-center">
         <Heading level={3}>Monitoring Übersicht</Heading>
         <div className="flex gap-3">
-          {onAddPublication && (
-            <Button
-              onClick={onAddPublication}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-            >
-              <PlusIcon className="w-4 h-4 mr-2" />
-              Veröffentlichung erfassen
-            </Button>
-          )}
-
           {pendingSuggestions.length > 0 && (
             <Button
               onClick={() => {
-                // Navigate zu erster Campaign mit pending suggestions
+                // Navigate zur ersten Campaign mit Auto-Funde Tab
                 const firstSuggestion = pendingSuggestions[0];
                 const campaign = campaigns.find(c => c.id === firstSuggestion.campaignId);
                 if (campaign) {
@@ -183,7 +171,7 @@ export function ProjectMonitoringOverview({
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <BellAlertIcon className="w-4 h-4 mr-2" />
-              Veröffentlichung prüfen ({pendingSuggestions.length})
+              Alle anzeigen ({pendingSuggestions.length})
             </Button>
           )}
         </div>
@@ -466,7 +454,15 @@ export function ProjectMonitoringOverview({
             <UsersIcon className="h-5 w-5 text-[#005fab]" />
             <Subheading>Empfänger-Performance</Subheading>
           </div>
-          <Button plain onClick={onViewAllRecipients}>
+          <Button
+            plain
+            onClick={() => {
+              // Navigate zur ersten Campaign mit Empfänger Tab
+              if (campaigns.length > 0) {
+                window.location.href = `/dashboard/analytics/monitoring/${campaigns[0].id}?tab=recipients`;
+              }
+            }}
+          >
             Detaillierte Liste
             <ArrowRightIcon className="h-4 w-4 ml-1" />
           </Button>
