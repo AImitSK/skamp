@@ -1,5 +1,7 @@
 // src/app/api/sendgrid/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 // SendGrid Event Types
 interface SendGridEvent {
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * Einzelnes SendGrid Event verarbeiten
- * Nutzt Firestore REST API da Client SDK in API Routes nicht funktioniert
+ * Nutzt Admin SDK für direkten Firestore-Zugriff
  */
 async function processWebhookEvent(event: SendGridEvent) {
   console.log('🔄 Processing event:', event.event, 'for', event.email);
@@ -64,50 +66,20 @@ async function processWebhookEvent(event: SendGridEvent) {
   });
 
   try {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    // 1. Find documents via Admin SDK
+    const sendsRef = adminDb.collection('email_campaign_sends');
+    const snapshot = await sendsRef.where('recipientEmail', '==', event.email).get();
 
-    // 1. Find documents via REST API (mit API Key für Authentication)
-    const queryUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
-
-    const queryResponse = await fetch(queryUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: 'email_campaign_sends' }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: 'recipientEmail' },
-              op: 'EQUAL',
-              value: { stringValue: event.email }
-            }
-          }
-        }
-      })
-    });
-
-    if (!queryResponse.ok) {
-      console.error('❌ Query failed:',  await queryResponse.text());
-      return;
-    }
-
-    const queryResult = await queryResponse.json();
-    const documents = queryResult.filter((r: any) => r.document).map((r: any) => r.document);
-
-    if (documents.length === 0) {
+    if (snapshot.empty) {
       console.warn('⚠️ No email_campaign_send found for:', event.email);
       return;
     }
 
-    console.log(`📊 Found ${documents.length} documents for:`, event.email);
+    console.log(`📊 Found ${snapshot.size} documents for:`, event.email);
 
     // 2. Update each document
-    for (const document of documents) {
-      const docPath = document.name;
-      const sendData = convertFirestoreDoc(document);
+    for (const doc of snapshot.docs) {
+      const sendData = doc.data();
 
       // Check message ID match
       if (event['sg_message_id'] && sendData.messageId &&
@@ -119,65 +91,27 @@ async function processWebhookEvent(event: SendGridEvent) {
       const updateData = createUpdateData(event, sendData);
       if (Object.keys(updateData).length === 0) continue;
 
-      // Convert to Firestore format
-      const firestoreFields: any = {};
+      // Convert Dates to Firestore Timestamps
+      const firestoreUpdateData: any = {};
       for (const [key, value] of Object.entries(updateData)) {
-        firestoreFields[key] = toFirestoreValue(value);
+        if (value instanceof Date) {
+          firestoreUpdateData[key] = Timestamp.fromDate(value);
+        } else if (key === 'updatedAt') {
+          firestoreUpdateData[key] = FieldValue.serverTimestamp();
+        } else {
+          firestoreUpdateData[key] = value;
+        }
       }
 
-      // Update via REST API
-      // Build updateMask query params (each field separately)
-      const updateMaskParams = Object.keys(updateData)
-        .map(key => `updateMask.fieldPaths=${key}`)
-        .join('&');
-      const updateUrl = `https://firestore.googleapis.com/v1/${docPath}?${updateMaskParams}&key=${apiKey}`;
-
-      const updateResponse = await fetch(updateUrl, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ fields: firestoreFields })
-      });
-
-      if (updateResponse.ok) {
-        console.log('✅ Updated document for', event.email, '- Fields:', Object.keys(updateData).join(', '));
-      } else {
-        console.error('❌ Update failed:', await updateResponse.text());
-      }
+      // Update via Admin SDK
+      await doc.ref.update(firestoreUpdateData);
+      console.log('✅ Updated document for', event.email, '- Fields:', Object.keys(updateData).join(', '));
     }
 
   } catch (error) {
     console.error('❌ Error processing webhook event:', error);
     throw error;
   }
-}
-
-// Helper: Convert Firestore REST API document to object
-function convertFirestoreDoc(doc: any): any {
-  const obj: any = {};
-  for (const [key, value] of Object.entries(doc.fields || {})) {
-    obj[key] = fromFirestoreValue(value);
-  }
-  return obj;
-}
-
-function fromFirestoreValue(value: any): any {
-  if (value.stringValue !== undefined) return value.stringValue;
-  if (value.integerValue !== undefined) return parseInt(value.integerValue);
-  if (value.doubleValue !== undefined) return value.doubleValue;
-  if (value.booleanValue !== undefined) return value.booleanValue;
-  if (value.timestampValue !== undefined) return new Date(value.timestampValue);
-  return null;
-}
-
-function toFirestoreValue(value: any): any {
-  if (value === null) return { nullValue: null };
-  if (typeof value === 'string') return { stringValue: value };
-  if (typeof value === 'number') return Number.isInteger(value) ? { integerValue: value.toString() } : { doubleValue: value };
-  if (typeof value === 'boolean') return { booleanValue: value };
-  if (value instanceof Date) return { timestampValue: value.toISOString() };
-  return { stringValue: String(value) };
 }
 
 /**
