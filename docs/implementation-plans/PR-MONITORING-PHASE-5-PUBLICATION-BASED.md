@@ -23,7 +23,7 @@
 
 ### Phase 4: UI Komponenten
 - [x] 4.1 Publication Modal - Monitoring Tab
-- [ ] 4.2 Globale Spam-Blocklist Settings Page
+- [x] 4.2 Globale Spam-Blocklist Settings Page
 - [ ] 4.3 Monitoring Suggestions UI
 
 ### Phase 5: Firebase Scheduled Functions (Crawler)
