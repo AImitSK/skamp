@@ -80,9 +80,9 @@ export async function GET(request: NextRequest) {
 
     // Führe Auto-Import aus
     // WICHTIG: Für Cron Jobs verwenden wir SuperAdmin-Credentials
-    const SUPER_ADMIN_USER_ID = 'cron-auto-import'; // System User für Attribution
+    const SUPER_ADMIN_USER_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Deine User ID
     const SUPER_ADMIN_EMAIL = 'info@sk-online-marketing.de';
-    const SUPER_ADMIN_ORG_ID = 'superadmin-org';
+    const SUPER_ADMIN_ORG_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Gleich wie User ID
 
     const result = await matchingService.autoImportCandidates({
       minScore: settings.autoImport.minScore,
@@ -188,9 +188,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Führe Auto-Import aus
-    const SUPER_ADMIN_USER_ID = 'cron-auto-import';
+    const SUPER_ADMIN_USER_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Deine User ID
     const SUPER_ADMIN_EMAIL = 'info@sk-online-marketing.de';
-    const SUPER_ADMIN_ORG_ID = 'superadmin-org';
+    const SUPER_ADMIN_ORG_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Gleich wie User ID
 
     const result = await matchingService.autoImportCandidates({
       minScore: settings.autoImport.minScore,
