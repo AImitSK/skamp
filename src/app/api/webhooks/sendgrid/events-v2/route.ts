@@ -17,10 +17,9 @@ interface SendGridEvent {
   status?: string;
 }
 
-// Force rebuild - timestamp: 2025-10-06T09:28:00Z
 export async function POST(request: NextRequest) {
   try {
-    console.log('📨 SendGrid Webhook received - v3 [BUILD CACHE CLEARED]');
+    console.log('📨 SendGrid Webhook received - v2');
 
     // Lazy load Admin SDK
     if (!adminDb) {
