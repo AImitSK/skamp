@@ -158,6 +158,19 @@ export function ProjectMonitoringOverview({
       <div className="flex justify-between items-center">
         <Heading level={3}>Monitoring Übersicht</Heading>
         <div className="flex gap-3">
+          <Button
+            onClick={() => {
+              // Navigate zur ersten Campaign mit Empfänger Tab
+              if (campaigns.length > 0) {
+                window.location.href = `/dashboard/analytics/monitoring/${campaigns[0].id}?tab=recipients`;
+              }
+            }}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Veröffentlichung erfassen
+          </Button>
+
           {pendingSuggestions.length > 0 && (
             <Button
               onClick={() => {
@@ -171,7 +184,7 @@ export function ProjectMonitoringOverview({
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <BellAlertIcon className="w-4 h-4 mr-2" />
-              Alle anzeigen ({pendingSuggestions.length})
+              Veröffentlichung prüfen ({pendingSuggestions.length})
             </Button>
           )}
         </div>
@@ -395,7 +408,15 @@ export function ProjectMonitoringOverview({
             <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
             <Subheading>Letzte Veröffentlichungen</Subheading>
           </div>
-          <Button plain onClick={onViewAllClippings}>
+          <Button
+            plain
+            onClick={() => {
+              // Navigate zur ersten Campaign mit Clipping-Archiv Tab
+              if (campaigns.length > 0) {
+                window.location.href = `/dashboard/analytics/monitoring/${campaigns[0].id}?tab=clippings`;
+              }
+            }}
+          >
             Alle anzeigen ({clippings.length})
             <ArrowRightIcon className="h-4 w-4 ml-1" />
           </Button>
