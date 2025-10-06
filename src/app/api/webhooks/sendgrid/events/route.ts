@@ -1,7 +1,7 @@
 // src/app/api/webhooks/sendgrid/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/client-init';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, increment, Timestamp } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 interface SendGridEvent {
   email: string;
@@ -29,9 +29,8 @@ export async function POST(request: NextRequest) {
       });
 
       // Finde den entsprechenden Send-Eintrag anhand der Message ID
-      const sendsRef = collection(db, 'email_campaign_sends');
-      const q = query(sendsRef, where('messageId', '==', event.sg_message_id));
-      const snapshot = await getDocs(q);
+      const sendsRef = adminDb.collection('email_campaign_sends');
+      const snapshot = await sendsRef.where('messageId', '==', event.sg_message_id).get();
 
       if (snapshot.empty) {
         console.warn('⚠️ No send record found for message ID:', event.sg_message_id);
@@ -39,15 +38,15 @@ export async function POST(request: NextRequest) {
       }
 
       const sendDoc = snapshot.docs[0];
-      const sendRef = doc(db, 'email_campaign_sends', sendDoc.id);
+      const sendRef = adminDb.collection('email_campaign_sends').doc(sendDoc.id);
 
       // Update basierend auf Event-Typ
       switch (event.event) {
         case 'delivered':
-          await updateDoc(sendRef, {
+          await sendRef.update({
             status: 'delivered',
             deliveredAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
           console.log('✅ Updated to delivered:', sendDoc.id);
           break;
@@ -57,8 +56,8 @@ export async function POST(request: NextRequest) {
           const updateData: any = {
             status: 'opened',
             lastOpenedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
-            openCount: increment(1),
-            updatedAt: serverTimestamp()
+            openCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp()
           };
 
           // Setze openedAt nur beim ersten Mal
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
             updateData.openedAt = Timestamp.fromDate(new Date(event.timestamp * 1000));
           }
 
-          await updateDoc(sendRef, updateData);
+          await sendRef.update(updateData);
           console.log('👁️ Updated to opened:', sendDoc.id);
           break;
 
@@ -75,9 +74,9 @@ export async function POST(request: NextRequest) {
           const clickUpdateData: any = {
             status: 'clicked',
             lastClickedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
-            clickCount: increment(1),
+            clickCount: FieldValue.increment(1),
             lastClickedUrl: event.url,
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           };
 
           // Setze clickedAt nur beim ersten Mal
@@ -85,35 +84,35 @@ export async function POST(request: NextRequest) {
             clickUpdateData.clickedAt = Timestamp.fromDate(new Date(event.timestamp * 1000));
           }
 
-          await updateDoc(sendRef, clickUpdateData);
+          await sendRef.update(clickUpdateData);
           console.log('🖱️ Updated to clicked:', sendDoc.id);
           break;
 
         case 'bounce':
-          await updateDoc(sendRef, {
+          await sendRef.update({
             status: 'bounced',
             bouncedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             bounceReason: event.reason,
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
           console.log('⚠️ Updated to bounced:', sendDoc.id);
           break;
 
         case 'dropped':
-          await updateDoc(sendRef, {
+          await sendRef.update({
             status: 'failed',
             failedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
             errorMessage: event.reason,
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
           console.log('❌ Updated to dropped:', sendDoc.id);
           break;
 
         case 'spam_report':
-          await updateDoc(sendRef, {
+          await sendRef.update({
             status: 'spam',
             spamReportedAt: Timestamp.fromDate(new Date(event.timestamp * 1000)),
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
           console.log('🚫 Updated to spam:', sendDoc.id);
           break;
