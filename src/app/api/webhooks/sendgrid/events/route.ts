@@ -1,7 +1,10 @@
 // src/app/api/webhooks/sendgrid/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin-init';
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+
+// WICHTIG: Dynamic import um Build-Zeit-Caching zu vermeiden
+let adminDb: any;
+let FieldValue: any;
+let Timestamp: any;
 
 interface SendGridEvent {
   email: string;
@@ -16,12 +19,20 @@ interface SendGridEvent {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📨 SendGrid Webhook received');
+    console.log('📨 SendGrid Webhook received - v2');
 
-    // Debug: Prüfe Admin SDK Status
+    // Lazy load Admin SDK
+    if (!adminDb) {
+      console.log('🔧 Loading Admin SDK...');
+      const { adminDb: db } = await import('@/lib/firebase/admin-init');
+      const firestore = await import('firebase-admin/firestore');
+      adminDb = db;
+      FieldValue = firestore.FieldValue;
+      Timestamp = firestore.Timestamp;
+      console.log('✅ Admin SDK loaded');
+    }
+
     console.log('🔍 Admin DB available:', !!adminDb);
-    console.log('🔍 FieldValue available:', !!FieldValue);
-    console.log('🔍 Timestamp available:', !!Timestamp);
 
     if (!adminDb) {
       console.error('❌ Admin SDK not available - cannot process webhook');
