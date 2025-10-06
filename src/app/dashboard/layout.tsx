@@ -514,6 +514,13 @@ export default function DashboardLayout({
                         Analytics
                       </DropdownItem>
                       <DropdownItem
+                        href="/dashboard/super-admin/monitoring"
+                        icon={ChartBarIcon}
+                        description="Monitoring & Crawler Control"
+                      >
+                        Monitoring Control
+                      </DropdownItem>
+                      <DropdownItem
                         href="/dashboard/super-admin/settings"
                         icon={Cog6ToothIcon}
                         description="Global-System konfigurieren"

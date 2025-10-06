@@ -36,9 +36,17 @@ Ein zentrales Dashboard für Super-Admins zur Überwachung und Steuerung des aut
 
 ## 📋 Phase 1: Backend Services & APIs
 
+### ⚠️ WICHTIG: Admin SDK Architektur
+
+**Alle Services verwenden Firebase Admin SDK:**
+- Services in `/src/lib/firebase-admin/` (Server-Side Only)
+- Bypassen Firestore Security Rules
+- Nur von API Routes aufrufbar
+- Client Components → API Routes → Admin Services → Firestore
+
 ### 1.1 Monitoring Statistics Service
 
-**Datei:** `src/lib/firebase/monitoring-stats-service.ts` (NEU)
+**Datei:** `src/lib/firebase-admin/monitoring-stats-service.ts` (NEU)
 
 **Funktionen:**
 ```typescript
@@ -91,15 +99,17 @@ class MonitoringStatsService {
 ```
 
 **Implementierung:**
+- Nutzt Firebase Admin SDK (`adminDb` from `@/lib/firebase/admin-init`)
 - Query über alle `campaign_monitoring_trackers`
-- Aggregation mit Firestore Queries
+- Aggregation mit Admin SDK Queries
+- Bypassed Security Rules
 - Caching für Performance (5 Minuten)
 
 ---
 
 ### 1.2 Crawler Control Service
 
-**Datei:** `src/lib/firebase/crawler-control-service.ts` (NEU)
+**Datei:** `src/lib/firebase-admin/crawler-control-service.ts` (NEU)
 
 **Funktionen:**
 ```typescript
@@ -156,6 +166,7 @@ class CrawlerControlService {
 **Feature Flag Collection:**
 ```typescript
 // Firestore: /system_config/crawler_config
+// Zugriff nur via Admin SDK (bypassed Security Rules)
 {
   isEnabled: boolean;
   pausedAt?: Timestamp;
@@ -169,7 +180,7 @@ class CrawlerControlService {
 
 ### 1.3 Error Logging Service
 
-**Datei:** `src/lib/firebase/crawler-error-log-service.ts` (NEU)
+**Datei:** `src/lib/firebase-admin/crawler-error-log-service.ts` (NEU)
 
 **Funktionen:**
 ```typescript
@@ -218,6 +229,7 @@ class CrawlerErrorLogService {
 **Error Log Collection:**
 ```typescript
 // Firestore: /crawler_error_logs/{logId}
+// Zugriff nur via Admin SDK (bypassed Security Rules)
 {
   timestamp: Timestamp;
   type: 'rss_feed_error' | 'crawler_error' | 'channel_error';
@@ -239,6 +251,8 @@ class CrawlerErrorLogService {
 
 ```typescript
 // POST /api/admin/crawler-control
+import { crawlerControlService } from '@/lib/firebase-admin/crawler-control-service';
+
 export async function POST(request: NextRequest) {
   // Super Admin Check
   const user = await verifyAuth(request);
@@ -249,6 +263,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { action, payload } = body;
 
+  // Nutzt Admin SDK Services (Server-Side)
   switch (action) {
     case 'pause':
       await crawlerControlService.pauseCronJob(user.uid, payload.reason);
@@ -280,6 +295,8 @@ export async function POST(request: NextRequest) {
 
 ```typescript
 // GET /api/admin/monitoring-stats
+import { monitoringStatsService } from '@/lib/firebase-admin/monitoring-stats-service';
+
 export async function GET(request: NextRequest) {
   // Super Admin Check
   const user = await verifyAuth(request);
@@ -287,6 +304,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
+  // Nutzt Admin SDK Services (Server-Side, bypassed Security Rules)
   const stats = await monitoringStatsService.getSystemStats();
   const orgStats = await monitoringStatsService.getOrganizationStats();
   const channelHealth = await monitoringStatsService.getChannelHealth();
@@ -371,12 +389,12 @@ async triggerManualCrawl(): Promise<{ jobId: string; status: 'started' }> {
 async triggerOrgCrawl(organizationId: string): Promise<{ jobId: string }> {
   const jobId = `org_${organizationId}_${Date.now()}`;
 
-  // Lade nur Tracker dieser Org
-  const trackersQuery = query(
-    collection(db, 'campaign_monitoring_trackers'),
-    where('organizationId', '==', organizationId),
-    where('isActive', '==', true)
-  );
+  // Nutzt Admin SDK für Firestore Query (bypassed Security Rules)
+  const trackersSnapshot = await adminDb
+    .collection('campaign_monitoring_trackers')
+    .where('organizationId', '==', organizationId)
+    .where('isActive', '==', true)
+    .get();
 
   // Crawle diese Tracker
   // ...
@@ -950,20 +968,26 @@ export default function MonitoringControlCenterPage() {
 
 ## 📋 Firestore Security Rules
 
+⚠️ **WICHTIG: Admin SDK bypassed alle Security Rules!**
+
+Die Admin SDK Services greifen direkt auf Firestore zu ohne Rule-Validierung.
+Security wird über API Route Auth Checks sichergestellt (Super Admin Check).
+
 ```javascript
-// Crawler Config (nur Super Admin)
+// Optional: Rules für zusätzliche Sicherheit (werden von Admin SDK ignoriert)
+// Crawler Config (gesperrt für alle außer Admin SDK)
 match /system_config/crawler_config {
-  allow read, write: if isSuperAdmin();
+  allow read, write: if false; // Nur Admin SDK Zugriff
 }
 
-// Crawler Error Logs (nur Super Admin)
+// Crawler Error Logs (gesperrt für alle außer Admin SDK)
 match /crawler_error_logs/{logId} {
-  allow read, write: if isSuperAdmin();
+  allow read, write: if false; // Nur Admin SDK Zugriff
 }
 
-// Crawler Run Logs (nur Super Admin)
+// Crawler Run Logs (gesperrt für alle außer Admin SDK)
 match /crawler_run_logs/{runId} {
-  allow read, write: if isSuperAdmin();
+  allow read, write: if false; // Nur Admin SDK Zugriff
 }
 ```
 

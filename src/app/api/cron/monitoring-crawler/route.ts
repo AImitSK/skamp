@@ -21,6 +21,7 @@ import {
 } from '@/types/monitoring';
 import { normalizeUrl } from '@/lib/utils/url-normalizer';
 import { spamPatternService } from '@/lib/firebase/spam-pattern-service';
+import { crawlerControlService } from '@/lib/firebase-admin/crawler-control-service';
 
 const parser = new Parser();
 
@@ -44,6 +45,19 @@ export async function GET(request: NextRequest) {
   console.log('🤖 Starting daily monitoring crawler');
 
   try {
+    // 🆕 FEATURE FLAG CHECK
+    const crawlerStatus = await crawlerControlService.getCronJobStatus();
+    if (!crawlerStatus.isEnabled) {
+      console.log('⏸️ Crawler is paused. Skipping run.');
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: crawlerStatus.reason || 'Crawler paused by admin',
+        pausedBy: crawlerStatus.pausedBy,
+        pausedAt: crawlerStatus.pausedAt?.toDate().toISOString()
+      });
+    }
+
     // 1. Deaktiviere abgelaufene Tracker
     await deactivateExpiredTrackers();
 
