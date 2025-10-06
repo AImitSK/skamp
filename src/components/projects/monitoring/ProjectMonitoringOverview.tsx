@@ -26,8 +26,11 @@ import {
   EyeIcon,
   BellAlertIcon,
   ChartBarIcon,
-  UsersIcon
+  UsersIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
+import { Heading, Subheading } from '@/components/ui/heading';
+import { Button } from '@/components/ui/button';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -42,6 +45,7 @@ interface ProjectMonitoringOverviewProps {
   onViewSuggestion: (suggestion: MonitoringSuggestion) => void;
   onConfirmSuggestion?: (suggestionId: string) => void;
   onRejectSuggestion?: (suggestionId: string) => void;
+  onAddPublication?: () => void; // Handler für manuelles Erfassen
 }
 
 export function ProjectMonitoringOverview({
@@ -53,7 +57,8 @@ export function ProjectMonitoringOverview({
   onViewAllRecipients,
   onViewSuggestion,
   onConfirmSuggestion,
-  onRejectSuggestion
+  onRejectSuggestion,
+  onAddPublication
 }: ProjectMonitoringOverviewProps) {
   // Pending Suggestions
   const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
@@ -153,6 +158,39 @@ export function ProjectMonitoringOverview({
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <Heading level={3}>Monitoring Übersicht</Heading>
+        <div className="flex gap-3">
+          {onAddPublication && (
+            <Button
+              onClick={onAddPublication}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Veröffentlichung erfassen
+            </Button>
+          )}
+
+          {pendingSuggestions.length > 0 && (
+            <Button
+              onClick={() => {
+                // Navigate zu erster Campaign mit pending suggestions
+                const firstSuggestion = pendingSuggestions[0];
+                const campaign = campaigns.find(c => c.id === firstSuggestion.campaignId);
+                if (campaign) {
+                  window.location.href = `/dashboard/analytics/monitoring/${campaign.id}?tab=suggestions`;
+                }
+              }}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              <BellAlertIcon className="w-4 h-4 mr-2" />
+              Veröffentlichung prüfen ({pendingSuggestions.length})
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -163,7 +201,7 @@ export function ProjectMonitoringOverview({
                 {clippings.length}
               </div>
             </div>
-            <NewspaperIcon className="h-8 w-8 text-gray-400" />
+            <NewspaperIcon className="h-8 w-8 text-[#005fab]" />
           </div>
         </div>
 
@@ -175,7 +213,7 @@ export function ProjectMonitoringOverview({
                 {pendingSuggestions.length}
               </div>
             </div>
-            <BellAlertIcon className="h-8 w-8 text-gray-400" />
+            <BellAlertIcon className="h-8 w-8 text-[#005fab]" />
           </div>
         </div>
 
@@ -187,7 +225,7 @@ export function ProjectMonitoringOverview({
                 {formatNumber(avgReach)}
               </div>
             </div>
-            <ChartBarIcon className="h-8 w-8 text-gray-400" />
+            <ChartBarIcon className="h-8 w-8 text-[#005fab]" />
           </div>
         </div>
 
@@ -199,7 +237,7 @@ export function ProjectMonitoringOverview({
                 {emailStats.openRate}%
               </div>
             </div>
-            <EyeIcon className="h-8 w-8 text-gray-400" />
+            <EyeIcon className="h-8 w-8 text-[#005fab]" />
           </div>
         </div>
       </div>
@@ -208,7 +246,10 @@ export function ProjectMonitoringOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Pie Chart */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Subheading className="mb-4">📊 Status-Verteilung</Subheading>
+          <div className="flex items-center gap-2 mb-4">
+            <ChartBarIcon className="h-5 w-5 text-[#005fab]" />
+            <Subheading>Status-Verteilung</Subheading>
+          </div>
           {statusData.length > 0 ? (
             <>
               <ResponsiveContainer width="100%" height={200}>
@@ -250,7 +291,10 @@ export function ProjectMonitoringOverview({
 
         {/* Top Publications Bar Chart */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Subheading className="mb-4">📰 Top Medien</Subheading>
+          <div className="flex items-center gap-2 mb-4">
+            <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
+            <Subheading>Top Medien</Subheading>
+          </div>
           {topPublicationsData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={topPublicationsData} layout="vertical">
@@ -272,7 +316,10 @@ export function ProjectMonitoringOverview({
       {/* Timeline Chart */}
       {timelineData.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Subheading className="mb-4">📈 Veröffentlichungen im Zeitverlauf (30 Tage)</Subheading>
+          <div className="flex items-center gap-2 mb-4">
+            <ChartBarIcon className="h-5 w-5 text-[#005fab]" />
+            <Subheading>Veröffentlichungen im Zeitverlauf (30 Tage)</Subheading>
+          </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={timelineData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -295,7 +342,10 @@ export function ProjectMonitoringOverview({
       {pendingSuggestions.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <Subheading>🔔 Pending Auto-Funde ({pendingSuggestions.length})</Subheading>
+            <div className="flex items-center gap-2">
+              <BellAlertIcon className="h-5 w-5 text-[#005fab]" />
+              <Subheading>Pending Auto-Funde ({pendingSuggestions.length})</Subheading>
+            </div>
             <Button
               plain
               onClick={() => onViewSuggestion(pendingSuggestions[0])}
@@ -355,7 +405,10 @@ export function ProjectMonitoringOverview({
       {/* Recent Clippings */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <Subheading>📰 Letzte Veröffentlichungen</Subheading>
+          <div className="flex items-center gap-2">
+            <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
+            <Subheading>Letzte Veröffentlichungen</Subheading>
+          </div>
           <Button plain onClick={onViewAllClippings}>
             Alle anzeigen ({clippings.length})
             <ArrowRightIcon className="h-4 w-4 ml-1" />
@@ -411,7 +464,10 @@ export function ProjectMonitoringOverview({
       {/* Recipients Summary */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <Subheading>👥 Empfänger-Performance</Subheading>
+          <div className="flex items-center gap-2">
+            <UsersIcon className="h-5 w-5 text-[#005fab]" />
+            <Subheading>Empfänger-Performance</Subheading>
+          </div>
           <Button plain onClick={onViewAllRecipients}>
             Detaillierte Liste
             <ArrowRightIcon className="h-4 w-4 ml-1" />
