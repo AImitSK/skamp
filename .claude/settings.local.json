@@ -95,7 +95,9 @@
       "Bash(npm cache clean:*)",
       "Bash(vercel env:*)",
       "Bash(python:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npx tsx:*)",
+      "Bash($env:CRON_SECRET = \"wCF63i7NwetDOIghOneagKx1k1k41Nez6fYcxBRyoF4=\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

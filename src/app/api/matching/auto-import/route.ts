@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { matchingService } from '@/lib/firebase/matching-service';
+import { autoImportCandidates } from '@/lib/firebase-admin/matching-service';
 import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
 import { adminAuth } from '@/lib/firebase/admin-init';
 
@@ -78,18 +78,20 @@ export async function GET(request: NextRequest) {
       useAiMerge: settings.useAiMerge
     });
 
-    // Führe Auto-Import aus
+    // Führe Auto-Import aus mit Admin SDK
     // WICHTIG: Für Cron Jobs verwenden wir SuperAdmin-Credentials
     const SUPER_ADMIN_USER_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Deine User ID
     const SUPER_ADMIN_EMAIL = 'info@sk-online-marketing.de';
     const SUPER_ADMIN_ORG_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Gleich wie User ID
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const result = await matchingService.autoImportCandidates({
+    const result = await autoImportCandidates({
       minScore: settings.autoImport.minScore,
       useAiMerge: settings.useAiMerge,
       userId: SUPER_ADMIN_USER_ID,
       userEmail: SUPER_ADMIN_EMAIL,
-      organizationId: SUPER_ADMIN_ORG_ID
+      organizationId: SUPER_ADMIN_ORG_ID,
+      baseUrl
     });
 
     console.log('✅ Auto-import completed', result.stats);
@@ -187,17 +189,19 @@ export async function POST(request: NextRequest) {
       useAiMerge: settings.useAiMerge
     });
 
-    // Führe Auto-Import aus
+    // Führe Auto-Import aus mit Admin SDK
     const SUPER_ADMIN_USER_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Deine User ID
     const SUPER_ADMIN_EMAIL = 'info@sk-online-marketing.de';
     const SUPER_ADMIN_ORG_ID = 'kqUJumpKKVPQIY87GP1cgO0VaKC3'; // Gleich wie User ID
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const result = await matchingService.autoImportCandidates({
+    const result = await autoImportCandidates({
       minScore: settings.autoImport.minScore,
       useAiMerge: settings.useAiMerge,
       userId: SUPER_ADMIN_USER_ID,
       userEmail: SUPER_ADMIN_EMAIL,
-      organizationId: SUPER_ADMIN_ORG_ID
+      organizationId: SUPER_ADMIN_ORG_ID,
+      baseUrl
     });
 
     console.log('✅ Auto-import completed (POST)', result.stats);

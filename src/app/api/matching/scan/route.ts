@@ -5,11 +5,11 @@
  * - Kann manuell vom SuperAdmin getriggert werden
  * - Kann von Vercel Cron Jobs getriggert werden
  *
- * WICHTIG: Nur Client SDK, KEIN Admin SDK!
+ * ✅ Nutzt Firebase Admin SDK (Server-Side)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { matchingService } from '@/lib/firebase/matching-service';
+import { scanForCandidates } from '@/lib/firebase-admin/matching-service';
 import { MATCHING_DEFAULTS } from '@/types/matching';
 
 /**
@@ -48,14 +48,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Führe Scan aus (ohne Auth - läuft mit Firestore Rules)
-    console.log('🔍 Starting matching scan', {
+    // Führe Scan aus (Admin SDK - hat volle Permissions)
+    console.log('🔍 Starting matching scan (Admin SDK)', {
       devMode,
       triggeredBy: secret ? 'cron' : 'manual',
       timestamp: new Date().toISOString()
     });
 
-    const job = await matchingService.scanForCandidates({
+    const job = await scanForCandidates({
       developmentMode: devMode,
       minScore: devMode
         ? MATCHING_DEFAULTS.DEV_MIN_SCORE
@@ -128,14 +128,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Führe Scan aus (ohne Auth - läuft mit Firestore Rules)
-    console.log('🔍 Starting matching scan (POST)', {
+    // Führe Scan aus (Admin SDK - hat volle Permissions)
+    console.log('🔍 Starting matching scan (POST, Admin SDK)', {
       devMode,
       triggeredBy: secret ? 'cron' : 'manual',
       timestamp: new Date().toISOString()
     });
 
-    const job = await matchingService.scanForCandidates({
+    const job = await scanForCandidates({
       developmentMode: devMode,
       minScore: devMode
         ? MATCHING_DEFAULTS.DEV_MIN_SCORE
