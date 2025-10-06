@@ -41,7 +41,7 @@ export default function SpamBlocklistPage() {
 
     try {
       setLoading(true);
-      const data = await spamPatternService.getByOrganization(
+      const data = await spamPatternService.getAllByOrganization(
         currentOrganization.id,
         'global'
       );
@@ -195,7 +195,7 @@ export default function SpamBlocklistPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {patterns.map((pattern) => (
-                  <tr key={pattern.id} className="hover:bg-gray-50">
+                  <tr key={pattern.id} className={`hover:bg-gray-50 ${!pattern.isActive ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge color="zinc">
                         {getTypeLabel(pattern.type)}
@@ -208,6 +208,9 @@ export default function SpamBlocklistPage() {
                         </code>
                         {pattern.isRegex && (
                           <Badge color="blue" className="ml-2">RegEx</Badge>
+                        )}
+                        {!pattern.isActive && (
+                          <Badge color="gray" className="ml-2">Inaktiv</Badge>
                         )}
                         {pattern.description && (
                           <p className="text-xs text-gray-500 mt-2">{pattern.description}</p>

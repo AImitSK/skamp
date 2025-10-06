@@ -83,6 +83,35 @@ class SpamPatternService {
   }
 
   /**
+   * Lädt ALLE Patterns für Organisation (inkl. inaktive)
+   * Für Settings/Admin UI
+   */
+  async getAllByOrganization(
+    organizationId: string,
+    scope?: 'global' | 'campaign'
+  ): Promise<SpamPattern[]> {
+    const constraints = [
+      where('organizationId', '==', organizationId)
+    ];
+
+    if (scope) {
+      constraints.push(where('scope', '==', scope));
+    }
+
+    const q = query(
+      collection(db, this.collectionName),
+      ...constraints
+    );
+
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as SpamPattern[];
+  }
+
+  /**
    * Lädt Patterns für spezifische Kampagne (Global + Campaign-Specific)
    */
   async getPatternsForCampaign(
