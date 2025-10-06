@@ -11,10 +11,13 @@ import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { projectService } from '@/lib/firebase/project-service';
+import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
 import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
+import { ProjectMonitoringOverview } from '@/components/projects/monitoring/ProjectMonitoringOverview';
+import { MonitoringSuggestion } from '@/types/monitoring';
 
 interface ProjectMonitoringTabProps {
   projectId: string;
@@ -28,6 +31,8 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [allSends, setAllSends] = useState<any[]>([]);
   const [allClippings, setAllClippings] = useState<any[]>([]);
+  const [allSuggestions, setAllSuggestions] = useState<MonitoringSuggestion[]>([]);
+  const [activeView, setActiveView] = useState<'overview' | 'recipients' | 'clippings'>('overview');
 
   useEffect(() => {
     loadData();
@@ -77,15 +82,16 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
 
       const campaignsWithData = await Promise.all(
         projectCampaigns.map(async (campaign: any) => {
-          const [sends, clippings] = await Promise.all([
+          const [sends, clippings, suggestions] = await Promise.all([
             emailCampaignService.getSends(campaign.id!, {
               organizationId: currentOrganization.id
             }),
             clippingService.getByCampaignId(campaign.id!, {
               organizationId: currentOrganization.id
-            })
+            }),
+            monitoringSuggestionService.getByCampaignId(campaign.id!, currentOrganization.id)
           ]);
-          return { campaign, sends, clippings };
+          return { campaign, sends, clippings, suggestions };
         })
       );
 
@@ -93,6 +99,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
 
       const allSendsArr = sentCampaigns.flatMap(({ sends }) => sends);
       const allClippingsArr = sentCampaigns.flatMap(({ clippings }) => clippings);
+      const allSuggestionsArr = sentCampaigns.flatMap(({ suggestions }) => suggestions);
 
       setCampaigns(sentCampaigns.map(({ campaign, sends, clippings }) => ({
         ...campaign,
@@ -108,6 +115,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
 
       setAllSends(allSendsArr);
       setAllClippings(allClippingsArr);
+      setAllSuggestions(allSuggestionsArr);
     } catch (error) {
       console.error('Fehler beim Laden der Monitoring-Daten:', error);
     } finally {
@@ -142,90 +150,77 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     );
   }
 
+  const handleConfirmSuggestion = async (suggestionId: string) => {
+    // TODO: Implement suggestion confirmation
+    console.log('Confirm suggestion:', suggestionId);
+    loadData();
+  };
+
+  const handleRejectSuggestion = async (suggestionId: string) => {
+    // TODO: Implement suggestion rejection
+    console.log('Reject suggestion:', suggestionId);
+    loadData();
+  };
+
   return (
     <div className="space-y-6">
-      <MonitoringDashboard clippings={allClippings} sends={allSends} />
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <Subheading className="mb-4">📋 Kampagnen in diesem Projekt</Subheading>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kampagne</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versendet</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Performance</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {campaigns.map((campaign) => {
-                const openRate = campaign.stats.total > 0
-                  ? Math.round((campaign.stats.opened / campaign.stats.total) * 100)
-                  : 0;
-                const bounceRate = campaign.stats.total > 0
-                  ? Math.round((campaign.stats.bounced / campaign.stats.total) * 100)
-                  : 0;
-
-                return (
-                  <tr
-                    key={campaign.id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => router.push(`/dashboard/analytics/monitoring/${campaign.id}`)}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900 truncate max-w-md">{campaign.title}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Text className="text-gray-600">
-                        {campaign.sentAt ? new Date(campaign.sentAt.toDate()).toLocaleDateString('de-DE') : '-'}
-                      </Text>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-4 text-sm items-center">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <EyeIcon className="h-4 w-4" />
-                          {campaign.stats.opened} ({openRate}%)
-                        </span>
-                        {campaign.stats.bounced > 0 && (
-                          <span className={`flex items-center gap-1 ${bounceRate > 5 ? 'text-red-600' : 'text-gray-600'}`}>
-                            <ExclamationCircleIcon className="h-4 w-4" />
-                            {campaign.stats.bounced}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1 text-sm">
-                        <span className="flex items-center gap-1">
-                          <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                          {campaign.stats.total}
-                        </span>
-                        <span className={`flex items-center gap-1 ${campaign.stats.clippings > 0 ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                          <NewspaperIcon className="h-4 w-4" />
-                          {campaign.stats.clippings}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <Subheading className="mb-4">📋 Alle Empfänger & Veröffentlichungen</Subheading>
-        <RecipientTrackingList
+      {/* View Toggle - nur wenn Overview */}
+      {activeView === 'overview' && (
+        <ProjectMonitoringOverview
+          clippings={allClippings}
+          suggestions={allSuggestions}
           sends={allSends}
-          campaignId={projectId}
-          onSendUpdated={handleSendUpdated}
+          onViewAllClippings={() => setActiveView('clippings')}
+          onViewAllRecipients={() => setActiveView('recipients')}
+          onViewSuggestion={(suggestion) => {
+            // Navigate to campaign monitoring detail
+            const campaign = campaigns.find(c =>
+              allSuggestions.some(s => s.campaignId === c.id)
+            );
+            if (campaign) {
+              router.push(`/dashboard/analytics/monitoring/${campaign.id}`);
+            }
+          }}
+          onConfirmSuggestion={handleConfirmSuggestion}
+          onRejectSuggestion={handleRejectSuggestion}
         />
-      </div>
+      )}
 
-      <ClippingArchive clippings={allClippings} />
+      {/* Recipients Detail View */}
+      {activeView === 'recipients' && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <Subheading>📋 Alle Empfänger & Veröffentlichungen</Subheading>
+            <button
+              onClick={() => setActiveView('overview')}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              ← Zurück zur Übersicht
+            </button>
+          </div>
+          <RecipientTrackingList
+            sends={allSends}
+            campaignId={projectId}
+            onSendUpdated={handleSendUpdated}
+          />
+        </div>
+      )}
+
+      {/* Clippings Detail View */}
+      {activeView === 'clippings' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <Subheading>📰 Alle Veröffentlichungen</Subheading>
+            <button
+              onClick={() => setActiveView('overview')}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              ← Zurück zur Übersicht
+            </button>
+          </div>
+          <ClippingArchive clippings={allClippings} />
+        </div>
+      )}
     </div>
   );
 }

@@ -25,7 +25,7 @@
 - [x] 4.1 Publication Modal - Monitoring Tab
 - [x] 4.2 Globale Spam-Blocklist Settings Page
 - [x] 4.3 Monitoring Suggestions UI (Tab in Campaign Monitoring Detail)
-- [ ] 4.4 Projekt Monitoring Tab - Empfänger & Veröffentlichungen überarbeiten
+- [x] 4.4 Projekt Monitoring Tab - Kompakte Übersicht mit Recharts
 
 ### Phase 5: Firebase Scheduled Functions (Crawler)
 - [x] 5.1 Daily Crawler Function implementieren (Vercel Cron Job)
