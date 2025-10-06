@@ -280,18 +280,20 @@ export default function SpamBlocklistPage() {
                   </Text>
                 </Field>
 
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={formData.isRegex}
-                    onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
-                  />
-                  <div>
-                    <Label>RegEx Pattern</Label>
-                    <Text className="text-xs text-gray-500">
-                      Regulärer Ausdruck für erweiterte Muster
-                    </Text>
+                <Field>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={formData.isRegex}
+                      onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
+                    />
+                    <div>
+                      <Label>RegEx Pattern</Label>
+                      <Text className="text-xs text-gray-500">
+                        Regulärer Ausdruck für erweiterte Muster
+                      </Text>
+                    </div>
                   </div>
-                </div>
+                </Field>
 
                 <Field>
                   <Label>Beschreibung (optional)</Label>
