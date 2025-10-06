@@ -24,7 +24,7 @@
 ### Phase 4: UI Komponenten
 - [x] 4.1 Publication Modal - Monitoring Tab
 - [x] 4.2 Globale Spam-Blocklist Settings Page
-- [ ] 4.3 Monitoring Suggestions UI (Tab in Campaign Monitoring Detail)
+- [x] 4.3 Monitoring Suggestions UI (Tab in Campaign Monitoring Detail)
 - [ ] 4.4 Projekt Monitoring Tab - Empfänger & Veröffentlichungen überarbeiten
 
 ### Phase 5: Firebase Scheduled Functions (Crawler)
