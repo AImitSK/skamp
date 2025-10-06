@@ -67,8 +67,8 @@ async function processWebhookEvent(event: SendGridEvent) {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
-    // 1. Find documents via REST API
-    const queryUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+    // 1. Find documents via REST API (mit API Key für Authentication)
+    const queryUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
 
     const queryResponse = await fetch(queryUrl, {
       method: 'POST',
