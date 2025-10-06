@@ -170,13 +170,12 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           clippings={allClippings}
           suggestions={allSuggestions}
           sends={allSends}
+          campaigns={campaigns}
           onViewAllClippings={() => setActiveView('clippings')}
           onViewAllRecipients={() => setActiveView('recipients')}
           onViewSuggestion={(suggestion) => {
             // Navigate to campaign monitoring detail
-            const campaign = campaigns.find(c =>
-              allSuggestions.some(s => s.campaignId === c.id)
-            );
+            const campaign = campaigns.find(c => c.id === suggestion.campaignId);
             if (campaign) {
               router.push(`/dashboard/analytics/monitoring/${campaign.id}`);
             }

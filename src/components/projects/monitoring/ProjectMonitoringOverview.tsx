@@ -21,12 +21,12 @@ import {
 } from 'recharts';
 import {
   NewspaperIcon,
-  ChartBarIcon,
-  ClockIcon,
   CheckCircleIcon,
   ArrowRightIcon,
   EyeIcon,
-  BellAlertIcon
+  BellAlertIcon,
+  ChartBarIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { formatDistanceToNow } from 'date-fns';
@@ -36,6 +36,7 @@ interface ProjectMonitoringOverviewProps {
   clippings: MediaClipping[];
   suggestions: MonitoringSuggestion[];
   sends: any[];
+  campaigns: any[]; // Campaign list for deep linking
   onViewAllClippings: () => void;
   onViewAllRecipients: () => void;
   onViewSuggestion: (suggestion: MonitoringSuggestion) => void;
@@ -47,6 +48,7 @@ export function ProjectMonitoringOverview({
   clippings,
   suggestions,
   sends,
+  campaigns,
   onViewAllClippings,
   onViewAllRecipients,
   onViewSuggestion,
@@ -161,7 +163,7 @@ export function ProjectMonitoringOverview({
                 {clippings.length}
               </div>
             </div>
-            <NewspaperIcon className="h-8 w-8 text-blue-600" />
+            <NewspaperIcon className="h-8 w-8 text-gray-400" />
           </div>
         </div>
 
@@ -173,7 +175,7 @@ export function ProjectMonitoringOverview({
                 {pendingSuggestions.length}
               </div>
             </div>
-            <BellAlertIcon className="h-8 w-8 text-orange-600" />
+            <BellAlertIcon className="h-8 w-8 text-gray-400" />
           </div>
         </div>
 
@@ -185,7 +187,7 @@ export function ProjectMonitoringOverview({
                 {formatNumber(avgReach)}
               </div>
             </div>
-            <ChartBarIcon className="h-8 w-8 text-green-600" />
+            <ChartBarIcon className="h-8 w-8 text-gray-400" />
           </div>
         </div>
 
@@ -197,7 +199,7 @@ export function ProjectMonitoringOverview({
                 {emailStats.openRate}%
               </div>
             </div>
-            <EyeIcon className="h-8 w-8 text-purple-600" />
+            <EyeIcon className="h-8 w-8 text-gray-400" />
           </div>
         </div>
       </div>
@@ -362,34 +364,41 @@ export function ProjectMonitoringOverview({
 
         {recentClippings.length > 0 ? (
           <div className="space-y-3">
-            {recentClippings.map((clipping) => (
-              <div
-                key={clipping.id}
-                className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Text className="font-medium text-gray-900">
-                      {clipping.outletName}
+            {recentClippings.map((clipping) => {
+              // Finde Campaign für dieses Clipping
+              const campaign = campaigns.find(c => c.id === clipping.campaignId);
+
+              return (
+                <a
+                  key={clipping.id}
+                  href={campaign ? `/dashboard/analytics/monitoring/${campaign.id}` : '#'}
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 block"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Text className="font-medium text-gray-900">
+                        {clipping.outletName}
+                      </Text>
+                      {clipping.detectionMethod === 'automated' && (
+                        <Badge color="green" className="text-xs">Auto</Badge>
+                      )}
+                    </div>
+                    <Text className="text-sm text-gray-600 truncate">
+                      {clipping.title}
                     </Text>
-                    {clipping.detectionMethod === 'automated' && (
-                      <Badge color="green" className="text-xs">Auto</Badge>
-                    )}
+                    <Text className="text-xs text-gray-500 mt-1">
+                      {clipping.publishedAt &&
+                        formatDistanceToNow(clipping.publishedAt.toDate(), {
+                          addSuffix: true,
+                          locale: de
+                        })}
+                      {clipping.reach && ` • Reichweite: ${formatNumber(clipping.reach)}`}
+                    </Text>
                   </div>
-                  <Text className="text-sm text-gray-600 truncate">
-                    {clipping.title}
-                  </Text>
-                  <Text className="text-xs text-gray-500 mt-1">
-                    {clipping.publishedAt &&
-                      formatDistanceToNow(clipping.publishedAt.toDate(), {
-                        addSuffix: true,
-                        locale: de
-                      })}
-                    {clipping.reach && ` • Reichweite: ${formatNumber(clipping.reach)}`}
-                  </Text>
-                </div>
-              </div>
-            ))}
+                  <ArrowRightIcon className="h-5 w-5 text-gray-400 ml-2 flex-shrink-0" />
+                </a>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
