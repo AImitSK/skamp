@@ -16,32 +16,41 @@ interface SendGridEvent {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📨 SendGrid Webhook received');
+
+    // Debug: Prüfe Admin SDK Status
+    console.log('🔍 Admin DB available:', !!adminDb);
+
     const events: SendGridEvent[] = await request.json();
 
-    console.log('📨 Received SendGrid webhook events:', events.length);
+    console.log('📊 Processing', events.length, 'events');
 
     for (const event of events) {
-      console.log('🔔 Processing event:', {
-        type: event.event,
-        email: event.email,
+      console.log('🔄 Processing event:', event.event, 'for', event.email);
+      console.log('📧 Event details:', {
         messageId: event.sg_message_id,
-        timestamp: new Date(event.timestamp * 1000).toISOString()
+        email: event.email,
+        event: event.event
       });
 
-      // Finde den entsprechenden Send-Eintrag anhand der Message ID
-      const sendsRef = adminDb.collection('email_campaign_sends');
-      const snapshot = await sendsRef.where('messageId', '==', event.sg_message_id).get();
+      try {
+        // Finde den entsprechenden Send-Eintrag anhand der Message ID
+        const sendsRef = adminDb.collection('email_campaign_sends');
+        console.log('🔍 Querying for messageId:', event.sg_message_id);
+        const snapshot = await sendsRef.where('messageId', '==', event.sg_message_id).get();
 
-      if (snapshot.empty) {
-        console.warn('⚠️ No send record found for message ID:', event.sg_message_id);
-        continue;
-      }
+        console.log('✅ Query successful, found', snapshot.size, 'documents');
 
-      const sendDoc = snapshot.docs[0];
-      const sendRef = adminDb.collection('email_campaign_sends').doc(sendDoc.id);
+        if (snapshot.empty) {
+          console.warn('⚠️ No send record found for message ID:', event.sg_message_id);
+          continue;
+        }
 
-      // Update basierend auf Event-Typ
-      switch (event.event) {
+        const sendDoc = snapshot.docs[0];
+        const sendRef = adminDb.collection('email_campaign_sends').doc(sendDoc.id);
+
+        // Update basierend auf Event-Typ
+        switch (event.event) {
         case 'delivered':
           await sendRef.update({
             status: 'delivered',
@@ -119,9 +128,14 @@ export async function POST(request: NextRequest) {
 
         default:
           console.log('ℹ️ Unhandled event type:', event.event);
+        }
+      } catch (eventError) {
+        console.error('❌ Error processing event:', eventError);
+        console.error('❌ Query failed:', JSON.stringify([eventError], null, 2));
       }
     }
 
+    console.log('✅ Webhook processing completed');
     return NextResponse.json({ success: true, processed: events.length });
   } catch (error) {
     console.error('❌ Error processing SendGrid webhook:', error);
