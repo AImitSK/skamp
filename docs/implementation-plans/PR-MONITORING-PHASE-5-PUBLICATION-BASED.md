@@ -28,7 +28,7 @@
 - [ ] 4.4 Projekt Monitoring Tab - Empfänger & Veröffentlichungen überarbeiten
 
 ### Phase 5: Firebase Scheduled Functions (Crawler)
-- [ ] 5.1 Daily Crawler Function implementieren
+- [x] 5.1 Daily Crawler Function implementieren (Vercel Cron Job)
 
 ### Phase 6: Integration & Workflow
 - [ ] 6.1 Campaign Creation Hook
