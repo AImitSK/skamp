@@ -1,21 +1,7 @@
 // src/app/api/webhooks/sendgrid/events/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-
-// Dynamischer Import mit Error Handling
-let adminDb: any = null;
-let FieldValue: any = null;
-let Timestamp: any = null;
-
-try {
-  const adminInit = require('@/lib/firebase/admin-init');
-  adminDb = adminInit.adminDb;
-  const firestoreAdmin = require('firebase-admin/firestore');
-  FieldValue = firestoreAdmin.FieldValue;
-  Timestamp = firestoreAdmin.Timestamp;
-  console.log('✅ Admin SDK loaded successfully');
-} catch (error) {
-  console.error('❌ Failed to load Admin SDK:', error);
-}
+import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 interface SendGridEvent {
   email: string;
