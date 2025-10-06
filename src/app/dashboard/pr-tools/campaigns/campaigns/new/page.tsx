@@ -509,7 +509,7 @@ export default function NewPRCampaignPage() {
             result.campaignId,
             { organizationId: currentOrganization!.id, userId: user!.uid }
           );
-          
+
           // ✅ Plan 2/9: Automatische Pipeline-PDF-Generierung für Projekt-verknüpfte Kampagnen
           try {
             const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
@@ -537,6 +537,26 @@ export default function NewPRCampaignPage() {
           }
         } catch (error) {
           console.error('Fehler beim Verknüpfen der Kampagne mit dem Projekt:', error);
+          // Nicht blockierend - Kampagne wurde bereits erfolgreich gespeichert
+        }
+      }
+
+      // ✅ MONITORING INTEGRATION: Erstelle Monitoring Tracker wenn aktiviert
+      if (result.campaignId) {
+        try {
+          // Lade gespeicherte Kampagne um monitoringConfig zu prüfen
+          const savedCampaign = await prService.getById(result.campaignId);
+
+          if (savedCampaign?.monitoringConfig?.isEnabled) {
+            const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
+            const trackerId = await campaignMonitoringService.createTrackerForCampaign(
+              result.campaignId,
+              currentOrganization!.id
+            );
+            console.log(`✅ Monitoring Tracker created: ${trackerId}`);
+          }
+        } catch (error) {
+          console.error('Fehler beim Erstellen des Monitoring Trackers:', error);
           // Nicht blockierend - Kampagne wurde bereits erfolgreich gespeichert
         }
       }

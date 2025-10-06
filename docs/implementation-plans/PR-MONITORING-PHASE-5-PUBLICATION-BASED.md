@@ -31,8 +31,8 @@
 - [x] 5.1 Daily Crawler Function implementieren (Vercel Cron Job)
 
 ### Phase 6: Integration & Workflow
-- [ ] 6.1 Campaign Creation Hook
-- [ ] 6.2 Manual Publication Entry (prüfen)
+- [x] 6.1 Campaign Creation Hook
+- [x] 6.2 Manual Publication Entry (geprüft - bleibt unverändert)
 
 ### Phase 7: Testing & Rollout
 - [ ] 7.1 Testing durchführen
