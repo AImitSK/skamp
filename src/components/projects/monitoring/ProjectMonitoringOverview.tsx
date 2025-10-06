@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Subheading } from '@/components/ui/heading';
+import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +29,6 @@ import {
   UsersIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
-import { Heading, Subheading } from '@/components/ui/heading';
-import { Button } from '@/components/ui/button';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
