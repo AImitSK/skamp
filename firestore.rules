@@ -171,6 +171,30 @@ service cloud.firestore {
                                     && resource.data.organizationId == request.auth.token.organizationId;
     }
 
+    // Media Clippings
+    match /media_clippings/{clippingId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Campaign Sends
+    match /email_campaign_sends/{sendId} {
+      // Lesen: Authentifizierte User ihrer Org
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      // Erstellen: Authentifizierte User
+      allow create: if isAuthenticated();
+      // Update: Authentifizierte User ihrer Org
+      allow update: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+      // Löschen: Authentifizierte User ihrer Org
+      allow delete: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
     // ========================================
     // DEFAULT FALLBACK
     // ========================================
