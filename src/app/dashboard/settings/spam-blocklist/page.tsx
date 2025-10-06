@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label } from "@/components/ui/fieldset";
-import { Switch } from "@/components/ui/switch";
+import { SimpleSwitch } from "@/components/notifications/SimpleSwitch";
 import { SettingsNav } from '@/components/SettingsNav';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -218,7 +218,7 @@ export default function SpamBlocklistPage() {
                       <span className="text-sm text-gray-900">{pattern.timesMatched || 0}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Switch
+                      <SimpleSwitch
                         checked={pattern.isActive}
                         onChange={() => handleToggle(pattern)}
                       />
@@ -280,20 +280,18 @@ export default function SpamBlocklistPage() {
                   </Text>
                 </Field>
 
-                <Field>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={formData.isRegex}
-                      onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
-                    />
-                    <div>
-                      <Label>RegEx Pattern</Label>
-                      <Text className="text-xs text-gray-500">
-                        Regulärer Ausdruck für erweiterte Muster
-                      </Text>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <SimpleSwitch
+                    checked={formData.isRegex}
+                    onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
+                  />
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">RegEx Pattern</div>
+                    <Text className="text-xs text-gray-500">
+                      Regulärer Ausdruck für erweiterte Muster
+                    </Text>
                   </div>
-                </Field>
+                </div>
 
                 <Field>
                   <Label>Beschreibung (optional)</Label>
