@@ -227,14 +227,15 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   }, [userId]);
 
   const loadCompanies = useCallback(async () => {
-    if (!userId) return;
+    if (!organizationId) return;
     try {
-      const userCompanies = await companiesEnhancedService.getAll(userId);
+      const userCompanies = await companiesEnhancedService.getAll(organizationId);
       setCompanies(userCompanies.filter(c => c.id !== company?.id));
     } catch (error) {
+      console.error('Fehler beim Laden der Companies:', error);
       // Silent error handling
     }
-  }, [userId, company?.id]);
+  }, [organizationId, company?.id]);
 
   const loadLibraryData = useCallback(async (companyId: string) => {
     if (!userId) return;

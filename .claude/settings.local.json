@@ -97,7 +97,11 @@
       "Bash(python:*)",
       "Bash(git reset:*)",
       "Bash(npx tsx:*)",
-      "Bash($env:CRON_SECRET = \"wCF63i7NwetDOIghOneagKx1k1k41Nez6fYcxBRyoF4=\")"
+      "Bash($env:CRON_SECRET = \"wCF63i7NwetDOIghOneagKx1k1k41Nez6fYcxBRyoF4=\")",
+      "Bash(git rm:*)",
+      "Bash(pwsh:*)",
+      "Bash(Select-String \"Created contact|candidates imported|Batch [0-9]|Auto-import completed\")",
+      "Bash(Select-Object -First 50)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

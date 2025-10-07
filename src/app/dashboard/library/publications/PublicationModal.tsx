@@ -456,12 +456,12 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
   }, [publication, publishers, formData.publisherId, formData.publisherName]);
 
 const loadPublishers = async () => {
-  if (!user) return;
-  
+  if (!user || !currentOrganization?.id) return;
+
   try {
     setLoadingPublishers(true);
-    
-    const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
+
+    const allCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
     console.log('🔍 PublicationModal: Alle Companies geladen:', allCompanies.length, allCompanies.map(c => ({ id: c.id, name: c.name || c.companyName, type: c.type })));
 
     const publisherCompanies = allCompanies.filter(company =>

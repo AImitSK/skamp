@@ -142,10 +142,13 @@ export default function BoilerplateModal({
   }, [boilerplate, editor]);
 
   const loadCompanies = async () => {
+    if (!organizationId) return;
+
     try {
       const companiesData = await companiesEnhancedService.getAll(organizationId);
       setCompanies(companiesData);
     } catch (error) {
+      console.error('Fehler beim Laden der Companies:', error);
       setCompanies([]);
     }
   };

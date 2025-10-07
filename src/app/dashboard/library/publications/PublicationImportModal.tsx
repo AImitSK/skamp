@@ -146,12 +146,12 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
 
   // Lade Verlage
   const loadPublishers = async () => {
-    if (!user) return;
-    
+    if (!user || !currentOrganization?.id) return;
+
     try {
       setLoadingPublishers(true);
-      
-      const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
+
+      const allCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
       
       const publisherCompanies = allCompanies.filter(company => 
         ['publisher', 'media_house', 'partner'].includes(company.type)
