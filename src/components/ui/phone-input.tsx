@@ -113,17 +113,26 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
     // Update input value when value prop changes
     useEffect(() => {
       if (!isFocused && value) {
-        const parsed = parsePhoneNumber(value)
-        if (parsed.isValid && parsed.e164) {
-          // Detect country from number
-          const detectedCountry = detectCountryFromE164(parsed.e164)
-          if (detectedCountry && detectedCountry !== selectedCountry) {
-            setSelectedCountry(detectedCountry as CountryCode)
+        // If value doesn't start with +, just display it as-is (national format)
+        if (!value.startsWith('+')) {
+          setInputValue(value)
+        } else {
+          // Parse E.164 format
+          const parsed = parsePhoneNumber(value)
+          if (parsed.isValid && parsed.e164) {
+            // Detect country from number
+            const detectedCountry = detectCountryFromE164(parsed.e164)
+            if (detectedCountry && detectedCountry !== selectedCountry) {
+              setSelectedCountry(detectedCountry as CountryCode)
+            }
+
+            // Format for display
+            const formatted = formatE164Phone(parsed.e164, 'national')
+            setInputValue(formatted)
+          } else {
+            // Invalid E.164, show as-is
+            setInputValue(value)
           }
-          
-          // Format for display
-          const formatted = formatE164Phone(parsed.e164, 'national')
-          setInputValue(formatted)
         }
       } else if (!value) {
         setInputValue('')
