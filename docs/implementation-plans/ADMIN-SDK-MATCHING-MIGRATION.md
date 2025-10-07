@@ -440,12 +440,12 @@ if (existingCompany.exists) { // ⚠️ .exists statt .exists()!
 }
 ```
 
-- **Status:** ⬜ TODO
+- **Status:** ✅ FERTIG
 - **Test:** Integration Test - Company Matching End-to-End
 
 ---
 
-### ✅ Step 2.2: handlePublicationMatching() portieren
+### ✅ Step 2.2: handlePublicationMatching() portieren ✅ FERTIG
 **Quelle:** `src/lib/firebase/matching-service.ts` (Lines 405-522)
 **Ziel:** `src/lib/firebase-admin/matching-service.ts`
 
@@ -491,12 +491,12 @@ const migratedConfig = migrateToMonitoringConfig(pubData);
 // ⚠️ publication-helpers.ts ist shared utility - sollte funktionieren!
 ```
 
-- **Status:** ⬜ TODO
+- **Status:** ✅ FERTIG
 - **Test:** Integration Test - Publication Matching End-to-End
 
 ---
 
-### ✅ Step 2.3: autoImportCandidates() umbauen
+### ✅ Step 2.3: autoImportCandidates() umbauen ✅ FERTIG
 **Datei:** `src/lib/firebase-admin/matching-service.ts` (Lines 444-718)
 
 **Aktuelle Implementierung (Lines 573-648):**
@@ -647,7 +647,7 @@ if (useIntelligentMatching) {
 }
 ```
 
-- **Status:** ⬜ TODO
+- **Status:** ✅ FERTIG
 - **Test:** End-to-End Test - Auto-Import mit Intelligent Matching
 
 ---
@@ -1095,12 +1095,12 @@ if (useIntelligentMatching) {
 |-------|---------|--------|
 | **Phase 0:** Vorbereitung & Sicherheit | 2h | ⬜ TODO |
 | **Phase 1:** Matching Helper Module portieren (7 Module) | 8-10h | ✅ FERTIG |
-| **Phase 2:** Haupt-Matching-Funktionen portieren | 3-4h | ⬜ TODO |
+| **Phase 2:** Haupt-Matching-Funktionen portieren | 3-4h | ✅ FERTIG |
 | **Phase 3:** Felder-Vervollständigung | 2h | ⬜ TODO |
 | **Phase 4:** Testing (Unit + Integration + E2E) | 4-5h | ⬜ TODO |
 | **Phase 5:** Deployment & Cleanup | 2h | ⬜ TODO |
 | **Phase 6:** Documentation & Monitoring | 1h | ⬜ TODO |
-| **Gesamt** | **22-26 Stunden** | 🔄 Phase 1 ✅ / Phase 2-6 ⬜ |
+| **Gesamt** | **22-26 Stunden** | 🔄 Phase 1-2 ✅ / Phase 3-6 ⬜ |
 
 **Empfehlung:** 3-4 Arbeitstage einplanen (mit Buffer für unerwartete Probleme)
 

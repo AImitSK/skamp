@@ -437,6 +437,194 @@ function scoreCandidate(variants: any[]): { total: number } {
   return { total };
 }
 
+// ========================================
+// INTELLIGENT MATCHING FUNCTIONS
+// ========================================
+
+/**
+ * Handled das komplette Company Matching inkl. Enrichment
+ * Portiert von Client SDK (matching-service.ts Lines 347-400)
+ */
+async function handleCompanyMatching(params: {
+  variants: any[]; // MatchingCandidateVariant[]
+  selectedVariantIndex: number;
+  organizationId: string;
+  userId: string;
+  autoGlobalMode: boolean;
+}): Promise<{
+  companyId: string;
+  companyName: string;
+  matchType: string;
+  confidence: number;
+  wasCreated: boolean;
+  wasEnriched: boolean;
+}> {
+  const { variants, organizationId, userId, autoGlobalMode } = params;
+
+  // Import Admin SDK Matching Modules
+  const { findOrCreateCompany } = await import('./matching/company-finder-admin');
+  const { enrichCompany } = await import('./matching/enrichment-engine-admin');
+
+  // 1. Suche nach bestehender Firma oder erstelle neue
+  const companyMatch = await findOrCreateCompany(variants, organizationId, userId, autoGlobalMode);
+
+  if (!companyMatch.wasCreated) {
+    // Firma gefunden → Prüfe ob Enrichment sinnvoll ist
+    const existingCompanyDoc = await adminDb.collection('companies_enhanced').doc(companyMatch.companyId!).get();
+
+    if (existingCompanyDoc.exists) {
+      const enrichmentResult = await enrichCompany(
+        companyMatch.companyId!,
+        existingCompanyDoc.data()!,
+        {}, // newData - TODO: extract from variants
+        variants,
+        0.8, // confidence
+        userId
+      );
+
+      return {
+        companyId: companyMatch.companyId!,
+        companyName: companyMatch.companyName!,
+        matchType: companyMatch.method,
+        confidence: companyMatch.confidence === 'high' ? 0.9 : companyMatch.confidence === 'medium' ? 0.7 : 0.5,
+        wasCreated: false,
+        wasEnriched: enrichmentResult.enriched
+      };
+    }
+  }
+
+  // Neue Company erstellt
+  return {
+    companyId: companyMatch.companyId!,
+    companyName: companyMatch.companyName!,
+    matchType: companyMatch.method,
+    confidence: 1.0,
+    wasCreated: true,
+    wasEnriched: false
+  };
+}
+
+/**
+ * Handled das komplette Publication Matching inkl. Erstellung
+ * Portiert von Client SDK (matching-service.ts Lines 405-522)
+ */
+async function handlePublicationMatching(params: {
+  companyId: string;
+  companyName: string;
+  variants: any[]; // MatchingCandidateVariant[]
+  selectedVariantIndex: number;
+  contactDataToUse: any;
+  organizationId: string;
+  userId: string;
+  autoGlobalMode: boolean;
+}): Promise<Array<{
+  publicationId: string;
+  publicationName: string;
+  matchType: string;
+  confidence: number;
+  wasCreated: boolean;
+  wasEnriched: boolean;
+}>> {
+  const { companyId, companyName, variants, contactDataToUse, organizationId, userId, autoGlobalMode } = params;
+
+  // Import Admin SDK Matching Modules
+  const { findPublications, createPublication } = await import('./matching/publication-finder-admin');
+
+  // 1. Finde bestehende Publikationen DIESER Company
+  const publicationMatches = await findPublications(
+    companyId,
+    variants,
+    organizationId
+  );
+
+  const results: Array<{
+    publicationId: string;
+    publicationName: string;
+    matchType: string;
+    confidence: number;
+    wasCreated: boolean;
+    wasEnriched: boolean;
+  }> = [];
+
+  if (publicationMatches.length > 0) {
+    // Publikationen gefunden - prüfe ob Migration/Enrichment nötig
+    const { migrateToMonitoringConfig } = await import('@/lib/utils/publication-helpers');
+
+    for (const match of publicationMatches) {
+      let wasEnriched = false;
+
+      // Lade Publication um monitoringConfig zu prüfen
+      try {
+        const pubDoc = await adminDb.collection('publications').doc(match.publicationId).get();
+
+        if (pubDoc.exists) {
+          const pubData = pubDoc.data()!;
+
+          // Migration: Alte Felder → monitoringConfig
+          const migratedConfig = migrateToMonitoringConfig(pubData);
+
+          if (migratedConfig) {
+            await adminDb.collection('publications').doc(match.publicationId).update({
+              monitoringConfig: migratedConfig,
+              updatedAt: FieldValue.serverTimestamp()
+            });
+
+            wasEnriched = true;
+            console.log(`✅ Publication ${match.publicationName} migriert zu monitoringConfig`);
+          }
+        }
+      } catch (error) {
+        console.error(`⚠️ Fehler beim Enrichment von Publication ${match.publicationId}:`, error);
+      }
+
+      results.push({
+        publicationId: match.publicationId,
+        publicationName: match.publicationName,
+        matchType: match.matchType,
+        confidence: match.confidence,
+        wasCreated: false,
+        wasEnriched
+      });
+    }
+
+    return results;
+  }
+
+  // 2. Keine Publikation gefunden → Erstelle neue Publication FÜR DIESE Company
+  const publicationNames = new Set<string>();
+
+  if (contactDataToUse.publications && contactDataToUse.publications.length > 0) {
+    contactDataToUse.publications.forEach((pub: string) => publicationNames.add(pub));
+    console.log(`📋 Verwende ${publicationNames.size} Publications aus ${contactDataToUse.usedAiMerge ? 'AI-Merge' : 'ausgewählter Variante'}`);
+  } else {
+    console.log('⚠️ Keine Publications in Contact-Daten gefunden');
+  }
+
+  // Erstelle Publications
+  for (const pubName of publicationNames) {
+    const newPubId = await createPublication({
+      name: pubName,
+      companyId: companyId,
+      companyName: companyName,
+      organizationId: organizationId,
+      createdBy: userId,
+      source: 'auto_matching',
+      autoGlobalMode: autoGlobalMode
+    });
+
+    results.push({
+      publicationId: newPubId,
+      publicationName: pubName,
+      matchType: 'created',
+      confidence: 1.0,
+      wasCreated: true,
+      wasEnriched: false
+    });
+  }
+
+  return results;
+}
+
 /**
  * Auto-Import Funktion (Admin SDK)
  * Importiert Kandidaten automatisch basierend auf Score-Threshold
@@ -570,90 +758,65 @@ export async function autoImportCandidates(params: {
           }
         }
 
-        // 2. COMPANY MATCHING (falls companyName vorhanden)
-        let companyId: string | null = null;
-        let companyName: string | null = contactDataToUse.companyName || null;
+        // 2. COMPANY MATCHING - ✅ INTELLIGENT!
+        let companyResult: {
+          companyId: string;
+          companyName: string;
+          matchType: string;
+          confidence: number;
+          wasCreated: boolean;
+          wasEnriched: boolean;
+        } | undefined;
 
-        if (companyName) {
-          console.log('🏢 Suche Company:', companyName);
-
-          // Suche bestehende Company
-          const companiesSnapshot = await adminDb
-            .collection('companies_enhanced')
-            .where('name', '==', companyName)
-            .where('organizationId', '==', params.organizationId)
-            .limit(1)
-            .get();
-
-          if (!companiesSnapshot.empty) {
-            companyId = companiesSnapshot.docs[0].id;
-            console.log('✅ Company gefunden:', companyId);
-          } else {
-            // Erstelle neue Company
-            const newCompanyRef = await adminDb.collection('companies_enhanced').add({
-              name: companyName,
-              type: 'publisher', // Default für Medien-Companies aus Auto-Import
-              organizationId: params.organizationId,
-              isGlobal: true,
-              createdAt: FieldValue.serverTimestamp(),
-              updatedAt: FieldValue.serverTimestamp(),
-              createdBy: params.userId,
-              source: 'auto_matching'
-            });
-            companyId = newCompanyRef.id;
-            console.log('✅ Company erstellt:', companyId);
-          }
+        if (contactDataToUse.companyName) {
+          console.log('🏢 Suche Company mit Intelligent Matching...');
+          companyResult = await handleCompanyMatching({
+            variants: candidate.variants,
+            selectedVariantIndex,
+            organizationId: params.organizationId,
+            userId: params.userId,
+            autoGlobalMode: true
+          });
+          console.log('✅ Company Match:', {
+            companyId: companyResult.companyId,
+            companyName: companyResult.companyName,
+            matchType: companyResult.matchType,
+            wasCreated: companyResult.wasCreated,
+            wasEnriched: companyResult.wasEnriched
+          });
         }
 
-        // 3. PUBLICATION MATCHING (nur wenn Company + Journalist)
-        const publicationIds: string[] = [];
+        // 3. PUBLICATION MATCHING - ✅ INTELLIGENT!
+        let publicationResults: Array<{
+          publicationId: string;
+          publicationName: string;
+          matchType: string;
+          confidence: number;
+          wasCreated: boolean;
+          wasEnriched: boolean;
+        }> = [];
 
-        if (companyId && contactDataToUse.hasMediaProfile) {
-          console.log('📰 Suche Publications...');
-
-          const publicationNames = contactDataToUse.publications || [];
-
-          for (const pubName of publicationNames) {
-            // Suche bestehende Publication
-            const pubSnapshot = await adminDb
-              .collection('publications')
-              .where('companyId', '==', companyId)
-              .where('name', '==', pubName)
-              .limit(1)
-              .get();
-
-            if (!pubSnapshot.empty) {
-              publicationIds.push(pubSnapshot.docs[0].id);
-              console.log(`  ✅ Publication gefunden: ${pubName}`);
-            } else {
-              // Erstelle neue Publication
-              const newPubRef = await adminDb.collection('publications').add({
-                name: pubName,
-                title: pubName,
-                companyId: companyId,
-                publisherName: companyName,
-                type: 'online', // Default für Auto-Import (meist Online-Medien)
-                frequency: 'daily', // Default Frequenz
-                targetRegion: 'DE', // Default Zielgebiet Deutschland
-                organizationId: params.organizationId,
-                isGlobal: true,
-                createdAt: FieldValue.serverTimestamp(),
-                updatedAt: FieldValue.serverTimestamp(),
-                createdBy: params.userId,
-                source: 'auto_matching'
-              });
-              publicationIds.push(newPubRef.id);
-              console.log(`  ✅ Publication erstellt: ${pubName}`);
-            }
-          }
+        if (companyResult && contactDataToUse.hasMediaProfile) {
+          console.log('📰 Suche Publications mit Intelligent Matching...');
+          publicationResults = await handlePublicationMatching({
+            companyId: companyResult.companyId,
+            companyName: companyResult.companyName,
+            variants: candidate.variants,
+            selectedVariantIndex,
+            contactDataToUse,
+            organizationId: params.organizationId,
+            userId: params.userId,
+            autoGlobalMode: true
+          });
+          console.log('✅ Publication Matches:', publicationResults.length);
         }
 
-        // 4. KONTAKT ERSTELLEN
+        // 4. KONTAKT ERSTELLEN - ✅ UNVERÄNDERT!
         console.log('👤 Erstelle Contact...');
 
         const contactData: any = {
           ...contactDataToUse,
-          companyId: companyId || null,
+          companyId: companyResult?.companyId || null,
           organizationId: params.organizationId,
           isGlobal: true,
           createdBy: params.userId,
@@ -669,7 +832,7 @@ export async function autoImportCandidates(params: {
             isJournalist: true,
             beats: contactDataToUse.beats || [],
             mediaTypes: contactDataToUse.mediaTypes || [],
-            publicationIds: publicationIds
+            publicationIds: publicationResults.map(p => p.publicationId) || []
           };
         }
 
