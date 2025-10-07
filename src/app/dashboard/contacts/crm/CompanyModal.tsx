@@ -668,22 +668,23 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     <Input
                       type="date"
                       value={(() => {
-                        console.log('📅 foundedDate field:', {
-                          hasValue: !!formData.foundedDate,
-                          type: formData.foundedDate?.constructor?.name,
-                          isDate: formData.foundedDate instanceof Date,
-                          hasToDate: !!(formData.foundedDate as any)?.toDate,
-                          raw: formData.foundedDate
-                        });
-
                         if (!formData.foundedDate) return '';
 
+                        // Handle Date object
                         if (formData.foundedDate instanceof Date) {
                           return formData.foundedDate.toISOString().split('T')[0];
                         }
 
+                        // Handle Firestore Timestamp with toDate method
                         if ((formData.foundedDate as any).toDate) {
                           return (formData.foundedDate as any).toDate().toISOString().split('T')[0];
+                        }
+
+                        // Handle plain Timestamp object {seconds, nanoseconds}
+                        const ts = formData.foundedDate as any;
+                        if (ts.seconds !== undefined) {
+                          const date = new Date(ts.seconds * 1000);
+                          return date.toISOString().split('T')[0];
                         }
 
                         return '';
