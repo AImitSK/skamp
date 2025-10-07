@@ -667,12 +667,27 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     <Label>Gründungsdatum</Label>
                     <Input
                       type="date"
-                      value={formData.foundedDate ?
-                        (formData.foundedDate instanceof Date ?
-                          formData.foundedDate.toISOString().split('T')[0] :
-                          (formData.foundedDate as any).toDate?.().toISOString().split('T')[0] || ''
-                        ) : ''
-                      }
+                      value={(() => {
+                        console.log('📅 foundedDate field:', {
+                          hasValue: !!formData.foundedDate,
+                          type: formData.foundedDate?.constructor?.name,
+                          isDate: formData.foundedDate instanceof Date,
+                          hasToDate: !!(formData.foundedDate as any)?.toDate,
+                          raw: formData.foundedDate
+                        });
+
+                        if (!formData.foundedDate) return '';
+
+                        if (formData.foundedDate instanceof Date) {
+                          return formData.foundedDate.toISOString().split('T')[0];
+                        }
+
+                        if ((formData.foundedDate as any).toDate) {
+                          return (formData.foundedDate as any).toDate().toISOString().split('T')[0];
+                        }
+
+                        return '';
+                      })()}
                       onChange={(e) => setFormData({
                         ...formData,
                         foundedDate: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
