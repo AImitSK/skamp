@@ -477,34 +477,54 @@ export async function autoImportCandidates(params: {
 
     console.log(`📊 Found ${candidates.length} candidates with score >= ${params.minScore}`);
 
-    // Importiere jeden Kandidaten
-    for (const candidate of candidates) {
-      stats.candidatesProcessed++;
+    // 🆕 RATE LIMITING: Gemini 2.0 Flash hat max 10 Requests/Minute
+    // Wir verarbeiten Kandidaten in Batches von 8 mit 60s Delay zwischen Batches
+    const BATCH_SIZE = 8; // 8 Requests pro Minute (Safety Margin)
+    const BATCH_DELAY_MS = 65000; // 65 Sekunden zwischen Batches
 
-      try {
-        console.log(`🔄 Auto-importing candidate ${candidate.id} (Score: ${candidate.score})...`);
+    console.log(`⏱️ Rate Limiting aktiv: ${BATCH_SIZE} Kandidaten pro Batch, ${BATCH_DELAY_MS/1000}s Delay`);
 
-        // Wähle erste Variante als Basis
-        const selectedVariantIndex = 0;
+    // Teile Kandidaten in Batches auf
+    const batches: any[][] = [];
+    for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
+      batches.push(candidates.slice(i, i + BATCH_SIZE));
+    }
 
-        // 1. KI-MERGE (falls aktiviert)
-        let contactDataToUse = candidate.variants[selectedVariantIndex].contactData;
+    console.log(`📦 ${batches.length} Batches zu verarbeiten`);
 
-        if (params.useAiMerge && candidate.variants.length > 1) {
-          console.log(`🤖 AI-Merge für ${candidate.variants.length} Varianten...`);
+    // Verarbeite jeden Batch
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`\n📦 Batch ${batchIndex + 1}/${batches.length}: ${batch.length} Kandidaten`);
 
-          try {
-            const response = await fetch(`${params.baseUrl}/api/ai/merge-variants`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ variants: candidate.variants })
-            });
+      // Importiere jeden Kandidaten im Batch
+      for (const candidate of batch) {
+        stats.candidatesProcessed++;
 
-            const result = await response.json();
+        try {
+          console.log(`🔄 Auto-importing candidate ${candidate.id} (Score: ${candidate.score})...`);
 
-            if (result.success && result.mergedData) {
-              console.log('✅ AI-Merge erfolgreich');
-              contactDataToUse = result.mergedData;
+          // Wähle erste Variante als Basis
+          const selectedVariantIndex = 0;
+
+          // 1. KI-MERGE (falls aktiviert)
+          let contactDataToUse = candidate.variants[selectedVariantIndex].contactData;
+
+          if (params.useAiMerge && candidate.variants.length > 1) {
+            console.log(`🤖 AI-Merge für ${candidate.variants.length} Varianten...`);
+
+            try {
+              const response = await fetch(`${params.baseUrl}/api/ai/merge-variants`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variants: candidate.variants })
+              });
+
+              const result = await response.json();
+
+              if (result.success && result.mergedData) {
+                console.log('✅ AI-Merge erfolgreich');
+                contactDataToUse = result.mergedData;
 
               // Stelle sicher, dass publications existiert
               if (!contactDataToUse.publications || contactDataToUse.publications.length === 0) {
@@ -647,6 +667,13 @@ export async function autoImportCandidates(params: {
         console.error(`❌ Auto-import error for ${candidate.id}:`, error);
       }
     }
+
+    // Ende des Batches - Delay vor nächstem Batch (außer beim letzten Batch)
+    if (batchIndex < batches.length - 1) {
+      console.log(`⏸️ Warte ${BATCH_DELAY_MS/1000}s vor nächstem Batch...`);
+      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+    }
+  }
 
     console.log('✅ Auto-import completed (Admin SDK)', stats);
 
