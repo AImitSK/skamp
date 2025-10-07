@@ -1533,6 +1533,12 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
         if (!companyRefsSnapshot.empty) {
           const ref = companyRefsSnapshot.docs[0].data();
 
+          // Validiere globalCompanyId
+          if (!ref.globalCompanyId || typeof ref.globalCompanyId !== 'string') {
+            console.warn('Invalid globalCompanyId in company_reference:', ref);
+            return null;
+          }
+
           // Lade globale Company-Daten
           const globalCompanyDoc = await getDoc(doc(db, 'companies_enhanced', ref.globalCompanyId));
           if (globalCompanyDoc.exists()) {
@@ -1598,6 +1604,12 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
       const companyReferences: CompanyEnhanced[] = [];
       for (const refDoc of companyRefsSnapshot.docs) {
         const ref = refDoc.data();
+
+        // Validiere globalCompanyId
+        if (!ref.globalCompanyId || typeof ref.globalCompanyId !== 'string') {
+          console.warn('Invalid globalCompanyId in company_reference:', ref);
+          continue;
+        }
 
         // Lade globale Company-Daten
         const globalCompanyDoc = await getDoc(doc(db, 'companies_enhanced', ref.globalCompanyId));
