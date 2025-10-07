@@ -632,6 +632,9 @@ export async function autoImportCandidates(params: {
                 title: pubName,
                 companyId: companyId,
                 publisherName: companyName,
+                type: 'online', // Default für Auto-Import (meist Online-Medien)
+                frequency: 'daily', // Default Frequenz
+                targetRegion: 'DE', // Default Zielgebiet Deutschland
                 organizationId: params.organizationId,
                 isGlobal: true,
                 createdAt: FieldValue.serverTimestamp(),
