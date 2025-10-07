@@ -126,10 +126,26 @@ const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>)
   return primary?.email || emails[0].email;
 };
 
-const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>): string => {
+const getPrimaryPhone = (phones?: Array<{ number: string; countryCode?: string; isPrimary?: boolean }>): string => {
   if (!phones || phones.length === 0) return '';
-  const primary = phones.find(p => p.isPrimary);
-  return primary?.number || phones[0].number;
+  const primary = phones.find(p => p.isPrimary) || phones[0];
+  if (!primary) return '';
+
+  // Get country calling code
+  const countryCallingCodes: Record<string, string> = {
+    'DE': '+49', 'AT': '+43', 'CH': '+41', 'US': '+1', 'GB': '+44',
+    'FR': '+33', 'IT': '+39', 'ES': '+34', 'NL': '+31', 'BE': '+32',
+    'PL': '+48', 'CZ': '+420', 'DK': '+45', 'SE': '+46', 'NO': '+47', 'FI': '+358'
+  };
+
+  const prefix = primary.countryCode ? countryCallingCodes[primary.countryCode] || '' : '';
+  const number = primary.number || '';
+
+  // If number already starts with +, return as is
+  if (number.startsWith('+')) return number;
+
+  // Otherwise prepend country code
+  return prefix ? `${prefix} ${number}` : number;
 };
 
 // Get SVG flag component for country code
