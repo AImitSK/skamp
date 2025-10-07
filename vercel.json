@@ -4,13 +4,13 @@
       "maxDuration": 30
     },
     "src/app/api/matching/scan/route.ts": {
-      "maxDuration": 900
+      "maxDuration": 300
     },
     "src/app/api/matching/auto-import/route.ts": {
-      "maxDuration": 900
+      "maxDuration": 300
     },
     "src/app/api/cron/monitoring-crawler/route.ts": {
-      "maxDuration": 900
+      "maxDuration": 300
     }
   },
   "crons": [
