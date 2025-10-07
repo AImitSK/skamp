@@ -62,8 +62,8 @@ export async function scanForCandidates(options: MatchingScanOptions = {}): Prom
     // 1. Lade alle Organisationen (Admin SDK)
     const orgsSnapshot = await adminDb.collection('organizations').get();
     const organizations = orgsSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter((org: any) => {
+      .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; name: string; type?: string; [key: string]: any }))
+      .filter((org) => {
         // Filter SuperAdmin-Org
         if (org.type === 'super_admin') return false;
 
