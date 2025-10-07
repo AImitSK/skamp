@@ -131,6 +131,40 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
   return primary?.number || phones[0].number;
 };
 
+// Convert country code to flag emoji (platform-independent)
+const getFlagEmoji = (countryCode?: string): string => {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
+
+// Country code to full name mapping
+const getCountryName = (countryCode?: string): string => {
+  if (!countryCode) return '';
+  const countryNames: Record<string, string> = {
+    'DE': 'Deutschland',
+    'AT': 'Österreich',
+    'CH': 'Schweiz',
+    'US': 'USA',
+    'GB': 'Vereinigtes Königreich',
+    'FR': 'Frankreich',
+    'IT': 'Italien',
+    'ES': 'Spanien',
+    'NL': 'Niederlande',
+    'BE': 'Belgien',
+    'PL': 'Polen',
+    'CZ': 'Tschechien',
+    'DK': 'Dänemark',
+    'SE': 'Schweden',
+    'NO': 'Norwegen',
+    'FI': 'Finnland'
+  };
+  return countryNames[countryCode] || countryCode;
+};
+
 // Konvertiert ReferencedJournalist zu ContactEnhanced Format für CRM-Anzeige
 const convertReferenceToContact = (reference: ReferencedJournalist): ContactEnhanced => {
   return {
@@ -873,20 +907,17 @@ const getContactCount = (companyId: string) => {
                       Firmenname / Typ
                     </span>
                   </div>
-                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Branche
+                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Ort / Land
                   </div>
                   <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Ort & Land
-                  </div>
-                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Website
+                    Website / Telefon
                   </div>
                   <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
-                    # Personen
+                    Personen
                   </div>
-                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-                    Zuletzt kontaktiert
+                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
+                    Tags
                   </div>
                 </div>
               </div>
@@ -927,40 +958,51 @@ const getContactCount = (companyId: string) => {
                         </div>
                       </div>
 
-                      {/* Industry */}
-                      <div className="w-[15%] text-sm text-zinc-500 dark:text-zinc-400 truncate">
-                        {company.industryClassification?.primary || '—'}
-                      </div>
-
-                      {/* Location */}
+                      {/* Location: City / Country */}
                       <div className="w-[20%]">
                         {company.mainAddress ? (
-                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                            {company.mainAddress.city && company.mainAddress.countryCode ? 
-                              `${company.mainAddress.city}, ${company.mainAddress.countryCode}` : 
-                              '—'
-                            }
+                          <div className="text-sm">
+                            <div className="text-zinc-900 dark:text-white font-medium">
+                              {company.mainAddress.city || '—'}
+                            </div>
+                            {company.mainAddress.countryCode && (
+                              <div className="text-zinc-600 dark:text-zinc-400 mt-0.5">
+                                {getFlagEmoji(company.mainAddress.countryCode)} {getCountryName(company.mainAddress.countryCode)}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-sm text-zinc-400">—</span>
                         )}
                       </div>
 
-                      {/* Website */}
-                      <div className="w-[15%]">
-                        {company.website ? (
-                          <a
-                            href={company.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary hover:text-primary-hover truncate block"
-                            title={company.website}
-                          >
-                            {company.website.replace(/^https?:\/\/(www\.)?/, '')}
-                          </a>
-                        ) : (
-                          <span className="text-sm text-zinc-400">—</span>
-                        )}
+                      {/* Website / Phone */}
+                      <div className="w-[20%]">
+                        <div className="text-sm space-y-0.5">
+                          {company.website ? (
+                            <a
+                              href={company.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-primary-hover truncate block"
+                              title={company.website}
+                            >
+                              {company.website.replace(/^https?:\/\/(www\.)?/, '')}
+                            </a>
+                          ) : (
+                            <div className="text-zinc-400">—</div>
+                          )}
+                          {company.phones && company.phones.length > 0 ? (
+                            <a
+                              href={`tel:${company.phones[0].number}`}
+                              className="text-primary hover:text-primary-hover block"
+                            >
+                              {company.phones[0].number}
+                            </a>
+                          ) : (
+                            <div className="text-zinc-400">—</div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Contact Count */}
@@ -970,22 +1012,24 @@ const getContactCount = (companyId: string) => {
                         </span>
                       </div>
 
-                      {/* Last Contact */}
-                      <div className="flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
-                        {(() => {
-                          const lastContact = getLastContactDate(company.id!);
-                          return lastContact ? (
-                            <span className="text-zinc-600 dark:text-zinc-400">
-                              {lastContact?.toDate
-                                ? new Date(lastContact.toDate()).toLocaleDateString('de-DE')
-                                : lastContact instanceof Date
-                                  ? lastContact.toLocaleDateString('de-DE')
-                                  : 'Nie'}
-                            </span>
-                          ) : (
-                            <span className="text-zinc-400">Nie</span>
-                          );
-                        })()}
+                      {/* Tags */}
+                      <div className="flex-1 pr-14">
+                        <div className="flex flex-wrap gap-1">
+                          {company.tagIds?.slice(0, 3).map(tagId => {
+                            const tag = tagsMap.get(tagId);
+                            return tag ? (
+                              <Badge key={tagId} color={tag.color as any} className="text-xs">
+                                {tag.name}
+                              </Badge>
+                            ) : null;
+                          })}
+                          {company.tagIds && company.tagIds.length > 3 && (
+                            <span className="text-xs text-zinc-400">+{company.tagIds.length - 3}</span>
+                          )}
+                          {(!company.tagIds || company.tagIds.length === 0) && (
+                            <span className="text-sm text-zinc-400">—</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Actions */}
