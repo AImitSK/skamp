@@ -272,7 +272,9 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         id: company.id,
         name: company.name,
         phones: company.phones,
-        emails: company.emails
+        emails: company.emails,
+        foundedDate: company.foundedDate,
+        foundedDateType: company.foundedDate?.constructor?.name
       });
 
       // Directly use enhanced company data
