@@ -286,7 +286,11 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
           region: '',
           countryCode: 'DE' as CountryCode
         },
-        phones: company.phones || [],
+        // Ensure phones have countryCode (migration fix for old data)
+        phones: (company.phones || []).map(phone => ({
+          ...phone,
+          countryCode: phone.countryCode || company.mainAddress?.countryCode || 'DE'
+        })),
         emails: company.emails || [],
         financial: company.financial || {},
         tagIds: company.tagIds || [],
