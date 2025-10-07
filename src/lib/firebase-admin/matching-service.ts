@@ -526,6 +526,10 @@ export async function autoImportCandidates(params: {
                 console.log('✅ AI-Merge erfolgreich');
                 contactDataToUse = result.mergedData;
 
+                // WICHTIG: Entferne companyId aus AI-Merge Result
+                // Diese wird im nächsten Schritt korrekt zugewiesen
+                delete contactDataToUse.companyId;
+
               // Stelle sicher, dass publications existiert
               if (!contactDataToUse.publications || contactDataToUse.publications.length === 0) {
                 const allPublications = new Set<string>();
