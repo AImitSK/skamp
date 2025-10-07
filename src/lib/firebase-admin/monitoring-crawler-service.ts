@@ -16,25 +16,32 @@ import {
  */
 export async function getActiveTrackers(): Promise<CampaignMonitoringTracker[]> {
   try {
-    const now = new Date();
-
     const snapshot = await adminDb
       .collection('campaign_monitoring_trackers')
       .where('isActive', '==', true)
-      .where('endDate', '>', now)
       .get();
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      startDate: doc.data().startDate?.toDate() || now,
-      endDate: doc.data().endDate?.toDate() || now,
-      createdAt: doc.data().createdAt?.toDate() || now,
-      updatedAt: doc.data().updatedAt?.toDate() || now,
-      lastCrawlAt: doc.data().lastCrawlAt?.toDate(),
-      nextCrawlAt: doc.data().nextCrawlAt?.toDate(),
-      channels: doc.data().channels || []
-    })) as CampaignMonitoringTracker[];
+    const now = new Date();
+
+    // Filter nur aktive Tracker die noch nicht abgelaufen sind
+    const trackers = snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          startDate: data.startDate?.toDate() || now,
+          endDate: data.endDate?.toDate() || now,
+          createdAt: data.createdAt?.toDate() || now,
+          updatedAt: data.updatedAt?.toDate() || now,
+          lastCrawlAt: data.lastCrawlAt?.toDate(),
+          nextCrawlAt: data.nextCrawlAt?.toDate(),
+          channels: data.channels || []
+        } as CampaignMonitoringTracker;
+      })
+      .filter(tracker => tracker.endDate > now);
+
+    return trackers;
   } catch (error) {
     console.error('❌ Error loading active trackers:', error);
     throw error;
@@ -432,20 +439,25 @@ export async function deactivateExpiredTrackers(): Promise<number> {
   try {
     const now = new Date();
 
+    // Lade alle aktiven Tracker und prüfe endDate manuell
     const snapshot = await adminDb
       .collection('campaign_monitoring_trackers')
       .where('isActive', '==', true)
-      .where('endDate', '<=', now)
       .get();
 
     let deactivated = 0;
 
     for (const doc of snapshot.docs) {
-      await doc.ref.update({
-        isActive: false,
-        updatedAt: new Date()
-      });
-      deactivated++;
+      const endDate = doc.data().endDate?.toDate();
+
+      // Prüfe ob abgelaufen
+      if (endDate && endDate <= now) {
+        await doc.ref.update({
+          isActive: false,
+          updatedAt: new Date()
+        });
+        deactivated++;
+      }
     }
 
     if (deactivated > 0) {
