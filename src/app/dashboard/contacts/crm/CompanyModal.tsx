@@ -28,6 +28,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
+import { Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 
 // Vorwahl-Optionen
@@ -662,15 +663,18 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
                   <Field>
                     <Label>Gründungsdatum</Label>
-                    <Input 
-                      type="date" 
-                      value={formData.foundedDate ? 
-                        (formData.foundedDate instanceof Date ? 
-                          formData.foundedDate.toISOString().split('T')[0] : 
+                    <Input
+                      type="date"
+                      value={formData.foundedDate ?
+                        (formData.foundedDate instanceof Date ?
+                          formData.foundedDate.toISOString().split('T')[0] :
                           (formData.foundedDate as any).toDate?.().toISOString().split('T')[0] || ''
                         ) : ''
-                      } 
-                      onChange={(e) => setFormData({ ...formData, foundedDate: e.target.value ? new Date(e.target.value) : undefined })} 
+                      }
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        foundedDate: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
+                      })}
                     />
                   </Field>
                 </div>
