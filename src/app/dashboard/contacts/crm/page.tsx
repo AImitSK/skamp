@@ -134,10 +134,13 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
 // Convert country code to flag emoji (platform-independent)
 const getFlagEmoji = (countryCode?: string): string => {
   if (!countryCode || countryCode.length !== 2) return '';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
+
+  // Regional Indicator Symbol Letter A = U+1F1E6 (127462)
+  // We add the offset of each letter (A=0, B=1, ..., Z=25)
+  const OFFSET = 127462; // U+1F1E6
+  const chars = countryCode.toUpperCase().split('');
+  const codePoints = chars.map(char => OFFSET + char.charCodeAt(0) - 65); // 65 = 'A'
+
   return String.fromCodePoint(...codePoints);
 };
 
