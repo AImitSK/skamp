@@ -4,13 +4,13 @@
       "maxDuration": 30
     },
     "src/app/api/matching/scan/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 900
     },
     "src/app/api/matching/auto-import/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 900
     },
     "src/app/api/cron/monitoring-crawler/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 900
     }
   },
   "crons": [
@@ -19,8 +19,12 @@
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/matching/auto-import?secret=$CRON_SECRET",
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=50&offset=0",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=50&offset=50",
+      "schedule": "15 4 * * *"
     },
     {
       "path": "/api/cron/monitoring-crawler",

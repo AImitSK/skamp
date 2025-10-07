@@ -448,6 +448,8 @@ export async function autoImportCandidates(params: {
   userEmail: string;
   organizationId: string;
   baseUrl: string; // Für AI-Merge API Call
+  maxCandidates?: number; // Optional: Chunking
+  offset?: number; // Optional: Chunking
 }): Promise<{
   success: boolean;
   stats: {
@@ -460,6 +462,8 @@ export async function autoImportCandidates(params: {
   console.log('🤖 Starting auto-import (Admin SDK)...', {
     minScore: params.minScore,
     useAiMerge: params.useAiMerge,
+    maxCandidates: params.maxCandidates,
+    offset: params.offset,
     timestamp: new Date().toISOString()
   });
 
@@ -472,13 +476,24 @@ export async function autoImportCandidates(params: {
 
   try {
     // Hole alle pending Kandidaten mit Score >= minScore
-    const candidatesSnapshot = await adminDb
+    let query = adminDb
       .collection('matching_candidates')
       .where('status', '==', 'pending')
       .where('score', '>=', params.minScore)
-      .orderBy('score', 'desc')
-      .limit(100)
-      .get();
+      .orderBy('score', 'desc');
+
+    // Chunking Support
+    if (params.maxCandidates) {
+      query = query.limit(params.maxCandidates);
+    } else {
+      query = query.limit(100); // Default Limit
+    }
+
+    if (params.offset) {
+      query = query.offset(params.offset);
+    }
+
+    const candidatesSnapshot = await query.get();
 
     const candidates = candidatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 

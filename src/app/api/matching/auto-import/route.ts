@@ -19,11 +19,15 @@ import { adminAuth } from '@/lib/firebase/admin-init';
  *
  * Query Parameters:
  * - secret: CRON_SECRET (erforderlich)
+ * - maxCandidates: Maximale Anzahl Kandidaten pro Chunk (optional)
+ * - offset: Offset für Chunking (optional)
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const secret = searchParams.get('secret');
+    const maxCandidates = searchParams.get('maxCandidates') ? parseInt(searchParams.get('maxCandidates')!) : undefined;
+    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
 
     // Prüfe CRON_SECRET
     const cronSecret = process.env.CRON_SECRET;
@@ -48,7 +52,9 @@ export async function GET(request: NextRequest) {
 
     console.log('🤖 Starting auto-import job', {
       triggeredBy: 'cron',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      maxCandidates,
+      offset
     });
 
     // Admin SDK ist bereits authentifiziert (kein Login nötig!)
@@ -96,7 +102,9 @@ export async function GET(request: NextRequest) {
       userId: SUPER_ADMIN_USER_ID,
       userEmail: SUPER_ADMIN_EMAIL,
       organizationId: SUPER_ADMIN_ORG_ID,
-      baseUrl
+      baseUrl,
+      maxCandidates,
+      offset
     });
 
     console.log('✅ Auto-import completed', result.stats);
@@ -211,7 +219,9 @@ export async function POST(request: NextRequest) {
       userId: SUPER_ADMIN_USER_ID,
       userEmail: SUPER_ADMIN_EMAIL,
       organizationId: SUPER_ADMIN_ORG_ID,
-      baseUrl
+      baseUrl,
+      maxCandidates,
+      offset
     });
 
     console.log('✅ Auto-import completed (POST)', result.stats);
