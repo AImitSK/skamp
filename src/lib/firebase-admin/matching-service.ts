@@ -592,6 +592,7 @@ export async function autoImportCandidates(params: {
             // Erstelle neue Company
             const newCompanyRef = await adminDb.collection('companies_enhanced').add({
               name: companyName,
+              type: 'publisher', // Default für Medien-Companies aus Auto-Import
               organizationId: params.organizationId,
               isGlobal: true,
               createdAt: FieldValue.serverTimestamp(),
