@@ -109,18 +109,36 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Auto-import completed', result.stats);
 
-    // Aktualisiere lastRun in Settings (Admin SDK)
-    await saveSettings({
-      autoImport: {
-        ...settings.autoImport,
-        lastRun: new Date(),
-        nextRun: calculateNextRun()
-      }
-    }, SUPER_ADMIN_USER_ID);
+    // Prüfe ob noch mehr Kandidaten zu verarbeiten sind
+    const hasMoreCandidates = result.stats.candidatesProcessed === (maxCandidates || 24);
+
+    if (hasMoreCandidates && !offset) {
+      // Nur beim ersten Chunk (offset=0) weitere Chunks triggern
+      const nextOffset = (maxCandidates || 24);
+      console.log(`🔄 Triggering next chunk with offset=${nextOffset}...`);
+
+      // Trigger next chunk asynchronously (fire-and-forget)
+      fetch(`${baseUrl}/api/matching/auto-import?secret=${cronSecret}&maxCandidates=${maxCandidates || 24}&offset=${nextOffset}`, {
+        method: 'GET'
+      }).catch(err => console.error('Failed to trigger next chunk:', err));
+    }
+
+    // Aktualisiere lastRun in Settings (Admin SDK) - nur beim letzten Chunk
+    if (!hasMoreCandidates || offset !== undefined) {
+      await saveSettings({
+        autoImport: {
+          ...settings.autoImport,
+          lastRun: new Date(),
+          nextRun: calculateNextRun()
+        }
+      }, SUPER_ADMIN_USER_ID);
+    }
 
     return NextResponse.json({
       success: true,
       stats: result.stats,
+      hasMoreCandidates,
+      nextOffset: hasMoreCandidates ? (offset || 0) + (maxCandidates || 24) : undefined,
       settings: {
         minScore: settings.autoImport.minScore,
         useAiMerge: settings.useAiMerge
