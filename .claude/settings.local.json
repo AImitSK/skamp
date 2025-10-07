@@ -101,7 +101,8 @@
       "Bash(git rm:*)",
       "Bash(pwsh:*)",
       "Bash(Select-String \"Created contact|candidates imported|Batch [0-9]|Auto-import completed\")",
-      "Bash(Select-Object -First 50)"
+      "Bash(Select-Object -First 50)",
+      "Bash(vercel:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

@@ -475,6 +475,12 @@ class MultiEntityReferenceService {
     try {
       console.log('🔍 loadGlobalCompany START:', { input: globalCompanyIdOrName });
 
+      // Validiere Input
+      if (!globalCompanyIdOrName || typeof globalCompanyIdOrName !== 'string' || globalCompanyIdOrName.trim() === '') {
+        console.warn('❌ loadGlobalCompany: Ungültiger Input:', globalCompanyIdOrName);
+        return null;
+      }
+
       // Versuche zuerst über ID zu laden
       console.log('📊 Versuche Company-Load über ID...');
       const globalDoc = await getDoc(doc(db, 'companies_enhanced', globalCompanyIdOrName));
@@ -633,6 +639,15 @@ class MultiEntityReferenceService {
     batch: any
   ): Promise<{ success: boolean; localCompanyId?: string; documentId?: string; error?: string }> {
     try {
+      // Validiere globalCompanyIdOrName
+      if (!globalCompanyIdOrName || typeof globalCompanyIdOrName !== 'string' || globalCompanyIdOrName.trim() === '') {
+        console.warn('❌ ensureCompanyReference: Ungültige globalCompanyIdOrName:', globalCompanyIdOrName);
+        return {
+          success: false,
+          error: 'Ungültige globalCompanyId oder Company-Name'
+        };
+      }
+
       // Prüfe ob Company-Reference bereits existiert
       const existingCompanyRef = await this.findCompanyReferenceByGlobalId(
         globalCompanyIdOrName, organizationId
