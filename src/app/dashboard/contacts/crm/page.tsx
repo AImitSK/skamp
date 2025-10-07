@@ -58,6 +58,7 @@ import clsx from 'clsx';
 import { Timestamp } from 'firebase/firestore';
 import { CountryCode } from '@/types/international';
 import { COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from '@/types/crm-enhanced';
+import * as Flags from 'country-flag-icons/react/3x2';
 
 type TabType = 'companies' | 'contacts';
 // Grid-Ansicht entfernt - nur Listenansicht verfügbar
@@ -131,17 +132,16 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
   return primary?.number || phones[0].number;
 };
 
-// Convert country code to flag emoji (platform-independent)
-const getFlagEmoji = (countryCode?: string): string => {
-  if (!countryCode || countryCode.length !== 2) return '';
+// Get SVG flag component for country code
+const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
+  if (!countryCode || countryCode.length !== 2) return null;
 
-  // Regional Indicator Symbol Letter A = U+1F1E6 (127462)
-  // We add the offset of each letter (A=0, B=1, ..., Z=25)
-  const OFFSET = 127462; // U+1F1E6
-  const chars = countryCode.toUpperCase().split('');
-  const codePoints = chars.map(char => OFFSET + char.charCodeAt(0) - 65); // 65 = 'A'
+  // @ts-ignore - Dynamic import from flag library
+  const Flag = Flags[countryCode.toUpperCase()];
 
-  return String.fromCodePoint(...codePoints);
+  if (!Flag) return null;
+
+  return <Flag className={className} title={countryCode} />;
 };
 
 // Country code to full name mapping
@@ -916,7 +916,7 @@ const getContactCount = (companyId: string) => {
                   <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Website / Telefon
                   </div>
-                  <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+                  <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Personen
                   </div>
                   <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
@@ -969,8 +969,9 @@ const getContactCount = (companyId: string) => {
                               {company.mainAddress.city || '—'}
                             </div>
                             {company.mainAddress.countryCode && (
-                              <div className="text-zinc-600 dark:text-zinc-400 mt-0.5">
-                                {getFlagEmoji(company.mainAddress.countryCode)} {getCountryName(company.mainAddress.countryCode)}
+                              <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 mt-0.5">
+                                <FlagIcon countryCode={company.mainAddress.countryCode} className="h-3 w-5 shrink-0" />
+                                <span>{getCountryName(company.mainAddress.countryCode)}</span>
                               </div>
                             )}
                           </div>
@@ -987,29 +988,37 @@ const getContactCount = (companyId: string) => {
                               href={company.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary hover:text-primary-hover truncate block"
+                              className="text-primary hover:text-primary-hover truncate flex items-center gap-1.5"
                               title={company.website}
                             >
-                              {company.website.replace(/^https?:\/\/(www\.)?/, '')}
+                              <GlobeAltIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                              <span className="truncate">{company.website.replace(/^https?:\/\/(www\.)?/, '')}</span>
                             </a>
                           ) : (
-                            <div className="text-zinc-400">—</div>
+                            <div className="text-zinc-400 flex items-center gap-1.5">
+                              <GlobeAltIcon className="h-4 w-4 shrink-0" />
+                              <span>—</span>
+                            </div>
                           )}
                           {company.phones && company.phones.length > 0 ? (
                             <a
                               href={`tel:${company.phones[0].number}`}
-                              className="text-primary hover:text-primary-hover block"
+                              className="text-primary hover:text-primary-hover flex items-center gap-1.5"
                             >
-                              {company.phones[0].number}
+                              <PhoneIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                              <span>{company.phones[0].number}</span>
                             </a>
                           ) : (
-                            <div className="text-zinc-400">—</div>
+                            <div className="text-zinc-400 flex items-center gap-1.5">
+                              <PhoneIcon className="h-4 w-4 shrink-0" />
+                              <span>—</span>
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {/* Contact Count */}
-                      <div className="w-[10%] text-center">
+                      <div className="w-[10%]">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {getContactCount(company.id!)}
                         </span>
