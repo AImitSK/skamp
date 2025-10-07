@@ -266,6 +266,14 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
   useEffect(() => {
     if (company) {
+      // Debug: Check if phones are loaded
+      console.log('📞 CompanyModal loading company:', {
+        id: company.id,
+        name: company.name,
+        phones: company.phones,
+        emails: company.emails
+      });
+
       // Directly use enhanced company data
       setFormData({
         ...company,
