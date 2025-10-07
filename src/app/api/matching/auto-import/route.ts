@@ -115,12 +115,15 @@ export async function GET(request: NextRequest) {
     if (hasMoreCandidates) {
       // Berechne nächsten Offset
       const nextOffset = (offset || 0) + (maxCandidates || 24);
-      console.log(`🔄 Triggering next chunk with offset=${nextOffset}...`);
+      console.log(`🔄 Triggering next chunk with offset=${nextOffset} after 90s delay...`);
 
-      // Trigger next chunk asynchronously (fire-and-forget)
-      fetch(`${baseUrl}/api/matching/auto-import?secret=${cronSecret}&maxCandidates=${maxCandidates || 24}&offset=${nextOffset}`, {
-        method: 'GET'
-      }).catch(err => console.error('Failed to trigger next chunk:', err));
+      // Trigger next chunk asynchronously with 90s delay (fire-and-forget)
+      // 90s Delay vermeidet Gemini API Rate Limit (15 RPM)
+      setTimeout(() => {
+        fetch(`${baseUrl}/api/matching/auto-import?secret=${cronSecret}&maxCandidates=${maxCandidates || 24}&offset=${nextOffset}`, {
+          method: 'GET'
+        }).catch(err => console.error('Failed to trigger next chunk:', err));
+      }, 90000); // 90 Sekunden Delay
     }
 
     // Aktualisiere lastRun in Settings (Admin SDK) - nur beim letzten Chunk
