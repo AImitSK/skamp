@@ -119,6 +119,30 @@ function Alert({
   );
 }
 
+// Country options with calling codes
+const COUNTRY_OPTIONS = [
+  { code: 'DE', label: '+49 DE', callingCode: '49' },
+  { code: 'AT', label: '+43 AT', callingCode: '43' },
+  { code: 'CH', label: '+41 CH', callingCode: '41' },
+  { code: 'US', label: '+1 US', callingCode: '1' },
+  { code: 'GB', label: '+44 GB', callingCode: '44' },
+  { code: 'FR', label: '+33 FR', callingCode: '33' },
+  { code: 'IT', label: '+39 IT', callingCode: '39' },
+  { code: 'ES', label: '+34 ES', callingCode: '34' },
+  { code: 'NL', label: '+31 NL', callingCode: '31' },
+  { code: 'BE', label: '+32 BE', callingCode: '32' },
+  { code: 'PL', label: '+48 PL', callingCode: '48' },
+  { code: 'SE', label: '+46 SE', callingCode: '46' },
+  { code: 'NO', label: '+47 NO', callingCode: '47' },
+  { code: 'DK', label: '+45 DK', callingCode: '45' },
+  { code: 'FI', label: '+358 FI', callingCode: '358' },
+  { code: 'CZ', label: '+420 CZ', callingCode: '420' },
+  { code: 'HU', label: '+36 HU', callingCode: '36' },
+  { code: 'PT', label: '+351 PT', callingCode: '351' },
+  { code: 'GR', label: '+30 GR', callingCode: '30' },
+  { code: 'IE', label: '+353 IE', callingCode: '353' }
+];
+
 // Helper functions für Enhanced Data
 const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>): string => {
   if (!emails || emails.length === 0) return '';
@@ -131,21 +155,20 @@ const getPrimaryPhone = (phones?: Array<{ number: string; countryCode?: string; 
   const primary = phones.find(p => p.isPrimary) || phones[0];
   if (!primary) return '';
 
-  // Get country calling code
-  const countryCallingCodes: Record<string, string> = {
-    'DE': '+49', 'AT': '+43', 'CH': '+41', 'US': '+1', 'GB': '+44',
-    'FR': '+33', 'IT': '+39', 'ES': '+34', 'NL': '+31', 'BE': '+32',
-    'PL': '+48', 'CZ': '+420', 'DK': '+45', 'SE': '+46', 'NO': '+47', 'FI': '+358'
-  };
-
-  const prefix = primary.countryCode ? countryCallingCodes[primary.countryCode] || '' : '';
   const number = primary.number || '';
 
   // If number already starts with +, return as is
   if (number.startsWith('+')) return number;
 
-  // Otherwise prepend country code
-  return prefix ? `${prefix} ${number}` : number;
+  // Get calling code from COUNTRY_OPTIONS
+  if (primary.countryCode) {
+    const country = COUNTRY_OPTIONS.find(c => c.code === primary.countryCode);
+    if (country) {
+      return `+${country.callingCode} ${number}`;
+    }
+  }
+
+  return number;
 };
 
 // Get SVG flag component for country code
