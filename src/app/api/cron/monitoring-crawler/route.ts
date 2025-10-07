@@ -1,27 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-  addDoc,
-  Timestamp,
-  FieldValue
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import Parser from 'rss-parser';
 import {
   CampaignMonitoringTracker,
-  MonitoringSuggestion,
   MonitoringSource,
-  MonitoringChannel,
-  SpamPattern
+  MonitoringChannel
 } from '@/types/monitoring';
 import { normalizeUrl } from '@/lib/utils/url-normalizer';
-import { spamPatternService } from '@/lib/firebase/spam-pattern-service';
 import { crawlerControlService } from '@/lib/firebase-admin/crawler-control-service';
+import {
+  getActiveTrackers,
+  getCampaign,
+  checkForSpam,
+  findExistingSuggestion,
+  updateSuggestionWithNewSource,
+  createSuggestion,
+  createClippingFromSuggestion,
+  updateTrackerChannel,
+  updateTrackerStats,
+  deactivateExpiredTrackers
+} from '@/lib/firebase-admin/monitoring-crawler-service';
 
 const parser = new Parser();
 
@@ -58,29 +55,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 1. Deaktiviere abgelaufene Tracker
+    // 1. Deaktiviere abgelaufene Tracker (Admin SDK)
     await deactivateExpiredTrackers();
 
-    // 2. Lade alle aktiven Tracker
-    const trackersQuery = query(
-      collection(db, 'campaign_monitoring_trackers'),
-      where('isActive', '==', true),
-      where('endDate', '>', Timestamp.now())
-    );
-
-    const trackersSnapshot = await getDocs(trackersQuery);
-    console.log(`📊 Found ${trackersSnapshot.size} active trackers`);
+    // 2. Lade alle aktiven Tracker (Admin SDK)
+    const trackers = await getActiveTrackers();
+    console.log(`📊 Found ${trackers.length} active trackers`);
 
     let totalArticlesFound = 0;
     let totalAutoConfirmed = 0;
 
     // 3. Crawle jeden Tracker
-    for (const trackerDoc of trackersSnapshot.docs) {
-      const tracker = {
-        id: trackerDoc.id,
-        ...trackerDoc.data()
-      } as CampaignMonitoringTracker;
-
+    for (const tracker of trackers) {
       console.log(`🔍 Crawling tracker ${tracker.id} for campaign ${tracker.campaignId}`);
 
       const stats = await crawlTracker(tracker);
@@ -92,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      trackersProcessed: trackersSnapshot.size,
+      trackersProcessed: trackers.length,
       totalArticlesFound,
       totalAutoConfirmed
     });
@@ -115,32 +101,23 @@ async function crawlTracker(tracker: CampaignMonitoringTracker): Promise<{
   let articlesFound = 0;
   let autoConfirmed = 0;
 
-  // Lade Kampagnen-Daten für Keywords
-  const campaignDoc = await getDocs(
-    query(collection(db, 'pr_campaigns'), where('__name__', '==', tracker.campaignId))
-  );
+  // Lade Kampagnen-Daten für Keywords (Admin SDK)
+  const campaign = await getCampaign(tracker.campaignId);
 
-  if (campaignDoc.empty) {
+  if (!campaign) {
     console.error(`Campaign ${tracker.campaignId} not found`);
     return { articlesFound: 0, autoConfirmed: 0 };
   }
 
-  const campaign = campaignDoc.docs[0].data();
   const keywords = campaign.monitoringConfig?.keywords || [];
   const minMatchScore = campaign.monitoringConfig?.minMatchScore || 70;
-
-  // Lade Spam Patterns
-  const spamPatterns = await spamPatternService.getPatternsForCampaign(
-    tracker.organizationId,
-    tracker.campaignId
-  );
 
   // Crawle jeden aktiven Channel
   for (const channel of tracker.channels) {
     if (!channel.isActive) continue;
 
     try {
-      let sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp }> = [];
+      let sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date }> = [];
 
       // RSS Feed Crawling
       if (channel.type === 'rss_feed') {
@@ -157,7 +134,6 @@ async function crawlTracker(tracker: CampaignMonitoringTracker): Promise<{
         const result = await processSuggestion(
           tracker,
           source,
-          spamPatterns,
           minMatchScore
         );
 
@@ -167,28 +143,40 @@ async function crawlTracker(tracker: CampaignMonitoringTracker): Promise<{
           if (result.autoConfirmed) {
             autoConfirmed++;
 
-            // Markiere Channel als gefunden und deaktiviere
-            await markChannelAsFound(tracker.id!, channel.id);
+            // Markiere Channel als gefunden und deaktiviere (Admin SDK)
+            await updateTrackerChannel(tracker.id!, channel.id, {
+              wasFound: true,
+              foundAt: new Date(),
+              isActive: false,
+              articlesFound: channel.articlesFound + 1
+            });
           }
         }
       }
 
-      // Update Channel lastChecked
-      await updateChannelLastChecked(tracker.id!, channel.id);
+      // Update Channel lastChecked (Admin SDK)
+      await updateTrackerChannel(tracker.id!, channel.id, {
+        lastChecked: new Date(),
+        lastSuccess: new Date()
+      });
 
     } catch (error) {
       console.error(`Error crawling channel ${channel.id}:`, error);
-      await updateChannelError(tracker.id!, channel.id, error instanceof Error ? error.message : 'Unknown error');
+      // Update Channel Error (Admin SDK)
+      await updateTrackerChannel(tracker.id!, channel.id, {
+        errorCount: channel.errorCount + 1,
+        lastError: error instanceof Error ? error.message : 'Unknown error',
+        lastChecked: new Date()
+      });
     }
   }
 
-  // Update Tracker Statistics
-  await updateDoc(doc(db, 'campaign_monitoring_trackers', tracker.id!), {
+  // Update Tracker Statistics (Admin SDK)
+  await updateTrackerStats(tracker.id!, {
     totalArticlesFound: (tracker.totalArticlesFound || 0) + articlesFound,
     totalAutoConfirmed: (tracker.totalAutoConfirmed || 0) + autoConfirmed,
-    lastCrawlAt: Timestamp.now(),
-    nextCrawlAt: calculateNextCrawl(),
-    updatedAt: Timestamp.now()
+    lastCrawlAt: new Date(),
+    nextCrawlAt: calculateNextCrawl()
   });
 
   return { articlesFound, autoConfirmed };
@@ -200,8 +188,8 @@ async function crawlTracker(tracker: CampaignMonitoringTracker): Promise<{
 async function crawlRssFeed(
   channel: MonitoringChannel,
   keywords: string[]
-): Promise<Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp }>> {
-  const sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp }> = [];
+): Promise<Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date }>> {
+  const sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date }> = [];
 
   try {
     const feed = await parser.parseURL(channel.url);
@@ -220,12 +208,12 @@ async function crawlRssFeed(
           sourceUrl: channel.url,
           matchScore,
           matchedKeywords: findMatchedKeywords(item.title, item.contentSnippet || '', keywords),
-          foundAt: Timestamp.now(),
+          foundAt: new Date(),
           publicationId: channel.publicationId,
           articleUrl: item.link,
           articleTitle: item.title,
           articleExcerpt: item.contentSnippet,
-          publishedAt: item.pubDate ? Timestamp.fromDate(new Date(item.pubDate)) : undefined
+          publishedAt: item.pubDate ? new Date(item.pubDate) : undefined
         });
       }
     }
@@ -243,8 +231,8 @@ async function crawlRssFeed(
 async function crawlGoogleNews(
   channel: MonitoringChannel,
   keywords: string[]
-): Promise<Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp }>> {
-  const sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp }> = [];
+): Promise<Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date }>> {
+  const sources: Array<MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date }> = [];
 
   try {
     // Google News RSS Feed URL ist bereits im Channel gespeichert
@@ -264,11 +252,11 @@ async function crawlGoogleNews(
           sourceUrl: channel.url,
           matchScore,
           matchedKeywords: findMatchedKeywords(item.title, item.contentSnippet || '', keywords),
-          foundAt: Timestamp.now(),
+          foundAt: new Date(),
           articleUrl: item.link,
           articleTitle: item.title,
           articleExcerpt: item.contentSnippet,
-          publishedAt: item.pubDate ? Timestamp.fromDate(new Date(item.pubDate)) : undefined
+          publishedAt: item.pubDate ? new Date(item.pubDate) : undefined
         });
       }
     }
@@ -283,59 +271,42 @@ async function crawlGoogleNews(
 }
 
 /**
- * Verarbeitet Suggestion (prüft Spam, erstellt/updated Suggestion)
+ * Verarbeitet Suggestion (prüft Spam, erstellt/updated Suggestion) - Admin SDK
  */
 async function processSuggestion(
   tracker: CampaignMonitoringTracker,
-  source: MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Timestamp },
-  spamPatterns: SpamPattern[],
+  source: MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date },
   minMatchScore: number
 ): Promise<{ created: boolean; autoConfirmed: boolean }> {
   const normalized = normalizeUrl(source.articleUrl);
 
-  // 1. Prüfe ob bereits vorhanden
-  const existingQuery = query(
-    collection(db, 'monitoring_suggestions'),
-    where('campaignId', '==', tracker.campaignId),
-    where('normalizedUrl', '==', normalized)
-  );
+  // 1. Prüfe ob bereits vorhanden (Admin SDK)
+  const existing = await findExistingSuggestion(tracker.campaignId, normalized);
 
-  const existingSnapshot = await getDocs(existingQuery);
-
-  if (!existingSnapshot.empty) {
-    // Update: Füge Source hinzu
-    const existingDoc = existingSnapshot.docs[0];
-    const existing = existingDoc.data() as MonitoringSuggestion;
-
-    const updatedSources = [...existing.sources, source];
-    const avgScore = updatedSources.reduce((sum, s) => sum + s.matchScore, 0) / updatedSources.length;
-    const highestScore = Math.max(...updatedSources.map(s => s.matchScore));
-
-    // Berechne neue Confidence
-    const confidence = calculateConfidence(updatedSources.length, avgScore, highestScore);
-    const shouldAutoConfirm = shouldAutoConfirmSuggestion(updatedSources.length, avgScore, highestScore, minMatchScore);
-
-    await updateDoc(existingDoc.ref, {
-      sources: updatedSources,
-      avgMatchScore: avgScore,
-      highestMatchScore: highestScore,
-      confidence,
-      autoConfirmed: shouldAutoConfirm,
-      status: shouldAutoConfirm ? 'auto_confirmed' : existing.status,
-      updatedAt: Timestamp.now()
-    });
+  if (existing.exists && existing.suggestion && existing.suggestionId) {
+    // Update: Füge Source hinzu (Admin SDK)
+    const result = await updateSuggestionWithNewSource(
+      existing.suggestionId,
+      existing.suggestion,
+      source,
+      minMatchScore
+    );
 
     // Falls Auto-Confirm: Erstelle Clipping
-    if (shouldAutoConfirm && existing.status === 'pending') {
-      await createClippingFromSuggestion(existingDoc.id, { ...existing, sources: updatedSources }, tracker);
+    if (result.autoConfirmed) {
+      await createClippingFromSuggestion(
+        existing.suggestionId,
+        { ...existing.suggestion, sources: [...existing.suggestion.sources, source] },
+        tracker
+      );
       return { created: false, autoConfirmed: true };
     }
 
-    return { created: false, autoConfirmed: false };
+    return { created: false, autoConfirmed: result.updated ? false : false };
   }
 
-  // 2. Spam-Check
-  const spamCheck = await spamPatternService.checkForSpam(
+  // 2. Spam-Check (Admin SDK)
+  const spamCheck = await checkForSpam(
     source.articleUrl,
     source.articleTitle,
     source.sourceName,
@@ -348,36 +319,32 @@ async function processSuggestion(
     return { created: false, autoConfirmed: false };
   }
 
-  // 3. Erstelle neue Suggestion
-  const confidence = calculateConfidence(1, source.matchScore, source.matchScore);
-  const shouldAutoConfirm = shouldAutoConfirmSuggestion(1, source.matchScore, source.matchScore, minMatchScore);
-
-  const suggestionData: Omit<MonitoringSuggestion, 'id'> = {
-    organizationId: tracker.organizationId,
-    campaignId: tracker.campaignId,
-    articleUrl: source.articleUrl,
-    normalizedUrl: normalized,
-    articleTitle: source.articleTitle,
-    articleExcerpt: source.articleExcerpt,
-    sources: [source],
-    avgMatchScore: source.matchScore,
-    highestMatchScore: source.matchScore,
-    confidence,
-    autoConfirmed: shouldAutoConfirm,
-    status: shouldAutoConfirm ? 'auto_confirmed' : 'pending',
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
-  };
-
-  const newDoc = await addDoc(collection(db, 'monitoring_suggestions'), suggestionData);
+  // 3. Erstelle neue Suggestion (Admin SDK)
+  const result = await createSuggestion(tracker, source, normalized, minMatchScore);
 
   // Falls Auto-Confirm: Erstelle Clipping
-  if (shouldAutoConfirm) {
-    await createClippingFromSuggestion(newDoc.id, suggestionData, tracker);
-    return { created: true, autoConfirmed: true };
+  if (result.created && result.autoConfirmed && result.suggestionId) {
+    const suggestionData: Omit<MonitoringSuggestion, 'id'> = {
+      organizationId: tracker.organizationId,
+      campaignId: tracker.campaignId,
+      articleUrl: source.articleUrl,
+      normalizedUrl: normalized,
+      articleTitle: source.articleTitle,
+      articleExcerpt: source.articleExcerpt,
+      sources: [source],
+      avgMatchScore: source.matchScore,
+      highestMatchScore: source.matchScore,
+      confidence: 'medium' as const,
+      autoConfirmed: true,
+      status: 'auto_confirmed',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await createClippingFromSuggestion(result.suggestionId, suggestionData, tracker);
   }
 
-  return { created: true, autoConfirmed: false };
+  return { created: result.created, autoConfirmed: result.autoConfirmed };
 }
 
 /**
@@ -426,215 +393,11 @@ function findMatchedKeywords(title: string, content: string, keywords: string[])
 }
 
 /**
- * Berechnet Confidence Level
- */
-function calculateConfidence(
-  sourceCount: number,
-  avgScore: number,
-  highestScore: number
-): 'low' | 'medium' | 'high' | 'very_high' {
-  if (sourceCount >= 3 && avgScore >= 80) return 'very_high';
-  if (sourceCount >= 2 && avgScore >= 70) return 'high';
-  if (sourceCount >= 2 || avgScore >= 80) return 'medium';
-  return 'low';
-}
-
-/**
- * Entscheidet ob Auto-Confirm
- */
-function shouldAutoConfirmSuggestion(
-  sourceCount: number,
-  avgScore: number,
-  highestScore: number,
-  minMatchScore: number
-): boolean {
-  // 2+ Quellen = Auto-Confirm
-  if (sourceCount >= 2) return true;
-
-  // 1 Quelle aber sehr hoher Score
-  if (sourceCount === 1 && highestScore >= 85 && highestScore >= minMatchScore) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Erstellt Clipping aus Suggestion
- */
-async function createClippingFromSuggestion(
-  suggestionId: string,
-  suggestion: Omit<MonitoringSuggestion, 'id'>,
-  tracker: CampaignMonitoringTracker
-): Promise<void> {
-  // Lade Kampagne für projectId
-  const campaignQuery = query(
-    collection(db, 'pr_campaigns'),
-    where('__name__', '==', tracker.campaignId)
-  );
-  const campaignSnapshot = await getDocs(campaignQuery);
-
-  if (campaignSnapshot.empty) {
-    console.error(`Campaign ${tracker.campaignId} not found for clipping creation`);
-    return;
-  }
-
-  const campaign = campaignSnapshot.docs[0].data();
-
-  const clippingData = {
-    organizationId: tracker.organizationId,
-    campaignId: tracker.campaignId,
-    projectId: campaign?.projectId,
-    title: suggestion.articleTitle,
-    url: suggestion.articleUrl,
-    publishedAt: suggestion.sources[0].publishedAt || Timestamp.now(),
-    outletName: suggestion.sources[0].sourceName,
-    outletType: 'online' as const,
-    sentiment: 'neutral' as const,
-    detectionMethod: 'automated' as const,
-    detectedAt: Timestamp.now(),
-    createdBy: 'system-crawler',
-    verifiedBy: 'system-auto-confirm',
-    verifiedAt: Timestamp.now(),
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
-  };
-
-  const clippingRef = await addDoc(collection(db, 'media_clippings'), clippingData);
-
-  // Update Suggestion mit clippingId
-  await updateDoc(doc(db, 'monitoring_suggestions', suggestionId), {
-    clippingId: clippingRef.id,
-    autoConfirmedAt: Timestamp.now()
-  });
-
-  console.log(`✅ Auto-confirmed clipping created: ${clippingRef.id}`);
-}
-
-/**
- * Markiert Channel als gefunden und deaktiviert ihn
- */
-async function markChannelAsFound(trackerId: string, channelId: string): Promise<void> {
-  const trackerDoc = await getDocs(
-    query(collection(db, 'campaign_monitoring_trackers'), where('__name__', '==', trackerId))
-  );
-
-  if (trackerDoc.empty) return;
-
-  const tracker = trackerDoc.docs[0].data() as CampaignMonitoringTracker;
-
-  const updatedChannels = tracker.channels.map(ch => {
-    if (ch.id === channelId) {
-      return {
-        ...ch,
-        wasFound: true,
-        foundAt: Timestamp.now(),
-        isActive: false, // Deaktiviere Channel nach Fund
-        articlesFound: ch.articlesFound + 1
-      };
-    }
-    return ch;
-  });
-
-  await updateDoc(trackerDoc.docs[0].ref, {
-    channels: updatedChannels,
-    updatedAt: Timestamp.now()
-  });
-}
-
-/**
- * Update Channel lastChecked
- */
-async function updateChannelLastChecked(trackerId: string, channelId: string): Promise<void> {
-  const trackerDoc = await getDocs(
-    query(collection(db, 'campaign_monitoring_trackers'), where('__name__', '==', trackerId))
-  );
-
-  if (trackerDoc.empty) return;
-
-  const tracker = trackerDoc.docs[0].data() as CampaignMonitoringTracker;
-
-  const updatedChannels = tracker.channels.map(ch => {
-    if (ch.id === channelId) {
-      return {
-        ...ch,
-        lastChecked: Timestamp.now(),
-        lastSuccess: Timestamp.now()
-      };
-    }
-    return ch;
-  });
-
-  await updateDoc(trackerDoc.docs[0].ref, {
-    channels: updatedChannels,
-    updatedAt: Timestamp.now()
-  });
-}
-
-/**
- * Update Channel Error
- */
-async function updateChannelError(trackerId: string, channelId: string, error: string): Promise<void> {
-  const trackerDoc = await getDocs(
-    query(collection(db, 'campaign_monitoring_trackers'), where('__name__', '==', trackerId))
-  );
-
-  if (trackerDoc.empty) return;
-
-  const tracker = trackerDoc.docs[0].data() as CampaignMonitoringTracker;
-
-  const updatedChannels = tracker.channels.map(ch => {
-    if (ch.id === channelId) {
-      return {
-        ...ch,
-        errorCount: ch.errorCount + 1,
-        lastError: error,
-        lastChecked: Timestamp.now()
-      };
-    }
-    return ch;
-  });
-
-  await updateDoc(trackerDoc.docs[0].ref, {
-    channels: updatedChannels,
-    updatedAt: Timestamp.now()
-  });
-}
-
-/**
- * Deaktiviert abgelaufene Tracker
- */
-async function deactivateExpiredTrackers(): Promise<number> {
-  const expiredQuery = query(
-    collection(db, 'campaign_monitoring_trackers'),
-    where('isActive', '==', true),
-    where('endDate', '<=', Timestamp.now())
-  );
-
-  const snapshot = await getDocs(expiredQuery);
-  let deactivated = 0;
-
-  for (const docSnap of snapshot.docs) {
-    await updateDoc(docSnap.ref, {
-      isActive: false,
-      updatedAt: Timestamp.now()
-    });
-    deactivated++;
-  }
-
-  if (deactivated > 0) {
-    console.log(`⏰ Deactivated ${deactivated} expired trackers`);
-  }
-
-  return deactivated;
-}
-
-/**
  * Berechnet nächsten Crawl-Zeitpunkt
  */
-function calculateNextCrawl(): Timestamp {
+function calculateNextCrawl(): Date {
   const next = new Date();
   next.setDate(next.getDate() + 1);
   next.setHours(6, 0, 0, 0); // 06:00 Uhr
-  return Timestamp.fromDate(next);
+  return next;
 }
