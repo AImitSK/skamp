@@ -953,7 +953,7 @@ const getContactCount = (companyId: string) => {
                     Ort / Land
                   </div>
                   <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Website / Telefon
+                    Website
                   </div>
                   <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Personen
@@ -1019,41 +1019,25 @@ const getContactCount = (companyId: string) => {
                         )}
                       </div>
 
-                      {/* Website / Phone */}
+                      {/* Website */}
                       <div className="w-[20%]">
-                        <div className="text-sm space-y-0.5">
-                          {company.website ? (
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:text-primary-hover truncate flex items-center gap-1.5"
-                              title={company.website}
-                            >
-                              <GlobeAltIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
-                              <span className="truncate">{company.website.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                            </a>
-                          ) : (
-                            <div className="text-zinc-400 flex items-center gap-1.5">
-                              <GlobeAltIcon className="h-4 w-4 shrink-0" />
-                              <span>—</span>
-                            </div>
-                          )}
-                          {getPrimaryPhone(company.phones) ? (
-                            <a
-                              href={`tel:${getPrimaryPhone(company.phones)}`}
-                              className="text-primary hover:text-primary-hover flex items-center gap-1.5"
-                            >
-                              <PhoneIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
-                              <span>{getPrimaryPhone(company.phones)}</span>
-                            </a>
-                          ) : (
-                            <div className="text-zinc-400 flex items-center gap-1.5">
-                              <PhoneIcon className="h-4 w-4 shrink-0" />
-                              <span>—</span>
-                            </div>
-                          )}
-                        </div>
+                        {company.website ? (
+                          <a
+                            href={company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:text-primary-hover truncate flex items-center gap-1.5"
+                            title={company.website}
+                          >
+                            <GlobeAltIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                            <span className="truncate">{company.website.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                          </a>
+                        ) : (
+                          <div className="text-sm text-zinc-400 flex items-center gap-1.5">
+                            <GlobeAltIcon className="h-4 w-4 shrink-0" />
+                            <span>—</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Contact Count */}
