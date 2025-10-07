@@ -1,0 +1,2478 @@
+
+> skamp@0.1.0 check:indexes
+> npx tsx scripts/check-firestore-indexes.ts
+
+🔍 Scanning codebase for Firestore queries...
+
+✅ Found 139 unique composite queries
+
+📊 Loaded 46 indexes from firestore.indexes.json
+
+❌ Found 104 queries without matching indexes:
+
+📄 src\app\api\email\domains\test-status\[id]\route.ts:71
+   Collection: email_campaign_sends
+   Fields: createdAt, recipientEmail
+
+   Suggested index:
+   {
+     "collectionGroup": "email_campaign_sends",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "recipientEmail",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\migrate-campaign-assets\route.ts:137
+   Collection: pdf_versions
+   Fields: campaignId, isDeleted
+
+   Suggested index:
+   {
+     "collectionGroup": "pdf_versions",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "campaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isDeleted",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\migrate-campaign-assets\route.ts:203
+   Collection: media_folders
+   Fields: isDeleted, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isDeleted",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\migrate-campaign-assets\route.ts:278
+   Collection: media_folders
+   Fields: isDeleted, name, organizationId, parentFolderId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isDeleted",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "parentFolderId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\invite\route.ts:114
+   Collection: team_members
+   Fields: email, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "team_members",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\invite\route.ts:149
+   Collection: team_members
+   Fields: organizationId, role
+
+   Suggested index:
+   {
+     "collectionGroup": "team_members",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "role",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\invite\route.ts:283
+   Collection: team_members
+   Fields: organizationId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "team_members",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\process-invitations\route.ts:50
+   Collection: notifications
+   Fields: category, isProcessed, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "category",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isProcessed",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\process-invitations\route.ts:109
+   Collection: notifications
+   Fields: category, category, isProcessed, isProcessed, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "category",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "category",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isProcessed",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isProcessed",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\team\process-invitations\route.ts:180
+   Collection: notifications
+   Fields: category, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "category",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\api\v1\webhooks\[webhookId]\deliveries\route.ts:51
+   Collection: webhook_deliveries
+   Fields: organizationId, status, webhookId
+
+   Suggested index:
+   {
+     "collectionGroup": "webhook_deliveries",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "webhookId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\dashboard\admin\test-notification-debug\page.tsx:50
+   Collection: notifications
+   Fields: toUserId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "toUserId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\dashboard\communication\inbox\page.original.tsx:348
+   Collection: email_threads
+   Fields: lastMessageAt, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_threads",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "lastMessageAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\dashboard\communication\inbox\page.original.tsx:403
+   Collection: email_messages
+   Fields: folder, organizationId, receivedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "receivedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\app\dashboard\communication\inbox\page.original.tsx:649
+   Collection: email_messages
+   Fields: receivedAt, threadId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "receivedAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "threadId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\components\inbox\CustomerCampaignSidebar.tsx:69
+   Collection: companies
+   Fields: name, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "companies",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\components\inbox\CustomerCampaignSidebar.tsx:82
+   Collection: pr_campaigns
+   Fields: clientId, createdAt, organizationId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "pr_campaigns",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\components\inbox\InternalNotes.tsx:73
+   Collection: email_notes
+   Fields: createdAt, organizationId, threadId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_notes",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "threadId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-inbox-count.ts:52
+   Collection: email_messages
+   Fields: assignedTo, folder, isRead, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedTo",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-inbox-count.ts:53
+   Collection: email_messages
+   Fields: assignedTo, folder, isRead, isRead, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedTo",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-inbox-count.ts:54
+   Collection: email_messages
+   Fields: assignedTo, folder, folder, isRead, isRead, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedTo",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-inbox-count.ts:63
+   Collection: email_messages
+   Fields: assignedTo, folder, folder, isRead, isRead, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedTo",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "folder",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isRead",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-notifications.ts:398
+   Collection: pr_campaigns
+   Fields: status, updatedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "pr_campaigns",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "updatedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-notifications.ts:414
+   Collection: notifications
+   Fields: createdAt, metadata.campaignId, type, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "metadata.campaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-notifications.ts:458
+   Collection: tasks
+   Fields: dueDate, status
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "dueDate",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\hooks\use-notifications.ts:473
+   Collection: notifications
+   Fields: createdAt, linkId, type, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "linkId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\calendar\notifications.ts:225
+   Collection: scheduled_emails
+   Fields: organizationId, scheduledAt, scheduledAt, status
+
+   Suggested index:
+   {
+     "collectionGroup": "scheduled_emails",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "scheduledAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "scheduledAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\customer-campaign-matcher.ts:95
+   Collection: pr_campaigns
+   Fields: organizationId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "pr_campaigns",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\customer-campaign-matcher.ts:145
+   Collection: contacts_enhanced
+   Fields: email, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "contacts_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\customer-campaign-matcher.ts:182
+   Collection: companies_enhanced
+   Fields: organizationId, website, website
+
+   Suggested index:
+   {
+     "collectionGroup": "companies_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "website",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "website",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\customer-campaign-matcher.ts:205
+   Collection: contacts_enhanced
+   Fields: email, email, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "contacts_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\email-processor-flexible.ts:122
+   Collection: email_messages
+   Fields: messageId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "messageId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\email-processor-flexible.ts:234
+   Collection: email_addresses
+   Fields: email, isActive
+
+   Suggested index:
+   {
+     "collectionGroup": "email_addresses",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\email-service.ts:742
+   Collection: pipeline_events
+   Fields: organizationId, projectId, type
+
+   Suggested index:
+   {
+     "collectionGroup": "pipeline_events",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\project-detection-pipeline.ts:175
+   Collection: projects
+   Fields: customer.email, organizationId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "projects",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "customer.email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\thread-matcher-service-flexible.ts:234
+   Collection: email_messages
+   Fields: organizationId, threadId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_messages",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "threadId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\thread-matcher-service-flexible.ts:852
+   Collection: email_threads
+   Fields: assignedTo, organizationId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "email_threads",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedTo",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\thread-matcher-service-flexible.ts:867
+   Collection: email_threads
+   Fields: organizationId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "email_threads",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\thread-matcher-service-flexible.ts:890
+   Collection: thread_assignment_history
+   Fields: createdAt, threadId
+
+   Suggested index:
+   {
+     "collectionGroup": "thread_assignment_history",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "threadId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\email\thread-matcher-service-flexible.ts:1058
+   Collection: projects
+   Fields: customer.email, status
+
+   Suggested index:
+   {
+     "collectionGroup": "projects",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "customer.email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\analytics-service.ts:129
+   Collection: email_campaign_sends
+   Fields: campaignId, sentAt
+
+   Suggested index:
+   {
+     "collectionGroup": "email_campaign_sends",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "campaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "sentAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\campaign-monitoring-service.ts:115
+   Collection: email_campaign_sends
+   Fields: campaignId, status
+
+   Suggested index:
+   {
+     "collectionGroup": "email_campaign_sends",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "campaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\clipping-service.ts:67
+   Collection: media_clippings
+   Fields: organizationId, projectId, publishedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "media_clippings",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publishedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\crm-service-enhanced.ts:1528
+   Collection: organizations
+   Fields: isActive, localCompanyId
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "localCompanyId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\crm-service.ts:43
+   Collection: companies
+   Fields: name, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "companies",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\crm-service.ts:133
+   Collection: tags
+   Fields: name, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "tags",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\crm-service.ts:273
+   Collection: contacts_enhanced
+   Fields: email, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "contacts_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "email",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\lists-service.ts:50
+   Collection: distribution_lists
+   Fields: name, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "distribution_lists",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\lists-service.ts:515
+   Collection: list_usage
+   Fields: listId, usedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "list_usage",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "listId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "usedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:203
+   Collection: media_shares
+   Fields: createdAt, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_shares",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:225
+   Collection: media_shares
+   Fields: active, shareId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_shares",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "active",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "shareId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:366
+   Collection: media_folders
+   Fields: organizationId, organizationId, parentFolderId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "parentFolderId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:762
+   Collection: media_assets
+   Fields: folderId, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_assets",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "folderId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1095
+   Collection: media_folders
+   Fields: clientId, clientId, organizationId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1101
+   Collection: media_folders
+   Fields: clientId, clientId, organizationId, organizationId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1110
+   Collection: media_folders
+   Fields: clientId, clientId, clientId, organizationId, userId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1111
+   Collection: media_folders
+   Fields: clientId, clientId, clientId, userId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1115
+   Collection: media_folders
+   Fields: clientId, clientId, userId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1116
+   Collection: media_folders
+   Fields: clientId, clientId, userId, userId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1125
+   Collection: media_folders
+   Fields: clientId, clientId, clientId, userId, userId, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "media_folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "clientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1314
+   Collection: media_assets
+   Fields: organizationId, projectId, publishDate, type
+
+   Suggested index:
+   {
+     "collectionGroup": "media_assets",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publishDate",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\media-service.ts:1423
+   Collection: media_assets
+   Fields: organizationId, publishDate, publishDate, type
+
+   Suggested index:
+   {
+     "collectionGroup": "media_assets",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publishDate",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publishDate",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:533
+   Collection: companies_enhanced
+   Fields: isGlobal, name
+
+   Suggested index:
+   {
+     "collectionGroup": "companies_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isGlobal",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:579
+   Collection: publications
+   Fields: organizationId, publisherId
+
+   Suggested index:
+   {
+     "collectionGroup": "publications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publisherId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:596
+   Collection: publications
+   Fields: companyId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "publications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "companyId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:873
+   Collection: organizations
+   Fields: globalJournalistId, isActive
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "globalJournalistId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:1006
+   Collection: organizations
+   Fields: globalCompanyId, isActive
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "globalCompanyId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:1033
+   Collection: organizations
+   Fields: globalPublicationId, isActive
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "globalPublicationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:1060
+   Collection: organizations
+   Fields: isActive, localJournalistId
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "localJournalistId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:1115
+   Collection: organizations
+   Fields: companyReferenceId, isActive
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "companyReferenceId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\multi-entity-reference-service.ts:1141
+   Collection: organizations
+   Fields: isActive, publicationReferenceIds
+
+   Suggested index:
+   {
+     "collectionGroup": "organizations",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publicationReferenceIds",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\organization-service.ts:411
+   Collection: team_members
+   Fields: status, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "team_members",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\pr-service.ts:888
+   Collection: pr_approval_shares
+   Fields: isActive, shareId
+
+   Suggested index:
+   {
+     "collectionGroup": "pr_approval_shares",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isActive",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "shareId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\pr-service.ts:1505
+   Collection: pr_campaigns
+   Fields: createdAt, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "pr_campaigns",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:159
+   Collection: email_threads
+   Fields: lastMessageAt, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_threads",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "lastMessageAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:208
+   Collection: project_internal_notes
+   Fields: createdAt, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "project_internal_notes",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:256
+   Collection: project_history
+   Fields: createdAt, organizationId, projectId, type
+
+   Suggested index:
+   {
+     "collectionGroup": "project_history",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:305
+   Collection: approval_history
+   Fields: createdAt, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "approval_history",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:362
+   Collection: email_threads
+   Fields: organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_threads",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-communication-service.ts:395
+   Collection: project_internal_notes
+   Fields: organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "project_internal_notes",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-service.ts:109
+   Collection: projects
+   Fields: organizationId, status, updatedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "projects",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "updatedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-service.ts:116
+   Collection: projects
+   Fields: currentStage, organizationId, status, updatedAt
+
+   Suggested index:
+   {
+     "collectionGroup": "projects",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "currentStage",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "updatedAt",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-service.ts:467
+   Collection: media_clippings
+   Fields: organizationId, projectId, publishDate
+
+   Suggested index:
+   {
+     "collectionGroup": "media_clippings",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "publishDate",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-service.ts:548
+   Collection: projects
+   Fields: currentStage, monitoringStatus, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "projects",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "currentStage",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "monitoringStatus",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\project-service.ts:958
+   Collection: approvals
+   Fields: createdAt, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "approvals",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\strategy-document-service.ts:249
+   Collection: document_versions
+   Fields: documentId, version
+
+   Suggested index:
+   {
+     "collectionGroup": "document_versions",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "documentId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "version",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:120
+   Collection: tasks
+   Fields: linkedClientId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "linkedClientId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:136
+   Collection: tasks
+   Fields: linkedCampaignId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "linkedCampaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:302
+   Collection: notifications
+   Fields: createdAt, linkId, organizationId, type
+
+   Suggested index:
+   {
+     "collectionGroup": "notifications",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "createdAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "linkId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "type",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:352
+   Collection: tasks
+   Fields: linkedProjectId, organizationId, pipelineStage
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "linkedProjectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "pipelineStage",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:373
+   Collection: tasks
+   Fields: linkedProjectId, organizationId, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "linkedProjectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:416
+   Collection: tasks
+   Fields: linkedProjectId, organizationId, pipelineStage, requiredForStageCompletion
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "linkedProjectId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "pipelineStage",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "requiredForStageCompletion",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:615
+   Collection: tasks
+   Fields: dueDate, organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "dueDate",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:633
+   Collection: tasks
+   Fields: organizationId, projectId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "projectId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\task-service.ts:665
+   Collection: tasks
+   Fields: assignedUserId, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "tasks",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "assignedUserId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\firebase\_archive\journalist-database-service.archived.ts:1246
+   Collection: journalistCandidates
+   Fields: matching.averageScore, review.status
+
+   Suggested index:
+   {
+     "collectionGroup": "journalistCandidates",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "matching.averageScore",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "review.status",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\matching\database-analyzer.ts:187
+   Collection: contacts_enhanced
+   Fields: deletedAt, isGlobal, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "contacts_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "deletedAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isGlobal",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\matching\database-analyzer.ts:239
+   Collection: contacts_enhanced
+   Fields: deletedAt, isGlobal, organizationId, website
+
+   Suggested index:
+   {
+     "collectionGroup": "contacts_enhanced",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "deletedAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isGlobal",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "website",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\matching\publication-finder.ts:243
+   Collection: superadmin_contacts
+   Fields: deletedAt, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "superadmin_contacts",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "deletedAt",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\security\rate-limit-service.ts:194
+   Collection: email_activity_logs
+   Fields: status, timestamp, timestamp, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_activity_logs",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "status",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "timestamp",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "timestamp",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\security\rate-limit-service.ts:319
+   Collection: email_activity_logs
+   Fields: timestamp, userId
+
+   Suggested index:
+   {
+     "collectionGroup": "email_activity_logs",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "timestamp",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "userId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\services\asset-migration-service.ts:141
+   Collection: folders
+   Fields: isDeleted, name, organizationId
+
+   Suggested index:
+   {
+     "collectionGroup": "folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isDeleted",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\services\asset-migration-service.ts:233
+   Collection: folders
+   Fields: isDeleted, name, organizationId, parentId
+
+   Suggested index:
+   {
+     "collectionGroup": "folders",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "isDeleted",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "name",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "organizationId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "parentId",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+📄 src\lib\services\asset-migration-service.ts:478
+   Collection: pdf_versions
+   Fields: campaignId, isMigrated
+
+   Suggested index:
+   {
+     "collectionGroup": "pdf_versions",
+     "queryScope": "COLLECTION",
+     "fields": [
+       {
+         "fieldPath": "campaignId",
+         "order": "ASCENDING"
+       },
+       {
+         "fieldPath": "isMigrated",
+         "order": "ASCENDING"
+       }
+     ]
+   }
+
+
+💡 To fix:
+1. Add suggested indexes to firestore.indexes.json
+2. Run: firebase deploy --only firestore:indexes
+3. Wait for indexes to build in Firebase Console
+
