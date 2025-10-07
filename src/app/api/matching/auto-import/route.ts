@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { autoImportCandidates } from '@/lib/firebase-admin/matching-service';
-import { matchingSettingsService } from '@/lib/firebase/matching-settings-service';
+import { getSettings, saveSettings } from '@/lib/firebase-admin/matching-settings-service';
 import { adminAuth } from '@/lib/firebase/admin-init';
 
 /**
@@ -54,8 +54,13 @@ export async function GET(request: NextRequest) {
     // Admin SDK ist bereits authentifiziert (kein Login nötig!)
     console.log('✅ Using Firebase Admin SDK');
 
-    // Lade Settings
-    const settings = await matchingSettingsService.getSettings();
+    // Lade Settings (Admin SDK)
+    const settings = await getSettings();
+    console.log('📊 Loaded settings:', {
+      autoImportEnabled: settings.autoImport.enabled,
+      minScore: settings.autoImport.minScore,
+      useAiMerge: settings.useAiMerge
+    });
 
     // Prüfe ob Auto-Import aktiviert ist
     if (!settings.autoImport.enabled) {
@@ -96,8 +101,8 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Auto-import completed', result.stats);
 
-    // Aktualisiere lastRun in Settings
-    await matchingSettingsService.saveSettings({
+    // Aktualisiere lastRun in Settings (Admin SDK)
+    await saveSettings({
       autoImport: {
         ...settings.autoImport,
         lastRun: new Date(),
@@ -165,8 +170,13 @@ export async function POST(request: NextRequest) {
     // Admin SDK ist bereits authentifiziert
     console.log('✅ Using Firebase Admin SDK (POST)');
 
-    // Lade Settings
-    const settings = await matchingSettingsService.getSettings();
+    // Lade Settings (Admin SDK)
+    const settings = await getSettings();
+    console.log('📊 Loaded settings (POST):', {
+      autoImportEnabled: settings.autoImport.enabled,
+      minScore: settings.autoImport.minScore,
+      useAiMerge: settings.useAiMerge
+    });
 
     // Prüfe ob Auto-Import aktiviert ist
     if (!settings.autoImport.enabled) {
@@ -206,8 +216,8 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Auto-import completed (POST)', result.stats);
 
-    // Aktualisiere lastRun in Settings
-    await matchingSettingsService.saveSettings({
+    // Aktualisiere lastRun in Settings (Admin SDK)
+    await saveSettings({
       autoImport: {
         ...settings.autoImport,
         lastRun: new Date(),
