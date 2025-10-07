@@ -347,7 +347,12 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
   // Phone handlers
   const addPhoneField = () => {
-    const newPhone = { type: 'business' as const, number: '', isPrimary: false };
+    const newPhone = {
+      type: 'business' as const,
+      number: '',
+      countryCode: formData.mainAddress?.countryCode || 'DE',
+      isPrimary: false
+    };
     setFormData({ ...formData, phones: [...(formData.phones || []), newPhone] });
   };
 
