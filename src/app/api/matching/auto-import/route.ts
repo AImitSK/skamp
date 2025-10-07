@@ -112,9 +112,9 @@ export async function GET(request: NextRequest) {
     // Prüfe ob noch mehr Kandidaten zu verarbeiten sind
     const hasMoreCandidates = result.stats.candidatesProcessed === (maxCandidates || 24);
 
-    if (hasMoreCandidates && !offset) {
-      // Nur beim ersten Chunk (offset=0) weitere Chunks triggern
-      const nextOffset = (maxCandidates || 24);
+    if (hasMoreCandidates) {
+      // Berechne nächsten Offset
+      const nextOffset = (offset || 0) + (maxCandidates || 24);
       console.log(`🔄 Triggering next chunk with offset=${nextOffset}...`);
 
       // Trigger next chunk asynchronously (fire-and-forget)
