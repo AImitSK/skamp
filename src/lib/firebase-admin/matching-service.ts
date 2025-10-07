@@ -30,6 +30,13 @@ export async function scanForCandidates(options: MatchingScanOptions = {}): Prom
     : (options.minScore || MATCHING_DEFAULTS.MIN_SCORE);
 
   // Erstelle Scan-Job
+  // Entferne undefined Werte aus options für Firestore
+  const cleanOptions: any = {};
+  if (options.developmentMode !== undefined) cleanOptions.developmentMode = options.developmentMode;
+  if (options.minScore !== undefined) cleanOptions.minScore = options.minScore;
+  if (options.minOrganizations !== undefined) cleanOptions.minOrganizations = options.minOrganizations;
+  if (options.organizationIds) cleanOptions.organizationIds = options.organizationIds;
+
   const jobData: any = {
     status: 'running',
     stats: {
@@ -44,7 +51,7 @@ export async function scanForCandidates(options: MatchingScanOptions = {}): Prom
     startedAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
     triggeredBy: options.organizationIds ? 'manual' : 'auto',
-    options
+    options: cleanOptions
   };
 
   const jobRef = await adminDb.collection('matching_scan_jobs').add(jobData);
