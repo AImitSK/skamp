@@ -862,7 +862,9 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                   
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
-                      {formData.phones.map((phone, index) => (
+                      {formData.phones.map((phone, index) => {
+                        console.log('📱 Rendering phone field:', { index, phone, hasNumber: !!phone.number });
+                        return (
                         <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-2">
                             <Select
@@ -933,7 +935,8 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                             </Button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
