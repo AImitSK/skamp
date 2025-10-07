@@ -1100,8 +1100,18 @@ const getContactCount = (companyId: string) => {
                       {/* Company & Position */}
                       <div className="w-[20%]">
                         {contact.companyName && (
-                          <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
-                            {contact.companyName}
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                              {contact.companyName}
+                            </div>
+                            {contact.companyId && (() => {
+                              const company = companies.find(c => c.id === contact.companyId);
+                              return company ? (
+                                <Badge color="zinc" className="text-xs shrink-0">
+                                  {companyTypeLabels[company.type]}
+                                </Badge>
+                              ) : null;
+                            })()}
                           </div>
                         )}
                         {contact.position && (

@@ -169,8 +169,31 @@ class MultiEntityReferenceService {
       }
 
       // 3. Company-Reference erstellen oder finden
+      // WICHTIG: Beide Werte validieren bevor wir sie kombinieren
+      const companyId = globalJournalist.companyId;
+      const companyName = globalJournalist.companyName;
+
+      // Prüfe ob MINDESTENS einer der Werte gültig ist
+      const hasValidCompanyId = companyId && typeof companyId === 'string' && companyId.trim() !== '';
+      const hasValidCompanyName = companyName && typeof companyName === 'string' && companyName.trim() !== '';
+
+      if (!hasValidCompanyId && !hasValidCompanyName) {
+        console.warn('❌ addJournalistReference: Keine gültige Company-ID oder Company-Name vorhanden', {
+          companyId,
+          companyName,
+          journalistId: globalJournalist.id
+        });
+        return {
+          success: false,
+          errors: ['Journalist hat keine gültige Company-Zuordnung']
+        };
+      }
+
+      // Verwende den ersten gültigen Wert
+      const globalCompanyIdOrName = hasValidCompanyId ? companyId : companyName;
+
       const companyResult = await this.ensureCompanyReference(
-        globalJournalist.companyId || globalJournalist.companyName,
+        globalCompanyIdOrName,
         organizationId,
         userId,
         batch
@@ -668,9 +691,22 @@ class MultiEntityReferenceService {
         collection(db, 'organizations', organizationId, this.companyRefsCollection)
       );
 
+      // Finale Validation vor dem Schreiben (Defense in Depth)
+      const trimmedGlobalId = globalCompanyIdOrName.trim();
+      if (!trimmedGlobalId) {
+        console.error('❌ CRITICAL: Empty globalCompanyId detected before write!', {
+          globalCompanyIdOrName,
+          organizationId
+        });
+        return {
+          success: false,
+          error: 'Leere globalCompanyId darf nicht geschrieben werden'
+        };
+      }
+
       const companyRefData: Omit<CompanyReference, 'id'> = {
         organizationId,
-        globalCompanyId: globalCompanyIdOrName,
+        globalCompanyId: trimmedGlobalId,
         localCompanyId,
         addedAt: serverTimestamp(),
         addedBy: userId,
