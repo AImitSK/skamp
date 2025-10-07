@@ -19,12 +19,20 @@
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=50&offset=0",
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=24&offset=0",
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=50&offset=50",
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=24&offset=24",
       "schedule": "15 4 * * *"
+    },
+    {
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=24&offset=48",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/matching/auto-import?secret=$CRON_SECRET&maxCandidates=24&offset=72",
+      "schedule": "45 4 * * *"
     },
     {
       "path": "/api/cron/monitoring-crawler",
