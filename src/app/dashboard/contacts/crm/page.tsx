@@ -1000,13 +1000,13 @@ const getContactCount = (companyId: string) => {
                               <span>—</span>
                             </div>
                           )}
-                          {company.phones && company.phones.length > 0 ? (
+                          {getPrimaryPhone(company.phones) ? (
                             <a
-                              href={`tel:${company.phones[0].number}`}
+                              href={`tel:${getPrimaryPhone(company.phones)}`}
                               className="text-primary hover:text-primary-hover flex items-center gap-1.5"
                             >
                               <PhoneIcon className="h-4 w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
-                              <span>{company.phones[0].number}</span>
+                              <span>{getPrimaryPhone(company.phones)}</span>
                             </a>
                           ) : (
                             <div className="text-zinc-400 flex items-center gap-1.5">
