@@ -629,9 +629,9 @@ export default function CompanyDetailPage() {
                     <Text className="text-sm font-semibold text-gray-700 mb-3">Geschäftliche Kennungen</Text>
                     <div className="space-y-2">
                       {company.identifiers.map((identifier, index) => (
-                        <div key={index} className="flex items-start justify-between py-2">
-                          <div>
-                            <Text className="font-medium">
+                        <div key={index} className="flex items-center justify-between">
+                          <Text className="text-sm">
+                            <span className="font-medium">
                               {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
                                identifier.type === 'EIN_US' ? 'EIN (US)' :
                                identifier.type === 'COMPANY_REG_DE' ? 'Handelsregister (DE)' :
@@ -640,9 +640,10 @@ export default function CompanyDetailPage() {
                                identifier.type === 'SIREN_FR' ? 'SIREN (FR)' :
                                identifier.type === 'DUNS' ? 'D-U-N-S' :
                                identifier.type === 'LEI' ? 'LEI' : identifier.type}
-                            </Text>
-                            <Text className="text-sm text-gray-600">{identifier.value}</Text>
-                          </div>
+                            </span>
+                            {': '}
+                            <span className="text-gray-600">{identifier.value}</span>
+                          </Text>
                           {identifier.issuingAuthority && (
                             <Badge color="zinc" className="text-xs">{identifier.issuingAuthority}</Badge>
                           )}
