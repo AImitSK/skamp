@@ -18,6 +18,7 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
 import {
@@ -46,9 +47,35 @@ import {
   ScaleIcon,
   BuildingOffice2Icon,
   IdentificationIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  CheckIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+
+// Country options with calling codes
+const COUNTRY_OPTIONS = [
+  { code: 'DE', label: '+49 DE', callingCode: '49' },
+  { code: 'AT', label: '+43 AT', callingCode: '43' },
+  { code: 'CH', label: '+41 CH', callingCode: '41' },
+  { code: 'US', label: '+1 US', callingCode: '1' },
+  { code: 'GB', label: '+44 GB', callingCode: '44' },
+  { code: 'FR', label: '+33 FR', callingCode: '33' },
+  { code: 'IT', label: '+39 IT', callingCode: '39' },
+  { code: 'ES', label: '+34 ES', callingCode: '34' },
+  { code: 'NL', label: '+31 NL', callingCode: '31' },
+  { code: 'BE', label: '+32 BE', callingCode: '32' },
+  { code: 'PL', label: '+48 PL', callingCode: '48' },
+  { code: 'SE', label: '+46 SE', callingCode: '46' },
+  { code: 'NO', label: '+47 NO', callingCode: '47' },
+  { code: 'DK', label: '+45 DK', callingCode: '45' },
+  { code: 'FI', label: '+358 FI', callingCode: '358' },
+  { code: 'CZ', label: '+420 CZ', callingCode: '420' },
+  { code: 'HU', label: '+36 HU', callingCode: '36' },
+  { code: 'PT', label: '+351 PT', callingCode: '351' },
+  { code: 'GR', label: '+30 GR', callingCode: '30' },
+  { code: 'IE', label: '+353 IE', callingCode: '353' }
+];
 
 // Helper functions
 const formatDate = (timestamp: any) => {
@@ -56,7 +83,7 @@ const formatDate = (timestamp: any) => {
   const date = timestamp.toDate ? timestamp.toDate() : timestamp;
   return new Date(date).toLocaleDateString('de-DE', {
     day: '2-digit',
-    month: 'long', 
+    month: 'long',
     year: 'numeric'
   });
 };
@@ -75,10 +102,28 @@ const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>)
   return primary?.email || emails[0].email;
 };
 
-const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>): string => {
+const getPrimaryPhone = (phones?: Array<{ number: string; countryCode?: string; isPrimary?: boolean }>): string => {
   if (!phones || phones.length === 0) return '';
-  const primary = phones.find(p => p.isPrimary);
-  return primary?.number || phones[0].number;
+  const primary = phones.find(p => p.isPrimary) || phones[0];
+  if (!primary) return '';
+
+  let number = primary.number || '';
+
+  // If number already starts with +, return as is
+  if (number.startsWith('+')) return number;
+
+  // Remove any leading zeros or spaces
+  number = number.trim().replace(/^0+/, '');
+
+  // Get calling code from COUNTRY_OPTIONS
+  // Use countryCode if available, otherwise default to 'DE'
+  const countryCode = primary.countryCode || 'DE';
+  const country = COUNTRY_OPTIONS.find(c => c.code === countryCode);
+  if (country) {
+    return `+${country.callingCode} ${number}`;
+  }
+
+  return number;
 };
 
 // Social Media Icons Component
@@ -171,23 +216,26 @@ function Alert({
 }
 
 // InfoCard Component
-function InfoCard({ 
-  title, 
-  icon: Icon, 
+function InfoCard({
+  title,
+  icon: Icon,
   children,
-  className = ""
-}: { 
-  title: string; 
+  className = "",
+  action
+}: {
+  title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   className?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className={clsx("rounded-lg border bg-white overflow-hidden", className)}>
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Icon className="h-5 w-5 text-gray-500" />
+    <div className={clsx("rounded-lg border border-zinc-200 bg-white overflow-hidden", className)}>
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+        <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+          <Icon className="h-5 w-5 text-zinc-500" />
           {title}
+          {action && <div className="ml-auto">{action}</div>}
         </h3>
       </div>
       <div className="p-4">
@@ -218,12 +266,47 @@ export default function CompanyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
     setAlert({ type, title, message });
     setTimeout(() => setAlert(null), 5000);
   }, []);
+
+  // Notes Management
+  const handleEditNotes = () => {
+    setNotesValue(company?.internalNotes || '');
+    setEditingNotes(true);
+  };
+
+  const handleCancelEditNotes = () => {
+    setEditingNotes(false);
+    setNotesValue('');
+  };
+
+  const handleSaveNotes = async () => {
+    if (!company || !currentOrganization?.id) return;
+
+    setSavingNotes(true);
+    try {
+      await companiesEnhancedService.update(
+        company.id!,
+        { internalNotes: notesValue },
+        { organizationId: currentOrganization.id, userId: user!.uid }
+      );
+
+      setCompany({ ...company, internalNotes: notesValue });
+      setEditingNotes(false);
+      showAlert('success', 'Notiz gespeichert');
+    } catch (error) {
+      showAlert('error', 'Fehler beim Speichern', 'Die Notiz konnte nicht gespeichert werden.');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
 
   // Data Loading
   const loadData = useCallback(async () => {
@@ -413,15 +496,8 @@ export default function CompanyDetailPage() {
   return (
     <>
       <div className="p-6 md:p-8">
-        {/* Alert */}
-        {alert && (
-          <div className="mb-4">
-            <Alert type={alert.type} title={alert.title} message={alert.message} />
-          </div>
-        )}
-
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center justify-between">
             <div>
               {/* Heading mit Badges */}
@@ -446,13 +522,13 @@ export default function CompanyDetailPage() {
               </div>
 
               {company.officialName && company.officialName !== company.name && (
-                <Text className="text-gray-600 mt-1">{company.officialName}</Text>
+                <Text className="text-zinc-600 mt-1">{company.officialName}</Text>
               )}
 
               {/* Adresse mit Gründungsdatum */}
               {company.mainAddress && (
-                <div className="mt-3 flex items-start gap-2 text-sm text-gray-600">
-                  <MapPinIcon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="mt-3 flex items-start gap-2 text-sm text-zinc-600">
+                  <MapPinIcon className="h-4 w-4 text-zinc-400 mt-0.5 flex-shrink-0" />
                   <div>
                     {company.mainAddress.street && <span>{company.mainAddress.street}, </span>}
                     {company.mainAddress.countryCode && <span>{company.mainAddress.countryCode} </span>}
@@ -477,7 +553,7 @@ export default function CompanyDetailPage() {
                           return null;
                         }
                         return (
-                          <span className="ml-2 text-gray-500">
+                          <span className="ml-2 text-zinc-500">
                             (gegr. {year})
                           </span>
                         );
@@ -501,7 +577,7 @@ export default function CompanyDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück zur Übersicht
+                Zurück
               </Button>
 
               <Button
@@ -517,6 +593,13 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
+        {/* Alert - Fixed height container */}
+        <div className="mb-6 h-[50px]">
+          {alert && (
+            <Alert type={alert.type} title={alert.title} message={alert.message} />
+          )}
+        </div>
+
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - 2/3 width */}
@@ -526,14 +609,14 @@ export default function CompanyDetailPage() {
               <div className="space-y-6">
                 {/* Contact Data */}
                 <div>
-                  <Text className="text-sm font-semibold text-gray-700 mb-3">Kontaktdaten</Text>
+                  <Text className="text-sm font-semibold text-zinc-700 mb-3">Kontaktdaten</Text>
                   <div className="space-y-3">
                     {company.emails && company.emails.length > 0 && (
                       <div>
                         {company.emails.map((email, index) => (
                           <div key={index} className="flex items-center justify-between gap-3 mb-1">
                             <div className="flex items-center gap-3">
-                              <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                              <EnvelopeIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                               <a
                                 href={`mailto:${email.email}`}
                                 className="text-[#005fab] hover:text-[#004a8c] hover:underline"
@@ -558,33 +641,51 @@ export default function CompanyDetailPage() {
 
                     {company.phones && company.phones.length > 0 && (
                       <div>
-                        {company.phones.map((phone, index) => (
-                          <div key={index} className="flex items-center justify-between gap-3 mb-1">
-                            <div className="flex items-center gap-3">
-                              <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                              <a
-                                href={`tel:${phone.number}`}
-                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                              >
-                                {phone.number}
-                              </a>
+                        {company.phones.map((phone, index) => {
+                          // Format phone number with country code
+                          let formattedNumber = phone.number || '';
+
+                          // If number already starts with +, use as is
+                          if (!formattedNumber.startsWith('+')) {
+                            // Remove any leading zeros or spaces
+                            formattedNumber = formattedNumber.trim().replace(/^0+/, '');
+
+                            // Get calling code from COUNTRY_OPTIONS
+                            const countryCode = phone.countryCode || 'DE';
+                            const country = COUNTRY_OPTIONS.find(c => c.code === countryCode);
+                            if (country) {
+                              formattedNumber = `+${country.callingCode} ${formattedNumber}`;
+                            }
+                          }
+
+                          return (
+                            <div key={index} className="flex items-center justify-between gap-3 mb-1">
+                              <div className="flex items-center gap-3">
+                                <PhoneIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                                <a
+                                  href={`tel:${phone.number}`}
+                                  className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                                >
+                                  {formattedNumber}
+                                </a>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge color="zinc" className="text-xs">
+                                  {phone.type === 'business' ? 'Geschäftlich' :
+                                   phone.type === 'mobile' ? 'Mobil' :
+                                   phone.type === 'fax' ? 'Fax' : phone.type}
+                                </Badge>
+                                {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge color="zinc" className="text-xs">
-                                {phone.type === 'business' ? 'Geschäftlich' :
-                                 phone.type === 'mobile' ? 'Mobil' :
-                                 phone.type === 'fax' ? 'Fax' : phone.type}
-                              </Badge>
-                              {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
                     {company.website && (
                       <div className="flex items-center gap-3">
-                        <GlobeAltIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <GlobeAltIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                         <a
                           href={company.website}
                           target="_blank"
@@ -599,26 +700,29 @@ export default function CompanyDetailPage() {
                     {/* Social Media unter Kontaktdaten */}
                     {company.socialMedia && company.socialMedia.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {company.socialMedia.map((social, index) => (
-                          <a
-                            key={index}
-                            href={social.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                            title={socialPlatformLabels[social.platform]}
-                          >
-                            <div className="text-gray-700">
-                              <SocialMediaIcon platform={social.platform} />
-                            </div>
-                            <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
-                          </a>
-                        ))}
+                        {company.socialMedia.map((social, index) => {
+                          const platformLabel = socialPlatformLabels[social.platform as keyof typeof socialPlatformLabels] || social.platform || 'Unbekannt';
+                          return (
+                            <a
+                              key={index}
+                              href={social.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                              title={platformLabel}
+                            >
+                              <div className="text-zinc-700">
+                                <SocialMediaIcon platform={social.platform} />
+                              </div>
+                              <span className="text-sm font-medium">{platformLabel}</span>
+                            </a>
+                          );
+                        })}
                       </div>
                     )}
 
                     {(!company.emails?.length && !company.phones?.length && !company.website && !company.socialMedia?.length) && (
-                      <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
+                      <Text className="text-zinc-500">Keine Kontaktdaten hinterlegt</Text>
                     )}
                   </div>
                 </div>
@@ -626,7 +730,7 @@ export default function CompanyDetailPage() {
                 {/* Business Identifiers */}
                 {company.identifiers && company.identifiers.length > 0 && (
                   <div>
-                    <Text className="text-sm font-semibold text-gray-700 mb-3">Geschäftliche Kennungen</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Geschäftliche Kennungen</Text>
                     <div className="space-y-2">
                       {company.identifiers.map((identifier, index) => (
                         <div key={index} className="flex items-center justify-between">
@@ -642,7 +746,7 @@ export default function CompanyDetailPage() {
                                identifier.type === 'LEI' ? 'LEI' : identifier.type}
                             </span>
                             {': '}
-                            <span className="text-gray-600">{identifier.value}</span>
+                            <span className="text-zinc-600">{identifier.value}</span>
                           </Text>
                           {identifier.issuingAuthority && (
                             <Badge color="zinc" className="text-xs">{identifier.issuingAuthority}</Badge>
@@ -656,11 +760,11 @@ export default function CompanyDetailPage() {
                 {/* Financial Information */}
                 {company.financial && (
                   <div>
-                    <Text className="text-sm font-semibold text-gray-700 mb-3">Finanzen</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Finanzen</Text>
                     <div className="grid grid-cols-2 gap-4">
                       {company.financial.annualRevenue && (
                         <div>
-                          <Text className="text-sm font-medium text-gray-500">Jahresumsatz</Text>
+                          <Text className="text-sm font-medium text-zinc-500">Jahresumsatz</Text>
                           <Text className="text-lg font-semibold">
                             {formatCurrency(
                               company.financial.annualRevenue.amount,
@@ -671,19 +775,19 @@ export default function CompanyDetailPage() {
                       )}
                       {company.financial.employees !== undefined && (
                         <div>
-                          <Text className="text-sm font-medium text-gray-500">Mitarbeiterzahl</Text>
+                          <Text className="text-sm font-medium text-zinc-500">Mitarbeiterzahl</Text>
                           <Text className="text-lg font-semibold">{company.financial.employees.toLocaleString('de-DE')}</Text>
                         </div>
                       )}
                       {company.financial.creditRating && (
                         <div>
-                          <Text className="text-sm font-medium text-gray-500">Kreditrating</Text>
+                          <Text className="text-sm font-medium text-zinc-500">Kreditrating</Text>
                           <Text className="text-lg font-semibold">{company.financial.creditRating}</Text>
                         </div>
                       )}
                       {company.financial.fiscalYearEnd && (
                         <div>
-                          <Text className="text-sm font-medium text-gray-500">Geschäftsjahresende</Text>
+                          <Text className="text-sm font-medium text-zinc-500">Geschäftsjahresende</Text>
                           <Text>{company.financial.fiscalYearEnd}</Text>
                         </div>
                       )}
@@ -699,7 +803,7 @@ export default function CompanyDetailPage() {
                 <div className="space-y-4">
                   {parentCompany && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Muttergesellschaft</Text>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">Muttergesellschaft</Text>
                       <Link
                         href={`/dashboard/contacts/crm/companies/${parentCompany.id}`}
                         className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
@@ -712,7 +816,7 @@ export default function CompanyDetailPage() {
 
                   {subsidiaries.length > 0 && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">
                         Tochtergesellschaften ({subsidiaries.length})
                       </Text>
                       <div className="space-y-1">
@@ -734,10 +838,10 @@ export default function CompanyDetailPage() {
             )}
 
             {/* Contacts */}
-            <div className="rounded-lg border bg-white overflow-hidden">
-              <div className="px-4 py-3 border-b bg-gray-50">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <UsersIcon className="h-5 w-5 text-gray-500" />
+            <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+              <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+                <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                  <UsersIcon className="h-5 w-5 text-zinc-500" />
                   Kontakte
                   <Badge color="blue" className="ml-auto">{contacts.length}</Badge>
                 </h3>
@@ -746,10 +850,10 @@ export default function CompanyDetailPage() {
                 {contacts.length > 0 ? (
                   <div className="space-y-3">
                     {contacts.map(contact => (
-                      <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-zinc-50 transition-colors">
                         <div className="flex-1">
-                          <Link 
-                            href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
+                          <Link
+                            href={`/dashboard/contacts/crm/contacts/${contact.id}`}
                             className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium"
                           >
                             {contact.displayName}
@@ -763,18 +867,18 @@ export default function CompanyDetailPage() {
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           {getPrimaryEmail(contact.emails) && (
-                            <a 
+                            <a
                               href={`mailto:${getPrimaryEmail(contact.emails)}`}
-                              className="text-gray-400 hover:text-[#005fab] transition-colors"
+                              className="text-zinc-400 hover:text-[#005fab] transition-colors"
                               title="E-Mail senden"
                             >
                               <EnvelopeIcon className="h-5 w-5" />
                             </a>
                           )}
                           {getPrimaryPhone(contact.phones) && (
-                            <a 
+                            <a
                               href={`tel:${getPrimaryPhone(contact.phones)}`}
-                              className="text-gray-400 hover:text-[#005fab] transition-colors"
+                              className="text-zinc-400 hover:text-[#005fab] transition-colors"
                               title="Anrufen"
                             >
                               <PhoneIcon className="h-5 w-5" />
@@ -786,8 +890,8 @@ export default function CompanyDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                    <Text className="text-gray-500">Keine Kontakte vorhanden</Text>
+                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+                    <Text className="text-zinc-500">Keine Kontakte vorhanden</Text>
                   </div>
                 )}
               </div>
@@ -795,11 +899,58 @@ export default function CompanyDetailPage() {
 
 
             {/* Notes */}
-            {company.internalNotes && (
-              <InfoCard title="Interne Notizen" icon={DocumentTextIcon}>
-                <p className="whitespace-pre-wrap text-gray-700">{company.internalNotes}</p>
-              </InfoCard>
-            )}
+            <InfoCard
+              title="Interne Notizen"
+              icon={DocumentTextIcon}
+              action={
+                !editingNotes ? (
+                  <button
+                    onClick={handleEditNotes}
+                    className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50
+                               font-medium whitespace-nowrap transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                               h-8 px-4 rounded-lg inline-flex items-center gap-1.5 text-sm"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                    Bearbeiten
+                  </button>
+                ) : null
+              }
+            >
+              {editingNotes ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={notesValue}
+                    onChange={(e) => setNotesValue(e.target.value)}
+                    rows={6}
+                    placeholder="Interne Notizen hinzufügen..."
+                    className="w-full"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSaveNotes}
+                      disabled={savingNotes}
+                      className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
+                    >
+                      <CheckIcon className="h-4 w-4 mr-2" />
+                      {savingNotes ? 'Speichern...' : 'Speichern'}
+                    </Button>
+                    <Button
+                      onClick={handleCancelEditNotes}
+                      disabled={savingNotes}
+                      className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
+                    >
+                      <XMarkIcon className="h-4 w-4 mr-2" />
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap text-zinc-700">
+                  {company.internalNotes || 'Keine Notizen vorhanden'}
+                </p>
+              )}
+            </InfoCard>
           </div>
 
           {/* Right column - 1/3 width */}
@@ -808,24 +959,24 @@ export default function CompanyDetailPage() {
             <InfoCard title="Details" icon={InformationCircleIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
-                  <CalendarIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <CalendarIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Erstellt:</span>
+                    <span className="text-zinc-600">Erstellt:</span>
                     <span className="ml-2">{formatDate(company.createdAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <ClockIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <ClockIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Aktualisiert:</span>
+                    <span className="text-zinc-600">Aktualisiert:</span>
                     <span className="ml-2">{formatDate(company.updatedAt)}</span>
                   </div>
                 </div>
                 {getLastContactDate() && (
                   <div className="flex items-center gap-3">
-                    <UsersIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <UsersIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                     <div>
-                      <span className="text-gray-600">Letzter Kontakt:</span>
+                      <span className="text-zinc-600">Letzter Kontakt:</span>
                       <span className="ml-2">{formatDate(getLastContactDate())}</span>
                     </div>
                   </div>
@@ -890,10 +1041,10 @@ export default function CompanyDetailPage() {
 
             {/* Distribution lists */}
             {lists.length > 0 && (
-              <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <ListBulletIcon className="h-5 w-5 text-gray-500" />
+              <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                    <ListBulletIcon className="h-5 w-5 text-zinc-500" />
                     In Listen enthalten
                     <Badge color="blue" className="ml-auto">{lists.length}</Badge>
                   </h3>

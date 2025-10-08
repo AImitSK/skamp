@@ -10,7 +10,7 @@ import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { listsService } from "@/lib/firebase/lists-service";
 import { publicationService } from "@/lib/firebase/library-service";
-import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS } from "@/types/crm-enhanced";
+import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
 import { Tag, socialPlatformLabels } from "@/types/crm";
 import { DistributionList } from "@/types/lists";
 import { Publication } from "@/types/library";
@@ -18,6 +18,7 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import ContactModalEnhanced from "@/app/dashboard/contacts/crm/ContactModalEnhanced";
 import {
   ArrowLeftIcon,
@@ -45,9 +46,35 @@ import {
   AcademicCapIcon,
   BriefcaseIcon,
   IdentificationIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  CheckIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
+
+// Country options with calling codes
+const COUNTRY_OPTIONS = [
+  { code: 'DE', label: '+49 DE', callingCode: '49' },
+  { code: 'AT', label: '+43 AT', callingCode: '43' },
+  { code: 'CH', label: '+41 CH', callingCode: '41' },
+  { code: 'US', label: '+1 US', callingCode: '1' },
+  { code: 'GB', label: '+44 GB', callingCode: '44' },
+  { code: 'FR', label: '+33 FR', callingCode: '33' },
+  { code: 'IT', label: '+39 IT', callingCode: '39' },
+  { code: 'ES', label: '+34 ES', callingCode: '34' },
+  { code: 'NL', label: '+31 NL', callingCode: '31' },
+  { code: 'BE', label: '+32 BE', callingCode: '32' },
+  { code: 'PL', label: '+48 PL', callingCode: '48' },
+  { code: 'SE', label: '+46 SE', callingCode: '46' },
+  { code: 'NO', label: '+47 NO', callingCode: '47' },
+  { code: 'DK', label: '+45 DK', callingCode: '45' },
+  { code: 'FI', label: '+358 FI', callingCode: '358' },
+  { code: 'CZ', label: '+420 CZ', callingCode: '420' },
+  { code: 'HU', label: '+36 HU', callingCode: '36' },
+  { code: 'PT', label: '+351 PT', callingCode: '351' },
+  { code: 'GR', label: '+30 GR', callingCode: '30' },
+  { code: 'IE', label: '+353 IE', callingCode: '353' }
+];
 
 // Helper functions
 const formatDate = (timestamp: any) => {
@@ -75,10 +102,29 @@ const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean; ty
   return primary || emails[0];
 };
 
-const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean; type?: string }>): { number: string; type?: string } | null => {
+const getPrimaryPhone = (phones?: Array<{ number: string; countryCode?: string; isPrimary?: boolean; type?: string }>): { number: string; type?: string } | null => {
   if (!phones || phones.length === 0) return null;
   const primary = phones.find(p => p.isPrimary);
   return primary || phones[0];
+};
+
+const formatPhoneNumber = (phone: { number: string; countryCode?: string }): string => {
+  let number = phone.number || '';
+
+  // If number already starts with +, return as is
+  if (number.startsWith('+')) return number;
+
+  // Remove any leading zeros or spaces
+  number = number.trim().replace(/^0+/, '');
+
+  // Get calling code from COUNTRY_OPTIONS
+  const countryCode = phone.countryCode || 'DE';
+  const country = COUNTRY_OPTIONS.find(c => c.code === countryCode);
+  if (country) {
+    return `+${country.callingCode} ${number}`;
+  }
+
+  return number;
 };
 
 // Social Media Icons Component
@@ -171,23 +217,26 @@ function Alert({
 }
 
 // InfoCard Component
-function InfoCard({ 
-  title, 
-  icon: Icon, 
+function InfoCard({
+  title,
+  icon: Icon,
   children,
-  className = ""
-}: { 
-  title: string; 
+  className = "",
+  action
+}: {
+  title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   className?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className={clsx("rounded-lg border bg-white overflow-hidden", className)}>
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Icon className="h-5 w-5 text-gray-500" />
+    <div className={clsx("rounded-lg border border-zinc-200 bg-white overflow-hidden", className)}>
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+        <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+          <Icon className="h-5 w-5 text-zinc-500" />
           {title}
+          {action && <div className="ml-auto">{action}</div>}
         </h3>
       </div>
       <div className="p-4">
@@ -216,12 +265,47 @@ export default function ContactDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
     setAlert({ type, title, message });
     setTimeout(() => setAlert(null), 5000);
   }, []);
+
+  // Notes Management
+  const handleEditNotes = () => {
+    setNotesValue(contact?.internalNotes || '');
+    setEditingNotes(true);
+  };
+
+  const handleCancelEditNotes = () => {
+    setEditingNotes(false);
+    setNotesValue('');
+  };
+
+  const handleSaveNotes = async () => {
+    if (!contact || !currentOrganization?.id) return;
+
+    setSavingNotes(true);
+    try {
+      await contactsEnhancedService.update(
+        contact.id!,
+        { internalNotes: notesValue },
+        { organizationId: currentOrganization.id, userId: user!.uid }
+      );
+
+      setContact({ ...contact, internalNotes: notesValue });
+      setEditingNotes(false);
+      showAlert('success', 'Notiz gespeichert');
+    } catch (error) {
+      showAlert('error', 'Fehler beim Speichern', 'Die Notiz konnte nicht gespeichert werden.');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
 
   // Data Loading
   const loadData = useCallback(async () => {
@@ -361,238 +445,239 @@ export default function ContactDetailPage() {
   return (
     <>
       <div className="p-6 md:p-8">
-        {/* Alert */}
-        {alert && (
-          <div className="mb-4">
-            <Alert type={alert.type} title={alert.title} message={alert.message} />
-          </div>
-        )}
-
         {/* Header */}
-        <div className="mb-6">
-          <Button 
-            plain 
-            onClick={() => router.push('/dashboard/contacts/crm/')}
-            className="mb-4"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
-          </Button>
-          
+        <div className="mb-4">
           <div className="flex items-center justify-between">
             <div>
               <Heading>{contact.displayName}</Heading>
-              {contact.name.academicTitle && (
-                <Text className="text-gray-600">{contact.name.academicTitle}</Text>
-              )}
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-2 mt-2">
+                {contact.mediaProfile?.isJournalist && (
+                  <Badge color="purple" className="whitespace-nowrap">
+                    Journalist
+                  </Badge>
+                )}
                 {contact.position && (
                   <Badge color="zinc" className="whitespace-nowrap">{contact.position}</Badge>
                 )}
-                {contact.companyName && <Text>{contact.companyName}</Text>}
                 {contact.status && contact.status !== 'active' && (
-                  <Badge 
+                  <Badge
                     color={contact.status === 'inactive' ? 'yellow' : 'red'}
                     className="whitespace-nowrap"
                   >
                     {getStatusLabel(contact.status)}
                   </Badge>
                 )}
-                {contact.mediaProfile?.isJournalist && (
-                  <Badge color="purple" className="whitespace-nowrap">
-                    <NewspaperIcon className="h-3 w-3 mr-1 inline" />
-                    Journalist
-                  </Badge>
-                )}
               </div>
             </div>
-            {(contact as any)?._isReference ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-                <div className="flex items-center gap-2 text-amber-800">
-                  <span className="text-amber-600">🔗</span>
-                  <span className="font-medium">Globaler Verweis</span>
-                </div>
-                <p className="text-amber-700 mt-1">
-                  Dieser Kontakt ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
-                </p>
-              </div>
-            ) : (
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
               <Button
-                onClick={() => setShowEditModal(true)}
-                className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap inline-flex items-center gap-x-2"
+                onClick={() => router.push('/dashboard/contacts/crm/')}
+                className="border border-zinc-300 bg-white text-zinc-700
+                           hover:bg-zinc-50 font-medium whitespace-nowrap
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
-                <PencilIcon className="h-4 w-4" />
-                Person bearbeiten
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Zurück
               </Button>
-            )}
+
+              {(contact as any)?._isReference ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <span className="text-amber-600">🔗</span>
+                    <span className="font-medium">Globaler Verweis</span>
+                  </div>
+                  <p className="text-amber-700 mt-1">
+                    Dieser Kontakt ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setShowEditModal(true)}
+                  className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
+                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                             h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Person bearbeiten
+                </Button>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Alert - Fixed height container */}
+        <div className="mb-6 h-[50px]">
+          {alert && (
+            <Alert type={alert.type} title={alert.title} message={alert.message} />
+          )}
         </div>
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Contact Data */}
-            <InfoCard title="Kontaktdaten" icon={PhoneIcon}>
-              <div className="space-y-4">
-                {/* Emails */}
-                {contact.emails && contact.emails.length > 0 && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
-                    <div className="space-y-2">
-                      {contact.emails.map((email, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                          <a 
-                            href={`mailto:${email.email}`}
-                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                          >
-                            {email.email}
-                          </a>
-                          <div className="flex gap-2">
-                            {email.type && (
+            {/* Main Information - Consolidated */}
+            <InfoCard title="Allgemeine Informationen" icon={UserIcon}>
+              <div className="space-y-6">
+                {/* Contact Data */}
+                <div>
+                  <Text className="text-sm font-semibold text-zinc-700 mb-3">Kontaktdaten</Text>
+                  <div className="space-y-3">
+                    {/* Emails */}
+                    {contact.emails && contact.emails.length > 0 && (
+                      <div>
+                        {contact.emails.map((email, index) => (
+                          <div key={index} className="flex items-center justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-3">
+                              <EnvelopeIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                              <a
+                                href={`mailto:${email.email}`}
+                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                              >
+                                {email.email}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Badge color="zinc" className="text-xs">
-                                {email.type === 'business' ? 'Geschäftlich' : 
+                                {email.type === 'business' ? 'Geschäftlich' :
                                  email.type === 'private' ? 'Privat' : 'Sonstige'}
                               </Badge>
-                            )}
-                            {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
-                            {email.isVerified && <CheckBadgeIcon className="h-4 w-4 text-green-500" />}
+                              {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        ))}
+                      </div>
+                    )}
 
-                {/* Phones */}
-                {contact.phones && contact.phones.length > 0 && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
-                    <div className="space-y-2">
-                      {contact.phones.map((phone, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                          <a 
-                            href={`tel:${phone.number}`}
-                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                          >
-                            {phone.number}
-                          </a>
-                          <div className="flex gap-2">
-                            {phone.type && (
+                    {/* Phones */}
+                    {contact.phones && contact.phones.length > 0 && (
+                      <div>
+                        {contact.phones.map((phone, index) => (
+                          <div key={index} className="flex items-center justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-3">
+                              <PhoneIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                              <a
+                                href={`tel:${phone.number}`}
+                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                              >
+                                {formatPhoneNumber(phone)}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Badge color="zinc" className="text-xs">
                                 {phone.type === 'business' ? 'Geschäftlich' :
                                  phone.type === 'mobile' ? 'Mobil' :
                                  phone.type === 'private' ? 'Privat' :
                                  phone.type === 'fax' ? 'Fax' : phone.type}
                               </Badge>
-                            )}
-                            {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Addresses */}
-                {contact.addresses && contact.addresses.length > 0 && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500 mb-2">Adressen</Text>
-                    <div className="space-y-3">
-                      {contact.addresses.map((addr, index) => (
-                        <div key={index} className="border rounded-lg p-3">
-                          <div className="flex items-start gap-3">
-                            <MapPinIcon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <div className="flex-1">
-                              <Badge color="zinc" className="text-xs mb-2">
-                                {addr.type === 'business' ? 'Geschäftlich' : 
-                                 addr.type === 'private' ? 'Privat' : 'Sonstige'}
-                              </Badge>
-                              <div className="text-sm">
-                                {addr.address.street && <p>{addr.address.street}</p>}
-                                {(addr.address.postalCode || addr.address.city) && (
-                                  <p>{addr.address.postalCode} {addr.address.city}</p>
-                                )}
-                                {addr.address.region && <p>{addr.address.region}</p>}
-                                {addr.address.countryCode && <p>{addr.address.countryCode}</p>}
-                              </div>
+                              {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Social Media - direkt unter Kontaktdaten */}
+                    {contact.socialProfiles && contact.socialProfiles.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {contact.socialProfiles.map((profile, index) => {
+                          const platformLabel = socialPlatformLabels[profile.platform as keyof typeof socialPlatformLabels] || profile.platform || 'Unbekannt';
+                          return (
+                            <a
+                              key={index}
+                              href={profile.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
+                              title={platformLabel}
+                            >
+                              <div className="text-zinc-700">
+                                <SocialMediaIcon platform={profile.platform} />
+                              </div>
+                              <span className="text-sm font-medium">{platformLabel}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {(!contact.emails?.length && !contact.phones?.length && !contact.socialProfiles?.length) && (
+                      <Text className="text-zinc-500">Keine Kontaktdaten hinterlegt</Text>
+                    )}
+                  </div>
+                </div>
+
+                {/* Company & Position */}
+                {company && (
+                  <div>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Berufsinformationen</Text>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <BuildingOfficeIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                        <Link
+                          href={`/dashboard/contacts/crm/companies/${company.id}`}
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                        >
+                          {company.name}
+                        </Link>
+                      </div>
+                      {contact.position && (
+                        <div className="flex items-center gap-3">
+                          <BriefcaseIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                          <Text className="text-sm">{contact.position}</Text>
                         </div>
-                      ))}
+                      )}
+                      {contact.department && (
+                        <div className="flex items-center gap-3">
+                          <IdentificationIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                          <Text className="text-sm">{contact.department}</Text>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-
-                {(!contact.emails?.length && !contact.phones?.length && !contact.addresses?.length) && (
-                  <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
                 )}
               </div>
             </InfoCard>
 
-            {/* Company */}
-            {company && (
-              <InfoCard title="Firma" icon={BuildingOfficeIcon}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <Link 
-                      href={`/dashboard/contacts/crm/companies/${company.id}`}
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium text-lg"
-                    >
-                      {company.name}
-                    </Link>
-                    {contact.position && (
-                      <p className="text-sm font-medium text-gray-700 mt-1">{contact.position}</p>
-                    )}
-                    {contact.department && (
-                      <p className="text-sm text-gray-600">{contact.department}</p>
-                    )}
-                    {company.industryClassification?.primary && (
-                      <p className="text-sm text-gray-600 mt-2">{company.industryClassification.primary}</p>
-                    )}
-                    <div className="flex items-center gap-4 mt-3 text-sm">
-                      {company.website && (
-                        <a 
-                          href={company.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-gray-600 hover:text-[#005fab] flex items-center gap-1"
-                        >
-                          <GlobeAltIcon className="h-4 w-4" />
-                          Website
-                        </a>
-                      )}
-                      {getPrimaryPhone(company.phones) && (
-                        <a 
-                          href={`tel:${getPrimaryPhone(company.phones)?.number}`}
-                          className="text-gray-600 hover:text-[#005fab] flex items-center gap-1"
-                        >
-                          <PhoneIcon className="h-4 w-4" />
-                          {getPrimaryPhone(company.phones)?.number}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <Button 
-                    plain
-                    onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}
-                    className="ml-4 whitespace-nowrap"
-                  >
-                    Zur Firma
-                  </Button>
-                </div>
-              </InfoCard>
-            )}
-
             {/* Media Profile for Journalists */}
             {contact.mediaProfile?.isJournalist && (
               <InfoCard title="Medien-Profil" icon={NewspaperIcon}>
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Medientypen */}
+                  {contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Medientypen</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.mediaProfile.mediaTypes.map((type, index) => {
+                          const typeLabel = MEDIA_TYPES.find(t => t.value === type)?.label || type;
+                          return (
+                            <Badge key={index} color="zinc" className="whitespace-nowrap">{typeLabel}</Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bevorzugte Formate */}
+                  {contact.mediaProfile.preferredFormats && contact.mediaProfile.preferredFormats.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Formate</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.mediaProfile.preferredFormats.map((format, index) => {
+                          const formatLabel = SUBMISSION_FORMATS.find(f => f.value === format)?.label || format;
+                          return (
+                            <Badge key={index} color="zinc" className="whitespace-nowrap">{formatLabel}</Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0 && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Ressorts / Themenbereiche</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Ressorts / Themenbereiche</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.beats.map((beat, index) => (
                           <Badge key={index} color="blue" className="whitespace-nowrap">{beat}</Badge>
@@ -603,7 +688,7 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.preferredTopics && contact.mediaProfile.preferredTopics.length > 0 && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Bevorzugte Themen</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Themen</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.preferredTopics.map((topic, index) => (
                           <Badge key={index} color="green" className="whitespace-nowrap">{topic}</Badge>
@@ -614,7 +699,7 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.excludedTopics && contact.mediaProfile.excludedTopics.length > 0 && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Ausgeschlossene Themen</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Ausgeschlossene Themen</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.excludedTopics.map((topic, index) => (
                           <Badge key={index} color="red" className="whitespace-nowrap">{topic}</Badge>
@@ -648,118 +733,40 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.submissionGuidelines && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-1">Einreichungsrichtlinien</Text>
-                      <Text className="text-sm text-gray-700">{contact.mediaProfile.submissionGuidelines}</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Einreichungsrichtlinien</Text>
+                      <Text className="text-sm text-zinc-700">{contact.mediaProfile.submissionGuidelines}</Text>
                     </div>
                   )}
-                </div>
-              </InfoCard>
-            )}
 
-            {/* Social Media */}
-            {contact.socialProfiles && contact.socialProfiles.length > 0 && (
-              <InfoCard title="Social Media" icon={LinkIcon}>
-                <div className="flex flex-wrap gap-3">
-                  {contact.socialProfiles.map((social, index) => (
-                    <a
-                      key={index}
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                    >
-                      <div className="text-gray-700">
-                        <SocialMediaIcon platform={social.platform} />
-                      </div>
-                      <span className="text-sm font-medium">{social.platform}</span>
-                      {social.verified && <CheckBadgeIcon className="h-4 w-4 text-blue-500" />}
-                    </a>
-                  ))}
-                </div>
-              </InfoCard>
-            )}
-
-            {/* Communication Preferences */}
-            {contact.communicationPreferences && (
-              <InfoCard title="Kommunikationspräferenzen" icon={ChatBubbleLeftRightIcon}>
-                <div className="space-y-3 text-sm">
-                  {contact.communicationPreferences.preferredChannel && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-gray-600">Bevorzugter Kanal:</Text>
-                      <Badge color="blue">
-                        {getChannelLabel(contact.communicationPreferences.preferredChannel)}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  {contact.communicationPreferences.preferredLanguage && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-gray-600">Bevorzugte Sprache:</Text>
-                      <div className="flex items-center gap-2">
-                        <LanguageIcon className="h-4 w-4 text-gray-400" />
-                        <Text className="font-medium">{contact.communicationPreferences.preferredLanguage}</Text>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {contact.communicationPreferences.preferredTime && (
+                  {/* Kommunikationspräferenzen */}
+                  {contact.communicationPreferences && (
                     <div>
-                      <Text className="text-gray-600 mb-2">Beste Kontaktzeiten:</Text>
-                      <div className="ml-4 space-y-1">
-                        {contact.communicationPreferences.preferredTime.bestDays && (
-                          <div>
-                            <Text className="text-xs text-gray-500">Tage:</Text>
-                            <div className="flex gap-1 mt-1">
-                              {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(day => (
-                                <Badge 
-                                  key={day} 
-                                  color={contact.communicationPreferences?.preferredTime?.bestDays?.includes(day as any) ? 'blue' : 'zinc'}
-                                  className="text-xs"
-                                >
-                                  {day === 'mon' ? 'Mo' : day === 'tue' ? 'Di' : day === 'wed' ? 'Mi' : 
-                                   day === 'thu' ? 'Do' : day === 'fri' ? 'Fr' : day === 'sat' ? 'Sa' : 'So'}
-                                </Badge>
-                              ))}
-                            </div>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Kommunikationspräferenzen</Text>
+                      <div className="space-y-2 text-sm">
+                        {contact.communicationPreferences.preferredChannel && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-zinc-600">Bevorzugter Kanal:</span>
+                            <Badge color="blue">
+                              {getChannelLabel(contact.communicationPreferences.preferredChannel)}
+                            </Badge>
                           </div>
                         )}
-                        {contact.communicationPreferences.preferredTime.bestHours && (
-                          <div>
-                            <Text className="text-xs text-gray-500">Zeit:</Text>
-                            <Text className="font-medium">
-                              {contact.communicationPreferences.preferredTime.bestHours.from} - {contact.communicationPreferences.preferredTime.bestHours.to}
-                            </Text>
+                        {contact.communicationPreferences.preferredLanguage && (
+                          <div className="flex items-center gap-3">
+                            <LanguageIcon className="h-4 w-4 text-zinc-400" />
+                            <span className="text-zinc-700">{contact.communicationPreferences.preferredLanguage}</span>
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
-                  
-                  {contact.communicationPreferences.doNotContact && (
-                    <div className="bg-red-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-red-700">
-                        <ExclamationTriangleIcon className="h-5 w-5" />
-                        <Text className="font-medium">Nicht kontaktieren</Text>
-                      </div>
-                      {contact.communicationPreferences.doNotContactUntil && (
-                        <Text className="text-sm text-red-600 mt-1">
-                          Bis: {formatDate(contact.communicationPreferences.doNotContactUntil)}
-                        </Text>
-                      )}
-                      {contact.communicationPreferences.doNotContactReason && (
-                        <Text className="text-sm text-red-600 mt-1">
-                          Grund: {contact.communicationPreferences.doNotContactReason}
-                        </Text>
-                      )}
                     </div>
                   )}
                 </div>
               </InfoCard>
             )}
 
-            {/* Professional Info */}
-            {contact.professionalInfo && (
-              <InfoCard title="Berufliche Informationen" icon={BriefcaseIcon}>
+            {/* Professional Info / Biografie */}
+            {contact.professionalInfo && (contact.professionalInfo.bio || contact.professionalInfo.education?.length || contact.professionalInfo.careerHistory?.length) && (
+              <InfoCard title="Biografie" icon={BriefcaseIcon}>
                 <div className="space-y-4">
                   {contact.professionalInfo.education && contact.professionalInfo.education.length > 0 && (
                     <div>
@@ -790,11 +797,58 @@ export default function ContactDetailPage() {
             )}
 
             {/* Notes */}
-            {contact.internalNotes && (
-              <InfoCard title="Interne Notizen" icon={DocumentTextIcon}>
-                <p className="whitespace-pre-wrap text-gray-700">{contact.internalNotes}</p>
-              </InfoCard>
-            )}
+            <InfoCard
+              title="Interne Notizen"
+              icon={DocumentTextIcon}
+              action={
+                !editingNotes ? (
+                  <button
+                    onClick={handleEditNotes}
+                    className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50
+                               font-medium whitespace-nowrap transition-colors
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                               h-8 px-4 rounded-lg inline-flex items-center gap-1.5 text-sm"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                    Bearbeiten
+                  </button>
+                ) : null
+              }
+            >
+              {editingNotes ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={notesValue}
+                    onChange={(e) => setNotesValue(e.target.value)}
+                    rows={6}
+                    placeholder="Interne Notizen hinzufügen..."
+                    className="w-full"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSaveNotes}
+                      disabled={savingNotes}
+                      className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
+                    >
+                      <CheckIcon className="h-4 w-4 mr-2" />
+                      {savingNotes ? 'Speichern...' : 'Speichern'}
+                    </Button>
+                    <Button
+                      onClick={handleCancelEditNotes}
+                      disabled={savingNotes}
+                      className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
+                    >
+                      <XMarkIcon className="h-4 w-4 mr-2" />
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap text-zinc-700">
+                  {contact.internalNotes || 'Keine Notizen vorhanden'}
+                </p>
+              )}
+            </InfoCard>
           </div>
 
           {/* Right column - 1/3 width */}
@@ -803,51 +857,53 @@ export default function ContactDetailPage() {
             <InfoCard title="Details" icon={InformationCircleIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
-                  <CalendarIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <CalendarIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <Text className="text-gray-600">Erstellt:</Text>
-                    <Text className="ml-2">{formatDate(contact.createdAt)}</Text>
+                    <span className="text-zinc-600">Erstellt:</span>
+                    <span className="ml-2">{formatDate(contact.createdAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <ClockIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <ClockIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <Text className="text-gray-600">Aktualisiert:</Text>
-                    <Text className="ml-2">{formatDate(contact.updatedAt)}</Text>
+                    <span className="text-zinc-600">Aktualisiert:</span>
+                    <span className="ml-2">{formatDate(contact.updatedAt)}</span>
                   </div>
                 </div>
-                {contact.personalInfo?.birthday && (
-                  <div className="flex items-center gap-3">
-                    <CakeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              </div>
+            </InfoCard>
+
+            {/* Personal Info */}
+            {contact.personalInfo && (contact.personalInfo.birthday || contact.personalInfo.languages?.length || contact.personalInfo.interests?.length || contact.personalInfo.notes) && (
+              <InfoCard title="Persönliche Informationen" icon={UserIcon}>
+                <div className="space-y-4">
+                  {contact.personalInfo.birthday && (
                     <div>
-                      <Text className="text-gray-600">Geburtstag:</Text>
-                      <Text className="ml-2">{formatBirthday(contact.personalInfo.birthday)}</Text>
+                      <div className="flex items-center gap-2 mb-1">
+                        <CakeIcon className="h-4 w-4 text-zinc-400" />
+                        <Text className="text-sm font-semibold text-zinc-700">Geburtstag</Text>
+                      </div>
+                      <Text className="text-sm text-zinc-900">{formatBirthday(contact.personalInfo.birthday)}</Text>
                     </div>
-                  </div>
-                )}
-                {contact.personalInfo?.languages && contact.personalInfo.languages.length > 0 && (
-                  <div className="flex items-start gap-3">
-                    <LanguageIcon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  )}
+
+                  {contact.personalInfo.languages && contact.personalInfo.languages.length > 0 && (
                     <div>
-                      <Text className="text-gray-600">Sprachen:</Text>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <LanguageIcon className="h-4 w-4 text-zinc-400" />
+                        <Text className="text-sm font-semibold text-zinc-700">Sprachen</Text>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {contact.personalInfo.languages.map((lang, index) => (
                           <Badge key={index} color="zinc" className="text-xs">{lang}</Badge>
                         ))}
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </InfoCard>
+                  )}
 
-            {/* Personal Info */}
-            {contact.personalInfo && (contact.personalInfo.interests?.length || contact.personalInfo.notes) && (
-              <InfoCard title="Persönliche Informationen" icon={UserIcon}>
-                <div className="space-y-3">
                   {contact.personalInfo.interests && contact.personalInfo.interests.length > 0 && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Interessen</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-2">Interessen</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.personalInfo.interests.map((interest, index) => (
                           <Badge key={index} color="purple" className="whitespace-nowrap">{interest}</Badge>
@@ -855,10 +911,11 @@ export default function ContactDetailPage() {
                       </div>
                     </div>
                   )}
+
                   {contact.personalInfo.notes && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-1">Persönliche Notizen</Text>
-                      <Text className="text-sm text-gray-700">{contact.personalInfo.notes}</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-1">Persönliche Notizen</Text>
+                      <Text className="text-sm text-zinc-700 whitespace-pre-wrap">{contact.personalInfo.notes}</Text>
                     </div>
                   )}
                 </div>
@@ -905,68 +962,35 @@ export default function ContactDetailPage() {
 
             {/* Publications for Journalists */}
             {contact.mediaProfile?.isJournalist && publications.length > 0 && (
-              <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <NewspaperIcon className="h-5 w-5 text-gray-500" />
-                    Publikationen
-                    <Badge color="blue" className="ml-auto">{publications.length}</Badge>
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {publications.map(publication => (
-                      <div key={publication.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold text-lg">{publication.title}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge color="blue" className="text-xs whitespace-nowrap">
-                                {publication.type}
-                              </Badge>
-                              {publication.verified && (
-                                <Badge color="green" className="text-xs whitespace-nowrap">
-                                  Verifiziert
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
+              <InfoCard title="Publikationen" icon={NewspaperIcon}>
+                <div className="space-y-3">
+                  {publications.map(publication => (
+                    <div key={publication.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-colors">
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-semibold text-base">{publication.title}</h4>
                           <Link
                             href={`/dashboard/library/publications/${publication.id}`}
-                            className="text-sm text-[#005fab] hover:text-[#004a8c] ml-4"
+                            className="text-xs text-primary hover:text-primary-hover whitespace-nowrap ml-2"
                           >
-                            Details →
+                            Anzeigen
                           </Link>
                         </div>
-                        
-                        {publication.subtitle && (
-                          <Text className="text-sm text-gray-600 mb-2">{publication.subtitle}</Text>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>Format: {publication.format}</span>
-                          {publication.metrics?.frequency && (
-                            <span>Frequenz: {publication.metrics.frequency}</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge color="blue" className="text-xs whitespace-nowrap">
+                            {publication.type}
+                          </Badge>
+                          {publication.verified && (
+                            <Badge color="green" className="text-xs whitespace-nowrap">
+                              Verifiziert
+                            </Badge>
                           )}
                         </div>
-                        
-                        {publication.focusAreas && publication.focusAreas.length > 0 && (
-                          <div className="mt-2">
-                            <div className="flex flex-wrap gap-1">
-                              {publication.focusAreas.slice(0, 3).map((area, index) => (
-                                <Badge key={index} color="zinc" className="text-xs">{area}</Badge>
-                              ))}
-                              {publication.focusAreas.length > 3 && (
-                                <Badge color="zinc" className="text-xs">+{publication.focusAreas.length - 3}</Badge>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </InfoCard>
             )}
 
             {/* Distribution lists */}

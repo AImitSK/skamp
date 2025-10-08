@@ -1270,16 +1270,23 @@ export default function ContactModalEnhanced({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
                     <Label>Geburtstag</Label>
-                    <Input 
-                      type="date" 
-                      value={formData.personalInfo?.birthday ? new Date(formData.personalInfo.birthday).toISOString().split('T')[0] : ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        personalInfo: { 
+                    <Input
+                      type="date"
+                      value={formData.personalInfo?.birthday ? (() => {
+                        try {
+                          const date = new Date(formData.personalInfo.birthday);
+                          return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+                        } catch {
+                          return '';
+                        }
+                      })() : ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        personalInfo: {
                           ...formData.personalInfo,
                           birthday: e.target.value ? new Date(e.target.value) : undefined
                         }
-                      })} 
+                      })}
                     />
                   </Field>
                   <Field>
