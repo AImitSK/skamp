@@ -594,16 +594,16 @@ const getContactCount = (companyId: string) => {
 
   return (
     <div>
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
-
       {/* Header */}
       <div className="mb-6">
-        <Heading level={1}>Kontakte</Heading>
+        <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Kontakte</h1>
+      </div>
+
+      {/* Alert - Fixed height container */}
+      <div className="mb-4 h-[50px]">
+        {alert && (
+          <Alert type={alert.type} title={alert.title} message={alert.message} />
+        )}
       </div>
 
       {/* Tabs */}
@@ -658,13 +658,30 @@ const getContactCount = (companyId: string) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
               className={clsx(
-                'block w-full rounded-lg border border-zinc-700 bg-white py-2 pl-10 pr-3 text-sm',
-                'placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-                'dark:border-zinc-400 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-400',
+                'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
+                'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+                'dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-700',
                 'h-10'
               )}
             />
           </div>
+
+          {/* Add Button */}
+          <Button
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
+            onClick={() => {
+              if (activeTab === 'companies') {
+                setSelectedCompany(null);
+                setShowCompanyModal(true);
+              } else {
+                setSelectedContact(null);
+                setShowContactModal(true);
+              }
+            }}
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Neu hinzufügen
+          </Button>
 
           {/* Filter Button - nur Icon */}
           <Popover className="relative">
@@ -672,7 +689,20 @@ const getContactCount = (companyId: string) => {
               const activeFiltersCount = activeTab === 'companies'
                 ? (selectedTypes.length + selectedCompanyTagIds.length)
                 : (selectedContactCompanyIds.length + selectedContactTagIds.length);
-              
+
+              // Get tags that are actually used in the current filtered data
+              const usedTagIds = new Set<string>();
+              if (activeTab === 'companies') {
+                filteredCompanies.forEach(company => {
+                  company.tagIds?.forEach(tagId => usedTagIds.add(tagId));
+                });
+              } else {
+                filteredContacts.forEach(contact => {
+                  contact.tagIds?.forEach(tagId => usedTagIds.add(tagId));
+                });
+              }
+              const usedTags = tagOptions.filter(tag => tag.id && usedTagIds.has(tag.id));
+
               const filters: Array<{
                 id: string;
                 label: string;
@@ -690,7 +720,7 @@ const getContactCount = (companyId: string) => {
                       id: 'tags',
                       label: 'Tags',
                       type: 'multiselect' as const,
-                      options: tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))
+                      options: usedTags.map(tag => ({ value: tag.id!, label: tag.name }))
                     }
                   ]
                 : [
@@ -704,7 +734,7 @@ const getContactCount = (companyId: string) => {
                       id: 'tags',
                       label: 'Tags',
                       type: 'multiselect' as const,
-                      options: tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))
+                      options: usedTags.map(tag => ({ value: tag.id!, label: tag.name }))
                     }
                   ];
               
@@ -739,7 +769,7 @@ const getContactCount = (companyId: string) => {
                       'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
                       activeFiltersCount > 0
                         ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
-                        : 'border-zinc-700 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-400 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                        : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
                     )}
                     aria-label="Filter"
                   >
@@ -760,22 +790,11 @@ const getContactCount = (companyId: string) => {
                     leaveFrom="opacity-100 translate-y-0"
                     leaveTo="opacity-0 translate-y-1"
                   >
-                    <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
-                          {activeFiltersCount > 0 && (
-                            <button
-                              onClick={onReset}
-                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                            >
-                              Zurücksetzen
-                            </button>
-                          )}
-                        </div>
-
+                    <Popover.Panel className="absolute right-0 z-10 mt-2 w-[600px] origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                      <div>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
                         {filters.map((filter) => (
-                          <div key={filter.id}>
+                          <div key={filter.id} className="mb-[10px]">
                             {filter.type === 'multiselect' && filter.options.length > 10 ? (
                               // Use SearchableFilter for large datasets
                               <SearchableFilter
@@ -788,31 +807,29 @@ const getContactCount = (companyId: string) => {
                             ) : (
                               // Keep existing UI for small datasets
                               <>
-                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                                   {filter.label}
                                 </label>
                                 {filter.type === 'multiselect' ? (
-                                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                                  <div className="space-y-2 max-h-60 overflow-y-auto">
                                     {filter.options.map((option) => {
                                       const currentValues = values[filter.id as keyof typeof values];
                                       const currentValuesArray = Array.isArray(currentValues) ? currentValues : [];
                                       const isChecked = currentValuesArray.includes(option.value);
-                                      
+
                                       return (
                                         <label
                                           key={option.value}
                                           className="flex items-center gap-2 cursor-pointer"
                                         >
-                                          <input
-                                            type="checkbox"
+                                          <Checkbox
                                             checked={isChecked}
-                                            onChange={(e) => {
-                                              const newValues = e.target.checked
+                                            onChange={(checked: boolean) => {
+                                              const newValues = checked
                                                 ? [...currentValuesArray, option.value]
                                                 : currentValuesArray.filter(v => v !== option.value);
                                               onChange(filter.id, newValues);
                                             }}
-                                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                                           />
                                           <span className="text-sm text-zinc-700 dark:text-zinc-300">
                                             {option.label}
@@ -839,6 +856,18 @@ const getContactCount = (companyId: string) => {
                             )}
                           </div>
                         ))}
+                        </div>
+
+                        {activeFiltersCount > 0 && (
+                          <div className="flex justify-end pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                            <button
+                              onClick={onReset}
+                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
+                            >
+                              Zurücksetzen
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </Popover.Panel>
                   </Transition>
@@ -847,28 +876,9 @@ const getContactCount = (companyId: string) => {
             }}
           </Popover>
 
-          {/* View Toggle entfernt - nur Listenansicht */}
-
-          {/* Add Button */}
-          <Button 
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
-            onClick={() => {
-              if (activeTab === 'companies') {
-                setSelectedCompany(null);
-                setShowCompanyModal(true);
-              } else {
-                setSelectedContact(null);
-                setShowContactModal(true);
-              }
-            }}
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
-          </Button>
-
           {/* Actions Button - nur 3 Punkte */}
           <Popover className="relative">
-            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-400 dark:hover:bg-zinc-800 h-10 w-10">
+            <Popover.Button className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white p-2.5 text-zinc-700 hover:bg-zinc-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 h-10 w-10">
               <EllipsisVerticalIcon className="h-5 w-5 stroke-[2.5]" />
             </Popover.Button>
             
@@ -923,10 +933,10 @@ const getContactCount = (companyId: string) => {
           {activeTab === 'companies' 
             ? `${filteredCompanies.length} von ${companies.length} Firmen`
             : `${filteredContacts.length} von ${contacts.length} Kontakten`}
-          {((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
+          {((activeTab === 'companies' && selectedCompanyIds.size > 0) ||
             (activeTab === 'contacts' && selectedContactIds.size > 0)) && (
             <span className="ml-2">
-              • {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} ausgewählt
+              · {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} ausgewählt
             </span>
           )}
         </Text>
@@ -1081,8 +1091,8 @@ const getContactCount = (companyId: string) => {
                       {/* Actions */}
                       <div className="ml-4">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-400 stroke-[2.5]" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
                             <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}>
@@ -1255,8 +1265,8 @@ const getContactCount = (companyId: string) => {
                       {/* Actions */}
                       <div className="w-[80px] flex justify-end">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-400 stroke-[2.5]" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
                             <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}>
