@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
-import CompanyMediaSection from "@/components/crm/CompanyMediaSection";
 import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
@@ -425,26 +424,71 @@ export default function CompanyDetailPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <Heading>{company.name}</Heading>
-              {company.officialName && company.officialName !== company.name && (
-                <Text className="text-gray-600">{company.officialName}</Text>
-              )}
-              <div className="flex items-center gap-2 mt-2">
-                <Badge color="zinc" className="whitespace-nowrap">{companyTypeLabels[company.type]}</Badge>
-                {company.status && (
-                  <Badge
-                    color={company.status === 'active' ? 'green' : company.status === 'inactive' ? 'yellow' : 'zinc'}
-                    className="whitespace-nowrap"
-                  >
-                    {getStatusLabel(company.status)}
-                  </Badge>
-                )}
-                {company.lifecycleStage && (
-                  <Badge color="blue" className="whitespace-nowrap">
-                    {getLifecycleLabel(company.lifecycleStage)}
-                  </Badge>
-                )}
+              {/* Heading mit Badges */}
+              <div className="flex items-center gap-3">
+                <Heading>{company.name}</Heading>
+                <div className="flex items-center gap-2">
+                  <Badge color="zinc" className="whitespace-nowrap">{companyTypeLabels[company.type]}</Badge>
+                  {company.status && (
+                    <Badge
+                      color={company.status === 'active' ? 'green' : company.status === 'inactive' ? 'yellow' : 'zinc'}
+                      className="whitespace-nowrap"
+                    >
+                      {getStatusLabel(company.status)}
+                    </Badge>
+                  )}
+                  {company.lifecycleStage && (
+                    <Badge color="blue" className="whitespace-nowrap">
+                      {getLifecycleLabel(company.lifecycleStage)}
+                    </Badge>
+                  )}
+                </div>
               </div>
+
+              {company.officialName && company.officialName !== company.name && (
+                <Text className="text-gray-600 mt-1">{company.officialName}</Text>
+              )}
+
+              {/* Adresse mit Gründungsdatum */}
+              {company.mainAddress && (
+                <div className="mt-3 flex items-start gap-2 text-sm text-gray-600">
+                  <MapPinIcon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    {company.mainAddress.street && <span>{company.mainAddress.street}, </span>}
+                    {company.mainAddress.countryCode && <span>{company.mainAddress.countryCode} </span>}
+                    {company.mainAddress.postalCode && <span>{company.mainAddress.postalCode} </span>}
+                    {company.mainAddress.city && <span>{company.mainAddress.city}</span>}
+                    {company.foundedDate && (() => {
+                      try {
+                        let date;
+                        // Handle Firestore Timestamp object
+                        if (company.foundedDate.toDate && typeof company.foundedDate.toDate === 'function') {
+                          date = company.foundedDate.toDate();
+                        } else if (company.foundedDate.seconds) {
+                          // Plain object with seconds/nanoseconds
+                          date = new Date(company.foundedDate.seconds * 1000);
+                        } else {
+                          date = new Date(company.foundedDate);
+                        }
+
+                        const year = date.getFullYear();
+                        if (isNaN(year)) {
+                          console.error('Invalid foundedDate after parsing:', company.foundedDate, 'parsed date:', date);
+                          return null;
+                        }
+                        return (
+                          <span className="ml-2 text-gray-500">
+                            (gegr. {year})
+                          </span>
+                        );
+                      } catch (error) {
+                        console.error('Error parsing foundedDate:', company.foundedDate, error);
+                        return null;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -477,208 +521,179 @@ export default function CompanyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Main Information */}
+            {/* Main Information - Consolidated */}
             <InfoCard title="Allgemeine Informationen" icon={BuildingOfficeIcon}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {company.tradingName && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Handelsname</Text>
-                      <Text>{company.tradingName}</Text>
-                    </div>
-                  )}
-                  {company.legalForm && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Rechtsform</Text>
-                      <Text>{company.legalForm}</Text>
-                    </div>
-                  )}
-                  {company.industryClassification?.primary && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Branche</Text>
-                      <Text>{company.industryClassification.primary}</Text>
-                    </div>
-                  )}
-                  {company.foundedDate && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Gründungsdatum</Text>
-                      <Text>{formatDate(company.foundedDate)}</Text>
-                    </div>
-                  )}
-                </div>
-                {company.description && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500">Beschreibung</Text>
-                    <Text className="mt-1">{company.description}</Text>
-                  </div>
-                )}
-              </div>
-            </InfoCard>
-
-            {/* Contact Data */}
-            <InfoCard title="Kontaktdaten" icon={PhoneIcon}>
-              <div className="space-y-3">
-                {company.emails && company.emails.length > 0 && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
-                    {company.emails.map((email, index) => (
-                      <div key={index} className="flex items-center gap-3 mb-1">
-                        <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                        <a 
-                          href={`mailto:${email.email}`}
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                        >
-                          {email.email}
-                        </a>
-                        <Badge color="zinc" className="text-xs">
-                          {email.type === 'general' ? 'Allgemein' : 
-                           email.type === 'support' ? 'Support' :
-                           email.type === 'sales' ? 'Vertrieb' :
-                           email.type === 'billing' ? 'Buchhaltung' :
-                           email.type === 'press' ? 'Presse' : email.type}
-                        </Badge>
-                        {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {company.phones && company.phones.length > 0 && (
-                  <div>
-                    <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
-                    {company.phones.map((phone, index) => (
-                      <div key={index} className="flex items-center gap-3 mb-1">
-                        <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                        <a 
-                          href={`tel:${phone.number}`}
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                        >
-                          {phone.number}
-                        </a>
-                        <Badge color="zinc" className="text-xs">
-                          {phone.type === 'business' ? 'Geschäftlich' :
-                           phone.type === 'mobile' ? 'Mobil' :
-                           phone.type === 'fax' ? 'Fax' : phone.type}
-                        </Badge>
-                        {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {company.website && (
-                  <div className="flex items-center gap-3">
-                    <GlobeAltIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <a 
-                      href={company.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                    >
-                      {company.website}
-                    </a>
-                  </div>
-                )}
-                
-                {(!company.emails?.length && !company.phones?.length && !company.website) && (
-                  <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
-                )}
-              </div>
-            </InfoCard>
-
-            {/* Address */}
-            <InfoCard title="Adresse" icon={MapPinIcon}>
-              {company.mainAddress ? (
-                <div className="space-y-1">
-                  {company.mainAddress.street && <p>{company.mainAddress.street}</p>}
-                  {(company.mainAddress.postalCode || company.mainAddress.city) && (
-                    <p>{company.mainAddress.postalCode} {company.mainAddress.city}</p>
-                  )}
-                  {company.mainAddress.region && <p>{company.mainAddress.region}</p>}
-                  {company.mainAddress.countryCode && <p>{company.mainAddress.countryCode}</p>}
-                  <div className="mt-3">
-                    <a 
-                      href={`https://maps.google.com/?q=${encodeURIComponent(
-                        `${company.mainAddress.street || ''} ${company.mainAddress.city || ''} ${company.mainAddress.countryCode || ''}`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#005fab] hover:text-[#004a8c] text-sm inline-flex items-center gap-1"
-                    >
-                      <MapPinIcon className="h-4 w-4" />
-                      In Google Maps öffnen
-                    </a>
-                  </div>
-                </div>
-              ) : (
-                <Text className="text-gray-500">Keine Adresse hinterlegt</Text>
-              )}
-            </InfoCard>
-
-            {/* Business Identifiers */}
-            {company.identifiers && company.identifiers.length > 0 && (
-              <InfoCard title="Geschäftliche Kennungen" icon={IdentificationIcon}>
-                <div className="space-y-2">
-                  {(company.identifiers || []).map((identifier, index) => (
-                    <div key={index} className="flex items-start justify-between py-2 border-b last:border-0">
+              <div className="space-y-6">
+                {/* Contact Data */}
+                <div>
+                  <Text className="text-sm font-semibold text-gray-700 mb-3">Kontaktdaten</Text>
+                  <div className="space-y-3">
+                    {company.emails && company.emails.length > 0 && (
                       <div>
-                        <Text className="font-medium">
-                          {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
-                           identifier.type === 'EIN_US' ? 'EIN (US)' :
-                           identifier.type === 'COMPANY_REG_DE' ? 'Handelsregister (DE)' :
-                           identifier.type === 'COMPANY_REG_UK' ? 'Companies House (UK)' :
-                           identifier.type === 'UID_CH' ? 'UID (CH)' :
-                           identifier.type === 'SIREN_FR' ? 'SIREN (FR)' :
-                           identifier.type === 'DUNS' ? 'D-U-N-S' :
-                           identifier.type === 'LEI' ? 'LEI' : identifier.type}
-                        </Text>
-                        <Text className="text-sm text-gray-600">{identifier.value}</Text>
+                        <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
+                        {company.emails.map((email, index) => (
+                          <div key={index} className="flex items-center gap-3 mb-1">
+                            <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <a
+                              href={`mailto:${email.email}`}
+                              className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                            >
+                              {email.email}
+                            </a>
+                            <Badge color="zinc" className="text-xs">
+                              {email.type === 'general' ? 'Allgemein' :
+                               email.type === 'support' ? 'Support' :
+                               email.type === 'sales' ? 'Vertrieb' :
+                               email.type === 'billing' ? 'Buchhaltung' :
+                               email.type === 'press' ? 'Presse' : email.type}
+                            </Badge>
+                            {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                          </div>
+                        ))}
                       </div>
-                      {identifier.issuingAuthority && (
-                        <Badge color="zinc" className="text-xs">{identifier.issuingAuthority}</Badge>
+                    )}
+
+                    {company.phones && company.phones.length > 0 && (
+                      <div>
+                        <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
+                        {company.phones.map((phone, index) => (
+                          <div key={index} className="flex items-center gap-3 mb-1">
+                            <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <a
+                              href={`tel:${phone.number}`}
+                              className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                            >
+                              {phone.number}
+                            </a>
+                            <Badge color="zinc" className="text-xs">
+                              {phone.type === 'business' ? 'Geschäftlich' :
+                               phone.type === 'mobile' ? 'Mobil' :
+                               phone.type === 'fax' ? 'Fax' : phone.type}
+                            </Badge>
+                            {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {company.website && (
+                      <div className="flex items-center gap-3">
+                        <GlobeAltIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <a
+                          href={company.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                        >
+                          {company.website}
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Social Media unter Kontaktdaten */}
+                    {company.socialMedia && company.socialMedia.length > 0 && (
+                      <div>
+                        <Text className="text-sm font-medium text-gray-500 mb-2">Social Media</Text>
+                        <div className="flex flex-wrap gap-2">
+                          {company.socialMedia.map((social, index) => (
+                            <a
+                              key={index}
+                              href={social.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                              title={socialPlatformLabels[social.platform]}
+                            >
+                              <div className="text-gray-700">
+                                <SocialMediaIcon platform={social.platform} />
+                              </div>
+                              <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(!company.emails?.length && !company.phones?.length && !company.website && !company.socialMedia?.length) && (
+                      <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                {company.identifiers && company.identifiers.length > 0 && <div className="border-t border-gray-200"></div>}
+
+                {/* Business Identifiers */}
+                {company.identifiers && company.identifiers.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-semibold text-gray-700 mb-3">Geschäftliche Kennungen</Text>
+                    <div className="space-y-2">
+                      {company.identifiers.map((identifier, index) => (
+                        <div key={index} className="flex items-start justify-between py-2 border-b last:border-0">
+                          <div>
+                            <Text className="font-medium">
+                              {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
+                               identifier.type === 'EIN_US' ? 'EIN (US)' :
+                               identifier.type === 'COMPANY_REG_DE' ? 'Handelsregister (DE)' :
+                               identifier.type === 'COMPANY_REG_UK' ? 'Companies House (UK)' :
+                               identifier.type === 'UID_CH' ? 'UID (CH)' :
+                               identifier.type === 'SIREN_FR' ? 'SIREN (FR)' :
+                               identifier.type === 'DUNS' ? 'D-U-N-S' :
+                               identifier.type === 'LEI' ? 'LEI' : identifier.type}
+                            </Text>
+                            <Text className="text-sm text-gray-600">{identifier.value}</Text>
+                          </div>
+                          {identifier.issuingAuthority && (
+                            <Badge color="zinc" className="text-xs">{identifier.issuingAuthority}</Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Divider */}
+                {company.financial && <div className="border-t border-gray-200"></div>}
+
+                {/* Financial Information */}
+                {company.financial && (
+                  <div>
+                    <Text className="text-sm font-semibold text-gray-700 mb-3">Finanzen</Text>
+                    <div className="grid grid-cols-2 gap-4">
+                      {company.financial.annualRevenue && (
+                        <div>
+                          <Text className="text-sm font-medium text-gray-500">Jahresumsatz</Text>
+                          <Text className="text-lg font-semibold">
+                            {formatCurrency(
+                              company.financial.annualRevenue.amount,
+                              company.financial.annualRevenue.currency
+                            )}
+                          </Text>
+                        </div>
+                      )}
+                      {company.financial.employees !== undefined && (
+                        <div>
+                          <Text className="text-sm font-medium text-gray-500">Mitarbeiterzahl</Text>
+                          <Text className="text-lg font-semibold">{company.financial.employees.toLocaleString('de-DE')}</Text>
+                        </div>
+                      )}
+                      {company.financial.creditRating && (
+                        <div>
+                          <Text className="text-sm font-medium text-gray-500">Kreditrating</Text>
+                          <Text className="text-lg font-semibold">{company.financial.creditRating}</Text>
+                        </div>
+                      )}
+                      {company.financial.fiscalYearEnd && (
+                        <div>
+                          <Text className="text-sm font-medium text-gray-500">Geschäftsjahresende</Text>
+                          <Text>{company.financial.fiscalYearEnd}</Text>
+                        </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              </InfoCard>
-            )}
-
-            {/* Financial Information */}
-            {company.financial && (
-              <InfoCard title="Finanzen" icon={BanknotesIcon}>
-                <div className="grid grid-cols-2 gap-4">
-                  {company.financial.annualRevenue && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Jahresumsatz</Text>
-                      <Text className="text-lg font-semibold">
-                        {formatCurrency(
-                          company.financial.annualRevenue.amount,
-                          company.financial.annualRevenue.currency
-                        )}
-                      </Text>
-                    </div>
-                  )}
-                  {company.financial.employees !== undefined && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Mitarbeiterzahl</Text>
-                      <Text className="text-lg font-semibold">{company.financial.employees.toLocaleString('de-DE')}</Text>
-                    </div>
-                  )}
-                  {company.financial.creditRating && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Kreditrating</Text>
-                      <Text className="text-lg font-semibold">{company.financial.creditRating}</Text>
-                    </div>
-                  )}
-                  {company.financial.fiscalYearEnd && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-500">Geschäftsjahresende</Text>
-                      <Text>{company.financial.fiscalYearEnd}</Text>
-                    </div>
-                  )}
-                </div>
-              </InfoCard>
-            )}
+                  </div>
+                )}
+              </div>
+            </InfoCard>
 
             {/* Corporate Structure */}
             {(company.parentCompanyId || company.subsidiaryIds?.length) && (
@@ -696,7 +711,7 @@ export default function CompanyDetailPage() {
                       </Link>
                     </div>
                   )}
-                  
+
                   {subsidiaries.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-gray-500 mb-2">
@@ -716,29 +731,6 @@ export default function CompanyDetailPage() {
                       </div>
                     </div>
                   )}
-                </div>
-              </InfoCard>
-            )}
-
-            {/* Social Media */}
-            {company.socialMedia && company.socialMedia.length > 0 && (
-              <InfoCard title="Social Media" icon={LinkIcon}>
-                <div className="flex flex-wrap gap-3">
-                  {company.socialMedia.map((social, index) => (
-                    <a
-                      key={index}
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      title={socialPlatformLabels[social.platform]}
-                    >
-                      <div className="text-gray-700">
-                        <SocialMediaIcon platform={social.platform} />
-                      </div>
-                      <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
-                    </a>
-                  ))}
                 </div>
               </InfoCard>
             )}
@@ -803,60 +795,6 @@ export default function CompanyDetailPage() {
               </div>
             </div>
 
-            {/* Publications for Media Companies */}
-            {isMediaCompany && publications.length > 0 && (
-              <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-6 py-4 border-b bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-xl flex items-center gap-2">
-                      <NewspaperIcon className="h-6 w-6 text-gray-500" />
-                      Publikationen
-                      <Badge color="blue" className="ml-2">{publications.length}</Badge>
-                    </h3>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {publications.map(publication => {
-                      const adCount = advertisements.filter(ad => 
-                        ad.publicationIds.includes(publication.id!)
-                      ).length;
-                      
-                      return (
-                        <div key={publication.id} className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h4 className="font-semibold text-lg">{publication.title}</h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge color="blue" className="text-xs whitespace-nowrap">
-                                  {publication.type}
-                                </Badge>
-                                {publication.verified && (
-                                  <Badge color="green" className="text-xs whitespace-nowrap">
-                                    Verifiziert
-                                  </Badge>
-                                )}
-                                {adCount > 0 && (
-                                  <Badge color="purple" className="text-xs whitespace-nowrap">
-                                    {adCount} Werbemittel
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <Link
-                              href={`/dashboard/library/publications/${publication.id}`}
-                              className="text-sm text-primary hover:text-primary-hover ml-4"
-                            >
-                              Anzeigen
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Notes */}
             {company.internalNotes && (
@@ -896,6 +834,50 @@ export default function CompanyDetailPage() {
                 )}
               </div>
             </InfoCard>
+
+            {/* Publications for Media Companies */}
+            {isMediaCompany && publications.length > 0 && (
+              <InfoCard title="Publikationen" icon={NewspaperIcon}>
+                <div className="space-y-3">
+                  {publications.map(publication => {
+                    const adCount = advertisements.filter(ad =>
+                      ad.publicationIds.includes(publication.id!)
+                    ).length;
+
+                    return (
+                      <div key={publication.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <h4 className="font-semibold text-base">{publication.title}</h4>
+                            <Link
+                              href={`/dashboard/library/publications/${publication.id}`}
+                              className="text-xs text-primary hover:text-primary-hover whitespace-nowrap ml-2"
+                            >
+                              Anzeigen
+                            </Link>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge color="blue" className="text-xs whitespace-nowrap">
+                              {publication.type}
+                            </Badge>
+                            {publication.verified && (
+                              <Badge color="green" className="text-xs whitespace-nowrap">
+                                Verifiziert
+                              </Badge>
+                            )}
+                            {adCount > 0 && (
+                              <Badge color="purple" className="text-xs whitespace-nowrap">
+                                {adCount} Werbemittel
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </InfoCard>
+            )}
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -943,13 +925,6 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
-        {/* Media Section at the bottom */}
-        {company.id && (
-          <CompanyMediaSection 
-            companyId={company.id} 
-            companyName={company.name} 
-          />
-        )}
       </div>
 
       {/* Edit Modal */}
