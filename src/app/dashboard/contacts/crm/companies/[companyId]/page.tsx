@@ -530,24 +530,27 @@ export default function CompanyDetailPage() {
                   <div className="space-y-3">
                     {company.emails && company.emails.length > 0 && (
                       <div>
-                        <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
                         {company.emails.map((email, index) => (
-                          <div key={index} className="flex items-center gap-3 mb-1">
-                            <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                            <a
-                              href={`mailto:${email.email}`}
-                              className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                            >
-                              {email.email}
-                            </a>
-                            <Badge color="zinc" className="text-xs">
-                              {email.type === 'general' ? 'Allgemein' :
-                               email.type === 'support' ? 'Support' :
-                               email.type === 'sales' ? 'Vertrieb' :
-                               email.type === 'billing' ? 'Buchhaltung' :
-                               email.type === 'press' ? 'Presse' : email.type}
-                            </Badge>
-                            {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                          <div key={index} className="flex items-center justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-3">
+                              <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                              <a
+                                href={`mailto:${email.email}`}
+                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                              >
+                                {email.email}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge color="zinc" className="text-xs">
+                                {email.type === 'general' ? 'Allgemein' :
+                                 email.type === 'support' ? 'Support' :
+                                 email.type === 'sales' ? 'Vertrieb' :
+                                 email.type === 'billing' ? 'Buchhaltung' :
+                                 email.type === 'press' ? 'Presse' : email.type}
+                              </Badge>
+                              {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -555,22 +558,25 @@ export default function CompanyDetailPage() {
 
                     {company.phones && company.phones.length > 0 && (
                       <div>
-                        <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
                         {company.phones.map((phone, index) => (
-                          <div key={index} className="flex items-center gap-3 mb-1">
-                            <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                            <a
-                              href={`tel:${phone.number}`}
-                              className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                            >
-                              {phone.number}
-                            </a>
-                            <Badge color="zinc" className="text-xs">
-                              {phone.type === 'business' ? 'Geschäftlich' :
-                               phone.type === 'mobile' ? 'Mobil' :
-                               phone.type === 'fax' ? 'Fax' : phone.type}
-                            </Badge>
-                            {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                          <div key={index} className="flex items-center justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-3">
+                              <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                              <a
+                                href={`tel:${phone.number}`}
+                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                              >
+                                {phone.number}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge color="zinc" className="text-xs">
+                                {phone.type === 'business' ? 'Geschäftlich' :
+                                 phone.type === 'mobile' ? 'Mobil' :
+                                 phone.type === 'fax' ? 'Fax' : phone.type}
+                              </Badge>
+                              {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -592,25 +598,22 @@ export default function CompanyDetailPage() {
 
                     {/* Social Media unter Kontaktdaten */}
                     {company.socialMedia && company.socialMedia.length > 0 && (
-                      <div>
-                        <Text className="text-sm font-medium text-gray-500 mb-2">Social Media</Text>
-                        <div className="flex flex-wrap gap-2">
-                          {company.socialMedia.map((social, index) => (
-                            <a
-                              key={index}
-                              href={social.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                              title={socialPlatformLabels[social.platform]}
-                            >
-                              <div className="text-gray-700">
-                                <SocialMediaIcon platform={social.platform} />
-                              </div>
-                              <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
-                            </a>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-2">
+                        {company.socialMedia.map((social, index) => (
+                          <a
+                            key={index}
+                            href={social.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            title={socialPlatformLabels[social.platform]}
+                          >
+                            <div className="text-gray-700">
+                              <SocialMediaIcon platform={social.platform} />
+                            </div>
+                            <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
+                          </a>
+                        ))}
                       </div>
                     )}
 
@@ -620,16 +623,13 @@ export default function CompanyDetailPage() {
                   </div>
                 </div>
 
-                {/* Divider */}
-                {company.identifiers && company.identifiers.length > 0 && <div className="border-t border-gray-200"></div>}
-
                 {/* Business Identifiers */}
                 {company.identifiers && company.identifiers.length > 0 && (
                   <div>
                     <Text className="text-sm font-semibold text-gray-700 mb-3">Geschäftliche Kennungen</Text>
                     <div className="space-y-2">
                       {company.identifiers.map((identifier, index) => (
-                        <div key={index} className="flex items-start justify-between py-2 border-b last:border-0">
+                        <div key={index} className="flex items-start justify-between py-2">
                           <div>
                             <Text className="font-medium">
                               {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
@@ -651,9 +651,6 @@ export default function CompanyDetailPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Divider */}
-                {company.financial && <div className="border-t border-gray-200"></div>}
 
                 {/* Financial Information */}
                 {company.financial && (
