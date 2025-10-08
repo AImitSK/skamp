@@ -18,7 +18,7 @@ export const Select = forwardRef(function Select(
         'relative block w-full',
         // Basis-Styling für den Wrapper
         'before:absolute before:inset-px before:rounded-lg before:bg-white before:shadow-sm dark:before:hidden',
-        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-primary',
+        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500',
       ])}
     >
       <Headless.Select
@@ -30,7 +30,7 @@ export const Select = forwardRef(function Select(
           
           // Typografie und Farben
           'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 dark:text-white dark:border-white/10 dark:bg-white/5',
-          
+
           // Fokus-Styling
           'focus:outline-none',
 

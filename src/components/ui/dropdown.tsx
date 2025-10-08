@@ -113,10 +113,10 @@ export function DropdownItem({
     className,
     // Base styles - größere Padding für mehr Raum
     'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden w-full',
-    // Hover state - volle Breite
+    // Hover state
     'hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
-    // Focus state - CI-Blau anstatt grau
-    'data-focus:bg-[#005fab]/10 dark:data-focus:bg-[#005fab]/20 data-focus:ring-2 data-focus:ring-[#005fab]/20',
+    // Focus state
+    'data-focus:bg-blue-500/10 dark:data-focus:bg-blue-500/20 data-focus:ring-2 data-focus:ring-blue-500/20',
     // Disabled state
     'data-disabled:opacity-50',
     // Forced colors mode
@@ -128,7 +128,7 @@ export function DropdownItem({
       {/* Icon container mit Hintergrund */}
       {Icon && (
         <div className="mt-1 flex size-10 flex-none items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 transition-colors duration-200">
-          <Icon className="size-5 text-zinc-600 group-hover:text-[#dedc00] dark:text-zinc-400 dark:group-hover:text-[#dedc00] transition-colors duration-200" />
+          <Icon className="size-5 text-zinc-600 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition-colors duration-200" />
         </div>
       )}
       {/* Text content */}

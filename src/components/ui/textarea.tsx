@@ -20,7 +20,7 @@ export const Textarea = forwardRef(function Textarea(
         className,
         'relative block w-full',
         'before:absolute before:inset-px before:rounded-lg before:bg-white before:shadow-sm dark:before:hidden',
-        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-primary',
+        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500',
       ])}
     >
       <Headless.Textarea

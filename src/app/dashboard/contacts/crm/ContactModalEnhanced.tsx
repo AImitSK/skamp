@@ -21,12 +21,22 @@ import { CONTACT_TABS } from "@/lib/constants/crm-constants";
 import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
-// CountrySelector, LanguageSelector durch reguläre Select ersetzt
+import { CountrySelector } from "@/components/ui/country-selector";
 import { PhoneInput } from "@/components/ui/phone-input";
+import * as Flags from 'country-flag-icons/react/3x2';
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { useAuth } from '@/context/AuthContext';
+
+// Flag Component
+const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
+  if (!countryCode) return null;
+  // @ts-ignore - Dynamic import from flag library
+  const Flag = Flags[countryCode.toUpperCase()];
+  if (!Flag) return null;
+  return <Flag className={className} title={countryCode} />;
+};
 
 // Vorwahl-Optionen
 const COUNTRY_OPTIONS = [
@@ -512,7 +522,7 @@ export default function ContactModalEnhanced({
           </div>
 
           {/* Tab Content */}
-          <div className="px-6 py-6 max-h-[60vh] overflow-y-auto overflow-x-hidden">
+          <div className="px-6 py-6 h-[500px] overflow-y-auto overflow-x-hidden">
             {/* General Tab */}
             {activeTab === 'general' && (
               <FieldGroup>
@@ -674,7 +684,7 @@ export default function ContactModalEnhanced({
             {activeTab === 'communication' && (
               <FieldGroup>
                 {/* Email Addresses */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
                     <Button type="button" onClick={addEmailField} plain className="text-sm">
@@ -741,7 +751,7 @@ export default function ContactModalEnhanced({
                 </div>
 
                 {/* Phone Numbers */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
                     <Button type="button" onClick={addPhoneField} plain className="text-sm">
@@ -843,7 +853,7 @@ export default function ContactModalEnhanced({
                 </div>
 
                 {/* Social Profiles */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
                     <Button type="button" onClick={addSocialProfile} plain className="text-sm">
@@ -895,7 +905,7 @@ export default function ContactModalEnhanced({
                 </div>
 
                 {/* Communication Preferences */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="text-sm font-medium text-gray-900">Kommunikations-Präferenzen</div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -921,30 +931,41 @@ export default function ContactModalEnhanced({
                     </Field>
                     <Field>
                       <Label>Bevorzugte Sprache</Label>
-                      <Select 
-                        value={formData.communicationPreferences?.preferredLanguage || ''} 
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          communicationPreferences: { 
-                            ...formData.communicationPreferences,
-                            preferredLanguage: e.target.value as LanguageCode
-                          }
-                        })}
-                      >
-                        <option value="">Sprache auswählen...</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                        <option value="en">🇺🇸 English</option>
-                        <option value="fr">🇫🇷 Français</option>
-                        <option value="es">🇪🇸 Español</option>
-                        <option value="it">🇮🇹 Italiano</option>
-                        <option value="pt">🇵🇹 Português</option>
-                        <option value="nl">🇳🇱 Nederlands</option>
-                        <option value="pl">🇵🇱 Polski</option>
-                        <option value="ru">🇷🇺 Русский</option>
-                        <option value="ja">🇯🇵 日本語</option>
-                        <option value="ko">🇰🇷 한국어</option>
-                        <option value="zh">🇨🇳 中文</option>
-                      </Select>
+                      <div className="relative" data-slot="control">
+                        {formData.communicationPreferences?.preferredLanguage && (
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                            <FlagIcon
+                              countryCode={formData.communicationPreferences.preferredLanguage === 'en' ? 'GB' : formData.communicationPreferences.preferredLanguage.toUpperCase()}
+                              className="h-3 w-5"
+                            />
+                          </div>
+                        )}
+                        <Select
+                          value={formData.communicationPreferences?.preferredLanguage || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            communicationPreferences: {
+                              ...formData.communicationPreferences,
+                              preferredLanguage: e.target.value as LanguageCode
+                            }
+                          })}
+                          className={formData.communicationPreferences?.preferredLanguage ? 'pl-11' : ''}
+                        >
+                          <option value="">Sprache auswählen...</option>
+                          <option value="de">Deutsch</option>
+                          <option value="en">English</option>
+                          <option value="fr">Français</option>
+                          <option value="es">Español</option>
+                          <option value="it">Italiano</option>
+                          <option value="pt">Português</option>
+                          <option value="nl">Nederlands</option>
+                          <option value="pl">Polski</option>
+                          <option value="ru">Русский</option>
+                          <option value="ja">日本語</option>
+                          <option value="ko">한국어</option>
+                          <option value="zh">中文</option>
+                        </Select>
+                      </div>
                     </Field>
                   </div>
                 </div>
@@ -954,14 +975,8 @@ export default function ContactModalEnhanced({
             {/* Media Tab (nur sichtbar wenn Journalist) */}
             {activeTab === 'media' && formData.mediaProfile?.isJournalist && (
               <div className="space-y-6">
-                {/* Info Section */}
-                <Alert 
-                  type="info" 
-                  message="Konfigurieren Sie hier das Medienprofil für Journalisten und Redakteure."
-                />
-
                 {/* Publikationen */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="space-y-1">
                     <h3 className="text-sm font-medium text-gray-900">Publikationen</h3>
                     <p className="text-xs text-gray-500">
@@ -1027,7 +1042,7 @@ export default function ContactModalEnhanced({
                 </div>
 
                 {/* Ressorts/Beats */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="space-y-1">
                     <h3 className="text-sm font-medium text-gray-900">Ressorts & Themengebiete</h3>
                     <p className="text-xs text-gray-500">Über welche Themen berichtet dieser Journalist?</p>
@@ -1084,7 +1099,7 @@ export default function ContactModalEnhanced({
                 {/* Medientypen & Formate in zwei Spalten */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Media Types */}
-                  <div className="space-y-4 rounded-md border p-4">
+                  <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                     <div className="space-y-1">
                       <h3 className="text-sm font-medium text-gray-900">Medientypen</h3>
                       <p className="text-xs text-gray-500">In welchen Medien arbeitet der Journalist?</p>
@@ -1116,7 +1131,7 @@ export default function ContactModalEnhanced({
                   </div>
 
                   {/* Submission Formats */}
-                  <div className="space-y-4 rounded-md border p-4">
+                  <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                     <div className="space-y-1">
                       <h3 className="text-sm font-medium text-gray-900">Bevorzugte Formate</h3>
                       <p className="text-xs text-gray-500">Welche Inhaltsformate werden bevorzugt?</p>
@@ -1149,7 +1164,7 @@ export default function ContactModalEnhanced({
                 </div>
 
                 {/* Submission Guidelines */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="space-y-1">
                     <h3 className="text-sm font-medium text-gray-900">Einreichungs-Richtlinien</h3>
                     <p className="text-xs text-gray-500">Spezielle Anforderungen oder Hinweise für die Kontaktaufnahme</p>
@@ -1191,23 +1206,12 @@ export default function ContactModalEnhanced({
                   />
                 </Field>
 
-                {/* TODO: Education, Certifications, etc. */}
-                <Alert 
-                  type="info" 
-                  message="Weitere berufliche Informationen (Ausbildung, Zertifikate, Mitgliedschaften) werden in einer zukünftigen Version hinzugefügt."
-                />
               </FieldGroup>
             )}
 
             {/* GDPR Tab */}
             {activeTab === 'gdpr' && (
               <FieldGroup>
-                <Alert 
-                  type="info" 
-                  title="DSGVO-Einwilligungen"
-                  message="Verwalten Sie hier die Einwilligungen für verschiedene Kommunikationszwecke."
-                />
-
                 <div className="space-y-4">
                   <div className="border rounded-lg p-4">
                     <div className="flex items-center justify-between">
@@ -1280,48 +1284,56 @@ export default function ContactModalEnhanced({
                   </Field>
                   <Field>
                     <Label>Nationalität</Label>
-                    <Select 
-                      value={formData.personalInfo?.nationality || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        personalInfo: { 
-                          ...formData.personalInfo,
-                          nationality: e.target.value as CountryCode
-                        }
-                      })}
-                    >
-                      <option value="">Nationalität auswählen...</option>
-                      <option value="DE">🇩🇪 Deutschland</option>
-                      <option value="AT">🇦🇹 Österreich</option>
-                      <option value="CH">🇨🇭 Schweiz</option>
-                      <option value="US">🇺🇸 USA</option>
-                      <option value="GB">🇬🇧 Großbritannien</option>
-                      <option value="FR">🇫🇷 Frankreich</option>
-                      <option value="IT">🇮🇹 Italien</option>
-                      <option value="ES">🇪🇸 Spanien</option>
-                      <option value="NL">🇳🇱 Niederlande</option>
-                      <option value="BE">🇧🇪 Belgien</option>
-                      <option value="LU">🇱🇺 Luxemburg</option>
-                      <option value="DK">🇩🇰 Dänemark</option>
-                      <option value="SE">🇸🇪 Schweden</option>
-                      <option value="NO">🇳🇴 Norwegen</option>
-                      <option value="FI">🇫🇮 Finnland</option>
-                      <option value="PL">🇵🇱 Polen</option>
-                      <option value="CZ">🇨🇿 Tschechien</option>
-                      <option value="HU">🇭🇺 Ungarn</option>
-                      <option value="PT">🇵🇹 Portugal</option>
-                      <option value="GR">🇬🇷 Griechenland</option>
-                      <option value="IE">🇮🇪 Irland</option>
-                      <option value="CA">🇨🇦 Kanada</option>
-                      <option value="AU">🇦🇺 Australien</option>
-                      <option value="JP">🇯🇵 Japan</option>
-                      <option value="CN">🇨🇳 China</option>
-                      <option value="IN">🇮🇳 Indien</option>
-                      <option value="BR">🇧🇷 Brasilien</option>
-                      <option value="MX">🇲🇽 Mexiko</option>
-                      <option value="RU">🇷🇺 Russland</option>
-                      <option value="TR">🇹🇷 Türkei</option>
-                    </Select>
+                    <div className="relative" data-slot="control">
+                      {formData.personalInfo?.nationality && (
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                          <FlagIcon countryCode={formData.personalInfo.nationality} className="h-3 w-5" />
+                        </div>
+                      )}
+                      <Select
+                        value={formData.personalInfo?.nationality || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          personalInfo: {
+                            ...formData.personalInfo,
+                            nationality: e.target.value as CountryCode
+                          }
+                        })}
+                        className={formData.personalInfo?.nationality ? 'pl-11' : ''}
+                      >
+                        <option value="">Nationalität auswählen...</option>
+                        <option value="DE">Deutschland</option>
+                        <option value="AT">Österreich</option>
+                        <option value="CH">Schweiz</option>
+                        <option value="US">USA</option>
+                        <option value="GB">Großbritannien</option>
+                        <option value="FR">Frankreich</option>
+                        <option value="IT">Italien</option>
+                        <option value="ES">Spanien</option>
+                        <option value="NL">Niederlande</option>
+                        <option value="BE">Belgien</option>
+                        <option value="LU">Luxemburg</option>
+                        <option value="DK">Dänemark</option>
+                        <option value="SE">Schweden</option>
+                        <option value="NO">Norwegen</option>
+                        <option value="FI">Finnland</option>
+                        <option value="PL">Polen</option>
+                        <option value="CZ">Tschechien</option>
+                        <option value="HU">Ungarn</option>
+                        <option value="PT">Portugal</option>
+                        <option value="GR">Griechenland</option>
+                        <option value="IE">Irland</option>
+                        <option value="CA">Kanada</option>
+                        <option value="AU">Australien</option>
+                        <option value="JP">Japan</option>
+                        <option value="CN">China</option>
+                        <option value="IN">Indien</option>
+                        <option value="BR">Brasilien</option>
+                        <option value="MX">Mexiko</option>
+                        <option value="RU">Russland</option>
+                        <option value="TR">Türkei</option>
+                      </Select>
+                    </div>
                   </Field>
                 </div>
 

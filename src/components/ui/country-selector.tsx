@@ -7,6 +7,16 @@ import { Checkbox } from './checkbox'
 import { isValidCountryCode, getCountryNameDe } from '@/lib/validators/iso-validators'
 import type { CountryCode } from '@/types/international'
 import clsx from 'clsx'
+import * as Flags from 'country-flag-icons/react/3x2'
+
+// Flag Component
+const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
+  if (!countryCode) return null;
+  // @ts-ignore - Dynamic import from flag library
+  const Flag = Flags[countryCode.toUpperCase()];
+  if (!Flag) return null;
+  return <Flag className={className} title={countryCode} />;
+};
 
 // Liste der gängigsten Länder (kann erweitert werden)
 const COMMON_COUNTRIES: CountryCode[] = [
@@ -119,7 +129,7 @@ export const CountrySelector = forwardRef<HTMLInputElement, CountrySelectorSingl
         >
           {(country) => country && (
             <ComboboxOption value={country}>
-              <span className={`fi fi-${country.code.toLowerCase()} mr-2`} />
+              <FlagIcon countryCode={country.code} className="h-3 w-5 mr-2" />
               <ComboboxLabel>{country.name}</ComboboxLabel>
               <span className="ml-auto text-xs text-zinc-500">{country.code}</span>
             </ComboboxOption>
@@ -220,7 +230,7 @@ export function CountrySelectorMulti({
                       onChange={() => toggleCountry(country.code)}
                       className="mr-2"
                     />
-                    <span className={`fi fi-${country.code.toLowerCase()} mr-2`} />
+                    <FlagIcon countryCode={country.code} className="h-3 w-5 mr-2" />
                     <span className="flex-1">{country.name}</span>
                     <span className="text-xs text-zinc-500">{country.code}</span>
                   </label>
@@ -251,7 +261,7 @@ export function CountrySelectorMulti({
               key={code}
               className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
             >
-              <span className={`fi fi-${code.toLowerCase()} mr-1`} />
+              <FlagIcon countryCode={code} className="h-3 w-5 mr-1" />
               {code}
               <button
                 type="button"

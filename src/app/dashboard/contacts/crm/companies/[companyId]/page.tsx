@@ -375,9 +375,12 @@ export default function CompanyDetailPage() {
       <div className="p-8">
         <Alert type="error" title="Fehler" message={error} />
         <div className="mt-4">
-          <Button 
-            onClick={() => router.push('/dashboard/contacts/crm/')} 
-            plain
+          <Button
+            onClick={() => router.push('/dashboard/contacts/crm/')}
+            className="border border-zinc-300 bg-white text-zinc-700
+                       hover:bg-zinc-50 font-medium whitespace-nowrap
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                       h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
@@ -393,9 +396,12 @@ export default function CompanyDetailPage() {
       <div className="p-8 text-center">
         <Text>Firma konnte nicht gefunden werden.</Text>
         <div className="mt-4">
-          <Button 
-            onClick={() => router.push('/dashboard/contacts/crm/')} 
-            plain
+          <Button
+            onClick={() => router.push('/dashboard/contacts/crm/')}
+            className="border border-zinc-300 bg-white text-zinc-700
+                       hover:bg-zinc-50 font-medium whitespace-nowrap
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                       h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
@@ -417,15 +423,6 @@ export default function CompanyDetailPage() {
 
         {/* Header */}
         <div className="mb-6">
-          <Button 
-            plain 
-            onClick={() => router.push('/dashboard/contacts/crm/')}
-            className="mb-4"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
-          </Button>
-          
           <div className="flex items-center justify-between">
             <div>
               <Heading>{company.name}</Heading>
@@ -435,7 +432,7 @@ export default function CompanyDetailPage() {
               <div className="flex items-center gap-2 mt-2">
                 <Badge color="zinc" className="whitespace-nowrap">{companyTypeLabels[company.type]}</Badge>
                 {company.status && (
-                  <Badge 
+                  <Badge
                     color={company.status === 'active' ? 'green' : company.status === 'inactive' ? 'yellow' : 'zinc'}
                     className="whitespace-nowrap"
                   >
@@ -449,13 +446,30 @@ export default function CompanyDetailPage() {
                 )}
               </div>
             </div>
-            <Button 
-              onClick={() => setShowEditModal(true)}
-              className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap inline-flex items-center gap-x-2"
-            >
-              <PencilIcon className="h-4 w-4" />
-              Firma bearbeiten
-            </Button>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => router.push('/dashboard/contacts/crm/')}
+                className="border border-zinc-300 bg-white text-zinc-700
+                           hover:bg-zinc-50 font-medium whitespace-nowrap
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Zurück zur Übersicht
+              </Button>
+
+              <Button
+                onClick={() => setShowEditModal(true)}
+                className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+              >
+                <PencilIcon className="h-4 w-4 mr-2" />
+                Firma bearbeiten
+              </Button>
+            </div>
           </div>
         </div>
 

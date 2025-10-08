@@ -20,7 +20,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const [newTagColor, setNewTagColor] = useState<TagColor>('blue');
+  const [newTagColor] = useState<TagColor>('blue'); // Alle Tags sind blau
 
   const selectedTags = availableTags.filter(tag => selectedTagIds.includes(tag.id!));
   const filteredTags = availableTags.filter(tag => 
@@ -38,12 +38,12 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
     onChange(selectedTagIds.filter(id => id !== tagId));
   };
 
-  const handleCreateTag = async () => {
-    if (!searchTerm.trim()) return;
-    
+  const handleCreateTag = async (tagName: string) => {
+    if (!tagName.trim()) return;
+
     setIsCreating(true);
     try {
-      const newTagId = await onCreateTag(searchTerm.trim(), newTagColor);
+      const newTagId = await onCreateTag(tagName.trim(), newTagColor);
       onChange([...selectedTagIds, newTagId]);
       setSearchTerm("");
       setIsOpen(false);
@@ -51,6 +51,25 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
       console.error("Fehler beim Erstellen des Tags:", error);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      e.preventDefault();
+
+      // Prüfe ob Tag bereits existiert
+      const existingTag = availableTags.find(tag =>
+        tag.name.toLowerCase() === searchTerm.trim().toLowerCase()
+      );
+
+      if (existingTag) {
+        // Tag existiert bereits - hinzufügen
+        handleAddTag(existingTag.id!);
+      } else {
+        // Neues Tag erstellen
+        await handleCreateTag(searchTerm.trim());
+      }
     }
   };
 
@@ -74,76 +93,41 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
 
       {/* Tag-Auswahl */}
       <div className="relative">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Tags hinzufügen..."
-          className="w-full rounded-md border border-zinc-300 py-2 px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+        <span
+          className={clsx(
+            'relative block w-full',
+            'before:absolute before:inset-px before:rounded-[calc(theme(borderRadius.lg)-1px)] before:bg-white before:shadow-sm',
+            'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset focus-within:after:ring-2 focus-within:after:ring-blue-500',
+            isCreating && 'opacity-50'
+          )}
+        >
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsOpen(true)}
+            placeholder="Tag eingeben + Enter drücken..."
+            disabled={isCreating}
+            className="relative block w-full appearance-none rounded-lg px-3 py-2 text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 border border-zinc-950/10 hover:border-zinc-950/20 bg-white/95 focus:outline-none disabled:border-zinc-950/20 disabled:cursor-not-allowed"
+          />
+        </span>
 
-        {/* Dropdown */}
-        {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 max-h-60">
-            {/* Vorhandene Tags */}
-            {filteredTags.length > 0 && (
-              <div className="max-h-48 overflow-auto">
-                {filteredTags.map(tag => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => handleAddTag(tag.id!)}
-                    className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-gray-100"
-                  >
-                    <Badge color={tag.color as any} className="mr-2">
-                      {tag.name}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Neues Tag erstellen */}
-            {searchTerm.trim() && !availableTags.some(tag => 
-              tag.name.toLowerCase() === searchTerm.toLowerCase()
-            ) && (
-              <div className="border-t border-gray-200 p-3">
-                <div className="text-xs text-gray-500 mb-2">Tag erstellen:</div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium">{searchTerm}</span>
-                  <div className="flex gap-1">
-                    {tagColors.map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setNewTagColor(color)}
-                        className={clsx(
-                          "h-4 w-4 rounded-full",
-                          color === 'blue' && 'bg-blue-500',
-                          color === 'green' && 'bg-green-500',
-                          color === 'yellow' && 'bg-yellow-500',
-                          color === 'red' && 'bg-red-500',
-                          color === 'purple' && 'bg-purple-500',
-                          color === 'pink' && 'bg-pink-500',
-                          color === 'orange' && 'bg-orange-500',
-                          color === 'zinc' && 'bg-zinc-500',
-                          newTagColor === color && 'ring-2 ring-offset-1 ring-gray-400'
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCreateTag}
-                  disabled={isCreating}
-                  className="w-full rounded bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary disabled:opacity-50"
-                >
-                  {isCreating ? 'Erstelle...' : 'Tag erstellen'}
-                </button>
-              </div>
-            )}
+        {/* Autocomplete Dropdown - nur bei Eingabe */}
+        {isOpen && searchTerm.trim() && filteredTags.length > 0 && (
+          <div className="absolute z-50 mt-1 w-full rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 max-h-48 overflow-auto">
+            {filteredTags.slice(0, 5).map(tag => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => handleAddTag(tag.id!)}
+                className="flex w-full items-center px-3 py-2 text-left text-sm hover:bg-zinc-50 transition-colors rounded-md"
+              >
+                <Badge color={tag.color as any} className="text-xs">
+                  {tag.name}
+                </Badge>
+              </button>
+            ))}
           </div>
         )}
       </div>

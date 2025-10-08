@@ -26,7 +26,7 @@ const styles = {
     // Indigo-Button für spezielle Aktionen
     indigo: 'border-transparent bg-indigo-600 text-white hover:bg-indigo-500',
     // "Plain" Variante für Abbrechen-Buttons
-    plain: 'border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+    plain: 'border-transparent bg-transparent text-zinc-700 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-800',
   },
 }
 

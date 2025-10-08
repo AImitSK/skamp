@@ -22,7 +22,7 @@ import { Publication, Advertisement } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
-// CountrySelector durch reguläres Select ersetzt
+import { CountrySelector } from "@/components/ui/country-selector";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -30,6 +30,16 @@ import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
+import * as Flags from 'country-flag-icons/react/3x2';
+
+// Flag Component
+const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
+  if (!countryCode) return null;
+  // @ts-ignore - Dynamic import from flag library
+  const Flag = Flags[countryCode.toUpperCase()];
+  if (!Flag) return null;
+  return <Flag className={className} title={countryCode} />;
+};
 
 // Vorwahl-Optionen
 const COUNTRY_OPTIONS = [
@@ -501,21 +511,21 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
           </div>
 
           {/* Tab Content */}
-          <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
+          <div className="px-6 py-6 h-[500px] overflow-y-auto">
             {/* General Tab */}
             {activeTab === 'general' && (
               <FieldGroup>
                 <Field>
-                  <Label>Anzeigename *</Label>
-                  <Input 
-                    value={formData.name} 
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                    required 
+                  <Label>
+                    Anzeigename *
+                    <InfoTooltip content="Der Name, wie er in Listen und Übersichten angezeigt wird" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
                     autoFocus
                   />
-                  <Text className="text-xs text-gray-500 mt-1">
-                    Der Name, wie er in Listen und Übersichten angezeigt wird
-                  </Text>
                 </Field>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -698,7 +708,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 </div>
 
                 {/* Business Identifiers */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">
                       Geschäftliche Kennungen
@@ -771,7 +781,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
             {activeTab === 'international' && (
               <FieldGroup>
                 {/* Main Address */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="text-sm font-medium text-gray-900">Hauptadresse</div>
                   
                   <Field>
@@ -825,51 +835,59 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     </Field>
                     <Field>
                       <Label>Land</Label>
-                      <Select 
-                        value={formData.mainAddress?.countryCode || ''} 
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          mainAddress: { ...formData.mainAddress!, countryCode: e.target.value as CountryCode }
-                        })}
-                      >
-                        <option value="">Land auswählen...</option>
-                        <option value="DE">🇩🇪 Deutschland</option>
-                        <option value="AT">🇦🇹 Österreich</option>
-                        <option value="CH">🇨🇭 Schweiz</option>
-                        <option value="US">🇺🇸 USA</option>
-                        <option value="GB">🇬🇧 Großbritannien</option>
-                        <option value="FR">🇫🇷 Frankreich</option>
-                        <option value="IT">🇮🇹 Italien</option>
-                        <option value="ES">🇪🇸 Spanien</option>
-                        <option value="NL">🇳🇱 Niederlande</option>
-                        <option value="BE">🇧🇪 Belgien</option>
-                        <option value="LU">🇱🇺 Luxemburg</option>
-                        <option value="DK">🇩🇰 Dänemark</option>
-                        <option value="SE">🇸🇪 Schweden</option>
-                        <option value="NO">🇳🇴 Norwegen</option>
-                        <option value="FI">🇫🇮 Finnland</option>
-                        <option value="PL">🇵🇱 Polen</option>
-                        <option value="CZ">🇨🇿 Tschechien</option>
-                        <option value="HU">🇭🇺 Ungarn</option>
-                        <option value="PT">🇵🇹 Portugal</option>
-                        <option value="GR">🇬🇷 Griechenland</option>
-                        <option value="IE">🇮🇪 Irland</option>
-                        <option value="CA">🇨🇦 Kanada</option>
-                        <option value="AU">🇦🇺 Australien</option>
-                        <option value="JP">🇯🇵 Japan</option>
-                        <option value="CN">🇨🇳 China</option>
-                        <option value="IN">🇮🇳 Indien</option>
-                        <option value="BR">🇧🇷 Brasilien</option>
-                        <option value="MX">🇲🇽 Mexiko</option>
-                        <option value="RU">🇷🇺 Russland</option>
-                        <option value="TR">🇹🇷 Türkei</option>
-                      </Select>
+                      <div className="relative" data-slot="control">
+                        {formData.mainAddress?.countryCode && (
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                            <FlagIcon countryCode={formData.mainAddress.countryCode} className="h-3 w-5" />
+                          </div>
+                        )}
+                        <Select
+                          value={formData.mainAddress?.countryCode || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            mainAddress: { ...formData.mainAddress!, countryCode: e.target.value as CountryCode }
+                          })}
+                          className={formData.mainAddress?.countryCode ? 'pl-11' : ''}
+                        >
+                          <option value="">Land auswählen...</option>
+                          <option value="DE">Deutschland</option>
+                          <option value="AT">Österreich</option>
+                          <option value="CH">Schweiz</option>
+                          <option value="US">USA</option>
+                          <option value="GB">Großbritannien</option>
+                          <option value="FR">Frankreich</option>
+                          <option value="IT">Italien</option>
+                          <option value="ES">Spanien</option>
+                          <option value="NL">Niederlande</option>
+                          <option value="BE">Belgien</option>
+                          <option value="LU">Luxemburg</option>
+                          <option value="DK">Dänemark</option>
+                          <option value="SE">Schweden</option>
+                          <option value="NO">Norwegen</option>
+                          <option value="FI">Finnland</option>
+                          <option value="PL">Polen</option>
+                          <option value="CZ">Tschechien</option>
+                          <option value="HU">Ungarn</option>
+                          <option value="PT">Portugal</option>
+                          <option value="GR">Griechenland</option>
+                          <option value="IE">Irland</option>
+                          <option value="CA">Kanada</option>
+                          <option value="AU">Australien</option>
+                          <option value="JP">Japan</option>
+                          <option value="CN">China</option>
+                          <option value="IN">Indien</option>
+                          <option value="BR">Brasilien</option>
+                          <option value="MX">Mexiko</option>
+                          <option value="RU">Russland</option>
+                          <option value="TR">Türkei</option>
+                        </Select>
+                      </div>
                     </Field>
                   </div>
                 </div>
 
                 {/* Phone Numbers */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
                     <Button type="button" onClick={addPhoneField} plain className="text-sm">
@@ -962,7 +980,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 </div>
 
                 {/* Email Addresses */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
                     <Button type="button" onClick={addEmailField} plain className="text-sm">
@@ -1031,9 +1049,18 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 </div>
 
                 {/* Social Media */}
-                <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
-                  {(formData.socialMedia || []).map((profile, index) => (
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+                    <Button type="button" onClick={addSocialMediaField} plain className="text-sm">
+                      <PlusIcon className="h-4 w-4" />
+                      Profil hinzufügen
+                    </Button>
+                  </div>
+
+                  {formData.socialMedia && formData.socialMedia.length > 0 ? (
+                    <div className="space-y-2">
+                      {(formData.socialMedia || []).map((profile, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-5">
                         <Select 
@@ -1058,11 +1085,11 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                         </Button>
                       </div>
                     </div>
-                  ))}
-                  <Button type="button" onClick={addSocialMediaField} plain className="w-full">
-                    <PlusIcon className="h-4 w-4" />
-                    Profil hinzufügen
-                  </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500">Keine Social Media Profile hinzugefügt</Text>
+                  )}
                 </div>
               </FieldGroup>
             )}
@@ -1105,22 +1132,22 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 </div>
 
                 <Field>
-                  <Label>Geschäftsjahresende</Label>
-                  <Input 
-                    type="text" 
-                    value={formData.financial?.fiscalYearEnd || ''} 
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      financial: { 
-                        ...formData.financial!, 
+                  <Label>
+                    Geschäftsjahresende
+                    <InfoTooltip content="Format: TT.MM. (z.B. 31.12. für 31. Dezember)" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formData.financial?.fiscalYearEnd || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      financial: {
+                        ...formData.financial!,
                         fiscalYearEnd: e.target.value || undefined
                       }
-                    })} 
+                    })}
                     placeholder="31.12."
                   />
-                  <Text className="text-xs text-gray-500 mt-1">
-                    Format: TT.MM. (z.B. 31.12. für 31. Dezember)
-                  </Text>
                 </Field>
 
                 <Field>
@@ -1172,11 +1199,6 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                   </Select>
                 </Field>
 
-                {/* TODO: Subsidiary selection would need a more complex UI */}
-                <Alert 
-                  type="info"
-                  message="Tochtergesellschaften können nach dem Speichern über die Konzernstruktur-Ansicht verwaltet werden."
-                />
               </FieldGroup>
             )}
 
@@ -1191,7 +1213,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                 />
 
                 {/* Publikationen */}
-                <div className="space-y-4 rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <BookOpenIcon className="h-5 w-5 text-gray-400" />

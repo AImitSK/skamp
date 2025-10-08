@@ -479,19 +479,43 @@ className="w-full"
 
 #### Secondary Button
 
-**TODO: Noch nicht definiert**
-- Outline-Style vs. Ghost-Style?
-- Farbe: zinc-700 border + hover?
-
 ```tsx
-// Placeholder - Zu definieren:
 <Button
   className="border border-zinc-300 bg-white text-zinc-700
-             hover:bg-zinc-50 h-10 px-6 rounded-lg"
+             hover:bg-zinc-50 font-medium whitespace-nowrap
+             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+             h-10 px-6 rounded-lg transition-colors"
 >
   Abbrechen
 </Button>
 ```
+
+**Verwendung:**
+- Cancel-Aktionen in Dialogs/Modals
+- "Zurück"-Navigation
+- Sekundäre Aktionen auf der Seite
+- Wird oft mit Primary Button kombiniert
+
+**Varianten:**
+```tsx
+// Mit Icon (links)
+<ArrowLeftIcon className="h-4 w-4 mr-2" />
+Zurück zur Übersicht
+
+// Disabled
+className="...opacity-50 cursor-not-allowed"
+disabled
+
+// Full Width
+className="w-full"
+```
+
+**Farben:**
+- Border: `border-zinc-300`
+- Background: `bg-white`
+- Text: `text-zinc-700`
+- Hover: `hover:bg-zinc-50`
+- Focus Ring: `focus:ring-primary`
 
 ---
 
@@ -1701,6 +1725,13 @@ const FlagIcon = ({ countryCode, className = "h-4 w-6" }) => {
 
 ## Changelog
 
+### Version 1.2 - Januar 2025
+- ✅ **Secondary Button**: Vollständig definiert
+  - Outline-Style mit border-zinc-300
+  - Hover: bg-zinc-50
+  - Verwendung: Cancel, Zurück-Navigation, Sekundäre Aktionen
+  - Kombinierbar mit Primary Button
+
 ### Version 1.1 - Januar 2025
 - ✅ **Modals & Dialogs**: Vollständig dokumentiert
   - Modal-Größen (xs bis 5xl)
@@ -1723,7 +1754,7 @@ const FlagIcon = ({ countryCode, className = "h-4 w-6" }) => {
 - ✅ Dropdowns: Filter-Popover, Action-Menü
 - ✅ Alerts: Alert-Component, Anti-Ruckeln-Pattern
 - ✅ Patterns: Toolbar, Results Info
-- 📝 TODO: Secondary Buttons, Cards, Navigation, Loading States
+- 📝 TODO: Cards, Navigation, Loading States
 
 ---
 
