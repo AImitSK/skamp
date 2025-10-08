@@ -97,11 +97,23 @@ export interface CombinedContactReference {
   // Company-Daten (aus globaler Quelle)
   companyId: string; // Lokale Company-Reference-ID
   companyName?: string;
+  companyTagIds?: string[]; // Company Tags
 
   // Publication-Daten (aus globaler Quelle)
   publicationIds: string[]; // Lokale Publication-Reference-IDs
   beats?: string[];
   mediaTypes?: string[];
+
+  // Social Media (aus globaler Quelle)
+  socialProfiles?: Array<{
+    platform: string;
+    url: string;
+    handle?: string;
+    verified?: boolean;
+  }>;
+
+  // Contact Tags (aus globaler Quelle)
+  tagIds?: string[];
 
   // Reference-Meta
   _isReference: true;
@@ -341,6 +353,12 @@ class MultiEntityReferenceService {
         .filter(id => id && typeof id === 'string');
       const companyRefs = await this.batchLoadCompanyReferences(companyRefIds, organizationId);
 
+      // 3a. Lade globale Company-Daten für Tags
+      const globalCompanyIds = Array.from(new Set(
+        Array.from(companyRefs.values()).map(ref => ref.globalCompanyId)
+      )).filter(id => id && typeof id === 'string');
+      const globalCompanies = await this.batchLoadGlobalCompanies(globalCompanyIds);
+
       // 4. Lade Publication-References für lokale IDs (nur valide IDs)
       const allPublicationRefIds = journalistRefs
         .flatMap(ref => ref.publicationReferenceIds || [])
@@ -353,6 +371,7 @@ class MultiEntityReferenceService {
       for (const journalistRef of journalistRefs) {
         const globalJournalist = globalJournalists.get(journalistRef.globalJournalistId);
         const companyRef = companyRefs.get(journalistRef.companyReferenceId);
+        const globalCompany = companyRef ? globalCompanies.get(companyRef.globalCompanyId) : null;
         const journalistPublicationRefs = (journalistRef.publicationReferenceIds || [])
           .map(id => publicationRefs.get(id))
           .filter(Boolean);
@@ -373,11 +392,18 @@ class MultiEntityReferenceService {
             // Lokale Company-Reference-ID (kritisch für Relations!)
             companyId: companyRef.localCompanyId,
             companyName: globalJournalist.companyName,
+            companyTagIds: globalCompany?.tagIds || [], // ✅ Company Tags
 
             // Lokale Publication-Reference-IDs (kritisch für Relations!)
             publicationIds: journalistPublicationRefs.map(ref => ref!.localPublicationId),
             beats: globalJournalist.mediaProfile?.beats,
             mediaTypes: globalJournalist.mediaProfile?.mediaTypes,
+
+            // ✅ Social Media Profile
+            socialProfiles: globalJournalist.socialProfiles || [],
+
+            // ✅ Contact Tags
+            tagIds: globalJournalist.tagIds || [],
 
             // Reference-Meta
             _isReference: true,
@@ -955,6 +981,38 @@ class MultiEntityReferenceService {
     }
 
     return companyRefsMap;
+  }
+
+  /**
+   * Batch-lädt globale Companies für Tags
+   */
+  private async batchLoadGlobalCompanies(ids: string[]): Promise<Map<string, any>> {
+    const companiesMap = new Map();
+
+    if (ids.length === 0) return companiesMap;
+
+    try {
+      const chunks = this.chunkArray(ids, 10);
+
+      for (const chunk of chunks) {
+        const q = query(
+          collection(db, 'companies_enhanced'),
+          where(documentId(), 'in', chunk)
+        );
+
+        const snapshot = await getDocs(q);
+        snapshot.docs.forEach(doc => {
+          companiesMap.set(doc.id, {
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Fehler beim Batch-Load der globalen Companies:', error);
+    }
+
+    return companiesMap;
   }
 
   /**

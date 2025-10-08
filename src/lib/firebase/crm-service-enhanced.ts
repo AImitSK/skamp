@@ -1180,15 +1180,15 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
         isPrimary: true
       }] : [],
       addresses: [],
-      socialMedia: [],
+      socialMedia: reference.socialProfiles || [], // ✅ Social Media aus globalen Daten
       tags: reference._localMeta?.tags || [],
       customFields: {},
 
       // Zusätzliche Felder für vollständige ContactEnhanced-Kompatibilität
       identifiers: [], // Contact-References haben keine Identifiers
-      socialProfiles: [], // Contact-References haben keine Social Media Profile
+      socialProfiles: reference.socialProfiles || [], // ✅ Social Media Profile aus globalen Daten
       gdprConsents: [], // Contact-References haben keine GDPR-Einwilligungen
-      tagIds: reference._localMeta?.tags || [], // Tag-IDs für Kompatibilität
+      tagIds: reference.tagIds || [], // ✅ Tag-IDs aus globalen Daten
       communicationPreferences: undefined, // Keine Kommunikationspräferenzen
       personalInfo: undefined, // Keine persönlichen Informationen
       professionalInfo: undefined, // Keine beruflichen Informationen
@@ -1562,6 +1562,7 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
               identifiers: globalCompany.identifiers || [],
               financial: globalCompany.financial,
               socialMedia: globalCompany.socialMedia || [],
+              tagIds: globalCompany.tagIds || [], // ✅ Tags
               status: globalCompany.status || 'active',
               lifecycleStage: globalCompany.lifecycleStage,
               parentCompanyId: globalCompany.parentCompanyId,
@@ -1658,6 +1659,9 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
 
           // Social Media
           socialMedia: globalCompany.socialMedia || [],
+
+          // ✅ Tags (aus globalen Daten)
+          tagIds: globalCompany.tagIds || [],
 
           // Status-Felder
           status: globalCompany.status || 'active',

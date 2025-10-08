@@ -904,40 +904,361 @@ border-[#dedc00] bg-[#dedc00]
 
 ### Modals & Dialogs
 
-**TODO: Vollständig zu definieren**
-
-#### Basis-Modal-Struktur
+#### Modal-Größen
 
 ```tsx
-// Placeholder (wird erweitert):
-<Dialog open={isOpen} onClose={handleClose}>
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+// Dialog Component unterstützt diese Größen:
+size="xs"   // max-w-xs  (320px)  - Kleine Bestätigungen
+size="sm"   // max-w-sm  (384px)  - Einfache Formulare
+size="md"   // max-w-md  (448px)  - Standard-Formulare
+size="lg"   // max-w-lg  (512px)  - Standard (DEFAULT)
+size="xl"   // max-w-xl  (576px)  - Größere Formulare
+size="2xl"  // max-w-2xl (672px)  - Komplexe Formulare
+size="3xl"  // max-w-3xl (768px)  - Sehr große Formulare
+size="4xl"  // max-w-4xl (896px)  - Extra groß
+size="5xl"  // max-w-5xl (1024px) - Maximum
+```
 
-  <div className="fixed inset-0 flex items-center justify-center p-4">
-    <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6">
-      <Dialog.Title className="text-xl font-semibold text-zinc-900">
-        Titel
-      </Dialog.Title>
+**Faustregel:**
+- Einfache Bestätigungen: `sm` oder `md`
+- Standard-Formulare: `lg` oder `xl`
+- Formulare mit Tabs: `2xl` bis `4xl`
+- Komplexe Multi-Tab-Formulare: `3xl` bis `5xl`
 
-      <div className="mt-4">
-        {/* Content */}
-      </div>
+---
 
-      <div className="mt-6 flex gap-3 justify-end">
-        <Button>Abbrechen</Button>
-        <Button>Bestätigen</Button>
-      </div>
-    </Dialog.Panel>
-  </div>
+#### Modal-Struktur (Basis)
+
+```tsx
+<Dialog open={isOpen} onClose={handleClose} size="lg">
+  {/* 1. Title */}
+  <DialogTitle>Modal-Titel</DialogTitle>
+
+  {/* 2. Body - Scrollbarer Content */}
+  <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+    <FieldGroup>
+      {/* Ihr Content hier */}
+    </FieldGroup>
+  </DialogBody>
+
+  {/* 3. Actions - Footer mit Buttons */}
+  <DialogActions>
+    <Button variant="secondary" onClick={handleClose}>
+      Abbrechen
+    </Button>
+    <Button onClick={handleSubmit}>
+      Speichern
+    </Button>
+  </DialogActions>
 </Dialog>
 ```
 
-**Zu definieren:**
-- Modal-Größen (sm, md, lg, xl, full)
-- Confirm-Dialog-Pattern
-- Form-Modal-Pattern
-- Scrollbare Modals
-- Modal mit Tabs
+**Anatomie:**
+- **DialogTitle**: Überschrift (px-6 py-4, automatisch gestylt)
+- **DialogBody**: Scrollbarer Content-Bereich
+- **DialogActions**: Button-Footer (bg-gray-50 px-6 py-4)
+
+---
+
+#### Scrollbare Modals (Standard)
+
+```tsx
+<DialogBody className="px-6 py-6 h-[500px] overflow-y-auto overflow-x-hidden">
+  <FieldGroup>
+    {/* Formular-Felder */}
+  </FieldGroup>
+</DialogBody>
+```
+
+**Standard-Höhe: h-[500px]**
+- Verhindert zu kleine/große Modals
+- Konsistente UX über alle Modals
+- Overflow: `overflow-y-auto overflow-x-hidden`
+
+---
+
+#### Modal mit Tabs
+
+```tsx
+<Dialog open={isOpen} onClose={handleClose} size="3xl">
+  <DialogTitle>Firma bearbeiten</DialogTitle>
+
+  {/* Tab-Navigation */}
+  <div className="border-b border-gray-200 px-6">
+    <nav className="flex -mb-px">
+      {TABS.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          className={clsx(
+            'flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+            activeTab === tab.id
+              ? 'border-primary text-primary'
+              : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
+          )}
+        >
+          <tab.icon className="h-5 w-5" />
+          {tab.label}
+        </button>
+      ))}
+    </nav>
+  </div>
+
+  <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+    {activeTab === 'general' && (
+      <FieldGroup>
+        {/* Tab Content */}
+      </FieldGroup>
+    )}
+  </DialogBody>
+
+  <DialogActions>
+    <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
+    <Button onClick={handleSave}>Speichern</Button>
+  </DialogActions>
+</Dialog>
+```
+
+**Tab-Styling:**
+- Active: `border-primary text-primary`
+- Inactive: `border-transparent text-zinc-500`
+- Hover: `hover:border-zinc-300 hover:text-zinc-700`
+- Icons: `h-5 w-5` mit Text
+
+---
+
+#### FieldGroup Pattern
+
+```tsx
+<FieldGroup>
+  {/* Einzelfeld */}
+  <Field>
+    <Label>Firmenname *</Label>
+    <Input value={name} onChange={setName} />
+  </Field>
+
+  {/* 2-Spalten-Grid */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Field>
+      <Label>Vorname</Label>
+      <Input value={firstName} />
+    </Field>
+    <Field>
+      <Label>Nachname</Label>
+      <Input value={lastName} />
+    </Field>
+  </div>
+
+  {/* Gruppierte Felder mit Hintergrund */}
+  <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+    <div className="text-sm font-medium text-gray-900">Hauptadresse</div>
+    <Field>
+      <Label>Straße</Label>
+      <Input value={street} />
+    </Field>
+  </div>
+</FieldGroup>
+```
+
+**Regeln:**
+- Wrapper für alle Tab-Inhalte
+- Automatisches Spacing
+- `bg-gray-50` für gruppierte Bereiche
+- 2-Spalten: `md:grid-cols-2 gap-4`
+
+---
+
+#### Feldgruppen mit Hintergrund
+
+```tsx
+<div className="space-y-4 rounded-md border p-4 bg-gray-50">
+  <div className="flex items-center justify-between">
+    <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+    <Button variant="ghost" onClick={addEmail}>
+      <PlusIcon className="h-4 w-4 mr-2" />
+      Hinzufügen
+    </Button>
+  </div>
+
+  {emails.map((email, index) => (
+    <div key={index} className="flex gap-2 items-start">
+      <Input value={email.email} className="flex-1" />
+      <Select value={email.type}>
+        <option value="work">Geschäftlich</option>
+      </Select>
+      <div className="flex items-center gap-2 pt-2">
+        <Checkbox checked={email.isPrimary} />
+        <button onClick={() => removeEmail(index)}>
+          <TrashIcon className="h-4 w-4 text-red-600" />
+        </button>
+      </div>
+    </div>
+  ))}
+
+  {emails.length === 0 && (
+    <Text className="text-sm text-gray-500">Keine E-Mails</Text>
+  )}
+</div>
+```
+
+**Pattern:**
+- Container: `space-y-4 rounded-md border p-4 bg-gray-50`
+- Header: `text-sm font-medium text-gray-900`
+- Add-Button: Ghost-Variante mit PlusIcon
+- Delete: `TrashIcon h-4 w-4 text-red-600`
+- Empty: `text-sm text-gray-500`
+
+---
+
+#### Checkboxen in Modals
+
+```tsx
+{/* Gelbe Checkbox (#dedc00) */}
+<div className="flex items-center gap-2">
+  <Checkbox
+    checked={isPrimary}
+    onChange={(checked) => setIsPrimary(checked)}
+  />
+  <label className="text-sm text-zinc-700">Als primär markieren</label>
+</div>
+```
+
+**Farben (automatisch):**
+- Unchecked: `border-zinc-300 bg-white`
+- Checked: `border-[#dedc00] bg-[#dedc00]`
+- Häkchen: Weißes SVG auf Gelb
+
+---
+
+#### Länder-/Telefon-Felder mit Flaggen
+
+```tsx
+{/* Telefon mit Ländervorwahl */}
+<div className="flex gap-2">
+  <Select value={phone.countryCode} className="w-32">
+    {COUNTRY_OPTIONS.map((c) => (
+      <option key={c.code} value={c.code}>
+        {c.label} {/* z.B. "+49 DE" */}
+      </option>
+    ))}
+  </Select>
+  <Input value={phone.number} placeholder="30 12345678" className="flex-1" />
+</div>
+
+{/* Adresse mit Flagge */}
+<Field>
+  <Label>Land</Label>
+  <div className="flex items-center gap-2">
+    <FlagIcon countryCode={address.countryCode} className="h-4 w-6" />
+    <CountrySelector value={address.countryCode} onChange={setCountry} />
+  </div>
+</Field>
+```
+
+**Flag Component:**
+```tsx
+import * as Flags from 'country-flag-icons/react/3x2';
+
+const FlagIcon = ({ countryCode, className = "h-4 w-6" }) => {
+  if (!countryCode) return null;
+  const Flag = Flags[countryCode.toUpperCase()];
+  if (!Flag) return null;
+  return <Flag className={className} title={countryCode} />;
+};
+```
+
+**Flaggen-Größe: `h-4 w-6`** (Standard inline)
+
+---
+
+#### Modal-Actions (Footer)
+
+```tsx
+<DialogActions>
+  <Button variant="secondary" onClick={onClose}>
+    Abbrechen
+  </Button>
+  <Button onClick={handleSave} disabled={loading}>
+    {loading ? 'Speichert...' : 'Speichern'}
+  </Button>
+</DialogActions>
+
+{/* Mit Delete-Action */}
+<DialogActions>
+  <div className="flex-1">
+    <Button variant="destructive" onClick={handleDelete}>
+      <TrashIcon className="h-4 w-4 mr-2" />
+      Löschen
+    </Button>
+  </div>
+  <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
+  <Button onClick={handleSave}>Speichern</Button>
+</DialogActions>
+```
+
+**Layout:**
+- Cancel: Links, secondary
+- Primary: Rechts
+- Delete: Ganz links mit `flex-1`
+- Spacing: `gap-4` (automatisch)
+
+---
+
+#### Bestätigungs-Modal
+
+```tsx
+<Dialog open={showConfirm} onClose={handleCancel} size="sm">
+  <DialogTitle>Eintrag löschen?</DialogTitle>
+
+  <DialogBody>
+    <Text className="text-sm text-zinc-600">
+      Diese Aktion kann nicht rückgängig gemacht werden.
+    </Text>
+  </DialogBody>
+
+  <DialogActions>
+    <Button variant="secondary" onClick={handleCancel}>
+      Abbrechen
+    </Button>
+    <Button variant="destructive" onClick={handleDelete}>
+      Löschen
+    </Button>
+  </DialogActions>
+</Dialog>
+```
+
+**Größe: `sm` oder `md`** (kurzer Inhalt)
+
+---
+
+#### Validation & Alerts
+
+```tsx
+<Dialog open={isOpen} onClose={onClose} size="xl">
+  <DialogTitle>Kontakt bearbeiten</DialogTitle>
+
+  {/* Alert nach Title */}
+  {validationErrors.length > 0 && (
+    <div className="px-6 pt-2">
+      <Alert
+        type="error"
+        title="Validierungsfehler"
+        message={validationErrors.join(', ')}
+      />
+    </div>
+  )}
+
+  <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+    {/* Content */}
+  </DialogBody>
+
+  <DialogActions>
+    {/* Buttons */}
+  </DialogActions>
+</Dialog>
+```
+
+**Alert-Position: Nach Title** (`px-6 pt-2`)
 
 ---
 
@@ -1380,6 +1701,19 @@ border-[#dedc00] bg-[#dedc00]
 
 ## Changelog
 
+### Version 1.1 - Januar 2025
+- ✅ **Modals & Dialogs**: Vollständig dokumentiert
+  - Modal-Größen (xs bis 5xl)
+  - Scrollbare Modals (h-[500px] Standard)
+  - Modal mit Tabs (Tab-Navigation Pattern)
+  - FieldGroup Pattern (Formular-Container)
+  - Feldgruppen mit Hintergrund (bg-gray-50)
+  - Checkboxen (#dedc00 gelb mit weißem Häkchen)
+  - Länder-/Telefon-Felder mit Flaggen (h-4 w-6)
+  - Modal-Actions (Footer mit Buttons)
+  - Bestätigungs-Modal Pattern
+  - Validation & Alerts in Modals
+
 ### Version 1.0 - Januar 2025
 - ✅ Foundation: Farben, Typografie, Spacing, Icons
 - ✅ Buttons: Primary, Icon-Buttons, Dropdown-Actions
@@ -1389,7 +1723,7 @@ border-[#dedc00] bg-[#dedc00]
 - ✅ Dropdowns: Filter-Popover, Action-Menü
 - ✅ Alerts: Alert-Component, Anti-Ruckeln-Pattern
 - ✅ Patterns: Toolbar, Results Info
-- 📝 TODO: Modals, Secondary Buttons, Cards, Navigation, Loading States
+- 📝 TODO: Secondary Buttons, Cards, Navigation, Loading States
 
 ---
 
