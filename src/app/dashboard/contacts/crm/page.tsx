@@ -648,12 +648,23 @@ const getContactCount = (companyId: string) => {
       <div className="mb-6">
         <div className="flex items-center gap-2">
           {/* Search Input */}
-          <SearchInput
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
-            className="flex-1"
-          />
+          <div className="flex-1 relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700 dark:text-zinc-400" aria-hidden="true" />
+            </div>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
+              className={clsx(
+                'block w-full rounded-lg border border-zinc-700 bg-white py-2 pl-10 pr-3 text-sm',
+                'placeholder:text-zinc-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+                'dark:border-zinc-400 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-400',
+                'h-10'
+              )}
+            />
+          </div>
 
           {/* Filter Button - nur Icon */}
           <Popover className="relative">
@@ -728,11 +739,11 @@ const getContactCount = (companyId: string) => {
                       'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
                       activeFiltersCount > 0
                         ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
-                        : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                        : 'border-zinc-700 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-400 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
                     )}
                     aria-label="Filter"
                   >
-                    <FunnelIcon className="h-5 w-5" />
+                    <FunnelIcon className="h-5 w-5 stroke-2" />
                     {activeFiltersCount > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                         {activeFiltersCount}
@@ -857,8 +868,8 @@ const getContactCount = (companyId: string) => {
 
           {/* Actions Button - nur 3 Punkte */}
           <Popover className="relative">
-            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-400 dark:hover:bg-zinc-800 h-10 w-10">
+              <EllipsisVerticalIcon className="h-5 w-5 stroke-[2.5]" />
             </Popover.Button>
             
             <Transition
