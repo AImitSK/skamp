@@ -89,11 +89,34 @@ const formatDate = (timestamp: any) => {
 
 const formatBirthday = (date: any) => {
   if (!date) return '';
-  const birthday = date instanceof Date ? date : new Date(date);
-  return birthday.toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long'
-  });
+
+  // Handle Date object
+  if (date instanceof Date) {
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long'
+    });
+  }
+
+  // Handle Firestore Timestamp with toDate method
+  if ((date as any).toDate) {
+    return (date as any).toDate().toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long'
+    });
+  }
+
+  // Handle plain Timestamp object {seconds, nanoseconds}
+  const ts = date as any;
+  if (ts.seconds !== undefined) {
+    const d = new Date(ts.seconds * 1000);
+    return d.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long'
+    });
+  }
+
+  return '';
 };
 
 const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean; type?: string }>): { email: string; type?: string } | null => {
@@ -161,16 +184,12 @@ const SocialMediaIcon = ({ platform }: { platform: string }) => {
 };
 
 // Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
+function Alert({
+  type = 'info',
+  title
+}: {
   type?: 'info' | 'success' | 'warning' | 'error';
   title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
 }) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
@@ -189,28 +208,10 @@ function Alert({
   const Icon = icons[type];
 
   return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
+    <div className={`rounded-md p-3 ${styles[type].split(' ')[0]}`}>
+      <div className="flex items-center gap-3">
+        <Icon className={`h-5 w-5 shrink-0 ${type === 'success' ? 'text-green-400' : type === 'info' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        <p className={`text-sm font-medium ${styles[type].split(' ')[1]} truncate`}>{title}</p>
       </div>
     </div>
   );
@@ -233,11 +234,12 @@ function InfoCard({
   return (
     <div className={clsx("rounded-lg border border-zinc-200 bg-white overflow-hidden", className)}>
       <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-        <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-          <Icon className="h-5 w-5 text-zinc-500" />
-          {title}
-          {action && <div className="ml-auto">{action}</div>}
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-zinc-900">
+            {title}
+          </h3>
+          {action && <div>{action}</div>}
+        </div>
       </div>
       <div className="p-4">
         {children}
@@ -264,14 +266,14 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string } | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
 
   // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string) => {
+    setAlert({ type, title });
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
@@ -301,7 +303,7 @@ export default function ContactDetailPage() {
       setEditingNotes(false);
       showAlert('success', 'Notiz gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Speichern', 'Die Notiz konnte nicht gespeichert werden.');
+      showAlert('error', 'Fehler beim Speichern der Notiz');
     } finally {
       setSavingNotes(false);
     }
@@ -386,6 +388,24 @@ export default function ContactDetailPage() {
     return CONTACT_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || 'Unbekannt';
   };
 
+  // Helper function to get status badge color
+  const getStatusBadgeColor = (status?: string): 'green' | 'yellow' | 'orange' | 'red' | 'zinc' => {
+    switch (status) {
+      case 'active':
+        return 'green';
+      case 'inactive':
+        return 'yellow';
+      case 'unsubscribed':
+        return 'orange';
+      case 'bounced':
+        return 'red';
+      case 'archived':
+        return 'zinc';
+      default:
+        return 'zinc';
+    }
+  };
+
   // Helper function to get channel label
   const getChannelLabel = (channel?: string) => {
     return COMMUNICATION_CHANNELS.find(ch => ch.value === channel)?.label || channel || '';
@@ -451,20 +471,21 @@ export default function ContactDetailPage() {
             <div>
               <Heading>{contact.displayName}</Heading>
               <div className="flex items-center gap-2 mt-2">
+                {/* Status Badge - immer anzeigen */}
+                <Badge
+                  color={getStatusBadgeColor(contact.status)}
+                  className="whitespace-nowrap"
+                >
+                  {getStatusLabel(contact.status)}
+                </Badge>
                 {contact.mediaProfile?.isJournalist && (
                   <Badge color="purple" className="whitespace-nowrap">
                     Journalist
                   </Badge>
                 )}
                 {contact.position && (
-                  <Badge color="zinc" className="whitespace-nowrap">{contact.position}</Badge>
-                )}
-                {contact.status && contact.status !== 'active' && (
-                  <Badge
-                    color={contact.status === 'inactive' ? 'yellow' : 'red'}
-                    className="whitespace-nowrap"
-                  >
-                    {getStatusLabel(contact.status)}
+                  <Badge color="zinc" className="whitespace-nowrap">
+                    {contact.position}{contact.department ? `, ${contact.department}` : ''}
                   </Badge>
                 )}
               </div>
@@ -510,7 +531,7 @@ export default function ContactDetailPage() {
         {/* Alert - Fixed height container */}
         <div className="mb-6 h-[50px]">
           {alert && (
-            <Alert type={alert.type} title={alert.title} message={alert.message} />
+            <Alert type={alert.type} title={alert.title} />
           )}
         </div>
 
@@ -519,7 +540,7 @@ export default function ContactDetailPage() {
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main Information - Consolidated */}
-            <InfoCard title="Allgemeine Informationen" icon={UserIcon}>
+            <InfoCard title="Allgemeines" icon={UserIcon}>
               <div className="space-y-6">
                 {/* Contact Data */}
                 <div>
@@ -643,46 +664,79 @@ export default function ContactDetailPage() {
 
             {/* Media Profile for Journalists */}
             {contact.mediaProfile?.isJournalist && (
-              <InfoCard title="Medien-Profil" icon={NewspaperIcon}>
+              <InfoCard title="Informationen" icon={NewspaperIcon}>
                 <div className="space-y-6">
-                  {/* Medientypen */}
-                  {contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Medientypen</Text>
-                      <div className="flex flex-wrap gap-2">
-                        {contact.mediaProfile.mediaTypes.map((type, index) => {
-                          const typeLabel = MEDIA_TYPES.find(t => t.value === type)?.label || type;
-                          return (
-                            <Badge key={index} color="zinc" className="whitespace-nowrap">{typeLabel}</Badge>
-                          );
-                        })}
-                      </div>
+                  {/* Medientypen und Bevorzugte Formate - zweispaltig */}
+                  {((contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0) ||
+                    (contact.mediaProfile.preferredFormats && contact.mediaProfile.preferredFormats.length > 0)) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Medientypen */}
+                      {contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0 && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Medientypen</Text>
+                          <div className="flex flex-wrap gap-2">
+                            {contact.mediaProfile.mediaTypes.map((type, index) => {
+                              const typeLabel = MEDIA_TYPES.find(t => t.value === type)?.label || type;
+                              return (
+                                <Badge key={index} color="blue" className="whitespace-nowrap">{typeLabel}</Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bevorzugte Formate */}
+                      {contact.mediaProfile.preferredFormats && contact.mediaProfile.preferredFormats.length > 0 && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Formate</Text>
+                          <div className="flex flex-wrap gap-2">
+                            {contact.mediaProfile.preferredFormats.map((format, index) => {
+                              const formatLabel = SUBMISSION_FORMATS.find(f => f.value === format)?.label || format;
+                              return (
+                                <Badge key={index} color="blue" className="whitespace-nowrap">{formatLabel}</Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* Bevorzugte Formate */}
-                  {contact.mediaProfile.preferredFormats && contact.mediaProfile.preferredFormats.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Formate</Text>
-                      <div className="flex flex-wrap gap-2">
-                        {contact.mediaProfile.preferredFormats.map((format, index) => {
-                          const formatLabel = SUBMISSION_FORMATS.find(f => f.value === format)?.label || format;
-                          return (
-                            <Badge key={index} color="zinc" className="whitespace-nowrap">{formatLabel}</Badge>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* Ressorts und Kommunikationspräferenzen - zweispaltig */}
+                  {((contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0) ||
+                    contact.communicationPreferences) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Ressorts */}
+                      {contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0 && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Ressorts / Themenbereiche</Text>
+                          <div className="flex flex-wrap gap-2">
+                            {contact.mediaProfile.beats.map((beat, index) => (
+                              <Badge key={index} color="blue" className="whitespace-nowrap">{beat}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                  {contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Ressorts / Themenbereiche</Text>
-                      <div className="flex flex-wrap gap-2">
-                        {contact.mediaProfile.beats.map((beat, index) => (
-                          <Badge key={index} color="blue" className="whitespace-nowrap">{beat}</Badge>
-                        ))}
-                      </div>
+                      {/* Kommunikationspräferenzen */}
+                      {contact.communicationPreferences && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Kommunikationspräferenzen</Text>
+                          <div className="flex flex-wrap gap-2">
+                            {contact.communicationPreferences.preferredChannel && (
+                              <Badge color="blue">
+                                {getChannelLabel(contact.communicationPreferences.preferredChannel)}
+                              </Badge>
+                            )}
+                            {contact.communicationPreferences.preferredLanguage && (
+                              <Badge color="blue" className="flex items-center gap-1.5">
+                                <LanguageIcon className="h-3.5 w-3.5" />
+                                {contact.communicationPreferences.preferredLanguage}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -691,7 +745,7 @@ export default function ContactDetailPage() {
                       <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Themen</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.preferredTopics.map((topic, index) => (
-                          <Badge key={index} color="green" className="whitespace-nowrap">{topic}</Badge>
+                          <Badge key={index} color="blue" className="whitespace-nowrap">{topic}</Badge>
                         ))}
                       </div>
                     </div>
@@ -702,7 +756,7 @@ export default function ContactDetailPage() {
                       <Text className="text-sm font-semibold text-zinc-700 mb-3">Ausgeschlossene Themen</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.excludedTopics.map((topic, index) => (
-                          <Badge key={index} color="red" className="whitespace-nowrap">{topic}</Badge>
+                          <Badge key={index} color="blue" className="whitespace-nowrap">{topic}</Badge>
                         ))}
                       </div>
                     </div>
@@ -738,26 +792,61 @@ export default function ContactDetailPage() {
                     </div>
                   )}
 
-                  {/* Kommunikationspräferenzen */}
-                  {contact.communicationPreferences && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Kommunikationspräferenzen</Text>
-                      <div className="space-y-2 text-sm">
-                        {contact.communicationPreferences.preferredChannel && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-zinc-600">Bevorzugter Kanal:</span>
-                            <Badge color="blue">
-                              {getChannelLabel(contact.communicationPreferences.preferredChannel)}
-                            </Badge>
-                          </div>
-                        )}
-                        {contact.communicationPreferences.preferredLanguage && (
-                          <div className="flex items-center gap-3">
+                  {/* Persönliche Informationen */}
+                  {contact.personalInfo && (contact.personalInfo.birthday || contact.personalInfo.nationality || contact.personalInfo.languages?.length || contact.personalInfo.interests?.length || contact.personalInfo.notes) && (
+                    <div className="space-y-4">
+                      {/* Geburtstag und Nationalität - zweispaltig */}
+                      {(contact.personalInfo.birthday || contact.personalInfo.nationality) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {contact.personalInfo.birthday && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <CakeIcon className="h-4 w-4 text-zinc-400" />
+                                <Text className="text-sm font-semibold text-zinc-700">Geburtstag</Text>
+                              </div>
+                              <Text className="text-sm text-zinc-900">{formatBirthday(contact.personalInfo.birthday)}</Text>
+                            </div>
+                          )}
+
+                          {contact.personalInfo.nationality && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <MapPinIcon className="h-4 w-4 text-zinc-400" />
+                                <Text className="text-sm font-semibold text-zinc-700">Nationalität</Text>
+                              </div>
+                              <Text className="text-sm text-zinc-900">{contact.personalInfo.nationality}</Text>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {contact.personalInfo.languages && contact.personalInfo.languages.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
                             <LanguageIcon className="h-4 w-4 text-zinc-400" />
-                            <span className="text-zinc-700">{contact.communicationPreferences.preferredLanguage}</span>
+                            <Text className="text-sm font-semibold text-zinc-700">Sprachen</Text>
                           </div>
-                        )}
-                      </div>
+                          <div className="flex flex-wrap gap-2">
+                            {contact.personalInfo.languages.map((lang, index) => (
+                              <Badge key={index} color="blue" className="text-xs">{lang}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {contact.personalInfo.interests && contact.personalInfo.interests.length > 0 && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-1">Interessen</Text>
+                          <Text className="text-sm text-zinc-700">{contact.personalInfo.interests.join(', ')}</Text>
+                        </div>
+                      )}
+
+                      {contact.personalInfo.notes && (
+                        <div>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-1">Persönliche Notizen</Text>
+                          <Text className="text-sm text-zinc-700 whitespace-pre-wrap">{contact.personalInfo.notes}</Text>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -870,64 +959,46 @@ export default function ContactDetailPage() {
                     <span className="ml-2">{formatDate(contact.updatedAt)}</span>
                   </div>
                 </div>
+                {tags.length > 0 && (
+                  <div className="pt-3 border-t border-zinc-200">
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map(tag => (
+                        <Badge key={tag.id} color={tag.color as any} className="whitespace-nowrap">{tag.name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </InfoCard>
 
-            {/* Personal Info */}
-            {contact.personalInfo && (contact.personalInfo.birthday || contact.personalInfo.languages?.length || contact.personalInfo.interests?.length || contact.personalInfo.notes) && (
-              <InfoCard title="Persönliche Informationen" icon={UserIcon}>
-                <div className="space-y-4">
-                  {contact.personalInfo.birthday && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <CakeIcon className="h-4 w-4 text-zinc-400" />
-                        <Text className="text-sm font-semibold text-zinc-700">Geburtstag</Text>
-                      </div>
-                      <Text className="text-sm text-zinc-900">{formatBirthday(contact.personalInfo.birthday)}</Text>
-                    </div>
-                  )}
-
-                  {contact.personalInfo.languages && contact.personalInfo.languages.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <LanguageIcon className="h-4 w-4 text-zinc-400" />
-                        <Text className="text-sm font-semibold text-zinc-700">Sprachen</Text>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {contact.personalInfo.languages.map((lang, index) => (
-                          <Badge key={index} color="zinc" className="text-xs">{lang}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {contact.personalInfo.interests && contact.personalInfo.interests.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-2">Interessen</Text>
-                      <div className="flex flex-wrap gap-2">
-                        {contact.personalInfo.interests.map((interest, index) => (
-                          <Badge key={index} color="purple" className="whitespace-nowrap">{interest}</Badge>
-                        ))}
+            {/* Publications for Journalists */}
+            {contact.mediaProfile?.isJournalist && publications.length > 0 && (
+              <InfoCard title="Publikationen" icon={NewspaperIcon}>
+                <div className="space-y-3">
+                  {publications.map(publication => (
+                    <div key={publication.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-colors">
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <h4 className="font-semibold text-base">{publication.title}</h4>
+                          <Link
+                            href={`/dashboard/library/publications/${publication.id}`}
+                            className="text-sm text-primary hover:text-primary-hover underline whitespace-nowrap ml-2"
+                          >
+                            Anzeigen
+                          </Link>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge color="blue" className="text-xs whitespace-nowrap">
+                            {publication.type}
+                          </Badge>
+                          {publication.verified && (
+                            <Badge color="green" className="text-xs whitespace-nowrap">
+                              Verifiziert
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-
-                  {contact.personalInfo.notes && (
-                    <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-1">Persönliche Notizen</Text>
-                      <Text className="text-sm text-zinc-700 whitespace-pre-wrap">{contact.personalInfo.notes}</Text>
-                    </div>
-                  )}
-                </div>
-              </InfoCard>
-            )}
-
-            {/* Tags */}
-            {tags.length > 0 && (
-              <InfoCard title="Tags" icon={TagIcon}>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map(tag => (
-                    <Badge key={tag.id} color={tag.color as any} className="whitespace-nowrap">{tag.name}</Badge>
                   ))}
                 </div>
               </InfoCard>
@@ -960,61 +1031,29 @@ export default function ContactDetailPage() {
 
 */}
 
-            {/* Publications for Journalists */}
-            {contact.mediaProfile?.isJournalist && publications.length > 0 && (
-              <InfoCard title="Publikationen" icon={NewspaperIcon}>
-                <div className="space-y-3">
-                  {publications.map(publication => (
-                    <div key={publication.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-colors">
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between">
-                          <h4 className="font-semibold text-base">{publication.title}</h4>
-                          <Link
-                            href={`/dashboard/library/publications/${publication.id}`}
-                            className="text-xs text-primary hover:text-primary-hover whitespace-nowrap ml-2"
-                          >
-                            Anzeigen
-                          </Link>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge color="blue" className="text-xs whitespace-nowrap">
-                            {publication.type}
-                          </Badge>
-                          {publication.verified && (
-                            <Badge color="green" className="text-xs whitespace-nowrap">
-                              Verifiziert
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </InfoCard>
-            )}
-
             {/* Distribution lists */}
             {lists.length > 0 && (
-              <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <ListBulletIcon className="h-5 w-5 text-gray-500" />
-                    In Listen enthalten
-                    <Badge color="blue" className="ml-auto">{lists.length}</Badge>
-                  </h3>
+              <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-zinc-900">
+                      In Listen enthalten
+                    </h3>
+                    <Badge color="blue">{lists.length}</Badge>
+                  </div>
                 </div>
                 <div className="p-4">
                   <ul className="space-y-2">
                     {lists.map(list => (
                       <li key={list.id} className="flex items-center justify-between">
-                        <Link 
-                          href={`/dashboard/contacts/lists/${list.id}`} 
+                        <Link
+                          href={`/dashboard/contacts/lists/${list.id}`}
                           className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                         >
                           {list.name}
                         </Link>
-                        <Badge 
-                          color={list.type === 'dynamic' ? 'green' : 'zinc'} 
+                        <Badge
+                          color={list.type === 'dynamic' ? 'green' : 'zinc'}
                           className="text-xs whitespace-nowrap"
                         >
                           {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
@@ -1040,7 +1079,7 @@ export default function ContactDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            showAlert('success', 'Kontakt aktualisiert', 'Die Kontaktdaten wurden erfolgreich aktualisiert.');
+            showAlert('success', 'Kontakt erfolgreich aktualisiert');
           }}
         />
       )}

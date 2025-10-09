@@ -160,16 +160,12 @@ const SocialMediaIcon = ({ platform }: { platform: string }) => {
 };
 
 // Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
+function Alert({
+  type = 'info',
+  title
+}: {
   type?: 'info' | 'success' | 'warning' | 'error';
   title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
 }) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
@@ -188,28 +184,10 @@ function Alert({
   const Icon = icons[type];
 
   return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
+    <div className={`rounded-md p-3 ${styles[type].split(' ')[0]}`}>
+      <div className="flex items-center gap-3">
+        <Icon className={`h-5 w-5 shrink-0 ${type === 'success' ? 'text-green-400' : type === 'info' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        <p className={`text-sm font-medium ${styles[type].split(' ')[1]} truncate`}>{title}</p>
       </div>
     </div>
   );
@@ -232,11 +210,12 @@ function InfoCard({
   return (
     <div className={clsx("rounded-lg border border-zinc-200 bg-white overflow-hidden", className)}>
       <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-        <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-          <Icon className="h-5 w-5 text-zinc-500" />
-          {title}
-          {action && <div className="ml-auto">{action}</div>}
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-zinc-900">
+            {title}
+          </h3>
+          {action && <div>{action}</div>}
+        </div>
       </div>
       <div className="p-4">
         {children}
@@ -265,14 +244,14 @@ export default function CompanyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string } | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
 
   // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string) => {
+    setAlert({ type, title });
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
@@ -302,7 +281,7 @@ export default function CompanyDetailPage() {
       setEditingNotes(false);
       showAlert('success', 'Notiz gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Speichern', 'Die Notiz konnte nicht gespeichert werden.');
+      showAlert('error', 'Fehler beim Speichern der Notiz');
     } finally {
       setSavingNotes(false);
     }
@@ -596,7 +575,7 @@ export default function CompanyDetailPage() {
         {/* Alert - Fixed height container */}
         <div className="mb-6 h-[50px]">
           {alert && (
-            <Alert type={alert.type} title={alert.title} message={alert.message} />
+            <Alert type={alert.type} title={alert.title} />
           )}
         </div>
 
@@ -840,11 +819,12 @@ export default function CompanyDetailPage() {
             {/* Contacts */}
             <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
               <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-                <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-                  <UsersIcon className="h-5 w-5 text-zinc-500" />
-                  Kontakte
-                  <Badge color="blue" className="ml-auto">{contacts.length}</Badge>
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-zinc-900">
+                    Kontakte
+                  </h3>
+                  <Badge color="blue">{contacts.length}</Badge>
+                </div>
               </div>
               <div className="p-4">
                 {contacts.length > 0 ? (
@@ -981,6 +961,15 @@ export default function CompanyDetailPage() {
                     </div>
                   </div>
                 )}
+                {tags.length > 0 && (
+                  <div className="pt-3 border-t border-zinc-200">
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map(tag => (
+                        <Badge key={tag.id} color={tag.color as any} className="whitespace-nowrap">{tag.name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </InfoCard>
 
@@ -1000,7 +989,7 @@ export default function CompanyDetailPage() {
                             <h4 className="font-semibold text-base">{publication.title}</h4>
                             <Link
                               href={`/dashboard/library/publications/${publication.id}`}
-                              className="text-xs text-primary hover:text-primary-hover whitespace-nowrap ml-2"
+                              className="text-sm text-primary hover:text-primary-hover underline whitespace-nowrap ml-2"
                             >
                               Anzeigen
                             </Link>
@@ -1028,26 +1017,16 @@ export default function CompanyDetailPage() {
               </InfoCard>
             )}
 
-            {/* Tags */}
-            {tags.length > 0 && (
-              <InfoCard title="Tags" icon={TagIcon}>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map(tag => (
-                    <Badge key={tag.id} color={tag.color as any} className="whitespace-nowrap">{tag.name}</Badge>
-                  ))}
-                </div>
-              </InfoCard>
-            )}
-
             {/* Distribution lists */}
             {lists.length > 0 && (
               <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
                 <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-                  <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-                    <ListBulletIcon className="h-5 w-5 text-zinc-500" />
-                    In Listen enthalten
-                    <Badge color="blue" className="ml-auto">{lists.length}</Badge>
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-zinc-900">
+                      In Listen enthalten
+                    </h3>
+                    <Badge color="blue">{lists.length}</Badge>
+                  </div>
                 </div>
                 <div className="p-4">
                   <ul className="space-y-2">
@@ -1086,7 +1065,7 @@ export default function CompanyDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            showAlert('success', 'Firma aktualisiert', 'Die Firmendaten wurden erfolgreich aktualisiert.');
+            showAlert('success', 'Firma erfolgreich aktualisiert');
           }}
         />
       )}

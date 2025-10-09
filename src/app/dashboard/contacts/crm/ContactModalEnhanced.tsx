@@ -28,6 +28,7 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { useAuth } from '@/context/AuthContext';
+import { Timestamp } from 'firebase/firestore';
 
 // Flag Component
 const FlagIcon = ({ countryCode, className = "h-4 w-6" }: { countryCode?: string; className?: string }) => {
@@ -1270,16 +1271,37 @@ export default function ContactModalEnhanced({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field>
                     <Label>Geburtstag</Label>
-                    <Input 
-                      type="date" 
-                      value={formData.personalInfo?.birthday ? new Date(formData.personalInfo.birthday).toISOString().split('T')[0] : ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        personalInfo: { 
-                          ...formData.personalInfo,
-                          birthday: e.target.value ? new Date(e.target.value) : undefined
+                    <Input
+                      type="date"
+                      value={(() => {
+                        if (!formData.personalInfo?.birthday) return '';
+
+                        // Handle Date object
+                        if (formData.personalInfo.birthday instanceof Date) {
+                          return formData.personalInfo.birthday.toISOString().split('T')[0];
                         }
-                      })} 
+
+                        // Handle Firestore Timestamp with toDate method
+                        if ((formData.personalInfo.birthday as any).toDate) {
+                          return (formData.personalInfo.birthday as any).toDate().toISOString().split('T')[0];
+                        }
+
+                        // Handle plain Timestamp object {seconds, nanoseconds}
+                        const ts = formData.personalInfo.birthday as any;
+                        if (ts.seconds !== undefined) {
+                          const date = new Date(ts.seconds * 1000);
+                          return date.toISOString().split('T')[0];
+                        }
+
+                        return '';
+                      })()}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        personalInfo: {
+                          ...formData.personalInfo,
+                          birthday: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
+                        }
+                      })}
                     />
                   </Field>
                   <Field>
@@ -1354,18 +1376,15 @@ export default function ContactModalEnhanced({
                 </Field>
 
                 <Field>
-                  <Label>Persönliche Notizen</Label>
-                  <Textarea 
-                    value={formData.personalInfo?.notes || ''} 
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      personalInfo: { 
-                        ...formData.personalInfo,
-                        notes: e.target.value 
-                      }
-                    })} 
+                  <Label>Interne Notizen</Label>
+                  <Textarea
+                    value={formData.internalNotes || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      internalNotes: e.target.value
+                    })}
                     rows={4}
-                    placeholder="Weitere Informationen zur Person..." 
+                    placeholder="Interne Notizen für das Team (nicht sichtbar für externe Kontakte)..."
                   />
                 </Field>
               </FieldGroup>
