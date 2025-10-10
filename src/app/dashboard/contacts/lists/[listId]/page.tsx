@@ -218,9 +218,9 @@ export default function ListDetailPage() {
       const [listData, userTags, allPublications] = await Promise.all([
         listsService.getById(listId),
         tagsService.getAll(currentOrganization?.id || user.uid, user.uid),
-        publicationService.getAll(user.uid)
+        publicationService.getAll(currentOrganization?.id || user.uid)
       ]);
-      
+
       if (listData) {
         setList(listData);
         setTags(userTags);
@@ -235,7 +235,7 @@ export default function ListDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, listId]);
+  }, [user, listId, currentOrganization]);
   
   useEffect(() => {
     loadData();
