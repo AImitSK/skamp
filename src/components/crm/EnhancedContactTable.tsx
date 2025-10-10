@@ -228,7 +228,7 @@ export function EnhancedContactTable({
                           )}
                         </div>
                       )}
-                      
+
                       {/* Regular tags */}
                       {contact.tagIds && contact.tagIds.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
@@ -248,10 +248,6 @@ export function EnhancedContactTable({
                         </div>
                       )}
                     </div>
-                    
-                    {!contact.mediaProfile?.beats?.length && !contact.tagIds?.length && (
-                      <span className="text-sm text-zinc-400">—</span>
-                    )}
                   </div>
 
                   {/* Status */}
@@ -439,7 +435,7 @@ export function EnhancedContactTable({
                         ))}
                       </>
                     )}
-                    
+
                     {/* Then show regular tags */}
                     {contact.tagIds && contact.tagIds.length > 0 && (
                       <>
@@ -453,17 +449,12 @@ export function EnhancedContactTable({
                         })}
                       </>
                     )}
-                    
+
                     {/* Show count of remaining items */}
                     {((contact.mediaProfile?.beats?.length || 0) + (contact.tagIds?.length || 0)) > 2 && (
                       <span className="text-xs text-zinc-500">
                         +{(contact.mediaProfile?.beats?.length || 0) + (contact.tagIds?.length || 0) - 2}
                       </span>
-                    )}
-                    
-                    {/* Show dash if no tags or beats */}
-                    {!contact.mediaProfile?.beats?.length && !contact.tagIds?.length && (
-                      <span className="text-sm text-zinc-400">—</span>
                     )}
                   </div>
                 </div>

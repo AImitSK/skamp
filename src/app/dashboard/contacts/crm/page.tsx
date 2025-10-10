@@ -1085,9 +1085,6 @@ const getContactCount = (companyId: string) => {
                           {company.tagIds && company.tagIds.length > 3 && (
                             <span className="text-xs text-zinc-400">+{company.tagIds.length - 3}</span>
                           )}
-                          {(!company.tagIds || company.tagIds.length === 0) && (
-                            <span className="text-sm text-zinc-400">—</span>
-                          )}
                         </div>
                       </div>
 

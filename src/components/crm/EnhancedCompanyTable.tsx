@@ -309,7 +309,7 @@ export function EnhancedCompanyTable({
               </div>
               
               <div className="hidden lg:block w-[30%]">
-                {company.tagIds && company.tagIds.length > 0 ? (
+                {company.tagIds && company.tagIds.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap">
                     {company.tagIds.slice(0, 2).map(tagId => {
                       const tag = tags.get(tagId);
@@ -325,8 +325,6 @@ export function EnhancedCompanyTable({
                       </span>
                     )}
                   </div>
-                ) : (
-                  <span className="text-sm text-zinc-400">—</span>
                 )}
               </div>
               

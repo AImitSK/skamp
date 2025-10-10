@@ -204,15 +204,15 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Props)
     return cleaned;
   };
 
-  const companySampleCSV = `Firmenname*,Offizieller Firmenname,Handelsname,Typ*,Branche,Status,Lifecycle Stage,Rechtsform,Gründungsjahr,Website,Beschreibung,Interne Notizen,Straße,PLZ,Stadt,Bundesland,Land (ISO),Telefon 1,Telefon Typ 1,Telefon 2,Telefon Typ 2,E-Mail 1,E-Mail Typ 1,E-Mail 2,E-Mail Typ 2,USt-IdNr,Handelsregister,Jahresumsatz,Währung,Mitarbeiterzahl,Geschäftsjahresende,Muttergesellschaft,LinkedIn,Twitter,Facebook,Instagram,YouTube,Xing,Tags
-Beispiel GmbH,Beispiel Gesellschaft mit beschränkter Haftung,Beispiel,Kunde,IT-Dienstleistungen,active,customer,GmbH,2010,https://www.beispiel.de,"Führender IT-Dienstleister in Deutschland","Wichtiger Kunde seit 2020",Musterstraße 123,10115,Berlin,Berlin,DE,+49 30 1234567,business,+49 171 1234567,mobile,info@beispiel.de,general,vertrieb@beispiel.de,sales,DE123456789,HRB 12345 Berlin,5000000,EUR,50,31.12.,,https://linkedin.com/company/beispiel,https://twitter.com/beispiel,,,,,Premium;Partner
-Muster AG,Muster Aktiengesellschaft,,Lieferant,Handel,active,partner,AG,2005,https://www.muster-ag.de,,,Hauptstraße 1,80331,München,Bayern,DE,+49 89 9876543,business,,,kontakt@muster-ag.de,general,,,DE987654321,HRB 98765 München,10000000,EUR,100,31.03.,,https://linkedin.com/company/muster-ag,,,,,https://xing.com/companies/muster-ag,Wichtig
-Test & Co. KG,,,Partner,Beratung,prospect,lead,KG,2015,,,Neue Partnerschaft in Verhandlung,Testweg 5,50667,Köln,NRW,DE,+49 221 5555555,business,,,info@test-co.de,general,,,,,1000000,EUR,10,31.12.,,,,,,,,Neu`;
+  const companySampleCSV = `Firmenname*;Offizieller Firmenname;Handelsname;Typ*;Branche;Status;Rechtsform;Gründungsdatum;Website;Beschreibung;Straße;PLZ;Stadt;Bundesland;Land (ISO);Telefon 1 Typ;Telefon 1 Land;Telefon 1 Nummer;Telefon 1 Primär;Telefon 2 Typ;Telefon 2 Land;Telefon 2 Nummer;Telefon 2 Primär;E-Mail 1 Typ;E-Mail 1 Adresse;E-Mail 1 Primär;E-Mail 2 Typ;E-Mail 2 Adresse;E-Mail 2 Primär;Kennung 1 Typ;Kennung 1 Wert;Kennung 1 Behörde;Kennung 2 Typ;Kennung 2 Wert;Kennung 2 Behörde;Jahresumsatz;Währung;Mitarbeiterzahl;Geschäftsjahresende;Kreditrating;LinkedIn;Twitter;Facebook;Instagram;YouTube;Xing;Tags
+TechVision GmbH;TechVision Gesellschaft mit beschränkter Haftung;TechVision;customer;IT & Software;active;GmbH;2015-03-15;https://www.techvision.de;Innovativer Anbieter für KI-gestützte Unternehmenslösungen mit Fokus auf mittelständische Betriebe;Innovationsstraße 42;10115;Berlin;Berlin;DE;business;DE;30 98765432;ja;mobile;DE;171 98765432;nein;general;kontakt@techvision.de;ja;sales;vertrieb@techvision.de;nein;VAT_EU;DE123456789;DE;COMPANY_REG_DE;HRB 12345 B;Berlin;3500000;EUR;45;31.12.;AAA;https://linkedin.com/company/techvision-gmbh;https://twitter.com/techvision_de;https://facebook.com/techvision;;https://youtube.com/@techvision;https://xing.com/companies/techvision;"Premium, IT, Innovation"
+Bergmann Verlag AG;Bergmann Verlag Aktiengesellschaft;Bergmann Verlag;publisher;Verlagswesen;active;AG;1987-06-01;https://www.bergmann-verlag.de;Traditioneller Fachverlag mit über 30 Jahren Erfahrung spezialisiert auf technische und wissenschaftliche Publikationen;Verlagsallee 15;80331;München;Bayern;DE;business;DE;89 12345678;ja;business;DE;89 12345679;nein;general;info@bergmann-verlag.de;ja;press;presse@bergmann-verlag.de;nein;VAT_EU;DE987654321;DE;COMPANY_REG_DE;HRB 98765 M;München;12000000;EUR;180;30.06.;AA+;https://linkedin.com/company/bergmann-verlag;https://twitter.com/bergmannverlag;https://facebook.com/bergmannverlag;https://instagram.com/bergmannverlag;;https://xing.com/companies/bergmann-verlag;"Medien, Verlag, Partner"
+Greentech Solutions KG;Greentech Solutions Kommanditgesellschaft;;partner;Umwelttechnologie;active;KG;2019-09-20;https://www.greentech-solutions.com;Nachhaltige Technologielösungen für erneuerbare Energien und Ressourcenmanagement;Zukunftsweg 88;50667;Köln;Nordrhein-Westfalen;DE;business;DE;221 55566677;ja;;;;;general;info@greentech-solutions.com;ja;support;support@greentech-solutions.com;nein;VAT_EU;DE456789123;DE;;;;;2800000;EUR;32;31.12.;A;https://linkedin.com/company/greentech-solutions-kg;https://twitter.com/greentech_sol;;https://instagram.com/greentech.solutions;;;"Technologie, Nachhaltigkeit, Innovation"`;
 
-  const contactSampleCSV = `Vorname*,Nachname*,Anrede,Titel,Position,Abteilung,Firma,Status,E-Mail Geschäftlich,E-Mail Privat,Telefon Geschäftlich,Telefon Mobil,Telefon Privat,Straße,PLZ,Stadt,Bundesland,Land (ISO),Bevorzugte Sprache,Ist Journalist,Publikationen,Ressorts,Bevorzugter Kanal,Website,LinkedIn,Twitter,Facebook,Instagram,Xing,Geburtstag,Interessen,GDPR Marketing,GDPR Newsletter,GDPR Telefon,Tags,Notizen
-Max,Mustermann,Herr,Dr.,Geschäftsführer,Geschäftsleitung,Beispiel GmbH,active,max.mustermann@beispiel.de,,+49 30 1234567,+49 171 1234567,,"Musterstraße 123",10115,Berlin,Berlin,DE,de,nein,,,email,https://www.max-mustermann.de,https://linkedin.com/in/max-mustermann,,,,https://xing.com/profile/max-mustermann,15.05.1975,"Golf, Technologie",ja,ja,nein,VIP;Entscheider,"Bevorzugt Kontakt per E-Mail"
-Anna,Schmidt,Frau,,Einkaufsleiterin,Einkauf,Muster AG,active,a.schmidt@muster-ag.de,anna.schmidt@gmail.com,+49 89 9876543,+49 172 9876543,,"Hauptstraße 1",80331,München,Bayern,DE,de,nein,,,phone,,https://linkedin.com/in/anna-schmidt,,,,,,"Reisen, Kunst",ja,nein,ja,Einkauf,"Beste Erreichbarkeit vormittags"
-Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@tech-magazin.de,,+49 40 5555555,+49 170 5555555,,,,Hamburg,Hamburg,DE,de,ja,"Tech Magazin","IT, KI, Startups",email,,https://linkedin.com/in/peter-mueller-journalist,https://twitter.com/pmueller_tech,,,,,Technologie,nein,ja,nein,Journalist;Multiplikator,"Deadline: Immer Mittwochs 15 Uhr"`;
+  const contactSampleCSV = `Vorname*;Nachname*;Anrede;Titel;Position;Abteilung;Firma;Status;E-Mail 1 Typ;E-Mail 1 Adresse;E-Mail 1 Primär;E-Mail 2 Typ;E-Mail 2 Adresse;E-Mail 2 Primär;Telefon 1 Typ;Telefon 1 Land;Telefon 1 Nummer;Telefon 1 Primär;Telefon 2 Typ;Telefon 2 Land;Telefon 2 Nummer;Telefon 2 Primär;LinkedIn;Twitter;Facebook;Instagram;Xing;Website;Bevorzugter Kanal;Bevorzugte Sprache;Ist Journalist;Ressorts;Medientypen;Bevorzugte Formate;Einreichungsrichtlinien;Biografie;Geburtstag;Nationalität;Interessen;GDPR Marketing;GDPR Newsletter;GDPR Telefon;Interne Notizen;Tags
+Maximilian;Weber;Herr;Dr.;Geschäftsführer;Geschäftsleitung;TechVision GmbH;active;business;m.weber@techvision.de;ja;private;max.weber@gmail.com;nein;business;DE;30 98765432;ja;mobile;DE;171 23456789;nein;https://linkedin.com/in/maximilian-weber;https://twitter.com/maxweber_tech;https://facebook.com/max.weber;;https://xing.com/profile/maximilian_weber;;email;de;nein;;;;Studium der Informatik an der TU Berlin. Über 15 Jahre Erfahrung in der Softwareentwicklung und IT-Beratung.;1978-03-22;DE;Technologie | Golf | Klassische Musik;ja;ja;nein;Sehr technikaffin bevorzugt digitale Kommunikation. Reagiert meist innerhalb von 2 Stunden.;"VIP, Entscheider, IT"
+Dr. Sarah;Hoffmann;Frau;Prof.;Chefredakteurin;Redaktion;Bergmann Verlag AG;active;business;s.hoffmann@bergmann-verlag.de;ja;;;;business;DE;89 12345678;ja;mobile;DE;172 98765432;nein;https://linkedin.com/in/sarah-hoffmann-dr;https://twitter.com/drsarahhoffmann;;https://instagram.com/prof.sarah.hoffmann;https://xing.com/profile/dr_sarah_hoffmann;;email;de;ja;Wissenschaft | Technologie | Innovation;print | online;press_release | interview | exclusive;Pressemitteilungen bis spätestens Dienstag 12 Uhr. Bevorzugt exklusive Geschichten mit wissenschaftlichem Hintergrund. Keine Massenmails!;Professorin für Wissenschaftsjournalismus an der Uni München. Promovierte Physikerin mit Schwerpunkt Quantencomputing. Seit 2010 beim Bergmann Verlag seit 2018 Chefredakteurin.;1975-11-08;DE;Wissenschaft | Fotografie | Bergsteigen;nein;ja;nein;Sehr anspruchsvoll bei Themenqualität. Deadline Dienstag 12 Uhr STRIKT einhalten! Bevorzugt persönliche Ansprache.;"Journalist, Wissenschaft, Premium"
+Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;business;t.schneider@greentech-solutions.com;ja;;;;business;DE;221 55566677;ja;mobile;DE;160 11223344;nein;https://linkedin.com/in/thomas-schneider-nachhaltigkeit;;;https://instagram.com/thomas.green;https://xing.com/profile/thomas_schneider_green;;phone;de;nein;;;;;BWL-Studium mit Schwerpunkt Nachhaltigkeit. 10 Jahre Erfahrung in Umwelttechnologie-Unternehmen. Zertifizierter Nachhaltigkeitsberater (DNK).;1985-06-15;DE;Umweltschutz | Wandern | Fahrradfahren;ja;nein;ja;Sehr engagiert im Bereich Nachhaltigkeit. Guter Multiplikator in der Green-Tech-Branche. Erreichbar am besten vormittags zwischen 9-11 Uhr.;"Partner, Nachhaltigkeit, CSR"`;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -226,6 +226,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
       Papa.parse(selectedFile, {
         header: true,
         preview: 5,
+        delimiter: ';', // Excel-Standard für deutsche Systeme
         complete: (results) => {
           setPreviewData(results.data);
         }
@@ -255,16 +256,14 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
       type: mapCompanyType(row["Typ*"] || row["Typ"]),
       website: row["Website"],
       description: row["Beschreibung"],
-      internalNotes: row["Interne Notizen"],
-      
-      // Status
+
+      // Status (Lifecycle Stage ausgeschlossen wie angefordert)
       status: mapCompanyStatus(row["Status"]),
-      lifecycleStage: mapLifecycleStage(row["Lifecycle Stage"]),
-      
+
       // Legal
       legalForm: row["Rechtsform"],
-      foundedDate: row["Gründungsjahr"] ? new Date(row["Gründungsjahr"], 0, 1) : undefined,
-      
+      foundedDate: row["Gründungsdatum"] ? parseDate(row["Gründungsdatum"]) : undefined,
+
       // Address
       mainAddress: row["Straße"] || row["PLZ"] || row["Stadt"] ? {
         street: row["Straße"] || '',
@@ -273,12 +272,12 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         region: row["Bundesland"] || '',
         countryCode: (row["Land (ISO)"] || 'DE') as CountryCode
       } : undefined,
-      
+
       // Industry
       industryClassification: row["Branche"] ? {
         primary: row["Branche"]
       } : undefined,
-      
+
       // Financial
       financial: {
         annualRevenue: row["Jahresumsatz"] ? {
@@ -286,9 +285,10 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
           currency: (row["Währung"] || 'EUR') as CurrencyCode
         } : undefined,
         employees: row["Mitarbeiterzahl"] ? parseInt(row["Mitarbeiterzahl"]) : undefined,
-        fiscalYearEnd: row["Geschäftsjahresende"]
+        fiscalYearEnd: row["Geschäftsjahresende"],
+        creditRating: row["Kreditrating"]
       },
-      
+
       // Arrays
       phones: [],
       emails: [],
@@ -296,51 +296,55 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
       socialMedia: []
     };
 
-    // Parse phones
-    if (row["Telefon 1"]) {
+    // Parse phones mit neuer Struktur: Typ, Land, Nummer, Primär
+    if (row["Telefon 1 Nummer"]) {
+      const countryCode = row["Telefon 1 Land"] || 'DE';
       company.phones!.push({
-        type: mapPhoneType(row["Telefon Typ 1"]) || 'business',
-        number: row["Telefon 1"],
-        isPrimary: true
+        type: mapPhoneType(row["Telefon 1 Typ"]) || 'business',
+        countryCode: countryCode as CountryCode,
+        number: row["Telefon 1 Nummer"],
+        isPrimary: row["Telefon 1 Primär"]?.toLowerCase() === 'ja' || row["Telefon 1 Primär"]?.toLowerCase() === 'true'
       });
     }
-    if (row["Telefon 2"]) {
+    if (row["Telefon 2 Nummer"]) {
+      const countryCode = row["Telefon 2 Land"] || 'DE';
       company.phones!.push({
-        type: mapPhoneType(row["Telefon Typ 2"]) || 'business',
-        number: row["Telefon 2"],
-        isPrimary: false
+        type: mapPhoneType(row["Telefon 2 Typ"]) || 'business',
+        countryCode: countryCode as CountryCode,
+        number: row["Telefon 2 Nummer"],
+        isPrimary: row["Telefon 2 Primär"]?.toLowerCase() === 'ja' || row["Telefon 2 Primär"]?.toLowerCase() === 'true'
       });
     }
 
-    // Parse emails
-    if (row["E-Mail 1"]) {
+    // Parse emails mit neuer Struktur: Typ, Adresse, Primär
+    if (row["E-Mail 1 Adresse"]) {
       company.emails!.push({
-        type: mapEmailType(row["E-Mail Typ 1"]) || 'general',
-        email: row["E-Mail 1"],
-        isPrimary: true
+        type: mapEmailType(row["E-Mail 1 Typ"]) || 'general',
+        email: row["E-Mail 1 Adresse"],
+        isPrimary: row["E-Mail 1 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 1 Primär"]?.toLowerCase() === 'true'
       });
     }
-    if (row["E-Mail 2"]) {
+    if (row["E-Mail 2 Adresse"]) {
       company.emails!.push({
-        type: mapEmailType(row["E-Mail Typ 2"]) || 'general',
-        email: row["E-Mail 2"],
-        isPrimary: false
+        type: mapEmailType(row["E-Mail 2 Typ"]) || 'general',
+        email: row["E-Mail 2 Adresse"],
+        isPrimary: row["E-Mail 2 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 2 Primär"]?.toLowerCase() === 'true'
       });
     }
 
-    // Parse identifiers
-    if (row["USt-IdNr"]) {
+    // Parse identifiers mit neuer Struktur: Typ, Wert, Behörde
+    if (row["Kennung 1 Wert"]) {
       company.identifiers!.push({
-        type: 'VAT_EU',
-        value: row["USt-IdNr"],
-        issuingAuthority: 'DE'
+        type: row["Kennung 1 Typ"] as any || 'OTHER',
+        value: row["Kennung 1 Wert"],
+        issuingAuthority: row["Kennung 1 Behörde"] || 'DE'
       });
     }
-    if (row["Handelsregister"]) {
+    if (row["Kennung 2 Wert"]) {
       company.identifiers!.push({
-        type: 'COMPANY_REG_DE',
-        value: row["Handelsregister"],
-        issuingAuthority: 'DE'
+        type: row["Kennung 2 Typ"] as any || 'OTHER',
+        value: row["Kennung 2 Wert"],
+        issuingAuthority: row["Kennung 2 Behörde"] || 'DE'
       });
     }
 
@@ -360,7 +364,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
     if (company.emails?.length === 0) delete company.emails;
     if (company.identifiers?.length === 0) delete company.identifiers;
     if (company.socialMedia?.length === 0) delete company.socialMedia;
-    if (!company.financial?.annualRevenue && !company.financial?.employees && !company.financial?.fiscalYearEnd) {
+    if (!company.financial?.annualRevenue && !company.financial?.employees && !company.financial?.fiscalYearEnd && !company.financial?.creditRating) {
       delete company.financial;
     }
 
@@ -377,94 +381,88 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         lastName: row["Nachname*"] || row["Nachname"]
       },
       displayName: `${row["Vorname*"] || row["Vorname"]} ${row["Nachname*"] || row["Nachname"]}`,
-      
+
       // Professional
       position: row["Position"],
       department: row["Abteilung"],
       companyName: row["Firma"],
-      
+
       // Status
       status: mapContactStatus(row["Status"]),
-      
+
+      // Interne Notizen
+      internalNotes: row["Interne Notizen"],
+
       // Arrays
       emails: [],
       phones: [],
       addresses: [],
       socialProfiles: [],
-      
+
       // Communication preferences
-      communicationPreferences: row["Bevorzugter Kanal"] ? {
+      communicationPreferences: row["Bevorzugter Kanal"] || row["Bevorzugte Sprache"] ? {
         preferredChannel: mapCommunicationChannel(row["Bevorzugter Kanal"]),
         preferredLanguage: (row["Bevorzugte Sprache"] || 'de') as LanguageCode
       } : undefined,
-      
-      // Personal info
-      personalInfo: row["Geburtstag"] || row["Interessen"] || row["Notizen"] ? {
+
+      // Professional info (mit Biografie)
+      professionalInfo: row["Biografie"] ? {
+        biography: row["Biografie"]
+      } : undefined,
+
+      // Personal info (mit Nationalität)
+      personalInfo: row["Geburtstag"] || row["Nationalität"] || row["Interessen"] ? {
         birthday: row["Geburtstag"] ? parseDate(row["Geburtstag"]) : undefined,
-        interests: row["Interessen"] ? row["Interessen"].split(';').map((i: string) => i.trim()) : undefined,
-        notes: row["Notizen"] || undefined
+        nationality: row["Nationalität"] as CountryCode || undefined,
+        interests: row["Interessen"] ? row["Interessen"].split('|').map((i: string) => i.trim()) : undefined
       } : undefined
     };
 
-    // Parse emails
-    if (row["E-Mail Geschäftlich"]) {
+    // Parse emails mit neuer Struktur: Typ, Adresse, Primär
+    if (row["E-Mail 1 Adresse"]) {
       contact.emails!.push({
-        type: 'business',
-        email: row["E-Mail Geschäftlich"],
-        isPrimary: true
+        type: mapEmailType(row["E-Mail 1 Typ"]) || 'business',
+        email: row["E-Mail 1 Adresse"],
+        isPrimary: row["E-Mail 1 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 1 Primär"]?.toLowerCase() === 'true'
       });
     }
-    if (row["E-Mail Privat"]) {
+    if (row["E-Mail 2 Adresse"]) {
       contact.emails!.push({
-        type: 'private',
-        email: row["E-Mail Privat"],
-        isPrimary: false
+        type: mapEmailType(row["E-Mail 2 Typ"]) || 'private',
+        email: row["E-Mail 2 Adresse"],
+        isPrimary: row["E-Mail 2 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 2 Primär"]?.toLowerCase() === 'true'
       });
     }
 
-    // Parse phones
-    if (row["Telefon Geschäftlich"]) {
+    // Parse phones mit neuer Struktur: Typ, Land, Nummer, Primär
+    if (row["Telefon 1 Nummer"]) {
+      const countryCode = row["Telefon 1 Land"] || 'DE';
       contact.phones!.push({
-        type: 'business',
-        number: row["Telefon Geschäftlich"],
-        isPrimary: true
+        type: mapPhoneType(row["Telefon 1 Typ"]) || 'business',
+        countryCode: countryCode as CountryCode,
+        number: row["Telefon 1 Nummer"],
+        isPrimary: row["Telefon 1 Primär"]?.toLowerCase() === 'ja' || row["Telefon 1 Primär"]?.toLowerCase() === 'true'
       });
     }
-    if (row["Telefon Mobil"]) {
+    if (row["Telefon 2 Nummer"]) {
+      const countryCode = row["Telefon 2 Land"] || 'DE';
       contact.phones!.push({
-        type: 'mobile',
-        number: row["Telefon Mobil"],
-        isPrimary: false
-      });
-    }
-    if (row["Telefon Privat"]) {
-      contact.phones!.push({
-        type: 'private',
-        number: row["Telefon Privat"],
-        isPrimary: false
+        type: mapPhoneType(row["Telefon 2 Typ"]) || 'mobile',
+        countryCode: countryCode as CountryCode,
+        number: row["Telefon 2 Nummer"],
+        isPrimary: row["Telefon 2 Primär"]?.toLowerCase() === 'ja' || row["Telefon 2 Primär"]?.toLowerCase() === 'true'
       });
     }
 
-    // Parse address
-    if (row["Straße"] || row["PLZ"] || row["Stadt"]) {
-      contact.addresses!.push({
-        type: 'business',
-        address: {
-          street: row["Straße"] || '',
-          postalCode: row["PLZ"] || '',
-          city: row["Stadt"] || '',
-          region: row["Bundesland"] || '',
-          countryCode: (row["Land (ISO)"] || 'DE') as CountryCode
-        }
-      });
-    }
-
-    // Parse journalist info
+    // Parse journalist info mit vollständigen Feldern
     if (row["Ist Journalist"] === 'ja' || row["Ist Journalist"] === 'true') {
       contact.mediaProfile = {
         isJournalist: true,
         publicationIds: [], // Would need to map to actual IDs
-        beats: row["Ressorts"] ? row["Ressorts"].split(';').map((b: string) => b.trim()) : []
+        beats: row["Ressorts"] ? row["Ressorts"].split('|').map((b: string) => b.trim()) : [],
+        mediaTypes: row["Medientypen"] ? row["Medientypen"].split('|').map((m: string) => m.trim()) : undefined,
+        preferredFormats: row["Bevorzugte Formate"] ? row["Bevorzugte Formate"].split('|').map((f: string) => f.trim()) : undefined,
+        submissionGuidelines: row["Einreichungsrichtlinien"] || undefined
       };
     }
 
@@ -521,7 +519,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
     if (contact.addresses?.length === 0) delete contact.addresses;
     if (contact.socialProfiles?.length === 0) delete contact.socialProfiles;
     if (contact.gdprConsents?.length === 0) delete contact.gdprConsents;
-    
+
     // Clean up personalInfo if all fields are undefined
     if (contact.personalInfo) {
       const hasContent = Object.values(contact.personalInfo).some(v => v !== undefined);
@@ -529,7 +527,15 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         delete contact.personalInfo;
       }
     }
-    
+
+    // Clean up professionalInfo if all fields are undefined
+    if (contact.professionalInfo) {
+      const hasContent = Object.values(contact.professionalInfo).some(v => v !== undefined);
+      if (!hasContent) {
+        delete contact.professionalInfo;
+      }
+    }
+
     // Clean up communicationPreferences if undefined
     if (contact.communicationPreferences && !contact.communicationPreferences.preferredChannel && !contact.communicationPreferences.preferredLanguage) {
       delete contact.communicationPreferences;
@@ -667,6 +673,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      delimiter: ';', // Excel-Standard für deutsche Systeme
       complete: async (results) => {
         try {
           const totalRows = results.data.length;
@@ -693,10 +700,10 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
                 
                 const company = parseCompanyRow(row);
                 
-                // Parse tags
+                // Parse tags (Komma-getrennt in Anführungszeichen)
                 if (row["Tags"]) {
                   // For now, we'll store tag names - in production, these would need to be mapped to tag IDs
-                  (company as any).tagNames = row["Tags"].split(';').map((t: string) => t.trim());
+                  (company as any).tagNames = row["Tags"].split(',').map((t: string) => t.trim());
                 }
                 
                 companies.push(company);
@@ -780,11 +787,11 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
                 }
                 
                 const contact = parseContactRow(row);
-                
-                // Parse tags
+
+                // Parse tags (Komma-getrennt in Anführungszeichen)
                 if (row["Tags"]) {
                   // For now, we'll store tag names - in production, these would need to be mapped to tag IDs
-                  (contact as any).tagNames = row["Tags"].split(';').map((t: string) => t.trim());
+                  (contact as any).tagNames = row["Tags"].split(',').map((t: string) => t.trim());
                 }
                 
                 contacts.push(contact);
@@ -969,7 +976,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
                     </Text>
                     <Text className="mt-1 text-sm text-blue-700">
                       Laden Sie eine CSV-Datei hoch, um {activeTab === 'companies' ? 'Firmen' : 'Kontakte'} zu importieren.
-                      Die Datei sollte UTF-8 kodiert sein und Semikolon (;) oder Komma (,) als Trennzeichen verwenden.
+                      Die Datei sollte UTF-8 kodiert sein und Semikolon (;) als Trennzeichen verwenden (Excel-Standard für Deutschland).
                     </Text>
                     <div className="mt-2">
                       <button

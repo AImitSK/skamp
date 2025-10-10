@@ -515,6 +515,11 @@ export default function CompanyDetailPage() {
                     {company.mainAddress.city && <span>{company.mainAddress.city}</span>}
                     {company.foundedDate && (() => {
                       try {
+                        // Skip if foundedDate is an empty object or invalid
+                        if (typeof company.foundedDate === 'object' && Object.keys(company.foundedDate).length === 0) {
+                          return null;
+                        }
+
                         let date;
                         // Handle Firestore Timestamp object
                         if (company.foundedDate.toDate && typeof company.foundedDate.toDate === 'function') {
@@ -527,8 +532,7 @@ export default function CompanyDetailPage() {
                         }
 
                         const year = date.getFullYear();
-                        if (isNaN(year)) {
-                          console.error('Invalid foundedDate after parsing:', company.foundedDate, 'parsed date:', date);
+                        if (isNaN(year) || year < 1800 || year > 2100) {
                           return null;
                         }
                         return (
@@ -537,7 +541,6 @@ export default function CompanyDetailPage() {
                           </span>
                         );
                       } catch (error) {
-                        console.error('Error parsing foundedDate:', company.foundedDate, error);
                         return null;
                       }
                     })()}
@@ -559,15 +562,27 @@ export default function CompanyDetailPage() {
                 Zurück
               </Button>
 
-              <Button
-                onClick={() => setShowEditModal(true)}
-                className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
-                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
-                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
-              >
-                <PencilIcon className="h-4 w-4 mr-2" />
-                Firma bearbeiten
-              </Button>
+              {(company as any)?._isReference ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <span className="text-amber-600">🔗</span>
+                    <span className="font-medium">Globaler Verweis</span>
+                  </div>
+                  <p className="text-amber-700 mt-1">
+                    Diese Firma ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
+                  </p>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setShowEditModal(true)}
+                  className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
+                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                             h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Firma bearbeiten
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -1056,7 +1071,7 @@ export default function CompanyDetailPage() {
       </div>
 
       {/* Edit Modal */}
-      {showEditModal && (
+      {showEditModal && !(company as any)?._isReference && (
         <CompanyModal
           company={company}
           userId={user!.uid}
