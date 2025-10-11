@@ -102,20 +102,19 @@ function Alert({
 }
 
 // InfoCard Component
-function InfoCard({ 
-  title, 
-  icon: Icon, 
-  children 
-}: { 
-  title: string; 
+function InfoCard({
+  title,
+  icon: Icon,
+  children
+}: {
+  title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Icon className="h-4 w-4 text-gray-500" />
+    <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+        <h3 className="text-lg font-semibold text-zinc-900">
           {title}
         </h3>
       </div>
@@ -487,20 +486,34 @@ export default function ListDetailPage() {
       <div className="p-8">
         <Alert type="error" title="Fehler" message={error} />
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain className="whitespace-nowrap">
+          <Button
+            onClick={() => router.push('/dashboard/contacts/lists')}
+            className="border border-zinc-300 bg-white text-zinc-700
+                       hover:bg-zinc-50 font-medium whitespace-nowrap
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                       h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+          >
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Button>
         </div>
       </div>
     );
   }
-  
+
   if (!list) {
     return (
       <div className="p-8 text-center">
         <Text>Liste konnte nicht gefunden werden.</Text>
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain className="whitespace-nowrap">
+          <Button
+            onClick={() => router.push('/dashboard/contacts/lists')}
+            className="border border-zinc-300 bg-white text-zinc-700
+                       hover:bg-zinc-50 font-medium whitespace-nowrap
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                       h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+          >
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Button>
         </div>
@@ -513,44 +526,49 @@ export default function ListDetailPage() {
       <div className="p-6 md:p-8">
         {/* Alert */}
         {alert && (
-          <div className="mb-4">
+          <div className="mb-6">
             <Alert type={alert.type} title={alert.title} message={alert.message} />
           </div>
         )}
 
         {/* Header */}
-        <div className="mb-6">
-          <Button 
-            plain 
-            onClick={() => router.push('/dashboard/contacts/lists')}
-            className="mb-4 flex items-center gap-2 whitespace-nowrap"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Button>
-          
+        <div className="mb-4">
           <div className="flex items-center justify-between">
             <div>
               <Heading>{list.name}</Heading>
               <Text className="mt-1">{list.description || 'Keine Beschreibung'}</Text>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => router.push('/dashboard/contacts/lists')}
+                className="border border-zinc-300 bg-white text-zinc-700
+                           hover:bg-zinc-50 font-medium whitespace-nowrap
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Zurück
+              </Button>
               {list.type === 'dynamic' && (
-                <Button 
-                  plain 
+                <Button
                   onClick={handleRefreshList}
                   disabled={refreshing}
-                  className="flex items-center gap-2 whitespace-nowrap"
+                  className="border border-zinc-300 bg-white text-zinc-700
+                             hover:bg-zinc-50 font-medium whitespace-nowrap
+                             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                             h-10 px-6 rounded-lg transition-colors inline-flex items-center"
                 >
-                  <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <ArrowPathIcon className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                   Aktualisieren
                 </Button>
               )}
-              <Button 
+              <Button
                 onClick={() => setShowEditModal(true)}
-                color="primary"
+                className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                           h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
-                <PencilIcon className="h-4 w-4" />
+                <PencilIcon className="h-4 w-4 mr-2" />
                 Liste bearbeiten
               </Button>
             </div>
@@ -560,13 +578,14 @@ export default function ListDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Kontakte Tabelle */}
           <div className="lg:col-span-2">
-            <div className="rounded-lg border bg-white overflow-hidden">
-              <div className="px-6 py-4 border-b bg-gray-50">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <UsersIcon className="h-4 w-4 text-gray-500" />
-                  Enthaltene Kontakte
-                  <Badge color="blue" className="ml-2 whitespace-nowrap">{list.contactCount || 0}</Badge>
-                </h3>
+            <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+              <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-zinc-900">
+                    Enthaltene Kontakte
+                  </h3>
+                  <Badge color="blue">{list.contactCount || 0}</Badge>
+                </div>
               </div>
               
               <div className="overflow-x-auto">
