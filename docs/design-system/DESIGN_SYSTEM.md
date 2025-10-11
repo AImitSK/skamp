@@ -1388,20 +1388,21 @@ const FlagIcon = ({ countryCode, className = "h-4 w-6" }) => {
 <Alert type="info" title="Information" message="Neue Features verfügbar" />
 ```
 
-**Alert-Container (Anti-Ruckeln-Pattern):**
+**Alert-Container Pattern:**
 ```tsx
-{/* Fester Platz unter Überschrift */}
-<div className="mb-4 h-[50px]">
-  {alert && (
+{/* Alert nur wenn vorhanden */}
+{alert && (
+  <div className="mb-4">
     <Alert type={alert.type} title={alert.title} message={alert.message} />
-  )}
-</div>
+  </div>
+)}
 ```
 
-**Warum feste Höhe?**
-- Verhindert Layout-Shift
-- Kein "Springen" der Seite
-- Immer unter der Überschrift
+**Verhalten:**
+- Alert wird nur gerendert, wenn vorhanden
+- Inhalt springt beim Einblenden nach unten
+- Geringerer Abstand zwischen Headline und Inhalt
+- Keine feste Höhe (bewusste Design-Entscheidung)
 
 ---
 
