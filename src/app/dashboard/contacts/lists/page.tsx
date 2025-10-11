@@ -370,12 +370,12 @@ export default function ListsPage() {
         <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Verteilerlisten</h1>
       </div>
 
-      {/* Alert - Fixed height container */}
-      <div className="mb-4 h-[50px]">
-        {alert && (
+      {/* Alert */}
+      {alert && (
+        <div className="mb-4">
           <Alert type={alert.type} title={alert.title} message={alert.message} />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Compact Toolbar */}
       <div className="mb-6">

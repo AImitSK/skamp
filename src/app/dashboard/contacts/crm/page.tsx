@@ -602,12 +602,12 @@ const getContactCount = (companyId: string) => {
         <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Kontakte</h1>
       </div>
 
-      {/* Alert - Fixed height container */}
-      <div className="mb-4 h-[50px]">
-        {alert && (
+      {/* Alert */}
+      {alert && (
+        <div className="mb-4">
           <Alert type={alert.type} title={alert.title} message={alert.message} />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="mb-6">

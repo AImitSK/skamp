@@ -587,12 +587,12 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
-        {/* Alert - Fixed height container */}
-        <div className="mb-6 h-[50px]">
-          {alert && (
+        {/* Alert */}
+        {alert && (
+          <div className="mb-6">
             <Alert type={alert.type} title={alert.title} />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
