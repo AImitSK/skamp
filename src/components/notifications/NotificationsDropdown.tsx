@@ -13,12 +13,18 @@ import {
   DropdownHeading
 } from '@/components/ui/dropdown';
 import { NavbarItem } from '@/components/navbar';
-import { 
-  BellIcon, 
+import {
+  BellIcon,
   CheckIcon,
   TrashIcon,
   EyeIcon,
-  ClockIcon
+  ClockIcon,
+  CheckCircleIcon,
+  PencilSquareIcon,
+  EnvelopeIcon,
+  ExclamationCircleIcon,
+  PhotoIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { Notification } from '@/types/notifications';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
@@ -58,28 +64,30 @@ export function NotificationsDropdown({ className }: NotificationsDropdownProps)
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
+    const iconClass = "h-5 w-5";
+
     switch (type) {
       case 'APPROVAL_GRANTED':
-        return '✅';
+        return <CheckCircleIcon className={`${iconClass} text-green-600`} />;
       case 'CHANGES_REQUESTED':
-        return '📝';
+        return <PencilSquareIcon className={`${iconClass} text-orange-600`} />;
       case 'FIRST_VIEW':
-        return '👀';
+        return <EyeIcon className={`${iconClass} text-blue-600`} />;
       case 'OVERDUE_APPROVAL':
-        return '⏰';
+        return <ClockIcon className={`${iconClass} text-red-600`} />;
       case 'EMAIL_SENT_SUCCESS':
-        return '📧';
+        return <EnvelopeIcon className={`${iconClass} text-green-600`} />;
       case 'EMAIL_BOUNCED':
-        return '⚠️';
+        return <ExclamationCircleIcon className={`${iconClass} text-red-600`} />;
       case 'TASK_OVERDUE':
-        return '🔔';
+        return <BellIcon className={`${iconClass} text-orange-600`} />;
       case 'MEDIA_FIRST_ACCESS':
       case 'MEDIA_DOWNLOADED':
-        return '📸';
+        return <PhotoIcon className={`${iconClass} text-purple-600`} />;
       case 'MEDIA_LINK_EXPIRED':
-        return '🔗';
+        return <LinkIcon className={`${iconClass} text-red-600`} />;
       default:
-        return '🔔';
+        return <BellIcon className={`${iconClass} text-gray-600`} />;
     }
   };
 
@@ -115,7 +123,7 @@ export function NotificationsDropdown({ className }: NotificationsDropdownProps)
         )}
       </DropdownButton>
       
-      <DropdownMenu anchor="bottom end" className="w-80 max-h-96 overflow-hidden">
+      <DropdownMenu anchor="bottom end" className="max-h-96 overflow-hidden !w-72" style={{ width: '320px', maxWidth: '320px' }}>
         {/* Header */}
         <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
@@ -166,9 +174,9 @@ export function NotificationsDropdown({ className }: NotificationsDropdownProps)
                   <div className="flex items-start justify-between gap-3">
                     {/* Icon & Content */}
                     <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <span className="text-lg flex-shrink-0 mt-0.5">
+                      <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
-                      </span>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium truncate ${
                           notification.isRead ? 'text-gray-700' : 'text-gray-900'
