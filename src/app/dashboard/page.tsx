@@ -1222,13 +1222,13 @@ export default function DashboardHomePage() {
                     onClick={() => setMonitoringFilter('pending')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       monitoringFilter === 'pending'
-                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                        ? 'bg-red-100 text-red-700 border border-red-300'
                         : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
-                    Handlungsbedarf
+                    Auto-Funde
                     {pendingSuggestions.length > 0 && (
-                      <Badge color="blue" className="ml-2">
+                      <Badge color="red" className="ml-2">
                         {pendingSuggestions.length}
                       </Badge>
                     )}
@@ -1265,7 +1265,7 @@ export default function DashboardHomePage() {
                       <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                       <Text className="text-zinc-600 font-medium">
                         {monitoringFilter === 'published' && 'Noch keine Veröffentlichungen'}
-                        {monitoringFilter === 'pending' && 'Kein Handlungsbedarf'}
+                        {monitoringFilter === 'pending' && 'Keine Auto-Funde'}
                       </Text>
                     </div>
                   </div>
