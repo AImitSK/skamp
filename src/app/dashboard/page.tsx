@@ -102,7 +102,7 @@ export default function DashboardHomePage() {
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
   const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [loadingMonitoring, setLoadingMonitoring] = useState(true);
-  const [monitoringFilter, setMonitoringFilter] = useState<'all' | 'published' | 'pending'>('all');
+  const [monitoringFilter, setMonitoringFilter] = useState<'published' | 'pending'>('published');
   const [monitoringPage, setMonitoringPage] = useState(1);
   const monitoringPerPage = 5;
 
@@ -468,18 +468,7 @@ export default function DashboardHomePage() {
     if (monitoringFilter === 'pending') {
       return pendingSuggestions.map(s => ({ type: 'suggestion' as const, data: s }));
     }
-    // 'all': Mix beides
-    const clippingItems = clippings.map(c => ({ type: 'clipping' as const, data: c }));
-    const suggestionItems = pendingSuggestions.map(s => ({ type: 'suggestion' as const, data: s }));
-    return [...clippingItems, ...suggestionItems].sort((a, b) => {
-      const dateA = a.type === 'clipping'
-        ? (a.data as MediaClipping).publishedAt?.toDate?.()?.getTime() || 0
-        : (a.data as MonitoringSuggestion).createdAt?.toDate?.()?.getTime() || 0;
-      const dateB = b.type === 'clipping'
-        ? (b.data as MediaClipping).publishedAt?.toDate?.()?.getTime() || 0
-        : (b.data as MonitoringSuggestion).createdAt?.toDate?.()?.getTime() || 0;
-      return dateB - dateA;
-    });
+    return [];
   };
 
   const filteredMonitoringItems = getFilteredMonitoringItems();
@@ -1214,22 +1203,6 @@ export default function DashboardHomePage() {
                 {/* Filter Buttons */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setMonitoringFilter('all')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      monitoringFilter === 'all'
-                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                        : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
-                    }`}
-                  >
-                    Alle
-                    {(clippings.length + pendingSuggestions.length) > 0 && (
-                      <Badge color="zinc" className="ml-2">
-                        {clippings.length + pendingSuggestions.length}
-                      </Badge>
-                    )}
-                  </button>
-
-                  <button
                     onClick={() => setMonitoringFilter('published')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       monitoringFilter === 'published'
@@ -1262,36 +1235,6 @@ export default function DashboardHomePage() {
                   </button>
                 </div>
               </div>
-
-              {/* Stats Bar */}
-              {clippings.length > 0 && (
-                <div className="mt-4 flex items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2">
-                    <FaceSmileIcon className="h-5 w-5 text-green-600" />
-                    <Text className="text-zinc-600">{sentimentCounts.positive}</Text>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-zinc-400" />
-                    <Text className="text-zinc-600">{sentimentCounts.neutral}</Text>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FaceFrownIcon className="h-5 w-5 text-red-600" />
-                    <Text className="text-zinc-600">{sentimentCounts.negative}</Text>
-                  </div>
-                  <div className="border-l border-zinc-300 pl-6 flex items-center gap-2">
-                    <EyeIcon className="h-5 w-5 text-zinc-500" />
-                    <Text className="text-zinc-600 font-medium">
-                      {totalReach.toLocaleString('de-DE')} Reichweite
-                    </Text>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <NewspaperIcon className="h-5 w-5 text-zinc-500" />
-                    <Text className="text-zinc-600 font-medium">
-                      {clippings.length} Clippings
-                    </Text>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Table */}
@@ -1323,7 +1266,6 @@ export default function DashboardHomePage() {
                       <Text className="text-zinc-600 font-medium">
                         {monitoringFilter === 'published' && 'Noch keine Veröffentlichungen'}
                         {monitoringFilter === 'pending' && 'Kein Handlungsbedarf'}
-                        {monitoringFilter === 'all' && 'Noch keine Monitoring-Daten'}
                       </Text>
                     </div>
                   </div>
@@ -1489,7 +1431,9 @@ export default function DashboardHomePage() {
           {/* News Platzhalter - 1/3 Breite */}
           <div className="lg:col-span-1 mt-6">
             <div className="mb-4">
-              <Heading level={2}>News & Updates</Heading>
+              <div className="flex items-center justify-between" style={{ minHeight: '41.19px' }}>
+                <Heading level={2}>News & Updates</Heading>
+              </div>
             </div>
             <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden flex flex-col p-6" style={{ minHeight: '400px' }}>
               <div className="flex-1 flex items-center justify-center">
