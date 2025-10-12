@@ -1353,7 +1353,7 @@ export default function DashboardHomePage() {
                                 {(item.data as MediaClipping).sentiment === 'negative' && (
                                   <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
                                 )}
-                                <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                                <CalendarIcon className="h-5 w-5 text-zinc-500" />
                                 <Text className="text-xs text-zinc-500">
                                   {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
                                 </Text>
