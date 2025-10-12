@@ -1348,7 +1348,12 @@ export default function DashboardHomePage() {
                                   <FaceSmileIcon className="h-5 w-5 text-green-600" title="Positiv" />
                                 )}
                                 {(item.data as MediaClipping).sentiment === 'neutral' && (
-                                  <div className="h-5 w-5 rounded-full bg-zinc-400" title="Neutral" />
+                                  <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" title="Neutral">
+                                    <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 14h8" />
+                                    <circle cx="9" cy="9.5" r="1" fill="currentColor" />
+                                    <circle cx="15" cy="9.5" r="1" fill="currentColor" />
+                                  </svg>
                                 )}
                                 {(item.data as MediaClipping).sentiment === 'negative' && (
                                   <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
