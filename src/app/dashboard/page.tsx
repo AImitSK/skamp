@@ -1300,9 +1300,9 @@ export default function DashboardHomePage() {
                           {/* Typ Icon */}
                           <div className="col-span-1">
                             {item.type === 'clipping' ? (
-                              <NewspaperIcon className="h-5 w-5 text-green-600" title="Veröffentlichung" />
+                              <NewspaperIcon className="h-5 w-5 text-zinc-500" title="Veröffentlichung" />
                             ) : (
-                              <SparklesIcon className="h-5 w-5 text-yellow-600" title="Auto-Fund" />
+                              <SparklesIcon className="h-5 w-5 text-zinc-500" title="Auto-Fund" />
                             )}
                           </div>
 
