@@ -1454,6 +1454,13 @@ export default function DashboardHomePage() {
           </div>
         </div>
       )}
+
+      {/* Copyright Footer */}
+      <div className="mt-12 pt-6 border-t border-zinc-200">
+        <Text className="text-center text-sm text-zinc-500">
+          © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
+        </Text>
+      </div>
     </div>
   );
 }
