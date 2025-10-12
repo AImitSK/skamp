@@ -22,7 +22,12 @@ import {
   EnvelopeIcon,
   ExclamationCircleIcon,
   PhotoIcon,
-  LinkIcon
+  LinkIcon,
+  NewspaperIcon,
+  SparklesIcon,
+  FaceSmileIcon,
+  FaceFrownIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { taskService } from '@/lib/firebase/task-service';
 import { projectService } from '@/lib/firebase/project-service';
@@ -38,6 +43,9 @@ import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { PRCampaign } from '@/types/pr';
 import { EmailCampaignSend } from '@/types/email';
 import { Select } from '@/components/ui/select';
+import { clippingService } from '@/lib/firebase/clipping-service';
+import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
+import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import {
   PieChart,
   Pie,
@@ -90,6 +98,14 @@ export default function DashboardHomePage() {
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [loadingSends, setLoadingSends] = useState(false);
 
+  // PR-Monitoring States
+  const [clippings, setClippings] = useState<MediaClipping[]>([]);
+  const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
+  const [loadingMonitoring, setLoadingMonitoring] = useState(true);
+  const [monitoringFilter, setMonitoringFilter] = useState<'all' | 'published' | 'pending'>('all');
+  const [monitoringPage, setMonitoringPage] = useState(1);
+  const monitoringPerPage = 5;
+
   // Role Labels
   const roleLabels: Record<string, string> = {
     owner: 'Owner',
@@ -104,6 +120,7 @@ export default function DashboardHomePage() {
     if (currentOrganization?.id && user?.uid) {
       loadTasks();
       loadCampaigns();
+      loadMonitoring();
     }
   }, [currentOrganization?.id, user?.uid]);
 
@@ -164,6 +181,56 @@ export default function DashboardHomePage() {
       console.error('Fehler beim Laden der Sends:', error);
     } finally {
       setLoadingSends(false);
+    }
+  };
+
+  const loadMonitoring = async () => {
+    if (!currentOrganization?.id) return;
+
+    try {
+      setLoadingMonitoring(true);
+
+      // Lade alle Kampagnen
+      const allCampaigns = await prService.getAll(currentOrganization.id, true);
+
+      // Lade alle Clippings und Suggestions parallel
+      const [allClippings, allSuggestions] = await Promise.all([
+        // Lade Clippings für alle Kampagnen
+        Promise.all(
+          allCampaigns.map(campaign =>
+            clippingService.getByCampaignId(campaign.id!, {
+              organizationId: currentOrganization.id
+            })
+          )
+        ).then(results => results.flat()),
+
+        // Lade Suggestions für alle Kampagnen
+        Promise.all(
+          allCampaigns.map(campaign =>
+            monitoringSuggestionService.getByCampaignId(campaign.id!, currentOrganization.id)
+          )
+        ).then(results => results.flat())
+      ]);
+
+      // Sortiere nach Datum (neueste zuerst)
+      const sortedClippings = allClippings.sort((a, b) => {
+        const dateA = a.publishedAt?.toDate?.()?.getTime() || 0;
+        const dateB = b.publishedAt?.toDate?.()?.getTime() || 0;
+        return dateB - dateA;
+      });
+
+      const sortedSuggestions = allSuggestions.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
+        const dateB = b.createdAt?.toDate?.()?.getTime() || 0;
+        return dateB - dateA;
+      });
+
+      setClippings(sortedClippings);
+      setSuggestions(sortedSuggestions);
+    } catch (error) {
+      console.error('Fehler beim Laden der Monitoring-Daten:', error);
+    } finally {
+      setLoadingMonitoring(false);
     }
   };
 
@@ -390,6 +457,71 @@ export default function DashboardHomePage() {
     { name: 'Zugestellt', value: emailStats.notOpened, color: '#add8f0' },
     { name: 'Bounced', value: emailStats.bounced, color: '#DEDC00' }
   ].filter(item => item.value > 0);
+
+  // PR-Monitoring Filter and Stats
+  const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
+
+  const getFilteredMonitoringItems = () => {
+    if (monitoringFilter === 'published') {
+      return clippings.map(c => ({ type: 'clipping' as const, data: c }));
+    }
+    if (monitoringFilter === 'pending') {
+      return pendingSuggestions.map(s => ({ type: 'suggestion' as const, data: s }));
+    }
+    // 'all': Mix beides
+    const clippingItems = clippings.map(c => ({ type: 'clipping' as const, data: c }));
+    const suggestionItems = pendingSuggestions.map(s => ({ type: 'suggestion' as const, data: s }));
+    return [...clippingItems, ...suggestionItems].sort((a, b) => {
+      const dateA = a.type === 'clipping'
+        ? (a.data as MediaClipping).publishedAt?.toDate?.()?.getTime() || 0
+        : (a.data as MonitoringSuggestion).createdAt?.toDate?.()?.getTime() || 0;
+      const dateB = b.type === 'clipping'
+        ? (b.data as MediaClipping).publishedAt?.toDate?.()?.getTime() || 0
+        : (b.data as MonitoringSuggestion).createdAt?.toDate?.()?.getTime() || 0;
+      return dateB - dateA;
+    });
+  };
+
+  const filteredMonitoringItems = getFilteredMonitoringItems();
+  const totalMonitoringPages = Math.ceil(filteredMonitoringItems.length / monitoringPerPage);
+  const monitoringStartIndex = (monitoringPage - 1) * monitoringPerPage;
+  const paginatedMonitoringItems = filteredMonitoringItems.slice(
+    monitoringStartIndex,
+    monitoringStartIndex + monitoringPerPage
+  );
+
+  // Sentiment Stats
+  const sentimentCounts = {
+    positive: clippings.filter(c => c.sentiment === 'positive').length,
+    neutral: clippings.filter(c => c.sentiment === 'neutral').length,
+    negative: clippings.filter(c => c.sentiment === 'negative').length
+  };
+
+  const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setMonitoringPage(1);
+  }, [monitoringFilter]);
+
+  // Handler für Suggestion-Bestätigung
+  const handleConfirmSuggestion = async (suggestion: MonitoringSuggestion) => {
+    if (!user?.uid || !currentOrganization?.id) return;
+
+    try {
+      await monitoringSuggestionService.confirmSuggestion(
+        suggestion.id!,
+        {
+          userId: user.uid,
+          organizationId: currentOrganization.id
+        }
+      );
+      // Reload monitoring data
+      await loadMonitoring();
+    } catch (error) {
+      console.error('Fehler beim Bestätigen:', error);
+    }
+  };
 
   if (orgLoading) {
     return (
@@ -1071,6 +1203,306 @@ export default function DashboardHomePage() {
             )}
           </div>
         </div>
+
+          {/* PR-Monitoring Widget - 2/3 Breite */}
+          <div className="lg:col-span-2 mt-6">
+            {/* Header */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <Heading level={2}>PR-Monitoring</Heading>
+
+                {/* Filter Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMonitoringFilter('all')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      monitoringFilter === 'all'
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                        : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Alle
+                    {(clippings.length + pendingSuggestions.length) > 0 && (
+                      <Badge color="zinc" className="ml-2">
+                        {clippings.length + pendingSuggestions.length}
+                      </Badge>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setMonitoringFilter('published')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      monitoringFilter === 'published'
+                        ? 'bg-green-100 text-green-700 border border-green-300'
+                        : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Veröffentlichungen
+                    {clippings.length > 0 && (
+                      <Badge color="green" className="ml-2">
+                        {clippings.length}
+                      </Badge>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setMonitoringFilter('pending')}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      monitoringFilter === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
+                        : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Handlungsbedarf
+                    {pendingSuggestions.length > 0 && (
+                      <Badge color="yellow" className="ml-2">
+                        {pendingSuggestions.length}
+                      </Badge>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Bar */}
+              {clippings.length > 0 && (
+                <div className="mt-4 flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <FaceSmileIcon className="h-5 w-5 text-green-600" />
+                    <Text className="text-zinc-600">{sentimentCounts.positive}</Text>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 rounded-full bg-zinc-400" />
+                    <Text className="text-zinc-600">{sentimentCounts.neutral}</Text>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FaceFrownIcon className="h-5 w-5 text-red-600" />
+                    <Text className="text-zinc-600">{sentimentCounts.negative}</Text>
+                  </div>
+                  <div className="border-l border-zinc-300 pl-6 flex items-center gap-2">
+                    <EyeIcon className="h-5 w-5 text-zinc-500" />
+                    <Text className="text-zinc-600 font-medium">
+                      {totalReach.toLocaleString('de-DE')} Reichweite
+                    </Text>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <NewspaperIcon className="h-5 w-5 text-zinc-500" />
+                    <Text className="text-zinc-600 font-medium">
+                      {clippings.length} Clippings
+                    </Text>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden flex flex-col" style={{ minHeight: '400px' }}>
+              {loadingMonitoring ? (
+                <>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                      <Text className="text-zinc-600">Lade Monitoring-Daten...</Text>
+                    </div>
+                  </div>
+                  <div className="px-6 py-3 border-t border-zinc-200 bg-zinc-50">
+                    <div className="flex items-center justify-end gap-1">
+                      <button disabled className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 opacity-30 cursor-not-allowed">
+                        <ChevronLeftIcon className="h-3 w-3" />
+                      </button>
+                      <button disabled className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 opacity-30 cursor-not-allowed">
+                        <ChevronRightIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : filteredMonitoringItems.length === 0 ? (
+                <>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
+                      <Text className="text-zinc-600 font-medium">
+                        {monitoringFilter === 'published' && 'Noch keine Veröffentlichungen'}
+                        {monitoringFilter === 'pending' && 'Kein Handlungsbedarf'}
+                        {monitoringFilter === 'all' && 'Noch keine Monitoring-Daten'}
+                      </Text>
+                    </div>
+                  </div>
+                  <div className="px-6 py-3 border-t border-zinc-200 bg-zinc-50">
+                    <div className="flex items-center justify-end gap-1">
+                      <button disabled className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 opacity-30 cursor-not-allowed">
+                        <ChevronLeftIcon className="h-3 w-3" />
+                      </button>
+                      <button disabled className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 opacity-30 cursor-not-allowed">
+                        <ChevronRightIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Table Header */}
+                  <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider">Typ</div>
+                      <div className="col-span-6 text-xs font-medium text-zinc-500 uppercase tracking-wider">Titel</div>
+                      <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Medium</div>
+                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</div>
+                    </div>
+                  </div>
+
+                  {/* Table Body */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-zinc-200">
+                    {paginatedMonitoringItems.map((item, idx) => (
+                      <div key={`${item.type}-${item.type === 'clipping' ? (item.data as MediaClipping).id : (item.data as MonitoringSuggestion).id}-${idx}`} className="px-6 py-4 hover:bg-zinc-50 transition-colors">
+                        <div className="grid grid-cols-12 gap-4 items-center">
+                          {/* Typ Icon */}
+                          <div className="col-span-1">
+                            {item.type === 'clipping' ? (
+                              <NewspaperIcon className="h-5 w-5 text-green-600" title="Veröffentlichung" />
+                            ) : (
+                              <SparklesIcon className="h-5 w-5 text-yellow-600" title="Auto-Fund" />
+                            )}
+                          </div>
+
+                          {/* Titel */}
+                          <div className="col-span-6 min-w-0">
+                            {item.type === 'clipping' ? (
+                              <a
+                                href={(item.data as MediaClipping).url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-primary hover:text-primary-hover hover:underline truncate whitespace-nowrap overflow-hidden text-ellipsis block"
+                                title={(item.data as MediaClipping).title}
+                              >
+                                {(item.data as MediaClipping).title}
+                              </a>
+                            ) : (
+                              <a
+                                href={(item.data as MonitoringSuggestion).articleUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-zinc-900 hover:text-primary hover:underline truncate whitespace-nowrap overflow-hidden text-ellipsis block"
+                                title={(item.data as MonitoringSuggestion).articleTitle}
+                              >
+                                {(item.data as MonitoringSuggestion).articleTitle}
+                              </a>
+                            )}
+                          </div>
+
+                          {/* Medium */}
+                          <div className="col-span-3 min-w-0">
+                            <Text className="text-sm text-zinc-600 truncate whitespace-nowrap overflow-hidden text-ellipsis">
+                              {item.type === 'clipping'
+                                ? (item.data as MediaClipping).outletName
+                                : (item.data as MonitoringSuggestion).sources?.[0]?.sourceName || 'Unbekannt'}
+                            </Text>
+                          </div>
+
+                          {/* Status / Sentiment + Aktion */}
+                          <div className="col-span-2 flex items-center gap-2">
+                            {item.type === 'clipping' ? (
+                              <>
+                                {(item.data as MediaClipping).sentiment === 'positive' && (
+                                  <FaceSmileIcon className="h-5 w-5 text-green-600" title="Positiv" />
+                                )}
+                                {(item.data as MediaClipping).sentiment === 'neutral' && (
+                                  <div className="h-5 w-5 rounded-full bg-zinc-400" title="Neutral" />
+                                )}
+                                {(item.data as MediaClipping).sentiment === 'negative' && (
+                                  <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
+                                )}
+                                <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                                <Text className="text-xs text-zinc-500">
+                                  {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                                </Text>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleConfirmSuggestion(item.data as MonitoringSuggestion)}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                              >
+                                Bestätigen
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  <div className="px-6 py-3 border-t border-zinc-200 bg-zinc-50">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setMonitoringPage(prev => Math.max(1, prev - 1))}
+                        disabled={monitoringPage === 1 || totalMonitoringPages <= 1}
+                        className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeftIcon className="h-3 w-3" />
+                      </button>
+
+                      {totalMonitoringPages > 1 && Array.from({ length: Math.min(3, totalMonitoringPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalMonitoringPages <= 3) {
+                          pageNum = i + 1;
+                        } else if (monitoringPage === 1) {
+                          pageNum = i + 1;
+                        } else if (monitoringPage === totalMonitoringPages) {
+                          pageNum = totalMonitoringPages - 2 + i;
+                        } else {
+                          pageNum = monitoringPage - 1 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setMonitoringPage(pageNum)}
+                            className={`px-2.5 py-1 rounded border text-xs font-medium transition-colors ${
+                              monitoringPage === pageNum
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                      {totalMonitoringPages > 3 && monitoringPage < totalMonitoringPages - 1 && (
+                        <span className="text-zinc-500 text-xs">...</span>
+                      )}
+
+                      <button
+                        onClick={() => setMonitoringPage(prev => Math.min(totalMonitoringPages, prev + 1))}
+                        disabled={monitoringPage === totalMonitoringPages || totalMonitoringPages <= 1}
+                        className="p-1.5 rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronRightIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* News Platzhalter - 1/3 Breite */}
+          <div className="lg:col-span-1 mt-6">
+            <div className="mb-4">
+              <Heading level={2}>News & Updates</Heading>
+            </div>
+            <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden flex flex-col p-6" style={{ minHeight: '400px' }}>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
+                  <Text className="text-zinc-600 font-medium">Coming Soon</Text>
+                  <Text className="text-zinc-500 text-sm mt-1">
+                    Hier erscheinen bald News und Updates
+                  </Text>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
