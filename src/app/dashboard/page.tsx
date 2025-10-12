@@ -1345,13 +1345,13 @@ export default function DashboardHomePage() {
                             {item.type === 'clipping' ? (
                               <>
                                 {(item.data as MediaClipping).sentiment === 'positive' && (
-                                  <FaceSmileIcon className="h-5 w-5 text-green-600" title="Positiv" />
+                                  <FaceSmileIcon className="h-5 w-5 text-zinc-400" title="Positiv" />
                                 )}
                                 {(item.data as MediaClipping).sentiment === 'neutral' && (
                                   <div className="h-5 w-5 rounded-full bg-zinc-400" title="Neutral" />
                                 )}
                                 {(item.data as MediaClipping).sentiment === 'negative' && (
-                                  <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
+                                  <FaceFrownIcon className="h-5 w-5 text-zinc-400" title="Negativ" />
                                 )}
                                 <CalendarIcon className="h-4 w-4 text-zinc-400" />
                                 <Text className="text-xs text-zinc-500">
