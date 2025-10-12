@@ -1206,13 +1206,13 @@ export default function DashboardHomePage() {
                     onClick={() => setMonitoringFilter('published')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       monitoringFilter === 'published'
-                        ? 'bg-green-100 text-green-700 border border-green-300'
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
                         : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     Veröffentlichungen
                     {clippings.length > 0 && (
-                      <Badge color="green" className="ml-2">
+                      <Badge color="blue" className="ml-2">
                         {clippings.length}
                       </Badge>
                     )}
@@ -1222,13 +1222,13 @@ export default function DashboardHomePage() {
                     onClick={() => setMonitoringFilter('pending')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       monitoringFilter === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700 border border-yellow-300'
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
                         : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     Handlungsbedarf
                     {pendingSuggestions.length > 0 && (
-                      <Badge color="yellow" className="ml-2">
+                      <Badge color="blue" className="ml-2">
                         {pendingSuggestions.length}
                       </Badge>
                     )}
