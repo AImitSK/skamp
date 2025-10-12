@@ -927,19 +927,19 @@ export default function DashboardHomePage() {
             <div className="flex items-center justify-between">
               <Heading level={2}>E-Mail Performance</Heading>
               {campaigns.length > 0 && (
-                <Select
-                  value={selectedCampaignId}
-                  onChange={(e) => setSelectedCampaignId(e.target.value)}
-                  className="ml-auto"
-                  style={{ width: '400px' }}
-                >
-                  <option value="">Kampagne auswählen</option>
-                  {campaigns.map((campaign) => (
-                    <option key={campaign.id} value={campaign.id}>
-                      {campaign.title}
-                    </option>
-                  ))}
-                </Select>
+                <div className="ml-auto" style={{ width: '400px' }}>
+                  <Select
+                    value={selectedCampaignId}
+                    onChange={(e) => setSelectedCampaignId(e.target.value)}
+                  >
+                    <option value="">Kampagne auswählen</option>
+                    {campaigns.map((campaign) => (
+                      <option key={campaign.id} value={campaign.id}>
+                        {campaign.title}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               )}
             </div>
           </div>
