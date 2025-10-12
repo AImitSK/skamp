@@ -1300,9 +1300,9 @@ export default function DashboardHomePage() {
                           {/* Typ Icon */}
                           <div className="col-span-1">
                             {item.type === 'clipping' ? (
-                              <NewspaperIcon className="h-5 w-5 text-zinc-500" title="Veröffentlichung" />
+                              <NewspaperIcon className="h-4 w-4 text-zinc-400" title="Veröffentlichung" />
                             ) : (
-                              <SparklesIcon className="h-5 w-5 text-zinc-500" title="Auto-Fund" />
+                              <SparklesIcon className="h-4 w-4 text-zinc-400" title="Auto-Fund" />
                             )}
                           </div>
 
@@ -1353,7 +1353,7 @@ export default function DashboardHomePage() {
                                 {(item.data as MediaClipping).sentiment === 'negative' && (
                                   <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
                                 )}
-                                <CalendarIcon className="h-5 w-5 text-zinc-500" />
+                                <CalendarIcon className="h-4 w-4 text-zinc-400" />
                                 <Text className="text-xs text-zinc-500">
                                   {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
                                 </Text>
