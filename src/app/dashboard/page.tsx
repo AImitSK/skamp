@@ -930,7 +930,8 @@ export default function DashboardHomePage() {
                 <Select
                   value={selectedCampaignId}
                   onChange={(e) => setSelectedCampaignId(e.target.value)}
-                  className="w-1/3 ml-auto"
+                  className="ml-auto"
+                  style={{ width: '400px' }}
                 >
                   <option value="">Kampagne auswählen</option>
                   {campaigns.map((campaign) => (
