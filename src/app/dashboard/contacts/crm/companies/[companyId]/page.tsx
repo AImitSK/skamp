@@ -396,12 +396,6 @@ export default function CompanyDetailPage() {
     return LIFECYCLE_STAGE_OPTIONS.find(opt => opt.value === stage)?.label || stage || 'Unbekannt';
   };
 
-  // Helper function to count contacts per publication
-  const getContactsPerPublication = (publicationId: string) => {
-    // This would need to be implemented based on your contact-publication relationship
-    return 0; // Placeholder
-  };
-
   // Get last contact date
   const getLastContactDate = () => {
     if (contacts.length === 0) return null;
