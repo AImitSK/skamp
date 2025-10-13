@@ -65,8 +65,11 @@ export function CompaniesTable({
 }: CompaniesTableProps) {
   const router = useRouter();
 
-  const allSelected = companies.length > 0 && selectedIds.size === companies.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < companies.length;
+  // Defensive: Stelle sicher, dass Arrays nie undefined sind
+  const safeCompanies = companies || [];
+
+  const allSelected = safeCompanies.length > 0 && selectedIds.size === safeCompanies.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < safeCompanies.length;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
@@ -100,7 +103,7 @@ export function CompaniesTable({
 
       {/* Body */}
       <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-        {companies.map((company) => (
+        {safeCompanies.map((company) => (
           <div key={company.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
             <div className="flex items-center">
               {/* Company Name & Type */}

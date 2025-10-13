@@ -55,23 +55,28 @@ export function CompaniesTableWrapper({
   onEdit,
   onDelete
 }: CompaniesTableWrapperProps) {
+  // Defensive: Stelle sicher, dass Arrays nie undefined sind
+  const safeCompanies = companies || [];
+  const safeContacts = contacts || [];
+  const safeTags = tags || [];
+
   // Tags Map erstellen
   const tagsMap = useMemo(() => {
     const map = new Map<string, { name: string; color: string }>();
-    tags.forEach(tag => {
+    safeTags.forEach(tag => {
       if (tag.id) {
         map.set(tag.id, { name: tag.name, color: tag.color });
       }
     });
     return map;
-  }, [tags]);
+  }, [safeTags]);
 
   // Contact Count Funktion
   const getContactCount = useMemo(() => {
     return (companyId: string) => {
-      return contacts.filter(contact => contact.companyId === companyId).length;
+      return safeContacts.filter(contact => contact.companyId === companyId).length;
     };
-  }, [contacts]);
+  }, [safeContacts]);
 
   // Country Name Funktion
   const getCountryName = (countryCode?: string) => {
@@ -82,7 +87,7 @@ export function CompaniesTableWrapper({
   // onSelectAll Handler
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = new Set(companies.map(c => c.id!).filter(Boolean));
+      const allIds = new Set(safeCompanies.map(c => c.id!).filter(Boolean));
       onSelect(allIds);
     } else {
       onSelect(new Set());
@@ -104,7 +109,7 @@ export function CompaniesTableWrapper({
 
   return (
     <CompaniesTable
-      companies={companies}
+      companies={safeCompanies}
       selectedIds={selectedIds}
       onSelectAll={handleSelectAll}
       onSelect={handleSelect}

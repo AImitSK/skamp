@@ -34,10 +34,14 @@ export function ContactsTableWrapper({
   onEdit,
   onDelete
 }: ContactsTableWrapperProps) {
+  // Defensive: Stelle sicher, dass Arrays nie undefined sind
+  const safeContacts = contacts || [];
+  const safeTags = tags || [];
+
   // onSelectAll Handler
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = new Set(contacts.map(c => c.id!).filter(Boolean));
+      const allIds = new Set(safeContacts.map(c => c.id!).filter(Boolean));
       onSelect(allIds);
     } else {
       onSelect(new Set());
@@ -73,14 +77,14 @@ export function ContactsTableWrapper({
 
   return (
     <ContactsTable
-      contacts={contacts}
+      contacts={safeContacts}
       selectedIds={selectedIds}
       onSelectAll={handleSelectAll}
       onSelect={handleSelect}
       onView={onView}
       onEdit={onEdit}
       onDelete={onDelete}
-      tags={tags}
+      tags={safeTags}
       getPrimaryEmail={getPrimaryEmail}
       getPrimaryPhone={getPrimaryPhone}
     />

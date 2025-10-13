@@ -50,8 +50,12 @@ export function ContactsTable({
 }: ContactsTableProps) {
   const router = useRouter();
 
-  const allSelected = contacts.length > 0 && selectedIds.size === contacts.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < contacts.length;
+  // Defensive: Stelle sicher, dass Arrays nie undefined sind
+  const safeContacts = contacts || [];
+  const safeTags = tags || [];
+
+  const allSelected = safeContacts.length > 0 && selectedIds.size === safeContacts.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < safeContacts.length;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
@@ -85,7 +89,7 @@ export function ContactsTable({
 
       {/* Body */}
       <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-        {contacts.map((contact) => (
+        {safeContacts.map((contact) => (
           <div key={contact.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
             <div className="flex items-center">
               {/* Name */}
@@ -209,7 +213,7 @@ export function ContactsTable({
               <div className="flex-1 pr-14">
                 <div className="flex flex-wrap gap-1">
                   {contact.tagIds?.slice(0, 3).map(tagId => {
-                    const tag = tags.find(t => t.id === tagId);
+                    const tag = safeTags.find(t => t.id === tagId);
                     return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
                   })}
                   {contact.tagIds && contact.tagIds.length > 3 && (
