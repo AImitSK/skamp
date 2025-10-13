@@ -38,3 +38,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Backup directories (created during refactoring)
+docs_old/
+*.backup/
+nul
