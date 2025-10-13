@@ -125,17 +125,20 @@ interface Props {
   organizationId: string;
 }
 
-export default function ContactModalEnhanced({ 
-  contact, 
-  companies, 
-  onClose, 
-  onSave, 
+export default function ContactModalEnhanced({
+  contact,
+  companies,
+  onClose,
+  onSave,
   userId,
   organizationId
 }: Props) {
   const { user } = useAuth();
   const { autoGlobalMode } = useAutoGlobal();
   const [activeTab, setActiveTab] = useState<ContactTabId>('general');
+
+  // Defensive: Stelle sicher, dass companies nie undefined ist
+  const safeCompanies = companies || [];
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
     name: {
       firstName: '',
@@ -259,13 +262,13 @@ export default function ContactModalEnhanced({
       };
 
       if (contact.companyId) {
-        const company = companies.find(c => c.id === contact.companyId);
+        const company = safeCompanies.find(c => c.id === contact.companyId);
         setSelectedCompany(company || null);
       }
     }
-    
+
     loadTags();
-  }, [contact, companies, organizationId, loadTags]); // Removed formData.companyId from dependencies!
+  }, [contact, safeCompanies, organizationId, loadTags]); // Removed formData.companyId from dependencies!
 
   // Load publications when component mounts or companyId changes
   useEffect(() => {
@@ -290,10 +293,10 @@ export default function ContactModalEnhanced({
   };
 
   const handleCompanyChange = (companyId: string) => {
-    const company = companyId ? companies.find(c => c.id === companyId) : null;
-    
+    const company = companyId ? safeCompanies.find(c => c.id === companyId) : null;
+
     setSelectedCompany(company || null);
-    
+
     setFormData(prev => ({
       ...prev,
       companyId: companyId,
@@ -606,7 +609,7 @@ export default function ContactModalEnhanced({
                     onChange={(e) => handleCompanyChange(e.target.value)}
                   >
                     <option value="">Keine Firma zugeordnet</option>
-                    {companies.map((company) => (
+                    {safeCompanies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name}
                       </option>

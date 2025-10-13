@@ -363,6 +363,7 @@ export default function ContactsPage() {
       {showContactModal && (
         <ContactModalEnhanced
           contact={selectedContact}
+          companies={companies}
           onClose={() => {
             setShowContactModal(false);
             setSelectedContact(null);
