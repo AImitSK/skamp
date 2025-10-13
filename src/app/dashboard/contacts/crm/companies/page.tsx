@@ -1,11 +1,11 @@
 // src/app/dashboard/contacts/crm/companies/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { useCompanies, useContacts, useTags, useBulkDeleteCompanies } from '@/lib/hooks/useCRMData';
 import { CompanyEnhanced, ContactEnhanced } from '@/types/crm-enhanced';
 import { Tag, CompanyType, companyTypeLabels } from '@/types/crm';
 import { CompaniesTable, CompanyFilters, CompanyBulkActions } from './components';
@@ -31,11 +31,13 @@ export default function CompaniesPage() {
   const { currentOrganization } = useOrganization();
   const router = useRouter();
 
-  // Data State
-  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
-  const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query hooks for data fetching with automatic caching
+  const { data: companies = [], isLoading: loadingCompanies } = useCompanies(currentOrganization?.id);
+  const { data: contacts = [], isLoading: loadingContacts } = useContacts(currentOrganization?.id);
+  const { data: tags = [], isLoading: loadingTags } = useTags(currentOrganization?.id);
+  const { mutate: bulkDeleteCompanies } = useBulkDeleteCompanies();
+
+  const loading = loadingCompanies || loadingContacts || loadingTags;
 
   // UI State
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,33 +69,6 @@ export default function CompaniesPage() {
     setAlert({ type, title, message });
     setTimeout(() => setAlert(null), 5000);
   }, []);
-
-  // Load Data
-  const loadData = useCallback(async () => {
-    if (!user || !currentOrganization) return;
-    setLoading(true);
-    try {
-      const [companiesData, contactsData, tagsData] = await Promise.all([
-        companiesEnhancedService.getAll(currentOrganization.id),
-        contactsEnhancedService.getAll(currentOrganization.id),
-        tagsEnhancedService.getAllAsLegacyTags(currentOrganization.id)
-      ]);
-
-      setCompanies(companiesData);
-      setContacts(contactsData);
-      setTags(tagsData);
-    } catch (error) {
-      showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
-    } finally {
-      setLoading(false);
-    }
-  }, [user, currentOrganization, showAlert]);
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, currentOrganization, loadData]);
 
   // Memoized Data
   const tagsMap = useMemo(() => {
@@ -138,27 +113,31 @@ export default function CompaniesPage() {
 
   // Handlers
   const handleDelete = async (id: string, name: string) => {
+    if (!currentOrganization) return;
+
     setConfirmDialog({
       isOpen: true,
       title: 'Firma löschen',
       message: `Möchten Sie "${name}" wirklich löschen?`,
       type: 'danger',
       onConfirm: async () => {
-        try {
-          const { deleteDoc, doc } = await import('firebase/firestore');
-          const { db } = await import('@/lib/firebase/client-init');
-          await deleteDoc(doc(db, 'companies_enhanced', id));
-          showAlert('success', `${name} wurde gelöscht`);
-          await loadData();
-        } catch (error) {
-          showAlert('error', 'Fehler beim Löschen');
-        }
+        bulkDeleteCompanies(
+          { ids: [id], organizationId: currentOrganization.id },
+          {
+            onSuccess: () => {
+              showAlert('success', `${name} wurde gelöscht`);
+            },
+            onError: () => {
+              showAlert('error', 'Fehler beim Löschen');
+            },
+          }
+        );
       }
     });
   };
 
   const handleBulkDelete = async () => {
-    if (selectedIds.size === 0) return;
+    if (selectedIds.size === 0 || !currentOrganization) return;
 
     setConfirmDialog({
       isOpen: true,
@@ -167,16 +146,18 @@ export default function CompaniesPage() {
       type: 'danger',
       onConfirm: async () => {
         const ids = Array.from(selectedIds);
-        try {
-          const { deleteDoc, doc } = await import('firebase/firestore');
-          const { db } = await import('@/lib/firebase/client-init');
-          await Promise.all(ids.map(id => deleteDoc(doc(db, 'companies_enhanced', id))));
-          showAlert('success', `${ids.length} Firmen gelöscht`);
-          await loadData();
-          setSelectedIds(new Set());
-        } catch (error) {
-          showAlert('error', 'Fehler beim Löschen');
-        }
+        bulkDeleteCompanies(
+          { ids, organizationId: currentOrganization.id },
+          {
+            onSuccess: () => {
+              showAlert('success', `${ids.length} Firmen gelöscht`);
+              setSelectedIds(new Set());
+            },
+            onError: () => {
+              showAlert('error', 'Fehler beim Löschen');
+            },
+          }
+        );
       }
     });
   };
@@ -371,7 +352,7 @@ export default function CompaniesPage() {
             setSelectedCompany(null);
           }}
           onSave={() => {
-            loadData();
+            // React Query automatically refetches after mutations
             showAlert('success', selectedCompany ? 'Firma aktualisiert' : 'Firma erstellt');
             setShowCompanyModal(false);
             setSelectedCompany(null);
@@ -386,7 +367,7 @@ export default function CompaniesPage() {
           onClose={() => setShowImportModal(false)}
           onImportSuccess={() => {
             setShowImportModal(false);
-            loadData();
+            // React Query automatically refetches after mutations
             showAlert('success', 'Import erfolgreich');
           }}
         />
