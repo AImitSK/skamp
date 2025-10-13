@@ -47,14 +47,12 @@ class PublicationService extends BaseService<Publication> {
     try {
       // Zuerst versuchen mit organizationId (neues Schema)
       const newResults = await super.getAll(organizationId, options);
-      
+
       if (newResults.length > 0) {
-        console.log(`✅ Found ${newResults.length} publications with organizationId`);
         return newResults;
       }
-      
+
       // Fallback: Legacy-Daten mit organizationId als userId
-      console.log('🔄 No publications found with organizationId, trying legacy userId...');
       
       const constraints: QueryConstraint[] = [];
       
@@ -80,9 +78,8 @@ class PublicationService extends BaseService<Publication> {
       );
       
       const legacySnapshot = await getDocs(legacyQuery);
-      
+
       if (!legacySnapshot.empty) {
-        console.log(`✅ Found ${legacySnapshot.size} legacy publications with userId = ${organizationId}`);
         const legacyDocs = legacySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -95,8 +92,7 @@ class PublicationService extends BaseService<Publication> {
         
         return legacyDocs;
       }
-      
-      console.log(`❌ No publications found with either organizationId or userId = ${organizationId}`);
+
       return [];
       
     } catch (error) {
@@ -527,14 +523,12 @@ class AdvertisementService extends BaseService<Advertisement> {
     try {
       // Zuerst versuchen mit organizationId (neues Schema)
       const newResults = await super.getAll(organizationId, options);
-      
+
       if (newResults.length > 0) {
-        console.log(`✅ Found ${newResults.length} advertisements with organizationId`);
         return newResults;
       }
-      
+
       // Fallback: Legacy-Daten mit organizationId = userId
-      console.log('🔄 No advertisements found with organizationId, trying legacy userId...');
       return [];
       
     } catch (error) {
@@ -1144,20 +1138,6 @@ class PublicationServiceExtended extends PublicationService {
         if (!globalPubDoc.exists()) continue;
 
         const globalPub = globalPubDoc.data();
-        console.log('🔍 Debug: Globale Publication Rohdaten:', {
-          title: globalPub.title,
-          frequency: globalPub.frequency,
-          circulation: globalPub.circulation,
-          readership: globalPub.readership,
-          monthlyUniqueVisitors: globalPub.monthlyUniqueVisitors,
-          monthlyPageViews: globalPub.monthlyPageViews,
-          metricsObject: globalPub.metrics,
-          // Identifikatoren & Links Debug (sicherstellen dass Array für UI)
-          identifiers: globalPub.identifiers || [],
-          websiteUrl: globalPub.websiteUrl,
-          socialMediaUrls: globalPub.socialMediaUrls,
-          allFields: Object.keys(globalPub)
-        });
 
         // Lade Publisher-Name (Company-Daten) direkt aus Firestore
         let publisherName = globalPub.publisherName || '';
@@ -1236,33 +1216,11 @@ class PublicationServiceExtended extends PublicationService {
           updatedBy: ref.addedBy
         } as Publication & { _isReference: boolean; _globalPublicationId: string };
 
-        console.log('📊 Debug: Erstellte Publication-Reference:', {
-          title: publicationReference.title,
-          metrics: publicationReference.metrics,
-          geographicTargets: publicationReference.geographicTargets,
-          hasMetrics: !!publicationReference.metrics,
-          hasOnlineMetrics: !!publicationReference.metrics?.online,
-          monthlyUniqueVisitors: publicationReference.metrics?.online?.monthlyUniqueVisitors,
-          // Identifikatoren & Links Debug (SICHER als Array)
-          identifiers: publicationReference.identifiers || [],
-          websiteUrl: publicationReference.websiteUrl,
-          socialMediaUrls: publicationReference.socialMediaUrls,
-          hasIdentifiers: !!publicationReference.identifiers,
-          hasSocialMedia: !!publicationReference.socialMediaUrls
-        });
-
         publicationReferences.push(publicationReference);
       }
 
       // 4. Kombiniere echte Publications und References
       const allPublications = [...realPublications, ...publicationReferences];
-
-      console.log('📊 ENHANCED PUBLICATIONS SERVICE:', {
-        realPublications: realPublications.length,
-        referencedPublications: publicationReferences.length,
-        totalPublications: allPublications.length,
-        organizationId
-      });
 
       return allPublications;
     } catch (error) {
@@ -1277,12 +1235,9 @@ class PublicationServiceExtended extends PublicationService {
    */
   async getById(publicationId: string, organizationId: string): Promise<Publication | null> {
     try {
-      console.log('🔍 Enhanced getById für Publication:', { publicationId, organizationId });
-
       // 1. Versuche zuerst echte Publication zu laden
       const realPublication = await super.getById(publicationId, organizationId);
       if (realPublication) {
-        console.log('✅ Echte Publication gefunden:', realPublication.title);
         return realPublication;
       }
 
@@ -1291,11 +1246,9 @@ class PublicationServiceExtended extends PublicationService {
       const referenceData = await multiEntityService.loadPublicationReference(publicationId, organizationId);
 
       if (referenceData) {
-        console.log('✅ Publication-Reference gefunden:', referenceData.title);
         return referenceData;
       }
 
-      console.log('❌ Keine Publication oder Reference gefunden für ID:', publicationId);
       return null;
     } catch (error) {
       console.error('Fehler in PublicationServiceExtended.getById:', error);

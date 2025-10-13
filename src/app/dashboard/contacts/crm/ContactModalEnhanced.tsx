@@ -205,24 +205,6 @@ export default function ContactModalEnhanced({
   // Initialize form data when contact changes
   useEffect(() => {
     if (contact) {
-      // Debug: Prüfe Contact-Struktur für Telefonnummern
-      console.log('📞 ContactModalEnhanced - Contact Debug:', {
-        contactId: contact.id,
-        isReference: (contact as any)?._isReference,
-        phonesRaw: contact.phones,
-        phonesLength: contact.phones?.length || 0,
-        phonesStructure: contact.phones?.map(p => ({ number: p.number, type: p.type, isPrimary: p.isPrimary }))
-      });
-
-      // Debug: Prüfe auch FormData nach Initialisierung
-      setTimeout(() => {
-        console.log('📞 ContactModalEnhanced - FormData Debug:', {
-          contactId: contact.id,
-          formDataPhones: (window as any).debugFormData?.phones,
-          formDataPhonesLength: (window as any).debugFormData?.phones?.length || 0
-        });
-      }, 100);
-
       // Directly use enhanced contact data
       setFormData({
         ...contact,
@@ -254,12 +236,6 @@ export default function ContactModalEnhanced({
         personalInfo: contact.personalInfo || {},
         gdprConsents: contact.gdprConsents || []
       });
-
-      // Debug: FormData für Debugging verfügbar machen
-      (window as any).debugFormData = {
-        ...contact,
-        phones: contact.phones || []
-      };
 
       if (contact.companyId) {
         const company = safeCompanies.find(c => c.id === contact.companyId);
@@ -766,18 +742,6 @@ export default function ContactModalEnhanced({
                   
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-2">
-                      {/* Debug: Telefonnummer-Rendering */}
-                      {console.log('🔍 Phone Rendering Debug:', {
-                        formDataPhones: formData.phones,
-                        phonesCount: formData.phones.length,
-                        firstPhone: formData.phones[0],
-                        firstPhoneDetailed: {
-                          number: formData.phones[0]?.number,
-                          type: formData.phones[0]?.type,
-                          isPrimary: formData.phones[0]?.isPrimary,
-                          allKeys: Object.keys(formData.phones[0] || {})
-                        }
-                      })}
                       {formData.phones.map((phone, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-2">
