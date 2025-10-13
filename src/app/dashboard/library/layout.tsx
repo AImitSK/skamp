@@ -23,7 +23,7 @@ const tabs: Tab[] = [
     name: "Redakteure",
     href: "/dashboard/library/editors",
     icon: UserGroupIcon,
-    description: "Redakteure und ihre Publikationen verwalten"
+    description: ""
   },
   {
     name: "Publikationen",
@@ -74,12 +74,14 @@ export default function LibraryLayout({
       <div className="pb-5 mb-5">
         <div className="sm:flex sm:items-baseline sm:justify-between">
           <div className="sm:w-0 sm:flex-1">
-            <h1 className="text-2xl font-semibold leading-6 text-gray-900">
+            <h1 className="text-3xl font-semibold text-zinc-900">
               Bibliothek
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {currentTab?.description || "Verwalten Sie Publikationen und Werbemittel"}
-            </p>
+            {currentTab?.description && (
+              <p className="mt-1 text-sm text-zinc-500">
+                {currentTab.description}
+              </p>
+            )}
           </div>
         </div>
       </div>
