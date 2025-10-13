@@ -8,7 +8,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { useContacts, useCompanies, useTags, useBulkDeleteContacts } from '@/lib/hooks/useCRMData';
 import { ContactEnhanced, CompanyEnhanced } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
-import { ContactsTableWrapper, ContactFilters, ContactBulkActions } from './components';
+import { ContactsTableWrapper, ContactFiltersWrapper, ContactBulkActions } from './components';
 import ContactModalEnhanced from '../ContactModalEnhanced';
 import ImportModalEnhanced from '../ImportModalEnhanced';
 import { Alert, ConfirmDialog } from '../components/shared';
@@ -250,7 +250,7 @@ export default function ContactsPage() {
           </Button>
 
           {/* Filters */}
-          <ContactFilters
+          <ContactFiltersWrapper
             selectedCompanyIds={selectedCompanyIds}
             selectedTagIds={selectedTagIds}
             journalistsOnly={journalistsOnly}

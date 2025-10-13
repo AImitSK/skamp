@@ -9,5 +9,8 @@ export type { ContactsTableWrapperProps } from './ContactsTableWrapper';
 export { ContactFilters } from './ContactFilters';
 export type { ContactFiltersProps } from './ContactFilters';
 
+export { ContactFiltersWrapper } from './ContactFiltersWrapper';
+export type { ContactFiltersWrapperProps } from './ContactFiltersWrapper';
+
 export { ContactBulkActions } from './ContactBulkActions';
 export type { ContactBulkActionsProps } from './ContactBulkActions';

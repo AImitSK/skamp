@@ -48,14 +48,21 @@ export function ContactFilters({
   companyOptions,
   contacts
 }: ContactFiltersProps) {
-  const activeFiltersCount = selectedCompanyIds.length + selectedTagIds.length;
+  // Defensive: Stelle sicher, dass Arrays nie undefined sind
+  const safeCompanyOptions = companyOptions || [];
+  const safeTags = availableTags || [];
+  const safeContacts = contacts || [];
+  const safeSelectedCompanyIds = selectedCompanyIds || [];
+  const safeSelectedTagIds = selectedTagIds || [];
+
+  const activeFiltersCount = safeSelectedCompanyIds.length + safeSelectedTagIds.length;
 
   // Get tags that are actually used in the current filtered data
   const usedTagIds = new Set<string>();
-  contacts.forEach(contact => {
+  safeContacts.forEach(contact => {
     contact.tagIds?.forEach(tagId => usedTagIds.add(tagId));
   });
-  const usedTags = availableTags
+  const usedTags = safeTags
     .filter(tag => tag.id && usedTagIds.has(tag.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -104,12 +111,12 @@ export function ContactFilters({
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {/* Company Filter */}
                   <div className="mb-[10px]">
-                    {companyOptions.length > 10 ? (
+                    {safeCompanyOptions.length > 10 ? (
                       // Use SearchableFilter for large datasets
                       <SearchableFilter
                         label="Firma"
-                        options={companyOptions}
-                        selectedValues={selectedCompanyIds}
+                        options={safeCompanyOptions}
+                        selectedValues={safeSelectedCompanyIds}
                         onChange={onCompanyChange}
                         placeholder="Firma suchen..."
                       />
@@ -120,8 +127,8 @@ export function ContactFilters({
                           Firma
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {companyOptions.map((option) => {
-                            const isChecked = selectedCompanyIds.includes(option.value);
+                          {safeCompanyOptions.map((option) => {
+                            const isChecked = safeSelectedCompanyIds.includes(option.value);
 
                             return (
                               <label
@@ -132,8 +139,8 @@ export function ContactFilters({
                                   checked={isChecked}
                                   onChange={(checked: boolean) => {
                                     const newValues = checked
-                                      ? [...selectedCompanyIds, option.value]
-                                      : selectedCompanyIds.filter(v => v !== option.value);
+                                      ? [...safeSelectedCompanyIds, option.value]
+                                      : safeSelectedCompanyIds.filter(v => v !== option.value);
                                     onCompanyChange(newValues);
                                   }}
                                 />
@@ -155,7 +162,7 @@ export function ContactFilters({
                       <SearchableFilter
                         label="Tags"
                         options={tagOptions}
-                        selectedValues={selectedTagIds}
+                        selectedValues={safeSelectedTagIds}
                         onChange={onTagChange}
                         placeholder="Tags suchen..."
                       />
@@ -167,7 +174,7 @@ export function ContactFilters({
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {tagOptions.map((option) => {
-                            const isChecked = selectedTagIds.includes(option.value);
+                            const isChecked = safeSelectedTagIds.includes(option.value);
 
                             return (
                               <label
@@ -178,8 +185,8 @@ export function ContactFilters({
                                   checked={isChecked}
                                   onChange={(checked: boolean) => {
                                     const newValues = checked
-                                      ? [...selectedTagIds, option.value]
-                                      : selectedTagIds.filter(v => v !== option.value);
+                                      ? [...safeSelectedTagIds, option.value]
+                                      : safeSelectedTagIds.filter(v => v !== option.value);
                                     onTagChange(newValues);
                                   }}
                                 />
