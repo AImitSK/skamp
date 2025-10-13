@@ -34,8 +34,6 @@ import ListModal from "./ListModal";
 import Papa from 'papaparse';
 import clsx from 'clsx';
 
-// Grid-Ansicht entfernt - nur Listenansicht verfügbar
-
 // Alert Component
 function Alert({ 
   type = 'info', 

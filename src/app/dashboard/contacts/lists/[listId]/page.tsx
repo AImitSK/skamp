@@ -154,30 +154,6 @@ function formatContactName(contact: Contact | ContactEnhanced): string {
   }
 }
 
-// Helper function to get contact email
-function getContactEmail(contact: Contact | ContactEnhanced): string | undefined {
-  if ('emails' in contact && Array.isArray(contact.emails)) {
-    // Enhanced Contact
-    const primaryEmail = contact.emails.find(e => e.isPrimary);
-    return primaryEmail?.email || contact.emails[0]?.email;
-  } else {
-    // Legacy Contact
-    return (contact as Contact).email;
-  }
-}
-
-// Helper function to get contact phone
-function getContactPhone(contact: Contact | ContactEnhanced): string | undefined {
-  if ('phones' in contact && Array.isArray(contact.phones)) {
-    // Enhanced Contact
-    const primaryPhone = contact.phones.find(p => p.isPrimary);
-    return primaryPhone?.number || contact.phones[0]?.number;
-  } else {
-    // Legacy Contact
-    return (contact as Contact).phone;
-  }
-}
-
 export default function ListDetailPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
