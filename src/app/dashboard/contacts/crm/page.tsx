@@ -210,37 +210,6 @@ const getCountryName = (countryCode?: string): string => {
   return countryNames[countryCode] || countryCode;
 };
 
-// Konvertiert ReferencedJournalist zu ContactEnhanced Format für CRM-Anzeige
-const convertReferenceToContact = (reference: ReferencedJournalist): ContactEnhanced => {
-  return {
-    id: reference._referenceId, // Verwende Reference-ID als lokale ID
-    organizationId: '', // Wird vom CRM nicht benötigt für Anzeige
-    displayName: reference.displayName,
-    emails: reference.email ? [{ email: reference.email, isPrimary: true, type: 'work' as any }] : [],
-    phones: reference.phone ? [{ number: reference.phone, isPrimary: true, type: 'work' as any }] : [],
-    companyName: reference.companyName,
-    position: reference.position,
-    mediaProfile: {
-      isJournalist: true,
-      publicationIds: reference.publicationIds || [],
-      beats: reference.beats || [],
-      mediaTypes: reference.mediaTypes || [],
-      preferredTopics: reference.beats || []
-    },
-    // Reference-spezifische Marker
-    _isReference: true,
-    _globalJournalistId: reference.id,
-    _localNotes: reference._localMeta.notes,
-    _localTags: reference._localMeta.tags || [],
-
-    // Pflichtfelder für CRM-Kompatibilität
-    createdAt: reference._localMeta.addedAt,
-    updatedAt: reference._localMeta.addedAt,
-    createdBy: 'reference-import',
-    updatedBy: 'reference-import'
-  } as any; // Type assertion da wir Reference-Felder hinzufügen
-};
-
 export default function ContactsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -579,21 +548,6 @@ const getContactCount = (companyId: string) => {
   // Company contact count tracked internally
   return count;
 };
-
-  // Get last contact date
-  const getLastContactDate = (companyId: string) => {
-    const companyContacts = contacts.filter(contact => contact.companyId === companyId);
-    if (companyContacts.length === 0) return null;
-    
-    // Sort by createdAt and return the most recent
-    const sorted = companyContacts.sort((a, b) => {
-      const dateA = a.createdAt?.toDate?.() || new Date(0);
-      const dateB = b.createdAt?.toDate?.() || new Date(0);
-      return dateB.getTime() - dateA.getTime();
-    });
-    
-    return sorted[0]?.createdAt;
-  };
 
   return (
     <div>
