@@ -1058,13 +1058,6 @@ class ContactEnhancedServiceExtended extends ContactEnhancedService {
       // 3. Kombiniere transparent - für andere Services unsichtbar!
       const allContacts = [...realContacts, ...referencedContacts];
 
-      console.log('📊 ENHANCED CONTACTS SERVICE:', {
-        realContacts: realContacts.length,
-        referencedContacts: referencedContacts.length,
-        totalContacts: allContacts.length,
-        organizationId
-      });
-
       return allContacts;
 
     } catch (error) {
@@ -1618,19 +1611,6 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
 
         const globalCompany = globalCompanyDoc.data();
 
-        // Debug: Log globale Company-Daten (detailliert)
-        console.log('🔍 Global Company Data (detailliert):', {
-          id: ref.globalCompanyId,
-          name: globalCompany.name,
-          type: globalCompany.type,
-          industryClassificationFull: globalCompany.industryClassification,
-          industryPrimary: globalCompany.industryClassification?.primary,
-          mainAddressFull: globalCompany.mainAddress,
-          addressCity: globalCompany.mainAddress?.city,
-          addressCountry: globalCompany.mainAddress?.countryCode,
-          website: globalCompany.website
-        });
-
         // Erstelle CompanyEnhanced aus Reference + globalen Daten
         companyReferences.push({
           id: ref.localCompanyId,
@@ -1686,13 +1666,6 @@ class CompanyEnhancedServiceExtended extends CompanyEnhancedService {
 
       // 4. Kombiniere echte Companies und References
       const allCompanies = [...realCompanies, ...companyReferences];
-
-      console.log('📊 ENHANCED COMPANIES SERVICE:', {
-        realCompanies: realCompanies.length,
-        referencedCompanies: companyReferences.length,
-        totalCompanies: allCompanies.length,
-        organizationId
-      });
 
       return allCompanies;
     } catch (error) {
