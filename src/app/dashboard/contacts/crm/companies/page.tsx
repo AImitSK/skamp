@@ -8,7 +8,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { useCompanies, useContacts, useTags, useBulkDeleteCompanies } from '@/lib/hooks/useCRMData';
 import { CompanyEnhanced, ContactEnhanced } from '@/types/crm-enhanced';
 import { Tag, CompanyType, companyTypeLabels } from '@/types/crm';
-import { CompaniesTable, CompanyFilters, CompanyBulkActions } from './components';
+import { CompaniesTableWrapper, CompanyFilters, CompanyBulkActions } from './components';
 import CompanyModal from '../CompanyModal';
 import ImportModalEnhanced from '../ImportModalEnhanced';
 import { Alert, ConfirmDialog } from '../components/shared';
@@ -276,7 +276,7 @@ export default function CompaniesPage() {
       </div>
 
       {/* Table */}
-      <CompaniesTable
+      <CompaniesTableWrapper
         companies={paginatedCompanies}
         selectedIds={selectedIds}
         contacts={contacts}
