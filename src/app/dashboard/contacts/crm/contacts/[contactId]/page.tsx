@@ -464,7 +464,7 @@ export default function ContactDetailPage() {
 
   return (
     <>
-      <div className="p-6 md:p-8">
+      <div>
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-center justify-between">
