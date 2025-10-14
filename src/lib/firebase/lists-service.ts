@@ -473,7 +473,6 @@ export const listsService = {
       }
     }
 
-    console.log(`📊 Retrieved ${allContacts.length} contacts from ${contactIds.length} IDs`);
     return allContacts;
   },
 
