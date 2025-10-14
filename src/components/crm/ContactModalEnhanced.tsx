@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -132,14 +133,15 @@ interface ContactModalProps {
   organizationId: string;
 }
 
-export default function ContactModalEnhanced({ 
-  contact, 
-  companies, 
-  onClose, 
-  onSave, 
+export default function ContactModalEnhanced({
+  contact,
+  companies,
+  onClose,
+  onSave,
   userId,
-  organizationId 
+  organizationId
 }: ContactModalProps) {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
     // Name
@@ -459,10 +461,14 @@ const handleSubmit = async (e: React.FormEvent) => {
           ...cleanedData,
           userId: userId
         } as Omit<Contact, 'id'> & { userId: string };
-        
+
         console.log('Creating contact with data:', createData);
         await contactsService.create(createData);
       }
+
+      // Invalidate contacts query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['contacts', organizationId] });
+
       onSave();
       onClose();
     } catch (error) {

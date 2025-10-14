@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -165,6 +166,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   const router = useRouter();
   const { user } = useAuth();
   const { autoGlobalMode } = useAutoGlobal();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<CompanyTabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
     // Basic fields
@@ -446,7 +448,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
       }
 
       const context = { organizationId: organizationId, userId: userId, autoGlobalMode };
-      
+
       if (company?.id) {
         // Update existing company
         await companiesEnhancedService.update(company.id, dataToSave, context);
@@ -454,7 +456,12 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         // Create new company
         await companiesEnhancedService.create(dataToSave as any, context);
       }
-      
+
+      // Invalidate companies query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['companies', organizationId] });
+      // Also invalidate contacts since they reference companies
+      await queryClient.invalidateQueries({ queryKey: ['contacts', organizationId] });
+
       onSave();
       onClose();
     } catch (error) {
