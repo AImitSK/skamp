@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Fragment } from "react";
+import { useState, useMemo, useCallback, Fragment, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
@@ -301,8 +301,18 @@ export default function EditorsPage() {
   const removeReference = useRemoveJournalistReference();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [subscription, setSubscription] = useState<JournalistSubscription | null>(null);
   const loading = loadingJournalists || loadingImported;
+
+  // Debounce searchTerm
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Filter States
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
@@ -557,9 +567,9 @@ export default function EditorsPage() {
   // Filter journalists
   const filteredJournalists = useMemo(() => {
     return (convertedJournalists || []).filter(journalist => {
-      // Search term
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
+      // Search term (debounced)
+      if (debouncedSearchTerm) {
+        const searchLower = debouncedSearchTerm.toLowerCase();
         const matches =
           journalist.personalData.displayName.toLowerCase().includes(searchLower) ||
           (journalist.professionalData.employment?.company?.name || 'Selbstständig').toLowerCase().includes(searchLower) ||
@@ -592,7 +602,7 @@ export default function EditorsPage() {
 
       return true;
     });
-  }, [convertedJournalists, searchTerm, selectedTopics, selectedMediaTypes, minQualityScore]);
+  }, [convertedJournalists, debouncedSearchTerm, selectedTopics, selectedMediaTypes, minQualityScore]);
 
   // Paginated Data
   const paginatedJournalists = useMemo(() => {
@@ -612,10 +622,13 @@ export default function EditorsPage() {
   }, [convertedJournalists]);
 
   // Check if current user is SuperAdmin
-  const isSuperAdmin = currentOrganization?.id === "superadmin-org";
+  const isSuperAdmin = useMemo(() =>
+    currentOrganization?.id === "superadmin-org",
+    [currentOrganization?.id]
+  );
 
   // Reference Remove Handler
-  const handleRemoveReference = async (journalist: JournalistDatabaseEntry) => {
+  const handleRemoveReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     if (!currentOrganization || !user) return;
 
     setImportingIds(prev => new Set([...prev, journalist.id!]));
@@ -637,10 +650,10 @@ export default function EditorsPage() {
         return newSet;
       });
     }
-  };
+  }, [currentOrganization, user, removeReference, showAlert]);
 
   // Toggle-Funktion für Import/Remove
-  const handleToggleReference = async (journalist: JournalistDatabaseEntry) => {
+  const handleToggleReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     const isImported = importedIds?.has(journalist.id);
 
     if (isImported) {
@@ -648,10 +661,10 @@ export default function EditorsPage() {
     } else {
       await handleImportReference(journalist);
     }
-  };
+  }, [importedIds, handleRemoveReference]); // handleImportReference wird unten definiert
 
   // Reference Import handlers
-  const handleImportReference = async (journalist: JournalistDatabaseEntry) => {
+  const handleImportReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     // SuperAdmin sollte sich nicht selbst referenzieren
     if (isSuperAdmin) {
       showAlert('info', 'SuperAdmin-Hinweis', 'Als SuperAdmin verwalten Sie diese Journalisten direkt im CRM. Ein Verweis ist nicht nötig.');
@@ -684,16 +697,59 @@ export default function EditorsPage() {
         return newSet;
       });
     }
-  };
+  }, [isSuperAdmin, subscription, currentOrganization, user, createReference, showAlert]);
 
-  const handleUpgrade = (journalist: JournalistDatabaseEntry) => {
+  const handleUpgrade = useCallback((journalist: JournalistDatabaseEntry) => {
     setImportDialogJournalist(journalist);
     setShowImportDialog(true);
-  };
+  }, []);
 
-  const handleViewDetails = (journalist: JournalistDatabaseEntry) => {
+  const handleViewDetails = useCallback((journalist: JournalistDatabaseEntry) => {
     setDetailJournalist(journalist);
-  };
+  }, []);
+
+  // Filter Handlers
+  const handleTopicToggle = useCallback((topic: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTopics(prev => [...prev, topic]);
+    } else {
+      setSelectedTopics(prev => prev.filter(t => t !== topic));
+    }
+  }, []);
+
+  const handleQualityScoreChange = useCallback((score: number) => {
+    setMinQualityScore(score);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setSelectedTopics([]);
+    setSelectedMediaTypes([]);
+    setMinQualityScore(0);
+  }, []);
+
+  // Pagination Handlers
+  const handlePreviousPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  }, [totalPages]);
+
+  const handleGoToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  // Computed values
+  const activeFiltersCount = useMemo(() =>
+    selectedTopics.length + selectedMediaTypes.length + (minQualityScore > 0 ? 1 : 0),
+    [selectedTopics.length, selectedMediaTypes.length, minQualityScore]
+  );
+
+  const totalPages = useMemo(() =>
+    Math.ceil(filteredJournalists.length / itemsPerPage),
+    [filteredJournalists.length, itemsPerPage]
+  );
 
   if (loading) {
     return (
@@ -705,9 +761,6 @@ export default function EditorsPage() {
       </div>
     );
   }
-
-  const activeFiltersCount = selectedTopics.length + selectedMediaTypes.length + (minQualityScore > 0 ? 1 : 0);
-  const totalPages = Math.ceil(filteredJournalists.length / itemsPerPage);
 
   return (
     <div>
@@ -783,13 +836,7 @@ export default function EditorsPage() {
                               <label key={topic} className="flex items-center gap-2 cursor-pointer">
                                 <Checkbox
                                   checked={selectedTopics.includes(topic)}
-                                  onChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedTopics([...selectedTopics, topic]);
-                                    } else {
-                                      setSelectedTopics(selectedTopics.filter(t => t !== topic));
-                                    }
-                                  }}
+                                  onChange={(checked) => handleTopicToggle(topic, checked)}
                                 />
                                 <span className="text-sm text-zinc-700">
                                   {topic}
@@ -811,7 +858,7 @@ export default function EditorsPage() {
                           max="100"
                           step="10"
                           value={minQualityScore}
-                          onChange={(e) => setMinQualityScore(Number(e.target.value))}
+                          onChange={(e) => handleQualityScoreChange(Number(e.target.value))}
                           className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer slider"
                         />
                       </div>
@@ -820,11 +867,7 @@ export default function EditorsPage() {
                       {activeFiltersCount > 0 && (
                         <div className="flex justify-end pt-2 border-t border-zinc-200">
                           <button
-                            onClick={() => {
-                              setSelectedTopics([]);
-                              setSelectedMediaTypes([]);
-                              setMinQualityScore(0);
-                            }}
+                            onClick={handleResetFilters}
                             className="text-sm text-zinc-500 hover:text-zinc-700 underline"
                           >
                             Zurücksetzen
@@ -1071,7 +1114,7 @@ export default function EditorsPage() {
           <div className="-mt-px flex w-0 flex-1">
             <Button
               plain
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={handlePreviousPage}
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon />
@@ -1094,7 +1137,7 @@ export default function EditorsPage() {
                   <Button
                     key={i}
                     plain
-                    onClick={() => setCurrentPage(i)}
+                    onClick={() => handleGoToPage(i)}
                     className={currentPage === i ? 'font-semibold text-primary' : ''}
                   >
                     {i}
@@ -1108,7 +1151,7 @@ export default function EditorsPage() {
           <div className="-mt-px flex w-0 flex-1 justify-end">
             <Button
               plain
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={handleNextPage}
               disabled={currentPage === totalPages}
             >
               Weiter
