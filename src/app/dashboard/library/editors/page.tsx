@@ -15,6 +15,7 @@ import {
 } from '@/lib/hooks/useEditorsData';
 import Alert from './components/shared/Alert';
 import EmptyState from './components/shared/EmptyState';
+import { toastService } from '@/lib/utils/toast';
 
 // Quality Score Berechnung
 function calculateQualityScore(contact: any): number {
@@ -320,7 +321,6 @@ export default function EditorsPage() {
   const [minQualityScore, setMinQualityScore] = useState<number>(0);
 
   // UI States
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [detailJournalist, setDetailJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -329,12 +329,6 @@ export default function EditorsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(25);
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Initialize mock subscription
   useMemo(() => {
@@ -631,12 +625,12 @@ export default function EditorsPage() {
   const handleImportReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     // SuperAdmin sollte sich nicht selbst referenzieren
     if (isSuperAdmin) {
-      showAlert('info', 'SuperAdmin-Hinweis', 'Als SuperAdmin verwalten Sie diese Journalisten direkt im CRM. Ein Verweis ist nicht nötig.');
+      toastService.info('SuperAdmin: Journalisten direkt im CRM verwalten - kein Verweis nötig');
       return;
     }
 
     if (!subscription?.features.importEnabled) {
-      showAlert('warning', 'Premium-Feature', 'Das Importieren von Journalisten ist nur mit einem Premium-Abo verfügbar.');
+      toastService.warning('Importieren von Journalisten nur mit Premium-Abo verfügbar');
       return;
     }
 
@@ -650,10 +644,9 @@ export default function EditorsPage() {
         notes: `Importiert als Verweis am ${new Date().toLocaleDateString('de-DE')}`
       });
 
-      showAlert('success', 'Multi-Entity Verweis erstellt',
-        `${journalist.personalData.displayName} wurde mit Company und Publications als Verweis hinzugefügt.`);
+      toastService.success(`${journalist.personalData.displayName} als Multi-Entity Verweis erfolgreich importiert`);
     } catch (error) {
-      showAlert('error', 'Import fehlgeschlagen', error instanceof Error ? error.message : 'Unbekannter Fehler');
+      toastService.error(error instanceof Error ? `Import fehlgeschlagen: ${error.message}` : 'Import fehlgeschlagen');
     } finally {
       setImportingIds(prev => {
         const newSet = new Set(prev);
@@ -675,11 +668,10 @@ export default function EditorsPage() {
         organizationId: currentOrganization.id
       });
 
-      showAlert('success', 'Verweis entfernt',
-        `${journalist.personalData.displayName} wurde aus Ihren Verweisen entfernt.`);
+      toastService.success(`${journalist.personalData.displayName} erfolgreich aus Verweisen entfernt`);
     } catch (error) {
-      showAlert('error', 'Fehler', 'Der Verweis konnte nicht entfernt werden.');
-    } finally {
+      toastService.error('Verweis konnte nicht entfernt werden');
+    } finally{
       setImportingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(journalist.id!);
@@ -764,13 +756,6 @@ export default function EditorsPage() {
 
   return (
     <div>
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
-
       {/* Search & Filter Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
@@ -1168,7 +1153,7 @@ export default function EditorsPage() {
         journalist={importDialogJournalist}
         organizationId={currentOrganization?.id || ''}
         onSuccess={() => {
-          showAlert('success', 'Import erfolgreich', 'Journalist wurde zu Ihrem CRM hinzugefügt');
+          toastService.success('Journalist erfolgreich zu Ihrem CRM hinzugefügt');
         }}
       />
 
