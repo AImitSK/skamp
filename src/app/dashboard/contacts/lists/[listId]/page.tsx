@@ -41,7 +41,8 @@ import {
   NewspaperIcon,
   ChartBarIcon,
   LanguageIcon,
-  SparklesIcon
+  SparklesIcon,
+  CheckCircleIcon
 } from "@heroicons/react/24/outline";
 
 // InfoCard Component
