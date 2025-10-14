@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import ContactModalEnhanced from "@/app/dashboard/contacts/crm/ContactModalEnhanced";
+import { toastService } from '@/lib/utils/toast';
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -266,16 +267,9 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string } | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string) => {
-    setAlert({ type, title });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Notes Management
   const handleEditNotes = () => {
@@ -301,9 +295,9 @@ export default function ContactDetailPage() {
 
       setContact({ ...contact, internalNotes: notesValue });
       setEditingNotes(false);
-      showAlert('success', 'Notiz gespeichert');
+      toastService.success('Notiz gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Speichern der Notiz');
+      toastService.error('Fehler beim Speichern der Notiz');
     } finally {
       setSavingNotes(false);
     }
@@ -527,13 +521,6 @@ export default function ContactDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* Alert */}
-        {alert && (
-          <div className="mb-6">
-            <Alert type={alert.type} title={alert.title} />
-          </div>
-        )}
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1079,7 +1066,7 @@ export default function ContactDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            showAlert('success', 'Kontakt erfolgreich aktualisiert');
+            toastService.success('Kontakt erfolgreich aktualisiert');
           }}
         />
       )}
