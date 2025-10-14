@@ -10,7 +10,7 @@ describe('ConfirmDialog', () => {
         title="Test Title"
         message="Test Message"
         onConfirm={jest.fn()}
-        onCancel={jest.fn()}
+        onClose={jest.fn()}
       />
     );
 
@@ -20,13 +20,14 @@ describe('ConfirmDialog', () => {
 
   it('calls onConfirm when confirm button is clicked', () => {
     const onConfirm = jest.fn();
+    const onClose = jest.fn();
     render(
       <ConfirmDialog
         isOpen={true}
         title="Test"
         message="Test"
         onConfirm={onConfirm}
-        onCancel={jest.fn()}
+        onClose={onClose}
       />
     );
 
@@ -34,23 +35,24 @@ describe('ConfirmDialog', () => {
     fireEvent.click(confirmButton);
 
     expect(onConfirm).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
 
-  it('calls onCancel when cancel button is clicked', () => {
-    const onCancel = jest.fn();
+  it('calls onClose when cancel button is clicked', () => {
+    const onClose = jest.fn();
     render(
       <ConfirmDialog
         isOpen={true}
         title="Test"
         message="Test"
         onConfirm={jest.fn()}
-        onCancel={onCancel}
+        onClose={onClose}
       />
     );
 
     const cancelButton = screen.getByText('Abbrechen');
     fireEvent.click(cancelButton);
 
-    expect(onCancel).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
 });

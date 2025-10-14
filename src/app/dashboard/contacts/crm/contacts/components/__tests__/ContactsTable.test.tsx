@@ -30,7 +30,19 @@ const mockContacts: ContactEnhanced[] = [
 ];
 
 const mockTags: Tag[] = [];
-const mockCompanies: any[] = [];
+
+// Helper-Funktionen für die Komponente
+const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>) => {
+  if (!emails || emails.length === 0) return '';
+  const primary = emails.find(e => e.isPrimary);
+  return primary ? primary.email : emails[0].email;
+};
+
+const getPrimaryPhone = (phones?: Array<{ number: string; countryCode?: string; isPrimary?: boolean }>) => {
+  if (!phones || phones.length === 0) return '';
+  const primary = phones.find(p => p.isPrimary);
+  return primary ? primary.number : phones[0].number;
+};
 
 describe('ContactsTable', () => {
   it('renders contacts correctly', () => {
@@ -38,12 +50,14 @@ describe('ContactsTable', () => {
       <ContactsTable
         contacts={mockContacts}
         selectedIds={new Set()}
-        companies={mockCompanies}
         tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={jest.fn()}
         onView={jest.fn()}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        getPrimaryEmail={getPrimaryEmail}
+        getPrimaryPhone={getPrimaryPhone}
       />
     );
 
@@ -57,22 +71,21 @@ describe('ContactsTable', () => {
       <ContactsTable
         contacts={mockContacts}
         selectedIds={new Set()}
-        companies={mockCompanies}
         tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={onSelect}
         onView={jest.fn()}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        getPrimaryEmail={getPrimaryEmail}
+        getPrimaryPhone={getPrimaryPhone}
       />
     );
 
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]); // First contact checkbox
 
-    expect(onSelect).toHaveBeenCalled();
-    const calledWith = onSelect.mock.calls[0][0];
-    expect(calledWith).toBeInstanceOf(Set);
-    expect(calledWith.has('1')).toBe(true);
+    expect(onSelect).toHaveBeenCalledWith('1', true);
   });
 
   it('calls onView when view button is clicked', () => {
@@ -81,12 +94,14 @@ describe('ContactsTable', () => {
       <ContactsTable
         contacts={mockContacts}
         selectedIds={new Set()}
-        companies={mockCompanies}
         tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={jest.fn()}
         onView={onView}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        getPrimaryEmail={getPrimaryEmail}
+        getPrimaryPhone={getPrimaryPhone}
       />
     );
 

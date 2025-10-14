@@ -3,10 +3,55 @@
  */
 
 // Mock Firebase modules bevor sie importiert werden
-jest.mock('firebase/app', () => require('./__mocks__/firebase/app'));
-jest.mock('firebase/firestore', () => require('./__mocks__/firebase/firestore'));
-jest.mock('firebase/storage', () => require('./__mocks__/firebase/storage'));
-jest.mock('@/lib/firebase/config', () => require('./__mocks__/firebase/config'));
+// Note: Inline implementation to avoid circular dependency with require()
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+  getApps: jest.fn(() => []),
+  getApp: jest.fn()
+}));
+
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(() => ({})),
+  collection: jest.fn(),
+  doc: jest.fn(),
+  getDoc: jest.fn(),
+  getDocs: jest.fn(),
+  addDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  setDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  limit: jest.fn(),
+  onSnapshot: jest.fn(),
+  serverTimestamp: jest.fn(),
+  Timestamp: {
+    now: jest.fn(),
+    fromDate: jest.fn()
+  },
+  FieldValue: {
+    serverTimestamp: jest.fn(),
+    arrayUnion: jest.fn(),
+    arrayRemove: jest.fn(),
+    increment: jest.fn(),
+    delete: jest.fn()
+  }
+}));
+
+jest.mock('firebase/storage', () => ({
+  getStorage: jest.fn(),
+  ref: jest.fn(),
+  uploadBytes: jest.fn(),
+  getDownloadURL: jest.fn(),
+  deleteObject: jest.fn()
+}));
+
+jest.mock('@/lib/firebase/config', () => ({
+  db: {},
+  storage: {},
+  app: {}
+}));
 
 // Mock Firebase Auth (falls benötigt)
 jest.mock('firebase/auth', () => ({

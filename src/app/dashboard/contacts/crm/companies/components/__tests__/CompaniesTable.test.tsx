@@ -29,21 +29,30 @@ const mockCompanies: CompanyEnhanced[] = [
   },
 ];
 
-const mockTags: Tag[] = [];
-const mockContacts: any[] = [];
+const mockTags: Tag[] = [
+  { id: 'tag-1', name: 'VIP', color: 'red', organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1', updatedBy: 'user-1' },
+];
+
+// Mock functions for required props
+const mockGetContactCount = jest.fn((companyId: string) => 0);
+const mockGetCountryName = jest.fn((countryCode?: string) => countryCode || '');
 
 describe('CompaniesTable', () => {
   it('renders companies correctly', () => {
+    const tagsMap = new Map(mockTags.map(tag => [tag.id!, tag]));
+
     render(
       <CompaniesTable
         companies={mockCompanies}
         selectedIds={new Set()}
-        contacts={mockContacts}
-        tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={jest.fn()}
         onView={jest.fn()}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        tagsMap={tagsMap}
+        getContactCount={mockGetContactCount}
+        getCountryName={mockGetCountryName}
       />
     );
 
@@ -53,40 +62,45 @@ describe('CompaniesTable', () => {
 
   it('handles row selection', () => {
     const onSelect = jest.fn();
+    const tagsMap = new Map(mockTags.map(tag => [tag.id!, tag]));
+
     render(
       <CompaniesTable
         companies={mockCompanies}
         selectedIds={new Set()}
-        contacts={mockContacts}
-        tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={onSelect}
         onView={jest.fn()}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        tagsMap={tagsMap}
+        getContactCount={mockGetContactCount}
+        getCountryName={mockGetCountryName}
       />
     );
 
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]); // First company checkbox (index 0 is "select all")
 
-    expect(onSelect).toHaveBeenCalled();
-    const calledWith = onSelect.mock.calls[0][0];
-    expect(calledWith).toBeInstanceOf(Set);
-    expect(calledWith.has('1')).toBe(true);
+    expect(onSelect).toHaveBeenCalledWith('1', true);
   });
 
   it('calls onView when view button is clicked', () => {
     const onView = jest.fn();
+    const tagsMap = new Map(mockTags.map(tag => [tag.id!, tag]));
+
     render(
       <CompaniesTable
         companies={mockCompanies}
         selectedIds={new Set()}
-        contacts={mockContacts}
-        tags={mockTags}
+        onSelectAll={jest.fn()}
         onSelect={jest.fn()}
         onView={onView}
         onEdit={jest.fn()}
         onDelete={jest.fn()}
+        tagsMap={tagsMap}
+        getContactCount={mockGetContactCount}
+        getCountryName={mockGetCountryName}
       />
     );
 
