@@ -106,7 +106,8 @@
       "Bash(powershell:*)",
       "Bash(tree:*)",
       "Bash(if not exist \"src\\app\\dashboard\\contacts\\crm.backup\" xcopy \"src\\app\\dashboard\\contacts\\crm\" \"src\\app\\dashboard\\contacts\\crm.backup\" /E /I /H /Y)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

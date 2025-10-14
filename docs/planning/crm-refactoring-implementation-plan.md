@@ -1,6 +1,6 @@
 # CRM-Refactoring: Detaillierter Implementierungsplan
 
-**Projekt:** SKAMP CRM Production-Ready Refactoring
+**Projekt:** CeleroPress CRM Production-Ready Refactoring
 **Datum:** 2025-10-13
 **Geschätzter Aufwand:** 3-5 Tage (bei 6-8h/Tag)
 **Basiert auf:** [crm-refactoring-analysis.md](./crm-refactoring-analysis.md)
