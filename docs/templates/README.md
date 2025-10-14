@@ -15,11 +15,12 @@ Dieses Verzeichnis enthält bewährte Templates und Vorlagen für verschiedene E
 ### 1. Modul-Refactoring Template
 
 **Datei:** `module-refactoring-template.md`
-**Umfang:** ~500 Zeilen, detailliert
+**Umfang:** ~2,300 Zeilen, detailliert
 **Verwendung:** Vollständiges Refactoring eines React-Moduls
 
 **Beinhaltet:**
-- 6-Phasen-Struktur (Setup → React Query → Modularisierung → Performance → Testing → Code Quality)
+- 7-Phasen-Struktur (Setup → Cleanup → React Query → Modularisierung → Performance → Testing → Dokumentation → Code Quality)
+- Phase 0.5 "Pre-Refactoring Cleanup" ⭐ NEU
 - Detaillierte Schritt-für-Schritt-Anleitung
 - Code-Templates für Hooks, Komponenten, Tests
 - Dokumentations-Templates
@@ -32,19 +33,26 @@ Dieses Verzeichnis enthält bewährte Templates und Vorlagen für verschiedene E
 - Neue Module nach Best Practices aufsetzen
 - React Query Integration
 - Performance-Optimierung
+- Toter Code entfernen (Phase 0.5)
 
 **Geschätzter Aufwand:** 2-4 Tage
+
+**Was ist neu in v1.1?**
+- Phase 0.5 "Pre-Refactoring Cleanup" hinzugefügt
+- Toter Code wird BEVOR dem Refactoring entfernt
+- Verhindert, dass alter Code modularisiert wird
+- Basiert auf Learnings aus Editors-Refactoring
 
 ---
 
 ### 2. Quick Reference
 
 **Datei:** `QUICK_REFERENCE.md`
-**Umfang:** ~200 Zeilen, kompakt
+**Umfang:** ~530 Zeilen, kompakt
 **Verwendung:** Schnellzugriff während der Entwicklung
 
 **Beinhaltet:**
-- 6 Phasen auf einen Blick
+- 7 Phasen auf einen Blick (inkl. Phase 0.5 Cleanup)
 - Ordnerstruktur-Übersicht
 - Wichtigste Git-Kommandos
 - Test-Kommandos
@@ -132,6 +140,7 @@ cp docs/templates/module-refactoring-template.md docs/[module]/REFACTORING_PLAN.
 
 Folge dem Template Phase für Phase:
 - Phase 0: Setup
+- Phase 0.5: Pre-Refactoring Cleanup ⭐ NEU
 - Phase 1: React Query
 - Phase 2: Modularisierung
 - Phase 3: Performance
@@ -286,12 +295,14 @@ git push origin main
 **⚠️ WICHTIG:** Phasen nicht überspringen!
 
 Die Reihenfolge ist sinnvoll:
-1. **React Query zuerst** - Foundation für alles andere
-2. **Modularisierung** - Basis für Testing & Docs
-3. **Performance** - Optimierung der Struktur
-4. **Testing** - Sicherstellen, dass alles funktioniert
-5. **Dokumentation** - Wissen festhalten
-6. **Code Quality** - Final Polish
+1. **Setup zuerst** - Sicherer Start mit Backups
+2. **Cleanup vor Refactoring** - Toter Code wird nicht modularisiert ⭐
+3. **React Query** - Foundation für alles andere
+4. **Modularisierung** - Basis für Testing & Docs
+5. **Performance** - Optimierung der Struktur
+6. **Testing** - Sicherstellen, dass alles funktioniert
+7. **Dokumentation** - Wissen festhalten
+8. **Code Quality** - Final Polish
 
 Jede Phase baut auf der vorherigen auf!
 
@@ -318,6 +329,7 @@ Templates sollten aktualisiert werden wenn:
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 1.1 | 2025-10-14 | Phase 0.5 "Pre-Refactoring Cleanup" hinzugefügt (aus Editors-Refactoring) |
 | 1.0 | 2025-10-14 | Initial Template basierend auf Listen-Refactoring |
 
 ---

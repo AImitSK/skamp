@@ -4,11 +4,12 @@
 
 ---
 
-## 🎯 Die 6 Phasen (Kurzversion)
+## 🎯 Die 7 Phasen (Kurzversion)
 
 | Phase | Was | Dauer | Output |
 |-------|-----|-------|--------|
 | **0. Setup** | Branch, Backup, Ist-Zustand | 30min | Feature-Branch, Backups |
+| **0.5 Cleanup** ⭐ | TODOs, Console-Logs, toter Code | 1-2h | Saubere Basis, -X Zeilen |
 | **1. React Query** | Custom Hooks, State Management | 4h | 6 Hooks, umgestellte Pages |
 | **2. Modularisierung** | Shared Components, Sections | 4h | 3 Shared, aufgeteilte Modals |
 | **3. Performance** | useCallback, useMemo, Debouncing | 2h | Optimierte Handler |
@@ -110,6 +111,24 @@ npx eslint src/app/dashboard/[module] --fix
 ```bash
 # Phase 0
 git commit -m "chore: Phase 0 - Setup & Backup für [Module]-Refactoring"
+
+# Phase 0.5
+git commit -m "chore: Phase 0.5 - Pre-Refactoring Cleanup
+
+- [X] TODO-Kommentare entfernt
+- ~[Y] Debug-Console-Logs entfernt
+- [Z] Deprecated Functions entfernt
+- [A] Unused State entfernt
+- Kommentierte Code-Blöcke gelöscht
+- Unused imports entfernt via ESLint
+
+[Component].tsx: [X] → [Y] Zeilen (-[Z] Zeilen toter Code)
+
+Saubere Basis für React Query Integration (Phase 1).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
 
 # Phase 1
 git commit -m "feat: Phase 1 - React Query Integration für [Module] abgeschlossen
@@ -434,6 +453,15 @@ console.log('📊 Stats:', stats);      // Development-Logs
 - [ ] Backups angelegt
 - [ ] Ist-Zustand dokumentiert
 
+### Phase 0.5 ⭐
+- [ ] TODO-Kommentare entfernt
+- [ ] Console-Logs entfernt
+- [ ] Deprecated Functions entfernt
+- [ ] Unused State entfernt
+- [ ] Kommentierte Code-Blöcke gelöscht
+- [ ] ESLint Auto-Fix durchgeführt
+- [ ] Manueller Test bestanden
+
 ### Phase 1
 - [ ] 6 Hooks erstellt
 - [ ] page.tsx umgestellt
@@ -462,6 +490,7 @@ console.log('📊 Stats:', stats);      // Development-Logs
 - [ ] Design System compliant
 
 ### Merge
+- [ ] Alle 7 Phasen abgeschlossen
 - [ ] Zu Main gemerged
 - [ ] Tests bestanden
 
@@ -488,9 +517,10 @@ console.log('📊 Stats:', stats);      // Development-Logs
 
 ---
 
-**Version:** 1.0
-**Erstellt:** [Datum]
-**Basiert auf:** Listen-Modul Refactoring
+**Version:** 1.1
+**Erstellt:** Oktober 2025
+**Basiert auf:** Listen-Modul & Editors-Modul Refactoring
+**Letzte Aktualisierung:** Oktober 2025 (Phase 0.5 hinzugefügt)
 
 ---
 

@@ -1,14 +1,15 @@
 # Modul-Refactoring Template
 
-**Version:** 1.0
-**Basiert auf:** Listen-Modul Refactoring (Oktober 2025)
+**Version:** 1.1
+**Basiert auf:** Listen-Modul & Editors-Modul Refactoring (Oktober 2025)
 **Projekt:** CeleroPress
 
 ---
 
 ## 📋 Übersicht
 
-Dieses Template bietet eine bewährte 6-Phasen-Struktur für die Refaktorierung von React-Modulen mit:
+Dieses Template bietet eine bewährte 7-Phasen-Struktur für die Refaktorierung von React-Modulen mit:
+- Pre-Refactoring Cleanup (toter Code) ⭐ NEU
 - React Query Integration
 - Komponenten-Modularisierung
 - Performance-Optimierung
@@ -80,7 +81,7 @@ docs/[module]/
 
 ---
 
-## 🚀 Die 6 Phasen
+## 🚀 Die 7 Phasen
 
 ### Phase 0: Vorbereitung & Setup
 
@@ -136,7 +137,260 @@ docs/[module]/
 - [id]/page.tsx: [Y] Zeilen
 - [Component].tsx: [Z] Zeilen
 
-### Bereit für Phase 1
+### Bereit für Phase 0.5 (Cleanup)
+```
+
+**Commit:**
+```bash
+git add .
+git commit -m "chore: Phase 0 - Setup & Backup für [Module]-Refactoring"
+```
+
+---
+
+### Phase 0.5: Pre-Refactoring Cleanup ⭐
+
+**Ziel:** Toten Code entfernen BEVOR mit Refactoring begonnen wird
+
+**Dauer:** 1-2 Stunden
+
+**Warum wichtig?** Phase 6 (Code Quality) findet NICHT automatisch:
+- Kommentierter Code
+- Deprecated Funktionen
+- TODO-Kommentare
+- Unused State-Variablen (die irgendwo referenziert werden)
+- Ungenutzte Helper-Functions
+
+**→ Cleanup im Vorfeld verhindert, dass toter Code in Phase 2 modularisiert wird!**
+
+#### 0.5.1 TODO-Kommentare finden & entfernen
+
+```bash
+# TODOs finden
+grep -rn "TODO:" src/app/dashboard/[module]
+# oder
+rg "TODO:" src/app/dashboard/[module]
+```
+
+**Aktion:**
+- [ ] Alle TODO-Kommentare durchgehen
+- [ ] Umsetzen oder entfernen (nicht verschieben!)
+- [ ] Zugehörigen Code prüfen (implementieren oder löschen)
+
+#### 0.5.2 Console-Logs finden & entfernen
+
+```bash
+# Debug-Logs finden
+grep -rn "console\." src/app/dashboard/[module]
+# oder
+rg "console\." src/app/dashboard/[module]
+```
+
+**Erlaubt ✅:**
+```typescript
+// Production-relevante Errors in catch-blocks
+catch (error) {
+  console.error('Failed to load data:', error);
+}
+```
+
+**Zu entfernen ❌:**
+```typescript
+// Debug-Logs
+console.log('data:', data);
+console.log('🔍 Loading...');
+console.log('📊 Stats:', stats);
+```
+
+**Aktion:**
+- [ ] Alle console.log() statements entfernen
+- [ ] Nur console.error() in catch-blocks behalten
+- [ ] Console.warn() prüfen (nur bei wichtigen Deprecations behalten)
+
+#### 0.5.3 Deprecated Functions finden & entfernen
+
+**Anzeichen für deprecated Functions:**
+- Mock-Implementations (`setTimeout(resolve, 2000)`)
+- Kommentare wie "old", "deprecated", "unused"
+- Functions die nur noch an einer Stelle aufgerufen werden
+- Functions mit leeren Implementations
+
+**Beispiel:**
+```typescript
+// ❌ Deprecated Function
+const handleOldWay = async () => {
+  // Mock
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  showAlert('success', 'Done');
+};
+```
+
+**Aktion:**
+- [ ] Code auf "deprecated", "old", "legacy" durchsuchen
+- [ ] Mock-Implementations identifizieren
+- [ ] Functions entfernen + alle Aufrufe
+- [ ] Zugehörige State-Variablen auch entfernen
+
+#### 0.5.4 Unused State entfernen
+
+```bash
+# State-Deklarationen finden
+grep -n "useState" src/app/dashboard/[module]/page.tsx
+```
+
+**Prüfen:**
+- Wird die State-Variable wirklich verwendet?
+- Wird sie nur gesetzt, aber nie gelesen?
+- Ist der Handler/Callback der einzige Nutzer?
+
+**Beispiel:**
+```typescript
+// ❌ Unused State
+const [oldData, setOldData] = useState(null);
+// → Wird nirgends verwendet
+
+// ❌ Nur in deprecated Function verwendet
+const [tempSelection, setTempSelection] = useState(null);
+// → Nur in handleOldWay() verwendet, die entfernt wird
+```
+
+**Aktion:**
+- [ ] Alle useState-Deklarationen durchgehen
+- [ ] Unused States identifizieren
+- [ ] States + Setter entfernen
+- [ ] Prüfen ob Types auch entfernt werden können
+
+#### 0.5.5 Kommentierte Code-Blöcke entfernen
+
+```bash
+# Kommentierte Zeilen finden
+grep -n "^[[:space:]]*//" src/app/dashboard/[module]/page.tsx | wc -l
+```
+
+**Typen von kommentiertem Code:**
+```typescript
+// ❌ Alter Code (auskommentiert, aber nicht gelöscht)
+// const oldFunction = () => {
+//   // ...
+// };
+
+// ❌ Auskommentierte Features
+// {/* Verification Status */}
+// {someCondition && (
+//   <div>...</div>
+// )}
+```
+
+**Entscheidung treffen:**
+- **Option A:** Feature ist "not available" / deprecated → Alles löschen
+- **Option B:** Feature soll implementiert werden → TODO erstellen, Code aktivieren
+
+**Empfehlung:** Option A (entfernen). Wenn Git-History vorhanden, können gelöschte Zeilen jederzeit wiederhergestellt werden.
+
+**Aktion:**
+- [ ] Auskommentierte Code-Blöcke identifizieren
+- [ ] Entscheidung: Implementieren oder entfernen?
+- [ ] Code-Blöcke vollständig löschen
+- [ ] Zugehörige imports/types auch entfernen
+
+#### 0.5.6 ESLint Auto-Fix
+
+```bash
+# Unused imports/variables automatisch entfernen
+npx eslint src/app/dashboard/[module] --fix
+
+# Prüfen was behoben wurde
+npx eslint src/app/dashboard/[module]
+```
+
+**Aktion:**
+- [ ] ESLint mit --fix ausführen
+- [ ] Diff prüfen (git diff)
+- [ ] Manuelle Fixes für verbleibende Warnings
+
+#### 0.5.7 Manueller Test
+
+**WICHTIG:** Nach dem Cleanup muss der Code noch funktionieren!
+
+```bash
+# Development-Server starten
+npm run dev
+
+# Modul manuell testen
+# - Liste laden
+# - Details öffnen
+# - Create/Update/Delete
+```
+
+**Aktion:**
+- [ ] Dev-Server starten
+- [ ] Modul aufrufen
+- [ ] Basis-Funktionen testen
+- [ ] Keine Console-Errors
+
+#### Checkliste Phase 0.5
+
+- [ ] TODO-Kommentare entfernt oder umgesetzt
+- [ ] Debug-Console-Logs entfernt (~X Logs)
+- [ ] Deprecated Functions entfernt
+- [ ] Unused State-Variablen entfernt
+- [ ] Kommentierte Code-Blöcke gelöscht
+- [ ] ESLint Auto-Fix durchgeführt
+- [ ] Unused imports entfernt
+- [ ] Manueller Test durchgeführt
+- [ ] Code funktioniert noch
+
+#### Deliverable
+
+```markdown
+## Phase 0.5: Pre-Refactoring Cleanup ✅
+
+### Entfernt
+- [X] TODO-Kommentare
+- ~[Y] Debug-Console-Logs
+- [Z] Deprecated Functions
+- [A] Unused State-Variablen
+- [B] Kommentierte Code-Blöcke
+- Unused imports (via ESLint)
+
+### Ergebnis
+- Datei(en): [X] → [Y] Zeilen (-[Z] Zeilen toter Code)
+- Saubere Basis für Phase 1 (React Query Integration)
+- Kein toter Code wird modularisiert
+
+### Warum wichtig?
+Phase 6 hätte diese Probleme NICHT gefunden:
+- ESLint findet keinen kommentierten Code
+- TypeScript findet keine deprecated Functions (wenn sie irgendwo referenziert werden)
+- TODO-Kommentare würden bleiben
+- Toter Code würde in Phase 2 modularisiert → Verschwendung
+
+### Manueller Test
+- ✅ Liste lädt
+- ✅ Details funktionieren
+- ✅ Create/Update/Delete funktioniert
+- ✅ Keine Console-Errors
+```
+
+**Commit:**
+```bash
+git add .
+git commit -m "chore: Phase 0.5 - Pre-Refactoring Cleanup
+
+- [X] TODO-Kommentare entfernt
+- ~[Y] Debug-Console-Logs entfernt
+- [Z] Deprecated Functions entfernt
+- [A] Unused State entfernt
+- Kommentierte Code-Blöcke gelöscht
+- Unused imports entfernt via ESLint
+
+[Component].tsx: [X] → [Y] Zeilen (-[Z] Zeilen toter Code)
+
+Saubere Basis für React Query Integration (Phase 1).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -1497,7 +1751,7 @@ npm test -- [module]
 
 ### Checkliste Merge
 
-- [ ] Alle 6 Phasen abgeschlossen
+- [ ] Alle 7 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup)
 - [ ] Alle Tests bestehen
 - [ ] Dokumentation vollständig
 - [ ] Feature-Branch gepushed
@@ -1512,7 +1766,7 @@ npm test -- [module]
 ## ✅ [Module]-Refactoring erfolgreich abgeschlossen!
 
 ### Status
-- **Alle 6 Phasen:** Abgeschlossen
+- **Alle 7 Phasen:** Abgeschlossen (inkl. Pre-Refactoring Cleanup)
 - **Tests:** [X]/[X] bestanden
 - **Coverage:** [X]%
 - **Dokumentation:** [Y] Zeilen
@@ -1901,12 +2155,24 @@ function MyComponent({
 
 ## 📝 Checkliste: Gesamtes Refactoring
 
-### Vorbereitung
+### Vorbereitung (Phase 0)
 
 - [ ] Feature-Branch erstellt
 - [ ] Backups angelegt
 - [ ] Ist-Zustand dokumentiert
 - [ ] Dependencies geprüft
+
+### Phase 0.5: Pre-Refactoring Cleanup ⭐ NEU
+
+- [ ] TODO-Kommentare entfernt oder umgesetzt
+- [ ] Debug-Console-Logs entfernt
+- [ ] Deprecated Functions entfernt
+- [ ] Unused State-Variablen entfernt
+- [ ] Kommentierte Code-Blöcke gelöscht
+- [ ] ESLint Auto-Fix durchgeführt
+- [ ] Unused imports entfernt
+- [ ] Manueller Test durchgeführt
+- [ ] Code funktioniert noch
 
 ### Phase 1: React Query
 
@@ -2064,9 +2330,14 @@ function useWhyDidYouUpdate(name: string, props: any) {
 
 ---
 
-**Version:** 1.0
-**Basiert auf:** Listen-Modul Refactoring (erfolgreich abgeschlossen am [Datum])
-**Template erstellt:** [Datum]
+**Version:** 1.1
+**Basiert auf:** Listen-Modul & Editors-Modul Refactoring (Oktober 2025)
+**Template erstellt:** Oktober 2025
+**Letzte Aktualisierung:** Oktober 2025 (Phase 0.5 hinzugefügt)
+
+**Changelog:**
+- **v1.1:** Phase 0.5 "Pre-Refactoring Cleanup" hinzugefügt (aus Editors-Refactoring gelernt)
+- **v1.0:** Initial Template basierend auf Listen-Modul Refactoring
 
 ---
 
