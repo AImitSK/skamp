@@ -10,6 +10,8 @@ import { listsService } from "@/lib/firebase/lists-service";
 import { tagsService } from "@/lib/firebase/crm-service";
 import { publicationService } from "@/lib/firebase/library-service";
 import { DistributionList } from "@/types/lists";
+import { useList, useUpdateList } from '@/lib/hooks/useListsData';
+import { useQueryClient } from '@tanstack/react-query';
 import { Contact, ContactEnhanced, companyTypeLabels, Tag } from "@/types/crm-enhanced";
 import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from "@/types/library";
 import { COUNTRY_NAMES, LANGUAGE_NAMES } from "@/types/international";
@@ -160,14 +162,16 @@ export default function ListDetailPage() {
   const params = useParams();
   const router = useRouter();
   const listId = params.listId as string;
+  const queryClient = useQueryClient();
 
-  const [list, setList] = useState<DistributionList | null>(null);
+  // React Query hooks
+  const { data: list, isLoading, error: queryError } = useList(listId);
+  const { mutate: updateListMutation } = useUpdateList();
+
   const [contactsInList, setContactsInList] = useState<(Contact | ContactEnhanced)[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
 
@@ -185,45 +189,40 @@ export default function ListDetailPage() {
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
-  const loadData = useCallback(async () => {
-    if (!user || !listId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [listData, userTags, allPublications] = await Promise.all([
-        listsService.getById(listId),
-        tagsService.getAll(currentOrganization?.id || user.uid, user.uid),
-        publicationService.getAll(currentOrganization?.id || user.uid)
-      ]);
+  // Lade zusätzliche Daten (Tags, Publications, Contacts)
+  useEffect(() => {
+    const loadAdditionalData = async () => {
+      if (!user || !list) return;
 
-      if (listData) {
-        setList(listData);
+      try {
+        const [userTags, allPublications] = await Promise.all([
+          tagsService.getAll(currentOrganization?.id || user.uid),
+          publicationService.getAll(currentOrganization?.id || user.uid)
+        ]);
+
         setTags(userTags);
         setPublications(allPublications);
-        const contactsData = await listsService.getContacts(listData);
+
+        const contactsData = await listsService.getContacts(list);
         setContactsInList(contactsData);
-      } else {
-        setError("Liste nicht gefunden.");
+      } catch (err: any) {
+        console.error('Fehler beim Laden zusätzlicher Daten:', err);
       }
-    } catch (err: any) {
-      setError("Fehler beim Laden der Listendetails.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user, listId, currentOrganization]);
-  
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    };
+
+    loadAdditionalData();
+  }, [user, list, currentOrganization]);
 
   const handleRefreshList = async () => {
     if (!list || list.type !== 'dynamic') return;
-    
+
     setRefreshing(true);
     try {
       await listsService.refreshDynamicList(list.id!);
       showAlert('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
-      await loadData();
+      // Invalidiere die Listen-Queries um aktualisierte Daten zu laden
+      queryClient.invalidateQueries({ queryKey: ['list', list.id] });
+      queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
       showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
     } finally {
@@ -232,15 +231,24 @@ export default function ListDetailPage() {
   };
 
   const handleSave = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
-    if(!list?.id) return;
-    try {
-      await listsService.update(list.id, listData);
-      showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
-      setShowEditModal(false);
-      await loadData();
-    } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
-    }
+    if (!list?.id || !currentOrganization?.id) return;
+
+    updateListMutation(
+      {
+        listId: list.id,
+        updates: listData,
+        organizationId: currentOrganization.id,
+      },
+      {
+        onSuccess: () => {
+          showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
+          setShowEditModal(false);
+        },
+        onError: () => {
+          showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+        },
+      }
+    );
   };
 
   const getCategoryLabel = (category?: string) => {
@@ -446,7 +454,7 @@ export default function ListDetailPage() {
     return labelMap[key] || key;
   };
   
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -457,10 +465,10 @@ export default function ListDetailPage() {
     );
   }
 
-  if (error) {
+  if (queryError) {
     return (
       <div className="p-8">
-        <Alert type="error" title="Fehler" message={error} />
+        <Alert type="error" title="Fehler" message="Fehler beim Laden der Listendetails." />
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/contacts/lists')}

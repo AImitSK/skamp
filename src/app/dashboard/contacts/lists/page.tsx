@@ -33,6 +33,8 @@ import { DistributionList, ListMetrics } from "@/types/lists";
 import ListModal from "./ListModal";
 import Papa from 'papaparse';
 import clsx from 'clsx';
+import { useLists, useCreateList, useUpdateList, useDeleteList, useBulkDeleteLists } from '@/lib/hooks/useListsData';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Alert Component
 function Alert({ 
@@ -93,9 +95,16 @@ function Alert({
 export default function ListsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-  const [lists, setLists] = useState<DistributionList[]>([]);
+  const queryClient = useQueryClient();
+
+  // React Query hooks statt useEffect
+  const { data: lists = [], isLoading } = useLists(currentOrganization?.id);
+  const { mutate: createList } = useCreateList();
+  const { mutate: updateList } = useUpdateList();
+  const { mutate: deleteList } = useDeleteList();
+  const { mutate: bulkDeleteLists } = useBulkDeleteLists();
+
   const [metrics, setMetrics] = useState<Map<string, ListMetrics>>(new Map());
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -123,21 +132,13 @@ export default function ListsPage() {
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
+  // Metrics laden wenn Listen sich ändern
   useEffect(() => {
-    if (user && currentOrganization?.id) {
-      loadData();
-    }
-  }, [user, currentOrganization?.id]);
-
-  const loadData = async () => {
-    if (!user || !currentOrganization?.id) return;
-    setLoading(true);
-    try {
-      const listsData = await listsService.getAll(currentOrganization.id);
-      setLists(listsData);
+    const loadMetrics = async () => {
+      if (!lists || lists.length === 0) return;
 
       const metricsMap = new Map<string, ListMetrics>();
-      for (const list of listsData) {
+      for (const list of lists) {
         if (list.id) {
           const listMetrics = await listsService.getListMetrics(list.id);
           if (listMetrics) {
@@ -146,91 +147,125 @@ export default function ListsPage() {
         }
       }
       setMetrics(metricsMap);
-    } catch (error) {
-      showAlert('error', 'Fehler beim Laden', 'Die Listen konnten nicht geladen werden.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadMetrics();
+  }, [lists]);
 
   const handleCreateList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      await listsService.create(listData);
-      showAlert('success', 'Liste erstellt', 'Die Liste wurde erfolgreich erstellt.');
-      await loadData();
-      setShowCreateModal(false);
-    } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht erstellt werden.');
-    }
+    if (!currentOrganization?.id || !user) return;
+
+    createList(
+      {
+        listData,
+        organizationId: currentOrganization.id,
+        userId: user.uid,
+      },
+      {
+        onSuccess: () => {
+          showAlert('success', 'Liste erstellt', 'Die Liste wurde erfolgreich erstellt.');
+          setShowCreateModal(false);
+        },
+        onError: () => {
+          showAlert('error', 'Fehler', 'Die Liste konnte nicht erstellt werden.');
+        },
+      }
+    );
   };
 
   const handleEditList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
-    if (!editingList?.id) return;
-    try {
-      await listsService.update(editingList.id, listData);
-      showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
-      await loadData();
-      setEditingList(null);
-    } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
-    }
+    if (!editingList?.id || !currentOrganization?.id) return;
+
+    updateList(
+      {
+        listId: editingList.id,
+        updates: listData,
+        organizationId: currentOrganization.id,
+      },
+      {
+        onSuccess: () => {
+          showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
+          setEditingList(null);
+        },
+        onError: () => {
+          showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+        },
+      }
+    );
   };
 
   const handleDeleteList = async (listId: string, listName: string) => {
+    if (!currentOrganization?.id) return;
+
     setConfirmDialog({
       isOpen: true,
       title: 'Liste löschen',
       message: `Möchten Sie die Liste "${listName}" wirklich unwiderruflich löschen?`,
       type: 'danger',
-      onConfirm: async () => {
-        try {
-          await listsService.delete(listId);
-          showAlert('success', 'Liste gelöscht', `"${listName}" wurde erfolgreich gelöscht.`);
-          await loadData();
-        } catch (error) {
-          showAlert('error', 'Fehler beim Löschen', 'Die Liste konnte nicht gelöscht werden.');
-        }
+      onConfirm: () => {
+        deleteList(
+          {
+            listId,
+            organizationId: currentOrganization.id,
+          },
+          {
+            onSuccess: () => {
+              showAlert('success', 'Liste gelöscht', `"${listName}" wurde erfolgreich gelöscht.`);
+            },
+            onError: () => {
+              showAlert('error', 'Fehler beim Löschen', 'Die Liste konnte nicht gelöscht werden.');
+            },
+          }
+        );
       }
     });
   };
 
   const handleBulkDelete = async () => {
     const count = selectedListIds.size;
-    if (count === 0) return;
-    
+    if (count === 0 || !currentOrganization?.id) return;
+
     setConfirmDialog({
       isOpen: true,
       title: `${count} Listen löschen`,
       message: `Möchten Sie wirklich ${count} Listen unwiderruflich löschen?`,
       type: 'danger',
-      onConfirm: async () => {
-        try {
-          await Promise.all(Array.from(selectedListIds).map(id => 
-            listsService.delete(id)
-          ));
-          showAlert('success', `${count} Listen gelöscht`);
-          await loadData();
-          setSelectedListIds(new Set());
-        } catch (error) {
-          showAlert('error', 'Fehler beim Löschen');
-        }
+      onConfirm: () => {
+        bulkDeleteLists(
+          {
+            listIds: Array.from(selectedListIds),
+            organizationId: currentOrganization.id,
+          },
+          {
+            onSuccess: () => {
+              showAlert('success', `${count} Listen gelöscht`);
+              setSelectedListIds(new Set());
+            },
+            onError: () => {
+              showAlert('error', 'Fehler beim Löschen');
+            },
+          }
+        );
       }
     });
   };
 
   const handleRefreshList = async (listId: string) => {
+    if (!currentOrganization?.id) return;
+
     try {
       await listsService.refreshDynamicList(listId);
       showAlert('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
-      await loadData();
+      // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
+      queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
     } catch (error) {
       showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
     }
   };
 
   const handleRefreshAllLists = async () => {
-    if (!user) return;
-    
+    if (!user || !currentOrganization?.id) return;
+
     setConfirmDialog({
       isOpen: true,
       title: 'Alle Listen aktualisieren',
@@ -239,9 +274,10 @@ export default function ListsPage() {
       onConfirm: async () => {
         try {
           showAlert('info', 'Aktualisierung gestartet', 'Alle dynamischen Listen werden neu berechnet...');
-          await listsService.refreshAllDynamicLists(currentOrganization?.id || user.uid);
+          await listsService.refreshAllDynamicLists(currentOrganization.id);
           showAlert('success', 'Aktualisierung abgeschlossen', 'Alle dynamischen Listen wurden erfolgreich aktualisiert.');
-          await loadData();
+          // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
+          queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
         } catch (error) {
           showAlert('error', 'Fehler', 'Die Listen konnten nicht aktualisiert werden.');
         }
@@ -348,7 +384,7 @@ export default function ListsPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
