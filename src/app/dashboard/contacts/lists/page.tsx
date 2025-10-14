@@ -9,7 +9,6 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -22,8 +21,6 @@ import {
   TrashIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon
@@ -35,62 +32,8 @@ import Papa from 'papaparse';
 import clsx from 'clsx';
 import { useLists, useCreateList, useUpdateList, useDeleteList, useBulkDeleteLists } from '@/lib/hooks/useListsData';
 import { useQueryClient } from '@tanstack/react-query';
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    success: InformationCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: ExclamationTriangleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Alert } from './components/shared/Alert';
+import { ConfirmDialog } from './components/shared/ConfirmDialog';
 
 export default function ListsPage() {
   const { user } = useAuth();
@@ -880,47 +823,17 @@ export default function ListsPage() {
       )}
 
       {/* Confirm Dialog */}
-      <Dialog
-        open={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-      >
-        <div className="p-6">
-          <div className="sm:flex sm:items-start">
-            <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
-              confirmDialog.type === 'danger' ? 'bg-red-100' : 'bg-yellow-100'
-            }`}>
-              <ExclamationTriangleIcon className={`h-6 w-6 ${
-                confirmDialog.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
-              }`} />
-            </div>
-            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-              <DialogTitle>{confirmDialog.title}</DialogTitle>
-              <DialogBody className="mt-2">
-                <Text>{confirmDialog.message}</Text>
-              </DialogBody>
-            </div>
-          </div>
-          <DialogActions className="mt-5 sm:mt-4">
-            <Button
-              plain
-              onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-              className="whitespace-nowrap"
-            >
-              Abbrechen
-            </Button>
-            <Button
-              color={confirmDialog.type === 'danger' ? 'zinc' : 'zinc'}
-              onClick={() => {
-                confirmDialog.onConfirm();
-                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-              }}
-              className={confirmDialog.type === 'danger' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
-            >
-              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
-            </Button>
-          </DialogActions>
-        </div>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
