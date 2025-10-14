@@ -9,19 +9,17 @@
 - Tests ausführen: `npm test`
 - Test-Coverage: `npm run test:coverage` 
 - Linter: `npm run lint`
-- TypeScript-Check: `npm run typecheck`
+- TypeScript-Check: `npm run type-check`
 
 ## Entwicklungsrichtlinien
-- CeleroPress Design System v2.0 verwenden
+- CeleroPress Design System docs/design-system/DESIGN_SYSTEM.md
 - Heroicons: Nur /24/outline Icons verwenden
-- Keine Shadow-Effekte (Design Pattern)
 - Console-Statements vor Commits entfernen
 - Multi-Tenancy-Architektur mit organizationId
 
 ## Git Workflow
 - Feature-Branches verwenden
 - Deutsche Commit-Messages
-- Tests vor dem Push ausführen
 - Pull Requests für größere Features
 
 ## Codebase-Struktur
@@ -31,10 +29,9 @@
 - Jest + React Testing Library für Tests
 
 ## Wichtige Dateien
-- `/docs/DESIGN_PATTERNS.md` - UI/UX Patterns
-- `/docs/features/` - Feature-Dokumentationen
 - `/src/types/` - TypeScript-Typen
 - `/src/lib/firebase/` - Firebase Services
+- `/docs/` - Docomentation
 
 ## Kommunikationsrichtlinien
 - **WICHTIG: Fragen sind Fragen, keine Handlungsaufforderungen**
@@ -42,6 +39,4 @@
 - Keine automatischen Aktionen bei Fragen - erst nach expliziter Aufforderung handeln
 - Immer erst Design und Ansatz diskutieren, bevor mit Implementierung begonnen wird
 
-## Aktueller Status
-- Media Library Feature: Vollständig implementiert und getestet
-- Tests aktuell in Bearbeitung - Funktionsnamen anpassen
+
