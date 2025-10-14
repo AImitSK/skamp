@@ -118,7 +118,7 @@ docs/editors/
 
 ---
 
-## 🚀 Die 6 Phasen
+## 🚀 Die 7 Phasen
 
 ### Phase 0: Vorbereitung & Setup
 
@@ -173,6 +173,232 @@ docs/editors/
 ```bash
 git add .
 git commit -m "chore: Phase 0 - Setup & Backup für Editors-Refactoring"
+```
+
+---
+
+### Phase 0.5: Pre-Refactoring Cleanup
+
+**Dauer:** 1-2 Stunden
+
+**Warum wichtig?** Phase 6 findet NICHT automatisch:
+- Kommentierter Code
+- Deprecated Funktionen
+- Unused State-Variablen (die irgendwo referenziert werden)
+- Ungenutzte Helper-Functions
+- TODO-Kommentare
+
+**→ Vorfeld-Bereinigung spart Zeit und verhindert, dass toter Code modularisiert wird!**
+
+#### 0.5.1 TODO-Kommentare entfernen
+
+**Gefundene TODOs:**
+
+```typescript
+// Zeile 663
+// TODO: Remove verification status filter - not available for contacts
+const handleVerificationFilterChange = (value: VerificationStatus | 'all') => {
+  // ...
+};
+
+// Zeile 1055
+// TODO: Remove totalFollowers - not captured in CRM
+```
+
+**Aktion:**
+- [ ] TODO bei Zeile 663 + zugehörigen Code entfernen
+- [ ] TODO bei Zeile 1055 entfernen
+- [ ] Prüfen ob `selectedVerificationStatus` State (Zeile 337) noch gebraucht wird
+
+#### 0.5.2 Console-Logs entfernen (frühzeitig)
+
+**Gefundene Debug-Logs:**
+
+```typescript
+// Zeilen 409-428: Umfangreiches Debug-Logging
+console.log('🔍 Loading global journalists from CRM...');
+console.log('📊 Global journalists found:', globalJournalists.length);
+console.log('📊 Sample journalist:', globalJournalists[0]);
+
+// Zeile 452
+console.log('🔍 Globale Companies mit isGlobal flag:', globalCompaniesWithFlag.length);
+
+// Zeile 476
+console.log('📊 Companies loaded:', companies.length);
+
+// Zeile 488
+console.log('🔍 Suche Company für Kontakt:', contact.displayName);
+
+// Zeile 496
+console.log('✅ Company gefunden:', matchedCompany.name);
+
+// Zeile 500
+console.log('⚠️ Keine Company gefunden für:', contact.displayName);
+
+// Zeile 517
+console.log('📊 Publications loaded:', publications.length);
+
+// Zeile 565
+console.log('✅ loadData completed');
+```
+
+**Aktion:**
+- [ ] Alle ~10 Debug-Logs entfernen (Zeilen 409-428, 452, 476, 488, 496, 500, 517, 565)
+- [ ] Nur production-relevante console.error in catch-blocks behalten
+
+#### 0.5.3 Deprecated Functions entfernen
+
+**Gefundene deprecated Functions:**
+
+```typescript
+// Zeilen 807-826: handleConfirmImport - Mock-Implementierung
+const handleConfirmImport = async () => {
+  if (!selectedJournalist) return;
+
+  setImporting(true);
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Mock
+    setImporting(false);
+    setShowImportConfirmation(false);
+    showAlert('success', 'Journalist importiert', 'Der Journalist wurde erfolgreich importiert.');
+    void loadData();
+  } catch (error) {
+    setImporting(false);
+    showAlert('error', 'Import fehlgeschlagen', 'Der Import konnte nicht durchgeführt werden.');
+  }
+};
+```
+
+**Aktion:**
+- [ ] `handleConfirmImport` Funktion entfernen (Zeilen 807-826)
+- [ ] Prüfen ob `setShowImportConfirmation` State noch verwendet wird
+- [ ] Falls nicht → State auch entfernen
+
+#### 0.5.4 Unused State entfernen
+
+**Gefundene unused States:**
+
+```typescript
+// Zeile 342: selectedJournalist
+const [selectedJournalist, setSelectedJournalist] = useState<JournalistDatabaseEntry | null>(null);
+// → Wird nur in handleConfirmImport (deprecated) verwendet
+
+// Zeile 337: selectedVerificationStatus (teilweise ungenutzt)
+const [selectedVerificationStatus, setSelectedVerificationStatus] = useState<VerificationStatus[]>([]);
+// → Filter-Code ist auskommentiert (Zeile 663-668)
+```
+
+**Aktion:**
+- [ ] `selectedJournalist` State entfernen (Zeile 342)
+- [ ] `selectedVerificationStatus` State prüfen:
+  - Falls Filter-Code (Zeile 663-668) implementiert werden soll → behalten
+  - Falls Filter entfernt wird → State auch entfernen
+
+#### 0.5.5 Kommentierte Code-Blöcke entfernen
+
+**Gefundene kommentierte Code-Blöcke:**
+
+```typescript
+// Zeilen 663-668: Verification Status Filter (auskommentiert)
+// const handleVerificationFilterChange = (value: VerificationStatus | 'all') => {
+//   if (value === 'all') {
+//     setSelectedVerificationStatus([]);
+//   } else {
+//     // ...
+//   }
+// };
+
+// Zeilen 1518-1533: Verification Section im Detail-Modal (auskommentiert)
+// {/* Verification Status (falls verfügbar) */}
+// {journalist.verificationStatus && (
+//   <div>
+//     ...
+//   </div>
+// )}
+```
+
+**Aktion:**
+- [ ] Entscheidung treffen: Verification-Feature implementieren oder entfernen?
+  - **Option A:** Feature entfernen → Alle 3 Blöcke löschen (Zeilen 337, 663-668, 1518-1533)
+  - **Option B:** Feature behalten → Kommentare entfernen, Code aktivieren
+
+**Empfehlung:** Option A (entfernen), da TODO explizit sagt "not available for contacts"
+
+#### 0.5.6 Import-Cleanup
+
+**Nach dem Code-Cleanup prüfen:**
+
+```bash
+# Unused imports finden
+npx eslint src/app/dashboard/library/editors/page.tsx --quiet
+
+# Auto-Fix für unused imports
+npx eslint src/app/dashboard/library/editors/page.tsx --fix
+```
+
+**Aktion:**
+- [ ] ESLint auf page.tsx ausführen
+- [ ] Unused imports entfernen
+
+#### Checkliste Phase 0.5
+
+- [ ] 2 TODO-Kommentare entfernt
+- [ ] ~10 Debug-Console-Logs entfernt
+- [ ] `handleConfirmImport` Function entfernt (Zeilen 807-826)
+- [ ] `selectedJournalist` State entfernt (Zeile 342)
+- [ ] Verification-Feature komplett entfernt (Zeilen 337, 663-668, 1518-1533)
+- [ ] Kommentierte Code-Blöcke gelöscht
+- [ ] ESLint-Check durchgeführt
+- [ ] Unused imports entfernt
+- [ ] Code funktioniert noch (manueller Test)
+
+#### Deliverable
+
+```markdown
+## Phase 0.5: Pre-Refactoring Cleanup ✅
+
+### Entfernt
+- 2 TODO-Kommentare (Zeilen 663, 1055)
+- ~10 Debug-Console-Logs (Zeilen 409-428, 452, 476, 488, 496, 500, 517, 565)
+- `handleConfirmImport` deprecated Function (Zeilen 807-826)
+- `selectedJournalist` unused State (Zeile 342)
+- Verification-Feature (Zeilen 337, 663-668, 1518-1533) - "not available for contacts"
+- Kommentierte Code-Blöcke
+- Unused imports (via ESLint)
+
+### Ergebnis
+- page.tsx: 1573 → ~1510 Zeilen (-63 Zeilen toter Code)
+- Saubere Basis für Phase 1 (React Query Integration)
+- Keine Gefahr, toten Code zu modularisieren
+
+### Warum wichtig?
+Phase 6 hätte diese Probleme NICHT gefunden:
+- ESLint findet keinen kommentierten Code
+- TypeScript findet keine deprecated Functions (wenn sie irgendwo referenziert werden)
+- TODO-Kommentare würden bleiben
+- Toten Code hätten wir in Phase 2 modularisiert → Verschwendung
+
+### Commit
+```bash
+git add .
+git commit -m "chore: Phase 0.5 - Pre-Refactoring Cleanup
+
+- 2 TODO-Kommentare entfernt
+- ~10 Debug-Console-Logs entfernt
+- handleConfirmImport deprecated Function entfernt
+- selectedJournalist unused State entfernt
+- Verification-Feature entfernt (not available for contacts)
+- Kommentierte Code-Blöcke gelöscht
+- Unused imports entfernt via ESLint
+
+page.tsx: 1573 → ~1510 Zeilen (-63 Zeilen toter Code)
+
+Saubere Basis für React Query Integration (Phase 1).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
 ```
 
 ---
@@ -1718,7 +1944,7 @@ npm run start
 
 ### Checkliste Merge
 
-- [ ] Alle 6 Phasen abgeschlossen
+- [ ] Alle 7 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup)
 - [ ] Alle Tests bestehen
 - [ ] Dokumentation vollständig
 - [ ] Feature-Branch gepushed
@@ -1733,7 +1959,7 @@ npm run start
 ## ✅ Editors-Refactoring erfolgreich abgeschlossen!
 
 ### Status
-- **Alle 6 Phasen:** Abgeschlossen
+- **Alle 7 Phasen:** Abgeschlossen (inkl. Pre-Refactoring Cleanup)
 - **Tests:** 25/25 bestanden
 - **Coverage:** 85%
 - **Dokumentation:** 2.700 Zeilen
@@ -1797,11 +2023,22 @@ npm run start
 
 ## 📝 Checkliste: Gesamtes Refactoring
 
-### Vorbereitung
+### Vorbereitung (Phase 0)
 - [ ] Feature-Branch erstellt
 - [ ] Backups angelegt
 - [ ] Ist-Zustand dokumentiert
 - [ ] Dependencies geprüft
+
+### Phase 0.5: Pre-Refactoring Cleanup ⭐ NEU
+- [ ] 2 TODO-Kommentare entfernt
+- [ ] ~10 Debug-Console-Logs entfernt
+- [ ] handleConfirmImport Function entfernt
+- [ ] selectedJournalist State entfernt
+- [ ] Verification-Feature entfernt (optional: falls nicht implementiert werden soll)
+- [ ] Kommentierte Code-Blöcke gelöscht
+- [ ] ESLint-Check durchgeführt
+- [ ] Unused imports entfernt
+- [ ] Code funktioniert noch (manueller Test)
 
 ### Phase 1: React Query
 - [ ] Custom Hooks erstellt (6 Hooks)
@@ -1925,10 +2162,21 @@ npm run start
 
 ---
 
-**Version:** 1.0
+**Version:** 1.1
 **Basiert auf:** Modul-Refactoring Template v1.0
 **Erstellt:** 2025-10-14
-**Geschätzter Aufwand:** 18-22 Stunden (2-3 Arbeitstage)
+**Aktualisiert:** 2025-10-14 (Phase 0.5 hinzugefügt)
+**Geschätzter Aufwand:** 19-24 Stunden (2-3 Arbeitstage)
+
+**Phasen:**
+- Phase 0: Setup (30min)
+- Phase 0.5: Pre-Refactoring Cleanup (1-2h) ⭐ NEU
+- Phase 1: React Query (4h)
+- Phase 2: Modularisierung (5h)
+- Phase 3: Performance (2h)
+- Phase 4: Testing (5h)
+- Phase 5: Dokumentation (4h)
+- Phase 6: Code Quality (2h)
 
 ---
 
