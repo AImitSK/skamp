@@ -38,11 +38,6 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Kontakte</h1>
-        {currentTab?.description && (
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            {currentTab.description}
-          </p>
-        )}
       </div>
 
       {/* Tab Navigation */}

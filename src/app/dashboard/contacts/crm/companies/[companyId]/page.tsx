@@ -211,7 +211,7 @@ function InfoCard({
     <div className={clsx("rounded-lg border border-zinc-200 bg-white overflow-hidden", className)}>
       <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-zinc-900">
+          <h3 className="text-base font-semibold text-zinc-900">
             {title}
           </h3>
           {action && <div>{action}</div>}
@@ -829,7 +829,7 @@ export default function CompanyDetailPage() {
             <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
               <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-zinc-900">
+                  <h3 className="text-base font-semibold text-zinc-900">
                     Kontakte
                   </h3>
                   <Badge color="blue">{contacts.length}</Badge>
@@ -1031,7 +1031,7 @@ export default function CompanyDetailPage() {
               <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
                 <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-zinc-900">
+                    <h3 className="text-base font-semibold text-zinc-900">
                       In Listen enthalten
                     </h3>
                     <Badge color="blue">{lists.length}</Badge>

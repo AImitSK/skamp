@@ -1461,21 +1461,43 @@ const FlagIcon = ({ countryCode, className = "h-4 w-6" }) => {
 
 ### Cards
 
-**TODO: Vollständig zu definieren**
+#### InfoCard (Detail-Seiten Box)
 
 ```tsx
-// Placeholder:
-<div className="bg-white rounded-lg p-6">
-  <h3 className="text-lg font-semibold text-zinc-900 mb-4">
-    Card-Titel
-  </h3>
-  {/* Content */}
+// Standard InfoCard Pattern für Detail-Seiten
+<div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+  <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+    <div className="flex items-center justify-between">
+      <h3 className="text-base font-semibold text-zinc-900">
+        Allgemeine Informationen
+      </h3>
+      {/* Optional: Action Button */}
+      <button className="text-sm text-primary hover:text-primary-hover">
+        Bearbeiten
+      </button>
+    </div>
+  </div>
+  <div className="p-4">
+    {/* Content */}
+  </div>
 </div>
 ```
 
-**Varianten zu definieren:**
+**Styling:**
+- Container: `rounded-lg border border-zinc-200 bg-white overflow-hidden`
+- Header: `px-4 py-3 border-b border-zinc-200 bg-zinc-50`
+- Titel: `text-base font-semibold text-zinc-900` **(WICHTIG: text-base, nicht text-lg!)**
+- Content: `p-4`
+
+**Verwendung:**
+- Detailseiten (Kontakt, Firma)
+- Gruppierung zusammenhängender Informationen
+- Optional mit Action-Button im Header
+
+---
+
+**TODO: Weitere Card-Varianten zu definieren:**
 - Standard Card
-- Card mit Header/Footer
 - Clickable Card
 - Card mit Bild
 - Stat Card
