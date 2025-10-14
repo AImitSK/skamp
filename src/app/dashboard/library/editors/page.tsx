@@ -334,12 +334,10 @@ export default function EditorsPage() {
   // Filter States
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedMediaTypes, setSelectedMediaTypes] = useState<MediaType[]>([]);
-  const [selectedVerificationStatus, setSelectedVerificationStatus] = useState<VerificationStatus[]>([]);
   const [minQualityScore, setMinQualityScore] = useState<number>(0);
 
   // UI States
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
-  const [selectedJournalist, setSelectedJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [detailJournalist, setDetailJournalist] = useState<JournalistDatabaseEntry | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
   const [importedJournalistIds, setImportedJournalistIds] = useState<Set<string>>(new Set());
@@ -406,8 +404,6 @@ export default function EditorsPage() {
       setSubscription(mockSubscription);
 
       // Load ALLE globalen Journalisten aus CRM (quer über alle Organisationen)
-      console.log('🔍 Loading global journalists from CRM...');
-
       // Direkte Firestore-Query für ALLE globalen Kontakte
       const globalContactsQuery = query(
         collection(db, 'contacts_enhanced'),
@@ -421,11 +417,6 @@ export default function EditorsPage() {
       const globalJournalists = allContacts.filter(c =>
         c.isGlobal && c.mediaProfile?.isJournalist
       );
-
-      console.log('📊 Global journalists found:', {
-        totalGlobal: allContacts.length,
-        journalists: globalJournalists.length
-      });
 
 
       // Load companies for type lookup (lokale + globale)
@@ -449,18 +440,16 @@ export default function EditorsPage() {
             id: doc.id,
             ...doc.data()
           })) as CompanyEnhanced[];
-          console.log('🔍 Globale Companies mit isGlobal flag:', globalCompanies.length);
         } catch (e) {
-          console.log('❌ Fehler beim Laden globaler Companies mit isGlobal:', e);
+          console.error('Fehler beim Laden globaler Companies mit isGlobal:', e);
         }
 
         // 2. Falls keine gefunden, versuche Companies von SuperAdmin zu laden
         if (globalCompanies.length === 0) {
           try {
             globalCompanies = await companiesEnhancedService.getAll('superadmin-org');
-            console.log('🔍 SuperAdmin Companies geladen:', globalCompanies.length);
           } catch (e) {
-            console.log('❌ Fehler beim Laden von SuperAdmin Companies:', e);
+            console.error('Fehler beim Laden von SuperAdmin Companies:', e);
           }
         }
 
@@ -473,7 +462,6 @@ export default function EditorsPage() {
         });
 
         companiesData = allCompanies;
-        console.log('📊 Companies loaded:', companiesData.length, '(local:', localCompanies.length, 'global:', globalCompanies.length, ')');
       } catch (error) {
         console.error('❌ Error loading companies:', error);
       }
@@ -485,7 +473,6 @@ export default function EditorsPage() {
         const allPublications = await publicationService.getAll(currentOrganization.id);
 
         publicationsData = allPublications;
-        console.log('📊 Publications loaded:', publicationsData.length, '(inkl. References)');
       } catch (error) {
         console.error('❌ Error loading publications:', error);
       }
@@ -493,12 +480,10 @@ export default function EditorsPage() {
       // Konvertiere CRM-Kontakte zu JournalistDatabaseEntry Format
       const convertedJournalists = globalJournalists.map((contact) => {
         // Company Type Lookup
-        console.log('🔍 Suche Company für Kontakt:', contact.displayName, 'CompanyId:', contact.companyId);
         let company = companiesData.find(c => c.id === contact.companyId);
 
         // Fallback: Erstelle Company-Objekt aus Contact-Daten wenn nicht gefunden
         if (!company && contact.companyId && contact.companyName) {
-          console.log('⚠️ Company nicht gefunden, erstelle aus Contact-Daten:', contact.companyName);
           company = {
             id: contact.companyId,
             name: contact.companyName,
@@ -514,12 +499,6 @@ export default function EditorsPage() {
 
         // Publications Lookup - Hierarchie: Company -> Publications -> Redakteure
         let publicationAssignments = [];
-        console.log('🔍 Publication Resolution für:', contact.displayName, {
-          company: company?.name,
-          companyType,
-          hasDirectPublicationIds: (contact.mediaProfile?.publicationIds || []).length > 0,
-          publicationsDataCount: publicationsData.length
-        });
 
         // 1. Direkte Publication-IDs (falls vorhanden)
         const directPublicationIds = contact.mediaProfile?.publicationIds || [];
@@ -562,7 +541,6 @@ export default function EditorsPage() {
           } else {
             // Erstelle Placeholder-Publication aus Company-Daten
             const companyName = company?.name || contact.companyName || 'Unbekannt';
-            console.log('📝 Erstelle Placeholder-Publication aus Company:', companyName);
             publicationAssignments = [{
               publication: {
                 title: companyName,
@@ -660,13 +638,6 @@ export default function EditorsPage() {
         if (!hasMatchingMediaType) return false;
       }
 
-      // TODO: Remove verification status filter - not available for contacts
-      // if (selectedVerificationStatus.length > 0) {
-      //   if (!selectedVerificationStatus.includes(journalist.metadata?.verification?.status)) {
-      //     return false;
-      //   }
-      // }
-
       // Quality score filter
       if (minQualityScore > 0) {
         if ((journalist.metadata?.dataQuality?.overallScore || 0) < minQualityScore) {
@@ -676,7 +647,7 @@ export default function EditorsPage() {
 
       return true;
     });
-  }, [journalists, searchTerm, selectedTopics, selectedMediaTypes, selectedVerificationStatus, minQualityScore]);
+  }, [journalists, searchTerm, selectedTopics, selectedMediaTypes, minQualityScore]);
 
   // Paginated Data
   const paginatedJournalists = useMemo(() => {
@@ -804,27 +775,6 @@ export default function EditorsPage() {
     }
   };
 
-  const handleConfirmImport = async () => {
-    if (!selectedJournalist) return;
-
-    setImportingIds(prev => new Set([...prev, selectedJournalist.id!]));
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      showAlert('success', 'Import erfolgreich', `${selectedJournalist.personalData.displayName} wurde in Ihr CRM importiert.`);
-      setSelectedJournalist(null);
-    } catch (error) {
-      showAlert('error', 'Import fehlgeschlagen', 'Bitte versuchen Sie es erneut.');
-    } finally {
-      setImportingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(selectedJournalist.id!);
-        return newSet;
-      });
-    }
-  };
-
   const handleUpgrade = (journalist: JournalistDatabaseEntry) => {
     setImportDialogJournalist(journalist);
     setShowImportDialog(true);
@@ -845,7 +795,7 @@ export default function EditorsPage() {
     );
   }
 
-  const activeFiltersCount = selectedTopics.length + selectedMediaTypes.length + selectedVerificationStatus.length + (minQualityScore > 0 ? 1 : 0);
+  const activeFiltersCount = selectedTopics.length + selectedMediaTypes.length + (minQualityScore > 0 ? 1 : 0);
   const totalPages = Math.ceil(filteredJournalists.length / itemsPerPage);
 
   return (
@@ -937,33 +887,6 @@ export default function EditorsPage() {
                             ))}
                           </div>
                         </div>
-
-                        {/* Verification Status Filter */}
-                        <div className="mb-[10px]">
-                          <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                            Verifizierungsstatus
-                          </label>
-                          <div className="space-y-2">
-                            {(['verified', 'pending', 'unverified'] as VerificationStatus[]).map((status) => (
-                              <label key={status} className="flex items-center gap-2 cursor-pointer">
-                                <Checkbox
-                                  checked={selectedVerificationStatus.includes(status)}
-                                  onChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedVerificationStatus([...selectedVerificationStatus, status]);
-                                    } else {
-                                      setSelectedVerificationStatus(selectedVerificationStatus.filter(s => s !== status));
-                                    }
-                                  }}
-                                />
-                                <span className="text-sm text-zinc-700">
-                                  {status === 'verified' ? 'Verifiziert' :
-                                   status === 'pending' ? 'Ausstehend' : 'Nicht verifiziert'}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
                       </div>
 
                       {/* Quality Score Filter - volle Breite */}
@@ -989,7 +912,6 @@ export default function EditorsPage() {
                             onClick={() => {
                               setSelectedTopics([]);
                               setSelectedMediaTypes([]);
-                              setSelectedVerificationStatus([]);
                               setMinQualityScore(0);
                             }}
                             className="text-sm text-zinc-500 hover:text-zinc-700 underline"
@@ -1052,8 +974,6 @@ export default function EditorsPage() {
                 const primaryPhone = journalist.personalData.phones?.find(p => p.isPrimary)?.number ||
                                     journalist.personalData.phones?.[0]?.number;
                 const primaryTopics = (journalist.professionalData.expertise.primaryTopics || []).slice(0, 2);
-                // TODO: Remove totalFollowers - not captured in CRM
-                // const totalFollowers = journalist.socialMedia?.influence?.totalFollowers || 0;
                 const canImport = subscription?.status === 'active' && subscription.features.importEnabled && !isSuperAdmin;
 
                 return (
@@ -1514,23 +1434,6 @@ export default function EditorsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* TODO: Remove Verification Info - only exists for publications */}
-              {/* {detailJournalist.metadata?.verification?.status === 'verified' && detailJournalist.metadata?.verification?.verifiedAt && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <div className="flex items-center space-x-2">
-                    <CheckBadgeIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <div>
-                      <div className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Verifiziert
-                      </div>
-                      <div className="text-xs text-green-600 dark:text-green-400">
-                        Verifiziert am: {new Date(detailJournalist.metadata.verification.verifiedAt).toLocaleDateString('de-DE')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )} */}
             </div>
           </DialogBody>
 
