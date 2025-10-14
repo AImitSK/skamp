@@ -49,9 +49,10 @@ export interface ListFilters {
   positions?: string[];
   hasEmail?: boolean;
   hasPhone?: boolean;
+  languages?: LanguageCode[]; // Bevorzugte Sprachen der Kontakte
   createdAfter?: Date;
   createdBefore?: Date;
-  
+
   // Medien-spezifische Filter (für Journalisten)
   beats?: string[]; // Ressorts/Themengebiete der Journalisten
   
@@ -333,6 +334,7 @@ export function getActiveFilterCount(filters: ListFilters): number {
   if (filters.positions?.length) count++;
   if (filters.hasEmail !== undefined) count++;
   if (filters.hasPhone !== undefined) count++;
+  if (filters.languages?.length) count++;
   if (filters.createdAfter) count++;
   if (filters.createdBefore) count++;
   if (filters.beats?.length) count++;

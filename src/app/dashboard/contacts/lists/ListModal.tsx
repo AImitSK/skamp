@@ -447,19 +447,18 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                             </div>
                           </div>
 
-                          {/* NEU: Sprachen-Filter - Temporär entfernt bis ListFilters erweitert ist */}
-                          {/* availableLanguages.length > 0 && (
-                            <MultiSelectDropdown 
-                              label="Bevorzugte Sprachen" 
-                              placeholder="Alle Sprachen" 
-                              options={availableLanguages.map(lang => ({ 
-                                value: lang, 
-                                label: LANGUAGE_NAMES[lang] || lang 
-                              }))} 
-                              selectedValues={formData.filters?.languages || []} 
+                          {availableLanguages.length > 0 && (
+                            <MultiSelectDropdown
+                              label="Bevorzugte Sprachen"
+                              placeholder="Alle Sprachen"
+                              options={availableLanguages.map(lang => ({
+                                value: lang,
+                                label: LANGUAGE_NAMES[lang] || lang
+                              }))}
+                              selectedValues={formData.filters?.languages || []}
                               onChange={(values) => handleFilterChange('languages', values)}
                             />
-                          ) */}
+                          )}
                         </div>
                       </div>
 

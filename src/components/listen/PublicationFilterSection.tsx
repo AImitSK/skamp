@@ -12,13 +12,12 @@ import { Button } from '@/components/ui/button';
 import { publicationService } from '@/lib/firebase/library-service';
 import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from '@/types/library';
 import { COUNTRY_NAMES, LANGUAGE_NAMES } from '@/types/international';
-import { ListFilters, PUBLICATION_FILTER_PRESETS } from '@/types/lists';
-import { 
-  NewspaperIcon, 
-  GlobeAltIcon, 
+import { ListFilters } from '@/types/lists';
+import {
+  NewspaperIcon,
+  GlobeAltIcon,
   LanguageIcon,
   ChartBarIcon,
-  SparklesIcon,
   BuildingOfficeIcon,
   TagIcon
 } from '@heroicons/react/20/solid';
@@ -140,29 +139,10 @@ export default function PublicationFilterSection({
 
   return (
     <div className="space-y-6">
-      {/* Filter-Presets */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
-          <SparklesIcon className="h-4 w-4 text-blue-500" />
-          Schnellauswahl
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {PUBLICATION_FILTER_PRESETS.map((preset, index) => (
-            <Button
-              key={index}
-              plain
-              onClick={() => applyPreset(preset)}
-              className="text-xs"
-            >
-              {preset.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       {/* Basis-Filter */}
       <div className="space-y-4">
         <button
+          type="button"
           onClick={() => toggleSection('basic')}
           className="w-full flex items-center justify-between text-left"
         >
@@ -229,6 +209,7 @@ export default function PublicationFilterSection({
       {/* Geografische Filter */}
       <div className="space-y-4">
         <button
+          type="button"
           onClick={() => toggleSection('geographic')}
           className="w-full flex items-center justify-between text-left"
         >
@@ -285,6 +266,7 @@ export default function PublicationFilterSection({
       {/* Thematische Filter */}
       <div className="space-y-4">
         <button
+          type="button"
           onClick={() => toggleSection('thematic')}
           className="w-full flex items-center justify-between text-left"
         >
@@ -329,6 +311,7 @@ export default function PublicationFilterSection({
       {/* Metriken */}
       <div className="space-y-4">
         <button
+          type="button"
           onClick={() => toggleSection('metrics')}
           className="w-full flex items-center justify-between text-left"
         >
@@ -405,6 +388,7 @@ export default function PublicationFilterSection({
       {/* Verlage & Qualität */}
       <div className="space-y-4">
         <button
+          type="button"
           onClick={() => toggleSection('quality')}
           className="w-full flex items-center justify-between text-left"
         >
