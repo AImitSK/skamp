@@ -627,43 +627,7 @@ export default function EditorsPage() {
     [currentOrganization?.id]
   );
 
-  // Reference Remove Handler
-  const handleRemoveReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
-    if (!currentOrganization || !user) return;
-
-    setImportingIds(prev => new Set([...prev, journalist.id!]));
-
-    try {
-      await removeReference.mutateAsync({
-        journalistId: journalist.id,
-        organizationId: currentOrganization.id
-      });
-
-      showAlert('success', 'Verweis entfernt',
-        `${journalist.personalData.displayName} wurde aus Ihren Verweisen entfernt.`);
-    } catch (error) {
-      showAlert('error', 'Fehler', 'Der Verweis konnte nicht entfernt werden.');
-    } finally {
-      setImportingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(journalist.id!);
-        return newSet;
-      });
-    }
-  }, [currentOrganization, user, removeReference, showAlert]);
-
-  // Toggle-Funktion für Import/Remove
-  const handleToggleReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
-    const isImported = importedIds?.has(journalist.id);
-
-    if (isImported) {
-      await handleRemoveReference(journalist);
-    } else {
-      await handleImportReference(journalist);
-    }
-  }, [importedIds, handleRemoveReference]); // handleImportReference wird unten definiert
-
-  // Reference Import handlers
+  // Reference Import Handler (muss VOR handleToggleReference definiert werden)
   const handleImportReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
     // SuperAdmin sollte sich nicht selbst referenzieren
     if (isSuperAdmin) {
@@ -698,6 +662,42 @@ export default function EditorsPage() {
       });
     }
   }, [isSuperAdmin, subscription, currentOrganization, user, createReference, showAlert]);
+
+  // Reference Remove Handler
+  const handleRemoveReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
+    if (!currentOrganization || !user) return;
+
+    setImportingIds(prev => new Set([...prev, journalist.id!]));
+
+    try {
+      await removeReference.mutateAsync({
+        journalistId: journalist.id,
+        organizationId: currentOrganization.id
+      });
+
+      showAlert('success', 'Verweis entfernt',
+        `${journalist.personalData.displayName} wurde aus Ihren Verweisen entfernt.`);
+    } catch (error) {
+      showAlert('error', 'Fehler', 'Der Verweis konnte nicht entfernt werden.');
+    } finally {
+      setImportingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(journalist.id!);
+        return newSet;
+      });
+    }
+  }, [currentOrganization, user, removeReference, showAlert]);
+
+  // Toggle-Funktion für Import/Remove
+  const handleToggleReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
+    const isImported = importedIds?.has(journalist.id);
+
+    if (isImported) {
+      await handleRemoveReference(journalist);
+    } else {
+      await handleImportReference(journalist);
+    }
+  }, [importedIds, handleRemoveReference, handleImportReference]);
 
   const handleUpgrade = useCallback((journalist: JournalistDatabaseEntry) => {
     setImportDialogJournalist(journalist);
