@@ -585,8 +585,7 @@ export default function ListDetailPage() {
                               {formatContactName(contact)}
                             </Link>
                             {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
-                              <Badge color="blue" className="ml-2 text-xs">
-                                <NewspaperIcon className="h-3 w-3 inline mr-1" />
+                              <Badge color="purple" className="ml-2 text-xs">
                                 Journalist
                               </Badge>
                             )}
