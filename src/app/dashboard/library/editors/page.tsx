@@ -727,6 +727,17 @@ export default function EditorsPage() {
     setMinQualityScore(0);
   }, []);
 
+  // Computed values (MUSS VOR Pagination Handlers definiert werden!)
+  const activeFiltersCount = useMemo(() =>
+    selectedTopics.length + selectedMediaTypes.length + (minQualityScore > 0 ? 1 : 0),
+    [selectedTopics.length, selectedMediaTypes.length, minQualityScore]
+  );
+
+  const totalPages = useMemo(() =>
+    Math.ceil(filteredJournalists.length / itemsPerPage),
+    [filteredJournalists.length, itemsPerPage]
+  );
+
   // Pagination Handlers
   const handlePreviousPage = useCallback(() => {
     setCurrentPage(prev => Math.max(1, prev - 1));
@@ -739,17 +750,6 @@ export default function EditorsPage() {
   const handleGoToPage = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
-
-  // Computed values
-  const activeFiltersCount = useMemo(() =>
-    selectedTopics.length + selectedMediaTypes.length + (minQualityScore > 0 ? 1 : 0),
-    [selectedTopics.length, selectedMediaTypes.length, minQualityScore]
-  );
-
-  const totalPages = useMemo(() =>
-    Math.ceil(filteredJournalists.length / itemsPerPage),
-    [filteredJournalists.length, itemsPerPage]
-  );
 
   if (loading) {
     return (
