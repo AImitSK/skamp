@@ -190,11 +190,7 @@ class MultiEntityReferenceService {
       const hasValidCompanyName = companyName && typeof companyName === 'string' && companyName.trim() !== '';
 
       if (!hasValidCompanyId && !hasValidCompanyName) {
-        console.warn('❌ addJournalistReference: Keine gültige Company-ID oder Company-Name vorhanden', {
-          companyId,
-          companyName,
-          journalistId: globalJournalist.id
-        });
+        
         return {
           success: false,
           errors: ['Journalist hat keine gültige Company-Zuordnung']
@@ -219,50 +215,30 @@ class MultiEntityReferenceService {
       }
 
       // 4. Publication-References erstellen oder finden
-      console.log('🔍 Checking for Publications:', {
-        journalistName: globalJournalist.displayName,
-        publicationIds: globalJournalist.publicationIds || [],
-        companyName: globalJournalist.companyName,
-        companyId: globalJournalist.companyId
-      });
+      
 
       // Lade globale Company um Typ zu prüfen und Publications zu finden
-      console.log('🔍 Lade globale Company:', {
-        companyId: globalJournalist.companyId,
-        companyName: globalJournalist.companyName
-      });
+      
 
       const globalCompany = await this.loadGlobalCompany(globalJournalist.companyId || globalJournalist.companyName);
 
-      console.log('📊 Globale Company geladen:', {
-        found: !!globalCompany,
-        company: globalCompany ? { id: globalCompany.id, name: globalCompany.name, type: globalCompany.type } : null
-      });
+      
 
       // Finde Publications basierend auf Company-Zuordnung (wenn Company ein Media House/Publisher ist)
       let publicationIds = globalJournalist.publicationIds || [];
-      console.log('📊 Publication-IDs vom Journalist:', publicationIds);
+      
 
       if ((!publicationIds.length) && globalCompany && ['publisher', 'media_house', 'agency'].includes(globalCompany.type)) {
-        console.log('🔍 Company ist Media House/Publisher, suche nach Publications...');
-        console.log('🏢 Company Details:', { id: globalCompany.id, name: globalCompany.name, type: globalCompany.type });
+        
+        
 
         const companyPublications = await this.findPublicationsByCompany(globalCompany.id);
         publicationIds = companyPublications.map(pub => pub.id);
 
-        console.log('📰 Gefundene Publications für Company:', {
-          companyId: globalCompany.id,
-          foundPublications: companyPublications.length,
-          publicationIds: publicationIds,
-          publications: companyPublications
-        });
+        
       }
 
-      console.log('📋 Erstelle Publication-References:', {
-        publicationIds,
-        count: publicationIds.length,
-        companyReferenceId: companyResult.documentId
-      });
+      
 
       const publicationsResult = await this.ensurePublicationReferences(
         publicationIds,
@@ -272,11 +248,7 @@ class MultiEntityReferenceService {
         batch
       );
 
-      console.log('✅ Publication-References Ergebnis:', {
-        success: publicationsResult.success,
-        documentIds: publicationsResult.documentIds,
-        count: publicationsResult.documentIds.length
-      });
+      
 
       if (!publicationsResult.success) {
         return {
@@ -522,23 +494,19 @@ class MultiEntityReferenceService {
    */
   private async loadGlobalCompany(globalCompanyIdOrName: string): Promise<any | null> {
     try {
-      console.log('🔍 loadGlobalCompany START:', { input: globalCompanyIdOrName });
+      
 
       // Validiere Input
       if (!globalCompanyIdOrName || typeof globalCompanyIdOrName !== 'string' || globalCompanyIdOrName.trim() === '') {
-        console.warn('❌ loadGlobalCompany: Ungültiger Input:', globalCompanyIdOrName);
+        
         return null;
       }
 
       // Versuche zuerst über ID zu laden
-      console.log('📊 Versuche Company-Load über ID...');
+      
       const globalDoc = await getDoc(doc(db, 'companies_enhanced', globalCompanyIdOrName));
 
-      console.log('📋 Company-Doc Ergebnis:', {
-        exists: globalDoc.exists(),
-        data: globalDoc.exists() ? globalDoc.data() : null,
-        isGlobal: globalDoc.exists() ? globalDoc.data()?.isGlobal : null
-      });
+      
 
       if (globalDoc.exists()) {
         // WORKAROUND: Akzeptiere Company auch ohne isGlobal Flag (SuperAdmin Problem)
@@ -547,12 +515,12 @@ class MultiEntityReferenceService {
           id: globalDoc.id,
           ...data
         };
-        console.log('✅ Company über ID gefunden (ohne isGlobal Check):', result);
+        
         return result;
       }
 
       // Falls nicht gefunden, suche nach Name in der superadmin Organization
-      console.log('🔍 Fallback: Suche Company über Name...', { name: globalCompanyIdOrName });
+      
 
       const companiesQuery = query(
         collection(db, 'companies_enhanced'),
@@ -561,11 +529,7 @@ class MultiEntityReferenceService {
       );
 
       const snapshot = await getDocs(companiesQuery);
-      console.log('📊 Name-Search Ergebnis:', {
-        found: !snapshot.empty,
-        count: snapshot.docs.length,
-        docs: snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, isGlobal: doc.data().isGlobal }))
-      });
+      
 
       if (!snapshot.empty) {
         const companyDoc = snapshot.docs[0];
@@ -573,11 +537,11 @@ class MultiEntityReferenceService {
           id: companyDoc.id,
           ...companyDoc.data()
         };
-        console.log('✅ Company über Name gefunden:', result);
+        
         return result;
       }
 
-      console.log('❌ Company nicht gefunden!');
+      
       return null;
     } catch (error) {
       console.error('💥 Fehler beim Laden der globalen Company:', error);
@@ -590,14 +554,14 @@ class MultiEntityReferenceService {
    */
   private async findPublicationsByCompany(companyId: string): Promise<any[]> {
     try {
-      console.log('🔍 Suche Publications für Company ID:', companyId);
+      
 
       // Versuche verschiedene SuperAdmin Organization IDs
       const superAdminOrgIds = ['superadmin', 'superadmin-org'];
       let allPublications: any[] = [];
 
       for (const orgId of superAdminOrgIds) {
-        console.log(`📊 Suche in Organization: ${orgId}`);
+        
 
         // Versuche mit publisherId
         let publicationsQuery = query(
@@ -612,11 +576,11 @@ class MultiEntityReferenceService {
           ...doc.data()
         }));
 
-        console.log(`📰 Gefundene Publications mit publisherId in ${orgId}:`, publications.length);
+        
 
         // Falls keine gefunden, versuche mit companyId
         if (publications.length === 0) {
-          console.log(`🔍 Fallback: Suche mit companyId in ${orgId}`);
+          
           publicationsQuery = query(
             collection(db, 'publications'),
             where('organizationId', '==', orgId),
@@ -629,7 +593,7 @@ class MultiEntityReferenceService {
             ...doc.data()
           }));
 
-          console.log(`📰 Gefundene Publications mit companyId in ${orgId}:`, publications.length);
+          
         }
 
         allPublications.push(...publications);
@@ -637,7 +601,7 @@ class MultiEntityReferenceService {
 
       // Falls keine gefunden, versuche allgemeine Suche nach publisherId ODER companyId
       if (allPublications.length === 0) {
-        console.log('🔍 Fallback: Suche alle Publications mit publisherId oder companyId:', companyId);
+        
 
         // Erst publisherId
         let fallbackQuery = query(
@@ -651,11 +615,11 @@ class MultiEntityReferenceService {
           ...doc.data()
         }));
 
-        console.log('📰 Fallback Publications mit publisherId gefunden:', allPublications.length);
+        
 
         // Falls noch keine gefunden, versuche companyId
         if (allPublications.length === 0) {
-          console.log('🔍 Letzter Fallback: Suche mit companyId');
+          
           fallbackQuery = query(
             collection(db, 'publications'),
             where('companyId', '==', companyId)
@@ -667,7 +631,7 @@ class MultiEntityReferenceService {
             ...doc.data()
           }));
 
-          console.log('📰 Fallback Publications mit companyId gefunden:', allPublications.length);
+          
         }
       }
 
@@ -690,7 +654,7 @@ class MultiEntityReferenceService {
     try {
       // Validiere globalCompanyIdOrName
       if (!globalCompanyIdOrName || typeof globalCompanyIdOrName !== 'string' || globalCompanyIdOrName.trim() === '') {
-        console.warn('❌ ensureCompanyReference: Ungültige globalCompanyIdOrName:', globalCompanyIdOrName);
+        
         return {
           success: false,
           error: 'Ungültige globalCompanyId oder Company-Name'
@@ -766,16 +730,12 @@ class MultiEntityReferenceService {
     batch: any
   ): Promise<{ success: boolean; documentIds: string[]; error?: string }> {
     try {
-      console.log('🏗️ ensurePublicationReferences Start:', {
-        globalPublicationIds,
-        companyReferenceId: companyReferenceDocumentId,
-        organizationId
-      });
+      
 
       const documentIds: string[] = [];  // Document IDs sammeln
 
       for (const globalPubId of globalPublicationIds) {
-        console.log(`  📖 Verarbeite Publication: ${globalPubId}`);
+        
 
         // Prüfe ob Publication-Reference bereits existiert
         const existingPubRef = await this.findPublicationReferenceByGlobalId(
@@ -783,7 +743,7 @@ class MultiEntityReferenceService {
         );
 
         if (existingPubRef) {
-          console.log(`    ✓ Existierende Reference gefunden: ${existingPubRef.id}`);
+          
           documentIds.push(existingPubRef.id!);  // Document ID, nicht localPublicationId
           continue;
         }
@@ -805,21 +765,13 @@ class MultiEntityReferenceService {
           isActive: true
         };
 
-        console.log(`    ➕ Erstelle neue Reference:`, {
-          docId: pubRefDoc.id,
-          localPublicationId,
-          globalPublicationId: globalPubId
-        });
+        
 
         batch.set(pubRefDoc, pubRefData);
         documentIds.push(pubRefDoc.id);  // Document ID sammeln, nicht localPublicationId
       }
 
-      console.log('✅ ensurePublicationReferences Fertig:', {
-        totalProcessed: globalPublicationIds.length,
-        documentIds,
-        count: documentIds.length
-      });
+      
 
       return {
         success: true,
@@ -1227,42 +1179,38 @@ class MultiEntityReferenceService {
    */
   async loadPublicationReference(publicationId: string, organizationId: string): Promise<any | null> {
     try {
-      console.log('🔍 Suche Publication-Reference:', { publicationId, organizationId });
+      
 
       // 1. Versuche zuerst direkte Document ID Suche
       try {
         const pubRefDoc = await getDoc(doc(db, 'organizations', organizationId, this.publicationRefsCollection, publicationId));
         if (pubRefDoc.exists()) {
           const pubRefData = pubRefDoc.data() as PublicationReference;
-          console.log('✅ Publication-Reference über Document ID gefunden:', pubRefData);
+          
 
           // Lade globale Publication-Daten
           const globalPubDoc = await getDoc(doc(db, 'publications', pubRefData.globalPublicationId));
           if (globalPubDoc.exists()) {
             const globalPubData = globalPubDoc.data();
-            console.log('📊 Globale Publication-Daten geladen:', globalPubData.title);
+            
 
             // Publisher-Name laden
             let publisherName = globalPubData.publisherName || '';
-            console.log('🔍 Publisher-Name Debug:', {
-              existingPublisherName: publisherName,
-              publisherId: globalPubData.publisherId,
-              willTryCompanyLoad: globalPubData.publisherId && !publisherName
-            });
+            
 
             if (globalPubData.publisherId && !publisherName) {
               try {
-                console.log('🔍 Versuche Company zu laden für publisherId:', globalPubData.publisherId);
+                
                 const companyDoc = await getDoc(doc(db, 'companies', globalPubData.publisherId));
                 if (companyDoc.exists()) {
                   const companyData = companyDoc.data();
                   publisherName = companyData?.companyName || companyData?.name || '';
-                  console.log('📊 Publisher-Name aus Company geladen:', publisherName, 'von Company:', companyData);
+                  
                 } else {
-                  console.warn('❌ Company Document nicht gefunden für publisherId:', globalPubData.publisherId);
+                  
                 }
               } catch (error) {
-                console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
+                
               }
             }
 
@@ -1317,7 +1265,7 @@ class MultiEntityReferenceService {
           }
         }
       } catch (error) {
-        console.log('🔍 Document ID Suche fehlgeschlagen, versuche localPublicationId Suche...');
+        
       }
 
       // 2. Fallback: Suche nach localPublicationId
@@ -1328,14 +1276,14 @@ class MultiEntityReferenceService {
 
       const snapshot = await getDocs(pubRefsQuery);
       if (snapshot.empty) {
-        console.log('❌ Keine Publication-Reference gefunden für:', publicationId);
+        
         return null;
       }
 
       const pubRefDoc = snapshot.docs[0];
       const pubRefData = pubRefDoc.data() as PublicationReference;
 
-      console.log('✅ Publication-Reference gefunden:', pubRefData);
+      
 
       // 2. Lade globale Publication-Daten
       const globalPubDoc = await getDoc(doc(db, 'publications', pubRefData.globalPublicationId));
@@ -1345,7 +1293,7 @@ class MultiEntityReferenceService {
       }
 
       const globalPubData = globalPubDoc.data();
-      console.log('📊 Globale Publication-Daten geladen:', globalPubData.title);
+      
 
       // 3. Lade Publisher-Daten (Company) für publisherName
       let publisherName = globalPubData.publisherName || '';
@@ -1355,10 +1303,10 @@ class MultiEntityReferenceService {
           if (companyDoc.exists()) {
             const companyData = companyDoc.data();
             publisherName = companyData?.companyName || companyData?.name || '';
-            console.log('📊 Publisher-Name aus Company geladen:', publisherName);
+            
           }
         } catch (error) {
-          console.warn('⚠️ Publisher-Name konnte nicht geladen werden:', error);
+          
         }
       }
 
