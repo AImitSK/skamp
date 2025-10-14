@@ -945,15 +945,12 @@ export default function EditorsPage() {
 
                       {/* Company/Medienhaus */}
                       <div className="w-48 px-4">
-                        <div className="flex items-center space-x-2">
-                          <NewspaperIcon className="h-4 w-4 text-zinc-700 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-zinc-900 truncate">
-                              {journalist.professionalData.employment?.company?.name || 'Selbstständig'}
-                            </div>
-                            <div className="text-xs text-zinc-500 truncate">
-                              {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || 'Medienhaus'}
-                            </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-zinc-900 truncate">
+                            {journalist.professionalData.employment?.company?.name || 'Selbstständig'}
+                          </div>
+                          <div className="text-xs text-zinc-500 truncate">
+                            {companyTypeLabels[journalist.professionalData.employment?.company?.type as keyof typeof companyTypeLabels] || 'Medienhaus'}
                           </div>
                         </div>
                       </div>
