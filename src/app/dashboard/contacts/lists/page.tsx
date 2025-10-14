@@ -32,8 +32,8 @@ import Papa from 'papaparse';
 import clsx from 'clsx';
 import { useLists, useCreateList, useUpdateList, useDeleteList, useBulkDeleteLists } from '@/lib/hooks/useListsData';
 import { useQueryClient } from '@tanstack/react-query';
-import { Alert } from './components/shared/Alert';
 import { ConfirmDialog } from './components/shared/ConfirmDialog';
+import { toastService } from '@/lib/utils/toast';
 
 export default function ListsPage() {
   const { user } = useAuth();
@@ -52,7 +52,6 @@ export default function ListsPage() {
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingList, setEditingList] = useState<DistributionList | null>(null);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -68,12 +67,6 @@ export default function ListsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(25);
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Metrics laden wenn Listen sich ändern
   useEffect(() => {
@@ -106,11 +99,11 @@ export default function ListsPage() {
       },
       {
         onSuccess: () => {
-          showAlert('success', 'Liste erstellt', 'Die Liste wurde erfolgreich erstellt.');
+          toastService.success('Liste erfolgreich erstellt');
           setShowCreateModal(false);
         },
         onError: () => {
-          showAlert('error', 'Fehler', 'Die Liste konnte nicht erstellt werden.');
+          toastService.error('Liste konnte nicht erstellt werden');
         },
       }
     );
@@ -127,11 +120,11 @@ export default function ListsPage() {
       },
       {
         onSuccess: () => {
-          showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
+          toastService.success('Liste erfolgreich aktualisiert');
           setEditingList(null);
         },
         onError: () => {
-          showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+          toastService.error('Liste konnte nicht aktualisiert werden');
         },
       }
     );
@@ -153,10 +146,10 @@ export default function ListsPage() {
           },
           {
             onSuccess: () => {
-              showAlert('success', 'Liste gelöscht', `"${listName}" wurde erfolgreich gelöscht.`);
+              toastService.success(`"${listName}" erfolgreich gelöscht`);
             },
             onError: () => {
-              showAlert('error', 'Fehler beim Löschen', 'Die Liste konnte nicht gelöscht werden.');
+              toastService.error('Liste konnte nicht gelöscht werden');
             },
           }
         );
@@ -181,11 +174,11 @@ export default function ListsPage() {
           },
           {
             onSuccess: () => {
-              showAlert('success', `${count} Listen gelöscht`);
+              toastService.success(`${count} Listen erfolgreich gelöscht`);
               setSelectedListIds(new Set());
             },
             onError: () => {
-              showAlert('error', 'Fehler beim Löschen');
+              toastService.error('Listen konnten nicht gelöscht werden');
             },
           }
         );
@@ -198,11 +191,11 @@ export default function ListsPage() {
 
     try {
       await listsService.refreshDynamicList(listId);
-      showAlert('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
+      toastService.success('Dynamische Liste erfolgreich aktualisiert');
       // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
     } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+      toastService.error('Liste konnte nicht aktualisiert werden');
     }
   };
 
@@ -216,13 +209,13 @@ export default function ListsPage() {
       type: 'warning',
       onConfirm: async () => {
         try {
-          showAlert('info', 'Aktualisierung gestartet', 'Alle dynamischen Listen werden neu berechnet...');
+          toastService.info('Aktualisierung gestartet - alle dynamischen Listen werden neu berechnet...');
           await listsService.refreshAllDynamicLists(currentOrganization.id);
-          showAlert('success', 'Aktualisierung abgeschlossen', 'Alle dynamischen Listen wurden erfolgreich aktualisiert.');
+          toastService.success('Alle dynamischen Listen erfolgreich aktualisiert');
           // Invalidiere die Listen-Query um die aktualisierten Daten zu laden
           queryClient.invalidateQueries({ queryKey: ['lists', currentOrganization.id] });
         } catch (error) {
-          showAlert('error', 'Fehler', 'Die Listen konnten nicht aktualisiert werden.');
+          toastService.error('Listen konnten nicht aktualisiert werden');
         }
       }
     });
@@ -254,9 +247,9 @@ export default function ListsPage() {
       link.click();
       document.body.removeChild(link);
 
-      showAlert('success', 'Export erfolgreich', `Die Kontakte wurden erfolgreich exportiert.`);
+      toastService.success('Kontakte erfolgreich exportiert');
     } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht exportiert werden.');
+      toastService.error('Liste konnte nicht exportiert werden');
     }
   };
 
@@ -346,13 +339,6 @@ export default function ListsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Verteilerlisten</h1>
       </div>
-
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
 
       {/* Compact Toolbar */}
       <div className="mb-6">

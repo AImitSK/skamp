@@ -76,6 +76,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import React, { useState } from "react";
 import clsx from 'clsx';
 import * as Headless from '@headlessui/react';
+import { Toaster } from '@/lib/utils/toast';
 
 // Navigation Interface Definitions
 interface NavigationChild {
@@ -645,6 +646,7 @@ export default function DashboardLayout({
           }
         >
           {children}
+          <Toaster />
           <MobileMenu />
           </StackedLayout>
         </CrmDataProvider>

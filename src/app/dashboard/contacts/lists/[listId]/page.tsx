@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ListModal from "../ListModal";
 import { Alert } from '../components/shared/Alert';
+import { toastService } from '@/lib/utils/toast';
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -115,7 +116,6 @@ export default function ListDetailPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
 
   // Extended company type labels
   const extendedCompanyTypeLabels = {
@@ -124,12 +124,6 @@ export default function ListDetailPage() {
     'media_house': 'Medienhaus',
     'agency': 'Agentur'
   };
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Lade zusätzliche Daten (Tags, Publications, Contacts)
   useEffect(() => {
@@ -161,12 +155,12 @@ export default function ListDetailPage() {
     setRefreshing(true);
     try {
       await listsService.refreshDynamicList(list.id!);
-      showAlert('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
+      toastService.success('Dynamische Liste erfolgreich aktualisiert');
       // Invalidiere die Listen-Queries um aktualisierte Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['list', list.id] });
       queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
-      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+      toastService.error('Liste konnte nicht aktualisiert werden');
     } finally {
       setRefreshing(false);
     }
@@ -183,11 +177,11 @@ export default function ListDetailPage() {
       },
       {
         onSuccess: () => {
-          showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
+          toastService.success('Liste erfolgreich aktualisiert');
           setShowEditModal(false);
         },
         onError: () => {
-          showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+          toastService.error('Liste konnte nicht aktualisiert werden');
         },
       }
     );
@@ -450,13 +444,6 @@ export default function ListDetailPage() {
   return (
     <>
       <div className="p-6 md:p-8">
-        {/* Alert */}
-        {alert && (
-          <div className="mb-6">
-            <Alert type={alert.type} title={alert.title} message={alert.message} />
-          </div>
-        )}
-
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-center justify-between">

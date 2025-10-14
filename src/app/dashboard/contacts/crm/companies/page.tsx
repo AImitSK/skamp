@@ -11,7 +11,8 @@ import { Tag, CompanyType, companyTypeLabels } from '@/types/crm';
 import { CompaniesTableWrapper, CompanyFilters, CompanyBulkActions } from './components';
 import CompanyModal from '../CompanyModal';
 import ImportModalEnhanced from '../ImportModalEnhanced';
-import { Alert, ConfirmDialog } from '../components/shared';
+import { ConfirmDialog } from '../components/shared';
+import { toastService } from '@/lib/utils/toast';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { PlusIcon, MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -54,8 +55,7 @@ export default function CompaniesPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyEnhanced | null>(null);
 
-  // Alert & Confirm State
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  // Confirm State
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -63,12 +63,6 @@ export default function CompaniesPage() {
     onConfirm: () => void;
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-
-  // Alert Helper
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Memoized Data
   const tagsMap = useMemo(() => {
@@ -125,10 +119,10 @@ export default function CompaniesPage() {
           { ids: [id], organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              showAlert('success', `${name} wurde gelöscht`);
+              toastService.success(`${name} erfolgreich gelöscht`);
             },
             onError: () => {
-              showAlert('error', 'Fehler beim Löschen');
+              toastService.error('Firma konnte nicht gelöscht werden');
             },
           }
         );
@@ -150,11 +144,11 @@ export default function CompaniesPage() {
           { ids, organizationId: currentOrganization.id },
           {
             onSuccess: () => {
-              showAlert('success', `${ids.length} Firmen gelöscht`);
+              toastService.success(`${ids.length} Firmen erfolgreich gelöscht`);
               setSelectedIds(new Set());
             },
             onError: () => {
-              showAlert('error', 'Fehler beim Löschen');
+              toastService.error('Firmen konnten nicht gelöscht werden');
             },
           }
         );
@@ -171,14 +165,14 @@ export default function CompaniesPage() {
       });
 
       if (!csvContent || filteredCompanies.length === 0) {
-        showAlert('warning', 'Keine Daten zum Exportieren');
+        toastService.warning('Keine Daten zum Exportieren');
         return;
       }
 
       downloadCSV(csvContent, 'firmen-export.csv');
-      showAlert('success', 'Export erfolgreich: firmen-export.csv');
+      toastService.success('Export erfolgreich: firmen-export.csv');
     } catch (error) {
-      showAlert('error', 'Export fehlgeschlagen', 'Bitte prüfen Sie die Konsole für Details.');
+      toastService.error('Export fehlgeschlagen - bitte Konsole prüfen');
     }
   };
 
@@ -195,13 +189,6 @@ export default function CompaniesPage() {
 
   return (
     <div>
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
-
       {/* Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
@@ -353,7 +340,7 @@ export default function CompaniesPage() {
           }}
           onSave={() => {
             // React Query automatically refetches after mutations
-            showAlert('success', selectedCompany ? 'Firma aktualisiert' : 'Firma erstellt');
+            toastService.success(selectedCompany ? 'Firma erfolgreich aktualisiert' : 'Firma erfolgreich erstellt');
             setShowCompanyModal(false);
             setSelectedCompany(null);
           }}
@@ -368,7 +355,7 @@ export default function CompaniesPage() {
           onImportSuccess={() => {
             setShowImportModal(false);
             // React Query automatically refetches after mutations
-            showAlert('success', 'Import erfolgreich');
+            toastService.success('Import erfolgreich abgeschlossen');
           }}
         />
       )}
