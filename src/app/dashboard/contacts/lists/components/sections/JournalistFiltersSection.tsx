@@ -24,6 +24,12 @@ export function JournalistFiltersSection({ formData, onFilterChange }: SectionPr
     return Array.from(beats).sort();
   }, [contacts]);
 
+  // Memoize beat options to prevent recreation on every render
+  const beatOptions = useMemo(() =>
+    availableBeats.map(beat => ({ value: beat, label: beat })),
+    [availableBeats]
+  );
+
   if (availableBeats.length === 0) {
     return null;
   }
@@ -39,7 +45,7 @@ export function JournalistFiltersSection({ formData, onFilterChange }: SectionPr
         <MultiSelectDropdown
           label="Ressorts/Beats"
           placeholder="Alle Ressorts"
-          options={availableBeats.map(beat => ({ value: beat, label: beat }))}
+          options={beatOptions}
           selectedValues={formData.filters?.beats || []}
           onChange={(values) => onFilterChange('beats', values)}
         />

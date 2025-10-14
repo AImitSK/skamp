@@ -11,6 +11,12 @@ import { SectionProps, extendedCompanyTypeLabels } from './types';
 export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps) {
   const { companies, tags } = useCrmData();
 
+  // Memoize company type options
+  const companyTypeOptions = useMemo(() =>
+    Object.entries(extendedCompanyTypeLabels).map(([value, label]) => ({ value, label })),
+    []
+  );
+
   // Extract unique values from Enhanced Model
   const availableIndustries = useMemo(() =>
     Array.from(new Set(
@@ -30,6 +36,25 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
     [companies]
   );
 
+  // Memoize dropdown options to prevent recreation on every render
+  const industryOptions = useMemo(() =>
+    availableIndustries.map(i => ({ value: i, label: i })),
+    [availableIndustries]
+  );
+
+  const tagOptions = useMemo(() =>
+    tags.map(tag => ({ value: tag.id!, label: tag.name })),
+    [tags]
+  );
+
+  const countryOptions = useMemo(() =>
+    availableCountries.map(c => ({
+      value: c,
+      label: COUNTRY_NAMES[c] || c
+    })),
+    [availableCountries]
+  );
+
   return (
     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
@@ -41,7 +66,7 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
         <MultiSelectDropdown
           label="Firmentypen"
           placeholder="Alle Typen"
-          options={Object.entries(extendedCompanyTypeLabels).map(([value, label]) => ({ value, label }))}
+          options={companyTypeOptions}
           selectedValues={formData.filters?.companyTypes || []}
           onChange={(values) => onFilterChange('companyTypes', values)}
         />
@@ -49,7 +74,7 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
         <MultiSelectDropdown
           label="Branchen"
           placeholder="Alle Branchen"
-          options={availableIndustries.map(i => ({ value: i, label: i }))}
+          options={industryOptions}
           selectedValues={formData.filters?.industries || []}
           onChange={(values) => onFilterChange('industries', values)}
         />
@@ -57,7 +82,7 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
         <MultiSelectDropdown
           label="Tags"
           placeholder="Alle Tags"
-          options={tags.map(tag => ({ value: tag.id!, label: tag.name }))}
+          options={tagOptions}
           selectedValues={formData.filters?.tagIds || []}
           onChange={(values) => onFilterChange('tagIds', values)}
         />
@@ -65,10 +90,7 @@ export function CompanyFiltersSection({ formData, onFilterChange }: SectionProps
         <MultiSelectDropdown
           label="Länder"
           placeholder="Alle Länder"
-          options={availableCountries.map(c => ({
-            value: c,
-            label: COUNTRY_NAMES[c] || c
-          }))}
+          options={countryOptions}
           selectedValues={formData.filters?.countries || []}
           onChange={(values) => onFilterChange('countries', values)}
         />

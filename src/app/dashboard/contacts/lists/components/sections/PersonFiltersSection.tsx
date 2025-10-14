@@ -26,6 +26,15 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
     return Array.from(languages).sort();
   }, [contacts]);
 
+  // Memoize language options to prevent recreation on every render
+  const languageOptions = useMemo(() =>
+    availableLanguages.map(lang => ({
+      value: lang,
+      label: LANGUAGE_NAMES[lang] || lang
+    })),
+    [availableLanguages]
+  );
+
   return (
     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
@@ -61,10 +70,7 @@ export function PersonFiltersSection({ formData, onFilterChange }: SectionProps)
           <MultiSelectDropdown
             label="Bevorzugte Sprachen"
             placeholder="Alle Sprachen"
-            options={availableLanguages.map(lang => ({
-              value: lang,
-              label: LANGUAGE_NAMES[lang] || lang
-            }))}
+            options={languageOptions}
             selectedValues={formData.filters?.languages || []}
             onChange={(values) => onFilterChange('languages', values)}
           />

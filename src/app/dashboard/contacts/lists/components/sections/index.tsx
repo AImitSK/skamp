@@ -1,7 +1,7 @@
 // src/app/dashboard/contacts/lists/components/sections/index.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FunnelIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
@@ -98,20 +98,20 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
     }
   };
 
-  const handleFilterChange = (filterKey: keyof ListFilters, value: any) => {
+  const handleFilterChange = useCallback((filterKey: keyof ListFilters, value: any) => {
     setFormData(prev => ({ ...prev, filters: { ...prev.filters, [filterKey]: value } }));
-  };
+  }, []);
 
-  const handleFormDataChange = (updates: Partial<DistributionList>) => {
+  const handleFormDataChange = useCallback((updates: Partial<DistributionList>) => {
     setFormData(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const handleSaveContactSelection = (selectedIds: string[]) => {
+  const handleSaveContactSelection = useCallback((selectedIds: string[]) => {
     setFormData(prev => ({ ...prev, contactIds: selectedIds }));
     setIsContactSelectorOpen(false);
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validierung
@@ -154,7 +154,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, userId, organizationId, onSave, onClose]);
 
   return (
     <>
