@@ -288,11 +288,11 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
     <>
       <Dialog open={true} onClose={onClose} size="5xl">
         <form ref={formRef} onSubmit={handleSubmit}>
-          <DialogTitle className="px-6 py-4 text-lg font-semibold">
+          <DialogTitle>
             {list ? 'Liste bearbeiten' : 'Neue Liste erstellen'}
           </DialogTitle>
-          
-          <DialogBody className="p-6 max-h-[70vh] overflow-y-auto">
+
+          <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto overflow-x-hidden">
             {validationErrors.length > 0 && (
               <div className="mb-4">
                 <Alert type="error" message={validationErrors[0]} />
@@ -592,15 +592,23 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
               </div>
             </div>
           </DialogBody>
-          
-          <DialogActions className="px-6 py-4">
-            <Button plain onClick={onClose} className="whitespace-nowrap">
+
+          <DialogActions>
+            <Button
+              onClick={onClose}
+              className="border border-zinc-300 bg-white text-zinc-700
+                         hover:bg-zinc-50 font-medium whitespace-nowrap
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                         h-10 px-6 rounded-lg transition-colors"
+            >
               Abbrechen
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !formData.name}
-              color="primary"
+              className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+                         h-10 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Speichern...' : 'Speichern'}
             </Button>

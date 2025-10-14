@@ -675,14 +675,14 @@ export default function ListsPage() {
 
                       {/* Category */}
                       <div className="w-[15%]">
-                        <Badge color="purple" className="text-xs whitespace-nowrap">
+                        <Badge color="zinc" className="text-xs whitespace-nowrap">
                           {getCategoryLabel(list.category || 'custom')}
                         </Badge>
                       </div>
 
                       {/* Type */}
                       <div className="w-[10%]">
-                        <Badge color={list.type === 'dynamic' ? 'green' : 'zinc'} className="text-xs whitespace-nowrap">
+                        <Badge color={list.type === 'dynamic' ? 'green' : 'blue'} className="text-xs whitespace-nowrap">
                           {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
                         </Badge>
                       </div>

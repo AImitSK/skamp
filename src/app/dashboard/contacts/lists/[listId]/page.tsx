@@ -114,7 +114,7 @@ function InfoCard({
   return (
     <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
       <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-        <h3 className="text-lg font-semibold text-zinc-900">
+        <h3 className="text-base font-semibold text-zinc-900">
           {title}
         </h3>
       </div>
@@ -557,7 +557,7 @@ export default function ListDetailPage() {
             <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
               <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-zinc-900">
+                  <h3 className="text-base font-semibold text-zinc-900">
                     Enthaltene Kontakte
                   </h3>
                   <Badge color="blue">{list.contactCount || 0}</Badge>
@@ -628,26 +628,26 @@ export default function ListDetailPage() {
           {/* Sidebar mit Details */}
           <div className="space-y-6">
             {/* Listen-Details */}
-            <InfoCard title="Listen-Details" icon={ListBulletIcon}>
+            <InfoCard title="Details" icon={ListBulletIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <ListBulletIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
+                  <div>
                     <span className="text-gray-600">Typ:</span>
-                    <Badge color={list.type === 'dynamic' ? 'green' : 'zinc'} className="whitespace-nowrap">
+                    <span className="ml-2">
                       {list.type === 'dynamic' ? 'Dynamische Liste' : 'Statische Liste'}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <HashtagIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <div className="flex items-center gap-2">
+                  <div>
                     <span className="text-gray-600">Kategorie:</span>
-                    <Badge color="purple" className="whitespace-nowrap">{getCategoryLabel(list.category)}</Badge>
+                    <span className="ml-2">{getCategoryLabel(list.category)}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
@@ -655,7 +655,7 @@ export default function ListDetailPage() {
                     <span className="ml-2">{formatDate(list.createdAt)}</span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
