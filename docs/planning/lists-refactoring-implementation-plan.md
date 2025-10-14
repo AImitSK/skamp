@@ -1,6 +1,6 @@
 # Listen-Refactoring: Detaillierter Implementierungsplan
 
-**Projekt:** SKAMP Listen-Modul Production-Ready Refactoring
+**Projekt:** CeleroPress Listen-Modul Production-Ready Refactoring
 **Datum:** 2025-10-14
 **Geschätzter Aufwand:** 2-3 Tage (bei 6-8h/Tag)
 **Basiert auf:** CRM-Refactoring Best Practices
