@@ -17,9 +17,9 @@
 | **3** | Performance-Optimierung | 2h | Phase 2 | Low |
 | **4** | Testing | 4h | Phase 3 | Low |
 | **5** | Dokumentation | 3h | Phase 4 | Low |
-| **6** | Code Quality | 2h | Phase 5 | Low |
+| **6** | Production-Ready & Rollout | 4h | Phase 5 | Medium |
 
-**TOTAL:** 20 Stunden (~3 Tage à 7h)
+**TOTAL:** 22 Stunden (~3 Tage à 7-8h)
 
 ---
 
@@ -775,32 +775,451 @@ Erste ADRs werden bei architektonischen Änderungen erstellt.
 
 ---
 
-## PHASE 6: CODE QUALITY (2h)
+## PHASE 6: PRODUCTION-READY & ROLLOUT (4h)
 
-### 6.1 ESLint & TypeScript (1h)
+**Ziel:** Super professioneller Code ohne Rückstände alter Ideen und Implementierungen
+
+### 6.1 Code Quality & Cleanup (1.5h)
+
+#### 6.1.1 ESLint & TypeScript (0.5h)
 
 ```bash
-# ESLint prüfen
+# ESLint prüfen und automatisch fixen
 npx eslint src/app/dashboard/contacts/lists/ --fix
-npx eslint src/components/listen/ --fix
+npx eslint src/lib/hooks/useListsData.ts --fix
 
-# TypeScript prüfen
+# TypeScript Errors prüfen
 npx tsc --noEmit --project tsconfig.json
+
+# Erwartetes Ergebnis:
+# ✅ 0 Errors
+# ✅ 0 Warnings
 ```
 
-### 6.2 Cleanup (1h)
+#### 6.1.2 Console & Debug Cleanup (0.5h)
 
-- [ ] Console.logs entfernen
-- [ ] Unused Imports entfernen
-- [ ] Kommentare aktualisieren
-- [ ] TODOs bereinigen
+**Zu entfernen:**
+```bash
+# Console-Statements finden
+grep -r "console\." src/app/dashboard/contacts/lists/
+grep -r "console\." src/lib/hooks/useListsData.ts
+
+# Zu entfernen:
+# ❌ console.log()
+# ❌ console.error() (außer in catch-Blöcken)
+# ❌ console.warn()
+# ❌ console.debug()
+# ❌ debugger;
+```
+
+**Erlaubt:**
+```typescript
+// ✅ In catch-Blöcken für Production-Monitoring
+try {
+  // ...
+} catch (error) {
+  console.error('[Lists] Failed to load:', error); // OK
+  throw error;
+}
+```
+
+#### 6.1.3 Code Cleanup (0.5h)
+
+```bash
+# Unused Imports finden
+npx eslint src/app/dashboard/contacts/lists/ --rule "no-unused-vars: error"
+
+# Dead Code finden (unreachable code)
+npx eslint src/app/dashboard/contacts/lists/ --rule "no-unreachable: error"
+```
+
+**Checkliste:**
+- [ ] Alle unused Imports entfernt
+- [ ] Alle unused Variables entfernt
+- [ ] Dead Code entfernt (if (false), unreachable returns)
+- [ ] Alte auskommentierte Code-Blöcke entfernt
+- [ ] Alte TODO-Kommentare entfernt oder in Issues verschoben
+- [ ] Temporäre Test-Code entfernt
+
+**Beispiele:**
+
+```typescript
+// ❌ SCHLECHT: Alter auskommentierter Code
+// const oldFunction = () => {
+//   console.log('This was the old way');
+// };
+
+// ❌ SCHLECHT: Unused imports
+import { useMemo, useEffect, useState } from 'react'; // nur useMemo wird benutzt
+
+// ❌ SCHLECHT: Dead code
+if (false) {
+  doSomething(); // wird nie ausgeführt
+}
+
+// ❌ SCHLECHT: TODO ohne Kontext
+// TODO: fix this
+
+// ✅ GUT: Sauberer Code
+import { useMemo } from 'react';
+
+// ✅ GUT: TODO als Issue
+// Issue #123: Refactor filter logic for better performance
+```
+
+### 6.2 Deep Code Review (1h)
+
+#### 6.2.1 Consistency Check (0.3h)
+
+**Namenskonventionen prüfen:**
+```typescript
+// ✅ Komponenten: PascalCase
+export function ListModal() {}
+
+// ✅ Hooks: camelCase mit "use" Prefix
+export function useLists() {}
+
+// ✅ Functions: camelCase
+function handleDelete() {}
+
+// ✅ Constants: UPPER_SNAKE_CASE
+const DEFAULT_PAGE_SIZE = 25;
+
+// ✅ Types: PascalCase
+interface ListModalProps {}
+type ListCategory = 'media' | 'custom';
+```
+
+**Datei-Struktur prüfen:**
+```
+src/app/dashboard/contacts/lists/
+├── page.tsx                               # ✅ Hauptseite
+├── [listId]/page.tsx                      # ✅ Detailseite
+├── components/
+│   ├── shared/                            # ✅ Shared Components
+│   │   ├── Alert.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   └── EmptyState.tsx
+│   └── modals/
+│       └── ListModal/                     # ✅ Modal Sections
+│           ├── index.tsx
+│           ├── BasicInfoSection.tsx
+│           ├── CompanyFiltersSection.tsx
+│           ├── PersonFiltersSection.tsx
+│           ├── JournalistFiltersSection.tsx
+│           ├── PreviewSection.tsx
+│           ├── ContactSelectorSection.tsx
+│           └── types.ts
+└── __tests__/                             # ✅ Tests
+    └── integration/
+```
+
+#### 6.2.2 Design System Compliance (0.3h)
+
+**Prüfen:**
+```typescript
+// ✅ Box Headers: text-base (nicht text-lg)
+<h3 className="text-base font-semibold text-zinc-900">
+
+// ✅ Badges: Korrekte Farben
+<Badge color="zinc">Kategorie</Badge>      // Categories
+<Badge color="blue">Statisch</Badge>       // Static lists
+<Badge color="purple">Journalist</Badge>   // Journalists (ohne Icon)
+
+// ✅ Buttons: Design System Styling
+<Button color="zinc">Abbrechen</Button>
+<Button color="blue">Speichern</Button>
+
+// ✅ Dialogs: Korrekte Struktur
+<Dialog>
+  <DialogTitle>Titel</DialogTitle>
+  <DialogBody>Inhalt</DialogBody>
+  <DialogActions>Buttons</DialogActions>
+</Dialog>
+
+// ❌ VERBOTEN: Shadow-Effekte
+className="shadow-lg"  // Design Pattern verbietet shadows
+```
+
+**Durchsuchen:**
+```bash
+# Shadows finden (sollten nicht vorhanden sein)
+grep -r "shadow-" src/app/dashboard/contacts/lists/
+
+# Icons prüfen (nur /24/outline erlaubt)
+grep -r "from '@heroicons" src/app/dashboard/contacts/lists/
+# Erwartetes Format: '@heroicons/react/24/outline'
+```
+
+#### 6.2.3 Performance-Checks (0.2h)
+
+```typescript
+// ✅ Filter sind memoized
+const filteredLists = useMemo(() => { /* ... */ }, [lists, filters]);
+
+// ✅ Pagination ist memoized
+const paginatedLists = useMemo(() => { /* ... */ }, [filteredLists, page]);
+
+// ✅ React Query ist konfiguriert
+const { data: lists } = useLists(orgId);  // mit 5min staleTime
+
+// ❌ VERMEIDEN: Unnötige Re-Renders
+// Prüfen mit React DevTools Profiler
+```
+
+#### 6.2.4 Accessibility-Checks (0.2h)
+
+```typescript
+// ✅ Labels für Inputs
+<Label htmlFor="list-name">Listen-Name</Label>
+<Input id="list-name" />
+
+// ✅ ARIA-Attribute
+<button aria-label="Liste löschen">
+  <TrashIcon className="h-5 w-5" />
+</button>
+
+// ✅ Keyboard-Navigation
+<Dialog onClose={onClose}>  // ESC zum Schließen
+```
+
+**Testen:**
+- [ ] Tab-Navigation funktioniert
+- [ ] ESC schließt Modals
+- [ ] Enter submittet Forms
+- [ ] Alle Buttons haben aria-labels oder sichtbaren Text
+
+### 6.3 Final Review (0.5h)
+
+**Pre-Deployment Checklist:**
+
+```bash
+# 1. Tests laufen
+npm test
+# Erwartung: ✅ Alle Tests grün
+
+# 2. TypeScript kompiliert
+npx tsc --noEmit
+# Erwartung: ✅ 0 Errors
+
+# 3. ESLint ist sauber
+npx eslint src/app/dashboard/contacts/lists/ src/lib/hooks/useListsData.ts
+# Erwartung: ✅ 0 Errors, 0 Warnings
+
+# 4. Build funktioniert
+npm run build
+# Erwartung: ✅ Build erfolgreich
+
+# 5. Lighthouse Score prüfen (lokal)
+npm run dev
+# Öffne: http://localhost:3000/dashboard/contacts/lists
+# DevTools → Lighthouse → Run
+# Erwartung: ✅ Performance 90+, Accessibility 95+
+
+# 6. Bundle Size prüfen
+npm run build
+# Prüfe .next/static/ Größe
+# Erwartung: ✅ Keine massiven Größenzunahmen
+```
+
+**Code-Qualitäts-Checklist:**
+- [ ] ✅ Keine console.logs (außer in catch-Blöcken)
+- [ ] ✅ Keine TypeScript Errors
+- [ ] ✅ Keine ESLint Warnings
+- [ ] ✅ Keine unused Imports
+- [ ] ✅ Keine Dead Code
+- [ ] ✅ Keine TODOs ohne Kontext
+- [ ] ✅ Keine alten Kommentare
+- [ ] ✅ Design System eingehalten
+- [ ] ✅ Namenskonventionen konsistent
+- [ ] ✅ Alle Tests grün
+- [ ] ✅ Performance optimiert (memoization)
+- [ ] ✅ Accessibility geprüft
+
+**Git Commit:**
+```bash
+git add .
+git commit -m "chore(lists): Production-ready code cleanup
+
+- Removed all console.logs and debug code
+- Fixed ESLint and TypeScript errors
+- Removed unused imports and dead code
+- Ensured Design System compliance
+- Verified performance optimizations
+- Confirmed accessibility standards
+- All tests passing
+
+🚀 Production Ready"
+```
+
+### 6.4 Staging Deployment (0.5h)
+
+```bash
+# 1. Deploy zu Staging
+vercel deploy --target preview
+
+# 2. Warte auf Deployment
+# URL wird angezeigt: https://skamp-xyz123.vercel.app
+
+# 3. Smoke Tests auf Staging
+```
+
+**Manuell testen:**
+- [ ] Listen-Übersicht lädt
+- [ ] Neue Liste erstellen funktioniert (dynamisch)
+- [ ] Neue Liste erstellen funktioniert (statisch)
+- [ ] Filter funktionieren
+- [ ] Liste bearbeiten funktioniert
+- [ ] Liste löschen funktioniert
+- [ ] Export funktioniert
+- [ ] Detailseite lädt
+- [ ] Mobile-Ansicht funktioniert
+
+**Performance-Check:**
+```bash
+# Lighthouse auf Staging
+# DevTools → Lighthouse → Run auf Staging-URL
+```
+
+**Erwartung:**
+- ✅ Performance: 90+
+- ✅ Accessibility: 95+
+- ✅ Best Practices: 90+
+- ✅ SEO: 90+
+
+### 6.5 Production Deployment (0.5h)
+
+```bash
+# 1. Merge zu main
+git checkout main
+git merge feature/lists-refactoring-production
+git push origin main
+
+# 2. Deploy zu Production
+vercel deploy --prod
+
+# 3. Monitor für erste 30 Minuten
+vercel logs --follow --production
+
+# Prüfen auf:
+# ❌ Errors
+# ❌ 500er Responses
+# ❌ Lange Response Times
+```
+
+**Post-Deployment Verification:**
+```bash
+# 1. Production URL öffnen
+open https://skamp.vercel.app/dashboard/contacts/lists
+
+# 2. Schnelle Smoke Tests
+# - Listen laden
+# - Neue Liste erstellen
+# - Filter anwenden
+
+# 3. Monitoring prüfen
+# - Sentry: Keine neuen Errors
+# - Vercel Analytics: Response Times normal
+# - User Feedback: Keine Beschwerden
+```
+
+### 6.6 Monitoring & Rollback-Plan (1h)
+
+**Monitoring-Dashboard (erste 2 Stunden nach Deployment):**
+
+```bash
+# Sentry Errors prüfen
+# https://sentry.io/...
+# Erwartung: <5 neue Errors in 2h
+
+# Vercel Analytics prüfen
+vercel logs --production | grep "ERROR"
+# Erwartung: Keine kritischen Errors
+
+# Performance Metriken
+# p95 Response Time: <2s
+# Error Rate: <0.5%
+```
+
+**Success Criteria (nach 24h):**
+- [ ] ✅ Keine kritischen Sentry-Errors
+- [ ] ✅ Response Times stabil (<2s p95)
+- [ ] ✅ Keine User-Beschwerden
+- [ ] ✅ Conversion Rate stabil
+- [ ] ✅ All Features funktionieren
+
+**Rollback-Strategie (falls kritische Probleme auftreten):**
+
+**Scenario 1: Kritischer Bug (User können nicht arbeiten)**
+```bash
+# Schnell-Rollback (5 Minuten)
+vercel rollback
+# oder
+git revert HEAD~1
+git push
+vercel deploy --prod
+```
+
+**Scenario 2: Performance-Probleme**
+```bash
+# Feature-Flag deaktivieren (falls implementiert)
+# Environment Variable setzen:
+vercel env add USE_LEGACY_LISTS=true
+vercel deploy --prod
+
+# Oder: Staging-Branch deployen
+git checkout feature/lists-refactoring-production
+git revert HEAD~5  # Revert zu stabiler Version
+git push
+vercel deploy --prod
+```
+
+**Scenario 3: Partial Rollback**
+```bash
+# Nur spezifische Dateien zurücksetzen
+git checkout HEAD~1 -- src/app/dashboard/contacts/lists/page.tsx
+git commit -m "fix(lists): Rollback page.tsx to stable version"
+git push
+vercel deploy --prod
+```
 
 ### ✅ **Checkpoint 6:**
-- [ ] Keine ESLint-Errors
-- [ ] Keine TypeScript-Errors
-- [ ] Keine Console.logs
-- [ ] Keine unused Imports
-- [ ] Git Commit: `chore(lists): Code quality improvements`
+- [ ] Code Quality: 100% (keine Warnings, keine TODOs, keine console.logs)
+- [ ] Consistency: 100% (Namenskonventionen, Design System)
+- [ ] Tests: Alle grün
+- [ ] Staging: Erfolgreich getestet
+- [ ] Production: Deployed und stabil
+- [ ] Monitoring: Aktiv, keine kritischen Errors
+- [ ] Rollback-Plan: Dokumentiert und getestet
+- [ ] Git Commits: Sauber und aussagekräftig
+
+**Final Git Commit:**
+```bash
+git commit -m "feat(lists): Production-ready refactoring complete
+
+Phase 0: Setup & Backup ✅
+Phase 1: React Query Integration ✅
+Phase 2: Code-Separation ✅
+Phase 3: Performance-Optimierung ✅
+Phase 4: Testing ✅
+Phase 5: Dokumentation ✅
+Phase 6: Production-Ready & Rollout ✅
+
+🚀 Listen-Modul ist jetzt production-ready:
+- Super professioneller Code
+- Keine Rückstände alter Implementierungen
+- Vollständig getestet
+- Dokumentiert
+- Performance optimiert
+
+📊 Ergebnisse:
+- ESLint Errors: 0
+- TypeScript Errors: 0
+- Test Coverage: 60%+
+- Lighthouse Score: 90+
+- Code Quality: 100%
+"
+```
 
 ---
 
