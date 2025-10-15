@@ -310,14 +310,6 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
 
   useEffect(() => {
     if (publication) {
-      console.log('🔍 PublicationModal: Publication geladen:', {
-        id: publication.id,
-        title: publication.title,
-        publisherId: publication.publisherId,
-        publisherName: publication.publisherName,
-        isReference: publication.isReference
-      });
-
       // Lade bestehende Publikation
       setFormData({
         title: publication.title,
@@ -432,25 +424,12 @@ const [loadingPublishers, setLoadingPublishers] = useState(true);
         );
 
         if (publisherByName) {
-          console.log('🔧 Publisher-ID Fix: Gefunden nach Name:', {
-            oldId: currentPublisherId,
-            newId: publisherByName.id,
-            name: currentPublisherName
-          });
-
           setFormData(prev => ({
             ...prev,
             publisherId: publisherByName.id!,
             publisherName: publisherByName.name || publisherByName.companyName || ''
           }));
-        } else {
-          console.warn('⚠️ Publisher nicht gefunden:', {
-            suchName: currentPublisherName,
-            verfügbare: publishers.map(p => ({ id: p.id, name: p.name || p.companyName }))
-          });
         }
-      } else if (publisherById) {
-        console.log('✅ Publisher-ID gefunden:', publisherById.name || publisherById.companyName);
       }
     }
   }, [publication, publishers, formData.publisherId, formData.publisherName]);
@@ -462,13 +441,11 @@ const loadPublishers = async () => {
     setLoadingPublishers(true);
 
     const allCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
-    console.log('🔍 PublicationModal: Alle Companies geladen:', allCompanies.length, allCompanies.map(c => ({ id: c.id, name: c.name || c.companyName, type: c.type })));
 
     const publisherCompanies = allCompanies.filter(company =>
       ['publisher', 'media_house', 'partner'].includes(company.type)
     );
-    console.log('🔍 PublicationModal: Publisher Companies gefiltert:', publisherCompanies.length, publisherCompanies.map(c => ({ id: c.id, name: c.name || c.companyName, type: c.type })));
-    
+
     // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
     if (publisherCompanies.length === 0 && allCompanies.length > 0) {
       setPublishers(allCompanies);
