@@ -138,7 +138,7 @@ export default function PublicationDetailPage() {
   const publicationId = params.publicationId as string;
 
   // React Query Hooks
-  const { data: publication, isLoading, error: queryError, refetch } = usePublication(publicationId);
+  const { data: publication, isLoading, error: queryError, refetch } = usePublication(publicationId, currentOrganization?.id);
   const updatePublication = useUpdatePublication();
   const verifyPublication = useVerifyPublication();
 
@@ -788,18 +788,17 @@ export default function PublicationDetailPage() {
                     <div className="flex items-center justify-between">
                       <Text className="text-sm font-medium text-zinc-500">Prüffrequenz</Text>
                       <Text className="text-sm">
-                        {publication.monitoringConfig.checkFrequency === 'hourly' ? 'Stündlich' :
-                         publication.monitoringConfig.checkFrequency === 'every_6_hours' ? 'Alle 6 Stunden' :
-                         publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
-                         'Wöchentlich'}
+                        {publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
+                         publication.monitoringConfig.checkFrequency === 'twice_daily' ? 'Zweimal täglich' :
+                         'Täglich'}
                       </Text>
                     </div>
                   )}
 
-                  {publication.monitoringConfig.lastCheckedAt && (
+                  {publication.monitoringConfig.lastChecked && (
                     <div className="flex items-center justify-between">
                       <Text className="text-sm font-medium text-zinc-500">Zuletzt geprüft</Text>
-                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastCheckedAt)}</Text>
+                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastChecked)}</Text>
                     </div>
                   )}
 

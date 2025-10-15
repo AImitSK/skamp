@@ -29,7 +29,7 @@ const tabs: Tab[] = [
     name: "Publikationen",
     href: "/dashboard/library/publications",
     icon: NewspaperIcon,
-    description: "Zeitungen, Magazine & Online-Medien"
+    description: ""
   },
   {
     name: "Boilerplates",
@@ -103,7 +103,7 @@ export default function LibraryLayout({
                 href={tab.href}
                 className={classNames(
                   isActive
-                    ? "border-[#005fab] text-[#005fab]"
+                    ? "border-primary text-primary"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                   "group inline-flex items-center whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors duration-200"
                 )}
@@ -112,7 +112,7 @@ export default function LibraryLayout({
                 <Icon
                   className={classNames(
                     isActive
-                      ? "text-[#005fab]"
+                      ? "text-primary"
                       : "text-gray-400 group-hover:text-gray-500",
                     "-ml-0.5 mr-2 h-5 w-5"
                   )}
@@ -133,7 +133,7 @@ export default function LibraryLayout({
         <select
           id="tabs"
           name="tabs"
-          className="block w-full rounded-md border-gray-300 focus:border-[#005fab] focus:ring-[#005fab]"
+          className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary"
           value={currentTab?.href}
           onChange={(e) => {
             const tab = tabs.find(t => t.href === e.target.value);

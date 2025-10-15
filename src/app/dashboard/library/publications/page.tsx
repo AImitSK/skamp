@@ -17,7 +17,6 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SearchInput } from "@/components/ui/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
@@ -31,7 +30,6 @@ import {
   EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
-  DocumentDuplicateIcon,
   EyeIcon,
   CheckBadgeIcon,
   GlobeAltIcon,
@@ -39,69 +37,18 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon,
-  RssIcon
+  RssIcon,
+  MagnifyingGlassIcon
 } from "@heroicons/react/24/outline";
 import Papa from 'papaparse';
 import clsx from 'clsx';
-import { 
-  PUBLICATION_TYPE_LABELS, 
-  FREQUENCY_LABELS, 
-  PUBLICATIONS_PAGE_SIZE, 
-  ALERT_TIMEOUT_MS 
+import {
+  PUBLICATION_TYPE_LABELS,
+  FREQUENCY_LABELS,
+  PUBLICATIONS_PAGE_SIZE
 } from '@/lib/constants/library-publications-constants';
-import type { AlertProps, ConfirmDialogState } from '@/types/library-publications-ui';
-
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: AlertProps) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    success: InformationCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: ExclamationTriangleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+import type { ConfirmDialogState } from '@/types/library-publications-ui';
+import { toastService } from '@/lib/utils/toast';
 
 export default function PublicationsPage() {
   const { user } = useAuth();
@@ -119,8 +66,7 @@ export default function PublicationsPage() {
   const [showPublicationModal, setShowPublicationModal] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Pagination
@@ -132,12 +78,6 @@ export default function PublicationsPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedVerified, setSelectedVerified] = useState<string>('all');
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), ALERT_TIMEOUT_MS);
-  }, []);
 
   // Filtered Data
   const filteredPublications = useMemo(() => {
@@ -221,9 +161,9 @@ export default function PublicationsPage() {
             organizationId: currentOrganization?.id || '',
             userId: user?.uid || ''
           });
-          showAlert('success', `${title} wurde gelöscht`);
+          toastService.success(`${title} wurde gelöscht`);
         } catch (error) {
-          showAlert('error', 'Fehler beim Löschen');
+          toastService.error('Fehler beim Löschen');
         }
       }
     });
@@ -247,42 +187,19 @@ export default function PublicationsPage() {
               userId: user?.uid || ''
             })
           ));
-          showAlert('success', `${count} Publikationen gelöscht`);
+          toastService.success(`${count} Publikationen gelöscht`);
           setSelectedPubIds(new Set());
         } catch (error) {
-          showAlert('error', 'Fehler beim Löschen');
+          toastService.error('Fehler beim Löschen');
         }
       }
     });
   };
 
-  // Duplicate Function
-  const handleDuplicate = async (pub: Publication) => {
-    try {
-      const duplicated = {
-        ...pub,
-        title: `${pub.title} (Kopie)`,
-        verified: false,
-        status: 'inactive' as const
-      };
-      delete duplicated.id;
-
-      await createPublication.mutateAsync({
-        organizationId: currentOrganization?.id || '',
-        userId: user?.uid || '',
-        publicationData: duplicated
-      });
-
-      showAlert('success', 'Publikation dupliziert');
-    } catch (error) {
-      showAlert('error', 'Fehler beim Duplizieren');
-    }
-  };
-
   // Export Function
   const handleExport = () => {
     if (filteredPublications.length === 0) {
-      showAlert('warning', 'Keine Daten zum Exportieren');
+      toastService.warning('Keine Daten zum Exportieren');
       return;
     }
 
@@ -312,10 +229,10 @@ export default function PublicationsPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      showAlert('success', 'Export erfolgreich');
+
+      toastService.success('Export erfolgreich');
     } catch (error) {
-      showAlert('error', 'Export fehlgeschlagen');
+      toastService.error('Export fehlgeschlagen');
     }
   };
 
@@ -326,14 +243,14 @@ export default function PublicationsPage() {
     if (pub.metrics?.online?.monthlyUniqueVisitors) {
       return `${pub.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')} UV/Monat`;
     }
-    return "—";
+    return "";
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-500">Lade Publikationen...</p>
         </div>
       </div>
@@ -344,23 +261,27 @@ export default function PublicationsPage() {
 
   return (
     <div>
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
-
       {/* Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
-          {/* Search Input */}
-          <SearchInput
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Publikationen durchsuchen..."
-            className="flex-1"
-          />
+          {/* Search */}
+          <div className="flex-1 relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700 dark:text-zinc-400" aria-hidden="true" />
+            </div>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Suchen"
+              className={clsx(
+                'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
+                'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+                'dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-700',
+                'h-10'
+              )}
+            />
+          </div>
 
           {/* Filter Button */}
           <Popover className="relative">
@@ -372,16 +293,16 @@ export default function PublicationsPage() {
                 <>
                   <Popover.Button
                     className={clsx(
-                      'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 h-10 w-10',
+                      'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
                       activeFiltersCount > 0
-                        ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
+                        ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
                         : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                     )}
                     aria-label="Filter"
                   >
                     <FunnelIcon className="h-5 w-5" />
                     {activeFiltersCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#005fab] text-xs font-medium text-white">
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                         {activeFiltersCount}
                       </span>
                     )}
@@ -396,11 +317,108 @@ export default function PublicationsPage() {
                     leaveFrom="opacity-100 translate-y-0"
                     leaveTo="opacity-0 translate-y-1"
                   >
-                    <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
-                          {activeFiltersCount > 0 && (
+                    <Popover.Panel className="absolute right-0 z-10 mt-2 w-[600px] origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                      <div>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          {/* Type Filter */}
+                          <div className="mb-[10px]">
+                            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Typ
+                            </label>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {Object.entries(PUBLICATION_TYPE_LABELS).map(([value, label]) => (
+                                <label key={value} className="flex items-center gap-2 cursor-pointer">
+                                  <Checkbox
+                                    checked={selectedTypes.includes(value)}
+                                    onChange={(checked: boolean) => {
+                                      if (checked) {
+                                        setSelectedTypes([...selectedTypes, value]);
+                                      } else {
+                                        setSelectedTypes(selectedTypes.filter(t => t !== value));
+                                      }
+                                    }}
+                                  />
+                                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Language Filter */}
+                          <div className="mb-[10px]">
+                            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Sprachen
+                            </label>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {availableLanguages.length > 0 ? (
+                                availableLanguages.map(lang => (
+                                  <label key={lang} className="flex items-center gap-2 cursor-pointer">
+                                    <Checkbox
+                                      checked={selectedLanguages.includes(lang)}
+                                      onChange={(checked: boolean) => {
+                                        if (checked) {
+                                          setSelectedLanguages([...selectedLanguages, lang]);
+                                        } else {
+                                          setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{lang}</span>
+                                  </label>
+                                ))
+                              ) : (
+                                <span className="text-sm text-zinc-500">Keine Sprachen verfügbar</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Country Filter */}
+                          <div className="mb-[10px]">
+                            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Länder
+                            </label>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                              {availableCountries.length > 0 ? (
+                                availableCountries.map(country => (
+                                  <label key={country} className="flex items-center gap-2 cursor-pointer">
+                                    <Checkbox
+                                      checked={selectedCountries.includes(country)}
+                                      onChange={(checked: boolean) => {
+                                        if (checked) {
+                                          setSelectedCountries([...selectedCountries, country]);
+                                        } else {
+                                          setSelectedCountries(selectedCountries.filter(c => c !== country));
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{country}</span>
+                                  </label>
+                                ))
+                              ) : (
+                                <span className="text-sm text-zinc-500">Keine Länder verfügbar</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Verified Filter */}
+                          <div className="mb-[10px]">
+                            <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Status
+                            </label>
+                            <select
+                              value={selectedVerified}
+                              onChange={(e) => setSelectedVerified(e.target.value)}
+                              className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                            >
+                              <option value="all">Alle</option>
+                              <option value="verified">Verifiziert</option>
+                              <option value="unverified">Nicht verifiziert</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {activeFiltersCount > 0 && (
+                          <div className="flex justify-end pt-2 border-t border-zinc-200 dark:border-zinc-700">
                             <button
                               onClick={() => {
                                 setSelectedTypes([]);
@@ -408,110 +426,12 @@ export default function PublicationsPage() {
                                 setSelectedCountries([]);
                                 setSelectedVerified('all');
                               }}
-                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
                             >
                               Zurücksetzen
                             </button>
-                          )}
-                        </div>
-
-                        {/* Type Filter */}
-                        <div>
-                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                            Typ
-                          </label>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {Object.entries(PUBLICATION_TYPE_LABELS).map(([value, label]) => (
-                              <label key={value} className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedTypes.includes(value)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedTypes([...selectedTypes, value]);
-                                    } else {
-                                      setSelectedTypes(selectedTypes.filter(t => t !== value));
-                                    }
-                                  }}
-                                  className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
-                                />
-                                <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Language Filter */}
-                        {availableLanguages.length > 0 && (
-                          <div>
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                              Sprache
-                            </label>
-                            <div className="space-y-2 max-h-40 overflow-y-auto">
-                              {availableLanguages.map(lang => (
-                                <label key={lang} className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedLanguages.includes(lang)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedLanguages([...selectedLanguages, lang]);
-                                      } else {
-                                        setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
-                                      }
-                                    }}
-                                    className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
-                                  />
-                                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{lang}</span>
-                                </label>
-                              ))}
-                            </div>
                           </div>
                         )}
-
-                        {/* Country Filter */}
-                        {availableCountries.length > 0 && (
-                          <div>
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                              Land
-                            </label>
-                            <div className="space-y-2 max-h-40 overflow-y-auto">
-                              {availableCountries.map(country => (
-                                <label key={country} className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedCountries.includes(country)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedCountries([...selectedCountries, country]);
-                                      } else {
-                                        setSelectedCountries(selectedCountries.filter(c => c !== country));
-                                      }
-                                    }}
-                                    className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
-                                  />
-                                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{country}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Verified Filter */}
-                        <div>
-                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                            Status
-                          </label>
-                          <select
-                            value={selectedVerified}
-                            onChange={(e) => setSelectedVerified(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] dark:border-zinc-600 dark:bg-zinc-700"
-                          >
-                            <option value="all">Alle</option>
-                            <option value="verified">Verifiziert</option>
-                            <option value="unverified">Nicht verifiziert</option>
-                          </select>
-                        </div>
                       </div>
                     </Popover.Panel>
                   </Transition>
@@ -534,8 +454,8 @@ export default function PublicationsPage() {
 
           {/* Actions Button */}
           <Popover className="relative">
-            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+            <Popover.Button className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white p-2.5 text-zinc-700 hover:bg-zinc-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 h-10 w-10">
+              <EllipsisVerticalIcon className="h-5 w-5 stroke-[2.5]" />
             </Popover.Button>
             
             <Transition
@@ -587,7 +507,7 @@ export default function PublicationsPage() {
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
           {filteredPublications.length} von {publications.length} Publikationen
           {selectedPubIds.size > 0 && (
-            <span className="ml-2">• {selectedPubIds.size} ausgewählt</span>
+            <span className="ml-2">· {selectedPubIds.size} ausgewählt</span>
           )}
         </Text>
         
@@ -606,7 +526,7 @@ export default function PublicationsPage() {
         {/* Header */}
         <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
           <div className="flex items-center">
-            <div className="flex items-center w-[25%]">
+            <div className="flex items-center w-[30%]">
               <Checkbox
                 checked={paginatedPublications.length > 0 && paginatedPublications.every(pub => selectedPubIds.has(pub.id!))}
                 indeterminate={paginatedPublications.some(pub => selectedPubIds.has(pub.id!)) && !paginatedPublications.every(pub => selectedPubIds.has(pub.id!))}
@@ -616,19 +536,13 @@ export default function PublicationsPage() {
                 Titel
               </span>
             </div>
-            <div className="hidden md:block w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div className="hidden md:block w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               Verlag
             </div>
-            <div className="hidden lg:block w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Typ
-            </div>
-            <div className="hidden lg:block w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            <div className="hidden lg:block w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
               Metrik
             </div>
-            <div className="hidden xl:block w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Frequenz
-            </div>
-            <div className="hidden xl:block w-[5%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+            <div className="hidden xl:block w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
               RSS
             </div>
             <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -647,7 +561,8 @@ export default function PublicationsPage() {
             paginatedPublications.map((pub) => (
               <div key={pub.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                 <div className="flex items-center">
-                  <div className="flex items-center w-[25%]">
+                  {/* Titel Spalte */}
+                  <div className="flex items-center w-[30%]">
                     <Checkbox
                       checked={selectedPubIds.has(pub.id!)}
                       onChange={(checked: boolean) => {
@@ -661,18 +576,18 @@ export default function PublicationsPage() {
                       }}
                     />
                     <div className="ml-4 min-w-0 flex-1">
-                      <Link 
-                        href={`/dashboard/library/publications/${pub.id}`} 
-                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-[#005fab] truncate block"
+                      <Link
+                        href={`/dashboard/library/publications/${pub.id}`}
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
                       >
                         {pub.title}
                       </Link>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5">
                         {pub.verified && (
-                          <div className="flex items-center">
-                            <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-1" />
-                            <span className="text-xs text-green-600">Verifiziert</span>
-                          </div>
+                          <Badge color="green" className="text-xs inline-flex items-center gap-1">
+                            <CheckBadgeIcon className="h-3 w-3" />
+                            Verifiziert
+                          </Badge>
                         )}
                         {(pub as any)._isReference && (
                           <Badge color="blue" className="text-xs">
@@ -682,35 +597,49 @@ export default function PublicationsPage() {
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="hidden md:block w-[20%] text-sm text-zinc-600 dark:text-zinc-400">
-                    {pub.publisherName || "—"}
-                  </div>
-                  
-                  <div className="hidden lg:block w-[15%]">
-                    <Badge color="zinc" className="text-xs">
-                      {PUBLICATION_TYPE_LABELS[pub.type] || pub.type}
-                    </Badge>
-                  </div>
-                  
-                  <div className="hidden lg:block w-[15%] text-sm text-zinc-600 dark:text-zinc-400">
-                    {formatMetric(pub)}
-                  </div>
-                  
-                  <div className="hidden xl:block w-[10%] text-sm text-zinc-600 dark:text-zinc-400">
-                    {pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : "—"}
+
+                  {/* Verlag/Typ Spalte */}
+                  <div className="hidden md:block w-[25%]">
+                    <div>
+                      {pub.publisherId ? (
+                        <Link
+                          href={`/dashboard/contacts/crm/companies/${pub.publisherId}`}
+                          className="text-sm text-zinc-900 dark:text-white hover:text-primary font-medium"
+                        >
+                          {pub.publisherName || "—"}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          {pub.publisherName || "—"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5">
+                      <Badge color="zinc" className="text-xs">
+                        {PUBLICATION_TYPE_LABELS[pub.type] || pub.type}
+                      </Badge>
+                    </div>
                   </div>
 
-                  <div className="hidden xl:block w-[5%] text-center">
+                  {/* Metrik Spalte */}
+                  <div className="hidden lg:block w-[20%] text-sm text-zinc-600 dark:text-zinc-400">
+                    {formatMetric(pub)}
+                  </div>
+
+                  {/* RSS Spalte */}
+                  <div className="hidden xl:block w-[10%] text-center">
                     {pub.monitoringConfig?.isEnabled && pub.monitoringConfig?.rssFeedUrls && pub.monitoringConfig.rssFeedUrls.length > 0 ? (
                       <div className="inline-flex items-center justify-center">
                         <div className="w-2 h-2 bg-green-500 rounded-full" title={`${pub.monitoringConfig.rssFeedUrls.length} RSS Feed(s) aktiv`}></div>
                       </div>
                     ) : (
-                      <span className="text-zinc-400">—</span>
+                      <div className="inline-flex items-center justify-center">
+                        <div className="w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full" title="Kein RSS Feed"></div>
+                      </div>
                     )}
                   </div>
 
+                  {/* Zielgebiet Spalte */}
                   <div className="hidden xl:block flex-1">
                     <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
                       <GlobeAltIcon className="mr-1 h-4 w-4 text-zinc-400" />
@@ -720,11 +649,12 @@ export default function PublicationsPage() {
                       )}
                     </div>
                   </div>
-                  
+
+                  {/* Actions */}
                   <div className="ml-4">
                     <Dropdown>
-                      <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:hover:bg-zinc-700">
+                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-400 stroke-[2.5]" />
                       </DropdownButton>
                       <DropdownMenu anchor="bottom end">
                         <DropdownItem href={`/dashboard/library/publications/${pub.id}`}>
@@ -741,14 +671,6 @@ export default function PublicationsPage() {
                         >
                           <PencilIcon className="h-4 w-4 mr-2" />
                           Bearbeiten {(pub as any)?._isReference && '(Verweis)'}
-                        </DropdownItem>
-                        <DropdownItem
-                          onClick={() => handleDuplicate(pub)}
-                          disabled={(pub as any)?._isReference}
-                          className={(pub as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
-                        >
-                          <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-                          Duplizieren {(pub as any)?._isReference && '(Verweis)'}
                         </DropdownItem>
                         <DropdownDivider />
                         <DropdownItem
@@ -801,7 +723,7 @@ export default function PublicationsPage() {
                     key={i}
                     plain
                     onClick={() => setCurrentPage(i)}
-                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                    className={currentPage === i ? 'font-semibold text-primary' : ''}
                   >
                     {i}
                   </Button>
@@ -836,7 +758,7 @@ export default function PublicationsPage() {
           onSuccess={() => {
             setShowPublicationModal(false);
             setSelectedPublication(null);
-            showAlert('success', selectedPublication ? 'Publikation aktualisiert' : 'Publikation erstellt');
+            toastService.success(selectedPublication ? 'Publikation aktualisiert' : 'Publikation erstellt');
           }}
         />
       )}
@@ -847,7 +769,7 @@ export default function PublicationsPage() {
           onClose={() => setShowImportModal(false)}
           onImportSuccess={() => {
             setShowImportModal(false);
-            showAlert('success', 'Import erfolgreich abgeschlossen');
+            toastService.success('Import erfolgreich abgeschlossen');
           }}
         />
       )}

@@ -9,7 +9,7 @@ import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import type { Publication } from "@/types/library";
 import type { LanguageCode, CountryCode } from "@/types/international";
 import { publicationService } from "@/lib/firebase/library-service";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
@@ -357,116 +357,123 @@ export function PublicationModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
-      <div className="p-6">
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-4">
-          <h3 className="text-lg font-medium leading-6 text-zinc-900">
-            {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
-          </h3>
-        </div>
+      <DialogTitle>
+        {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
+      </DialogTitle>
 
+      <DialogBody className="p-0">
         {/* Tab Navigation */}
-        <div className="border-b border-zinc-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-zinc-200">
+          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             <button
+              type="button"
               onClick={() => setActiveTab('basic')}
               className={`${
                 activeTab === 'basic'
-                  ? 'border-[#005fab] text-[#005fab]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+              } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
               Grunddaten
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('metrics')}
               className={`${
                 activeTab === 'metrics'
-                  ? 'border-[#005fab] text-[#005fab]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+              } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
               Metriken
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('identifiers')}
               className={`${
                 activeTab === 'identifiers'
-                  ? 'border-[#005fab] text-[#005fab]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+              } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
               Identifikatoren & Links
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('monitoring')}
               className={`${
                 activeTab === 'monitoring'
-                  ? 'border-[#005fab] text-[#005fab]'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+              } group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap`}
             >
               Monitoring
             </button>
           </nav>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 h-[500px] overflow-y-auto overflow-x-hidden pr-4">
-          {/* Grunddaten Tab */}
-          {activeTab === 'basic' && (
-            <BasicInfoSection
-              formData={formData}
-              setFormData={setFormData}
-              publishers={publishers}
-              loadingPublishers={loadingPublishers}
-              onPublisherChange={handlePublisherChange}
-            />
-          )}
+        {/* Tab Content with fixed height */}
+        <div className="px-6 py-6 h-[500px] overflow-y-auto">
+          <div className="space-y-6">
+            {/* Grunddaten Tab */}
+            {activeTab === 'basic' && (
+              <BasicInfoSection
+                formData={formData}
+                setFormData={setFormData}
+                publishers={publishers}
+                loadingPublishers={loadingPublishers}
+                onPublisherChange={handlePublisherChange}
+              />
+            )}
 
-          {/* Metriken Tab */}
-          {activeTab === 'metrics' && (
-            <MetricsSection
-              formData={formData}
-              metrics={metrics}
-              setMetrics={setMetrics}
-            />
-          )}
+            {/* Metriken Tab */}
+            {activeTab === 'metrics' && (
+              <MetricsSection
+                formData={formData}
+                metrics={metrics}
+                setMetrics={setMetrics}
+              />
+            )}
 
-          {/* Identifikatoren Tab */}
-          {activeTab === 'identifiers' && (
-            <IdentifiersSection
-              identifiers={identifiers}
-              setIdentifiers={setIdentifiers}
-              socialMediaUrls={socialMediaUrls}
-              setSocialMediaUrls={setSocialMediaUrls}
-            />
-          )}
+            {/* Identifikatoren Tab */}
+            {activeTab === 'identifiers' && (
+              <IdentifiersSection
+                identifiers={identifiers}
+                setIdentifiers={setIdentifiers}
+                socialMediaUrls={socialMediaUrls}
+                setSocialMediaUrls={setSocialMediaUrls}
+              />
+            )}
 
-          {/* Monitoring Tab */}
-          {activeTab === 'monitoring' && (
-            <MonitoringSection
-              monitoringConfig={monitoringConfig}
-              setMonitoringConfig={setMonitoringConfig}
-              rssDetectionStatus={rssDetectionStatus}
-              setRssDetectionStatus={setRssDetectionStatus}
-              detectedFeeds={detectedFeeds}
-              setDetectedFeeds={setDetectedFeeds}
-              showManualRssInput={showManualRssInput}
-              setShowManualRssInput={setShowManualRssInput}
-              publication={publication}
-            />
-          )}
-
-          {/* Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t">
-            <Button plain onClick={onClose}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={loading || !formData.publisherId} className="px-6 py-2">
-              {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
-            </Button>
+            {/* Monitoring Tab */}
+            {activeTab === 'monitoring' && (
+              <MonitoringSection
+                monitoringConfig={monitoringConfig}
+                setMonitoringConfig={setMonitoringConfig}
+                rssDetectionStatus={rssDetectionStatus}
+                setRssDetectionStatus={setRssDetectionStatus}
+                detectedFeeds={detectedFeeds}
+                setDetectedFeeds={setDetectedFeeds}
+                showManualRssInput={showManualRssInput}
+                setShowManualRssInput={setShowManualRssInput}
+                publication={publication}
+              />
+            )}
           </div>
-        </form>
-      </div>
+        </div>
+      </DialogBody>
+
+      <DialogActions>
+        <Button plain onClick={onClose}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || !formData.publisherId}
+        >
+          {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

@@ -15,14 +15,15 @@ export function usePublications(organizationId: string | undefined) {
   });
 }
 
-export function usePublication(id: string | undefined) {
+export function usePublication(id: string | undefined, organizationId: string | undefined) {
   return useQuery({
-    queryKey: ['publication', id],
+    queryKey: ['publication', id, organizationId],
     queryFn: () => {
       if (!id) throw new Error('No ID');
-      return publicationService.getById(id);
+      if (!organizationId) throw new Error('No organization');
+      return publicationService.getById(id, organizationId);
     },
-    enabled: !!id,
+    enabled: !!id && !!organizationId,
     staleTime: 5 * 60 * 1000,
   });
 }
