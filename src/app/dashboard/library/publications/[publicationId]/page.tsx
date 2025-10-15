@@ -647,124 +647,6 @@ export default function PublicationDetailPage() {
               </InfoCard>
             )}
 
-            {/* Monitoring-Konfiguration */}
-            {publication.monitoringConfig && (
-              <InfoCard title="Monitoring-Konfiguration" icon={ClockIcon}>
-                <div className="space-y-4">
-                  {/* Status */}
-                  <div className="flex items-center justify-between">
-                    <Text className="text-sm font-medium text-zinc-500">Status</Text>
-                    <Badge color={publication.monitoringConfig.isEnabled ? "green" : "zinc"}>
-                      {publication.monitoringConfig.isEnabled ? 'Aktiviert' : 'Deaktiviert'}
-                    </Badge>
-                  </div>
-
-                  {publication.monitoringConfig.checkFrequency && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Prüffrequenz</Text>
-                      <Text className="text-sm">
-                        {publication.monitoringConfig.checkFrequency === 'hourly' ? 'Stündlich' :
-                         publication.monitoringConfig.checkFrequency === 'every_6_hours' ? 'Alle 6 Stunden' :
-                         publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
-                         'Wöchentlich'}
-                      </Text>
-                    </div>
-                  )}
-
-                  {publication.monitoringConfig.lastCheckedAt && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Zuletzt geprüft</Text>
-                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastCheckedAt)}</Text>
-                    </div>
-                  )}
-
-                  {/* URLs */}
-                  {publication.monitoringConfig.rssFeedUrls && publication.monitoringConfig.rssFeedUrls.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        RSS Feeds ({publication.monitoringConfig.rssFeedUrls.length})
-                      </Text>
-                      <div className="space-y-1">
-                        {publication.monitoringConfig.rssFeedUrls.map((url, index) => (
-                          <a
-                            key={index}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-[#005fab] hover:text-[#004a8c] hover:underline block"
-                          >
-                            {url}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Keywords */}
-                  {publication.monitoringConfig.keywords && publication.monitoringConfig.keywords.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Keywords ({publication.monitoringConfig.keywords.length})
-                      </Text>
-                      <div className="flex flex-wrap gap-2">
-                        {publication.monitoringConfig.keywords.map((keyword, index) => (
-                          <Badge key={index} color="blue">
-                            {keyword}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {publication.monitoringConfig.totalArticlesFound !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Gefundene Artikel</Text>
-                      <Text className="text-lg font-semibold">
-                        {publication.monitoringConfig.totalArticlesFound.toLocaleString('de-DE')}
-                      </Text>
-                    </div>
-                  )}
-                </div>
-              </InfoCard>
-            )}
-
-            {/* Themenschwerpunkte & Branchen */}
-            {((publication.focusAreas && publication.focusAreas.length > 0) ||
-              (publication.targetIndustries && publication.targetIndustries.length > 0)) && (
-              <InfoCard title="Themenschwerpunkte & Branchen" icon={HashtagIcon}>
-                <div className="space-y-4">
-                  {publication.focusAreas && publication.focusAreas.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Themenschwerpunkte ({publication.focusAreas.length})
-                      </Text>
-                      <div className="flex flex-wrap gap-2">
-                        {publication.focusAreas.map((area, index) => (
-                          <Badge key={index} color="blue">
-                            {area}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {publication.targetIndustries && publication.targetIndustries.length > 0 && (
-                    <div>
-                      <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Zielbranchen ({publication.targetIndustries.length})
-                      </Text>
-                      <div className="flex flex-wrap gap-2">
-                        {publication.targetIndustries.map((industry, index) => (
-                          <Badge key={index} color="zinc">
-                            {industry}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </InfoCard>
-            )}
-
             {/* Notes */}
             <InfoCard
               title="Notizen"
@@ -866,6 +748,124 @@ export default function PublicationDetailPage() {
                 )}
               </div>
             </InfoCard>
+
+            {/* Themenschwerpunkte & Branchen */}
+            {((publication.focusAreas && publication.focusAreas.length > 0) ||
+              (publication.targetIndustries && publication.targetIndustries.length > 0)) && (
+              <InfoCard title="Themenschwerpunkte & Branchen" icon={HashtagIcon}>
+                <div className="space-y-4">
+                  {publication.focusAreas && publication.focusAreas.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">
+                        Themenschwerpunkte ({publication.focusAreas.length})
+                      </Text>
+                      <div className="flex flex-wrap gap-2">
+                        {publication.focusAreas.map((area, index) => (
+                          <Badge key={index} color="blue">
+                            {area}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {publication.targetIndustries && publication.targetIndustries.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">
+                        Zielbranchen ({publication.targetIndustries.length})
+                      </Text>
+                      <div className="flex flex-wrap gap-2">
+                        {publication.targetIndustries.map((industry, index) => (
+                          <Badge key={index} color="zinc">
+                            {industry}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
+
+            {/* Monitoring-Konfiguration */}
+            {publication.monitoringConfig && (
+              <InfoCard title="Monitoring-Konfiguration" icon={ClockIcon}>
+                <div className="space-y-4">
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <Text className="text-sm font-medium text-zinc-500">Status</Text>
+                    <Badge color={publication.monitoringConfig.isEnabled ? "green" : "zinc"}>
+                      {publication.monitoringConfig.isEnabled ? 'Aktiviert' : 'Deaktiviert'}
+                    </Badge>
+                  </div>
+
+                  {publication.monitoringConfig.checkFrequency && (
+                    <div className="flex items-center justify-between">
+                      <Text className="text-sm font-medium text-zinc-500">Prüffrequenz</Text>
+                      <Text className="text-sm">
+                        {publication.monitoringConfig.checkFrequency === 'hourly' ? 'Stündlich' :
+                         publication.monitoringConfig.checkFrequency === 'every_6_hours' ? 'Alle 6 Stunden' :
+                         publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
+                         'Wöchentlich'}
+                      </Text>
+                    </div>
+                  )}
+
+                  {publication.monitoringConfig.lastCheckedAt && (
+                    <div className="flex items-center justify-between">
+                      <Text className="text-sm font-medium text-zinc-500">Zuletzt geprüft</Text>
+                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastCheckedAt)}</Text>
+                    </div>
+                  )}
+
+                  {/* URLs */}
+                  {publication.monitoringConfig.rssFeedUrls && publication.monitoringConfig.rssFeedUrls.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">
+                        RSS Feeds ({publication.monitoringConfig.rssFeedUrls.length})
+                      </Text>
+                      <div className="space-y-1">
+                        {publication.monitoringConfig.rssFeedUrls.map((url, index) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-[#005fab] hover:text-[#004a8c] hover:underline block"
+                          >
+                            {url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Keywords */}
+                  {publication.monitoringConfig.keywords && publication.monitoringConfig.keywords.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">
+                        Keywords ({publication.monitoringConfig.keywords.length})
+                      </Text>
+                      <div className="flex flex-wrap gap-2">
+                        {publication.monitoringConfig.keywords.map((keyword, index) => (
+                          <Badge key={index} color="blue">
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {publication.monitoringConfig.totalArticlesFound !== undefined && (
+                    <div className="flex items-center justify-between">
+                      <Text className="text-sm font-medium text-zinc-500">Gefundene Artikel</Text>
+                      <Text className="text-lg font-semibold">
+                        {publication.monitoringConfig.totalArticlesFound.toLocaleString('de-DE')}
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
 
             {/* Editions */}
             {publication.editions && publication.editions.length > 0 && (
