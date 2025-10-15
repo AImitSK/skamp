@@ -197,7 +197,8 @@ focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
 
 ```tsx
 // ❌ Keine Schatten (außer Dropdowns)
-className="shadow-md shadow-lg"
+className="shadow-md"
+className="shadow-lg"
 
 // ❌ Keine /20/solid Icons
 import { Icon } from "@heroicons/react/20/solid"
