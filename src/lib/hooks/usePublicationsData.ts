@@ -54,7 +54,7 @@ export function useUpdatePublication() {
       });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['publication', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['publication', variables.id, variables.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['publications', variables.organizationId] });
     },
   });
@@ -85,7 +85,7 @@ export function useVerifyPublication() {
       });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['publication', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['publication', variables.id, variables.organizationId] });
       queryClient.invalidateQueries({ queryKey: ['publications', variables.organizationId] });
     },
   });

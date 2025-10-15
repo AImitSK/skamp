@@ -8,11 +8,11 @@ import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import type { Publication } from "@/types/library";
 import type { LanguageCode, CountryCode } from "@/types/international";
-import { publicationService } from "@/lib/firebase/library-service";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
+import { useCreatePublication, useUpdatePublication } from '@/lib/hooks/usePublicationsData';
 
 import { BasicInfoSection } from './BasicInfoSection';
 import { MetricsSection } from './MetricsSection';
@@ -60,6 +60,10 @@ export function PublicationModal({
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
+
+  // React Query Mutations
+  const createPublication = useCreatePublication();
+  const updatePublication = useUpdatePublication();
 
   // State
   const [loading, setLoading] = useState(false);
@@ -323,14 +327,17 @@ export function PublicationModal({
       });
 
       if (publication?.id) {
-        await publicationService.update(publication.id, dataToSave, {
+        await updatePublication.mutateAsync({
+          id: publication.id,
           organizationId: currentOrganization?.id || '',
-          userId: user?.uid || ''
+          userId: user?.uid || '',
+          publicationData: dataToSave
         });
       } else {
-        await publicationService.create(dataToSave, {
+        await createPublication.mutateAsync({
           organizationId: currentOrganization?.id || '',
-          userId: user?.uid || ''
+          userId: user?.uid || '',
+          publicationData: dataToSave
         });
       }
 
@@ -351,6 +358,8 @@ export function PublicationModal({
     publication,
     currentOrganization,
     autoGlobalMode,
+    createPublication,
+    updatePublication,
     onSuccess,
     onClose
   ]);
