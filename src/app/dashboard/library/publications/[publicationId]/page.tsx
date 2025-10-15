@@ -854,15 +854,6 @@ export default function PublicationDetailPage() {
                       </div>
                     </div>
                   )}
-
-                  {publication.monitoringConfig.totalArticlesFound !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Gefundene Artikel</Text>
-                      <Text className="text-lg font-semibold">
-                        {publication.monitoringConfig.totalArticlesFound.toLocaleString('de-DE')}
-                      </Text>
-                    </div>
-                  )}
                 </div>
               </InfoCard>
             )}
