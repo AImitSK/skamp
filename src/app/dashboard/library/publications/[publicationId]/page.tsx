@@ -566,6 +566,38 @@ export default function PublicationDetailPage() {
                             </Text>
                           </div>
                         )}
+                        {publication.metrics.print.subscriptionPriceMonthly && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Abo-Preis Monat</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.print.subscriptionPriceMonthly.amount.toFixed(2)} {publication.metrics.print.subscriptionPriceMonthly.currency}
+                            </Text>
+                          </div>
+                        )}
+                        {publication.metrics.print.subscriptionPriceAnnual && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Abo-Preis Jahr</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.print.subscriptionPriceAnnual.amount.toFixed(2)} {publication.metrics.print.subscriptionPriceAnnual.currency}
+                            </Text>
+                          </div>
+                        )}
+                        {publication.metrics.print.paperFormat && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Format</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.print.paperFormat}
+                            </Text>
+                          </div>
+                        )}
+                        {publication.metrics.print.pageCount && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Seitenanzahl</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.print.pageCount}
+                            </Text>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -623,7 +655,47 @@ export default function PublicationDetailPage() {
                             </Text>
                           </div>
                         )}
+                        {publication.metrics.online.newsletterSubscribers && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Newsletter-Abonnenten</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.online.newsletterSubscribers.toLocaleString('de-DE')}
+                            </Text>
+                          </div>
+                        )}
+                        {publication.metrics.online.domainAuthority && (
+                          <div>
+                            <Text className="text-sm font-medium text-zinc-500">Domain Authority</Text>
+                            <Text className="text-lg font-semibold">
+                              {publication.metrics.online.domainAuthority}/100
+                            </Text>
+                          </div>
+                        )}
                       </div>
+                      {(publication.metrics.online.hasPaywall !== undefined || publication.metrics.online.hasMobileApp !== undefined) && (
+                        <div className="flex items-center gap-6 pt-4 border-t border-zinc-200 mt-4">
+                          {publication.metrics.online.hasPaywall !== undefined && (
+                            <div className="flex items-center gap-2">
+                              {publication.metrics.online.hasPaywall ? (
+                                <CheckIcon className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <XMarkIcon className="h-5 w-5 text-zinc-400" />
+                              )}
+                              <Text className="text-sm">Paywall</Text>
+                            </div>
+                          )}
+                          {publication.metrics.online.hasMobileApp !== undefined && (
+                            <div className="flex items-center gap-2">
+                              {publication.metrics.online.hasMobileApp ? (
+                                <CheckIcon className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <XMarkIcon className="h-5 w-5 text-zinc-400" />
+                              )}
+                              <Text className="text-sm">Mobile App</Text>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
