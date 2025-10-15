@@ -386,7 +386,15 @@ export default function CompanyDetailPage() {
   if (error) {
     return (
       <div className="p-8">
-        <Alert type="error" title="Fehler" message={error} />
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+          <div className="flex items-center gap-3">
+            <InformationCircleIcon className="h-5 w-5 text-red-600 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-red-900">Fehler</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
+        </div>
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/contacts/crm/')}
