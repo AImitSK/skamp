@@ -91,12 +91,43 @@ const frequencyLabels: Record<string, string> = {
 // Helper functions
 const formatDate = (timestamp: any) => {
   if (!timestamp) return 'Unbekannt';
-  const date = timestamp.toDate ? timestamp.toDate() : timestamp;
-  return new Date(date).toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
+
+  try {
+    let date: Date;
+
+    // Firestore Timestamp
+    if (timestamp?.toDate && typeof timestamp.toDate === 'function') {
+      date = timestamp.toDate();
+    }
+    // Already a Date object
+    else if (timestamp instanceof Date) {
+      date = timestamp;
+    }
+    // String or number timestamp
+    else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      date = new Date(timestamp);
+    }
+    // Firestore Timestamp object with seconds
+    else if (timestamp?.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    }
+    else {
+      return 'Unbekannt';
+    }
+
+    // Validate date
+    if (isNaN(date.getTime())) {
+      return 'Unbekannt';
+    }
+
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch (error) {
+    return 'Unbekannt';
+  }
 };
 
 // InfoCard Component
@@ -714,11 +745,11 @@ export default function PublicationDetailPage() {
                 </div>
                 {publication.verified && publication.verifiedAt && (
                   <div className="pt-3 border-t border-zinc-200">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      <div>
-                        <Text className="font-medium">Verifiziert</Text>
-                        <Text className="text-xs text-green-600">{formatDate(publication.verifiedAt)}</Text>
+                    <div className="flex items-center gap-3">
+                      <CheckBadgeIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <div className="flex items-baseline gap-2">
+                        <Text className="font-medium text-green-700">Verifiziert</Text>
+                        <Text className="text-sm text-zinc-600">· {formatDate(publication.verifiedAt)}</Text>
                       </div>
                     </div>
                   </div>
