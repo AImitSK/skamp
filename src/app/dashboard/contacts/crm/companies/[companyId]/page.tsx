@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
+import { toastService } from '@/lib/utils/toast';
 import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
@@ -39,9 +40,6 @@ import {
   ListBulletIcon,
   LinkIcon,
   NewspaperIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
   CurrencyEuroIcon,
   ScaleIcon,
@@ -159,39 +157,6 @@ const SocialMediaIcon = ({ platform }: { platform: string }) => {
   return icons[platform] || <LinkIcon className="h-5 w-5" />;
 };
 
-// Alert Component
-function Alert({
-  type = 'info',
-  title
-}: {
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    success: CheckCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: XCircleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-3 ${styles[type].split(' ')[0]}`}>
-      <div className="flex items-center gap-3">
-        <Icon className={`h-5 w-5 shrink-0 ${type === 'success' ? 'text-green-400' : type === 'info' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        <p className={`text-sm font-medium ${styles[type].split(' ')[1]} truncate`}>{title}</p>
-      </div>
-    </div>
-  );
-}
 
 // InfoCard Component
 function InfoCard({
@@ -244,16 +209,9 @@ export default function CompanyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string } | null>(null);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string) => {
-    setAlert({ type, title });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Notes Management
   const handleEditNotes = () => {
@@ -279,9 +237,9 @@ export default function CompanyDetailPage() {
 
       setCompany({ ...company, internalNotes: notesValue });
       setEditingNotes(false);
-      showAlert('success', 'Notiz gespeichert');
+      toastService.success('Notiz gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Speichern der Notiz');
+      toastService.error('Fehler beim Speichern der Notiz');
     } finally {
       setSavingNotes(false);
     }
@@ -581,12 +539,6 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
-        {/* Alert */}
-        {alert && (
-          <div className="mb-6">
-            <Alert type={alert.type} title={alert.title} />
-          </div>
-        )}
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1074,7 +1026,7 @@ export default function CompanyDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            showAlert('success', 'Firma erfolgreich aktualisiert');
+            toastService.success('Firma erfolgreich aktualisiert');
           }}
         />
       )}
