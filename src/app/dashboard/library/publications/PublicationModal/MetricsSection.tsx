@@ -1,6 +1,7 @@
 // src/app/dashboard/library/publications/PublicationModal/MetricsSection.tsx
 "use client";
 
+import { memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { PublicationFormData, MetricsState } from './types';
@@ -13,7 +14,7 @@ interface MetricsSectionProps {
   setMetrics: (metrics: MetricsState) => void;
 }
 
-export function MetricsSection({ formData, metrics, setMetrics }: MetricsSectionProps) {
+export const MetricsSection = memo(function MetricsSection({ formData, metrics, setMetrics }: MetricsSectionProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -293,4 +294,4 @@ export function MetricsSection({ formData, metrics, setMetrics }: MetricsSection
       )}
     </div>
   );
-}
+});

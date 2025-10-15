@@ -1,6 +1,7 @@
 // src/app/dashboard/library/publications/PublicationModal/MonitoringSection.tsx
 "use client";
 
+import { memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ interface MonitoringSectionProps {
   publication?: Publication;
 }
 
-export function MonitoringSection({
+export const MonitoringSection = memo(function MonitoringSection({
   monitoringConfig,
   setMonitoringConfig,
   rssDetectionStatus,
@@ -342,4 +343,4 @@ export function MonitoringSection({
       )}
     </div>
   );
-}
+});

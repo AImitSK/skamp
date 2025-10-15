@@ -1,6 +1,7 @@
 // src/app/dashboard/library/publications/PublicationModal/BasicInfoSection.tsx
 "use client";
 
+import { memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
@@ -60,7 +61,7 @@ function Alert({
   );
 }
 
-export function BasicInfoSection({
+export const BasicInfoSection = memo(function BasicInfoSection({
   formData,
   setFormData,
   publishers,
@@ -279,4 +280,4 @@ export function BasicInfoSection({
       </div>
     </div>
   );
-}
+});

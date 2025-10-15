@@ -1,7 +1,7 @@
 // src/app/dashboard/library/publications/PublicationModal/index.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -79,10 +79,36 @@ export function PublicationModal({
   const [detectedFeeds, setDetectedFeeds] = useState<string[]>([]);
   const [showManualRssInput, setShowManualRssInput] = useState(false);
 
+  // Load publishers function with useCallback
+  const loadPublishers = useCallback(async () => {
+    if (!user || !currentOrganization?.id) return;
+
+    try {
+      setLoadingPublishers(true);
+
+      const allCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
+
+      const publisherCompanies = allCompanies.filter(company =>
+        ['publisher', 'media_house', 'partner'].includes(company.type)
+      );
+
+      // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
+      if (publisherCompanies.length === 0 && allCompanies.length > 0) {
+        setPublishers(allCompanies);
+      } else {
+        setPublishers(publisherCompanies);
+      }
+    } catch (error) {
+      // Silent error
+    } finally {
+      setLoadingPublishers(false);
+    }
+  }, [user, currentOrganization?.id]);
+
   // Load publishers on mount
   useEffect(() => {
     loadPublishers();
-  }, [user]);
+  }, [loadPublishers]);
 
   // Set preselected publisher if provided
   useEffect(() => {
@@ -224,41 +250,17 @@ export function PublicationModal({
     }
   }, [publication, publishers, formData.publisherId, formData.publisherName]);
 
-  const loadPublishers = async () => {
-    if (!user || !currentOrganization?.id) return;
-
-    try {
-      setLoadingPublishers(true);
-
-      const allCompanies = await companiesEnhancedService.getAll(currentOrganization.id);
-
-      const publisherCompanies = allCompanies.filter(company =>
-        ['publisher', 'media_house', 'partner'].includes(company.type)
-      );
-
-      // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
-      if (publisherCompanies.length === 0 && allCompanies.length > 0) {
-        setPublishers(allCompanies);
-      } else {
-        setPublishers(publisherCompanies);
-      }
-    } catch (error) {
-      // Silent error
-    } finally {
-      setLoadingPublishers(false);
-    }
-  };
-
-  const handlePublisherChange = (publisherId: string) => {
+  // Handler functions with useCallback for performance
+  const handlePublisherChange = useCallback((publisherId: string) => {
     const selectedPublisher = publishers.find(p => p.id === publisherId);
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       publisherId,
       publisherName: selectedPublisher?.name || ''
-    });
-  };
+    }));
+  }, [publishers]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -339,7 +341,19 @@ export function PublicationModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    user,
+    formData,
+    metrics,
+    identifiers,
+    socialMediaUrls,
+    monitoringConfig,
+    publication,
+    currentOrganization,
+    autoGlobalMode,
+    onSuccess,
+    onClose
+  ]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">

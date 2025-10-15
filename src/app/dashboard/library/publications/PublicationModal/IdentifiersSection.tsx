@@ -1,6 +1,7 @@
 // src/app/dashboard/library/publications/PublicationModal/IdentifiersSection.tsx
 "use client";
 
+import { memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ interface IdentifiersSectionProps {
   setSocialMediaUrls: (urls: SocialMediaItem[]) => void;
 }
 
-export function IdentifiersSection({
+export const IdentifiersSection = memo(function IdentifiersSection({
   identifiers,
   setIdentifiers,
   socialMediaUrls,
@@ -136,4 +137,4 @@ export function IdentifiersSection({
       </div>
     </div>
   );
-}
+});
