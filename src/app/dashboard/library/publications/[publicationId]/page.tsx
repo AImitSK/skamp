@@ -328,13 +328,13 @@ export default function PublicationDetailPage() {
               <div className="flex items-center gap-3">
                 <Heading>{publication.title}</Heading>
                 <div className="flex items-center gap-2">
-                  <Badge color="blue" className="whitespace-nowrap">
+                  <Badge color="zinc" className="whitespace-nowrap">
                     {publicationTypeLabels[publication.type] || publication.type}
                   </Badge>
-                  <Badge color="blue" className="whitespace-nowrap">
+                  <Badge color="zinc" className="whitespace-nowrap">
                     {formatLabels[publication.format] || publication.format}
                   </Badge>
-                  <Badge color="blue" className="whitespace-nowrap">
+                  <Badge color="zinc" className="whitespace-nowrap">
                     {scopeLabels[publication.geographicScope]}
                   </Badge>
                   {publication.status === 'active' ? (
@@ -487,7 +487,7 @@ export default function PublicationDetailPage() {
                 {/* Geography */}
                 <div>
                   <Text className="text-sm font-semibold text-zinc-700 mb-3">Sprachen & Zielländer</Text>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
                     {publication.languages && publication.languages.length > 0 && (
                       <div>
                         <Text className="text-sm text-zinc-500 mb-1">
@@ -509,7 +509,7 @@ export default function PublicationDetailPage() {
                         </Text>
                         <div className="flex flex-wrap gap-1">
                           {publication.geographicTargets.slice(0, 2).map((country) => (
-                            <Badge key={country} color="green" className="text-xs">
+                            <Badge key={country} color="blue" className="text-xs">
                               {country}
                             </Badge>
                           ))}
@@ -743,13 +743,15 @@ export default function PublicationDetailPage() {
                     <span className="ml-2">{formatDate(publication.updatedAt)}</span>
                   </div>
                 </div>
-                {publication.verified && publication.verifiedAt && (
+                {publication.verified && (
                   <div className="pt-3 border-t border-zinc-200">
                     <div className="flex items-center gap-3">
                       <CheckBadgeIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
                       <div className="flex items-baseline gap-2">
                         <Text className="font-medium text-green-700">Verifiziert</Text>
-                        <Text className="text-sm text-zinc-600">· {formatDate(publication.verifiedAt)}</Text>
+                        {publication.verifiedAt && formatDate(publication.verifiedAt) !== 'Unbekannt' && (
+                          <Text className="text-sm text-zinc-600">· {formatDate(publication.verifiedAt)}</Text>
+                        )}
                       </div>
                     </div>
                   </div>
