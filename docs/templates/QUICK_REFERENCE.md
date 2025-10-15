@@ -315,6 +315,42 @@ const handleDelete = async (id: string) => {
 
 ---
 
+## 📨 Toast-Benachrichtigungen ⭐ NEU
+
+**Zentraler Service (react-hot-toast) - Kompakt, eine Zeile:**
+
+```typescript
+import { toastService } from '@/lib/utils/toast';
+
+// Success (3s)
+toastService.success('Liste erstellt');
+toastService.success('Änderungen gespeichert');
+
+// Error (5s)
+toastService.error('Fehler beim Löschen');
+
+// Info/Warning (4s)
+toastService.info('Hinweis beachten');
+toastService.warning('Achtung: Daten unvollständig');
+
+// Promise (automatisch Loading → Success/Error)
+await toastService.promise(
+  apiCall(),
+  {
+    loading: 'Lädt...',
+    success: 'Fertig!',
+    error: 'Fehler!',
+  }
+);
+```
+
+**Nicht mehr verwenden:**
+- ❌ Inline `showAlert` Funktionen
+- ❌ Lokaler Alert-State
+- ❌ Custom `useAlert` Hook
+
+---
+
 ## ⚡ Performance Patterns
 
 ```typescript
