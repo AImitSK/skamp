@@ -93,6 +93,11 @@ src/app/dashboard/contacts/crm/
 - **React Query (@tanstack/react-query)** - Data Caching & Server State
 - **React Context** - Auth & Organization State
 
+### UI Notifications
+- **react-hot-toast** - Zentraler Toast-Service für konsistente Benachrichtigungen
+- **toastService** (`@/lib/utils/toast`) - Wrapper mit CI-Styling
+- Ersetzt inline Alert-Komponenten für bessere UX und weniger Code-Duplikation
+
 ### Performance
 - **React Virtual (@tanstack/react-virtual)** - Virtualisierung für lange Listen
 - **useMemo/useCallback** - Optimierte Renders
@@ -193,6 +198,44 @@ const newContact = await contactsEnhancedService.create(organizationId, contactD
 ```
 
 Siehe auch: [Contacts API Documentation](./api/contacts.md)
+
+---
+
+## 📨 Toast-Benachrichtigungen
+
+Das CRM-Modul nutzt den zentralen Toast-Service (`@/lib/utils/toast`) für alle Benachrichtigungen.
+
+### Verwendung
+
+```typescript
+import { toastService } from '@/lib/utils/toast';
+
+// Success-Benachrichtigung (3s Dauer)
+toastService.success('Firma erfolgreich gespeichert');
+toastService.success('Kontakt erfolgreich aktualisiert');
+
+// Error-Benachrichtigung (5s Dauer)
+toastService.error('Fehler beim Löschen');
+toastService.error('Fehler beim Speichern der Notiz');
+
+// Info-Benachrichtigung (4s Dauer)
+toastService.info('Hinweis: Daten werden aktualisiert');
+
+// Warning-Benachrichtigung (4s Dauer)
+toastService.warning('Achtung: Felder unvollständig');
+```
+
+### Vorteile gegenüber inline Alerts
+
+- ✅ **Konsistentes Design**: Einheitliche Toasts im gesamten CRM
+- ✅ **Weniger Code**: Kein lokaler Alert-State mehr nötig (~35 Zeilen pro Page gespart)
+- ✅ **Bessere UX**: Non-blocking Toasts in top-right Position
+- ✅ **Automatisches Schließen**: Zeitbasiert nach 3-5 Sekunden
+- ✅ **Zentrale Wartung**: Ein Service für alle Module
+
+**Migration abgeschlossen:**
+- ✅ `contacts/[contactId]/page.tsx` - 3 showAlert() Aufrufe ersetzt
+- ✅ `companies/[companyId]/page.tsx` - 3 showAlert() Aufrufe ersetzt
 
 ---
 

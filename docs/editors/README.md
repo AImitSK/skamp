@@ -255,6 +255,11 @@ UI Update
 - **React Testing Library** - Component Testing
 - **@testing-library/react-hooks** - Hook Testing
 
+### UI Notifications
+- **react-hot-toast** - Zentraler Toast-Service für konsistente Benachrichtigungen
+- **toastService** (`@/lib/utils/toast`) - Wrapper mit CI-Styling
+- Ersetzt inline Alert-Komponenten für bessere UX und weniger Code-Duplikation
+
 ---
 
 ## API-Dokumentation
@@ -287,6 +292,54 @@ Siehe: [Komponenten-Dokumentation](./components/README.md)
 
 **Page Components:**
 - **EditorsPage** - Main Component mit Search, Filter, Table, Pagination
+
+---
+
+## 📨 Toast-Benachrichtigungen
+
+Das Editors-Modul nutzt den zentralen Toast-Service (`@/lib/utils/toast`) für alle Benachrichtigungen.
+
+### Verwendung
+
+```typescript
+import { toastService } from '@/lib/utils/toast';
+
+// Success-Benachrichtigung (3s Dauer)
+toastService.success('Multi-Entity Verweis erfolgreich importiert');
+toastService.success('Verweis erfolgreich entfernt');
+
+// Error-Benachrichtigung (5s Dauer)
+toastService.error('Import fehlgeschlagen');
+toastService.error('Verweis konnte nicht entfernt werden');
+
+// Info-Benachrichtigung (4s Dauer)
+toastService.info('SuperAdmin: Journalisten direkt im CRM verwalten - kein Verweis nötig');
+
+// Warning-Benachrichtigung (4s Dauer)
+toastService.warning('Importieren von Journalisten nur mit Premium-Abo verfügbar');
+```
+
+### Aktuelle Toast-Verwendungen im Modul
+
+Das Editors-Modul nutzt Toasts für folgende Szenarien:
+
+1. **Import-Erfolg**: Multi-Entity Reference erfolgreich erstellt
+2. **Import-Fehler**: Fehler beim Erstellen der References
+3. **Remove-Erfolg**: Reference erfolgreich entfernt
+4. **Remove-Fehler**: Fehler beim Entfernen
+5. **SuperAdmin-Info**: Hinweis für SuperAdmin-Organisationen
+6. **Subscription-Warning**: Premium-Feature-Hinweis für Free-Plan
+
+### Vorteile gegenüber inline Alerts
+
+- ✅ **Konsistentes Design**: Einheitliche Toasts im gesamten Editors-Modul
+- ✅ **Weniger Code**: Kein lokaler Alert-State mehr nötig
+- ✅ **Bessere UX**: Non-blocking Toasts in top-right Position
+- ✅ **Automatisches Schließen**: Zeitbasiert nach 3-5 Sekunden
+- ✅ **Zentrale Wartung**: Ein Service für alle Module
+
+**Migration abgeschlossen:**
+- ✅ `editors/page.tsx` - Alle 6 Benachrichtigungen nutzen toastService
 
 ---
 
