@@ -27,18 +27,14 @@ import {
   GlobeAltIcon,
   BuildingOfficeIcon,
   CalendarIcon,
-  DocumentTextIcon,
   ChartBarIcon,
   UserGroupIcon,
-  NewspaperIcon,
   LinkIcon,
   ClockIcon,
-  CurrencyEuroIcon,
   ExclamationTriangleIcon,
   ArrowTrendingUpIcon,
   DocumentDuplicateIcon,
-  ShareIcon,
-  PlusIcon
+  ShareIcon
 } from "@heroicons/react/24/outline";
 
 // Type Labels
@@ -87,7 +83,7 @@ const scopeLabels: Record<string, string> = {
 };
 
 // Tab Types
-type TabType = 'overview' | 'metrics' | 'editorial' | 'advertisements' | 'identifiers';
+type TabType = 'overview' | 'metrics' | 'monitoring' | 'identifiers';
 
 // Stat Card Component
 function StatCard({ 
@@ -189,28 +185,6 @@ export default function PublicationDetailPage() {
       if (!pubData) {
         router.push('/dashboard/library/publications');
         return;
-      }
-
-      // 🆕 Phase 5: Console Log für monitoringConfig Testing
-      console.log('📰 Publication geladen:', {
-        id: pubData.id,
-        name: pubData.name,
-        hasMonitoringConfig: !!pubData.monitoringConfig,
-        monitoringConfig: pubData.monitoringConfig
-      });
-
-      // 🔍 Detaillierter Log für RSS Feed Testing
-      if (pubData.monitoringConfig) {
-        console.log('📡 Monitoring Config Details:', {
-          isEnabled: pubData.monitoringConfig.isEnabled,
-          websiteUrl: pubData.monitoringConfig.websiteUrl,
-          rssFeedUrls: pubData.monitoringConfig.rssFeedUrls,
-          rssFeedCount: pubData.monitoringConfig.rssFeedUrls?.length || 0,
-          autoDetectRss: pubData.monitoringConfig.autoDetectRss,
-          checkFrequency: pubData.monitoringConfig.checkFrequency,
-          keywords: pubData.monitoringConfig.keywords,
-          totalArticlesFound: pubData.monitoringConfig.totalArticlesFound
-        });
       }
 
       setPublication(pubData);
@@ -488,24 +462,14 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               Metriken & Zahlen
             </button>
             <button
-              onClick={() => setActiveTab('editorial')}
+              onClick={() => setActiveTab('monitoring')}
               className={`${
-                activeTab === 'editorial'
+                activeTab === 'monitoring'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
-              Redaktion & Einreichung
-            </button>
-            <button
-              onClick={() => setActiveTab('advertisements')}
-              className={`${
-                activeTab === 'advertisements'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-            >
-              Werbemittel ({advertisements.length})
+              Monitoring
             </button>
             <button
               onClick={() => setActiveTab('identifiers')}
@@ -841,257 +805,142 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
           </div>
         )}
 
-        {/* Editorial Tab */}
-        {activeTab === 'editorial' && (
+        {/* Monitoring Tab */}
+        {activeTab === 'monitoring' && (
           <div className="space-y-6">
-            {/* Editorial Contacts */}
-            {publication.editorialContacts && publication.editorialContacts.length > 0 && (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Redaktionelle Kontakte
-                </h3>
-                <div className="space-y-4">
-                  {publication.editorialContacts.map((contact, index) => (
-                    <div key={index} className="border-l-2 border-zinc-200 dark:border-zinc-700 pl-4">
-                      <div className="font-medium text-zinc-900 dark:text-white">
-                        {contact.role}
-                      </div>
-                      {contact.name && (
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {contact.name}
-                        </div>
-                      )}
-                      <div className="mt-1 flex items-center gap-4 text-sm">
-                        {contact.email && (
-                          <a href={`mailto:${contact.email}`} className="text-primary hover:text-primary-hover">
-                            {contact.email}
-                          </a>
-                        )}
-                        {contact.phone && (
-                          <a href={`tel:${contact.phone}`} className="text-primary hover:text-primary-hover">
-                            {contact.phone}
-                          </a>
-                        )}
-                      </div>
-                      {contact.topics && contact.topics.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {contact.topics.map((topic, i) => (
-                            <Badge key={i} color="zinc" className="text-xs">
-                              {topic}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Submission Guidelines */}
-            {publication.submissionGuidelines && (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Einreichungsrichtlinien
-                </h3>
-                
-                {publication.submissionGuidelines.generalInfo && (
-                  <div className="mb-4">
-                    <Text className="text-sm whitespace-pre-wrap">
-                      {publication.submissionGuidelines.generalInfo}
-                    </Text>
-                  </div>
-                )}
-
-                <dl className="space-y-3">
-                  {publication.submissionGuidelines.preferredSubmissionMethod && (
-                    <InfoRow label="Bevorzugte Einreichungsmethode" value={
-                      publication.submissionGuidelines.preferredSubmissionMethod === 'email' ? 'E-Mail' :
-                      publication.submissionGuidelines.preferredSubmissionMethod === 'portal' ? 'Online-Portal' :
-                      'Telefon'
-                    } />
-                  )}
-                  
-                  {publication.submissionGuidelines.submissionEmail && (
-                    <InfoRow label="Einreichungs-E-Mail" value={
-                      <a href={`mailto:${publication.submissionGuidelines.submissionEmail}`} className="text-primary hover:text-primary-hover">
-                        {publication.submissionGuidelines.submissionEmail}
-                      </a>
-                    } />
-                  )}
-                  
-                  {publication.submissionGuidelines.submissionPortalUrl && (
-                    <InfoRow label="Online-Portal" value={
-                      <a href={publication.submissionGuidelines.submissionPortalUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover">
-                        Portal öffnen
-                      </a>
-                    } />
-                  )}
-                </dl>
-
-                {publication.submissionGuidelines.preferredFormats && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Bevorzugte Formate
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {publication.submissionGuidelines.preferredFormats.map((format) => (
-                        <Badge key={format} color="blue">
-                          {format === 'press_release' ? 'Pressemitteilung' :
-                           format === 'exclusive' ? 'Exklusiv' :
-                           format === 'opinion' ? 'Meinung/Kommentar' :
-                           format === 'study' ? 'Studie' :
-                           'Interview'}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {publication.submissionGuidelines.deadlines && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                      Deadlines
-                    </h4>
-                    <Text className="text-sm">
-                      {publication.submissionGuidelines.deadlines.type === 'daily' ? 'Täglich' :
-                       publication.submissionGuidelines.deadlines.type === 'weekly' ? 'Wöchentlich' :
-                       publication.submissionGuidelines.deadlines.type === 'monthly' ? 'Monatlich' :
-                       'Ausgabenspezifisch'}
-                      {publication.submissionGuidelines.deadlines.time && ` um ${publication.submissionGuidelines.deadlines.time} Uhr`}
-                      {publication.submissionGuidelines.deadlines.daysBeforePublication && `, ${publication.submissionGuidelines.deadlines.daysBeforePublication} Tage vor Veröffentlichung`}
-                    </Text>
-                    {publication.submissionGuidelines.deadlines.notes && (
-                      <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                        {publication.submissionGuidelines.deadlines.notes}
-                      </Text>
+            {publication.monitoringConfig ? (
+              <>
+                {/* Status */}
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
+                    Monitoring-Status
+                  </h3>
+                  <dl className="space-y-3">
+                    <InfoRow
+                      label="Status"
+                      value={
+                        publication.monitoringConfig.isEnabled ? (
+                          <Badge color="green">Aktiviert</Badge>
+                        ) : (
+                          <Badge color="zinc">Deaktiviert</Badge>
+                        )
+                      }
+                    />
+                    {publication.monitoringConfig.checkFrequency && (
+                      <InfoRow
+                        label="Prüffrequenz"
+                        value={
+                          publication.monitoringConfig.checkFrequency === 'hourly' ? 'Stündlich' :
+                          publication.monitoringConfig.checkFrequency === 'every_6_hours' ? 'Alle 6 Stunden' :
+                          publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
+                          'Wöchentlich'
+                        }
+                      />
                     )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Sections */}
-            {publication.sections && publication.sections.length > 0 && (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Ressorts & Rubriken
-                </h3>
-                <div className="space-y-3">
-                  {publication.sections.map((section, index) => (
-                    <div key={index} className="pb-3 border-b border-zinc-200 dark:border-zinc-700 last:border-0">
-                      <div className="font-medium text-zinc-900 dark:text-white">
-                        {section.name}
-                      </div>
-                      {section.description && (
-                        <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                          {section.description}
-                        </Text>
-                      )}
-                      {section.focusTopics && section.focusTopics.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {section.focusTopics.map((topic, i) => (
-                            <Badge key={i} color="zinc" className="text-xs">
-                              {topic}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    {publication.monitoringConfig.lastCheckedAt && (
+                      <InfoRow
+                        label="Zuletzt geprüft"
+                        value={formatDate(publication.monitoringConfig.lastCheckedAt)}
+                      />
+                    )}
+                  </dl>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Advertisements Tab */}
-        {activeTab === 'advertisements' && (
-          <div>
-            {advertisements.length === 0 ? (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-12 text-center">
-                <NewspaperIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
-                <Text className="text-lg font-medium text-zinc-900 dark:text-white mb-2">
-                  Keine Werbemittel vorhanden
-                </Text>
-                <Text className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                  Für diese Publikation wurden noch keine Werbemittel angelegt.
-                </Text>
-                <Link href={`/dashboard/library/advertisements/new?publicationId=${publicationId}`}>
-                  <Button className="px-6 py-2">
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Werbemittel erstellen
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-                  <thead className="bg-zinc-50 dark:bg-zinc-800/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Typ
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Preis
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="relative px-6 py-3">
-                        <span className="sr-only">Aktionen</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {advertisements.map((ad) => (
-                      <tr key={ad.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            href={`/dashboard/library/advertisements/${ad.id}`}
-                            className="text-sm font-medium text-zinc-900 dark:text-white hover:text-primary"
-                          >
-                            {ad.name}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge color="zinc">
-                            {ad.type === 'display_banner' ? 'Display Banner' :
-                             ad.type === 'print_ad' ? 'Print-Anzeige' :
-                             ad.type === 'native_ad' ? 'Native Ad' :
-                             ad.type}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
-                          {ad.pricing.listPrice.amount.toFixed(2)} {ad.pricing.listPrice.currency}
-                          <span className="text-zinc-500 dark:text-zinc-400 ml-1">
-                            / {ad.pricing.priceUnit || 'Einheit'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {ad.status === 'active' ? (
-                            <Badge color="green">Aktiv</Badge>
-                          ) : ad.status === 'draft' ? (
-                            <Badge color="zinc">Entwurf</Badge>
-                          ) : (
-                            <Badge color="yellow">Pausiert</Badge>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link
-                            href={`/dashboard/library/advertisements/${ad.id}`}
+                {/* URLs */}
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
+                    Überwachte URLs
+                  </h3>
+                  <dl className="space-y-3">
+                    {publication.monitoringConfig.websiteUrl && (
+                      <InfoRow
+                        label="Website"
+                        value={
+                          <a
+                            href={publication.monitoringConfig.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-primary hover:text-primary-hover"
                           >
-                            Anzeigen
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            {publication.monitoringConfig.websiteUrl}
+                          </a>
+                        }
+                      />
+                    )}
+                    {publication.monitoringConfig.rssFeedUrls && publication.monitoringConfig.rssFeedUrls.length > 0 && (
+                      <div className="py-3">
+                        <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                          RSS Feeds ({publication.monitoringConfig.rssFeedUrls.length})
+                        </dt>
+                        <dd className="space-y-1">
+                          {publication.monitoringConfig.rssFeedUrls.map((url, index) => (
+                            <div key={index}>
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary hover:text-primary-hover"
+                              >
+                                {url}
+                              </a>
+                            </div>
+                          ))}
+                        </dd>
+                      </div>
+                    )}
+                    <InfoRow
+                      label="Auto-Detect RSS"
+                      value={
+                        publication.monitoringConfig.autoDetectRss ? (
+                          <Badge color="green">Aktiviert</Badge>
+                        ) : (
+                          <Badge color="zinc">Deaktiviert</Badge>
+                        )
+                      }
+                    />
+                  </dl>
+                </div>
+
+                {/* Keywords & Stats */}
+                {(publication.monitoringConfig.keywords || publication.monitoringConfig.totalArticlesFound !== undefined) && (
+                  <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
+                      Keywords & Statistiken
+                    </h3>
+                    <dl className="space-y-3">
+                      {publication.monitoringConfig.keywords && publication.monitoringConfig.keywords.length > 0 && (
+                        <div className="py-3">
+                          <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                            Keywords ({publication.monitoringConfig.keywords.length})
+                          </dt>
+                          <dd className="flex flex-wrap gap-2">
+                            {publication.monitoringConfig.keywords.map((keyword, index) => (
+                              <Badge key={index} color="blue">
+                                {keyword}
+                              </Badge>
+                            ))}
+                          </dd>
+                        </div>
+                      )}
+                      {publication.monitoringConfig.totalArticlesFound !== undefined && (
+                        <InfoRow
+                          label="Gefundene Artikel"
+                          value={publication.monitoringConfig.totalArticlesFound.toLocaleString('de-DE')}
+                        />
+                      )}
+                    </dl>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-12 text-center">
+                <ChartBarIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
+                <Text className="text-lg font-medium text-zinc-900 dark:text-white mb-2">
+                  Kein Monitoring konfiguriert
+                </Text>
+                <Text className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Für diese Publikation wurde noch kein Monitoring eingerichtet.
+                </Text>
               </div>
             )}
           </div>
