@@ -13,7 +13,6 @@ import {
   useCompanies,
   usePublications
 } from '@/lib/hooks/useEditorsData';
-import Alert from './components/shared/Alert';
 import EmptyState from './components/shared/EmptyState';
 import { toastService } from '@/lib/utils/toast';
 
@@ -654,7 +653,7 @@ export default function EditorsPage() {
         return newSet;
       });
     }
-  }, [isSuperAdmin, subscription, currentOrganization, user, createReference, showAlert]);
+  }, [isSuperAdmin, subscription, currentOrganization, user, createReference]);
 
   // Reference Remove Handler
   const handleRemoveReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
@@ -678,7 +677,7 @@ export default function EditorsPage() {
         return newSet;
       });
     }
-  }, [currentOrganization, user, removeReference, showAlert]);
+  }, [currentOrganization, user, removeReference]);
 
   // Toggle-Funktion für Import/Remove
   const handleToggleReference = useCallback(async (journalist: JournalistDatabaseEntry) => {
