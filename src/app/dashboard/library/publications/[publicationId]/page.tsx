@@ -297,13 +297,13 @@ export default function PublicationDetailPage() {
               <div className="flex items-center gap-3">
                 <Heading>{publication.title}</Heading>
                 <div className="flex items-center gap-2">
-                  <Badge color="zinc" className="whitespace-nowrap">
+                  <Badge color="blue" className="whitespace-nowrap">
                     {publicationTypeLabels[publication.type] || publication.type}
                   </Badge>
                   <Badge color="blue" className="whitespace-nowrap">
                     {formatLabels[publication.format] || publication.format}
                   </Badge>
-                  <Badge color="green" className="whitespace-nowrap">
+                  <Badge color="blue" className="whitespace-nowrap">
                     {scopeLabels[publication.geographicScope]}
                   </Badge>
                   {publication.status === 'active' ? (
@@ -313,35 +313,12 @@ export default function PublicationDetailPage() {
                   ) : (
                     <Badge color="red" className="whitespace-nowrap">Eingestellt</Badge>
                   )}
-                  {publication.verified && (
-                    <Badge color="green" className="whitespace-nowrap flex items-center gap-1">
-                      <CheckBadgeIcon className="h-3 w-3" />
-                      Verifiziert
-                    </Badge>
-                  )}
                 </div>
               </div>
 
               {publication.subtitle && (
                 <Text className="text-zinc-600 mt-1">{publication.subtitle}</Text>
               )}
-
-              {/* Publisher & Erstellt */}
-              <div className="mt-3 flex items-center gap-4 text-sm text-zinc-600">
-                {publisher && (
-                  <Link
-                    href={`/dashboard/contacts/crm/companies/${publisher.id}`}
-                    className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
-                  >
-                    <BuildingOfficeIcon className="h-4 w-4" />
-                    {publisher.name}
-                  </Link>
-                )}
-                <span className="flex items-center gap-1">
-                  <CalendarIcon className="h-4 w-4 text-zinc-400" />
-                  Erstellt am {formatDate(publication.createdAt)}
-                </span>
-              </div>
             </div>
 
             {/* Action Buttons */}
@@ -388,6 +365,20 @@ export default function PublicationDetailPage() {
             {/* Allgemeine Informationen */}
             <InfoCard title="Allgemeine Informationen" icon={NewspaperIcon}>
               <div className="space-y-6">
+                {/* Publisher */}
+                {publisher && (
+                  <div>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Verlag</Text>
+                    <Link
+                      href={`/dashboard/contacts/crm/companies/${publisher.id}`}
+                      className="flex items-center gap-2 text-primary hover:text-primary-hover hover:underline"
+                    >
+                      <BuildingOfficeIcon className="h-5 w-5 text-zinc-400" />
+                      {publisher.name}
+                    </Link>
+                  </div>
+                )}
+
                 {/* URLs */}
                 {(publication.websiteUrl || publication.rssFeedUrl) && (
                   <div>
