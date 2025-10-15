@@ -713,9 +713,106 @@ import Alert from './components/shared/Alert';
 )}
 ```
 
+**Alternative: Zentraler Toast-Service (Empfohlen) ⭐**
+
+**WICHTIG:** Anstatt inline Alert-Komponenten zu verwenden, sollte der zentrale Toast-Service genutzt werden!
+
+**Vorteile:**
+- ✅ **Weniger Code**: Kein lokaler Alert-State mehr nötig (~35 Zeilen pro Page gespart)
+- ✅ **Bessere UX**: Non-blocking Toasts in top-right Position
+- ✅ **Konsistentes Design**: Einheitliche Benachrichtigungen im gesamten Modul
+- ✅ **Automatisches Schließen**: Zeitbasiert nach 3-5 Sekunden
+- ✅ **Zentrale Wartung**: Ein Service für alle Module
+
+**Service-Location:** `src/lib/utils/toast.ts`
+
+**Verwendung in page.tsx:**
+```typescript
+import { toastService } from '@/lib/utils/toast';
+
+// Kein Alert-State mehr nötig!
+// const [alert, setAlert] = useState(null);
+// const showAlert = useCallback((type, title, message) => { ... }, []);
+
+// Direkt Toast aufrufen
+const handleCreate = async (data: any) => {
+  try {
+    await create[Module].mutateAsync({ organizationId, [module]Data: data });
+    toastService.success('Erfolgreich erstellt');
+  } catch (error) {
+    toastService.error('Fehler beim Erstellen');
+  }
+};
+
+const handleUpdate = async (id: string, data: any) => {
+  try {
+    await update[Module].mutateAsync({ id, organizationId, [module]Data: data });
+    toastService.success('Erfolgreich aktualisiert');
+  } catch (error) {
+    toastService.error('Fehler beim Aktualisieren');
+  }
+};
+
+const handleDelete = async (id: string) => {
+  try {
+    await delete[Module].mutateAsync({ id, organizationId });
+    toastService.success('Erfolgreich gelöscht');
+  } catch (error) {
+    toastService.error('Fehler beim Löschen');
+  }
+};
+```
+
+**Alle Toast-Typen:**
+```typescript
+// Success (3s Dauer)
+toastService.success('Erfolgreich gespeichert');
+
+// Error (5s Dauer)
+toastService.error('Fehler beim Speichern');
+
+// Info (4s Dauer)
+toastService.info('Hinweis: Daten werden aktualisiert');
+
+// Warning (4s Dauer)
+toastService.warning('Achtung: Felder unvollständig');
+
+// Loading Toast (bis dismissed)
+const loadingToast = toastService.loading('Daten werden geladen...');
+// Später:
+toastService.dismiss(loadingToast);
+
+// Promise-basiert (automatisch Loading → Success/Error)
+await toastService.promise(
+  apiCall(),
+  {
+    loading: 'Lädt...',
+    success: 'Fertig!',
+    error: 'Fehler aufgetreten',
+  }
+);
+```
+
+**Nicht mehr verwenden:**
+- ❌ Inline `showAlert` Funktionen
+- ❌ Lokaler Alert-State (`useState<Alert | null>`)
+- ❌ Custom `useAlert` Hook
+- ❌ Alert-Component JSX im Return
+
+**Code-Reduktion:**
+- Alert-State: ~5 Zeilen gespart
+- showAlert-Funktion: ~15 Zeilen gespart
+- Alert-JSX: ~10 Zeilen gespart
+- Unused Imports: ~3 Zeilen gespart
+- **Gesamt: ~33 Zeilen pro Page**
+
+---
+
 **Weitere Shared Components:**
 - **ConfirmDialog.tsx** - Lösch-Bestätigungen
 - **EmptyState.tsx** - Leere Listen/Keine Ergebnisse
+
+**Hinweis:** Alert-Komponente ist legacy. Nutze `toastService` für neue Features!
 
 #### Phase 2.2: Große Komponenten modularisieren
 
