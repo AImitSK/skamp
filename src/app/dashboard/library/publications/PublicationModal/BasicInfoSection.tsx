@@ -72,7 +72,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Titel der Publikation *
           </label>
           <Input
@@ -84,7 +84,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Untertitel / Claim
           </label>
           <Input
@@ -98,13 +98,13 @@ export const BasicInfoSection = memo(function BasicInfoSection({
 
       {/* Publisher Dropdown */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-zinc-700 mb-1">
           <BuildingOfficeIcon className="inline h-4 w-4 mr-1" />
           Verlag / Medienhaus *
         </label>
         {loadingPublishers ? (
           <div className="animate-pulse">
-            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-zinc-200 rounded"></div>
           </div>
         ) : publishers.length === 0 ? (
           <div>
@@ -142,7 +142,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Website
           </label>
           <Input
@@ -153,7 +153,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Reichweite
           </label>
           <Select
@@ -171,7 +171,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Typ *
           </label>
           <Select
@@ -186,7 +186,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Format
           </label>
           <Select
@@ -200,7 +200,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Status
           </label>
           <Select
@@ -216,7 +216,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-zinc-700 mb-1">
           <LanguageIcon className="inline h-4 w-4 mr-1" />
           Sprachen *
         </label>
@@ -229,7 +229,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-zinc-700 mb-1">
           <GlobeAltIcon className="inline h-4 w-4 mr-1" />
           Geografische Zielgebiete *
         </label>
@@ -242,7 +242,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-zinc-700 mb-1">
           Themenbereiche
         </label>
         <TagInput
@@ -250,7 +250,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           onChange={(tags) => setFormData({ ...formData, focusAreas: tags })}
           placeholder="Tippen Sie und drücken Sie Enter..."
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-zinc-500">
           Geben Sie Themenbereiche ein und drücken Sie Enter oder Komma
         </p>
       </div>
@@ -260,15 +260,15 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           type="checkbox"
           checked={formData.verified}
           onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-          className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+          className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
         />
-        <label className="ml-2 block text-sm text-gray-900">
+        <label className="ml-2 block text-sm text-zinc-900">
           Publikation ist verifiziert
         </label>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-zinc-700 mb-1">
           Interne Notizen
         </label>
         <Textarea

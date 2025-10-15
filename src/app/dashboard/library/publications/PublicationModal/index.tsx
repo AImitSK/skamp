@@ -358,21 +358,21 @@ export function PublicationModal({
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
       <div className="p-6">
-        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">
+        <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-4">
+          <h3 className="text-lg font-medium leading-6 text-zinc-900">
             {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
           </h3>
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-zinc-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('basic')}
               className={`${
                 activeTab === 'basic'
                   ? 'border-[#005fab] text-[#005fab]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Grunddaten
@@ -382,7 +382,7 @@ export function PublicationModal({
               className={`${
                 activeTab === 'metrics'
                   ? 'border-[#005fab] text-[#005fab]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Metriken
@@ -392,7 +392,7 @@ export function PublicationModal({
               className={`${
                 activeTab === 'identifiers'
                   ? 'border-[#005fab] text-[#005fab]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Identifikatoren & Links
@@ -402,7 +402,7 @@ export function PublicationModal({
               className={`${
                 activeTab === 'monitoring'
                   ? 'border-[#005fab] text-[#005fab]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Monitoring
@@ -410,7 +410,7 @@ export function PublicationModal({
           </nav>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto pr-4">
+        <form onSubmit={handleSubmit} className="space-y-6 h-[500px] overflow-y-auto overflow-x-hidden pr-4">
           {/* Grunddaten Tab */}
           {activeTab === 'basic' && (
             <BasicInfoSection

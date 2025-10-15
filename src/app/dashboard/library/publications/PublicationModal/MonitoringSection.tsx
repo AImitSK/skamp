@@ -94,10 +94,10 @@ export const MonitoringSection = memo(function MonitoringSection({
   return (
     <div className="space-y-6">
       {/* Enable Monitoring */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-lg">
         <div>
-          <h4 className="font-medium text-gray-900">Monitoring aktivieren</h4>
-          <p className="text-sm text-gray-500 mt-1">
+          <h4 className="font-medium text-zinc-900">Monitoring aktivieren</h4>
+          <p className="text-sm text-zinc-500 mt-1">
             Überwache automatisch neue Veröffentlichungen dieser Publikation
           </p>
         </div>
@@ -111,7 +111,7 @@ export const MonitoringSection = memo(function MonitoringSection({
             })}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005fab]"></div>
+          <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#005fab]"></div>
         </label>
       </div>
 
@@ -119,7 +119,7 @@ export const MonitoringSection = memo(function MonitoringSection({
         <>
           {/* Website URL mit Check Button */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-zinc-700 mb-1">
               Website URL
             </label>
             <div className="flex gap-2">
@@ -148,7 +148,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                 {rssDetectionStatus === 'checking' ? 'Suche...' : 'RSS-Feed suchen'}
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Klicken Sie "RSS-Feed suchen" um automatisch Feeds zu erkennen
             </p>
           </div>
@@ -205,7 +205,7 @@ export const MonitoringSection = memo(function MonitoringSection({
           {/* Manuelle RSS Feed URLs (nur sichtbar wenn nicht auto-detected oder getrennt) */}
           {(showManualRssInput || rssDetectionStatus === 'not_found') && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 mb-2">
                 RSS Feed URLs (manuell)
               </label>
               <div className="space-y-2">
@@ -259,7 +259,7 @@ export const MonitoringSection = memo(function MonitoringSection({
 
           {/* Check Frequency */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-zinc-700 mb-1">
               Prüf-Frequenz
             </label>
             <Select
@@ -276,7 +276,7 @@ export const MonitoringSection = memo(function MonitoringSection({
 
           {/* Keywords */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-700 mb-2">
               Keywords (optional)
             </label>
             <div className="space-y-2">
@@ -325,7 +325,7 @@ export const MonitoringSection = memo(function MonitoringSection({
                 Keyword hinzufügen
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               Optionale Filter für relevante Artikel (zusätzlich zur Kampagnen-basierten Suche)
             </p>
           </div>

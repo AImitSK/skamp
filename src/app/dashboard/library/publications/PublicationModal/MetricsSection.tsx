@@ -19,7 +19,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Erscheinungsfrequenz
           </label>
           <Select
@@ -34,7 +34,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           </Select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Zielgruppe
           </label>
           <Input
@@ -48,7 +48,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Altersgruppe
           </label>
           <Input
@@ -59,7 +59,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-zinc-700 mb-1">
             Geschlechterverteilung
           </label>
           <Select
@@ -76,10 +76,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Print Metriken */}
       {(formData.format === 'print' || formData.format === 'both') && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-gray-900">Print-Metriken</h4>
+          <h4 className="font-medium text-zinc-900">Print-Metriken</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Auflage
               </label>
               <Input
@@ -93,7 +93,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Auflagentyp
               </label>
               <Select
@@ -111,7 +111,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Preis pro Ausgabe (€)
               </label>
               <Input
@@ -126,7 +126,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Abo-Preis Monat (€)
               </label>
               <Input
@@ -141,7 +141,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Format
               </label>
               <Input
@@ -155,7 +155,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Seitenanzahl
               </label>
               <Input
@@ -175,10 +175,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
       {/* Online Metriken */}
       {(formData.format === 'online' || formData.format === 'both') && (
         <div className="border rounded-lg p-4 space-y-4">
-          <h4 className="font-medium text-gray-900">Online-Metriken</h4>
+          <h4 className="font-medium text-zinc-900">Online-Metriken</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Monatliche Unique Visitors
               </label>
               <Input
@@ -192,7 +192,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Monatliche Page Views
               </label>
               <Input
@@ -206,7 +206,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Ø Sitzungsdauer (Minuten)
               </label>
               <Input
@@ -221,7 +221,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Bounce Rate (%)
               </label>
               <Input
@@ -236,7 +236,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Registrierte Nutzer
               </label>
               <Input
@@ -250,7 +250,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Newsletter-Abonnenten
               </label>
               <Input
@@ -273,7 +273,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, hasPaywall: e.target.checked }
                 })}
-                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
               />
               <span className="ml-2 text-sm">Hat Paywall</span>
             </label>
@@ -285,7 +285,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, hasMobileApp: e.target.checked }
                 })}
-                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
               />
               <span className="ml-2 text-sm">Hat Mobile App</span>
             </label>

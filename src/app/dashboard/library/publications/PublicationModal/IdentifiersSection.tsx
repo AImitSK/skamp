@@ -40,7 +40,7 @@ export const IdentifiersSection = memo(function IdentifiersSection({
   return (
     <div className="space-y-6">
       <div>
-        <h4 className="font-medium text-gray-900 mb-3">Identifikatoren</h4>
+        <h4 className="font-medium text-zinc-900 mb-3">Identifikatoren</h4>
         <div className="space-y-2">
           {identifiers.map((identifier, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
@@ -94,7 +94,7 @@ export const IdentifiersSection = memo(function IdentifiersSection({
       </div>
 
       <div>
-        <h4 className="font-medium text-gray-900 mb-3">Social Media Profile</h4>
+        <h4 className="font-medium text-zinc-900 mb-3">Social Media Profile</h4>
         <div className="space-y-2">
           {socialMediaUrls.map((social, index) => (
             <div key={index} className="flex gap-2">

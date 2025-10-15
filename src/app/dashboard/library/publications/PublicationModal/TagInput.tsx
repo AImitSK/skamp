@@ -37,7 +37,7 @@ export function TagInput({ value, onChange, placeholder }: TagInputProps) {
   };
 
   return (
-    <div className="min-h-[42px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 focus-within:border-[#005fab] focus-within:ring-1 focus-within:ring-[#005fab]">
+    <div className="min-h-[42px] w-full rounded-md border border-zinc-300 bg-white px-3 py-2 focus-within:border-[#005fab] focus-within:ring-1 focus-within:ring-[#005fab]">
       <div className="flex flex-wrap gap-2 items-center">
         {value.map((tag, index) => (
           <Badge key={index} color="blue" className="inline-flex items-center gap-1 pl-2 pr-1 py-1">
