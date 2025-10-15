@@ -494,7 +494,7 @@ export default function PublicationDetailPage() {
                           Sprachen ({publication.languages.length})
                         </Text>
                         <div className="flex flex-wrap gap-1">
-                          {publication.languages.map((lang) => (
+                          {publication.languages.slice(0, 2).map((lang) => (
                             <Badge key={lang} color="blue" className="text-xs">
                               {lang.toUpperCase()}
                             </Badge>
@@ -508,7 +508,7 @@ export default function PublicationDetailPage() {
                           Zielländer ({publication.geographicTargets.length})
                         </Text>
                         <div className="flex flex-wrap gap-1">
-                          {publication.geographicTargets.map((country) => (
+                          {publication.geographicTargets.slice(0, 2).map((country) => (
                             <Badge key={country} color="green" className="text-xs">
                               {country}
                             </Badge>
