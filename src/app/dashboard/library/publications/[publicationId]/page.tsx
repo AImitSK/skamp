@@ -260,7 +260,7 @@ export default function PublicationDetailPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <Text className="mt-4">Lade Publikation...</Text>
         </div>
       </div>
@@ -422,7 +422,7 @@ export default function PublicationDetailPage() {
                             href={publication.websiteUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                            className="text-primary hover:text-primary-hover hover:underline"
                           >
                             {publication.websiteUrl}
                           </a>
@@ -435,7 +435,7 @@ export default function PublicationDetailPage() {
                             href={publication.rssFeedUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                            className="text-primary hover:text-primary-hover hover:underline"
                           >
                             RSS Feed
                           </a>
@@ -456,7 +456,7 @@ export default function PublicationDetailPage() {
                           href={social.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
+                          className="flex items-center gap-2 text-primary hover:text-primary-hover hover:underline"
                         >
                           <LinkIcon className="h-4 w-4" />
                           {social.platform}
@@ -837,7 +837,7 @@ export default function PublicationDetailPage() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-[#005fab] hover:text-[#004a8c] hover:underline block"
+                            className="text-sm text-primary hover:text-primary-hover hover:underline block"
                           >
                             {url}
                           </a>

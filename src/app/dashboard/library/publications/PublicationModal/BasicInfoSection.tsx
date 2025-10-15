@@ -260,7 +260,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
           type="checkbox"
           checked={formData.verified}
           onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-          className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
+          className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
         />
         <label className="ml-2 block text-sm text-zinc-900">
           Publikation ist verifiziert

@@ -273,7 +273,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, hasPaywall: e.target.checked }
                 })}
-                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
               />
               <span className="ml-2 text-sm">Hat Paywall</span>
             </label>
@@ -285,7 +285,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   ...metrics,
                   online: { ...metrics.online, hasMobileApp: e.target.checked }
                 })}
-                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-zinc-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-primary border-zinc-300 rounded"
               />
               <span className="ml-2 text-sm">Hat Mobile App</span>
             </label>
