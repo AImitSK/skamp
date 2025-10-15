@@ -1,12 +1,17 @@
 // src/app/dashboard/library/publications/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
+import { useState, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { publicationService } from "@/lib/firebase/library-service";
 import type { Publication } from "@/types/library";
+import {
+  usePublications,
+  useCreatePublication,
+  useUpdatePublication,
+  useDeletePublication
+} from "@/lib/hooks/usePublicationsData";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -101,8 +106,13 @@ function Alert({
 export default function PublicationsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-  const [publications, setPublications] = useState<Publication[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hooks
+  const { data: publications = [], isLoading, error } = usePublications(currentOrganization?.id);
+  const createPublication = useCreatePublication();
+  const updatePublication = useUpdatePublication();
+  const deletePublication = useDeletePublication();
+
   const [searchTerm, setSearchTerm] = useState("");
   
   const [selectedPubIds, setSelectedPubIds] = useState<Set<string>>(new Set());
@@ -128,26 +138,6 @@ export default function PublicationsPage() {
     setAlert({ type, title, message });
     setTimeout(() => setAlert(null), ALERT_TIMEOUT_MS);
   }, []);
-
-  useEffect(() => {
-    if (user && currentOrganization?.id) {
-      loadData();
-    }
-  }, [user, currentOrganization?.id]);
-
-  const loadData = async () => {
-    if (!user || !currentOrganization?.id) return;
-    setLoading(true);
-    try {
-      const pubsData = await publicationService.getAll(currentOrganization.id);
-
-      setPublications(pubsData);
-    } catch (error) {
-      showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filtered Data
   const filteredPublications = useMemo(() => {
@@ -226,12 +216,12 @@ export default function PublicationsPage() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await publicationService.softDelete(id, {
+          await deletePublication.mutateAsync({
+            id,
             organizationId: currentOrganization?.id || '',
             userId: user?.uid || ''
           });
           showAlert('success', `${title} wurde gelöscht`);
-          await loadData();
         } catch (error) {
           showAlert('error', 'Fehler beim Löschen');
         }
@@ -242,7 +232,7 @@ export default function PublicationsPage() {
   const handleBulkDelete = async () => {
     const count = selectedPubIds.size;
     if (count === 0) return;
-    
+
     setConfirmDialog({
       isOpen: true,
       title: `${count} Publikationen löschen`,
@@ -250,14 +240,14 @@ export default function PublicationsPage() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await Promise.all(Array.from(selectedPubIds).map(id => 
-            publicationService.softDelete(id, {
+          await Promise.all(Array.from(selectedPubIds).map(id =>
+            deletePublication.mutateAsync({
+              id,
               organizationId: currentOrganization?.id || '',
               userId: user?.uid || ''
             })
           ));
           showAlert('success', `${count} Publikationen gelöscht`);
-          await loadData();
           setSelectedPubIds(new Set());
         } catch (error) {
           showAlert('error', 'Fehler beim Löschen');
@@ -276,14 +266,14 @@ export default function PublicationsPage() {
         status: 'inactive' as const
       };
       delete duplicated.id;
-      
-      await publicationService.create(duplicated, {
+
+      await createPublication.mutateAsync({
         organizationId: currentOrganization?.id || '',
-        userId: user?.uid || ''
+        userId: user?.uid || '',
+        publicationData: duplicated
       });
-      
+
       showAlert('success', 'Publikation dupliziert');
-      await loadData();
     } catch (error) {
       showAlert('error', 'Fehler beim Duplizieren');
     }
@@ -339,7 +329,7 @@ export default function PublicationsPage() {
     return "—";
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -843,10 +833,9 @@ export default function PublicationsPage() {
             setSelectedPublication(null);
           }}
           publication={selectedPublication || undefined}
-          onSuccess={async () => {
+          onSuccess={() => {
             setShowPublicationModal(false);
             setSelectedPublication(null);
-            await loadData();
             showAlert('success', selectedPublication ? 'Publikation aktualisiert' : 'Publikation erstellt');
           }}
         />
@@ -858,7 +847,6 @@ export default function PublicationsPage() {
           onClose={() => setShowImportModal(false)}
           onImportSuccess={() => {
             setShowImportModal(false);
-            loadData();
             showAlert('success', 'Import erfolgreich abgeschlossen');
           }}
         />
