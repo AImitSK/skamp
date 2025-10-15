@@ -1,15 +1,19 @@
 // src/app/dashboard/library/publications/[publicationId]/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { publicationService } from "@/lib/firebase/library-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import type { Publication } from "@/types/library";
 import type { Company } from "@/types/crm";
+import {
+  usePublication,
+  useUpdatePublication,
+  useVerifyPublication
+} from "@/lib/hooks/usePublicationsData";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -133,15 +137,19 @@ export default function PublicationDetailPage() {
   const router = useRouter();
   const publicationId = params.publicationId as string;
 
-  // States
-  const [publication, setPublication] = useState<Publication | null>(null);
+  // React Query Hooks
+  const { data: publication, isLoading, error: queryError, refetch } = usePublication(publicationId);
+  const updatePublication = useUpdatePublication();
+  const verifyPublication = useVerifyPublication();
+
+  // Local States
   const [publisher, setPublisher] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
-  const [savingNotes, setSavingNotes] = useState(false);
+
+  // Error handling
+  const error = queryError ? 'Fehler beim Laden der Daten.' : null;
 
   // Notes Management
   const handleEditNotes = () => {
@@ -157,63 +165,36 @@ export default function PublicationDetailPage() {
   const handleSaveNotes = async () => {
     if (!publication || !currentOrganization?.id) return;
 
-    setSavingNotes(true);
     try {
-      await publicationService.update(
-        publication.id!,
-        { internalNotes: notesValue },
-        {
-          organizationId: currentOrganization.id,
-          userId: user!.uid
-        }
-      );
+      await updatePublication.mutateAsync({
+        id: publication.id!,
+        organizationId: currentOrganization.id,
+        userId: user!.uid,
+        publicationData: { internalNotes: notesValue }
+      });
 
-      setPublication({ ...publication, internalNotes: notesValue });
       setEditingNotes(false);
       toastService.success('Notiz gespeichert');
     } catch (error) {
       toastService.error('Fehler beim Speichern der Notiz');
-    } finally {
-      setSavingNotes(false);
     }
   };
 
-  // Data Loading
-  const loadData = useCallback(async () => {
-    if (!user || !publicationId || !currentOrganization?.id) return;
-    setLoading(true);
-    setError(null);
-
-    const organizationId = currentOrganization.id;
-
-    try {
-      // Load publication
-      const pubData = await publicationService.getById(publicationId, organizationId);
-      if (pubData) {
-        setPublication(pubData);
-
-        // Load publisher if exists
-        if (pubData.publisherId) {
-          try {
-            const publisherData = await companiesService.getById(pubData.publisherId);
-            setPublisher(publisherData);
-          } catch (error) {
-            // Error loading publisher
-          }
-        }
-      } else {
-        setError("Publikation nicht gefunden.");
-      }
-    } catch (err: any) {
-      setError("Fehler beim Laden der Daten.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user, publicationId, currentOrganization?.id]);
-
+  // Load publisher when publication changes
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    const loadPublisher = async () => {
+      if (publication?.publisherId) {
+        try {
+          const publisherData = await companiesService.getById(publication.publisherId);
+          setPublisher(publisherData);
+        } catch (error) {
+          // Error loading publisher
+        }
+      }
+    };
+
+    loadPublisher();
+  }, [publication?.publisherId]);
 
   // Verify Handler
   const handleVerify = async () => {
@@ -221,16 +202,21 @@ export default function PublicationDetailPage() {
 
     try {
       if (publication.verified) {
-        // Unverifizieren (Update lokal)
-        setPublication(prev => prev ? { ...prev, verified: false, verifiedAt: undefined } : null);
+        // Unverifizieren
+        await updatePublication.mutateAsync({
+          id: publicationId,
+          organizationId: currentOrganization.id,
+          userId: user.uid,
+          publicationData: { verified: false, verifiedAt: undefined }
+        });
         toastService.success('Verifizierung zurückgenommen');
       } else {
         // Verifizieren
-        await publicationService.verify(publicationId, {
+        await verifyPublication.mutateAsync({
+          id: publicationId,
           organizationId: currentOrganization.id,
           userId: user.uid
         });
-        await loadData();
         toastService.success('Publikation verifiziert');
       }
     } catch (error) {
@@ -239,7 +225,7 @@ export default function PublicationDetailPage() {
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -678,15 +664,15 @@ export default function PublicationDetailPage() {
                   <div className="flex items-center gap-2">
                     <Button
                       onClick={handleSaveNotes}
-                      disabled={savingNotes}
+                      disabled={updatePublication.isPending}
                       className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
                     >
                       <CheckIcon className="h-4 w-4 mr-2" />
-                      {savingNotes ? 'Speichern...' : 'Speichern'}
+                      {updatePublication.isPending ? 'Speichern...' : 'Speichern'}
                     </Button>
                     <Button
                       onClick={handleCancelEditNotes}
-                      disabled={savingNotes}
+                      disabled={updatePublication.isPending}
                       className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
                     >
                       <XMarkIcon className="h-4 w-4 mr-2" />
@@ -895,9 +881,8 @@ export default function PublicationDetailPage() {
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           publication={publication}
-          onSuccess={async () => {
+          onSuccess={() => {
             setShowEditModal(false);
-            await loadData();
             toastService.success('Publikation erfolgreich aktualisiert');
           }}
         />
