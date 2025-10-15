@@ -165,9 +165,9 @@ export function PublicationModal({
           print: {
             circulation: publication.metrics.print?.circulation?.toString() || '',
             circulationType: publication.metrics.print?.circulationType || 'distributed',
-            pricePerIssue: publication.metrics.print?.pricePerIssue?.amount.toString() || '',
-            subscriptionPriceMonthly: publication.metrics.print?.subscriptionPrice?.monthly?.amount.toString() || '',
-            subscriptionPriceAnnual: publication.metrics.print?.subscriptionPrice?.annual?.amount.toString() || '',
+            pricePerIssue: publication.metrics.print?.pricePerIssue?.amount?.toString() || '',
+            subscriptionPriceMonthly: publication.metrics.print?.subscriptionPrice?.monthly?.amount?.toString() || '',
+            subscriptionPriceAnnual: publication.metrics.print?.subscriptionPrice?.annual?.amount?.toString() || '',
             pageCount: publication.metrics.print?.pageCount?.toString() || '',
             paperFormat: publication.metrics.print?.paperFormat || ''
           },

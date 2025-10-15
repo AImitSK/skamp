@@ -59,72 +59,92 @@ export const prepareMetrics = (
     preparedMetrics.targetGender = metrics.targetGender;
   }
 
-  // Nur Print-Metriken hinzufügen, wenn vorhanden
-  if ((format === 'print' || format === 'both') && metrics.print.circulation) {
-    preparedMetrics.print = {
-      circulation: parseInt(metrics.print.circulation),
-      circulationType: metrics.print.circulationType
-    };
+  // Print-Metriken hinzufügen, wenn Format print oder both
+  if (format === 'print' || format === 'both') {
+    // Prüfe ob IRGENDEIN Print-Feld ausgefüllt ist
+    const hasPrintData = metrics.print.circulation || metrics.print.pricePerIssue ||
+      metrics.print.subscriptionPriceMonthly || metrics.print.subscriptionPriceAnnual ||
+      metrics.print.pageCount || metrics.print.paperFormat;
 
-    if (metrics.print.pricePerIssue) {
-      preparedMetrics.print.pricePerIssue = {
-        amount: parseFloat(metrics.print.pricePerIssue),
-        currency: 'EUR'
-      };
-    }
+    if (hasPrintData) {
+      preparedMetrics.print = {};
 
-    if (metrics.print.subscriptionPriceMonthly || metrics.print.subscriptionPriceAnnual) {
-      preparedMetrics.print.subscriptionPrice = {};
-      if (metrics.print.subscriptionPriceMonthly) {
-        preparedMetrics.print.subscriptionPrice.monthly = {
-          amount: parseFloat(metrics.print.subscriptionPriceMonthly),
+      if (metrics.print.circulation) {
+        preparedMetrics.print.circulation = parseInt(metrics.print.circulation);
+        preparedMetrics.print.circulationType = metrics.print.circulationType;
+      }
+
+      if (metrics.print.pricePerIssue) {
+        preparedMetrics.print.pricePerIssue = {
+          amount: parseFloat(metrics.print.pricePerIssue),
           currency: 'EUR'
         };
       }
-      if (metrics.print.subscriptionPriceAnnual) {
-        preparedMetrics.print.subscriptionPrice.annual = {
-          amount: parseFloat(metrics.print.subscriptionPriceAnnual),
-          currency: 'EUR'
-        };
-      }
-    }
 
-    if (metrics.print.pageCount) {
-      preparedMetrics.print.pageCount = parseInt(metrics.print.pageCount);
-    }
-    if (metrics.print.paperFormat) {
-      preparedMetrics.print.paperFormat = metrics.print.paperFormat;
+      if (metrics.print.subscriptionPriceMonthly || metrics.print.subscriptionPriceAnnual) {
+        preparedMetrics.print.subscriptionPrice = {};
+        if (metrics.print.subscriptionPriceMonthly) {
+          preparedMetrics.print.subscriptionPrice.monthly = {
+            amount: parseFloat(metrics.print.subscriptionPriceMonthly),
+            currency: 'EUR'
+          };
+        }
+        if (metrics.print.subscriptionPriceAnnual) {
+          preparedMetrics.print.subscriptionPrice.annual = {
+            amount: parseFloat(metrics.print.subscriptionPriceAnnual),
+            currency: 'EUR'
+          };
+        }
+      }
+
+      if (metrics.print.pageCount) {
+        preparedMetrics.print.pageCount = parseInt(metrics.print.pageCount);
+      }
+      if (metrics.print.paperFormat) {
+        preparedMetrics.print.paperFormat = metrics.print.paperFormat;
+      }
     }
   }
 
-  // Nur Online-Metriken hinzufügen, wenn vorhanden
-  if ((format === 'online' || format === 'both') && metrics.online.monthlyUniqueVisitors) {
-    preparedMetrics.online = {
-      monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors),
-      hasPaywall: metrics.online.hasPaywall,
-      hasMobileApp: metrics.online.hasMobileApp
-    };
+  // Online-Metriken hinzufügen, wenn Format online oder both
+  if (format === 'online' || format === 'both') {
+    // Prüfe ob IRGENDEIN Online-Feld ausgefüllt ist
+    const hasOnlineData = metrics.online.monthlyUniqueVisitors || metrics.online.monthlyPageViews ||
+      metrics.online.avgSessionDuration || metrics.online.bounceRate ||
+      metrics.online.registeredUsers || metrics.online.paidSubscribers ||
+      metrics.online.newsletterSubscribers || metrics.online.domainAuthority ||
+      metrics.online.hasPaywall || metrics.online.hasMobileApp;
 
-    if (metrics.online.monthlyPageViews) {
-      preparedMetrics.online.monthlyPageViews = parseInt(metrics.online.monthlyPageViews);
-    }
-    if (metrics.online.avgSessionDuration) {
-      preparedMetrics.online.avgSessionDuration = parseFloat(metrics.online.avgSessionDuration);
-    }
-    if (metrics.online.bounceRate) {
-      preparedMetrics.online.bounceRate = parseFloat(metrics.online.bounceRate);
-    }
-    if (metrics.online.registeredUsers) {
-      preparedMetrics.online.registeredUsers = parseInt(metrics.online.registeredUsers);
-    }
-    if (metrics.online.paidSubscribers) {
-      preparedMetrics.online.paidSubscribers = parseInt(metrics.online.paidSubscribers);
-    }
-    if (metrics.online.newsletterSubscribers) {
-      preparedMetrics.online.newsletterSubscribers = parseInt(metrics.online.newsletterSubscribers);
-    }
-    if (metrics.online.domainAuthority) {
-      preparedMetrics.online.domainAuthority = parseInt(metrics.online.domainAuthority);
+    if (hasOnlineData) {
+      preparedMetrics.online = {
+        hasPaywall: metrics.online.hasPaywall || false,
+        hasMobileApp: metrics.online.hasMobileApp || false
+      };
+
+      if (metrics.online.monthlyUniqueVisitors) {
+        preparedMetrics.online.monthlyUniqueVisitors = parseInt(metrics.online.monthlyUniqueVisitors);
+      }
+      if (metrics.online.monthlyPageViews) {
+        preparedMetrics.online.monthlyPageViews = parseInt(metrics.online.monthlyPageViews);
+      }
+      if (metrics.online.avgSessionDuration) {
+        preparedMetrics.online.avgSessionDuration = parseFloat(metrics.online.avgSessionDuration);
+      }
+      if (metrics.online.bounceRate) {
+        preparedMetrics.online.bounceRate = parseFloat(metrics.online.bounceRate);
+      }
+      if (metrics.online.registeredUsers) {
+        preparedMetrics.online.registeredUsers = parseInt(metrics.online.registeredUsers);
+      }
+      if (metrics.online.paidSubscribers) {
+        preparedMetrics.online.paidSubscribers = parseInt(metrics.online.paidSubscribers);
+      }
+      if (metrics.online.newsletterSubscribers) {
+        preparedMetrics.online.newsletterSubscribers = parseInt(metrics.online.newsletterSubscribers);
+      }
+      if (metrics.online.domainAuthority) {
+        preparedMetrics.online.domainAuthority = parseInt(metrics.online.domainAuthority);
+      }
     }
   }
 
