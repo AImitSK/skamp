@@ -220,9 +220,9 @@ export async function updateFolder(folderId: string, updates: Partial<MediaFolde
 export async function deleteFolder(folderId: string): Promise<void> {
   try {
     const hasFiles = await hasFilesInFolder(folderId);
-    const hasSubfolders = await hasSubfolders(folderId);
+    const hasFolders = await hasSubfolders(folderId);
 
-    if (hasFiles || hasSubfolders) {
+    if (hasFiles || hasFolders) {
       throw new Error('Ordner kann nicht gelöscht werden: Enthält noch Dateien oder Unterordner');
     }
 
