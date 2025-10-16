@@ -216,7 +216,7 @@ export default function BoilerplatesPage() {
           <SearchInput
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Textbausteine durchsuchen..."
+            placeholder="Suchen..."
             className="flex-1"
           />
 
@@ -430,10 +430,10 @@ export default function BoilerplatesPage() {
                     <div className="flex items-center w-[40%]">
                       <button
                         onClick={() => bp.id && handleToggleFavorite(bp.id)}
-                        className="text-gray-400 hover:text-yellow-500"
+                        className="text-gray-400 hover:text-[#dedc00]"
                       >
                         {bp.isFavorite ? (
-                          <StarIconSolid className="h-4 w-4 text-yellow-500" />
+                          <StarIconSolid className="h-4 w-4 text-[#dedc00]" />
                         ) : (
                           <StarIconOutline className="h-4 w-4" />
                         )}
@@ -484,8 +484,8 @@ export default function BoilerplatesPage() {
                     {/* Actions */}
                     <div className="w-[5%] text-right">
                       <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                        <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors dark:hover:bg-zinc-700">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 stroke-[2.5]" />
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem onClick={() => handleEdit(bp)}>
