@@ -4,6 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mediaService } from '@/lib/firebase/media-service';
+import * as sharesService from '@/lib/firebase/media-shares-service';
 import { MediaAsset, MediaFolder, ShareLink } from '@/types/media';
 import type { UploadContext } from '@/lib/firebase/smart-upload-router';
 
@@ -115,13 +116,20 @@ export function useUploadMediaAsset() {
       context?: Partial<UploadContext>;
     }) => {
       const { file, organizationId, folderId, onProgress, context } = params;
-      return mediaService.uploadMediaWithRetry(
+
+      // Map UploadContext to uploadMedia context format
+      const uploadContext = context ? {
+        userId: context.userId || organizationId,
+        clientId: context.clientId
+      } : undefined;
+
+      return mediaService.uploadMedia(
         file,
         organizationId,
         folderId,
         onProgress,
         3,
-        context
+        uploadContext
       );
     },
     onSuccess: (_, variables) => {
@@ -447,13 +455,23 @@ export function useShareLinks(organizationId: string | undefined) {
 
 /**
  * Hook: Einzelner Share Link
+ * Phase 6: Umgestellt auf Admin SDK API-Route
  */
 export function useShareLink(shareId: string | undefined) {
   return useQuery({
     queryKey: mediaQueryKeys.shareLink(shareId),
     queryFn: async () => {
       if (!shareId) return null;
-      return mediaService.getShareLink(shareId);
+
+      // ✅ Neu: API-Route (Server-Side)
+      const response = await fetch(`/api/media/share/${shareId}`);
+
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error('Failed to load share');
+      }
+
+      return response.json();
     },
     enabled: !!shareId,
     staleTime: 300000, // 5 minutes (share links ändern sich selten)
@@ -462,6 +480,7 @@ export function useShareLink(shareId: string | undefined) {
 
 /**
  * Mutation: Share Link erstellen
+ * Phase 6: Umgestellt auf Admin SDK API-Route (Server-Side mit bcrypt)
  */
 export function useCreateShareLink() {
   const queryClient = useQueryClient();
@@ -472,7 +491,24 @@ export function useCreateShareLink() {
       context: { organizationId: string; userId: string };
     }) => {
       const { shareLink, context } = params;
-      return mediaService.createShareLink(shareLink, context);
+
+      // ✅ Neu: API-Route (Server-Side mit bcrypt)
+      const response = await fetch('/api/media/share/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...shareLink,
+          organizationId: context.organizationId,
+          createdBy: context.userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create share');
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
       // Invalidate share links
@@ -495,7 +531,7 @@ export function useUpdateShareLink() {
       updates: Partial<ShareLink>;
     }) => {
       const { shareId, updates } = params;
-      return mediaService.updateShareLink(shareId, updates);
+      return sharesService.updateShareLink(shareId, updates);
     },
     onSuccess: (_, variables) => {
       // Invalidate alle share queries
@@ -521,7 +557,7 @@ export function useDeleteShareLink() {
       shareId: string;
     }) => {
       const { shareId } = params;
-      return mediaService.deleteShareLink(shareId);
+      return sharesService.deleteShareLink(shareId);
     },
     onSuccess: () => {
       // Invalidate alle share queries
@@ -534,6 +570,7 @@ export function useDeleteShareLink() {
 
 /**
  * Mutation: Share Link Passwort validieren
+ * Phase 6: Umgestellt auf Admin SDK API-Route (Server-Side mit bcrypt)
  */
 export function useValidateSharePassword() {
   return useMutation({
@@ -542,7 +579,24 @@ export function useValidateSharePassword() {
       password: string;
     }) => {
       const { shareLink, password } = params;
-      return mediaService.validateSharePassword(shareLink, password);
+
+      // ✅ Neu: API-Route (Server-Side mit bcrypt)
+      const response = await fetch('/api/media/share/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shareId: shareLink.shareId,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Invalid password');
+      }
+
+      const data = await response.json();
+      return data.valid;
     },
   });
 }
@@ -558,12 +612,13 @@ export function useCampaignMediaAssets(shareLink: ShareLink | undefined | null) 
   return useQuery({
     queryKey: mediaQueryKeys.campaignAssets(shareLink || undefined),
     queryFn: async () => {
-      if (!shareLink || shareLink.type !== 'campaign' || !shareLink.campaignId) {
+      if (!shareLink || shareLink.type !== 'campaign' || !shareLink.context?.campaignId) {
         return [];
       }
-      return mediaService.getCampaignMediaAssets(shareLink.campaignId);
+      // Pass entire shareLink object to getCampaignMediaAssets
+      return sharesService.getCampaignMediaAssets(shareLink);
     },
-    enabled: !!shareLink && shareLink.type === 'campaign' && !!shareLink.campaignId,
+    enabled: !!shareLink && shareLink.type === 'campaign' && !!shareLink.context?.campaignId,
   });
 }
 

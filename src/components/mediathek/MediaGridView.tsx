@@ -30,7 +30,7 @@ interface MediaGridViewProps {
   handleFolderDragOver: (e: React.DragEvent, folderId: string) => void;
   handleFolderDragLeave: () => void;
   handleFolderDrop: (e: React.DragEvent, folder: MediaFolder) => void;
-  handleFolderMove: (folderId: string, targetFolderId: string) => void;
+  handleFolderMove: (folderId: string, targetFolderId: string) => Promise<void>;
   handleFolderDragStart: (folder: MediaFolder) => void;
   handleFolderDragEnd: () => void;
   handleRootDrop: (e: React.DragEvent) => void;

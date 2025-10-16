@@ -89,7 +89,6 @@ export async function getProjectClippings(
 
     return clippings;
   } catch (error) {
-    console.error('Fehler beim Laden der Projekt-Clippings:', error);
     return [];
   }
 }
@@ -156,7 +155,6 @@ export async function generateClippingScreenshot(
 
     return placeholderUrl;
   } catch (error) {
-    console.error('Fehler bei Screenshot-Generierung:', error);
     throw error;
   }
 }
@@ -236,7 +234,6 @@ export async function searchClippings(
       return bTime - aTime;
     });
   } catch (error) {
-    console.error('Fehler bei Clipping-Suche:', error);
     return [];
   }
 }

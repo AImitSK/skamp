@@ -6,9 +6,11 @@ import { MediaAsset } from '@/types/media';
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   );
+  MockLink.displayName = 'Link';
+  return MockLink;
 });
 
 // Mock Data
@@ -16,12 +18,13 @@ const createMockAsset = (overrides?: Partial<MediaAsset>): MediaAsset => ({
   id: 'asset-1',
   fileName: 'test-image.jpg',
   fileType: 'image/jpeg',
-  fileSize: 1024000,
+  metadata: {
+    fileSize: 1024000,
+  },
   downloadUrl: 'https://example.com/test.jpg',
   storagePath: 'media/test.jpg',
   userId: 'user-1',
-  organizationId: 'org-1',
-  folderId: null,
+  folderId: undefined,
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   ...overrides,
