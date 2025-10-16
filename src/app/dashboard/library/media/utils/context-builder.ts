@@ -151,15 +151,6 @@ export class MediaLibraryContextBuilder {
       };
     }
 
-    // TODO: Folder-basierte Vererbung (Phase 1)
-    // if (params.currentFolderId) {
-    //   return {
-    //     source: 'folder',
-    //     clientId: undefined,
-    //     clientName: undefined
-    //   };
-    // }
-
     return {
       source: 'none'
     };

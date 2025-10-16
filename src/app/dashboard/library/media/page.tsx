@@ -202,12 +202,10 @@ export default function MediathekPage() {
       // ✅ Verwende currentOrganization aus useOrganization Hook
       setOrganizationId(currentOrganization.id);
       setCurrentUserId(user.uid);
-      console.log('🏢 Media Library verwendet currentOrganization:', currentOrganization.id, currentOrganization.name);
     } else {
       // ⚠️ Fallback für Legacy-User - verwende user.uid als Organization
       setOrganizationId(user.uid);
       setCurrentUserId(user.uid);
-      console.log('👤 Media Library Fallback - User als Organization:', user.uid);
     }
   }, [user, currentOrganization]);
 

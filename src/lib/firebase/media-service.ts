@@ -1881,11 +1881,9 @@ export const mediaService = {
       // Markiere als projekt-weit verfügbar
       attachment.isProjectWide = true;
       attachment.metadata.attachedInPhase = 'project_shared';
-      
+
       // Asset-History Tracking würde hier erfolgen
       // (Implementierung in projectService)
-      
-      console.log(`Asset ${assetId} mit Projekt ${projectId} geteilt`);
     } catch (error) {
       throw error;
     }
