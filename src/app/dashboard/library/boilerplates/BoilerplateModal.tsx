@@ -6,6 +6,7 @@ import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
 import { toastService } from '@/lib/utils/toast';
+import { useCreateBoilerplate, useUpdateBoilerplate } from "@/lib/hooks/useBoilerplatesData";
 import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,15 +59,18 @@ interface BoilerplateModalProps {
   userId: string;
 }
 
-export default function BoilerplateModal({ 
-  boilerplate, 
-  onClose, 
-  onSave, 
+export default function BoilerplateModal({
+  boilerplate,
+  onClose,
+  onSave,
   organizationId,
-  userId 
+  userId
 }: BoilerplateModalProps) {
-  const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
+
+  // React Query Mutations
+  const createBoilerplateMutation = useCreateBoilerplate();
+  const updateBoilerplateMutation = useUpdateBoilerplate();
 
   // Einfacher Tiptap Editor Setup (ohne KI-Toolbar)
   const editor = useEditor({
@@ -180,8 +184,6 @@ export default function BoilerplateModal({
       return;
     }
 
-    setSaving(true);
-
     try {
       const boilerplateData: BoilerplateCreateData = {
         name: formData.name,
@@ -194,17 +196,21 @@ export default function BoilerplateModal({
       };
 
       if (boilerplate && boilerplate.id) {
-        await boilerplatesService.update(
-          boilerplate.id,
-          boilerplateData,
-          { organizationId, userId }
-        );
+        // Update mit React Query Mutation
+        await updateBoilerplateMutation.mutateAsync({
+          id: boilerplate.id,
+          organizationId,
+          userId,
+          boilerplateData
+        });
         toastService.success(`"${formData.name}" erfolgreich aktualisiert`);
       } else {
-        await boilerplatesService.create(
-          boilerplateData,
-          { organizationId, userId }
-        );
+        // Create mit React Query Mutation
+        await createBoilerplateMutation.mutateAsync({
+          organizationId,
+          userId,
+          boilerplateData
+        });
         toastService.success(`"${formData.name}" erfolgreich erstellt`);
       }
 
@@ -217,10 +223,11 @@ export default function BoilerplateModal({
           ? `Fehler beim Speichern: ${error.message}`
           : 'Fehler beim Speichern des Textbausteins'
       );
-    } finally {
-      setSaving(false);
     }
   };
+
+  // Saving state aus Mutations
+  const saving = createBoilerplateMutation.isPending || updateBoilerplateMutation.isPending;
 
   return (
     <Dialog 
