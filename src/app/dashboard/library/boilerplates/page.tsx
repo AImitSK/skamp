@@ -26,8 +26,6 @@ import {
   StarIcon as StarIconOutline,
   ExclamationTriangleIcon,
   FunnelIcon,
-  ListBulletIcon,
-  Squares2X2Icon,
   ChevronLeftIcon,
   ChevronRightIcon,
   LanguageIcon
@@ -35,39 +33,6 @@ import {
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import BoilerplateModal from "./BoilerplateModal";
 import clsx from 'clsx';
-
-// ViewToggle Component
-function ViewToggle({ value, onChange, className }: { value: 'grid' | 'list'; onChange: (value: 'grid' | 'list') => void; className?: string }) {
-  return (
-    <div className={clsx('inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600', className)}>
-      <button
-        onClick={() => onChange('list')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
-          value === 'list'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="List view"
-      >
-        <ListBulletIcon className="h-5 w-5" />
-      </button>
-      
-      <button
-        onClick={() => onChange('grid')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
-          value === 'grid'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="Grid view"
-      >
-        <Squares2X2Icon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
 
 // Kategorie-Labels
 const CATEGORY_LABELS: Record<string, string> = {
@@ -105,11 +70,10 @@ export default function BoilerplatesPage() {
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Filter & View States
+  // Filter States
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -235,32 +199,11 @@ export default function BoilerplatesPage() {
     });
   };
 
-  const handleArchive = async (id: string) => {
-    if (!organizationId || !id) return;
-    
-    await boilerplatesService.archive(id, { organizationId, userId: user!.uid });
-    await loadData();
-  };
-
   const handleToggleFavorite = async (id: string) => {
     if (!organizationId || !id) return;
-    
+
     await boilerplatesService.toggleFavorite(id, { organizationId, userId: user!.uid });
     await loadData();
-  };
-
-  const handleDuplicate = async (boilerplate: Boilerplate) => {
-    if (!organizationId || !boilerplate.id) return;
-    
-    const newName = prompt("Name für die Kopie:", `${boilerplate.name} (Kopie)`);
-    if (newName) {
-      await boilerplatesService.duplicate(
-        boilerplate.id, 
-        newName, 
-        { organizationId, userId: user!.uid }
-      );
-      await loadData();
-    }
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -443,9 +386,6 @@ export default function BoilerplatesPage() {
             </Transition>
           </Popover>
 
-          {/* View Toggle */}
-          <ViewToggle value={viewMode} onChange={setViewMode} />
-
           {/* Add Button */}
           <Button 
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
@@ -516,12 +456,12 @@ export default function BoilerplatesPage() {
             <Heading level={3} className="mt-2">Keine Textbausteine gefunden</Heading>
             <Text className="mt-1">
               {searchTerm || activeFiltersCount > 0
-                ? "Versuchen Sie andere Suchkriterien" 
+                ? "Versuchen Sie andere Suchkriterien"
                 : "Erstellen Sie Ihren ersten Textbaustein"}
             </Text>
             {!searchTerm && activeFiltersCount === 0 && (
               <div className="mt-6">
-                <Button 
+                <Button
                   onClick={() => setShowModal(true)}
                   className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                 >
@@ -531,7 +471,7 @@ export default function BoilerplatesPage() {
               </div>
             )}
           </div>
-        ) : viewMode === 'list' ? (
+        ) : (
           // Table View
           <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
@@ -665,98 +605,6 @@ export default function BoilerplatesPage() {
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          // Grid View
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {paginatedBoilerplates.map((bp) => (
-              <div
-                key={bp.id}
-                className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
-              >
-                {/* Checkbox & Favorite */}
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                  <button
-                    onClick={() => bp.id && handleToggleFavorite(bp.id)}
-                    className="text-gray-400 hover:text-yellow-500"
-                  >
-                    {bp.isFavorite ? (
-                      <StarIconSolid className="h-4 w-4 text-yellow-500" />
-                    ) : (
-                      <StarIconOutline className="h-4 w-4" />
-                    )}
-                  </button>
-                  <Checkbox
-                    checked={selectedListIds.has(bp.id!)}
-                    onChange={(checked: boolean) => {
-                      const newIds = new Set(selectedListIds);
-                      if (checked) newIds.add(bp.id!);
-                      else newIds.delete(bp.id!);
-                      setSelectedListIds(newIds);
-                    }}
-                  />
-                </div>
-
-                {/* Info */}
-                <div className="pr-16">
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white line-clamp-1">
-                    {bp.name}
-                  </h3>
-                  {bp.description && (
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-2">
-                      {bp.description}
-                    </p>
-                  )}
-                  <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    <Badge color="zinc" className="text-xs">
-                      {CATEGORY_LABELS[bp.category]}
-                    </Badge>
-                    <Badge color="zinc" className="text-xs inline-flex items-center gap-1">
-                      <LanguageIcon className="h-3 w-3" />
-                      {LANGUAGE_LABELS[(bp as any).language || 'de']}
-                    </Badge>
-                    {bp.isGlobal ? (
-                      <Badge color="blue" className="text-xs inline-flex items-center gap-1">
-                        <GlobeAltIcon className="h-3 w-3" />
-                        Global
-                      </Badge>
-                    ) : (
-                      <Badge color="orange" className="text-xs">
-                        {bp.clientName}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Content Preview */}
-                <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
-                  {bp.content}
-                </div>
-
-                {/* Tags entfernt */}
-
-                {/* Actions */}
-                <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
-                  <button
-                    onClick={() => handleEdit(bp)}
-                    className="text-sm text-primary hover:text-primary-hover"
-                  >
-                    Bearbeiten
-                  </button>
-                  <Dropdown>
-                    <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => bp.id && handleDelete(bp.id!, bp.name)}>
-                        <TrashIcon className="h-4 w-4" />
-                        <span className="text-red-600">Löschen</span>
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
