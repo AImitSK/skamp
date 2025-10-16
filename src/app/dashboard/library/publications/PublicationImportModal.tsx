@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -125,6 +126,7 @@ interface Props {
 export default function PublicationImportModal({ onClose, onImportSuccess }: Props) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState('');
@@ -133,15 +135,14 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pro
   const [duplicateHandling, setDuplicateHandling] = useState<'skip' | 'update'>('skip');
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
-  const [selectedPublisherId, setSelectedPublisherId] = useState<string>('');
   const [loadingPublishers, setLoadingPublishers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sample CSV Template mit realistischen Daten
-  const sampleCSV = `Titel*;Untertitel;Verlag ID;Typ*;Format;Status;Website;Geografischer Fokus;Sprachen*;Länder*;Themenschwerpunkte;Frequenz;Zielgruppe;Altersgruppe;Geschlecht;Print Auflage;Print Auflagentyp;Print Preis;Print Währung;Online UV/Monat;Online PV/Monat;Online Session Dauer (Sek);Online Bounce Rate (%);ISSN;Verifiziert;Interne Notizen
-Der Spiegel;Deutschlands führendes Nachrichtenmagazin;;magazine;both;active;https://www.spiegel.de;national;de;"DE,AT,CH";"Politik,Wirtschaft,Gesellschaft";weekly;Bildungsbürger;30-59;all;850000;audited_ivw;8.50;EUR;25000000;150000000;420;35;0038-7452;ja;Premium-Publikation mit hoher Reichweite
-Süddeutsche Zeitung;Meinungsstarke überregionale Tageszeitung;;newspaper;both;active;https://www.sueddeutsche.de;national;de;"DE,AT,CH";"Politik,Kultur,Sport";daily;Bildungselite;35-64;all;320000;audited_ivw;3.20;EUR;18000000;95000000;380;42;0174-4917;ja;Sehr hohe journalistische Qualität
-Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www.heise.de;international;"de,en";"DE,AT,CH,US,GB";"IT,Technologie,Digitalisierung";continuous;IT-Professionals;25-49;predominantly_male;;;;;;12000000;65000000;320;28;2196-4327;ja;Führende IT-Publikation im DACH-Raum`;
+  const sampleCSV = `Titel*;Untertitel;Verlag*;Typ*;Format;Status;Website;Geografischer Fokus;Sprachen*;Länder*;Themenschwerpunkte;Frequenz;Zielgruppe;Altersgruppe;Geschlecht;Print Auflage;Print Auflagentyp;Print Preis;Print Währung;Online UV/Monat;Online PV/Monat;Online Session Dauer (Sek);Online Bounce Rate (%);ISSN;Verifiziert;Interne Notizen
+Der Spiegel;Deutschlands führendes Nachrichtenmagazin;Spiegel-Verlag;magazine;both;active;https://www.spiegel.de;national;de;"DE,AT,CH";"Politik,Wirtschaft,Gesellschaft";weekly;Bildungsbürger;30-59;all;850000;audited_ivw;8.50;EUR;25000000;150000000;420;35;0038-7452;ja;Premium-Publikation mit hoher Reichweite
+Süddeutsche Zeitung;Meinungsstarke überregionale Tageszeitung;Süddeutscher Verlag;newspaper;both;active;https://www.sueddeutsche.de;national;de;"DE,AT,CH";"Politik,Kultur,Sport";daily;Bildungselite;35-64;all;320000;audited_ivw;3.20;EUR;18000000;95000000;380;42;0174-4917;ja;Sehr hohe journalistische Qualität
+Heise Online;IT-Nachrichten und Hintergründe;Heise Medien GmbH;website;online;active;https://www.heise.de;international;"de,en";"DE,AT,CH,US,GB";"IT,Technologie,Digitalisierung";continuous;IT-Professionals;25-49;predominantly_male;;;;;;12000000;65000000;320;28;2196-4327;ja;Führende IT-Publikation im DACH-Raum`;
 
   // Lade Publisher beim Mount
   useEffect(() => {
@@ -221,13 +222,19 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
     return value?.toLowerCase() === 'ja' || value?.toLowerCase() === 'true';
   };
 
-  const parsePublicationRow = (row: any, selectedPublisher: CompanyEnhanced | undefined): Partial<Publication> => {
+  const parsePublicationRow = (row: any, allPublishers: CompanyEnhanced[]): Partial<Publication> => {
+    // Finde Publisher nach Name
+    const publisherName = row["Verlag*"] || row["Verlag"];
+    const matchedPublisher = publisherName ?
+      allPublishers.find(p => p.name.toLowerCase() === publisherName.toLowerCase()) :
+      undefined;
+
     const pub: Partial<Publication> = {
       // Grunddaten
       title: row["Titel*"] || row["Titel"],
       subtitle: row["Untertitel"],
-      publisherId: selectedPublisherId,
-      publisherName: selectedPublisher?.name,
+      publisherId: matchedPublisher?.id,
+      publisherName: publisherName || matchedPublisher?.name,
 
       // Klassifizierung
       type: mapPublicationType(row["Typ*"] || row["Typ"]),
@@ -424,8 +431,8 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
   };
 
   const handleImport = async () => {
-    if (!file || !user || !selectedPublisherId) {
-      setError('Bitte wählen Sie eine Datei und einen Verlag aus.');
+    if (!file || !user) {
+      setError('Bitte wählen Sie eine Datei aus.');
       return;
     }
 
@@ -454,7 +461,6 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
 
           const publications: Partial<Publication>[] = [];
           const parseErrors: { row: number; error: string }[] = [];
-          const selectedPublisher = publishers.find(p => p.id === selectedPublisherId);
 
           results.data.forEach((row: any, index: number) => {
             try {
@@ -474,7 +480,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
                 return;
               }
 
-              const publication = parsePublicationRow(row, selectedPublisher);
+              const publication = parsePublicationRow(row, publishers);
               publications.push(publication);
             } catch (err) {
               parseErrors.push({
@@ -509,8 +515,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
             },
             {
               duplicateCheck: true,
-              updateExisting: duplicateHandling === 'update',
-              defaultPublisherId: selectedPublisherId
+              updateExisting: duplicateHandling === 'update'
             }
           );
 
@@ -524,6 +529,9 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
           });
 
           if (result.created > 0 || result.updated > 0) {
+            // Invalidate queries to refresh the table
+            queryClient.invalidateQueries({ queryKey: ['publications', currentOrganization!.id] });
+
             setTimeout(() => {
               onImportSuccess();
               onClose();
@@ -556,9 +564,9 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
   return (
     <Dialog open={true} onClose={onClose} size="5xl">
       <DialogTitle className="px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <span className="text-lg font-semibold">Publikationen importieren</span>
-          <Badge color="blue">{file ? '1 Datei ausgewählt' : 'Keine Datei'}</Badge>
+          <Badge color="blue" className="shrink-0">{file ? '1 Datei ausgewählt' : 'Keine Datei'}</Badge>
         </div>
       </DialogTitle>
 
@@ -592,39 +600,12 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
               </div>
             </div>
 
-            {/* Verlag auswählen */}
-            <FieldGroup>
-              <Field>
-                <Label>Verlag auswählen *</Label>
-                {loadingPublishers ? (
-                  <div className="animate-pulse">
-                    <div className="h-10 bg-gray-200 rounded"></div>
-                  </div>
-                ) : publishers.length === 0 ? (
-                  <Alert
-                    type="warning"
-                    message="Keine Verlage oder Medienhäuser gefunden. Bitte legen Sie zuerst eine Firma vom Typ 'Verlag', 'Medienhaus' oder 'Partner' im CRM an."
-                  />
-                ) : (
-                  <>
-                    <Select
-                      value={selectedPublisherId}
-                      onChange={(e) => setSelectedPublisherId(e.target.value)}
-                    >
-                      <option value="">-- Bitte wählen --</option>
-                      {publishers.map(publisher => (
-                        <option key={publisher.id} value={publisher.id}>
-                          {publisher.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <Description>
-                      Alle importierten Publikationen werden diesem Verlag zugeordnet.
-                    </Description>
-                  </>
-                )}
-              </Field>
-            </FieldGroup>
+            {/* Info über Verlagszuordnung */}
+            <Alert
+              type="info"
+              title="Verlagszuordnung"
+              message="Jede Publikation kann einem eigenen Verlag zugeordnet werden. Geben Sie in der CSV-Spalte 'Verlag' den Namen des Verlags an. Wenn der Verlag im CRM existiert, wird er automatisch verknüpft."
+            />
 
             {/* Duplikate-Behandlung */}
             <FieldGroup>
@@ -815,7 +796,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
         {!importResult && (
           <Button
             onClick={handleImport}
-            disabled={!file || isImporting || !selectedPublisherId}
+            disabled={!file || isImporting}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             {isImporting ? (
