@@ -1,7 +1,7 @@
 # Boilerplates-Modul: Refactoring-Implementierungsplan
 
 **Version:** 1.0
-**Status:** 🟢 In Arbeit (Phase 0 & 0.5 ✅)
+**Status:** 🟢 In Arbeit (Phase 0, 0.5 & 1 ✅)
 **Basiert auf:** [Module-Refactoring-Template v1.1](../templates/module-refactoring-template.md)
 **Erstellt:** 16. Oktober 2025
 **Gestartet:** 16. Oktober 2025
@@ -36,7 +36,7 @@ Das Boilerplates-Modul (`/dashboard/library/boilerplates`) benötigt ein vollst�
 |-------|-------------|-------|--------|
 | 0 | Setup & Backup | 30min | ✅ Abgeschlossen |
 | 0.5 | Pre-Cleanup | 1-2h | ✅ Abgeschlossen |
-| 1 | React Query | 3h | ⏳ Offen |
+| 1 | React Query | 3h | ✅ Abgeschlossen |
 | 2 | Modularisierung | 2h | ⏳ Offen (optional) |
 | 3 | Performance | 2h | ⏳ Offen |
 | 4 | Testing | 3h | ⏳ Offen |
@@ -532,12 +532,12 @@ const handleToggleFavorite = async (id: string) => {
 
 #### Checkliste Phase 1
 
-- [ ] Hooks-Datei erstellt (`useBoilerplatesData.ts`)
-- [ ] 6 Hooks implementiert (getAll, getById, create, update, delete, toggleFavorite)
-- [ ] page.tsx auf React Query umgestellt
-- [ ] Alte loadData/useEffect entfernt
-- [ ] TypeScript-Fehler behoben
-- [ ] Manueller Test durchgeführt
+- [x] Hooks-Datei erstellt (`useBoilerplatesData.ts`)
+- [x] 6 Hooks implementiert (getAll, getById, create, update, delete, toggleFavorite)
+- [x] page.tsx auf React Query umgestellt
+- [x] Alte loadData/useEffect entfernt
+- [x] TypeScript-Fehler behoben
+- [x] Manueller Test durchgeführt
 
 #### Deliverable
 
@@ -545,18 +545,26 @@ const handleToggleFavorite = async (id: string) => {
 ## Phase 1: React Query Integration ✅
 
 ### Implementiert
-- Custom Hooks in `useBoilerplatesData.ts` (6 Hooks)
+- Custom Hooks in `useBoilerplatesData.ts` (6 Hooks, 144 Zeilen)
 - page.tsx vollständig auf React Query umgestellt
-- Alte loadData-Pattern entfernt
+- Alte loadData-Pattern entfernt (useEffect, loadData function, manual state management)
+- Automatische Cache-Invalidierung bei Mutations
 
 ### Vorteile
 - Automatisches Caching (5min staleTime)
 - Query Invalidierung bei Mutations
 - Error Handling über React Query
-- ~80 Zeilen Boilerplate Code gespart
+- Wiederverwendbare Hooks für andere Module
+- Bessere Performance durch intelligentes Caching
 
-### Code-Reduktion
-- page.tsx: 656 → [X] Zeilen (-[Y] Zeilen)
+### Code-Statistiken
+- page.tsx: 656 → 634 Zeilen (-22 Zeilen)
+- Neue Hooks-Datei: 144 Zeilen (wiederverwendbar)
+- Netto: +122 Zeilen (bessere Code-Organisation und Trennung)
+
+### Qualität
+- ✅ 0 TypeScript-Fehler
+- ✅ 0 ESLint-Warnings
 ```
 
 #### Commit
@@ -1319,7 +1327,9 @@ npm test -- boilerplates
 
 1. ~~**Phase 0 starten:** Feature-Branch erstellen, Backups anlegen~~ ✅ Abgeschlossen
 2. ~~**Phase 0.5 durchführen:** Toten Code entfernen~~ ✅ Abgeschlossen (Code war bereits sauber)
-3. **Phase 1 beginnen:** React Query Hooks erstellen (NÄCHSTER SCHRITT)
+3. ~~**Phase 1 beginnen:** React Query Hooks erstellen~~ ✅ Abgeschlossen
+4. **Phase 2 entscheiden:** Modal modularisieren oder überspringen? (400 Zeilen - Grenzfall)
+5. **Phase 3 beginnen:** Performance-Optimierungen (useCallback, useMemo, Debouncing) (NÄCHSTER SCHRITT)
 
 ### Kurzfristig (Nach Refactoring)
 
@@ -1382,7 +1392,7 @@ Im Vergleich zu Publications:
 
 **Maintainer:** CeleroPress Development Team
 **Erstellt:** 16. Oktober 2025
-**Letzte Aktualisierung:** 16. Oktober 2025 (Phase 0 & 0.5 abgeschlossen)
+**Letzte Aktualisierung:** 16. Oktober 2025 (Phase 0, 0.5 & 1 abgeschlossen)
 
 ---
 
