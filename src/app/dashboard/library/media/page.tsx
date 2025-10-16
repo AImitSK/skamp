@@ -718,7 +718,7 @@ export default function MediathekPage() {
 
       {/* Breadcrumb Navigation */}
       {breadcrumbs.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-4">
           <BreadcrumbNavigation
             breadcrumbs={breadcrumbs}
             onNavigate={handleNavigateToFolder}
