@@ -12,7 +12,6 @@ import { Select } from "@/components/ui/select";
 import { Field, Label, Description, Fieldset } from "@/components/ui/fieldset";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
-import { LanguageSelector } from "@/components/ui/language-selector";
 // Einfacher Editor ohne KI-Toolbar - ersetzt GmailStyleEditor
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -30,6 +29,16 @@ import {
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SimpleSwitch } from "@/components/notifications/SimpleSwitch";
 import type { LanguageCode } from "@/types/international";
+import * as Flags from 'country-flag-icons/react/3x2';
+
+// Flag Component
+const FlagIcon = ({ countryCode, className = "h-3 w-5" }: { countryCode?: string; className?: string }) => {
+  if (!countryCode) return null;
+  // @ts-ignore - Dynamic import from flag library
+  const Flag = Flags[countryCode.toUpperCase()];
+  if (!Flag) return null;
+  return <Flag className={className} title={countryCode} />;
+};
 
 // Kategorie-Optionen
 const CATEGORY_OPTIONS = [
@@ -331,10 +340,33 @@ export default function BoilerplateModal({
 
             <Field>
               <Label>Sprache</Label>
-              <LanguageSelector
-                value={formData.language || 'de'}
-                onChange={(lang) => setFormData({ ...formData, language: lang as LanguageCode })}
-              />
+              <div className="relative" data-slot="control">
+                {formData.language && (
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                    <FlagIcon
+                      countryCode={formData.language === 'en' ? 'GB' : formData.language.toUpperCase()}
+                      className="h-3 w-5"
+                    />
+                  </div>
+                )}
+                <Select
+                  value={formData.language || 'de'}
+                  onChange={(e) => setFormData({ ...formData, language: e.target.value as LanguageCode })}
+                  className={formData.language ? 'pl-11' : ''}
+                >
+                  <option value="">Sprache auswählen...</option>
+                  <option value="de">Deutsch</option>
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="es">Español</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Português</option>
+                  <option value="nl">Nederlands</option>
+                  <option value="pl">Polski</option>
+                  <option value="ru">Русский</option>
+                  <option value="ja">日本語</option>
+                </Select>
+              </div>
               <Description className="mt-2">
                 Sprache des Textbausteins für mehrsprachige Unterstützung
               </Description>
