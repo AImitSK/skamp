@@ -1,7 +1,7 @@
 # Boilerplates-Modul: Refactoring-Implementierungsplan
 
 **Version:** 1.0
-**Status:** 🟢 In Arbeit (Phase 0, 0.5, 1 & 3 ✅ | Phase 2 ⏭️)
+**Status:** 🟢 In Arbeit (Phase 0, 0.5, 1, 3 & 3.5 ✅ | Phase 2 ⏭️)
 **Basiert auf:** [Module-Refactoring-Template v1.1](../templates/module-refactoring-template.md)
 **Erstellt:** 16. Oktober 2025
 **Gestartet:** 16. Oktober 2025
@@ -17,7 +17,7 @@ Das Boilerplates-Modul (`/dashboard/library/boilerplates`) benötigt ein vollst�
 **✅ Bereits erledigt:**
 - Design System vollständig angewendet (Search-Input, Button-Stil, Tabellen-Layout)
 - Sprachen-Auswahl mit Flaggen-Icons implementiert
-- Toast-Service vollständig integriert
+- Toast-Service vollständig integriert ✅ (Phase 3.5 - 16. Oktober 2025)
 - Grid-View und Multi-Select entfernt (vereinfachtes UI)
 
 **❌ Noch zu tun:**
@@ -39,6 +39,7 @@ Das Boilerplates-Modul (`/dashboard/library/boilerplates`) benötigt ein vollst�
 | 1 | React Query | 3h | ✅ Abgeschlossen |
 | 2 | Modularisierung | 2h | ⏭️ Übersprungen (400 Zeilen akzeptabel) |
 | 3 | Performance | 2h | ✅ Abgeschlossen |
+| 3.5 | Toast Integration | 30min | ✅ Abgeschlossen |
 | 4 | Testing | 3h | ⏳ Offen |
 | 5 | Dokumentation | 2-3h | ⏳ Offen |
 | 6 | Code Quality | 2h | ⏳ Offen |
@@ -845,6 +846,165 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
+### Phase 3.5: Toast-Integration (30 Minuten)
+
+**Ziel:** Benutzer-Feedbacks mit Toast-Service modernisieren
+
+#### 3.5.1 Toast-Service in page.tsx integrieren (15min)
+
+**Import hinzufügen:**
+```typescript
+import { toastService } from '@/lib/utils/toast';
+```
+
+**Toast zu Mutations hinzufügen:**
+```typescript
+const handleDelete = useCallback(async (id: string, name: string) => {
+  setConfirmDialog({
+    isOpen: true,
+    title: 'Textbaustein löschen',
+    message: `Möchten Sie den Textbaustein "${name}" wirklich unwiderruflich löschen?`,
+    type: 'danger',
+    onConfirm: async () => {
+      try {
+        await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
+        toastService.success(`"${name}" erfolgreich gelöscht`);
+      } catch (error) {
+        toastService.error(
+          error instanceof Error
+            ? `Fehler beim Löschen: ${error.message}`
+            : 'Fehler beim Löschen des Textbausteins'
+        );
+      }
+    }
+  });
+}, [deleteBoilerplateMutation, organizationId]);
+
+const handleToggleFavorite = useCallback(async (id: string) => {
+  if (!organizationId || !id || !user) return;
+
+  try {
+    await toggleFavoriteMutation.mutateAsync({
+      id,
+      organizationId,
+      userId: user.uid
+    });
+    toastService.success('Favorit-Status aktualisiert');
+  } catch (error) {
+    toastService.error(
+      error instanceof Error
+        ? `Fehler beim Aktualisieren: ${error.message}`
+        : 'Fehler beim Aktualisieren des Favorit-Status'
+    );
+  }
+}, [toggleFavoriteMutation, organizationId, user]);
+```
+
+#### 3.5.2 alert() Calls in BoilerplateModal.tsx ersetzen (15min)
+
+**Import hinzufügen:**
+```typescript
+import { toastService } from '@/lib/utils/toast';
+```
+
+**Ersetzen:**
+```typescript
+// VORHER: alert('Bitte füllen Sie Name und Inhalt aus.');
+// NACHHER:
+toastService.warning('Bitte füllen Sie Name und Inhalt aus.');
+
+// VORHER: alert('Fehler beim Speichern');
+// NACHHER:
+toastService.error(
+  error instanceof Error
+    ? `Fehler beim Speichern: ${error.message}`
+    : 'Fehler beim Speichern des Textbausteins'
+);
+
+// Success Toasts hinzufügen:
+if (boilerplate && boilerplate.id) {
+  await boilerplatesService.update(/* ... */);
+  toastService.success(`"${formData.name}" erfolgreich aktualisiert`);
+} else {
+  await boilerplatesService.create(/* ... */);
+  toastService.success(`"${formData.name}" erfolgreich erstellt`);
+}
+```
+
+#### Checkliste Phase 3.5
+
+- [x] toastService in page.tsx importiert
+- [x] Toast zu handleDelete hinzugefügt (success/error)
+- [x] Toast zu handleToggleFavorite hinzugefügt (success/error)
+- [x] toastService in BoilerplateModal.tsx importiert
+- [x] alert() mit toastService.warning() ersetzt
+- [x] Success toasts für create/update hinzugefügt
+- [x] Error toast mit detaillierter Fehlermeldung hinzugefügt
+- [x] Manueller Test durchgeführt
+
+#### Deliverable
+
+```markdown
+## Phase 3.5: Toast-Integration ✅
+
+### Implementiert
+- toastService in page.tsx:
+  - handleDelete: Success/Error Toasts
+  - handleToggleFavorite: Success/Error Toasts
+- toastService in BoilerplateModal.tsx:
+  - Validierungs-Warning (statt alert)
+  - Create Success Toast
+  - Update Success Toast
+  - Error Toast mit detaillierter Fehlermeldung
+
+### Ersetzte alert() Aufrufe
+- alert('Bitte füllen Sie Name und Inhalt aus.') → toastService.warning()
+- alert('Fehler beim Speichern') → toastService.error() mit Details
+
+### Vorteile
+- Konsistente Benutzer-Feedbacks über das gesamte Modul
+- Moderne UX (keine Browser-Dialoge mehr)
+- Detaillierte Fehlermeldungen für besseres Debugging
+- Pattern-Konsistenz mit anderen Modulen (editors, lists)
+
+### Code-Änderungen
+- page.tsx: +13 Zeilen (try-catch + toasts)
+- BoilerplateModal.tsx: +9 Zeilen (toasts)
+- Pattern übernommen von editors.page.tsx
+
+### Qualität
+- ✅ 0 TypeScript-Fehler
+- ✅ 0 ESLint-Warnings
+- ✅ Manueller Test bestanden
+```
+
+#### Commit
+
+```bash
+git add .
+git commit -m "feat: Toast-Integration für Boilerplates-Modul abgeschlossen
+
+Toast-Service in page.tsx integriert:
+- handleDelete: Success/Error Toasts hinzugefügt
+- handleToggleFavorite: Success/Error Toasts hinzugefügt
+
+Toast-Service in BoilerplateModal.tsx integriert:
+- alert() Aufrufe durch toastService ersetzt
+- Success Toasts für Create/Update hinzugefügt
+- Detaillierte Fehlermeldungen
+
+Vorteile:
+- Konsistente Benutzer-Feedbacks
+- Moderne UX ohne Browser-Dialoge
+- Pattern-Konsistenz mit anderen Modulen
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+---
+
 ### Phase 4: Testing (3 Stunden)
 
 **Ziel:** Comprehensive Test Suite mit >80% Coverage
@@ -1349,7 +1509,8 @@ npm test -- boilerplates
 3. ~~**Phase 1 beginnen:** React Query Hooks erstellen~~ ✅ Abgeschlossen
 4. ~~**Phase 2 entscheiden:** Modal modularisieren oder überspringen?~~ ⏭️ Übersprungen (400 Zeilen akzeptabel)
 5. ~~**Phase 3 beginnen:** Performance-Optimierungen~~ ✅ Abgeschlossen
-6. **Phase 4 beginnen:** Comprehensive Test Suite erstellen (NÄCHSTER SCHRITT)
+6. ~~**Phase 3.5 durchführen:** Toast-Integration implementieren~~ ✅ Abgeschlossen
+7. **Phase 4 beginnen:** Comprehensive Test Suite erstellen (NÄCHSTER SCHRITT)
 
 ### Kurzfristig (Nach Refactoring)
 
@@ -1412,7 +1573,7 @@ Im Vergleich zu Publications:
 
 **Maintainer:** CeleroPress Development Team
 **Erstellt:** 16. Oktober 2025
-**Letzte Aktualisierung:** 16. Oktober 2025 (Phase 0, 0.5, 1 & 3 abgeschlossen | Phase 2 übersprungen)
+**Letzte Aktualisierung:** 16. Oktober 2025 (Phase 0, 0.5, 1, 3 & 3.5 ✅ | Phase 2 ⏭️)
 
 ---
 
