@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { MonitoringConfigState, RssDetectionStatus } from './types';
 import type { Publication } from '@/types/library';
+import { toastService } from '@/lib/utils/toast';
 
 interface MonitoringSectionProps {
   monitoringConfig: MonitoringConfigState;
@@ -35,7 +36,7 @@ export const MonitoringSection = memo(function MonitoringSection({
   // RSS Auto-Detection Function
   const handleRssAutoDetect = async () => {
     if (!monitoringConfig.websiteUrl) {
-      alert('Bitte geben Sie zuerst eine Website URL ein.');
+      toastService.warning('Bitte geben Sie zuerst eine Website URL ein.');
       return;
     }
 
@@ -74,7 +75,7 @@ export const MonitoringSection = memo(function MonitoringSection({
       }
     } catch (error) {
       console.error('RSS Auto-Detection Error:', error);
-      alert('Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut.');
+      toastService.error('Fehler bei der RSS Feed Erkennung. Bitte versuchen Sie es erneut.');
       setRssDetectionStatus('not_found');
       setShowManualRssInput(true);
     }
