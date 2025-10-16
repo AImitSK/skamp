@@ -11,12 +11,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Text } from "@/components/ui/text";
 import { MediaFolder, MediaAsset } from "@/types/media";
 import { mediaService } from "@/lib/firebase/media-service";
-import { 
-  LinkIcon, 
-  ClipboardDocumentIcon, 
+import {
+  LinkIcon,
+  ClipboardDocumentIcon,
   CheckIcon,
   InformationCircleIcon
 } from "@heroicons/react/24/outline";
+import { toastService } from '@/lib/utils/toast';
 
 interface ShareModalProps {
   target: MediaFolder | MediaAsset;
@@ -102,14 +103,14 @@ export default function ShareModal({
       };
       
       setCreatedLink(linkData);
-      
+      toastService.success('Share-Link erfolgreich erstellt');
+
       // Rufe onSuccess nur auf, wenn explizit gewünscht
       // aber NICHT beim normalen Share-Vorgang
       // onSuccess?.();
       
     } catch (error) {
-      // Error handling could be improved with proper user feedback
-      alert('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut.');
+      toastService.error('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut');
     } finally {
       setCreating(false);
     }

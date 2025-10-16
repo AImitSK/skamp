@@ -41,9 +41,9 @@ import {
   DropdownItem,
   DropdownDivider
 } from "@/components/ui/dropdown";
-import { 
-  PlusIcon, 
-  PhotoIcon, 
+import {
+  PlusIcon,
+  PhotoIcon,
   Squares2X2Icon,
   ListBulletIcon,
   EyeIcon,
@@ -54,14 +54,13 @@ import {
   ShareIcon,
   EllipsisVerticalIcon,
   PencilIcon,
-  InformationCircleIcon,
-  CheckCircleIcon,
   ExclamationTriangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassIcon,
   FolderIcon
 } from "@heroicons/react/24/outline";
+import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
@@ -71,62 +70,6 @@ import ShareModal from "@/components/mediathek/ShareModal";
 import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal";
 
 type ViewMode = 'grid' | 'list';
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    success: CheckCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: ExclamationTriangleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function MediathekPage() {
   const { user } = useAuth();
@@ -176,9 +119,6 @@ export default function MediathekPage() {
   const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
   const useSmartRouterEnabled = shouldUseSmartRouter();
 
-  // Alert State
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
-
   // Drag & Drop States
   const [draggedAsset, setDraggedAsset] = useState<MediaAsset | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
@@ -203,12 +143,6 @@ export default function MediathekPage() {
     onConfirm: () => void;
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-
-  // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
 
   // Get asset's folder
   const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
@@ -270,10 +204,10 @@ export default function MediathekPage() {
         organizationId
       });
 
-      showAlert('success', 'Ordner verschoben');
+      toastService.success('Ordner verschoben');
 
     } catch (error) {
-      showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
+      toastService.error('Der Ordner konnte nicht verschoben werden');
     } finally {
       setMoving(false);
       setDraggedFolder(null);
@@ -338,9 +272,9 @@ export default function MediathekPage() {
           });
 
           clearSelection();
-          showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
+          toastService.success(`${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
         } catch (error) {
-          showAlert('error', 'Fehler beim Löschen', 'Die Dateien konnten nicht gelöscht werden.');
+          toastService.error('Die Dateien konnten nicht gelöscht werden');
         } finally {
           setMoving(false);
         }
@@ -366,9 +300,9 @@ export default function MediathekPage() {
       );
 
       clearSelection();
-      showAlert('success', 'Dateien verschoben');
+      toastService.success('Dateien verschoben');
     } catch (error) {
-      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
+      toastService.error('Die Dateien konnten nicht verschoben werden');
     } finally {
       setMoving(false);
     }
@@ -474,11 +408,11 @@ export default function MediathekPage() {
           newFolderId: targetFolder.id,
           organizationId
         });
-        showAlert('success', 'Datei verschoben');
+        toastService.success('Datei verschoben');
       }
       
     } catch (error) {
-      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
+      toastService.error('Die Dateien konnten nicht verschoben werden');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -505,10 +439,10 @@ export default function MediathekPage() {
           organizationId: organizationId!
         });
 
-        showAlert('success', 'Ordner in Root verschoben');
+        toastService.success('Ordner in Root verschoben');
 
       } catch (error) {
-        showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
+        toastService.error('Der Ordner konnte nicht verschoben werden');
       } finally {
         setMoving(false);
         setDraggedFolder(null);
@@ -557,10 +491,10 @@ export default function MediathekPage() {
         });
       }
 
-      showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
+      toastService.success(`${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
       
     } catch (error) {
-      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
+      toastService.error('Die Dateien konnten nicht verschoben werden');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -603,7 +537,7 @@ export default function MediathekPage() {
           }
         });
       }
-      showAlert('success', editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
+      toastService.success(editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
     } catch (error) {
       throw error;
     }
@@ -622,9 +556,9 @@ export default function MediathekPage() {
             folderId: folder.id!,
             organizationId
           });
-          showAlert('success', 'Ordner gelöscht');
+          toastService.success('Ordner gelöscht');
         } catch (error) {
-          showAlert('error', 'Fehler beim Löschen', 'Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist.');
+          toastService.error('Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist');
         }
       }
     });
@@ -668,9 +602,9 @@ export default function MediathekPage() {
             asset,
             organizationId
           });
-          showAlert('success', 'Datei gelöscht');
+          toastService.success('Datei gelöscht');
         } catch(error) {
-          showAlert('error', 'Fehler beim Löschen', 'Die Datei konnte nicht gelöscht werden.');
+          toastService.error('Die Datei konnte nicht gelöscht werden');
         }
       }
     });
@@ -1138,13 +1072,6 @@ export default function MediathekPage() {
 
   return (
     <div>
-      {/* Alert */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} title={alert.title} message={alert.message} />
-        </div>
-      )}
-
       {/* Moving Indicator */}
       {moving && (
         <div className="fixed top-4 right-4 bg-[#005fab] text-white px-4 py-2 rounded-lg shadow-lg z-50">

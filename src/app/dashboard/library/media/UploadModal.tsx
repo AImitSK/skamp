@@ -13,50 +13,18 @@ import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter, uploadToMediaLibrary } from "@/lib/firebase/smart-upload-router";
 import { mediaLibraryContextBuilder, UploadContextInfo } from "./utils/context-builder";
 import { getMediaLibraryFeatureFlags, shouldUseSmartRouter, getUIFeatureConfig } from "./config/feature-flags";
-import { 
-  CloudArrowUpIcon, 
-  DocumentTextIcon, 
-  XMarkIcon, 
-  FolderIcon, 
+import {
+  CloudArrowUpIcon,
+  DocumentTextIcon,
+  XMarkIcon,
+  FolderIcon,
   BuildingOfficeIcon,
-  InformationCircleIcon,
   CogIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   TagIcon
 } from "@heroicons/react/24/outline";
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message 
-}: { 
-  type?: 'info' | 'error';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const Icon = type === 'error' ? XMarkIcon : InformationCircleIcon;
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
-        </div>
-        <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { toastService } from '@/lib/utils/toast';
 
 interface UploadModalProps {
   onClose: () => void;
@@ -98,7 +66,6 @@ export default function UploadModal({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [selectedClientId, setSelectedClientId] = useState<string>(preselectedClientId || '');
-  const [alert, setAlert] = useState<{ type: 'info' | 'error'; message: string } | null>(null);
 
   // Smart Upload Router Integration mit Feature Flags
   const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
@@ -140,11 +107,6 @@ export default function UploadModal({
       loadContextInfo();
     }
   }, [organizationId, userId, currentFolderId, selectedClientId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo, companies]);
-
-  const showAlert = (type: 'info' | 'error', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -308,13 +270,14 @@ export default function UploadModal({
       const failedUploads = results.filter(r => r.error);
       
       if (failedUploads.length === 0) {
+        toastService.success(`${results.length} ${results.length === 1 ? 'Datei' : 'Dateien'} erfolgreich hochgeladen`);
         await onUploadSuccess();
         onClose();
       } else {
-        showAlert('error', `${failedUploads.length} von ${results.length} Uploads fehlgeschlagen.`);
+        toastService.error(`${failedUploads.length} von ${results.length} Uploads fehlgeschlagen`);
       }
     } catch (error) {
-      showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
+      toastService.error('Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut');
     } finally {
       setUploading(false);
     }
@@ -331,14 +294,8 @@ export default function UploadModal({
     <Dialog open={true} onClose={onClose} size="2xl">
       <div className="p-6">
         <DialogTitle>Medien hochladen</DialogTitle>
-        
-        <DialogBody className="mt-4">
-          {alert && (
-            <div className="mb-4">
-              <Alert type={alert.type} message={alert.message} />
-            </div>
-          )}
 
+        <DialogBody className="mt-4">
           <FieldGroup>
             {/* Zielordner anzeigen */}
             {currentFolderId && folderName && (
