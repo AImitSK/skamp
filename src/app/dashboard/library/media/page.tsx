@@ -10,6 +10,20 @@ import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter } from "@/lib/firebase/smart-upload-router";
 import { mediaLibraryContextBuilder } from "./utils/context-builder";
 import { getMediaLibraryFeatureFlags, shouldUseSmartRouter } from "./config/feature-flags";
+import {
+  useMediaAssets,
+  useMediaFolders,
+  useAllMediaFolders,
+  useMediaFolder,
+  useFolderBreadcrumbs,
+  useDeleteMediaAsset,
+  useBulkDeleteAssets,
+  useMoveAsset,
+  useCreateFolder,
+  useUpdateFolder,
+  useDeleteFolder,
+  useMoveFolder,
+} from "@/lib/hooks/useMediaData";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/ui/heading";
@@ -124,13 +138,25 @@ export default function MediathekPage() {
   // Multi-Tenancy State
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  
-  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
-  const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [allFolders, setAllFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
-  const [breadcrumbs, setBreadcrumbs] = useState<FolderBreadcrumb[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hooks - Replace manual state management
+  const { data: folders = [], isLoading: foldersLoading } = useMediaFolders(organizationId, currentFolderId);
+  const { data: mediaAssets = [], isLoading: assetsLoading } = useMediaAssets(organizationId, currentFolderId);
+  const { data: allFolders = [] } = useAllMediaFolders(organizationId);
+  const { data: breadcrumbs = [] } = useFolderBreadcrumbs(currentFolderId);
+
+  // Mutations
+  const deleteAssetMutation = useDeleteMediaAsset();
+  const bulkDeleteAssetsMutation = useBulkDeleteAssets();
+  const moveAssetMutation = useMoveAsset();
+  const createFolderMutation = useCreateFolder();
+  const updateFolderMutation = useUpdateFolder();
+  const deleteFolderMutation = useDeleteFolder();
+  const moveFolderMutation = useMoveFolder();
+
+  // Loading state (derived from queries)
+  const loading = foldersLoading || assetsLoading;
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -226,68 +252,26 @@ export default function MediathekPage() {
     }
   }, [searchParams, companies, router]);
 
-  useEffect(() => {
-    if (organizationId) {
-      loadData();
-    }
-  }, [organizationId, currentFolderId]);
-
-  const loadData = async () => {
-    if (!organizationId) {
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const [foldersData, assetsData] = await Promise.all([
-        mediaService.getFolders(organizationId, currentFolderId),
-        mediaService.getMediaAssets(organizationId, currentFolderId)
-      ]);
-      
-      setFolders(foldersData);
-      setMediaAssets(assetsData);
-      
-      let allFoldersWithParent = foldersData;
-      if (currentFolderId) {
-        const currentFolder = await mediaService.getFolder(currentFolderId);
-        if (currentFolder) {
-          allFoldersWithParent = [...foldersData, currentFolder];
-        }
-      }
-      setAllFolders(allFoldersWithParent);
-      
-      if (currentFolderId) {
-        const breadcrumbsData = await mediaService.getBreadcrumbs(currentFolderId);
-        setBreadcrumbs(breadcrumbsData);
-      } else {
-        setBreadcrumbs([]);
-      }
-    } catch (error) {
-      showAlert('error', 'Fehler beim Laden', 'Die Mediathek konnte nicht geladen werden.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ React Query: No manual loadData() needed - queries auto-fetch and cache
 
   // FOLDER DRAG & DROP HANDLERS
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
     if (!organizationId) return;
-    
+
     try {
       setMoving(true);
       setDragOverFolder(null);
       setDraggedFolder(null);
-      
-      await mediaService.updateFolder(folderId, {
-        parentFolderId: targetFolderId
+
+      // React Query Mutation - auto invalidates queries
+      await moveFolderMutation.mutateAsync({
+        folderId,
+        newParentId: targetFolderId,
+        organizationId
       });
-      
-      await mediaService.updateFolderClientInheritance(folderId, organizationId);
-      await loadData();
-      
+
       showAlert('success', 'Ordner verschoben');
-      
+
     } catch (error) {
       showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
     } finally {
@@ -295,7 +279,7 @@ export default function MediathekPage() {
       setDraggedFolder(null);
       setDragOverFolder(null);
     }
-  }, [organizationId]);
+  }, [organizationId, moveFolderMutation]);
 
   const handleFolderDragStart = (folder: MediaFolder) => {
     setDraggedFolder(folder);
@@ -334,9 +318,9 @@ export default function MediathekPage() {
 
   const handleBulkDelete = async () => {
     if (selectedAssets.size === 0) return;
-    
+
     const count = selectedAssets.size;
-    
+
     setConfirmDialog({
       isOpen: true,
       title: `${count} ${count === 1 ? 'Datei' : 'Dateien'} löschen`,
@@ -346,13 +330,14 @@ export default function MediathekPage() {
         try {
           setMoving(true);
           const assetsToDelete = mediaAssets.filter(asset => selectedAssets.has(asset.id!));
-          
-          await Promise.all(
-            assetsToDelete.map(asset => mediaService.deleteMediaAsset(asset))
-          );
-          
+
+          // React Query Mutation - auto invalidates queries
+          await bulkDeleteAssetsMutation.mutateAsync({
+            assets: assetsToDelete,
+            organizationId: organizationId!
+          });
+
           clearSelection();
-          await loadData();
           showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
         } catch (error) {
           showAlert('error', 'Fehler beim Löschen', 'Die Dateien konnten nicht gelöscht werden.');
@@ -368,15 +353,19 @@ export default function MediathekPage() {
 
     try {
       setMoving(true);
-      
+
+      // React Query Mutations - auto invalidate queries
       await Promise.all(
-        Array.from(selectedAssets).map(assetId => 
-          mediaService.moveAssetToFolder(assetId, targetFolderId, organizationId)
+        Array.from(selectedAssets).map(assetId =>
+          moveAssetMutation.mutateAsync({
+            assetId,
+            newFolderId: targetFolderId,
+            organizationId
+          })
         )
       );
-      
+
       clearSelection();
-      await loadData();
       showAlert('success', 'Dateien verschoben');
     } catch (error) {
       showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
@@ -479,8 +468,12 @@ export default function MediathekPage() {
       if (count > 1) {
         await handleBulkMove(targetFolder.id);
       } else {
-        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id, organizationId);
-        await loadData();
+        // React Query Mutation - auto invalidates queries
+        await moveAssetMutation.mutateAsync({
+          assetId: assetsToMove[0],
+          newFolderId: targetFolder.id,
+          organizationId
+        });
         showAlert('success', 'Datei verschoben');
       }
       
@@ -501,20 +494,19 @@ export default function MediathekPage() {
     
     if (dragData.startsWith('folder:')) {
       const folderId = dragData.replace('folder:', '');
-      
+
       try {
         setMoving(true);
-        
-        await mediaService.updateFolder(folderId, {
-          parentFolderId: undefined
+
+        // React Query Mutation - auto invalidates queries
+        await moveFolderMutation.mutateAsync({
+          folderId,
+          newParentId: undefined,
+          organizationId: organizationId!
         });
-        
-        if (organizationId) {
-          await mediaService.updateFolderClientInheritance(folderId, organizationId);
-        }
-        await loadData();
+
         showAlert('success', 'Ordner in Root verschoben');
-        
+
       } catch (error) {
         showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
       } finally {
@@ -545,18 +537,26 @@ export default function MediathekPage() {
     try {
       setMoving(true);
       
+      // React Query Mutations - auto invalidate queries
       if (count > 1) {
         await Promise.all(
-          currentAssets.map(asset => 
-            mediaService.moveAssetToFolder(asset.id!, undefined, organizationId)
+          currentAssets.map(asset =>
+            moveAssetMutation.mutateAsync({
+              assetId: asset.id!,
+              newFolderId: undefined,
+              organizationId
+            })
           )
         );
         clearSelection();
       } else {
-        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, organizationId);
+        await moveAssetMutation.mutateAsync({
+          assetId: currentAssets[0].id!,
+          newFolderId: undefined,
+          organizationId
+        });
       }
-      
-      await loadData();
+
       showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
       
     } catch (error) {
@@ -580,21 +580,29 @@ export default function MediathekPage() {
 
   const handleSaveFolder = async (folderData: Omit<MediaFolder, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (!organizationId || !currentUserId) return;
-    
+
     try {
       if (editingFolder) {
-        await mediaService.updateFolder(editingFolder.id!, folderData);
+        // React Query Mutation - auto invalidates queries
+        await updateFolderMutation.mutateAsync({
+          folderId: editingFolder.id!,
+          updates: folderData,
+          organizationId
+        });
       } else {
-        await mediaService.createFolder({
-          ...folderData,
-          userId: organizationId, // For compatibility
-          parentFolderId: currentFolderId,
-        }, {
-          organizationId,
-          userId: currentUserId
+        // React Query Mutation - auto invalidates queries
+        await createFolderMutation.mutateAsync({
+          folder: {
+            ...folderData,
+            userId: organizationId, // For compatibility
+            parentFolderId: currentFolderId,
+          },
+          context: {
+            organizationId,
+            userId: currentUserId
+          }
         });
       }
-      await loadData();
       showAlert('success', editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
     } catch (error) {
       throw error;
@@ -609,8 +617,11 @@ export default function MediathekPage() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await mediaService.deleteFolder(folder.id!);
-          await loadData();
+          // React Query Mutation - auto invalidates queries
+          await deleteFolderMutation.mutateAsync({
+            folderId: folder.id!,
+            organizationId
+          });
           showAlert('success', 'Ordner gelöscht');
         } catch (error) {
           showAlert('error', 'Fehler beim Löschen', 'Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist.');
@@ -652,8 +663,11 @@ export default function MediathekPage() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await mediaService.deleteMediaAsset(asset);
-          await loadData();
+          // React Query Mutation - auto invalidates queries
+          await deleteAssetMutation.mutateAsync({
+            asset,
+            organizationId
+          });
           showAlert('success', 'Datei gelöscht');
         } catch(error) {
           showAlert('error', 'Fehler beim Löschen', 'Die Datei konnte nicht gelöscht werden.');
@@ -1334,9 +1348,9 @@ export default function MediathekPage() {
 
       {/* Modals - Only render when organizationId is available */}
       {showUploadModal && organizationId && currentUserId && (
-        <UploadModal 
+        <UploadModal
           onClose={handleUploadModalClose}
-          onUploadSuccess={loadData}
+          onUploadSuccess={() => {}} // React Query auto-invalidates queries
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
           preselectedClientId={preselectedClientId}
@@ -1363,7 +1377,7 @@ export default function MediathekPage() {
           target={sharingTarget.target}
           type={sharingTarget.type}
           onClose={handleCloseShareModal}
-          onSuccess={loadData}
+          onSuccess={() => {}} // React Query auto-invalidates queries
           organizationId={organizationId}
           userId={currentUserId}
         />
@@ -1375,7 +1389,7 @@ export default function MediathekPage() {
           currentFolder={getAssetFolder(editingAsset)}
           allFolders={allFolders}
           onClose={handleCloseAssetDetailsModal}
-          onSave={loadData}
+          onSave={() => {}} // React Query auto-invalidates queries
         />
       )}
 

@@ -7,6 +7,7 @@ import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
 import { ShareLink, MediaAsset, MediaFolder } from "@/types/media";
 import { BrandingSettings } from "@/types/branding";
+import { useShareLink, useCampaignMediaAssets } from "@/lib/hooks/useMediaData";
 import { 
   PhotoIcon, 
   DocumentIcon, 
@@ -31,78 +32,71 @@ import Link from "next/link";
 export default function SharePage() {
   const params = useParams();
   const shareId = params.shareId as string;
-  
-  const [shareLink, setShareLink] = useState<ShareLink | null>(null);
+
+  // React Query Hook - auto-fetches and caches share link
+  const { data: shareLink, isLoading: shareLinkLoading, error: shareLinkError } = useShareLink(shareId);
+
+  // Local state for password handling and UI
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaAsset[]>([]);
   const [folderInfo, setFolderInfo] = useState<MediaFolder | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Loading state
+  const loading = shareLinkLoading;
+
+  // React Query Hook bereits lädt Share Link - nur zusätzliche Daten laden
   useEffect(() => {
-    if (shareId) {
-      loadShareContent();
-    }
-  }, [shareId]);
+    if (!shareLink) return;
 
-  const loadShareContent = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    const loadAdditionalContent = async () => {
+      try {
+        setError(null);
 
-      // Lade Share-Link
-      const link = await mediaService.getShareLinkByShareId(shareId);
-      
-      if (!link) {
-        setError('Share-Link nicht gefunden oder nicht mehr aktiv.');
-        return;
-      }
-
-      setShareLink(link);
-
-      // Prüfe Passwort-Schutz
-      if (link.settings.passwordRequired && !passwordInput) {
-        setPasswordRequired(true);
-        return;
-      }
-
-      if (link.settings.passwordRequired && passwordInput !== link.settings.passwordRequired) {
-        setPasswordError(true);
-        return;
-      }
-
-      // WICHTIG: Lade Branding NUR wenn es KEIN Campaign-Share ist
-      if (link.userId && link.type !== 'campaign') {
-        try {
-          const branding = await brandingService.getBrandingSettings(link.userId);
-          setBrandingSettings(branding);
-        } catch (brandingError) {
-          // Kein kritischer Fehler - fahre ohne Branding fort
+        // Prüfe Passwort-Schutz
+        if (shareLink.settings.passwordRequired && !passwordInput) {
+          setPasswordRequired(true);
+          return;
         }
-      } else if (link.type === 'campaign') {
-        setBrandingSettings(null); // Explizit kein Branding für Kampagnen
-      }
 
-      // Lade Inhalte je nach Typ
-      if (link.type === 'folder') {
-        await loadFolderContent(link.targetId);
-      } else if (link.type === 'campaign') {
-        // NEU: Behandle Campaign-Typ
-        await loadCampaignContent(link);
-      } else {
-        // Default: Single file
-        await loadFileContent(link.targetId);
-      }
+        if (shareLink.settings.passwordRequired && passwordInput !== shareLink.settings.passwordRequired) {
+          setPasswordError(true);
+          return;
+        }
 
-    } catch (error) {
-      setError('Fehler beim Laden des Inhalts.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        // WICHTIG: Lade Branding NUR wenn es KEIN Campaign-Share ist
+        if (shareLink.userId && shareLink.type !== 'campaign') {
+          try {
+            const branding = await brandingService.getBrandingSettings(shareLink.userId);
+            setBrandingSettings(branding);
+          } catch (brandingError) {
+            // Kein kritischer Fehler - fahre ohne Branding fort
+          }
+        } else if (shareLink.type === 'campaign') {
+          setBrandingSettings(null); // Explizit kein Branding für Kampagnen
+        }
+
+        // Lade Inhalte je nach Typ
+        if (shareLink.type === 'folder') {
+          await loadFolderContent(shareLink.targetId);
+        } else if (shareLink.type === 'campaign') {
+          // NEU: Behandle Campaign-Typ
+          await loadCampaignContent(shareLink);
+        } else {
+          // Default: Single file
+          await loadFileContent(shareLink.targetId);
+        }
+
+      } catch (error) {
+        setError('Fehler beim Laden des Inhalts.');
+      }
+    };
+
+    loadAdditionalContent();
+  }, [shareLink, passwordInput]);
 
   // NEU: Lade Campaign-Medien
   const loadCampaignContent = async (shareLink: ShareLink) => {
@@ -151,7 +145,7 @@ export default function SharePage() {
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError(false);
-    loadShareContent();
+    // useEffect wird automatisch re-triggern wenn passwordInput sich ändert
   };
 
   const getFileIcon = (fileType: string) => {
@@ -181,14 +175,14 @@ export default function SharePage() {
     );
   }
 
-  // Error State
-  if (error) {
+  // Error State (from React Query or local)
+  if (shareLinkError || error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="max-w-md w-full bg-white rounded-lg border border-gray-200 p-8 text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <Heading level={2} className="text-red-900 mb-2">Fehler</Heading>
-          <Text className="text-gray-600 mb-6">{error}</Text>
+          <Text className="text-gray-600 mb-6">{error || 'Share-Link nicht gefunden oder nicht mehr aktiv.'}</Text>
           <Button onClick={() => window.location.reload()}>
             Erneut versuchen
           </Button>
