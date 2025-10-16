@@ -7,6 +7,11 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { Boilerplate } from "@/types/crm-enhanced";
+import {
+  useBoilerplates,
+  useDeleteBoilerplate,
+  useToggleFavoriteBoilerplate
+} from "@/lib/hooks/useBoilerplatesData";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -54,9 +59,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 export default function BoilerplatesPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-  const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBoilerplate, setEditingBoilerplate] = useState<Boilerplate | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,36 +82,10 @@ export default function BoilerplatesPage() {
   // Verwende currentOrganization.id für Multi-Tenancy
   const organizationId = currentOrganization?.id || '';
 
-  useEffect(() => {
-    if (user && currentOrganization && organizationId) {
-      loadData();
-    }
-  }, [user, currentOrganization, organizationId]);
-
-  const loadData = async () => {
-    if (!user || !currentOrganization || !organizationId) return;
-    
-    setLoading(true);
-    try {
-      // Versuche Migration wenn nötig
-      await boilerplatesService.migrateFromUserToOrg(user.uid, organizationId);
-      
-      // Lade Boilerplates
-      const boilerplatesData = await boilerplatesService.getAll(organizationId);
-      setBoilerplates(boilerplatesData);
-      
-      // Versuche Companies zu laden
-      try {
-        const companiesData = await companiesService.getAll(organizationId);
-        setCompanies(companiesData);
-      } catch (error) {
-        setCompanies([]);
-      }
-    } catch (error) {
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query Hooks
+  const { data: boilerplates = [], isLoading: loading } = useBoilerplates(organizationId);
+  const deleteBoilerplateMutation = useDeleteBoilerplate();
+  const toggleFavoriteMutation = useToggleFavoriteBoilerplate();
 
   // Gefilterte Boilerplates
   const filteredBoilerplates = useMemo(() => {
@@ -172,17 +148,19 @@ export default function BoilerplatesPage() {
       message: `Möchten Sie den Textbaustein "${name}" wirklich unwiderruflich löschen?`,
       type: 'danger',
       onConfirm: async () => {
-        await boilerplatesService.delete(id);
-        await loadData();
+        await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
       }
     });
   };
 
   const handleToggleFavorite = async (id: string) => {
-    if (!organizationId || !id) return;
+    if (!organizationId || !id || !user) return;
 
-    await boilerplatesService.toggleFavorite(id, { organizationId, userId: user!.uid });
-    await loadData();
+    await toggleFavoriteMutation.mutateAsync({
+      id,
+      organizationId,
+      userId: user.uid
+    });
   };
 
   const activeFiltersCount = selectedCategories.length + selectedLanguages.length + selectedScope.length;
@@ -603,7 +581,7 @@ export default function BoilerplatesPage() {
           onSave={() => {
             setShowModal(false);
             setEditingBoilerplate(null);
-            loadData();
+            // React Query invalidiert automatisch den Cache
           }}
           organizationId={organizationId}
           userId={user!.uid}
