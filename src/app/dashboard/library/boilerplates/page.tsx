@@ -16,16 +16,14 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
-import { 
+import {
   PlusIcon,
   GlobeAltIcon,
   BuildingOfficeIcon,
-  DocumentDuplicateIcon,
-  ArchiveBoxIcon,
   TrashIcon,
   EllipsisVerticalIcon,
   PencilIcon,
-  StarIcon,
+  StarIcon as StarIconOutline,
   ExclamationTriangleIcon,
   FunnelIcon,
   ListBulletIcon,
@@ -34,7 +32,7 @@ import {
   ChevronRightIcon,
   LanguageIcon
 } from "@heroicons/react/24/outline";
-import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
+import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import BoilerplateModal from "./BoilerplateModal";
 import clsx from 'clsx';
 
@@ -583,7 +581,7 @@ export default function BoilerplatesPage() {
                         className="ml-2 text-gray-400 hover:text-yellow-500"
                       >
                         {bp.isFavorite ? (
-                          <StarIcon className="h-4 w-4 text-yellow-500" />
+                          <StarIconSolid className="h-4 w-4 text-yellow-500" />
                         ) : (
                           <StarIconOutline className="h-4 w-4" />
                         )}
@@ -602,7 +600,7 @@ export default function BoilerplatesPage() {
 
                     {/* Kategorie */}
                     <div className="w-[15%]">
-                      <Badge color="purple" className="text-xs whitespace-nowrap">
+                      <Badge color="zinc" className="text-xs whitespace-nowrap">
                         {CATEGORY_LABELS[bp.category] || bp.category}
                       </Badge>
                     </div>
@@ -642,10 +640,6 @@ export default function BoilerplatesPage() {
                             <PencilIcon className="h-4 w-4" />
                             Bearbeiten
                           </DropdownItem>
-                          <DropdownItem onClick={() => handleDuplicate(bp)}>
-                            <DocumentDuplicateIcon className="h-4 w-4" />
-                            Duplizieren
-                          </DropdownItem>
                           <DropdownItem onClick={() => bp.id && handleToggleFavorite(bp.id)}>
                             {bp.isFavorite ? (
                               <>
@@ -654,16 +648,12 @@ export default function BoilerplatesPage() {
                               </>
                             ) : (
                               <>
-                                <StarIcon className="h-4 w-4" />
+                                <StarIconSolid className="h-4 w-4" />
                                 Als Favorit
                               </>
                             )}
                           </DropdownItem>
                           <DropdownDivider />
-                          <DropdownItem onClick={() => bp.id && handleArchive(bp.id)}>
-                            <ArchiveBoxIcon className="h-4 w-4" />
-                            Archivieren
-                          </DropdownItem>
                           <DropdownItem onClick={() => bp.id && handleDelete(bp.id!, bp.name)}>
                             <TrashIcon className="h-4 w-4" />
                             <span className="text-red-600">Löschen</span>
@@ -691,7 +681,7 @@ export default function BoilerplatesPage() {
                     className="text-gray-400 hover:text-yellow-500"
                   >
                     {bp.isFavorite ? (
-                      <StarIcon className="h-4 w-4 text-yellow-500" />
+                      <StarIconSolid className="h-4 w-4 text-yellow-500" />
                     ) : (
                       <StarIconOutline className="h-4 w-4" />
                     )}
@@ -718,7 +708,7 @@ export default function BoilerplatesPage() {
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    <Badge color="purple" className="text-xs">
+                    <Badge color="zinc" className="text-xs">
                       {CATEGORY_LABELS[bp.category]}
                     </Badge>
                     <Badge color="zinc" className="text-xs inline-flex items-center gap-1">
@@ -758,15 +748,6 @@ export default function BoilerplatesPage() {
                       <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => handleDuplicate(bp)}>
-                        <DocumentDuplicateIcon className="h-4 w-4" />
-                        Duplizieren
-                      </DropdownItem>
-                      <DropdownItem onClick={() => bp.id && handleArchive(bp.id)}>
-                        <ArchiveBoxIcon className="h-4 w-4" />
-                        Archivieren
-                      </DropdownItem>
-                      <DropdownDivider />
                       <DropdownItem onClick={() => bp.id && handleDelete(bp.id!, bp.name)}>
                         <TrashIcon className="h-4 w-4" />
                         <span className="text-red-600">Löschen</span>

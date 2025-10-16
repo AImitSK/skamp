@@ -35,7 +35,7 @@ const tabs: Tab[] = [
     name: "Boilerplates",
     href: "/dashboard/library/boilerplates",
     icon: DocumentTextIcon,
-    description: "Wiederverwendbare Textbausteine und Vorlagen"
+    description: ""
   },
   {
     name: "Mediathek",
