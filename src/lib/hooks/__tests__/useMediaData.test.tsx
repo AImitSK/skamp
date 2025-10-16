@@ -18,10 +18,12 @@ import {
   useRemovePipelineAsset,
 } from '../useMediaData';
 import { mediaService } from '@/lib/firebase/media-service';
+import * as sharesService from '@/lib/firebase/media-shares-service';
 import { MediaAsset, MediaFolder } from '@/types/media';
 
-// Mock Firebase Service
+// Mock Firebase Services
 jest.mock('@/lib/firebase/media-service');
+jest.mock('@/lib/firebase/media-shares-service');
 
 // Test Wrapper mit QueryClient
 const createWrapper = () => {
@@ -344,12 +346,14 @@ describe('useMediaData Hooks - Phase 4a.1', () => {
       const mockShareLink: any = {
         id: 'share-1',
         type: 'campaign',
-        campaignId: 'campaign-1',
+        context: {
+          campaignId: 'campaign-1',
+        },
         organizationId: 'org-1',
       };
 
       const campaignAssets = [mockAsset];
-      (mediaService.getCampaignMediaAssets as jest.Mock).mockResolvedValue(campaignAssets);
+      (sharesService.getCampaignMediaAssets as jest.Mock).mockResolvedValue(campaignAssets);
 
       const { result } = renderHook(
         () => useCampaignMediaAssets(mockShareLink),
@@ -359,7 +363,7 @@ describe('useMediaData Hooks - Phase 4a.1', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toEqual(campaignAssets);
-      expect(mediaService.getCampaignMediaAssets).toHaveBeenCalledWith('campaign-1');
+      expect(sharesService.getCampaignMediaAssets).toHaveBeenCalledWith(mockShareLink);
     });
 
     it('sollte Query disablen wenn kein Campaign ShareLink', async () => {

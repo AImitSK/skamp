@@ -101,6 +101,11 @@ describe('Public Share Page - Phase 4a.5', () => {
       isLoading: false,
       error: null,
     });
+    (useCampaignMediaAssets as jest.Mock).mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
     (mediaService.getMediaAssetById as jest.Mock).mockResolvedValue(mockAsset);
     (brandingService.getBrandingSettings as jest.Mock).mockResolvedValue(mockBranding);
   });
@@ -210,10 +215,14 @@ describe('Public Share Page - Phase 4a.5', () => {
     const submitButton = screen.getByText('Zugriff freischalten');
     fireEvent.click(submitButton);
 
-    // Error sollte angezeigt werden
+    // Nach falschem Passwort sollte Passwort-Prompt weiterhin sichtbar sein
     await waitFor(() => {
-      expect(screen.getByText('Falsches Passwort')).toBeInTheDocument();
+      expect(screen.getByText('Passwort erforderlich')).toBeInTheDocument();
     });
+
+    // Passwort-Input sollte weiterhin sichtbar sein
+    expect(screen.getByPlaceholderText(/Passwort eingeben/i)).toBeInTheDocument();
+    expect(screen.getByText('Zugriff freischalten')).toBeInTheDocument();
   });
 
   // ============================================================================
@@ -278,10 +287,10 @@ describe('Public Share Page - Phase 4a.5', () => {
     render(<SharePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Keine Inhalte')).toBeInTheDocument();
+      expect(screen.getByText('Fehler')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Diese Kampagne enthält keine Medien/i)).toBeInTheDocument();
+    expect(screen.getByText(/Keine Medien in dieser Kampagne gefunden/i)).toBeInTheDocument();
   });
 
   // ============================================================================

@@ -70,7 +70,7 @@ describe('ShareModal Component - Phase 4a.3', () => {
     render(<ShareModal {...defaultProps} />);
 
     // Dialog-Titel
-    expect(screen.getByText('Share-Link erstellen')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Share-Link erstellen' })).toBeInTheDocument();
 
     // Titel-Input mit Standardwert (Dateiname)
     const titleInput = screen.getByPlaceholderText(/z.B. Produktfotos/i);
@@ -84,8 +84,8 @@ describe('ShareModal Component - Phase 4a.3', () => {
     expect(screen.getByText('Download erlauben')).toBeInTheDocument();
 
     // Buttons
-    expect(screen.getByText('Abbrechen')).toBeInTheDocument();
-    expect(screen.getByText('Share-Link erstellen')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Abbrechen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Share-Link erstellen' })).toBeInTheDocument();
   });
 
   // ============================================================================
@@ -158,7 +158,7 @@ describe('ShareModal Component - Phase 4a.3', () => {
     fireEvent.change(passwordInput, { target: { value: 'secure123' } });
 
     // Submit Button klicken
-    const submitButton = screen.getByText('Share-Link erstellen');
+    const submitButton = screen.getByRole('button', { name: 'Share-Link erstellen' });
     fireEvent.click(submitButton);
 
     // Warte auf API-Call
@@ -216,7 +216,7 @@ describe('ShareModal Component - Phase 4a.3', () => {
     const titleInput = screen.getByPlaceholderText(/z.B. Produktfotos/i);
     fireEvent.change(titleInput, { target: { value: '' } });
 
-    const submitButton = screen.getByText('Share-Link erstellen');
+    const submitButton = screen.getByRole('button', { name: 'Share-Link erstellen' });
     expect(submitButton).toBeDisabled();
   });
 
@@ -249,7 +249,7 @@ describe('ShareModal Component - Phase 4a.3', () => {
     render(<ShareModal {...defaultProps} />);
 
     // Link erstellen
-    const submitButton = screen.getByText('Share-Link erstellen');
+    const submitButton = screen.getByRole('button', { name: 'Share-Link erstellen' });
     fireEvent.click(submitButton);
 
     // Warte auf Erfolgsansicht
