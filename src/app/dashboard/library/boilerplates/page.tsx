@@ -12,6 +12,7 @@ import {
   useDeleteBoilerplate,
   useToggleFavoriteBoilerplate
 } from "@/lib/hooks/useBoilerplatesData";
+import { toastService } from '@/lib/utils/toast';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -178,7 +179,16 @@ export default function BoilerplatesPage() {
       message: `Möchten Sie den Textbaustein "${name}" wirklich unwiderruflich löschen?`,
       type: 'danger',
       onConfirm: async () => {
-        await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
+        try {
+          await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
+          toastService.success(`"${name}" erfolgreich gelöscht`);
+        } catch (error) {
+          toastService.error(
+            error instanceof Error
+              ? `Fehler beim Löschen: ${error.message}`
+              : 'Fehler beim Löschen des Textbausteins'
+          );
+        }
       }
     });
   }, [deleteBoilerplateMutation, organizationId]);
@@ -186,11 +196,20 @@ export default function BoilerplatesPage() {
   const handleToggleFavorite = useCallback(async (id: string) => {
     if (!organizationId || !id || !user) return;
 
-    await toggleFavoriteMutation.mutateAsync({
-      id,
-      organizationId,
-      userId: user.uid
-    });
+    try {
+      await toggleFavoriteMutation.mutateAsync({
+        id,
+        organizationId,
+        userId: user.uid
+      });
+      toastService.success('Favorit-Status aktualisiert');
+    } catch (error) {
+      toastService.error(
+        error instanceof Error
+          ? `Fehler beim Aktualisieren: ${error.message}`
+          : 'Fehler beim Aktualisieren des Favorit-Status'
+      );
+    }
   }, [toggleFavoriteMutation, organizationId, user]);
 
   const formatDate = (timestamp: any) => {

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
+import { toastService } from '@/lib/utils/toast';
 import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,7 +176,7 @@ export default function BoilerplateModal({
   const handleSubmit = async () => {
     const content = editor?.getHTML() || '';
     if (!formData.name.trim() || !content.trim()) {
-      alert('Bitte füllen Sie Name und Inhalt aus.');
+      toastService.warning('Bitte füllen Sie Name und Inhalt aus.');
       return;
     }
 
@@ -198,18 +199,24 @@ export default function BoilerplateModal({
           boilerplateData,
           { organizationId, userId }
         );
+        toastService.success(`"${formData.name}" erfolgreich aktualisiert`);
       } else {
         await boilerplatesService.create(
           boilerplateData,
           { organizationId, userId }
         );
+        toastService.success(`"${formData.name}" erfolgreich erstellt`);
       }
-      
+
       onSave();
       onClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      alert('Fehler beim Speichern');
+      toastService.error(
+        error instanceof Error
+          ? `Fehler beim Speichern: ${error.message}`
+          : 'Fehler beim Speichern des Textbausteins'
+      );
     } finally {
       setSaving(false);
     }
