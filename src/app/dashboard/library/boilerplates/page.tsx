@@ -11,7 +11,6 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SearchInput } from "@/components/ui/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
@@ -27,7 +26,8 @@ import {
   FunnelIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  LanguageIcon
+  MagnifyingGlassIcon,
+  DocumentTextIcon
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import BoilerplateModal from "./BoilerplateModal";
@@ -213,12 +213,23 @@ export default function BoilerplatesPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2">
           {/* Search Input */}
-          <SearchInput
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Suchen..."
-            className="flex-1"
-          />
+          <div className="flex-1 relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700 dark:text-zinc-400" aria-hidden="true" />
+            </div>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Suchen..."
+              className={clsx(
+                'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
+                'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+                'dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-700',
+                'h-10'
+              )}
+            />
+          </div>
 
           {/* Filter Button */}
           <Popover className="relative">
@@ -362,7 +373,8 @@ export default function BoilerplatesPage() {
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
             onClick={() => setShowModal(true)}
           >
-            Baustein erstellen
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Neu hinzufügen
           </Button>
         </div>
       </div>
@@ -378,7 +390,7 @@ export default function BoilerplatesPage() {
       <div>
         {filteredBoilerplates.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-white dark:bg-zinc-800">
-            <DocumentDuplicateIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
             <Heading level={3} className="mt-2">Keine Textbausteine gefunden</Heading>
             <Text className="mt-1">
               {searchTerm || activeFiltersCount > 0
@@ -403,21 +415,27 @@ export default function BoilerplatesPage() {
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="w-[40%]">
+                <div className="w-[40%] text-left">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Name
                   </span>
                 </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Kategorie
+                <div className="w-[15%] text-left">
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Kategorie
+                  </span>
                 </div>
-                <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Sprache
+                <div className="w-[10%] text-left">
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Sprache
+                  </span>
                 </div>
-                <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Sichtbarkeit
+                <div className="w-[25%] text-left">
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Sichtbarkeit
+                  </span>
                 </div>
-                <div className="w-[5%]"></div>
+                <div className="w-[10%] text-right"></div>
               </div>
             </div>
 
@@ -427,7 +445,7 @@ export default function BoilerplatesPage() {
                 <div key={bp.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
                     {/* Favorite & Name */}
-                    <div className="flex items-center w-[40%]">
+                    <div className="flex items-center w-[40%] text-left">
                       <button
                         onClick={() => bp.id && handleToggleFavorite(bp.id)}
                         className="text-gray-400 hover:text-[#dedc00]"
@@ -451,21 +469,21 @@ export default function BoilerplatesPage() {
                     </div>
 
                     {/* Kategorie */}
-                    <div className="w-[15%]">
+                    <div className="w-[15%] text-left">
                       <Badge color="zinc" className="text-xs whitespace-nowrap">
                         {CATEGORY_LABELS[bp.category] || bp.category}
                       </Badge>
                     </div>
 
                     {/* Sprache */}
-                    <div className="w-[10%]">
+                    <div className="w-[10%] text-left">
                       <Badge color="zinc" className="text-xs whitespace-nowrap">
                         {LANGUAGE_LABELS[(bp as any).language || 'de'] || 'Deutsch'}
                       </Badge>
                     </div>
 
                     {/* Sichtbarkeit */}
-                    <div className="w-[20%]">
+                    <div className="w-[25%] text-left">
                       {bp.isGlobal ? (
                         <Badge color="blue" className="inline-flex items-center gap-1 text-xs whitespace-nowrap">
                           <GlobeAltIcon className="h-3 w-3" />
@@ -479,10 +497,8 @@ export default function BoilerplatesPage() {
                       )}
                     </div>
 
-                    {/* Tags entfernt */}
-
                     {/* Actions */}
-                    <div className="w-[5%] text-right">
+                    <div className="w-[10%] text-right">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors dark:hover:bg-zinc-700">
                           <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 stroke-[2.5]" />
