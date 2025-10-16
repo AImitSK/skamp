@@ -27,13 +27,7 @@ import {
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
-import {
-  ExclamationTriangleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { toastService } from '@/lib/utils/toast';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
@@ -45,6 +39,9 @@ import MediaGridView from "@/components/mediathek/MediaGridView";
 import MediaListView from "@/components/mediathek/MediaListView";
 import MediaToolbar from "@/components/mediathek/MediaToolbar";
 import EmptyState from "@/components/mediathek/EmptyState";
+import Pagination from "@/components/mediathek/Pagination";
+import ConfirmDialog from "@/components/mediathek/ConfirmDialog";
+import LoadingSpinner from "@/components/mediathek/LoadingSpinner";
 
 type ViewMode = 'grid' | 'list';
 
@@ -684,14 +681,7 @@ export default function MediathekPage() {
   const totalItems = filteredFolders.length + filteredAssets.length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Mediathek...</Text>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Lade Mediathek..." />;
   }
 
   if (!organizationId) {
@@ -809,56 +799,12 @@ export default function MediathekPage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && viewMode === 'list' && (
-        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
-          <div className="-mt-px flex w-0 flex-1">
-            <Button
-              plain
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeftIcon className="h-4 w-4" />
-              Zurück
-            </Button>
-          </div>
-          <div className="hidden md:-mt-px md:flex">
-            {(() => {
-              const pages = [];
-              const maxVisible = 7;
-              let start = Math.max(1, currentPage - 3);
-              let end = Math.min(totalPages, start + maxVisible - 1);
-              
-              if (end - start < maxVisible - 1) {
-                start = Math.max(1, end - maxVisible + 1);
-              }
-              
-              for (let i = start; i <= end; i++) {
-                pages.push(
-                  <Button
-                    key={i}
-                    plain
-                    onClick={() => setCurrentPage(i)}
-                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
-                  >
-                    {i}
-                  </Button>
-                );
-              }
-              
-              return pages;
-            })()}
-          </div>
-          <div className="-mt-px flex w-0 flex-1 justify-end">
-            <Button
-              plain
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Weiter
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        </nav>
+      {viewMode === 'list' && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Smart Router Status Badge (Development) */}
@@ -921,45 +867,17 @@ export default function MediathekPage() {
       )}
 
       {/* Confirm Dialog */}
-      <Dialog
-        open={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-      >
-        <div className="p-6">
-          <div className="sm:flex sm:items-start">
-            <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
-              confirmDialog.type === 'danger' ? 'bg-red-100' : 'bg-yellow-100'
-            }`}>
-              <ExclamationTriangleIcon className={`h-6 w-6 ${
-                confirmDialog.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
-              }`} />
-            </div>
-            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-              <DialogTitle>{confirmDialog.title}</DialogTitle>
-              <DialogBody className="mt-2">
-                <Text>{confirmDialog.message}</Text>
-              </DialogBody>
-            </div>
-          </div>
-          <DialogActions className="mt-5 sm:mt-4">
-            <Button
-              plain
-              onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-            >
-              Abbrechen
-            </Button>
-            <Button
-              color={confirmDialog.type === 'danger' ? 'zinc' : 'zinc'}
-              onClick={() => {
-                confirmDialog.onConfirm();
-                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-              }}
-            >
-              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
-            </Button>
-          </DialogActions>
-        </div>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={() => {
+          confirmDialog.onConfirm();
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
