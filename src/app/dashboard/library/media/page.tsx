@@ -1,11 +1,13 @@
 // src/app/dashboard/pr-tools/media-library/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { useOrganization } from "@/context/OrganizationContext";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { throttle } from "@/lib/utils/throttle";
 import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter } from "@/lib/firebase/smart-upload-router";
 import { mediaLibraryContextBuilder } from "./utils/context-builder";
@@ -76,6 +78,9 @@ export default function MediathekPage() {
   const loading = foldersLoading || assetsLoading;
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Debounced search term (300ms delay) - Phase 3.3 Performance Optimization
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   // Modal States
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -119,10 +124,10 @@ export default function MediathekPage() {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Get asset's folder
-  const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
+  const getAssetFolder = useCallback((asset: MediaAsset): MediaFolder | undefined => {
     if (!asset.folderId) return undefined;
     return allFolders.find(f => f.id === asset.folderId);
-  };
+  }, [allFolders]);
 
   // === MULTI-TENANCY INITIALIZATION ===
   useEffect(() => {
@@ -162,6 +167,30 @@ export default function MediathekPage() {
 
   // ✅ React Query: No manual loadData() needed - queries auto-fetch and cache
 
+  // Filtered assets and folders based on debounced search - Phase 3.3
+  const filteredFolders = useMemo(() => {
+    if (!debouncedSearchTerm) return folders;
+    return folders.filter(folder =>
+      folder.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [folders, debouncedSearchTerm]);
+
+  const filteredAssets = useMemo(() => {
+    if (!debouncedSearchTerm) return mediaAssets;
+    return mediaAssets.filter(asset =>
+      asset.fileName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      asset.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [mediaAssets, debouncedSearchTerm]);
+
+  // Paginated Data
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAssets.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAssets, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => Math.ceil(filteredAssets.length / itemsPerPage), [filteredAssets.length, itemsPerPage]);
+
   // FOLDER DRAG & DROP HANDLERS
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
     if (!organizationId) return;
@@ -189,17 +218,17 @@ export default function MediathekPage() {
     }
   }, [organizationId, moveFolderMutation]);
 
-  const handleFolderDragStart = (folder: MediaFolder) => {
+  const handleFolderDragStart = useCallback((folder: MediaFolder) => {
     setDraggedFolder(folder);
-  };
+  }, []);
 
-  const handleFolderDragEnd = () => {
+  const handleFolderDragEnd = useCallback(() => {
     setDraggedFolder(null);
     setDragOverFolder(null);
-  };
+  }, []);
 
   // BULK SELECTION HANDLERS
-  const toggleAssetSelection = (assetId: string) => {
+  const toggleAssetSelection = useCallback((assetId: string) => {
     const newSelection = new Set(selectedAssets);
     if (newSelection.has(assetId)) {
       newSelection.delete(assetId);
@@ -207,24 +236,24 @@ export default function MediathekPage() {
       newSelection.add(assetId);
     }
     setSelectedAssets(newSelection);
-    
+
     if (newSelection.size === 0) {
       setIsSelectionMode(false);
     }
-  };
+  }, [selectedAssets]);
 
-  const selectAllAssets = () => {
+  const selectAllAssets = useCallback(() => {
     const visibleAssetIds = new Set(paginatedAssets.map(asset => asset.id!));
     setSelectedAssets(visibleAssetIds);
     setIsSelectionMode(true);
-  };
+  }, [paginatedAssets]);
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setSelectedAssets(new Set());
     setIsSelectionMode(false);
-  };
+  }, []);
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (selectedAssets.size === 0) return;
 
     const count = selectedAssets.size;
@@ -254,9 +283,9 @@ export default function MediathekPage() {
         }
       }
     });
-  };
+  }, [selectedAssets, mediaAssets, bulkDeleteAssetsMutation, organizationId, clearSelection]);
 
-  const handleBulkMove = async (targetFolderId?: string) => {
+  const handleBulkMove = useCallback(async (targetFolderId?: string) => {
     if (selectedAssets.size === 0 || !organizationId) return;
 
     try {
@@ -280,7 +309,7 @@ export default function MediathekPage() {
     } finally {
       setMoving(false);
     }
-  };
+  }, [selectedAssets, organizationId, moveAssetMutation, clearSelection]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -317,33 +346,40 @@ export default function MediathekPage() {
   }, [selectedAssets, mediaAssets, draggedFolder, dragOverFolder]);
 
   // DRAG & DROP HANDLERS
-  const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
+  const handleAssetDragStart = useCallback((e: React.DragEvent, asset: MediaAsset) => {
     if (selectedAssets.has(asset.id!) && selectedAssets.size > 1) {
       setDraggedAsset(null);
     } else {
       setDraggedAsset(asset);
     }
-    
+
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', asset.id || '');
-  };
+  }, [selectedAssets]);
 
-  const handleAssetDragEnd = () => {
+  const handleAssetDragEnd = useCallback(() => {
     setDraggedAsset(null);
     setDragOverFolder(null);
-  };
+  }, []);
 
-  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+  // Phase 3.5: Throttled drag-over handler (max 10x per second = 100ms)
+  const setDragOverFolderThrottled = useRef(
+    throttle((folderId: string) => {
+      setDragOverFolder(folderId);
+    }, 100)
+  ).current;
+
+  const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverFolder(folderId);
-  };
+    setDragOverFolderThrottled(folderId);
+  }, [setDragOverFolderThrottled]);
 
-  const handleFolderDragLeave = () => {
+  const handleFolderDragLeave = useCallback(() => {
     setDragOverFolder(null);
-  };
+  }, []);
 
-  const handleFolderDrop = async (e: React.DragEvent, targetFolder: MediaFolder) => {
+  const handleFolderDrop = useCallback(async (e: React.DragEvent, targetFolder: MediaFolder) => {
     e.preventDefault();
     setDragOverFolder(null);
 
@@ -354,7 +390,7 @@ export default function MediathekPage() {
     }
 
     let assetsToMove: string[] = [];
-    
+
     if (selectedAssets.size > 0) {
       assetsToMove = Array.from(selectedAssets);
     } else if (draggedAsset?.id) {
@@ -365,14 +401,14 @@ export default function MediathekPage() {
 
     const currentAssets = mediaAssets.filter(asset => assetsToMove.includes(asset.id!));
     const alreadyInFolder = currentAssets.some(asset => asset.folderId === targetFolder.id);
-    
+
     if (alreadyInFolder && assetsToMove.length === 1) return;
 
     const count = assetsToMove.length;
-    
+
     try {
       setMoving(true);
-      
+
       if (count > 1) {
         await handleBulkMove(targetFolder.id);
       } else {
@@ -384,22 +420,22 @@ export default function MediathekPage() {
         });
         toastService.success('Datei verschoben');
       }
-      
+
     } catch (error) {
       toastService.error('Die Dateien konnten nicht verschoben werden');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
     }
-  };
+  }, [selectedAssets, draggedAsset, organizationId, mediaAssets, handleBulkMove, moveAssetMutation]);
 
   // ROOT DROP HANDLER
-  const handleRootDrop = async (e: React.DragEvent) => {
+  const handleRootDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOverFolder(null);
 
     const dragData = e.dataTransfer.getData('text/plain');
-    
+
     if (dragData.startsWith('folder:')) {
       const folderId = dragData.replace('folder:', '');
 
@@ -425,7 +461,7 @@ export default function MediathekPage() {
     }
 
     let assetsToMove: string[] = [];
-    
+
     if (selectedAssets.size > 0) {
       assetsToMove = Array.from(selectedAssets);
     } else if (draggedAsset?.id) {
@@ -434,17 +470,17 @@ export default function MediathekPage() {
 
     if (assetsToMove.length === 0 || !organizationId) return;
 
-    const currentAssets = mediaAssets.filter(asset => 
+    const currentAssets = mediaAssets.filter(asset =>
       assetsToMove.includes(asset.id!) && asset.folderId
     );
 
     if (currentAssets.length === 0) return;
 
     const count = currentAssets.length;
-    
+
     try {
       setMoving(true);
-      
+
       // React Query Mutations - auto invalidate queries
       if (count > 1) {
         await Promise.all(
@@ -466,27 +502,27 @@ export default function MediathekPage() {
       }
 
       toastService.success(`${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
-      
+
     } catch (error) {
       toastService.error('Die Dateien konnten nicht verschoben werden');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
     }
-  };
+  }, [selectedAssets, draggedAsset, organizationId, mediaAssets, moveFolderMutation, moveAssetMutation, clearSelection]);
 
   // Existing handlers
-  const handleCreateFolder = () => {
+  const handleCreateFolder = useCallback(() => {
     setEditingFolder(undefined);
     setShowFolderModal(true);
-  };
+  }, []);
 
-  const handleEditFolder = (folder: MediaFolder) => {
+  const handleEditFolder = useCallback((folder: MediaFolder) => {
     setEditingFolder(folder);
     setShowFolderModal(true);
-  };
+  }, []);
 
-  const handleSaveFolder = async (folderData: Omit<MediaFolder, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+  const handleSaveFolder = useCallback(async (folderData: Omit<MediaFolder, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (!organizationId || !currentUserId) return;
 
     try {
@@ -515,9 +551,9 @@ export default function MediathekPage() {
     } catch (error) {
       throw error;
     }
-  };
+  }, [editingFolder, organizationId, currentUserId, currentFolderId, updateFolderMutation, createFolderMutation]);
 
-  const handleDeleteFolder = async (folder: MediaFolder) => {
+  const handleDeleteFolder = useCallback(async (folder: MediaFolder) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Ordner löschen',
@@ -536,34 +572,34 @@ export default function MediathekPage() {
         }
       }
     });
-  };
+  }, [deleteFolderMutation, organizationId]);
 
-  const handleOpenFolder = (folder: MediaFolder) => {
+  const handleOpenFolder = useCallback((folder: MediaFolder) => {
     setCurrentFolderId(folder.id);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleNavigateToFolder = (folderId?: string) => {
+  const handleNavigateToFolder = useCallback((folderId?: string) => {
     setCurrentFolderId(folderId);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleShareFolder = (folder: MediaFolder) => {
+  const handleShareFolder = useCallback((folder: MediaFolder) => {
     setSharingTarget({ target: folder, type: 'folder' });
     setShowShareModal(true);
-  };
+  }, []);
 
-  const handleShareAsset = (asset: MediaAsset) => {
+  const handleShareAsset = useCallback((asset: MediaAsset) => {
     setSharingTarget({ target: asset, type: 'file' });
     setShowShareModal(true);
-  };
+  }, []);
 
-  const handleCloseShareModal = () => {
+  const handleCloseShareModal = useCallback(() => {
     setShowShareModal(false);
     setSharingTarget(null);
-  };
+  }, []);
 
-  const handleDeleteAsset = async (asset: MediaAsset) => {
+  const handleDeleteAsset = useCallback(async (asset: MediaAsset) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Datei löschen',
@@ -582,58 +618,34 @@ export default function MediathekPage() {
         }
       }
     });
-  };
+  }, [deleteAssetMutation, organizationId]);
 
   // Asset-Details Handlers
-  const handleEditAsset = (asset: MediaAsset) => {
+  const handleEditAsset = useCallback((asset: MediaAsset) => {
     setEditingAsset(asset);
     setShowAssetDetailsModal(true);
-  };
+  }, []);
 
-  const handleCloseAssetDetailsModal = () => {
+  const handleCloseAssetDetailsModal = useCallback(() => {
     setShowAssetDetailsModal(false);
     setEditingAsset(undefined);
-  };
+  }, []);
 
   // Upload Modal Handlers
-  const handleUploadModalOpen = () => {
+  const handleUploadModalOpen = useCallback(() => {
     setPreselectedClientId(undefined);
     setShowUploadModal(true);
-  };
+  }, []);
 
-  const handleUploadModalClose = () => {
+  const handleUploadModalClose = useCallback(() => {
     setShowUploadModal(false);
     setPreselectedClientId(undefined);
-  };
+  }, []);
 
-  // Filtered assets and folders based on search
-  const filteredFolders = useMemo(() => {
-    if (!searchTerm) return folders;
-    return folders.filter(folder => 
-      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [folders, searchTerm]);
-
-  const filteredAssets = useMemo(() => {
-    if (!searchTerm) return mediaAssets;
-    return mediaAssets.filter(asset => 
-      asset.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [mediaAssets, searchTerm]);
-
-  // Paginated Data
-  const paginatedAssets = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAssets.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAssets, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
-
-  // Reset page when search changes
+  // Reset page when debounced search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   // Helper Functions
   const formatFileSize = (bytes: number) => {
@@ -644,41 +656,41 @@ export default function MediathekPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getCurrentFolderName = () => {
+  const getCurrentFolderName = useCallback(() => {
     if (!currentFolderId) return undefined;
     if (breadcrumbs.length > 0) {
       return breadcrumbs[breadcrumbs.length - 1]?.name;
     }
     const currentFolder = folders.find(f => f.id === currentFolderId);
     return currentFolder?.name;
-  };
+  }, [currentFolderId, breadcrumbs, folders]);
 
-  const getAssetTooltip = (asset: MediaAsset) => {
+  const getAssetTooltip = useCallback((asset: MediaAsset) => {
     let tooltip = asset.fileName;
-    
+
     const fileExt = asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei';
     tooltip += `\n\nTyp: ${fileExt}`;
-    
+
     if (asset.createdAt) {
       const date = new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE');
       tooltip += `\nErstellt: ${date}`;
     }
-    
+
     if (asset.description) {
       tooltip += `\n\nBeschreibung: ${asset.description}`;
     }
-    
+
     const company = asset.clientId ? companies.find(c => c.id === asset.clientId) : null;
     if (company) {
       tooltip += `\nKunde: ${company.name}`;
     }
-    
+
     return tooltip;
-  };
+  }, [companies]);
 
 
 
-  const totalItems = filteredFolders.length + filteredAssets.length;
+  const totalItems = useMemo(() => filteredFolders.length + filteredAssets.length, [filteredFolders, filteredAssets]);
 
   if (loading) {
     return <LoadingSpinner message="Lade Mediathek..." />;

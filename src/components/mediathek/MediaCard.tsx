@@ -1,6 +1,7 @@
 // src/components/mediathek/MediaCard.tsx
 "use client";
 
+import { memo } from "react";
 import { MediaAsset } from "@/types/media";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,8 @@ const getFileIcon = (fileType: string | undefined) => {
   }
 };
 
-export default function MediaCard({
+// Phase 3.4: React.memo prevents unnecessary re-renders
+const MediaCard = memo(function MediaCard({
   asset,
   isSelected,
   isDragging,
@@ -197,4 +199,6 @@ export default function MediaCard({
       </div>
     </div>
   );
-}
+});
+
+export default MediaCard;

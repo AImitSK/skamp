@@ -1,6 +1,7 @@
 // src/components/mediathek/FolderCard.tsx - Cleaner Grid ohne Dateianzahl, Beschreibung als Tooltip
 "use client";
 
+import { memo } from "react";
 import { MediaFolder } from "@/types/media";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,12 +42,13 @@ interface FolderCardProps {
   onFolderDragEnd?: () => void;
 }
 
-export default function FolderCard({ 
-  folder, 
-  onOpen, 
-  onEdit, 
-  onDelete, 
-  onShare, 
+// Phase 3.4: React.memo prevents unnecessary re-renders
+const FolderCard = memo(function FolderCard({
+  folder,
+  onOpen,
+  onEdit,
+  onDelete,
+  onShare,
   fileCount = 0, // Wird nicht mehr angezeigt, aber beibehalten für Kompatibilität
   // Drag & Drop Props für Assets
   isDragOver = false,
@@ -266,4 +268,6 @@ export default function FolderCard({
       </div>
     </div>
   );
-}
+});
+
+export default FolderCard;
