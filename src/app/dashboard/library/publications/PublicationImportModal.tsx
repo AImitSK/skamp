@@ -139,10 +139,10 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pro
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sample CSV Template mit realistischen Daten
-  const sampleCSV = `Titel*;Untertitel;Verlag*;Typ*;Format;Status;Website;Geografischer Fokus;Sprachen*;Länder*;Themenschwerpunkte;Frequenz;Zielgruppe;Altersgruppe;Geschlecht;Print Auflage;Print Auflagentyp;Print Preis;Print Währung;Online UV/Monat;Online PV/Monat;Online Session Dauer (Sek);Online Bounce Rate (%);ISSN;Verifiziert;Interne Notizen
+  const sampleCSV = `Titel*;Untertitel;Verlag;Typ*;Format;Status;Website;Geografischer Fokus;Sprachen*;Länder*;Themenschwerpunkte;Frequenz;Zielgruppe;Altersgruppe;Geschlecht;Print Auflage;Print Auflagentyp;Print Preis;Print Währung;Online UV/Monat;Online PV/Monat;Online Session Dauer (Sek);Online Bounce Rate (%);ISSN;Verifiziert;Interne Notizen
 Der Spiegel;Deutschlands führendes Nachrichtenmagazin;Spiegel-Verlag;magazine;both;active;https://www.spiegel.de;national;de;"DE,AT,CH";"Politik,Wirtschaft,Gesellschaft";weekly;Bildungsbürger;30-59;all;850000;audited_ivw;8.50;EUR;25000000;150000000;420;35;0038-7452;ja;Premium-Publikation mit hoher Reichweite
 Süddeutsche Zeitung;Meinungsstarke überregionale Tageszeitung;Süddeutscher Verlag;newspaper;both;active;https://www.sueddeutsche.de;national;de;"DE,AT,CH";"Politik,Kultur,Sport";daily;Bildungselite;35-64;all;320000;audited_ivw;3.20;EUR;18000000;95000000;380;42;0174-4917;ja;Sehr hohe journalistische Qualität
-Heise Online;IT-Nachrichten und Hintergründe;Heise Medien GmbH;website;online;active;https://www.heise.de;international;"de,en";"DE,AT,CH,US,GB";"IT,Technologie,Digitalisierung";continuous;IT-Professionals;25-49;predominantly_male;;;;;;12000000;65000000;320;28;2196-4327;ja;Führende IT-Publikation im DACH-Raum`;
+Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www.heise.de;international;"de,en";"DE,AT,CH,US,GB";"IT,Technologie,Digitalisierung";continuous;IT-Professionals;25-49;predominantly_male;;;;;;12000000;65000000;320;28;2196-4327;ja;Führende IT-Publikation im DACH-Raum - Verlag wird später zugeordnet`;
 
   // Lade Publisher beim Mount
   useEffect(() => {
@@ -223,8 +223,8 @@ Heise Online;IT-Nachrichten und Hintergründe;Heise Medien GmbH;website;online;a
   };
 
   const parsePublicationRow = (row: any, allPublishers: CompanyEnhanced[]): Partial<Publication> => {
-    // Finde Publisher nach Name
-    const publisherName = row["Verlag*"] || row["Verlag"];
+    // Finde Publisher nach Name (optional)
+    const publisherName = row["Verlag"];
     const matchedPublisher = publisherName ?
       allPublishers.find(p => p.name.toLowerCase() === publisherName.toLowerCase()) :
       undefined;
@@ -233,8 +233,8 @@ Heise Online;IT-Nachrichten und Hintergründe;Heise Medien GmbH;website;online;a
       // Grunddaten
       title: row["Titel*"] || row["Titel"],
       subtitle: row["Untertitel"],
-      publisherId: matchedPublisher?.id,
-      publisherName: publisherName || matchedPublisher?.name,
+      ...(matchedPublisher?.id && { publisherId: matchedPublisher.id }),
+      ...(publisherName && { publisherName: publisherName }),
 
       // Klassifizierung
       type: mapPublicationType(row["Typ*"] || row["Typ"]),
@@ -603,8 +603,8 @@ Heise Online;IT-Nachrichten und Hintergründe;Heise Medien GmbH;website;online;a
             {/* Info über Verlagszuordnung */}
             <Alert
               type="info"
-              title="Verlagszuordnung"
-              message="Jede Publikation kann einem eigenen Verlag zugeordnet werden. Geben Sie in der CSV-Spalte 'Verlag' den Namen des Verlags an. Wenn der Verlag im CRM existiert, wird er automatisch verknüpft."
+              title="Verlagszuordnung (optional)"
+              message="Sie können Publikationen ohne Verlag importieren und diesen später zuordnen. Optional: Geben Sie in der CSV-Spalte 'Verlag' den Namen an - wenn der Verlag im CRM existiert, wird er automatisch verknüpft."
             />
 
             {/* Duplikate-Behandlung */}

@@ -608,10 +608,14 @@ export default function PublicationsPage() {
                         >
                           {pub.publisherName || "—"}
                         </Link>
-                      ) : (
+                      ) : pub.publisherName ? (
                         <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {pub.publisherName || "—"}
+                          {pub.publisherName}
                         </span>
+                      ) : (
+                        <Badge color="amber" className="text-xs">
+                          Kein Verlag
+                        </Badge>
                       )}
                     </div>
                     <div className="mt-0.5">

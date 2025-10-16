@@ -268,12 +268,6 @@ export function PublicationModal({
     e.preventDefault();
     if (!user) return;
 
-    // Validierung
-    if (!formData.publisherId) {
-      alert("Bitte wählen Sie einen Verlag aus.");
-      return;
-    }
-
     setLoading(true);
     try {
       // Bereite Metriken vor
@@ -478,7 +472,7 @@ export function PublicationModal({
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={loading || !formData.publisherId}
+          disabled={loading}
         >
           {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
         </Button>
