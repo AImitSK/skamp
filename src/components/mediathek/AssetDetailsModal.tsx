@@ -168,10 +168,9 @@ export default function AssetDetailsModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="lg">
-      <div className="p-6">
-        <DialogTitle>Asset-Details bearbeiten</DialogTitle>
-        
-        <DialogBody className="mt-4">
+      <DialogTitle>Asset-Details bearbeiten</DialogTitle>
+
+      <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
           {/* Asset Preview & Info */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-start gap-4">
@@ -312,22 +311,21 @@ export default function AssetDetailsModal({
                 )}
               </div>
             </div>
-          </FieldGroup>
-        </DialogBody>
+        </FieldGroup>
+      </DialogBody>
 
-        <DialogActions>
-          <Button plain onClick={onClose} disabled={saving}>
-            Abbrechen
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={!fileName.trim() || saving}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-          >
-            {saving ? 'Speichern...' : 'Änderungen speichern'}
-          </Button>
-        </DialogActions>
-      </div>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={saving}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={!fileName.trim() || saving}
+          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+        >
+          {saving ? 'Speichern...' : 'Änderungen speichern'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

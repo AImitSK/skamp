@@ -134,13 +134,12 @@ export default function FolderModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="lg">
-      <div className="p-6">
-        <DialogTitle>
-          {isEdit ? 'Ordner bearbeiten' : 'Neuen Ordner erstellen'}
-        </DialogTitle>
-        
-        <DialogBody className="mt-4">
-          <FieldGroup>
+      <DialogTitle>
+        {isEdit ? 'Ordner bearbeiten' : 'Neuen Ordner erstellen'}
+      </DialogTitle>
+
+      <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+        <FieldGroup>
             <Field>
               <Label>Ordnername *</Label>
               <Input
@@ -244,22 +243,21 @@ export default function FolderModal({
                 </div>
               </div>
             </div>
-          </FieldGroup>
-        </DialogBody>
+        </FieldGroup>
+      </DialogBody>
 
-        <DialogActions>
-          <Button plain onClick={onClose} disabled={saving}>
-            Abbrechen
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={!name.trim() || saving}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-          >
-            {saving ? 'Speichern...' : (isEdit ? 'Speichern' : 'Ordner erstellen')}
-          </Button>
-        </DialogActions>
-      </div>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={saving}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={!name.trim() || saving}
+          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+        >
+          {saving ? 'Speichern...' : (isEdit ? 'Speichern' : 'Ordner erstellen')}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

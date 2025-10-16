@@ -292,11 +292,10 @@ export default function UploadModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
-      <div className="p-6">
-        <DialogTitle>Medien hochladen</DialogTitle>
+      <DialogTitle>Medien hochladen</DialogTitle>
 
-        <DialogBody className="mt-4">
-          <FieldGroup>
+      <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+        <FieldGroup>
             {/* Zielordner anzeigen */}
             {currentFolderId && folderName && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -556,36 +555,35 @@ export default function UploadModal({
                 </div>
               </div>
             )}
-          </FieldGroup>
-        </DialogBody>
+        </FieldGroup>
+      </DialogBody>
 
-        <DialogActions className="mt-6">
-          <div className="flex items-center gap-2 flex-1">
-            {useSmartRouterEnabled && uiConfig.showContextInfo && contextInfo && (
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span>Smart Router:</span>
-                <Badge color={uploadMethod === 'smart' ? 'green' : 'gray'} className="text-xs">
-                  {uploadMethod === 'smart' ? 'Aktiv' : 'Deaktiviert'}
-                </Badge>
-              </div>
-            )}
-          </div>
-          <Button plain onClick={onClose} disabled={uploading}>
-            Abbrechen
-          </Button>
-          <Button 
-            onClick={handleUpload} 
-            disabled={selectedFiles.length === 0 || uploading}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
-          >
-            {uploading ? (
-              uploadMethod === 'smart' ? 'Smart Upload...' : 'Uploading...'
-            ) : (
-              `${selectedFiles.length} Datei(en) hochladen`
-            )}
-          </Button>
-        </DialogActions>
-      </div>
+      <DialogActions>
+        <div className="flex items-center gap-2 flex-1">
+          {useSmartRouterEnabled && uiConfig.showContextInfo && contextInfo && (
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <span>Smart Router:</span>
+              <Badge color={uploadMethod === 'smart' ? 'green' : 'gray'} className="text-xs">
+                {uploadMethod === 'smart' ? 'Aktiv' : 'Deaktiviert'}
+              </Badge>
+            </div>
+          )}
+        </div>
+        <Button plain onClick={onClose} disabled={uploading}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleUpload}
+          disabled={selectedFiles.length === 0 || uploading}
+          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+        >
+          {uploading ? (
+            uploadMethod === 'smart' ? 'Smart Upload...' : 'Uploading...'
+          ) : (
+            `${selectedFiles.length} Datei(en) hochladen`
+          )}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

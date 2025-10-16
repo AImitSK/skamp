@@ -30,7 +30,7 @@ export default function ConfirmDialog({
   const defaultConfirmLabel = type === 'danger' ? 'Löschen' : 'Bestätigen';
 
   return (
-    <Dialog open={isOpen} onClose={onCancel}>
+    <Dialog open={isOpen} onClose={onCancel} size="sm">
       <div className="p-6">
         <div className="sm:flex sm:items-start">
           <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
@@ -43,7 +43,7 @@ export default function ConfirmDialog({
           <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
             <DialogTitle>{title}</DialogTitle>
             <DialogBody className="mt-2">
-              <Text>{message}</Text>
+              <Text className="text-sm text-zinc-600">{message}</Text>
             </DialogBody>
           </div>
         </div>

@@ -143,15 +143,14 @@ export default function ShareModal({
     // Link wurde erstellt - Erfolgsansicht
     return (
       <Dialog open={true} onClose={handleClose} size="lg">
-        <div className="p-6">
-          <DialogTitle>
-            <div className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5 text-green-600" />
-              Share-Link erstellt
-            </div>
-          </DialogTitle>
-          
-          <DialogBody className="mt-4">
+        <DialogTitle>
+          <div className="flex items-center gap-2">
+            <LinkIcon className="h-5 w-5 text-green-600" />
+            Share-Link erstellt
+          </div>
+        </DialogTitle>
+
+        <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                 <CheckIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
@@ -203,17 +202,16 @@ export default function ShareModal({
                 </ul>
               </div>
             </div>
-          </DialogBody>
+        </DialogBody>
 
-          <DialogActions className="mt-5 sm:mt-4">
-            <Button 
-              onClick={handleClose}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-            >
-              Fertig
-            </Button>
-          </DialogActions>
-        </div>
+        <DialogActions>
+          <Button
+            onClick={handleClose}
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+          >
+            Fertig
+          </Button>
+        </DialogActions>
       </Dialog>
     );
   }
@@ -221,16 +219,15 @@ export default function ShareModal({
   // Link-Erstellung
   return (
     <Dialog open={true} onClose={onClose} size="lg">
-      <div className="p-6">
-        <DialogTitle>
-          <div className="flex items-center gap-2">
-            <LinkIcon className="h-5 w-5" />
-            Share-Link erstellen
-          </div>
-        </DialogTitle>
-        
-        <DialogBody className="mt-4">
-          <FieldGroup>
+      <DialogTitle>
+        <div className="flex items-center gap-2">
+          <LinkIcon className="h-5 w-5" />
+          Share-Link erstellen
+        </div>
+      </DialogTitle>
+
+      <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto">
+        <FieldGroup>
             <Field>
               <Label>Titel für geteilten Inhalt *</Label>
               <Input
@@ -286,22 +283,21 @@ export default function ShareModal({
                 </div>
               </div>
             </div>
-          </FieldGroup>
-        </DialogBody>
+        </FieldGroup>
+      </DialogBody>
 
-        <DialogActions className="mt-5 sm:mt-4">
-          <Button plain onClick={onClose} disabled={creating}>
-            Abbrechen
-          </Button>
-          <Button 
-            onClick={handleCreateLink} 
-            disabled={!title.trim() || creating}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-          >
-            {creating ? 'Erstelle Link...' : 'Share-Link erstellen'}
-          </Button>
-        </DialogActions>
-      </div>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={creating}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleCreateLink}
+          disabled={!title.trim() || creating}
+          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+        >
+          {creating ? 'Erstelle Link...' : 'Share-Link erstellen'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
