@@ -92,6 +92,7 @@ export default function BoilerplatesPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -141,8 +142,13 @@ export default function BoilerplatesPage() {
       });
     }
 
+    // Favoriten-Filter
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(bp => bp.isFavorite);
+    }
+
     return filtered;
-  }, [boilerplates, debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope]);
+  }, [boilerplates, debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope, showFavoritesOnly]);
 
   // Paginated Data
   const paginatedBoilerplates = useMemo(() => {
@@ -157,14 +163,14 @@ export default function BoilerplatesPage() {
   );
 
   const activeFiltersCount = useMemo(
-    () => selectedCategories.length + selectedLanguages.length + selectedScope.length,
-    [selectedCategories.length, selectedLanguages.length, selectedScope.length]
+    () => selectedCategories.length + selectedLanguages.length + selectedScope.length + (showFavoritesOnly ? 1 : 0),
+    [selectedCategories.length, selectedLanguages.length, selectedScope.length, showFavoritesOnly]
   );
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope]);
+  }, [debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope, showFavoritesOnly]);
 
   // Handler mit useCallback
   const handleEdit = useCallback((boilerplate: Boilerplate) => {
@@ -284,110 +290,137 @@ export default function BoilerplatesPage() {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
-                    {activeFiltersCount > 0 && (
+              <Popover.Panel className="absolute left-0 z-10 mt-2 w-[600px] origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {/* Linke Spalte: Kategorie + Sprache */}
+                    <div>
+                      {/* Kategorie Filter */}
+                      <div className="mb-[10px]">
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                          Kategorie
+                        </label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                            <label key={value} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedCategories.includes(value)}
+                                onChange={(e) => {
+                                  const newValues = e.target.checked
+                                    ? [...selectedCategories, value]
+                                    : selectedCategories.filter(v => v !== value);
+                                  setSelectedCategories(newValues);
+                                }}
+                                className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Sprachen Filter */}
+                      <div className="mb-[10px]">
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                          Sprache
+                        </label>
+                        <div className="space-y-2">
+                          {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
+                            <label key={value} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedLanguages.includes(value)}
+                                onChange={(e) => {
+                                  const newValues = e.target.checked
+                                    ? [...selectedLanguages, value]
+                                    : selectedLanguages.filter(v => v !== value);
+                                  setSelectedLanguages(newValues);
+                                }}
+                                className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rechte Spalte: Sichtbarkeit + Favoriten */}
+                    <div>
+                      {/* Sichtbarkeit Filter */}
+                      <div className="mb-[10px]">
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                          Sichtbarkeit
+                        </label>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedScope.includes('global')}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedScope, 'global']
+                                  : selectedScope.filter(v => v !== 'global');
+                                setSelectedScope(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Global</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedScope.includes('client')}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedScope, 'client']
+                                  : selectedScope.filter(v => v !== 'client');
+                                setSelectedScope(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Kundenspezifisch</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Favoriten Filter */}
+                      <div className="mb-[10px]">
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                          Favoriten
+                        </label>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showFavoritesOnly}
+                              onChange={(e) => setShowFavoritesOnly(e.target.checked)}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Nur Favoriten anzeigen</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reset Button */}
+                  {activeFiltersCount > 0 && (
+                    <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700">
                       <button
                         onClick={() => {
                           setSelectedCategories([]);
                           setSelectedLanguages([]);
                           setSelectedScope([]);
+                          setShowFavoritesOnly(false);
                         }}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
-                        Zurücksetzen
+                        Alle Filter zurücksetzen
                       </button>
-                    )}
-                  </div>
-
-                  {/* Kategorie Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      Kategorie
-                    </label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                        <label key={value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.includes(value)}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedCategories, value]
-                                : selectedCategories.filter(v => v !== value);
-                              setSelectedCategories(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-                        </label>
-                      ))}
                     </div>
-                  </div>
-
-                  {/* Sprachen Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      Sprache
-                    </label>
-                    <div className="space-y-2">
-                      {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
-                        <label key={value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedLanguages.includes(value)}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedLanguages, value]
-                                : selectedLanguages.filter(v => v !== value);
-                              setSelectedLanguages(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Sichtbarkeit Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                      Sichtbarkeit
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedScope.includes('global')}
-                          onChange={(e) => {
-                            const newValues = e.target.checked
-                              ? [...selectedScope, 'global']
-                              : selectedScope.filter(v => v !== 'global');
-                            setSelectedScope(newValues);
-                          }}
-                          className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                        />
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Global</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedScope.includes('client')}
-                          onChange={(e) => {
-                            const newValues = e.target.checked
-                              ? [...selectedScope, 'client']
-                              : selectedScope.filter(v => v !== 'client');
-                            setSelectedScope(newValues);
-                          }}
-                          className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                        />
-                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Kundenspezifisch</span>
-                      </label>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </Popover.Panel>
             </Transition>
