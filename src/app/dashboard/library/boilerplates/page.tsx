@@ -56,6 +56,23 @@ const LANGUAGE_LABELS: Record<string, string> = {
   it: 'Italienisch'
 };
 
+// Debounce Hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function BoilerplatesPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -87,13 +104,16 @@ export default function BoilerplatesPage() {
   const deleteBoilerplateMutation = useDeleteBoilerplate();
   const toggleFavoriteMutation = useToggleFavoriteBoilerplate();
 
+  // Debounced search term (300ms delay)
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Gefilterte Boilerplates
   const filteredBoilerplates = useMemo(() => {
     let filtered = boilerplates;
 
-    // Textsuche
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+    // Textsuche (mit debounced term)
+    if (debouncedSearchTerm) {
+      const term = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(bp =>
         bp.name.toLowerCase().includes(term) ||
         bp.content.toLowerCase().includes(term) ||
@@ -121,7 +141,7 @@ export default function BoilerplatesPage() {
     }
 
     return filtered;
-  }, [boilerplates, searchTerm, selectedCategories, selectedLanguages, selectedScope]);
+  }, [boilerplates, debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope]);
 
   // Paginated Data
   const paginatedBoilerplates = useMemo(() => {
@@ -129,19 +149,29 @@ export default function BoilerplatesPage() {
     return filteredBoilerplates.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredBoilerplates, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredBoilerplates.length / itemsPerPage);
+  // Computed values mit useMemo
+  const totalPages = useMemo(
+    () => Math.ceil(filteredBoilerplates.length / itemsPerPage),
+    [filteredBoilerplates.length, itemsPerPage]
+  );
+
+  const activeFiltersCount = useMemo(
+    () => selectedCategories.length + selectedLanguages.length + selectedScope.length,
+    [selectedCategories.length, selectedLanguages.length, selectedScope.length]
+  );
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategories, selectedLanguages, selectedScope]);
+  }, [debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope]);
 
-  const handleEdit = (boilerplate: Boilerplate) => {
+  // Handler mit useCallback
+  const handleEdit = useCallback((boilerplate: Boilerplate) => {
     setEditingBoilerplate(boilerplate);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = useCallback(async (id: string, name: string) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Textbaustein löschen',
@@ -151,9 +181,9 @@ export default function BoilerplatesPage() {
         await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
       }
     });
-  };
+  }, [deleteBoilerplateMutation, organizationId]);
 
-  const handleToggleFavorite = async (id: string) => {
+  const handleToggleFavorite = useCallback(async (id: string) => {
     if (!organizationId || !id || !user) return;
 
     await toggleFavoriteMutation.mutateAsync({
@@ -161,9 +191,7 @@ export default function BoilerplatesPage() {
       organizationId,
       userId: user.uid
     });
-  };
-
-  const activeFiltersCount = selectedCategories.length + selectedLanguages.length + selectedScope.length;
+  }, [toggleFavoriteMutation, organizationId, user]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return 'Unbekannt';
