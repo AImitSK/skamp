@@ -367,9 +367,6 @@ export default function BoilerplateModal({
                   <option value="ja">日本語</option>
                 </Select>
               </div>
-              <Description className="mt-2">
-                Sprache des Textbausteins für mehrsprachige Unterstützung
-              </Description>
             </Field>
           </div>
 
