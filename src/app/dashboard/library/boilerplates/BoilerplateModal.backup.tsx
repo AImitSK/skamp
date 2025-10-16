@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
-import { toastService } from '@/lib/utils/toast';
-import { useCreateBoilerplate, useUpdateBoilerplate } from "@/lib/hooks/useBoilerplatesData";
 import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,18 +57,15 @@ interface BoilerplateModalProps {
   userId: string;
 }
 
-export default function BoilerplateModal({
-  boilerplate,
-  onClose,
-  onSave,
+export default function BoilerplateModal({ 
+  boilerplate, 
+  onClose, 
+  onSave, 
   organizationId,
-  userId
+  userId 
 }: BoilerplateModalProps) {
+  const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
-
-  // React Query Mutations
-  const createBoilerplateMutation = useCreateBoilerplate();
-  const updateBoilerplateMutation = useUpdateBoilerplate();
 
   // Einfacher Tiptap Editor Setup (ohne KI-Toolbar)
   const editor = useEditor({
@@ -180,9 +175,11 @@ export default function BoilerplateModal({
   const handleSubmit = async () => {
     const content = editor?.getHTML() || '';
     if (!formData.name.trim() || !content.trim()) {
-      toastService.warning('Bitte füllen Sie Name und Inhalt aus.');
+      alert('Bitte füllen Sie Name und Inhalt aus.');
       return;
     }
+
+    setSaving(true);
 
     try {
       const boilerplateData: BoilerplateCreateData = {
@@ -196,38 +193,27 @@ export default function BoilerplateModal({
       };
 
       if (boilerplate && boilerplate.id) {
-        // Update mit React Query Mutation
-        await updateBoilerplateMutation.mutateAsync({
-          id: boilerplate.id,
-          organizationId,
-          userId,
-          boilerplateData
-        });
-        toastService.success(`"${formData.name}" erfolgreich aktualisiert`);
+        await boilerplatesService.update(
+          boilerplate.id,
+          boilerplateData,
+          { organizationId, userId }
+        );
       } else {
-        // Create mit React Query Mutation
-        await createBoilerplateMutation.mutateAsync({
-          organizationId,
-          userId,
-          boilerplateData
-        });
-        toastService.success(`"${formData.name}" erfolgreich erstellt`);
+        await boilerplatesService.create(
+          boilerplateData,
+          { organizationId, userId }
+        );
       }
-
+      
       onSave();
       onClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      toastService.error(
-        error instanceof Error
-          ? `Fehler beim Speichern: ${error.message}`
-          : 'Fehler beim Speichern des Textbausteins'
-      );
+      alert('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
     }
   };
-
-  // Saving state aus Mutations
-  const saving = createBoilerplateMutation.isPending || updateBoilerplateMutation.isPending;
 
   return (
     <Dialog 

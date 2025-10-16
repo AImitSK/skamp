@@ -14,7 +14,10 @@
       "Bash(npm test:*)",
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npx cloc:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

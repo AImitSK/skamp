@@ -7,12 +7,6 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { Boilerplate } from "@/types/crm-enhanced";
-import {
-  useBoilerplates,
-  useDeleteBoilerplate,
-  useToggleFavoriteBoilerplate
-} from "@/lib/hooks/useBoilerplatesData";
-import { toastService } from '@/lib/utils/toast';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -57,26 +51,12 @@ const LANGUAGE_LABELS: Record<string, string> = {
   it: 'Italienisch'
 };
 
-// Debounce Hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
 export default function BoilerplatesPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBoilerplate, setEditingBoilerplate] = useState<Boilerplate | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -92,7 +72,6 @@ export default function BoilerplatesPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedScope, setSelectedScope] = useState<string[]>([]);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,21 +80,44 @@ export default function BoilerplatesPage() {
   // Verwende currentOrganization.id für Multi-Tenancy
   const organizationId = currentOrganization?.id || '';
 
-  // React Query Hooks
-  const { data: boilerplates = [], isLoading: loading } = useBoilerplates(organizationId);
-  const deleteBoilerplateMutation = useDeleteBoilerplate();
-  const toggleFavoriteMutation = useToggleFavoriteBoilerplate();
+  useEffect(() => {
+    if (user && currentOrganization && organizationId) {
+      loadData();
+    }
+  }, [user, currentOrganization, organizationId]);
 
-  // Debounced search term (300ms delay)
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const loadData = async () => {
+    if (!user || !currentOrganization || !organizationId) return;
+    
+    setLoading(true);
+    try {
+      // Versuche Migration wenn nötig
+      await boilerplatesService.migrateFromUserToOrg(user.uid, organizationId);
+      
+      // Lade Boilerplates
+      const boilerplatesData = await boilerplatesService.getAll(organizationId);
+      setBoilerplates(boilerplatesData);
+      
+      // Versuche Companies zu laden
+      try {
+        const companiesData = await companiesService.getAll(organizationId);
+        setCompanies(companiesData);
+      } catch (error) {
+        setCompanies([]);
+      }
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Gefilterte Boilerplates
   const filteredBoilerplates = useMemo(() => {
     let filtered = boilerplates;
 
-    // Textsuche (mit debounced term)
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
+    // Textsuche
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(bp =>
         bp.name.toLowerCase().includes(term) ||
         bp.content.toLowerCase().includes(term) ||
@@ -142,13 +144,8 @@ export default function BoilerplatesPage() {
       });
     }
 
-    // Favoriten-Filter
-    if (showFavoritesOnly) {
-      filtered = filtered.filter(bp => bp.isFavorite);
-    }
-
     return filtered;
-  }, [boilerplates, debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope, showFavoritesOnly]);
+  }, [boilerplates, searchTerm, selectedCategories, selectedLanguages, selectedScope]);
 
   // Paginated Data
   const paginatedBoilerplates = useMemo(() => {
@@ -156,67 +153,39 @@ export default function BoilerplatesPage() {
     return filteredBoilerplates.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredBoilerplates, currentPage, itemsPerPage]);
 
-  // Computed values mit useMemo
-  const totalPages = useMemo(
-    () => Math.ceil(filteredBoilerplates.length / itemsPerPage),
-    [filteredBoilerplates.length, itemsPerPage]
-  );
-
-  const activeFiltersCount = useMemo(
-    () => selectedCategories.length + selectedLanguages.length + selectedScope.length + (showFavoritesOnly ? 1 : 0),
-    [selectedCategories.length, selectedLanguages.length, selectedScope.length, showFavoritesOnly]
-  );
+  const totalPages = Math.ceil(filteredBoilerplates.length / itemsPerPage);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedCategories, selectedLanguages, selectedScope, showFavoritesOnly]);
+  }, [searchTerm, selectedCategories, selectedLanguages, selectedScope]);
 
-  // Handler mit useCallback
-  const handleEdit = useCallback((boilerplate: Boilerplate) => {
+  const handleEdit = (boilerplate: Boilerplate) => {
     setEditingBoilerplate(boilerplate);
     setShowModal(true);
-  }, []);
+  };
 
-  const handleDelete = useCallback(async (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Textbaustein löschen',
       message: `Möchten Sie den Textbaustein "${name}" wirklich unwiderruflich löschen?`,
       type: 'danger',
       onConfirm: async () => {
-        try {
-          await deleteBoilerplateMutation.mutateAsync({ id, organizationId });
-          toastService.success(`"${name}" erfolgreich gelöscht`);
-        } catch (error) {
-          toastService.error(
-            error instanceof Error
-              ? `Fehler beim Löschen: ${error.message}`
-              : 'Fehler beim Löschen des Textbausteins'
-          );
-        }
+        await boilerplatesService.delete(id);
+        await loadData();
       }
     });
-  }, [deleteBoilerplateMutation, organizationId]);
+  };
 
-  const handleToggleFavorite = useCallback(async (id: string) => {
-    if (!organizationId || !id || !user) return;
+  const handleToggleFavorite = async (id: string) => {
+    if (!organizationId || !id) return;
 
-    try {
-      await toggleFavoriteMutation.mutateAsync({
-        id,
-        organizationId,
-        userId: user.uid
-      });
-      toastService.success('Favorit-Status aktualisiert');
-    } catch (error) {
-      toastService.error(
-        error instanceof Error
-          ? `Fehler beim Aktualisieren: ${error.message}`
-          : 'Fehler beim Aktualisieren des Favorit-Status'
-      );
-    }
-  }, [toggleFavoriteMutation, organizationId, user]);
+    await boilerplatesService.toggleFavorite(id, { organizationId, userId: user!.uid });
+    await loadData();
+  };
+
+  const activeFiltersCount = selectedCategories.length + selectedLanguages.length + selectedScope.length;
 
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return 'Unbekannt';
@@ -290,137 +259,110 @@ export default function BoilerplatesPage() {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <Popover.Panel className="absolute left-0 z-10 mt-2 w-[600px] origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
-                <div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    {/* Linke Spalte: Kategorie + Sprache */}
-                    <div>
-                      {/* Kategorie Filter */}
-                      <div className="mb-[10px]">
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Kategorie
-                        </label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                            <label key={value} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedCategories.includes(value)}
-                                onChange={(e) => {
-                                  const newValues = e.target.checked
-                                    ? [...selectedCategories, value]
-                                    : selectedCategories.filter(v => v !== value);
-                                  setSelectedCategories(newValues);
-                                }}
-                                className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                              />
-                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Sprachen Filter */}
-                      <div className="mb-[10px]">
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Sprache
-                        </label>
-                        <div className="space-y-2">
-                          {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
-                            <label key={value} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedLanguages.includes(value)}
-                                onChange={(e) => {
-                                  const newValues = e.target.checked
-                                    ? [...selectedLanguages, value]
-                                    : selectedLanguages.filter(v => v !== value);
-                                  setSelectedLanguages(newValues);
-                                }}
-                                className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                              />
-                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Rechte Spalte: Sichtbarkeit + Favoriten */}
-                    <div>
-                      {/* Sichtbarkeit Filter */}
-                      <div className="mb-[10px]">
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Sichtbarkeit
-                        </label>
-                        <div className="space-y-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={selectedScope.includes('global')}
-                              onChange={(e) => {
-                                const newValues = e.target.checked
-                                  ? [...selectedScope, 'global']
-                                  : selectedScope.filter(v => v !== 'global');
-                                setSelectedScope(newValues);
-                              }}
-                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                            />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Global</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={selectedScope.includes('client')}
-                              onChange={(e) => {
-                                const newValues = e.target.checked
-                                  ? [...selectedScope, 'client']
-                                  : selectedScope.filter(v => v !== 'client');
-                                setSelectedScope(newValues);
-                              }}
-                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                            />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Kundenspezifisch</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Favoriten Filter */}
-                      <div className="mb-[10px]">
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Favoriten
-                        </label>
-                        <div className="space-y-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={showFavoritesOnly}
-                              onChange={(e) => setShowFavoritesOnly(e.target.checked)}
-                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
-                            />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Nur Favoriten anzeigen</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Reset Button */}
-                  {activeFiltersCount > 0 && (
-                    <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700">
+              <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                    {activeFiltersCount > 0 && (
                       <button
                         onClick={() => {
                           setSelectedCategories([]);
                           setSelectedLanguages([]);
                           setSelectedScope([]);
-                          setShowFavoritesOnly(false);
                         }}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
-                        Alle Filter zurücksetzen
+                        Zurücksetzen
                       </button>
+                    )}
+                  </div>
+
+                  {/* Kategorie Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Kategorie
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                        <label key={value} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(value)}
+                            onChange={(e) => {
+                              const newValues = e.target.checked
+                                ? [...selectedCategories, value]
+                                : selectedCategories.filter(v => v !== value);
+                              setSelectedCategories(newValues);
+                            }}
+                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                        </label>
+                      ))}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Sprachen Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Sprache
+                    </label>
+                    <div className="space-y-2">
+                      {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
+                        <label key={value} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedLanguages.includes(value)}
+                            onChange={(e) => {
+                              const newValues = e.target.checked
+                                ? [...selectedLanguages, value]
+                                : selectedLanguages.filter(v => v !== value);
+                              setSelectedLanguages(newValues);
+                            }}
+                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sichtbarkeit Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Sichtbarkeit
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedScope.includes('global')}
+                          onChange={(e) => {
+                            const newValues = e.target.checked
+                              ? [...selectedScope, 'global']
+                              : selectedScope.filter(v => v !== 'global');
+                            setSelectedScope(newValues);
+                          }}
+                          className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Global</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedScope.includes('client')}
+                          onChange={(e) => {
+                            const newValues = e.target.checked
+                              ? [...selectedScope, 'client']
+                              : selectedScope.filter(v => v !== 'client');
+                            setSelectedScope(newValues);
+                          }}
+                          className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Kundenspezifisch</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </Popover.Panel>
             </Transition>
@@ -661,7 +603,7 @@ export default function BoilerplatesPage() {
           onSave={() => {
             setShowModal(false);
             setEditingBoilerplate(null);
-            // React Query invalidiert automatisch den Cache
+            loadData();
           }}
           organizationId={organizationId}
           userId={user!.uid}

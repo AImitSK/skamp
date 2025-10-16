@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { interceptSave } from '@/lib/utils/global-interceptor';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 import { useCreatePublication, useUpdatePublication } from '@/lib/hooks/usePublicationsData';
+import { toastService } from '@/lib/utils/toast';
 
 import { BasicInfoSection } from './BasicInfoSection';
 import { MetricsSection } from './MetricsSection';
@@ -338,7 +339,12 @@ export function PublicationModal({
       onSuccess();
       onClose();
     } catch (error) {
-      alert("Fehler beim Speichern der Publikation");
+      console.error('Fehler beim Speichern der Publikation:', error);
+      toastService.error(
+        error instanceof Error
+          ? `Fehler beim Speichern: ${error.message}`
+          : 'Fehler beim Speichern der Publikation'
+      );
     } finally {
       setLoading(false);
     }
