@@ -113,10 +113,6 @@ class PublicationService extends BaseService<Publication> {
       throw new Error('Titel ist erforderlich');
     }
 
-    if (!data.publisherId) {
-      throw new Error('Verlag ist erforderlich');
-    }
-
     if (!data.languages || data.languages.length === 0) {
       throw new Error('Mindestens eine Sprache ist erforderlich');
     }
@@ -356,17 +352,9 @@ class PublicationService extends BaseService<Publication> {
           continue;
         }
 
-        // Default Publisher zuweisen
+        // Default Publisher zuweisen (optional)
         if (options.defaultPublisherId && !publication.publisherId) {
           publication.publisherId = options.defaultPublisherId;
-        }
-
-        if (!publication.publisherId) {
-          results.errors.push({
-            row: i + 1,
-            error: 'Verlag fehlt'
-          });
-          continue;
         }
 
         // Setze Defaults
@@ -419,16 +407,27 @@ class PublicationService extends BaseService<Publication> {
     publication: Partial<Publication>,
     organizationId: string
   ): Promise<Publication | null> {
+    if (!publication.title) return null;
+
+    const allPublications = await this.getAll(organizationId);
+
     // Suche nach gleichem Titel beim gleichen Verlag
-    if (publication.title && publication.publisherId) {
-      const matches = await this.search(organizationId, {
-        publisherId: publication.publisherId
-      });
-      
-      const match = matches.find(p => 
+    if (publication.publisherId) {
+      const match = allPublications.find(p =>
+        p.publisherId === publication.publisherId &&
         p.title.toLowerCase() === publication.title!.toLowerCase()
       );
-      
+
+      if (match) {
+        return match;
+      }
+    } else {
+      // Kein Verlag: Prüfe nur nach Titel (verhindert "Der Spiegel" 2x ohne Verlag)
+      const match = allPublications.find(p =>
+        !p.publisherId &&
+        p.title.toLowerCase() === publication.title!.toLowerCase()
+      );
+
       if (match) {
         return match;
       }
