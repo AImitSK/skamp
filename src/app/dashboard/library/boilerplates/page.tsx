@@ -11,7 +11,6 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { SearchInput } from "@/components/ui/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
@@ -61,7 +60,6 @@ export default function BoilerplatesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingBoilerplate, setEditingBoilerplate] = useState<Boilerplate | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -180,38 +178,11 @@ export default function BoilerplatesPage() {
     });
   };
 
-  const handleBulkDelete = async () => {
-    const count = selectedListIds.size;
-    if (count === 0) return;
-    
-    setConfirmDialog({
-      isOpen: true,
-      title: `${count} Textbausteine löschen`,
-      message: `Möchten Sie wirklich ${count} Textbausteine unwiderruflich löschen?`,
-      type: 'danger',
-      onConfirm: async () => {
-        await Promise.all(Array.from(selectedListIds).map(id => 
-          boilerplatesService.delete(id)
-        ));
-        await loadData();
-        setSelectedListIds(new Set());
-      }
-    });
-  };
-
   const handleToggleFavorite = async (id: string) => {
     if (!organizationId || !id) return;
 
     await boilerplatesService.toggleFavorite(id, { organizationId, userId: user!.uid });
     await loadData();
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedListIds(new Set(paginatedBoilerplates.map(bp => bp.id!)));
-    } else {
-      setSelectedListIds(new Set());
-    }
   };
 
   const activeFiltersCount = selectedCategories.length + selectedLanguages.length + selectedScope.length;
@@ -387,65 +358,20 @@ export default function BoilerplatesPage() {
           </Popover>
 
           {/* Add Button */}
-          <Button 
+          <Button
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
             onClick={() => setShowModal(true)}
           >
             Baustein erstellen
           </Button>
-
-          {/* Actions Button */}
-          {selectedListIds.size > 0 && (
-            <Popover className="relative">
-              <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                <EllipsisVerticalIcon className="h-5 w-5" />
-              </Popover.Button>
-              
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 translate-y-1"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-1"
-              >
-                <Popover.Panel className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
-                  <div className="py-1">
-                    <button
-                      onClick={handleBulkDelete}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      Auswahl löschen ({selectedListIds.size})
-                    </button>
-                  </div>
-                </Popover.Panel>
-              </Transition>
-            </Popover>
-          )}
         </div>
       </div>
 
       {/* Results Info */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
           {filteredBoilerplates.length} von {boilerplates.length} Textbausteinen
-          {selectedListIds.size > 0 && (
-            <span className="ml-2">
-              • {selectedListIds.size} ausgewählt
-            </span>
-          )}
         </Text>
-        
-        {selectedListIds.size > 0 && (
-          <button
-            onClick={handleBulkDelete}
-            className="text-sm text-red-600 hover:text-red-700 underline"
-          >
-            {selectedListIds.size} Löschen
-          </button>
-        )}
       </div>
 
       {/* Content */}
@@ -477,13 +403,8 @@ export default function BoilerplatesPage() {
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="flex items-center w-[35%]">
-                  <Checkbox
-                    checked={paginatedBoilerplates.length > 0 && selectedListIds.size === paginatedBoilerplates.length}
-                    indeterminate={selectedListIds.size > 0 && selectedListIds.size < paginatedBoilerplates.length}
-                    onChange={(checked: boolean) => handleSelectAll(checked)}
-                  />
-                  <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[40%]">
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Name
                   </span>
                 </div>
@@ -505,20 +426,11 @@ export default function BoilerplatesPage() {
               {paginatedBoilerplates.map((bp) => (
                 <div key={bp.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
-                    {/* Checkbox & Favorite */}
-                    <div className="flex items-center w-[35%]">
-                      <Checkbox
-                        checked={selectedListIds.has(bp.id!)}
-                        onChange={(checked: boolean) => {
-                          const newIds = new Set(selectedListIds);
-                          if (checked) newIds.add(bp.id!);
-                          else newIds.delete(bp.id!);
-                          setSelectedListIds(newIds);
-                        }}
-                      />
+                    {/* Favorite & Name */}
+                    <div className="flex items-center w-[40%]">
                       <button
                         onClick={() => bp.id && handleToggleFavorite(bp.id)}
-                        className="ml-2 text-gray-400 hover:text-yellow-500"
+                        className="text-gray-400 hover:text-yellow-500"
                       >
                         {bp.isFavorite ? (
                           <StarIconSolid className="h-4 w-4 text-yellow-500" />
