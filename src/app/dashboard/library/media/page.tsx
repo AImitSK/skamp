@@ -26,48 +26,25 @@ import {
 } from "@/lib/hooks/useMediaData";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { teamMemberService } from "@/lib/firebase/organization-service";
-import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
-import { 
-  Dropdown,
-  DropdownButton,
-  DropdownMenu,
-  DropdownItem,
-  DropdownDivider
-} from "@/components/ui/dropdown";
 import {
-  PlusIcon,
-  PhotoIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
-  EyeIcon,
-  TrashIcon,
-  VideoCameraIcon,
-  DocumentTextIcon,
-  FolderPlusIcon,
-  ShareIcon,
-  EllipsisVerticalIcon,
-  PencilIcon,
   ExclamationTriangleIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-  FolderIcon
+  ChevronRightIcon
 } from "@heroicons/react/24/outline";
 import { toastService } from '@/lib/utils/toast';
-import Link from 'next/link';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
 import BreadcrumbNavigation from "@/components/mediathek/BreadcrumbNavigation";
 import FolderModal from "@/components/mediathek/FolderModal";
 import ShareModal from "@/components/mediathek/ShareModal";
 import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal";
+import MediaGridView from "@/components/mediathek/MediaGridView";
+import MediaListView from "@/components/mediathek/MediaListView";
+import MediaToolbar from "@/components/mediathek/MediaToolbar";
+import EmptyState from "@/components/mediathek/EmptyState";
 
 type ViewMode = 'grid' | 'list';
 
@@ -679,20 +656,6 @@ export default function MediathekPage() {
     return currentFolder?.name;
   };
 
-  const getFileIcon = (fileType: string | undefined) => {
-    if (!fileType) return DocumentTextIcon;
-
-    if (fileType.startsWith('image/')) {
-      return PhotoIcon;
-    } else if (fileType.startsWith('video/')) {
-      return VideoCameraIcon;
-    } else if (fileType.includes('pdf') || fileType.includes('document')) {
-      return DocumentTextIcon;
-    } else {
-      return DocumentTextIcon;
-    }
-  };
-
   const getAssetTooltip = (asset: MediaAsset) => {
     let tooltip = asset.fileName;
     
@@ -716,335 +679,7 @@ export default function MediathekPage() {
     return tooltip;
   };
 
-  const renderGridView = () => (
-    <div 
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-      onDragOver={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
-      onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
-    >
-      {/* Render Folders First */}
-      {filteredFolders.map((folder) => (
-        <FolderCard
-          key={folder.id}
-          folder={folder}
-          onOpen={handleOpenFolder}
-          onEdit={handleEditFolder}
-          onDelete={handleDeleteFolder}
-          onShare={handleShareFolder}
-          fileCount={0}
-          isDragOver={dragOverFolder === folder.id}
-          onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
-          onDragLeave={handleFolderDragLeave}
-          onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
-          onFolderMove={handleFolderMove}
-          onFolderDragStart={handleFolderDragStart}
-          onFolderDragEnd={handleFolderDragEnd}
-        />
-      ))}
-      
-      {/* Render Media Assets */}
-      {paginatedAssets.map((asset) => {
-        const FileIcon = getFileIcon(asset.fileType);
-        const isSelected = selectedAssets.has(asset.id!);
-        const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
-        
-        return (
-          <div 
-            key={asset.id} 
-            className={`group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
-              isDragging ? 'opacity-50 scale-95' : ''
-            } ${
-              isSelected ? 'border-[#005fab] bg-blue-50' : 'border-gray-200'
-            }`}
-            draggable={true}
-            onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
-            onDragEnd={handleAssetDragEnd}
-            onClick={(e: React.MouseEvent) => {
-              if (isSelectionMode || e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                toggleAssetSelection(asset.id!);
-                if (!isSelectionMode) setIsSelectionMode(true);
-              }
-            }}
-            title={getAssetTooltip(asset)}
-          >
-            {/* Selection Checkbox */}
-            <div className={`absolute top-2 left-2 z-10 transition-opacity ${
-              isSelectionMode || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-            }`}>
-              <label className="cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    e.stopPropagation();
-                    toggleAssetSelection(asset.id!);
-                    if (!isSelectionMode) setIsSelectionMode(true);
-                  }}
-                  className="size-4 text-[#005fab] bg-white border-gray-300 rounded focus:ring-[#005fab] focus:ring-2"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                />
-              </label>
-            </div>
 
-            {/* Multi-Selection Badge */}
-            {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
-              <div className="absolute top-2 right-2 bg-[#005fab] text-white text-xs px-2 py-1 rounded-full">
-                {selectedAssets.size}
-              </div>
-            )}
-
-            {/* Preview */}
-            <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
-              {asset.fileType?.startsWith('image/') ? (
-                <img 
-                  src={asset.downloadUrl} 
-                  alt={asset.fileName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              ) : (
-                <FileIcon className="h-16 w-16 text-gray-400" />
-              )}
-              
-              {/* Hover Actions */}
-              {!isSelectionMode && (
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <div className="flex gap-2">
-                    <Link href={asset.downloadUrl} target="_blank">
-                      <Button color="zinc" className="shadow-lg bg-white p-2">
-                        <EyeIcon className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* 3-Punkte-Menü */}
-              {!isSelectionMode && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Dropdown>
-                    <DropdownButton 
-                      plain 
-                      className="bg-white/90 shadow-sm hover:bg-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]"
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    >
-                      <EllipsisVerticalIcon className="h-4 w-4" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }} className="hover:bg-gray-50">
-                        <PencilIcon className="h-4 w-4 text-gray-500" />
-                        Details bearbeiten
-                      </DropdownItem>
-                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }} className="hover:bg-gray-50">
-                        <ShareIcon className="h-4 w-4 text-gray-500" />
-                        Teilen
-                      </DropdownItem>
-                      <DropdownDivider />
-                      <DropdownItem 
-                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
-                        className="hover:bg-red-50"
-                      >
-                        <TrashIcon className="h-4 w-4 text-red-500" />
-                        <span className="text-red-600">Löschen</span>
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              )}
-            </div>
-
-            {/* File Info */}
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-900 truncate mb-2" title={asset.fileName}>
-                {asset.fileName}
-              </h3>
-              
-              {asset.clientId && (
-                <div>
-                  <Badge color="blue" className="text-xs">
-                    {companies.find(c => c.id === asset.clientId)?.name || 'Unbekannter Kunde'}
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  const renderListView = () => (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <TableHeader>
-            <Checkbox
-              checked={paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.has(a.id!))}
-              indeterminate={paginatedAssets.some(a => selectedAssets.has(a.id!)) && !paginatedAssets.every(a => selectedAssets.has(a.id!))}
-              onChange={(checked) => {
-                if (checked) {
-                  selectAllAssets();
-                } else {
-                  clearSelection();
-                }
-              }}
-            />
-          </TableHeader>
-          <TableHeader>Name</TableHeader>
-          <TableHeader>Typ</TableHeader>
-          <TableHeader>Größe</TableHeader>
-          <TableHeader>Kunde</TableHeader>
-          <TableHeader>Erstellt am</TableHeader>
-          <TableHeader>
-            <span className="sr-only">Aktionen</span>
-          </TableHeader>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {/* Render Folders First */}
-        {filteredFolders.map((folder) => {
-          const associatedCompany = folder.clientId 
-            ? companies.find(c => c.id === folder.clientId)
-            : null;
-            
-          return (
-            <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50">
-              <TableCell>
-                <div className="h-4 w-4" />
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleOpenFolder(folder)}>
-                  <FolderIcon className="h-8 w-8" style={{ color: folder.color }} />
-                  <div>
-                    <div className="font-medium">{folder.name}</div>
-                    {folder.description && (
-                      <div className="text-sm text-gray-500">{folder.description}</div>
-                    )}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>Ordner</TableCell>
-              <TableCell>—</TableCell>
-              <TableCell>
-                {associatedCompany ? (
-                  <Badge color="blue" className="text-xs">
-                    {associatedCompany.name}
-                  </Badge>
-                ) : (
-                  <Text>—</Text>
-                )}
-              </TableCell>
-              <TableCell>
-                {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
-              </TableCell>
-              <TableCell>
-                <Dropdown>
-                  <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]">
-                    <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
-                  </DropdownButton>
-                  <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-                    <DropdownItem onClick={() => handleEditFolder(folder)} className="hover:bg-gray-50">
-                      <PencilIcon className="h-4 w-4 text-gray-500" />
-                      Bearbeiten
-                    </DropdownItem>
-                    <DropdownItem onClick={() => handleShareFolder(folder)} className="hover:bg-gray-50">
-                      <ShareIcon className="h-4 w-4 text-gray-500" />
-                      Teilen
-                    </DropdownItem>
-                    <DropdownDivider />
-                    <DropdownItem onClick={() => handleDeleteFolder(folder)} className="hover:bg-red-50">
-                      <TrashIcon className="h-4 w-4 text-red-500" />
-                      <span className="text-red-600">Löschen</span>
-                    </DropdownItem>
-                  </DropdownMenu>
-                </Dropdown>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-        
-        {/* Render Media Assets */}
-        {paginatedAssets.map((asset) => {
-          const associatedCompany = asset.clientId 
-            ? companies.find(c => c.id === asset.clientId)
-            : null;
-          const FileIcon = getFileIcon(asset.fileType);
-            
-          return (
-            <TableRow key={asset.id} className="hover:bg-gray-50">
-              <TableCell>
-                <Checkbox
-                  checked={selectedAssets.has(asset.id!)}
-                  onChange={(checked) => {
-                    toggleAssetSelection(asset.id!);
-                    if (!isSelectionMode && checked) setIsSelectionMode(true);
-                  }}
-                />
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  {asset.fileType?.startsWith('image/') ? (
-                    <img src={asset.downloadUrl} alt={asset.fileName} className="h-10 w-10 object-cover rounded" />
-                  ) : (
-                    <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
-                      <FileIcon className="h-6 w-6 text-gray-500" />
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-medium">{asset.fileName}</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Text>{asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
-              </TableCell>
-              <TableCell>
-                <Text>—</Text>
-              </TableCell>
-              <TableCell>
-                {associatedCompany ? (
-                  <Badge color="blue" className="text-xs">
-                    {associatedCompany.name}
-                  </Badge>
-                ) : (
-                  <Text>—</Text>
-                )}
-              </TableCell>
-              <TableCell>
-                {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
-              </TableCell>
-              <TableCell>
-                <Dropdown>
-                  <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]">
-                    <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
-                  </DropdownButton>
-                  <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-                    <DropdownItem href={asset.downloadUrl} target="_blank" className="hover:bg-gray-50">
-                      <EyeIcon className="h-4 w-4 text-gray-500" />
-                      Ansehen
-                    </DropdownItem>
-                    <DropdownItem onClick={() => handleEditAsset(asset)} className="hover:bg-gray-50">
-                      <PencilIcon className="h-4 w-4 text-gray-500" />
-                      Details bearbeiten
-                    </DropdownItem>
-                    <DropdownItem onClick={() => handleShareAsset(asset)} className="hover:bg-gray-50">
-                      <ShareIcon className="h-4 w-4 text-gray-500" />
-                      Teilen
-                    </DropdownItem>
-                    <DropdownDivider />
-                    <DropdownItem onClick={() => handleDeleteAsset(asset)} className="hover:bg-red-50">
-                      <TrashIcon className="h-4 w-4 text-red-500" />
-                      <span className="text-red-600">Löschen</span>
-                    </DropdownItem>
-                  </DropdownMenu>
-                </Dropdown>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
 
   const totalItems = filteredFolders.length + filteredAssets.length;
 
@@ -1089,120 +724,85 @@ export default function MediathekPage() {
         </div>
       )}
 
-      {/* Search and Controls */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
-          <Input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Dateien und Ordner durchsuchen..."
-            className="pl-10"
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            onClick={handleCreateFolder}
-            disabled={draggedFolder !== null}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            <FolderPlusIcon className="h-4 w-4" />
-            Ordner anlegen
-          </Button>
-          <Button
-            onClick={handleUploadModalOpen}
-            disabled={draggedFolder !== null || !organizationId}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Dateien hochladen
-          </Button>
-        </div>
-
-        {/* View Toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-1">
-          <Button
-            plain
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded ${viewMode === 'grid' 
-              ? 'bg-white shadow-sm text-[#005fab]' 
-              : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Squares2X2Icon className="h-4 w-4" />
-          </Button>
-          <Button
-            plain
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded ${viewMode === 'list' 
-              ? 'bg-white shadow-sm text-[#005fab]' 
-              : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <ListBulletIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Results Info and Bulk Actions */}
-      <div className="mt-4 flex items-center justify-between">
-        <Text>
-          {filteredFolders.length} {filteredFolders.length === 1 ? 'Ordner' : 'Ordner'}, {' '}
-          {filteredAssets.length} {filteredAssets.length === 1 ? 'Datei' : 'Dateien'}
-        </Text>
-        
-        <div className="flex min-h-10 items-center gap-4">
-          {selectedAssets.size > 0 && (
-            <>
-              <Text>
-                {selectedAssets.size} ausgewählt
-              </Text>
-              <Button plain onClick={selectAllAssets} className="text-[#005fab]">
-                Alle auswählen
-              </Button>
-              <Button plain onClick={clearSelection}>
-                Auswahl aufheben
-              </Button>
-              <Button color="zinc" onClick={handleBulkDelete}>
-                <TrashIcon className="h-4 w-4" />
-                Löschen
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      {/* Toolbar */}
+      <MediaToolbar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        selectedAssetsCount={selectedAssets.size}
+        foldersCount={filteredFolders.length}
+        assetsCount={filteredAssets.length}
+        onCreateFolder={handleCreateFolder}
+        onUpload={handleUploadModalOpen}
+        onSelectAll={selectAllAssets}
+        onClearSelection={clearSelection}
+        onBulkDelete={handleBulkDelete}
+        disabled={draggedFolder !== null || !organizationId}
+      />
 
       {/* Content */}
       <div className="mt-8">
         {totalItems === 0 ? (
-          <div className="text-center py-12 border rounded-lg bg-white">
-            <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <Heading level={3} className="mt-2">
-              {currentFolderId ? 'Dieser Ordner ist leer' : 'Ihre Mediathek ist leer'}
-            </Heading>
-            <Text className="mt-1">
-              {currentFolderId 
-                ? 'Laden Sie Dateien hoch oder erstellen Sie Unterordner.'
-                : 'Erstellen Sie Ihren ersten Ordner oder laden Sie Dateien hoch.'
-              }
-            </Text>
-            <div className="mt-6 flex justify-center gap-3">
-              <Button plain onClick={handleCreateFolder}>
-                <FolderPlusIcon className="h-4 w-4" />
-                Ordner erstellen
-              </Button>
-              <Button onClick={handleUploadModalOpen} className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
-                <PlusIcon className="h-4 w-4" />
-                Dateien hochladen
-              </Button>
-            </div>
-          </div>
+          <EmptyState
+            isInFolder={!!currentFolderId}
+            onCreateFolder={handleCreateFolder}
+            onUpload={handleUploadModalOpen}
+          />
         ) : (
           <div className="bg-white rounded-lg border">
             <div className="p-6">
-              {viewMode === 'grid' ? renderGridView() : renderListView()}
+              {viewMode === 'grid' ? (
+                <MediaGridView
+                  folders={filteredFolders}
+                  assets={paginatedAssets}
+                  selectedAssets={selectedAssets}
+                  isSelectionMode={isSelectionMode}
+                  draggedAsset={draggedAsset}
+                  draggedFolder={draggedFolder}
+                  dragOverFolder={dragOverFolder}
+                  currentFolderId={currentFolderId}
+                  companies={companies}
+                  getAssetTooltip={getAssetTooltip}
+                  handleAssetDragStart={handleAssetDragStart}
+                  handleAssetDragEnd={handleAssetDragEnd}
+                  toggleAssetSelection={toggleAssetSelection}
+                  setIsSelectionMode={setIsSelectionMode}
+                  handleEditAsset={handleEditAsset}
+                  handleShareAsset={handleShareAsset}
+                  handleDeleteAsset={handleDeleteAsset}
+                  handleOpenFolder={handleOpenFolder}
+                  handleEditFolder={handleEditFolder}
+                  handleDeleteFolder={handleDeleteFolder}
+                  handleShareFolder={handleShareFolder}
+                  handleFolderDragOver={handleFolderDragOver}
+                  handleFolderDragLeave={handleFolderDragLeave}
+                  handleFolderDrop={handleFolderDrop}
+                  handleFolderMove={handleFolderMove}
+                  handleFolderDragStart={handleFolderDragStart}
+                  handleFolderDragEnd={handleFolderDragEnd}
+                  handleRootDrop={handleRootDrop}
+                />
+              ) : (
+                <MediaListView
+                  folders={filteredFolders}
+                  assets={paginatedAssets}
+                  selectedAssets={selectedAssets}
+                  isSelectionMode={isSelectionMode}
+                  companies={companies}
+                  toggleAssetSelection={toggleAssetSelection}
+                  setIsSelectionMode={setIsSelectionMode}
+                  selectAllAssets={selectAllAssets}
+                  clearSelection={clearSelection}
+                  handleOpenFolder={handleOpenFolder}
+                  handleEditFolder={handleEditFolder}
+                  handleShareFolder={handleShareFolder}
+                  handleDeleteFolder={handleDeleteFolder}
+                  handleEditAsset={handleEditAsset}
+                  handleShareAsset={handleShareAsset}
+                  handleDeleteAsset={handleDeleteAsset}
+                />
+              )}
             </div>
           </div>
         )}
