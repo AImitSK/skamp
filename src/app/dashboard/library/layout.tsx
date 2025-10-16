@@ -41,7 +41,7 @@ const tabs: Tab[] = [
     name: "Mediathek",
     href: "/dashboard/library/media",
     icon: PhotoIcon,
-    description: "Zentrale Verwaltung aller Medieninhalte"
+    description: ""
   }
 ];
 

@@ -174,7 +174,7 @@ export default function MediaToolbar({
       </div>
 
       {/* Results Info */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
           {foldersCount} {foldersCount === 1 ? 'Ordner' : 'Ordner'}, {assetsCount} {assetsCount === 1 ? 'Datei' : 'Dateien'}
           {selectedAssetsCount > 0 && (
