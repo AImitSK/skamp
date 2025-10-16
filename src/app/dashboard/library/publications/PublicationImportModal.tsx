@@ -531,11 +531,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
           if (result.created > 0 || result.updated > 0) {
             // Invalidate queries to refresh the table
             queryClient.invalidateQueries({ queryKey: ['publications', currentOrganization!.id] });
-
-            setTimeout(() => {
-              onImportSuccess();
-              onClose();
-            }, 2000);
+            onImportSuccess();
           }
         } catch (err) {
           setError("Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.");
