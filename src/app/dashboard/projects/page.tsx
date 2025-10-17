@@ -35,10 +35,9 @@ import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
 import { TeamMember } from '@/types/international';
-import { BoardFilters, kanbanBoardService } from '@/lib/kanban/kanban-board-service';
+import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
-import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
-import { useBoardRealtime } from '@/hooks/useBoardRealtime';
+import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import Link from 'next/link';
 
 // Kanban Layout Wrapper Komponente
@@ -81,9 +80,9 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
-  
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hook für Projekte
+  const { data: allProjects = [], isLoading } = useProjects(currentOrganization?.id);
   const [showWizard, setShowWizard] = useState(false);
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -97,10 +96,23 @@ export default function ProjectsPage() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Gefilterte Projekte basierend auf Checkboxen
+  const projects = React.useMemo(() => {
+    if (showActive && showArchived) {
+      return allProjects;
+    } else if (showActive) {
+      return allProjects.filter(p => p.status !== 'archived');
+    } else if (showArchived) {
+      return allProjects.filter(p => p.status === 'archived');
+    }
+    return [];
+  }, [allProjects, showActive, showArchived]);
+
+  const loading = isLoading;
+
   useEffect(() => {
-    loadProjects();
     loadTeamMembers();
-  }, [currentOrganization?.id, viewMode, showActive, showArchived]);
+  }, [currentOrganization?.id]);
 
   // Close filter dropdown on click outside
   useEffect(() => {
@@ -119,43 +131,7 @@ export default function ProjectsPage() {
     };
   }, [showFilterDropdown]);
 
-  const loadProjects = async () => {
-    if (!currentOrganization?.id) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Lade alle Projekte
-      const allProjectList = await projectService.getAll({
-        organizationId: currentOrganization.id
-      });
-      
-      // Client-seitiges Filtern basierend auf den Checkboxen
-      let filteredProjects = [];
-      
-      if (showActive && showArchived) {
-        // Beide anzeigen
-        filteredProjects = allProjectList;
-      } else if (showActive) {
-        // Nur aktive (nicht-archivierte) anzeigen
-        filteredProjects = allProjectList.filter(project => project.status !== 'archived');
-      } else if (showArchived) {
-        // Nur archivierte anzeigen
-        filteredProjects = allProjectList.filter(project => project.status === 'archived');
-      } else {
-        // Keins angewählt - leer
-        filteredProjects = [];
-      }
-      
-      setProjects(filteredProjects);
-    } catch (error: any) {
-      console.error('Fehler beim Laden der Projekte:', error);
-      setError('Projekte konnten nicht geladen werden');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // loadProjects entfernt - React Query handled das automatisch
 
   const loadTeamMembers = async () => {
     if (!currentOrganization?.id) return;
@@ -174,18 +150,7 @@ export default function ProjectsPage() {
 
   const handleWizardSuccess = (result: ProjectCreationResult) => {
     console.log('Projekt erfolgreich erstellt:', result);
-    
-    // Neues Projekt direkt zum State hinzufügen (optimistische Update)
-    if (result.project) {
-      setProjects(prevProjects => [...prevProjects, result.project]);
-    }
-    
-    // Projekte neu laden mit Verzögerung (für Firebase Konsistenz)
-    setTimeout(() => {
-      loadProjects();
-    }, 1000);
-    
-    // Wizard bleibt offen - User kann Erfolgsmeldung manuell schließen
+    // React Query invalidiert automatisch den Cache
   };
 
   const handleEditProject = (project: Project) => {
@@ -194,15 +159,7 @@ export default function ProjectsPage() {
   };
 
   const handleEditSuccess = (updatedProject: Project) => {
-    // Update project in state
-    setProjects(prevProjects => 
-      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
-    );
-    
-    // Reload projects for consistency
-    setTimeout(() => {
-      loadProjects();
-    }, 500);
+    // React Query invalidiert automatisch den Cache
   };
 
   // Group projects by pipeline stage for board view - BUGFIX: 6 Phasen statt 7
@@ -224,6 +181,11 @@ export default function ProjectsPage() {
     }, {} as Record<PipelineStage, Project[]>);
   };
 
+  // React Query Hooks
+  const moveProjectMutation = useMoveProject();
+  const deleteProjectMutation = useDeleteProject();
+  const archiveProjectMutation = useArchiveProject();
+
   // Handle project move in board view
   const handleProjectMove = async (projectId: string, targetStage: PipelineStage) => {
     if (!user || !currentOrganization?.id) return;
@@ -242,21 +204,16 @@ export default function ProjectsPage() {
         throw new Error('Projekt nicht gefunden');
       }
 
-      // Move project
-      const result = await kanbanBoardService.moveProject(
+      // Move project mit Optimistic Update
+      await moveProjectMutation.mutateAsync({
         projectId,
         currentStage,
         targetStage,
-        user.uid,
-        currentOrganization.id
-      );
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
 
-      if (result.success) {
-        // Refresh projects
-        loadProjects();
-      } else {
-        console.error('Move failed:', result.errors);
-      }
+      // Kein loadProjects() mehr - React Query handled den Cache
     } catch (error: any) {
       console.error('Move error:', error);
     }
@@ -329,22 +286,19 @@ export default function ProjectsPage() {
         <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
           {/* Board View with integrated toolbar */}
           {!loading && !error && projects.length > 0 && currentOrganization && (
-            <BoardProvider organizationId={currentOrganization.id}>
-              <KanbanBoard
-                projects={groupProjectsByStage(projects)}
-                totalProjects={projects.length}
-                activeUsers={[]} // TODO: Get from real-time hook
-                filters={filters}
-                loading={loading}
-                onProjectMove={handleProjectMove}
-                onFiltersChange={handleFiltersChange}
-                onRefresh={loadProjects}
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                onNewProject={() => setShowWizard(true)}
-                onMoreOptions={() => console.log('More options')}
-              />
-            </BoardProvider>
+            <KanbanBoard
+              projects={groupProjectsByStage(projects)}
+              totalProjects={projects.length}
+              activeUsers={[]}
+              filters={filters}
+              loading={loading}
+              onProjectMove={handleProjectMove}
+              onFiltersChange={handleFiltersChange}
+              onRefresh={() => {}} // Kein Manual Refresh nötig - React Query handled das
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              onNewProject={() => setShowWizard(true)}
+            />
           )}
 
           {/* Error State */}
@@ -791,14 +745,14 @@ export default function ProjectsPage() {
                           </DropdownItem>
                           <DropdownDivider />
                           {project.status === 'archived' ? (
-                            <DropdownItem 
+                            <DropdownItem
                               onClick={async () => {
                                 try {
                                   await projectService.unarchive(project.id!, {
                                     organizationId: currentOrganization.id,
-                                    userId: currentOrganization.ownerId
+                                    userId: user?.uid || ''
                                   });
-                                  loadProjects();
+                                  // React Query invalidiert automatisch
                                 } catch (error) {
                                   console.error('Fehler beim Reaktivieren:', error);
                                 }
@@ -808,14 +762,14 @@ export default function ProjectsPage() {
                               Reaktivieren
                             </DropdownItem>
                           ) : (
-                            <DropdownItem 
+                            <DropdownItem
                               onClick={async () => {
                                 try {
-                                  await projectService.archive(project.id!, {
+                                  await archiveProjectMutation.mutateAsync({
+                                    projectId: project.id!,
                                     organizationId: currentOrganization.id,
-                                    userId: currentOrganization.ownerId
+                                    userId: user?.uid || ''
                                   });
-                                  loadProjects();
                                 } catch (error) {
                                   console.error('Fehler beim Archivieren:', error);
                                 }
@@ -826,14 +780,14 @@ export default function ProjectsPage() {
                             </DropdownItem>
                           )}
                           <DropdownDivider />
-                          <DropdownItem 
+                          <DropdownItem
                             onClick={async () => {
                               if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
                                 try {
-                                  await projectService.delete(project.id!, {
+                                  await deleteProjectMutation.mutateAsync({
+                                    projectId: project.id!,
                                     organizationId: currentOrganization.id
                                   });
-                                  loadProjects();
                                 } catch (error) {
                                   console.error('Fehler beim Löschen:', error);
                                 }

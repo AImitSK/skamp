@@ -45,8 +45,8 @@ export interface KanbanBoardProps {
   onProjectSelect?: (projectId: string) => void;
   onRefresh?: () => void;
   // New props for extended toolbar
-  viewMode?: 'board' | 'list' | 'calendar';
-  onViewModeChange?: (mode: 'board' | 'list' | 'calendar') => void;
+  viewMode?: 'board' | 'list';
+  onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
   onMoreOptions?: () => void;
 }
@@ -125,6 +125,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 onProjectMove={onProjectMove}
                 onProjectSelect={onProjectSelect}
                 onProjectAdded={onRefresh}
+                onProjectDeleted={onRefresh}
+                onProjectArchived={onRefresh}
+                onProjectUpdated={onRefresh}
                 useDraggableProject={useDraggableProject}
                 useDropZone={useDropZone}
                 getStageName={getStageName}

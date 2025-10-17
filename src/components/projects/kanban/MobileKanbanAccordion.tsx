@@ -37,7 +37,7 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
 }) => {
   // Expanded Sections State
   const [expandedSections, setExpandedSections] = useState<Set<PipelineStage>>(
-    new Set(['ideas_planning', 'creation', 'internal_approval']) // Default expanded
+    new Set<PipelineStage>(['ideas_planning', 'creation', 'approval']) // Default expanded
   );
 
   // Toggle Section
@@ -236,10 +236,9 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
 const getValidMoveTargets = (currentStage: PipelineStage): PipelineStage[] => {
   const validTransitions: Record<PipelineStage, PipelineStage[]> = {
     'ideas_planning': ['creation'],
-    'creation': ['ideas_planning', 'internal_approval'],
-    'internal_approval': ['creation', 'customer_approval'],
-    'customer_approval': ['internal_approval', 'distribution'],
-    'distribution': ['customer_approval', 'monitoring'],
+    'creation': ['ideas_planning', 'approval'],
+    'approval': ['creation', 'distribution'],
+    'distribution': ['approval', 'monitoring'],
     'monitoring': ['distribution', 'completed'],
     'completed': ['monitoring']
   };

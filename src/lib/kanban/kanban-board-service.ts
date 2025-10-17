@@ -397,9 +397,8 @@ class KanbanBoardService {
   private groupProjectsByStage(projects: Project[]): Record<PipelineStage, Project[]> {
     const stages: PipelineStage[] = [
       'ideas_planning',
-      'creation', 
-      'internal_approval',
-      'customer_approval',
+      'creation',
+      'approval',
       'distribution',
       'monitoring',
       'completed'
@@ -436,8 +435,7 @@ class KanbanBoardService {
     return {
       'ideas_planning': [],
       'creation': [],
-      'internal_approval': [],
-      'customer_approval': [],
+      'approval': [],
       'distribution': [],
       'monitoring': [],
       'completed': []

@@ -17,6 +17,9 @@ export interface KanbanColumnProps {
   onProjectMove: (projectId: string, targetStage: PipelineStage) => Promise<void>;
   onProjectSelect?: (projectId: string) => void;
   onProjectAdded?: () => void;
+  onProjectDeleted?: () => void;
+  onProjectArchived?: () => void;
+  onProjectUpdated?: () => void;
   useDraggableProject: (project: Project) => any;
   useDropZone: (stage: PipelineStage) => any;
   getStageName: (stage: PipelineStage) => string;
@@ -33,6 +36,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   onProjectMove,
   onProjectSelect,
   onProjectAdded,
+  onProjectDeleted,
+  onProjectArchived,
+  onProjectUpdated,
   useDraggableProject,
   useDropZone,
   getStageName,
@@ -59,7 +65,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
 
   // Handle successful project creation (unused but kept for potential future use)
   const handleProjectCreated = (projectId: string) => {
-    console.log(`Projekt ${projectId} erfolgreich in ${stage} erstellt`);
     if (onProjectAdded) {
       onProjectAdded();
     }
@@ -86,9 +91,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
           
         </div>
         
-        {/* Stage Description */}
+        {/* Stage Name */}
         <p className={`text-xs mt-1 ${stageColors.text} opacity-75`}>
-          {stageConfig.description}
+          {stageConfig.shortName}
         </p>
       </div>
 
@@ -120,6 +125,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             onProjectSelect={onProjectSelect}
             onProjectMove={onProjectMove}
             onProjectAdded={onProjectAdded}
+            onProjectDeleted={onProjectDeleted}
+            onProjectArchived={onProjectArchived}
+            onProjectUpdated={onProjectUpdated}
             useDraggableProject={useDraggableProject}
             loading={loading}
           />
