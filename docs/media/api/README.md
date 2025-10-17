@@ -11,7 +11,7 @@ Das Media-Modul ist in 5 spezialisierte Services aufgeteilt:
 | Service | Datei | Zeilen | Beschreibung |
 |---------|-------|--------|--------------|
 | **Assets** | `media-assets-service.ts` | ~400 | Asset CRUD Operations, Upload, Download |
-| **Folders** | `media-folders-service.ts` | ~300 | Folder Management, Hierarchie, Client-Vererbung |
+| **Folders** | `media-folders-service.ts` | ~300 | Folder Management, Hierarchie, Verschachtelung |
 | **Shares** | `media-shares-service.ts` | ~450 | Share-Link Operations, Public Sharing |
 | **Clippings** | `media-clippings-service.ts` | ~300 | Monitoring Integration, Clipping Management |
 | **Pipeline** | `media-pipeline-service.ts` | ~150 | Pipeline Workflows, Asset-Verarbeitung |
@@ -67,7 +67,7 @@ async function uploadMedia(
   folderId?: string,
   onProgress?: (progress: number) => void,
   retryCount?: number,
-  context?: { userId?: string; clientId?: string }
+  context?: { userId?: string }
 ): Promise<MediaAsset>
 
 // Beispiel
@@ -77,7 +77,7 @@ const asset = await mediaService.uploadMedia(
   'folder-456',
   (progress) => console.log(`${progress}%`),
   3, // Retry-Count
-  { userId: 'user-789', clientId: 'client-101' }
+  { userId: 'user-789' }
 );
 ```
 
@@ -118,7 +118,7 @@ async function updateAsset(
 // Beispiel
 await mediaService.updateAsset('asset-123', {
   fileName: 'new-name.jpg',
-  clientId: 'client-456',
+  description: 'Updated description',
   tags: ['marketing', 'q1-2025'],
 });
 ```
@@ -135,17 +135,6 @@ async function moveAssetToFolder(
   newFolderId: string | null,
   organizationId: string
 ): Promise<void>
-```
-
-#### `getMediaAssetsByClient(organizationId, clientId)`
-
-Lädt alle Assets für einen Client.
-
-```typescript
-async function getMediaAssetsByClient(
-  organizationId: string,
-  clientId: string
-): Promise<MediaAsset[]>
 ```
 
 ---
@@ -192,7 +181,7 @@ async function createFolder(
     userId: string;
     organizationId: string;
     parentFolderId?: string;
-    clientId?: string;
+    description?: string;
   },
   context: { organizationId: string; userId: string }
 ): Promise<string> // Returns: folderId
@@ -204,7 +193,7 @@ const folderId = await mediaService.createFolder(
     userId: 'user-123',
     organizationId: 'org-456',
     parentFolderId: 'folder-789',
-    clientId: 'client-101',
+    description: 'Q1 2025 Marketing Materials',
   },
   { organizationId: 'org-456', userId: 'user-123' }
 );
@@ -223,7 +212,7 @@ async function updateFolder(
 // Beispiel
 await mediaService.updateFolder('folder-123', {
   name: 'Neuer Name',
-  clientId: 'client-456',
+  description: 'Updated description',
 });
 ```
 
@@ -268,23 +257,6 @@ const breadcrumbs = await mediaService.getFolderBreadcrumbs('folder-789', 'org-1
 //   { id: 'folder-456', name: 'Kampagnen' },
 //   { id: 'folder-789', name: 'Q1 2025' }
 // ]
-```
-
-### Client-Vererbung
-
-#### `updateFolderClientInheritance(folderId, organizationId)`
-
-Aktualisiert Client-Vererbung für alle Inhalte eines Folders.
-
-```typescript
-async function updateFolderClientInheritance(
-  folderId: string,
-  organizationId: string
-): Promise<void>
-
-// Wenn Folder.clientId = 'client-123'
-// → Alle Assets in diesem Folder erben clientId = 'client-123'
-// → Rekursiv für alle Sub-Folders
 ```
 
 ---

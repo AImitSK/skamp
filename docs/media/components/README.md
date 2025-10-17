@@ -82,7 +82,6 @@ interface FolderCardProps {
 - Asset-Count Badge
 - Drag & Drop Support (verschachteln)
 - Quick-Actions (Rename, Delete)
-- Client-Badge (wenn clientId vorhanden)
 
 ---
 
@@ -314,7 +313,6 @@ interface UploadModalProps {
   onUploadSuccess: () => Promise<void>;
   currentFolderId?: string;
   folderName?: string;
-  preselectedClientId?: string;
   organizationId: string;
   userId: string;
 }
@@ -337,7 +335,6 @@ interface UploadModalProps {
 **Features:**
 - Drag & Drop Zone
 - Multi-File Selection
-- Client-Zuordnung
 - Upload-Progress pro Datei
 - Batch-Upload (5 parallel)
 - Retry-Logic (3 Versuche)
@@ -411,7 +408,6 @@ interface AssetDetailsModalProps {
 - Full-Size Preview
 - Metadata-Anzeige
 - Inline-Editing
-- Client-Zuordnung
 - Tags-Management
 - Download-Button
 - Delete-Button
@@ -457,8 +453,8 @@ interface FolderModalProps {
 
 **Features:**
 - Folder-Name
-- Client-Zuordnung
 - Description (optional)
+- Color-Auswahl (optional)
 - Parent-Folder-Auswahl
 
 ---

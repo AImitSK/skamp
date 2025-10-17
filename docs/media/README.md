@@ -8,13 +8,13 @@
 
 ## Übersicht
 
-Das Media-Modul ist das zentrale Asset-Management-System von CeleroPress. Es ermöglicht das Hochladen, Verwalten, Organisieren und Teilen von Medien-Dateien (Bilder, Videos, Dokumente) in einer hierarchischen Ordnerstruktur mit Client-Zuordnung.
+Das Media-Modul ist das zentrale Asset-Management-System von CeleroPress. Es ermöglicht das Hochladen, Verwalten, Organisieren und Teilen von Medien-Dateien (Bilder, Videos, Dokumente) in einer hierarchischen Ordnerstruktur.
 
 ### Kernfeatures
 
 - ✅ **Media-Bibliothek** - Dateien und Ordner verwalten mit Drag & Drop
 - ✅ **Upload-System** - Mehrere Dateien gleichzeitig hochladen (Batching, Retry-Logic)
-- ✅ **Folder-Hierarchie** - Verschachtelte Ordner mit automatischer Client-Vererbung
+- ✅ **Folder-Hierarchie** - Verschachtelte Ordner mit flexibler Organisation
 - ✅ **Share-Links** - Öffentliche Freigabe mit Branding und Passwort-Schutz
 - ✅ **Campaign-Integration** - Media-Assets für PR-Kampagnen
 - ✅ **Clipping-Operations** - Integration mit Monitoring-System
@@ -333,29 +333,7 @@ interface MediaAsset {
 const { data: assets } = useMediaAssets(organizationId, folderId);
 ```
 
-### 2. Client-Zuordnung
-
-Assets und Folders können **Clients zugeordnet** werden:
-
-```typescript
-// Asset mit Client-Zuordnung
-const asset = {
-  id: 'asset-1',
-  fileName: 'logo.png',
-  clientId: 'client-123', // ✅ Zuordnung
-  // ...
-};
-
-// Folder mit Client-Vererbung
-const folder = {
-  id: 'folder-1',
-  name: 'Client XY Medien',
-  clientId: 'client-123', // ✅ Vererbung an alle Inhalte
-  // ...
-};
-```
-
-### 3. Folder-Hierarchie
+### 2. Folder-Hierarchie
 
 Folders können verschachtelt werden:
 
@@ -379,7 +357,7 @@ const { data: breadcrumbs } = useFolderBreadcrumbs('folder-2');
 // ['Marketing', 'Kampagne Q1']
 ```
 
-### 4. Share-Link Typen
+### 3. Share-Link Typen
 
 Es gibt 3 Share-Link-Typen:
 
@@ -405,7 +383,7 @@ const campaignShare = {
 };
 ```
 
-### 5. React Query Caching
+### 4. React Query Caching
 
 React Query cached automatisch Daten:
 

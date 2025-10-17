@@ -203,44 +203,6 @@ function UploadToFolder({ folderId, folderName }: { folderId: string; folderName
 
 ---
 
-## Upload mit Client-Zuordnung
-
-### Asset automatisch einem Client zuordnen
-
-```typescript
-import { mediaService } from '@/lib/firebase/media-service';
-
-async function uploadWithClient(file: File, clientId: string) {
-  // 1. Upload Asset
-  const asset = await mediaService.uploadMedia(
-    file,
-    'org-123',
-    undefined, // root folder
-    undefined, // no progress callback
-    3, // retry count
-    {
-      userId: 'user-456',
-      clientId, // ✅ Client-Kontext
-    }
-  );
-
-  // 2. Update Asset mit clientId (falls nicht automatisch gesetzt)
-  if (!asset.clientId) {
-    await mediaService.updateAsset(asset.id, {
-      clientId,
-    });
-  }
-
-  return asset;
-}
-```
-
-**Client-Vererbung:**
-- Wenn Asset in Folder mit `clientId` hochgeladen → Automatische Vererbung
-- Wenn Asset direkt hochgeladen → Manuell `clientId` setzen
-
----
-
 ## Upload mit Metadaten
 
 ### Custom Metadata hinzufügen
@@ -254,7 +216,6 @@ async function uploadWithMetadata(file: File) {
   await mediaService.updateAsset(asset.id, {
     description: 'Marketing Material Q1',
     tags: ['marketing', 'q1-2025', 'hero-image'],
-    clientId: 'client-123',
     metadata: {
       campaign: 'Q1 Launch',
       author: 'Max Mustermann',
