@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Text } from "@/components/ui/text";
 import { MediaFolder, MediaAsset } from "@/types/media";
-import { mediaService } from "@/lib/firebase/media-service";
 import {
   LinkIcon,
   ClipboardDocumentIcon,
@@ -64,52 +63,55 @@ export default function ShareModal({
 
     setCreating(true);
     try {
-      const shareData = {
-        organizationId, // NEW: Use organizationId
-        createdBy: userId, // NEW: Track who created it
-        type,
-        targetId: target.id!,
-        title: title.trim(),
-        isActive: true,
-        settings: {
-          downloadAllowed,
-          showFileList: type === 'folder',
-          expiresAt: null,
-          passwordRequired: passwordRequired.trim() || null,
-          watermarkEnabled: false,
+      // ✅ Verwende API-Route für bcrypt-Hashing
+      const response = await fetch('/api/media/share/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        description: description.trim() || undefined,
-      };
+        body: JSON.stringify({
+          organizationId,
+          createdBy: userId,
+          type,
+          targetId: target.id!,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          settings: {
+            downloadAllowed,
+            showFileList: type === 'folder',
+            expiresAt: null,
+            passwordRequired: passwordRequired.trim() || null, // ✅ Wird von API gehashed
+            watermarkEnabled: false,
+          },
+        }),
+      });
 
-      // createShareLink gibt ein ShareLink Objekt zurück
-      const result = await mediaService.createShareLink(shareData);
-      
-      // Extrahiere die shareId - result ist vom Typ ShareLink
-      const generatedShareId = (result as any).shareId || (result as any).id;
-      
-      if (!generatedShareId || typeof generatedShareId !== 'string') {
+      if (!response.ok) {
+        throw new Error('API-Fehler beim Erstellen des Share-Links');
+      }
+
+      const result = await response.json();
+
+      if (!result.shareId) {
         throw new Error('Keine gültige shareId erhalten');
       }
-      
+
       // Erstelle ein lokales Objekt für die Anzeige
       const linkData: CreatedShareLink = {
-        id: generatedShareId,
-        shareId: generatedShareId,
+        id: result.shareId,
+        shareId: result.shareId,
         title: title.trim(),
         type,
         downloadAllowed,
         passwordRequired: passwordRequired.trim() || undefined,
         accessCount: 0,
       };
-      
+
       setCreatedLink(linkData);
       toastService.success('Share-Link erfolgreich erstellt');
 
-      // Rufe onSuccess nur auf, wenn explizit gewünscht
-      // aber NICHT beim normalen Share-Vorgang
-      // onSuccess?.();
-      
     } catch (error) {
+      console.error('Share-Link Error:', error);
       toastService.error('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut');
     } finally {
       setCreating(false);
