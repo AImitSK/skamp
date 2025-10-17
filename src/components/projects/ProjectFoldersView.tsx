@@ -21,7 +21,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
-import { mediaService } from '@/lib/firebase/media-service';
+import { getFolders, createFolder } from '@/lib/firebase/media-folders-service';
+import { getMediaAssets, updateAsset, deleteMediaAsset, uploadMedia } from '@/lib/firebase/media-assets-service';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
@@ -177,7 +178,7 @@ function MoveAssetModal({
   const handleFolderClick = async (folder: any) => {
     try {
       // Navigiere in den Ordner hinein
-      const subfolders = await mediaService.getFolders(organizationId, folder.id);
+      const subfolders = await getFolders(organizationId, folder.id);
       setCurrentFolders(subfolders);
       setCurrentPath([...currentPath, { id: folder.id, name: folder.name }]);
       setSelectedFolderId(folder.id); // Aktueller Ordner ist ausgewählt
@@ -204,7 +205,7 @@ function MoveAssetModal({
       } else {
         // Zurück zum vorherigen Ordner
         const parentFolder = currentPath[currentPath.length - 2];
-        const subfolders = await mediaService.getFolders(organizationId, parentFolder.id);
+        const subfolders = await getFolders(organizationId, parentFolder.id);
         setCurrentFolders(subfolders);
         setCurrentPath(currentPath.slice(0, -1));
         setSelectedFolderId(parentFolder.id);
@@ -217,13 +218,13 @@ function MoveAssetModal({
 
   const handleMove = async () => {
     if (!asset?.id || selectedFolderId === null) return;
-    
+
     setMoving(true);
     try {
-      await mediaService.updateAsset(asset.id, {
+      await updateAsset(asset.id, {
         folderId: selectedFolderId
       });
-      
+
       onMoveSuccess();
       onClose();
     } catch (error) {
@@ -327,15 +328,13 @@ function CreateFolderModal({
   onClose,
   onCreateSuccess,
   parentFolderId,
-  organizationId,
-  clientId
+  organizationId
 }: {
   isOpen: boolean;
   onClose: () => void;
   onCreateSuccess: () => void;
   parentFolderId?: string;
   organizationId: string;
-  clientId: string;
 }) {
   const { user } = useAuth();
   const [folderName, setFolderName] = useState('');
@@ -349,17 +348,15 @@ function CreateFolderModal({
 
   const handleCreate = async () => {
     if (!folderName.trim() || !user?.uid) return;
-    
+
     setCreating(true);
     try {
-      await mediaService.createFolder({
-        userId: user.uid,
+      await createFolder({
         name: folderName.trim(),
         parentFolderId,
-        description: `Unterordner erstellt von ${user.displayName || user.email}`,
-        ...(clientId && { clientId })
+        description: `Unterordner erstellt von ${user.displayName || user.email}`
       }, { organizationId, userId: user.uid });
-      
+
       setFolderName('');
       onCreateSuccess();
       onClose();
@@ -417,7 +414,6 @@ function ProjectUploadModal({
   onUploadSuccess,
   currentFolderId,
   folderName,
-  clientId,
   organizationId,
   projectId,
   project,
@@ -428,7 +424,6 @@ function ProjectUploadModal({
   onUploadSuccess: () => void;
   currentFolderId?: string;
   folderName?: string;
-  clientId: string;
   organizationId: string;
   projectId: string;
   project?: {
@@ -534,26 +529,26 @@ function ProjectUploadModal({
           setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
         };
 
-        // Upload mit automatischer Kundenzuordnung
-        return await mediaService.uploadClientMedia(
+        // Upload ohne clientId
+        return await uploadMedia(
           file,
           organizationId,
-          clientId,
           currentFolderId,
           progressCallback,
+          3,
           { userId: user.uid }
         );
       });
 
       await Promise.all(uploadPromises);
-      
+
       showAlert('success', `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei wurde' : 'Dateien wurden'} erfolgreich hochgeladen.`);
       setSelectedFiles([]); // Upload-Liste zurücksetzen
       setTimeout(() => {
         onUploadSuccess();
         onClose();
       }, 1500);
-      
+
     } catch (error) {
       console.error('Upload-Fehler:', error);
       showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
@@ -606,17 +601,6 @@ function ProjectUploadModal({
             </div>
           </div>
         )}
-        
-        {/* Kundeninformation */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <InformationCircleIcon className="w-5 h-5 text-blue-500 mr-2" />
-            <Text className="text-sm text-blue-700">
-              Dateien werden automatisch dem Projektkunden zugeordnet
-              {project?.customer?.name && ` (${project.customer.name})`}
-            </Text>
-          </div>
-        </div>
 
         {/* Enhanced Drag & Drop Area with Smart Routing */}
         <div
@@ -803,7 +787,6 @@ interface ProjectFoldersViewProps {
   projectFolders: any;
   foldersLoading: boolean;
   onRefresh: () => void;
-  clientId: string;
   // Smart Router Integration
   project?: {
     title: string;
@@ -818,7 +801,6 @@ export default function ProjectFoldersView({
   projectFolders,
   foldersLoading,
   onRefresh,
-  clientId,
   project
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
@@ -910,7 +892,7 @@ export default function ProjectFoldersView({
           
           // Lade Unterordner falls vorhanden
           try {
-            const subfolders = await mediaService.getFolders(organizationId, folder.id);
+            const subfolders = await getFolders(organizationId, folder.id);
             if (subfolders.length > 0) {
               await collectFolders(subfolders, level + 1);
             }
@@ -936,12 +918,12 @@ export default function ProjectFoldersView({
     try {
       // Lade Inhalte des spezifischen Ordners
       const [folders, assets] = await Promise.all([
-        mediaService.getFolders(organizationId, folderId),
-        mediaService.getMediaAssets(organizationId, folderId)
+        getFolders(organizationId, folderId),
+        getMediaAssets(organizationId, folderId)
       ]);
       setCurrentFolders(folders);
       setCurrentAssets(assets);
-      
+
       // Breadcrumbs aus dem übergebenen Stack setzen
       setBreadcrumbs([...stack]);
     } catch (error) {
@@ -957,12 +939,12 @@ export default function ProjectFoldersView({
       if (folderId) {
         // Lade Inhalte des spezifischen Ordners
         const [folders, assets] = await Promise.all([
-          mediaService.getFolders(organizationId, folderId),
-          mediaService.getMediaAssets(organizationId, folderId)
+          getFolders(organizationId, folderId),
+          getMediaAssets(organizationId, folderId)
         ]);
         setCurrentFolders(folders);
         setCurrentAssets(assets);
-        
+
         // Breadcrumbs immer aus navigationStack setzen
         setBreadcrumbs([...navigationStack]);
       } else {
@@ -1080,7 +1062,6 @@ export default function ProjectFoldersView({
         currentFolderId: selectedFolderId,
         folderName: breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined,
         organizationId,
-        clientId,
         userId: user.uid
       });
       
@@ -1141,7 +1122,6 @@ export default function ProjectFoldersView({
             projectCompany: project.customer?.name,
             currentStage: project.currentStage,
             organizationId,
-            clientId,
             userId: user?.uid || '',
             currentFolderId: folderId,
             folderName,
@@ -1375,20 +1355,20 @@ export default function ProjectFoldersView({
 
   const confirmDeleteAsset = async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
-    
+
     try {
       // Erst das Asset-Objekt laden, dann löschen
-      const assets = await mediaService.getMediaAssets(organizationId, selectedFolderId);
+      const assets = await getMediaAssets(organizationId, selectedFolderId);
       const assetToDelete = assets.find(asset => asset.id === assetId);
-      
+
       if (!assetToDelete) {
         showAlert('error', 'Datei konnte nicht gefunden werden.');
         return;
       }
 
-      await mediaService.deleteMediaAsset(assetToDelete);
+      await deleteMediaAsset(assetToDelete);
       showAlert('success', `Datei "${fileName}" wurde erfolgreich gelöscht.`);
-      
+
       // Refresh current view
       if (selectedFolderId) {
         loadFolderContent(selectedFolderId);
@@ -1744,7 +1724,6 @@ export default function ProjectFoldersView({
         onUploadSuccess={handleUploadSuccess}
         currentFolderId={selectedFolderId}
         folderName={breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined}
-        clientId={clientId}
         organizationId={organizationId}
         projectId={projectId}
         project={project}
@@ -1761,7 +1740,6 @@ export default function ProjectFoldersView({
         onCreateSuccess={handleCreateFolderSuccess}
         parentFolderId={selectedFolderId}
         organizationId={organizationId}
-        clientId={clientId}
       />
       
       {/* Move Asset Modal */}

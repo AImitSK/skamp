@@ -109,59 +109,6 @@ export async function getFolder(folderId: string): Promise<MediaFolder | null> {
 }
 
 /**
- * Update folder client inheritance recursively
- */
-export async function updateFolderClientInheritance(folderId: string, organizationId: string): Promise<void> {
-  try {
-    // 1. Lade alle Ordner für Vererbungs-Berechnung
-    const allFolders = await getAllFoldersForOrganization(organizationId);
-
-    // 2. Finde den Ordner und berechne seine neue vererbte clientId
-    const folder = await getFolder(folderId);
-    if (!folder) {
-      return;
-    }
-
-    // 3. Berechne vererbte clientId
-    const { getRootFolderClientId } = await import('@/lib/utils/folder-utils');
-    const inheritedClientId = await getRootFolderClientId(folder, allFolders);
-
-    // 4. Update den Ordner selbst
-    if (inheritedClientId !== folder.clientId) {
-      await updateFolder(folderId, { clientId: inheritedClientId });
-    }
-
-    // 5. Update alle direkten Assets in diesem Ordner
-    const { getMediaAssetsInFolder, updateAsset } = await import('./media-assets-service');
-    const assets = await getMediaAssetsInFolder(folderId);
-    if (assets.length > 0) {
-      await Promise.all(
-        assets.map(asset => {
-          if (asset.clientId !== inheritedClientId) {
-            return updateAsset(asset.id!, { clientId: inheritedClientId });
-          }
-          return Promise.resolve();
-        })
-      );
-    }
-
-    // 6. Finde alle direkten Unterordner
-    const subfolders = allFolders.filter(f => f.parentFolderId === folderId);
-
-    // 7. Rekursiv alle Unterordner updaten
-    if (subfolders.length > 0) {
-      await Promise.all(
-        subfolders.map(subfolder =>
-          updateFolderClientInheritance(subfolder.id!, organizationId)
-        )
-      );
-    }
-  } catch (error) {
-    throw error;
-  }
-}
-
-/**
  * Get all folders for organization (flat list)
  */
 export async function getAllFoldersForOrganization(organizationId: string): Promise<MediaFolder[]> {
@@ -322,11 +269,6 @@ export async function moveFolderToParent(folderId: string, newParentId: string |
 
     // Update folder
     await updateFolder(folderId, { parentFolderId: newParentId || undefined });
-
-    // Update client inheritance if organizationId provided
-    if (organizationId) {
-      await updateFolderClientInheritance(folderId, organizationId);
-    }
   } catch (error) {
     throw error;
   }

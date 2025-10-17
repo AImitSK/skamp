@@ -170,23 +170,6 @@ export async function uploadMedia(
 }
 
 /**
- * Upload media specifically for a client
- */
-export async function uploadClientMedia(
-  file: File,
-  organizationId: string,
-  clientId: string,
-  folderId?: string,
-  onProgress?: (progress: number) => void,
-  context?: { userId: string }
-): Promise<MediaAsset> {
-  return uploadMedia(file, organizationId, folderId, onProgress, 3, {
-    userId: context?.userId || organizationId,
-    clientId
-  });
-}
-
-/**
  * Upload Buffer für PDF-Generation
  */
 export async function uploadBuffer(
