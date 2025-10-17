@@ -1,26 +1,20 @@
-// src/app/share/[shareId]/page.tsx - Mit Campaign-Support OHNE BRANDING
+// src/app/share/[shareId]/page.tsx - CeleroPress Share Page mit Design System
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { mediaService } from "@/lib/firebase/media-service";
-import { brandingService } from "@/lib/firebase/branding-service";
 import { ShareLink, MediaAsset, MediaFolder } from "@/types/media";
-import { BrandingSettings } from "@/types/branding";
-import { useShareLink, useCampaignMediaAssets } from "@/lib/hooks/useMediaData";
-import { 
-  PhotoIcon, 
-  DocumentIcon, 
-  VideoCameraIcon, 
+import { useShareLink } from "@/lib/hooks/useMediaData";
+import {
+  PhotoIcon,
+  DocumentIcon,
+  VideoCameraIcon,
   DocumentTextIcon,
   ArrowDownTrayIcon,
   EyeIcon,
   LockClosedIcon,
   ExclamationTriangleIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  GlobeAltIcon,
-  MapPinIcon,
   NewspaperIcon
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
@@ -37,7 +31,6 @@ export default function SharePage() {
   const { data: shareLink, isLoading: shareLinkLoading, error: shareLinkError } = useShareLink(shareId);
 
   // Local state for password handling and UI
-  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaAsset[]>([]);
   const [folderInfo, setFolderInfo] = useState<MediaFolder | null>(null);
   const [passwordRequired, setPasswordRequired] = useState(false);
@@ -62,18 +55,6 @@ export default function SharePage() {
         if (shareLink.settings.requirePassword && !passwordValidated) {
           setPasswordRequired(true);
           return;
-        }
-
-        // WICHTIG: Lade Branding NUR wenn es KEIN Campaign-Share ist
-        if (shareLink.userId && shareLink.type !== 'campaign') {
-          try {
-            const branding = await brandingService.getBrandingSettings(shareLink.userId);
-            setBrandingSettings(branding);
-          } catch (brandingError) {
-            // Kein kritischer Fehler - fahre ohne Branding fort
-          }
-        } else if (shareLink.type === 'campaign') {
-          setBrandingSettings(null); // Explizit kein Branding für Kampagnen
         }
 
         // Lade Inhalte je nach Typ
@@ -195,10 +176,10 @@ export default function SharePage() {
   // Loading State
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto mb-4"></div>
-          <p className="text-gray-600">Lade geteilten Inhalt...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-zinc-600">Lade geteilten Inhalt...</p>
         </div>
       </div>
     );
@@ -207,12 +188,15 @@ export default function SharePage() {
   // Error State (from React Query or local)
   if (shareLinkError || error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="max-w-md w-full bg-white rounded-lg border border-gray-200 p-8 text-center">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
+        <div className="max-w-md w-full bg-white rounded-lg border border-zinc-200 p-8 text-center shadow-sm">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <Heading level={2} className="text-red-900 mb-2">Fehler</Heading>
-          <Text className="text-gray-600 mb-6">{error || 'Share-Link nicht gefunden oder nicht mehr aktiv.'}</Text>
-          <Button onClick={() => window.location.reload()}>
+          <Heading level={2} className="text-zinc-900 font-semibold mb-2">Fehler</Heading>
+          <Text className="text-zinc-600 text-sm mb-6">{error || 'Share-Link nicht gefunden oder nicht mehr aktiv.'}</Text>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-primary hover:bg-primary-hover text-white font-medium h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
             Erneut versuchen
           </Button>
         </div>
@@ -223,16 +207,16 @@ export default function SharePage() {
   // Password Required
   if (passwordRequired) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="max-w-md w-full bg-white rounded-lg border border-gray-200 p-8">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
+        <div className="max-w-md w-full bg-white rounded-lg border border-zinc-200 p-8 shadow-sm">
           <div className="text-center mb-6">
-            <LockClosedIcon className="h-16 w-16 text-[#005fab] mx-auto mb-4" />
-            <Heading level={2} className="text-gray-900">Passwort erforderlich</Heading>
-            <Text className="text-gray-600 mt-2">
+            <LockClosedIcon className="h-16 w-16 text-primary mx-auto mb-4" />
+            <Heading level={2} className="text-zinc-900 font-semibold">Passwort erforderlich</Heading>
+            <Text className="text-zinc-600 text-sm mt-2">
               Dieser Inhalt ist passwortgeschützt.
             </Text>
           </div>
-          
+
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
               <Input
@@ -240,17 +224,16 @@ export default function SharePage() {
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="Passwort eingeben"
-                className={passwordError ? 'border-red-500' : ''}
+                className={`h-10 rounded-lg ${passwordError ? 'border-red-500 focus:ring-red-500' : 'border-zinc-300 focus:ring-primary'}`}
                 autoFocus
               />
               {passwordError && (
-                <p className="text-red-500 text-sm mt-1">Falsches Passwort</p>
+                <p className="text-red-600 text-sm mt-2 font-medium">Falsches Passwort. Bitte versuchen Sie es erneut.</p>
               )}
             </div>
             <Button
               type="submit"
-              className="w-full"
-              color="indigo"
+              className="w-full bg-primary hover:bg-primary-hover text-white font-medium h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={validatingPassword || !passwordInput.trim()}
             >
               {validatingPassword ? 'Überprüfe...' : 'Zugriff freischalten'}
@@ -270,54 +253,36 @@ export default function SharePage() {
 
   // Main Content
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-zinc-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
                 {shareLink?.type === 'campaign' && (
-                  <NewspaperIcon className="h-6 w-6 text-[#005fab]" />
+                  <NewspaperIcon className="h-6 w-6 text-primary" />
                 )}
-                <Heading level={1} className="text-2xl font-bold text-gray-900">
+                <Heading level={1} className="text-2xl font-semibold text-zinc-900">
                   {shareLink?.title}
                 </Heading>
               </div>
               {shareLink?.description && (
-                <Text className="mt-1 text-gray-600">{shareLink.description}</Text>
+                <Text className="mt-2 text-sm text-zinc-600">{shareLink.description}</Text>
               )}
-              <div className="mt-2 flex items-center text-sm text-gray-500">
+              <div className="mt-3 flex items-center text-sm text-zinc-500">
                 <span>
                   {getContentTypeDisplay()} • {mediaItems.length} {mediaItems.length === 1 ? 'Element' : 'Elemente'}
                 </span>
               </div>
             </div>
-            
-            {/* Logo ODER minimales Label - abhängig vom Share-Typ */}
-            <div className="text-right">
-              {shareLink?.type === 'campaign' ? (
-                // KEIN Logo für Kampagnen - nur minimales Label
-                <div className="text-xs text-gray-400">
-                  Medien-Freigabe
-                </div>
-              ) : (
-                // Normales Branding für andere Share-Typen
-                <>
-                  {brandingSettings?.logoUrl ? (
-                    <img 
-                      src={brandingSettings.logoUrl} 
-                      alt={brandingSettings.companyName || 'Logo'} 
-                      className="h-12 w-auto object-contain"
-                    />
-                  ) : (
-                    <>
-                      <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                      <div className="text-sm font-medium text-[#005fab]">Media Share</div>
-                    </>
-                  )}
-                </>
-              )}
+
+            {/* CeleroPress Logo */}
+            <div className="flex-shrink-0 ml-6">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary">CeleroPress</div>
+                <div className="text-xs text-zinc-500 mt-1">Medien-Freigabe</div>
+              </div>
             </div>
           </div>
         </div>
@@ -328,10 +293,10 @@ export default function SharePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {mediaItems.length === 0 ? (
             <div className="text-center py-12">
-              <PhotoIcon className="mx-auto h-16 w-16 text-gray-400" />
-              <Heading level={3} className="mt-4 text-lg text-gray-900">Keine Inhalte</Heading>
-              <Text className="text-gray-600 mt-2">
-                {shareLink?.type === 'folder' ? 'Dieser Ordner ist leer.' : 
+              <PhotoIcon className="mx-auto h-16 w-16 text-zinc-400" />
+              <Heading level={3} className="mt-4 text-lg font-semibold text-zinc-900">Keine Inhalte</Heading>
+              <Text className="text-zinc-600 text-sm mt-2">
+                {shareLink?.type === 'folder' ? 'Dieser Ordner ist leer.' :
                  shareLink?.type === 'campaign' ? 'Diese Kampagne enthält keine Medien.' :
                  'Inhalt nicht verfügbar.'}
               </Text>
@@ -340,14 +305,14 @@ export default function SharePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {mediaItems.map((asset) => {
                 const FileIcon = getFileIcon(asset.fileType);
-                
+
                 return (
                   <div
                     key={asset.id}
-                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-gray-300 transition-colors"
+                    className="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:border-zinc-300 transition-colors"
                   >
                     {/* Preview */}
-                    <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
+                    <div className="aspect-square bg-zinc-50 flex items-center justify-center relative">
                       {asset.fileType?.startsWith('image/') ? (
                         <img
                           src={asset.downloadUrl}
@@ -355,31 +320,31 @@ export default function SharePage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <FileIcon className="h-16 w-16 text-gray-400" />
+                        <FileIcon className="h-16 w-16 text-zinc-400" />
                       )}
                     </div>
 
                     {/* File Info */}
                     <div className="p-4">
-                      <h3 className="text-sm font-medium text-gray-900 truncate mb-2" title={asset.fileName}>
+                      <h3 className="text-sm font-semibold text-zinc-900 truncate mb-2" title={asset.fileName}>
                         {asset.fileName}
                       </h3>
-                      <p className="text-xs text-gray-500 mb-3">
+                      <p className="text-xs text-zinc-500 mb-3">
                         {asset.fileType?.split('/')[1]?.toUpperCase() || 'FILE'}
                       </p>
-                      
+
                       {/* Actions */}
                       <div className="space-y-2">
                         <Link href={asset.downloadUrl} target="_blank" className="block">
-                          <button className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] transition-colors">
-                            <EyeIcon className="h-3 w-3 mr-2" />
+                          <button className="w-full flex items-center justify-center gap-2 h-9 px-4 text-xs font-medium text-zinc-700 bg-white border border-zinc-300 rounded-lg hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                            <EyeIcon className="h-4 w-4" />
                             Ansehen
                           </button>
                         </Link>
                         {shareLink?.settings.downloadAllowed && (
                           <Link href={asset.downloadUrl} download className="block">
-                            <button className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-[#005fab] border border-[#005fab] rounded-md hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] transition-colors">
-                              <ArrowDownTrayIcon className="h-3 w-3 mr-2" />
+                            <button className="w-full flex items-center justify-center gap-2 h-9 px-4 text-xs font-medium text-white bg-primary border border-primary rounded-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                              <ArrowDownTrayIcon className="h-4 w-4" />
                               Download
                             </button>
                           </Link>
@@ -394,90 +359,14 @@ export default function SharePage() {
         </div>
       </div>
 
-      {/* Footer mit Branding ODER minimal für Kampagnen */}
-      <div className="bg-white border-t mt-16">
+      {/* Footer */}
+      <div className="bg-white border-t border-zinc-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {shareLink?.type === 'campaign' ? (
-            // MINIMALER Footer für Kampagnen - KEIN Branding
-            <div className="text-center text-xs text-gray-400">
-              <p>© {new Date().getFullYear()} Alle Rechte vorbehalten.</p>
-            </div>
-          ) : (
-            // Normaler Footer mit Branding für andere Share-Typen
-            <>
-              {brandingSettings ? (
-                <div className="space-y-3">
-                  {/* Firmeninfo-Zeile */}
-                  <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
-                    {brandingSettings.companyName && (
-                      <span className="font-medium">{brandingSettings.companyName}</span>
-                    )}
-                    
-                    {brandingSettings.address && (brandingSettings.address.street || brandingSettings.address.postalCode || brandingSettings.address.city) && (
-                      <>
-                        <span className="text-gray-400">|</span>
-                        <span className="flex items-center gap-1">
-                          <MapPinIcon className="h-4 w-4" />
-                          {[
-                            brandingSettings.address.street,
-                            brandingSettings.address.postalCode && brandingSettings.address.city 
-                              ? `${brandingSettings.address.postalCode} ${brandingSettings.address.city}`
-                              : brandingSettings.address.postalCode || brandingSettings.address.city
-                          ].filter(Boolean).join(', ')}
-                        </span>
-                      </>
-                    )}
-                    
-                    {brandingSettings.phone && (
-                      <>
-                        <span className="text-gray-400">|</span>
-                        <span className="flex items-center gap-1">
-                          <PhoneIcon className="h-4 w-4" />
-                          {brandingSettings.phone}
-                        </span>
-                      </>
-                    )}
-                    
-                    {brandingSettings.email && (
-                      <>
-                        <span className="text-gray-400">|</span>
-                        <span className="flex items-center gap-1">
-                          <EnvelopeIcon className="h-4 w-4" />
-                          {brandingSettings.email}
-                        </span>
-                      </>
-                    )}
-                    
-                    {brandingSettings.website && (
-                      <>
-                        <span className="text-gray-400">|</span>
-                        <a 
-                          href={brandingSettings.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[#005fab] hover:underline"
-                        >
-                          <GlobeAltIcon className="h-4 w-4" />
-                          {brandingSettings.website.replace(/^https?:\/\/(www\.)?/, '')}
-                        </a>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Copyright-Zeile */}
-                  {brandingSettings.showCopyright && (
-                    <div className="text-center text-xs text-gray-500">
-                      <p>Copyright © {new Date().getFullYear()} Media Share System. Alle Rechte vorbehalten.</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-sm text-gray-500">
-                  <p>Geteilt über Media Share System</p>
-                </div>
-              )}
-            </>
-          )}
+          <div className="text-center">
+            <p className="text-sm text-zinc-600">
+              © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
+            </p>
+          </div>
         </div>
       </div>
     </div>

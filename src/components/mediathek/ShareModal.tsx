@@ -209,7 +209,7 @@ export default function ShareModal({
         <DialogActions>
           <Button
             onClick={handleClose}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+            className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Fertig
           </Button>
@@ -289,13 +289,18 @@ export default function ShareModal({
       </DialogBody>
 
       <DialogActions>
-        <Button plain onClick={onClose} disabled={creating}>
+        <Button
+          plain
+          onClick={onClose}
+          disabled={creating}
+          className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors"
+        >
           Abbrechen
         </Button>
         <Button
           onClick={handleCreateLink}
           disabled={!title.trim() || creating}
-          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+          className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap h-10 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           {creating ? 'Erstelle Link...' : 'Share-Link erstellen'}
         </Button>
