@@ -17,11 +17,12 @@ import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard'
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { teamMemberService } from '@/lib/firebase/organization-service';
-import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { useOrganization } from '@/context/OrganizationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
+import toast from 'react-hot-toast';
 
 // ========================================
 // INTERFACES
@@ -100,9 +101,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const quickActionButtonRef = useRef<HTMLButtonElement>(null);
+
+  // React Query Mutations
+  const deleteProjectMutation = useDeleteProject();
+  const archiveProjectMutation = useArchiveProject();
+
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
   
@@ -171,30 +175,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   const confirmDelete = async () => {
     if (!currentOrganization?.id) {
-      setDeleteError('Keine Organisation gefunden');
+      toast.error('Keine Organisation gefunden');
       return;
     }
-    
-    setIsDeleting(true);
-    setDeleteError(null);
-    
+
     try {
-      // Projekt löschen
-      await projectService.delete(project.id, {
+      await deleteProjectMutation.mutateAsync({
+        projectId: project.id!,
         organizationId: currentOrganization.id
       });
-      
-      // Dialog schließen
+
+      toast.success('Projekt gelöscht');
       setShowDeleteDialog(false);
 
-      // Trigger callback to update board state
+      // Trigger callback if provided (for backward compatibility)
       if (onProjectDeleted) {
         onProjectDeleted();
       }
     } catch (error) {
-      setDeleteError('Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.');
-    } finally {
-      setIsDeleting(false);
+      toast.error('Fehler beim Löschen des Projekts');
     }
   };
 
@@ -205,21 +204,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   };
 
   const handleArchiveProject = async (projectId: string) => {
-    if (!currentOrganization?.id) return;
+    if (!currentOrganization?.id) {
+      toast.error('Keine Organisation gefunden');
+      return;
+    }
 
     try {
-      await projectService.archive(projectId, {
+      await archiveProjectMutation.mutateAsync({
+        projectId,
         organizationId: currentOrganization.id,
         userId: currentOrganization.ownerId
       });
 
-      // Trigger callback to update board state
+      toast.success('Projekt archiviert');
+
+      // Trigger callback if provided (for backward compatibility)
       if (onProjectArchived) {
         onProjectArchived();
       }
-
     } catch (error) {
-      // Silent fail - error handling will be improved in later phases
+      toast.error('Fehler beim Archivieren');
     }
   };
 
@@ -466,9 +470,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             </div>
 
             {/* Error Message */}
-            {deleteError && (
+            {deleteProjectMutation.isError && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-800">{deleteError}</p>
+                <p className="text-sm text-red-800">Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.</p>
               </div>
             )}
 
@@ -478,7 +482,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                 type="button"
                 color="secondary"
                 onClick={() => setShowDeleteDialog(false)}
-                disabled={isDeleting}
+                disabled={deleteProjectMutation.isPending}
               >
                 Abbrechen
               </Button>
@@ -486,9 +490,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                 type="button"
                 color="danger"
                 onClick={confirmDelete}
-                disabled={isDeleting}
+                disabled={deleteProjectMutation.isPending}
               >
-                {isDeleting ? (
+                {deleteProjectMutation.isPending ? (
                   <>
                     <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
                     Lösche...

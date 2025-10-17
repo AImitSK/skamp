@@ -3,13 +3,13 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { PipelineStage } from '@/types/project';
-import { 
-  BoardData, 
-  BoardFilters,
-  kanbanBoardService 
+import {
+  BoardData,
+  BoardFilters
 } from '@/lib/kanban/kanban-board-service';
 import { useBoardRealtime } from '@/hooks/useBoardRealtime';
 import { useAuth } from '@/hooks/useAuth';
+import { useMoveProject } from '@/lib/hooks/useProjectData';
 
 // ========================================
 // BOARD STATE INTERFACES
@@ -169,12 +169,13 @@ export interface BoardProviderProps {
   organizationId: string;
 }
 
-export const BoardProvider: React.FC<BoardProviderProps> = ({ 
-  children, 
-  organizationId 
+export const BoardProvider: React.FC<BoardProviderProps> = ({
+  children,
+  organizationId
 }) => {
   const [state, dispatch] = useReducer(boardReducer, initialBoardState);
   const { user } = useAuth();
+  const moveProjectMutation = useMoveProject();
   
   // Real-time data loading
   const { 
@@ -278,14 +279,14 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
         dragStartTime: Date.now()
       }});
 
-      // Move project via service
-      const result = await kanbanBoardService.moveProject(
+      // Move project via React Query mutation
+      const result = await moveProjectMutation.mutateAsync({
         projectId,
         currentStage,
         targetStage,
-        user.uid,
+        userId: user.uid,
         organizationId
-      );
+      });
 
       if (!result.success) {
         throw new Error(result.errors?.join(', ') || 'Move failed');
@@ -303,7 +304,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
         dragStartTime: null
       }});
     }
-  }, [user, organizationId, state.originalBoardData]);
+  }, [user, organizationId, state.originalBoardData, moveProjectMutation]);
 
   // Project selection actions
   const selectProject = useCallback((projectId: string) => {
