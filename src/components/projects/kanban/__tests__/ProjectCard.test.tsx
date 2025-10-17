@@ -10,12 +10,83 @@ import { Timestamp } from 'firebase/firestore';
 // MOCKS SETUP
 // ========================================
 
+// Mock Next.js Router
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    pathname: '/dashboard/projects',
+  }),
+}));
+
+// Mock React Query Hooks
+jest.mock('@/lib/hooks/useProjectData', () => ({
+  useDeleteProject: () => ({
+    mutateAsync: jest.fn().mockResolvedValue(undefined),
+    isPending: false,
+    isError: false,
+  }),
+  useArchiveProject: () => ({
+    mutateAsync: jest.fn().mockResolvedValue(undefined),
+    isPending: false,
+    isError: false,
+  }),
+}));
+
+// Mock Organization Context
+jest.mock('@/context/OrganizationContext', () => ({
+  useOrganization: () => ({
+    currentOrganization: {
+      id: 'org-1',
+      name: 'Test Org',
+      ownerId: 'user-1',
+    },
+  }),
+}));
+
+// Mock Firebase Organization Service
+jest.mock('@/lib/firebase/organization-service', () => ({
+  teamMemberService: {
+    getByOrganization: jest.fn().mockResolvedValue([]),
+  },
+}));
+
+// Mock ProjectQuickActionsMenu
+jest.mock('../ProjectQuickActionsMenu', () => ({
+  ProjectQuickActionsMenu: () => <div data-testid="quick-actions-menu" />,
+}));
+
+// Mock ProjectEditWizard
+jest.mock('@/components/projects/edit/ProjectEditWizard', () => ({
+  ProjectEditWizard: () => <div data-testid="edit-wizard" />,
+}));
+
+// Mock Avatar
+jest.mock('@/components/ui/avatar', () => ({
+  Avatar: ({ alt }: any) => <div data-testid="avatar">{alt}</div>,
+}));
+
+// Mock date-fns
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: () => 'in 7 Tagen',
+}));
+
+// Mock toast
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 // Mock Heroicons
 jest.mock('@heroicons/react/24/outline', () => ({
   ClockIcon: ({ className }: any) => <div data-testid="clock-icon" className={className} />,
   UserIcon: ({ className }: any) => <div data-testid="user-icon" className={className} />,
   ExclamationTriangleIcon: ({ className }: any) => <div data-testid="warning-icon" className={className} />,
-  EllipsisHorizontalIcon: ({ className }: any) => <div data-testid="menu-icon" className={className} />
+  EllipsisHorizontalIcon: ({ className }: any) => <div data-testid="menu-icon" className={className} />,
+  TrashIcon: ({ className }: any) => <div data-testid="trash-icon" className={className} />,
+  XMarkIcon: ({ className }: any) => <div data-testid="x-mark-icon" className={className} />,
 }));
 
 // ========================================
