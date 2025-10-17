@@ -4,21 +4,19 @@
 import { memo } from "react";
 import { MediaFolder } from "@/types/media";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  FolderIcon, 
+import {
+  FolderIcon,
   EllipsisVerticalIcon,
   TrashIcon,
   PencilIcon,
   ShareIcon
 } from "@heroicons/react/24/outline";
-import { 
+import {
   Dropdown,
   DropdownButton,
   DropdownMenu,
   DropdownItem,
 } from "@/components/ui/dropdown";
-import { useCrmData } from "@/context/CrmDataContext";
 
 interface FolderCardProps {
   folder: MediaFolder;
@@ -62,13 +60,8 @@ const FolderCard = memo(function FolderCard({
   onFolderDragStart,
   onFolderDragEnd
 }: FolderCardProps) {
-  
-  const { companies } = useCrmData();
+
   const folderColor = folder.color || '#6366f1'; // Default Indigo
-  
-  const associatedCompany = folder.clientId 
-    ? companies.find(c => c.id === folder.clientId)
-    : null;
 
   // Folder Drag Handlers
   const handleFolderDragStart = (e: React.DragEvent) => {
@@ -133,9 +126,6 @@ const FolderCard = memo(function FolderCard({
     let tooltip = folder.name;
     if (folder.description) {
       tooltip += `\n\nBeschreibung: ${folder.description}`;
-    }
-    if (associatedCompany) {
-      tooltip += `\nKunde: ${associatedCompany.name}`;
     }
     return tooltip;
   };
@@ -241,29 +231,20 @@ const FolderCard = memo(function FolderCard({
         )}
       </div>
 
-      {/* 🆕 CLEANER Folder Information - Nur Name und Client-Badge */}
+      {/* 🆕 CLEANER Folder Information - Nur Name */}
       <div className={`p-4 ${isDragOver ? 'bg-blue-50' : ''}`}>
-        <h3 
-          className={`text-sm font-medium truncate mb-2 cursor-pointer transition-colors ${
-            isDragOver 
-              ? 'text-blue-900' 
+        <h3
+          className={`text-sm font-medium truncate cursor-pointer transition-colors ${
+            isDragOver
+              ? 'text-blue-900'
               : 'text-gray-900 hover:text-indigo-600'
           }`}
           onClick={() => onOpen(folder)}
         >
           {folder.name}
         </h3>
-        
-        {/* Nur Client-Badge, falls vorhanden */}
-        {associatedCompany && (
-          <div>
-            <Badge color="blue" className="text-xs">
-              {associatedCompany.name}
-            </Badge>
-          </div>
-        )}
-        
-        {/* 🚫 ENTFERNT: Dateianzahl, Beschreibung, Erstellungsdatum */}
+
+        {/* 🚫 ENTFERNT: Dateianzahl, Beschreibung, Erstellungsdatum, Client-Badge */}
         {/* Alle diese Infos sind jetzt im Tooltip verfügbar */}
       </div>
     </div>

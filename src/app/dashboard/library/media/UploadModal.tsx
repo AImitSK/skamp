@@ -6,7 +6,6 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/
 import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter, uploadToMediaLibrary } from "@/lib/firebase/smart-upload-router";
@@ -16,11 +15,7 @@ import {
   CloudArrowUpIcon,
   DocumentTextIcon,
   XMarkIcon,
-  FolderIcon,
-  CogIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  TagIcon
+  FolderIcon
 } from "@heroicons/react/24/outline";
 import { toastService } from '@/lib/utils/toast';
 
@@ -268,70 +263,6 @@ export default function UploadModal({
               </div>
             )}
 
-            {/* Smart Router Context Info */}
-            {contextInfo && useSmartRouterEnabled && uiConfig.showContextInfo && (
-              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <CogIcon className="h-4 w-4 text-gray-600" />
-                  <Text className="text-sm font-medium text-gray-900">
-                    Smart Upload Routing
-                  </Text>
-                  <Badge color={contextInfo.uploadMethod === 'smart' ? 'green' : 'gray'}>
-                    {contextInfo.uploadMethod === 'smart' ? 'Aktiviert' : 'Legacy'}
-                  </Badge>
-                </div>
-                
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Routing:</span>
-                    <span>{contextInfo.routing.type === 'organized' ? '📁 Organisiert' : '📋 Standard'}</span>
-                    <span>({contextInfo.routing.reason})</span>
-                  </div>
-
-                  {contextInfo.expectedTags.length > 0 && (
-                    <div className="flex items-start gap-2">
-                      <TagIcon className="h-3 w-3 mt-0.5 text-gray-500" />
-                      <span className="font-medium">Auto-Tags:</span>
-                      <span className="flex flex-wrap gap-1">
-                        {contextInfo.expectedTags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} color="gray" className="text-xs px-1 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {contextInfo.expectedTags.length > 3 && (
-                          <Badge color="gray" className="text-xs px-1 py-0">
-                            +{contextInfo.expectedTags.length - 3}
-                          </Badge>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Upload Method Toggle (nur wenn Feature aktiviert) */}
-                {uiConfig.allowMethodToggle && (
-                  <div className="mt-3 pt-2 border-t border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <Text className="text-xs font-medium text-gray-700">Upload-Methode:</Text>
-                      <button
-                        type="button"
-                        onClick={() => setUploadMethod(uploadMethod === 'smart' ? 'legacy' : 'smart')}
-                        className="text-xs text-[#005fab] hover:text-[#004a8c] font-medium"
-                        disabled={!useSmartRouterEnabled}
-                      >
-                        {uploadMethod === 'smart' ? 'Legacy verwenden' : 'Smart Router verwenden'}
-                      </button>
-                      {!useSmartRouterEnabled && (
-                        <Badge color="gray" className="text-xs">
-                          Deaktiviert
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             <Field>
               <Label>Dateien auswählen</Label>
               <Description>
@@ -429,58 +360,13 @@ export default function UploadModal({
                   <li><strong>Dateien:</strong> {selectedFiles.length}</li>
                   <li><strong>Zielordner:</strong> {folderName || 'Root'}</li>
                   <li><strong>Gesamtgröße:</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
-                  {contextInfo && (
-                    <li><strong>Upload-Methode:</strong> {uploadMethod === 'smart' ? 'Smart Router' : 'Legacy'}</li>
-                  )}
                 </ul>
-              </div>
-            )}
-
-            {/* Upload Results (nur wenn Feature aktiviert) */}
-            {uiConfig.showUploadResults && uploadResults.length > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <Text className="text-sm font-medium text-blue-900 mb-2">Upload-Ergebnisse:</Text>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {uploadResults.map((result, index) => (
-                    <div key={index} className="flex items-center gap-2 text-xs">
-                      {result.error ? (
-                        <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
-                      ) : (
-                        <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                      )}
-                      <span className="flex-1 truncate">{result.fileName}</span>
-                      <Badge 
-                        color={result.method === 'organized' ? 'green' : result.method === 'legacy-fallback' ? 'yellow' : 'gray'}
-                        className="text-xs px-1 py-0"
-                      >
-                        {result.method === 'organized' ? 'Smart' : 
-                         result.method === 'legacy-fallback' ? 'Fallback' : 
-                         result.method === 'unorganized' ? 'Standard' : 'Legacy'}
-                      </Badge>
-                      {result.error && (
-                        <span className="text-red-600 text-xs truncate max-w-32" title={result.error}>
-                          {result.error}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
         </FieldGroup>
       </DialogBody>
 
       <DialogActions>
-        <div className="flex items-center gap-2 flex-1">
-          {useSmartRouterEnabled && uiConfig.showContextInfo && contextInfo && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <span>Smart Router:</span>
-              <Badge color={uploadMethod === 'smart' ? 'green' : 'gray'} className="text-xs">
-                {uploadMethod === 'smart' ? 'Aktiv' : 'Deaktiviert'}
-              </Badge>
-            </div>
-          )}
-        </div>
         <Button plain onClick={onClose} disabled={uploading}>
           Abbrechen
         </Button>
@@ -489,11 +375,7 @@ export default function UploadModal({
           disabled={selectedFiles.length === 0 || uploading}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {uploading ? (
-            uploadMethod === 'smart' ? 'Smart Upload...' : 'Uploading...'
-          ) : (
-            `${selectedFiles.length} Datei(en) hochladen`
-          )}
+          {uploading ? 'Uploading...' : `${selectedFiles.length} Datei(en) hochladen`}
         </Button>
       </DialogActions>
     </Dialog>
