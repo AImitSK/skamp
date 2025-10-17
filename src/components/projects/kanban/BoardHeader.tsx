@@ -8,14 +8,12 @@ import {
   Squares2X2Icon,
   ArrowPathIcon,
   UserGroupIcon,
-  AdjustmentsHorizontalIcon,
   PlusIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
-import { BoardSettingsModal, BoardSettings } from './BoardSettingsModal';
 // Falls useDebounce Hook existiert, importieren - sonst eigene Implementation unten
 
 // ========================================
@@ -35,13 +33,10 @@ export interface BoardHeaderProps {
   onRefresh?: () => void;
   showFilters: boolean;
   onToggleFilters: () => void;
-  boardSettings?: BoardSettings;
-  onBoardSettingsChange?: (settings: BoardSettings) => void;
   // New props for extended toolbar
   viewMode?: 'board' | 'list';
   onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
-  onMoreOptions?: () => void;
 }
 
 // ========================================
@@ -76,15 +71,10 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   onRefresh,
   showFilters,
   onToggleFilters,
-  boardSettings,
-  onBoardSettingsChange,
   viewMode = 'board',
   onViewModeChange,
-  onNewProject,
-  onMoreOptions
+  onNewProject
 }) => {
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
   // Search State
   const [searchValue, setSearchValue] = useState(filters.search || '');
   const debouncedSearch = useDebounceSearch(searchValue, 300);
@@ -95,23 +85,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
       onFiltersChange({ ...filters, search: debouncedSearch });
     }
   }, [debouncedSearch, filters, onFiltersChange]);
-
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showMoreOptions && event.target) {
-        const target = event.target as Element;
-        if (!target.closest('.relative')) {
-          setShowMoreOptions(false);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showMoreOptions]);
 
   // Active Filter Count
   const activeFilterCount = useMemo(() => {
@@ -302,51 +275,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               <span>Neues Projekt</span>
             </Button>
           )}
-
-          {/* Three Dots Menu - NO BORDER */}
-          {onMoreOptions && (
-            <div className="relative">
-              <button
-                onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                title="Weitere Optionen"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
-              
-              {/* Dropdown Menu */}
-              {showMoreOptions && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        setShowSettingsModal(true);
-                        setShowMoreOptions(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <AdjustmentsHorizontalIcon className="h-4 w-4 mr-2" />
-                      Einstellungen
-                    </button>
-                    <button
-                      onClick={() => {
-                        onMoreOptions();
-                        setShowMoreOptions(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h2a2 2 0 012 2v4m-6 4V7a2 2 0 012-2h2a2 2 0 012 2v4m-6 6v4a2 2 0 002 2h2a2 2 0 002-2v-4" />
-                      </svg>
-                      Weitere Aktionen
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -411,16 +339,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             </button>
           )}
         </div>
-      )}
-
-      {/* Board Settings Modal */}
-      {boardSettings && onBoardSettingsChange && (
-        <BoardSettingsModal
-          isOpen={showSettingsModal}
-          onClose={() => setShowSettingsModal(false)}
-          settings={boardSettings}
-          onSettingsChange={onBoardSettingsChange}
-        />
       )}
     </div>
   );

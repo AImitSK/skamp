@@ -342,7 +342,6 @@ export default function ProjectsPage() {
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
                 onNewProject={() => setShowWizard(true)}
-                onMoreOptions={() => console.log('More options')}
               />
             </BoardProvider>
           )}

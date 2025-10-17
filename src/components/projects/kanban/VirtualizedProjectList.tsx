@@ -18,6 +18,9 @@ export interface VirtualizedProjectListProps {
   onProjectSelect?: (projectId: string) => void;
   onProjectMove?: (projectId: string, targetStage: any) => Promise<void>;
   onProjectAdded?: () => void;
+  onProjectDeleted?: () => void;
+  onProjectArchived?: () => void;
+  onProjectUpdated?: () => void;
   useDraggableProject: (project: Project) => any;
   loading?: boolean;
 }
@@ -30,6 +33,9 @@ interface ListItemProps {
     onProjectSelect?: (projectId: string) => void;
     onProjectMove?: (projectId: string, targetStage: any) => Promise<void>;
     onProjectAdded?: () => void;
+    onProjectDeleted?: () => void;
+    onProjectArchived?: () => void;
+    onProjectUpdated?: () => void;
     useDraggableProject: (project: Project) => any;
   };
 }
@@ -39,7 +45,7 @@ interface ListItemProps {
 // ========================================
 
 const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
-  const { projects, onProjectSelect, onProjectMove, onProjectAdded, useDraggableProject } = data;
+  const { projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject } = data;
   const project = projects[index];
 
   if (!project) {
@@ -58,6 +64,9 @@ const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
           onSelect={onProjectSelect}
           onProjectMove={onProjectMove}
           onProjectAdded={onProjectAdded}
+          onProjectDeleted={onProjectDeleted}
+          onProjectArchived={onProjectArchived}
+          onProjectUpdated={onProjectUpdated}
           useDraggableProject={useDraggableProject}
         />
       </div>
@@ -90,6 +99,9 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   onProjectSelect,
   onProjectMove,
   onProjectAdded,
+  onProjectDeleted,
+  onProjectArchived,
+  onProjectUpdated,
   useDraggableProject,
   loading = false
 }) => {
@@ -99,8 +111,11 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
     onProjectSelect,
     onProjectMove,
     onProjectAdded,
+    onProjectDeleted,
+    onProjectArchived,
+    onProjectUpdated,
     useDraggableProject
-  }), [projects, onProjectSelect, onProjectMove, onProjectAdded, useDraggableProject]);
+  }), [projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject]);
 
   // Performance threshold - virtualize only for large lists
   const shouldVirtualize = projects.length >= PERFORMANCE_CONFIG.virtualScrolling.threshold;
@@ -158,6 +173,10 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
           project={project}
           onSelect={onProjectSelect}
           onProjectMove={onProjectMove}
+          onProjectAdded={onProjectAdded}
+          onProjectDeleted={onProjectDeleted}
+          onProjectArchived={onProjectArchived}
+          onProjectUpdated={onProjectUpdated}
           useDraggableProject={useDraggableProject}
         />
       ))}

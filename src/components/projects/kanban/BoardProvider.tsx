@@ -229,7 +229,6 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
 
       dispatch({ type: 'SET_BOARD_DATA', payload: filteredBoardData });
     } catch (error: any) {
-      console.error('Filter application error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message || 'Filter-Fehler' });
     } finally {
       dispatch({ type: 'SET_FILTERING', payload: false });
@@ -292,11 +291,7 @@ export const BoardProvider: React.FC<BoardProviderProps> = ({
         throw new Error(result.errors?.join(', ') || 'Move failed');
       }
 
-      // Success feedback
-      console.log('Project moved successfully:', result.validationMessages?.join(', '));
-      
     } catch (error: any) {
-      console.error('Move project error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message || 'Move-Fehler' });
     } finally {
       dispatch({ type: 'SET_MOVING', payload: false });

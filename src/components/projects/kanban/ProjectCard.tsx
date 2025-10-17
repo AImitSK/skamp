@@ -20,9 +20,8 @@ import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { useOrganization } from '@/context/OrganizationContext';
-// TODO: date-fns Installation erforderlich
-// import { formatDistanceToNow } from 'date-fns';
-// import { de } from 'date-fns/locale';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 // ========================================
 // INTERFACES
@@ -33,6 +32,9 @@ export interface ProjectCardProps {
   onSelect?: (projectId: string) => void;
   onProjectMove?: (projectId: string, targetStage: PipelineStage) => Promise<void>;
   onProjectAdded?: () => void;
+  onProjectDeleted?: () => void;
+  onProjectArchived?: () => void;
+  onProjectUpdated?: () => void;
   useDraggableProject: (project: Project) => any;
 }
 
@@ -86,6 +88,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   onSelect,
   onProjectMove,
   onProjectAdded,
+  onProjectDeleted,
+  onProjectArchived,
+  onProjectUpdated,
   useDraggableProject
 }) => {
   const router = useRouter();
@@ -127,7 +132,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         const activeMembers = members.filter(m => m.status === 'active');
         setTeamMembers(activeMembers);
       } catch (error) {
-        console.error('Error loading team members:', error);
+        // Silent fail - team members are optional UI enhancement
       } finally {
         setLoadingTeam(false);
       }
@@ -181,25 +186,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       
       // Dialog schließen
       setShowDeleteDialog(false);
-      
-      // Seite neu laden um die Änderung zu reflektieren
-      window.location.reload();
+
+      // Trigger callback to update board state
+      if (onProjectDeleted) {
+        onProjectDeleted();
+      }
     } catch (error) {
-      console.error('Fehler beim Löschen des Projekts:', error);
       setDeleteError('Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.');
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleCloneProject = (projectId: string) => {
-    // TODO: Implement clone functionality
-    console.log('Clone project:', projectId);
-  };
-
-  const handleShareProject = (projectId: string) => {
-    // TODO: Implement share functionality
-    console.log('Share project:', projectId);
   };
 
   const handleMoveToStage = async (projectId: string, stage: PipelineStage) => {
@@ -216,27 +212,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         organizationId: currentOrganization.id,
         userId: currentOrganization.ownerId
       });
-      
-      console.log('Projekt archiviert:', projectId);
-      
-      // Seite neu laden um die Änderung zu reflektieren (wie beim Löschen)
-      window.location.reload();
-      
+
+      // Trigger callback to update board state
+      if (onProjectArchived) {
+        onProjectArchived();
+      }
+
     } catch (error) {
-      console.error('Fehler beim Archivieren:', error);
+      // Silent fail - error handling will be improved in later phases
     }
   };
 
   const handleEditSuccess = (updatedProject: Project) => {
     // Trigger project update callback if available
-    if (onProjectAdded) {
-      onProjectAdded(); // This will trigger a refresh in the parent component
+    if (onProjectUpdated) {
+      onProjectUpdated(); // This will trigger a refresh in the parent component
+    } else if (onProjectAdded) {
+      onProjectAdded(); // Fallback to generic refresh
     }
-    
-    // Alternative: reload page to ensure consistency
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
   };
 
   return (
@@ -280,8 +273,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             onView={handleViewProject}
             onEdit={handleEditProject}
             onDelete={handleDeleteProject}
-            onClone={handleCloneProject}
-            onShare={handleShareProject}
             onMoveToStage={handleMoveToStage}
             onArchive={handleArchiveProject}
             triggerRef={quickActionButtonRef}
