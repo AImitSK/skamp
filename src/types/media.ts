@@ -95,7 +95,8 @@ export interface ShareLink {
   settings: {
     expiresAt: Date | null;
     downloadAllowed: boolean;
-    passwordRequired: string | null;
+    passwordRequired?: string | null; // Server-Side: bcrypt Hash (nicht an Client senden!)
+    requirePassword?: boolean; // Client-Side: Boolean Flag ob Passwort erforderlich
     watermarkEnabled: boolean;
     showFileList?: boolean; // Bei Ordnern: Dateiliste anzeigen
     maxDownloads?: number; // Maximale Downloads pro Asset

@@ -58,8 +58,8 @@ export default function SharePage() {
       try {
         setError(null);
 
-        // Prüfe Passwort-Schutz
-        if (shareLink.settings.passwordRequired && !passwordValidated) {
+        // Prüfe Passwort-Schutz (requirePassword ist Boolean von API)
+        if (shareLink.settings.requirePassword && !passwordValidated) {
           setPasswordRequired(true);
           return;
         }
