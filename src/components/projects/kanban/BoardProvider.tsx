@@ -5,7 +5,8 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import { PipelineStage } from '@/types/project';
 import {
   BoardData,
-  BoardFilters
+  BoardFilters,
+  kanbanBoardService
 } from '@/lib/kanban/kanban-board-service';
 import { useBoardRealtime } from '@/hooks/useBoardRealtime';
 import { useAuth } from '@/hooks/useAuth';

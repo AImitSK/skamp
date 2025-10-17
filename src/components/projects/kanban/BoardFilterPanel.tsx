@@ -246,7 +246,7 @@ export const BoardFilterPanel: React.FC<BoardFilterPanelProps> = ({
                   type="date"
                   value={formatDateForInput(localFilters.dateRange?.[0] || null)}
                   onChange={(e) => handleDateRangeChange('start', e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
               <div>
@@ -255,7 +255,7 @@ export const BoardFilterPanel: React.FC<BoardFilterPanelProps> = ({
                   type="date"
                   value={formatDateForInput(localFilters.dateRange?.[1] || null)}
                   onChange={(e) => handleDateRangeChange('end', e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
             </div>

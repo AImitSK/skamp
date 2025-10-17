@@ -68,9 +68,9 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
           >
             Abbrechen
           </Button>
-          <Button
+          <button
             type="button"
-            color="danger"
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
             onClick={onConfirm}
             disabled={isDeleting}
           >
@@ -85,7 +85,7 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
                 Löschen
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

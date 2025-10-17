@@ -45,8 +45,8 @@ export interface KanbanBoardProps {
   onProjectSelect?: (projectId: string) => void;
   onRefresh?: () => void;
   // New props for extended toolbar
-  viewMode?: 'board' | 'list' | 'calendar';
-  onViewModeChange?: (mode: 'board' | 'list' | 'calendar') => void;
+  viewMode?: 'board' | 'list';
+  onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
   onMoreOptions?: () => void;
 }

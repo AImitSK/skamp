@@ -15,8 +15,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 import { useOrganization } from '@/context/OrganizationContext';
-import { formatDistanceToNow } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { de } from 'date-fns/locale/de';
 import { useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import toast from 'react-hot-toast';
 import { ProjectCardProps } from './types';
@@ -152,7 +152,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       await archiveProjectMutation.mutateAsync({
         projectId,
         organizationId: currentOrganization.id,
-        userId: currentOrganization.ownerId
+        userId: project.userId
       });
 
       toast.success('Projekt archiviert');
@@ -163,7 +163,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     } catch (error) {
       toast.error('Fehler beim Archivieren');
     }
-  }, [currentOrganization?.id, currentOrganization?.ownerId, archiveProjectMutation, onProjectArchived]);
+  }, [currentOrganization?.id, project.userId, archiveProjectMutation, onProjectArchived]);
 
   const handleEditSuccess = useCallback((updatedProject: Project) => {
     if (onProjectUpdated) {
@@ -179,7 +179,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         ref={drag}
         className={`
           project-card bg-white rounded-lg border border-zinc-200 p-4
-          cursor-move hover:shadow-md transition-all
+          cursor-move hover:border-zinc-300 transition-all
           ${isDragging ? 'opacity-50' : ''}
         `}
         onClick={handleCardClick}
@@ -192,7 +192,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             </h3>
             {project.customer && (
               <p className="text-xs text-zinc-600 truncate mt-1">
-                {project.customer.companyName || project.customer.name}
+                {project.customer.name}
               </p>
             )}
           </div>
@@ -264,8 +264,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                 {teamMembers.slice(0, 3).map((member) => (
                   <Avatar
                     key={member.id}
-                    src={member.avatar}
-                    alt={member.name}
+                    src={member.photoUrl}
+                    alt={member.displayName}
                     className="h-5 w-5 rounded-full border-2 border-white"
                   />
                 ))}

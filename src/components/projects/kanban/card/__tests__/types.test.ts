@@ -9,7 +9,7 @@ describe('ProjectCard Types', () => {
     title: 'Test Project',
     description: 'Test Description',
     status: 'active',
-    currentStage: 'briefing',
+    currentStage: 'creation',
     organizationId: 'org-1',
     userId: 'user-1',
     createdAt: Timestamp.now(),
@@ -88,8 +88,8 @@ describe('ProjectCard Types', () => {
       };
 
       if (props.onProjectMove) {
-        await props.onProjectMove('test-id', 'concept');
-        expect(onProjectMove).toHaveBeenCalledWith('test-id', 'concept');
+        await props.onProjectMove('test-id', 'approval');
+        expect(onProjectMove).toHaveBeenCalledWith('test-id', 'approval');
       }
     });
 

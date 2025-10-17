@@ -102,7 +102,7 @@ const mockProjects: Project[] = [
     ...mockProject,
     id: 'project-3',
     title: 'Drittes Projekt',
-    currentStage: 'internal_approval' as PipelineStage
+    currentStage: 'approval' as PipelineStage
   }
 ];
 
@@ -128,7 +128,7 @@ const mockProjectUpdates: ProjectUpdate[] = [
     projectTitle: 'Test Projekt',
     action: 'moved',
     fromStage: 'creation' as PipelineStage,
-    toStage: 'internal_approval' as PipelineStage,
+    toStage: 'approval' as PipelineStage,
     userId: 'user-1',
     userName: 'Test User',
     timestamp: mockTimestamp
@@ -216,10 +216,10 @@ describe('KanbanBoardService', () => {
       expect(result.totalProjects).toBe(3);
       expect(result.projectsByStage).toHaveProperty('ideas_planning');
       expect(result.projectsByStage).toHaveProperty('creation');
-      expect(result.projectsByStage).toHaveProperty('internal_approval');
+      expect(result.projectsByStage).toHaveProperty('approval');
       expect(result.projectsByStage['ideas_planning']).toHaveLength(1);
       expect(result.projectsByStage['creation']).toHaveLength(1);
-      expect(result.projectsByStage['internal_approval']).toHaveLength(1);
+      expect(result.projectsByStage['approval']).toHaveLength(1);
       expect(result.activeUsers).toEqual(mockActiveUsers);
       expect(result.recentUpdates).toEqual(mockProjectUpdates);
       
@@ -288,7 +288,7 @@ describe('KanbanBoardService', () => {
       // Arrange
       const projectId = 'project-1';
       const fromStage = 'creation' as PipelineStage;
-      const toStage = 'internal_approval' as PipelineStage;
+      const toStage = 'approval' as PipelineStage;
       const userId = 'user-1';
       const organizationId = 'org-1';
 
@@ -339,7 +339,7 @@ describe('KanbanBoardService', () => {
       // Arrange
       const projectId = 'project-1';
       const fromStage = 'creation' as PipelineStage;
-      const toStage = 'internal_approval' as PipelineStage;
+      const toStage = 'approval' as PipelineStage;
       const userId = 'user-2';
       const organizationId = 'org-1';
 
@@ -367,7 +367,7 @@ describe('KanbanBoardService', () => {
       // Arrange
       const projectId = 'project-1';
       const fromStage = 'creation' as PipelineStage;
-      const toStage = 'internal_approval' as PipelineStage;
+      const toStage = 'approval' as PipelineStage;
       const userId = 'user-1';
       const organizationId = 'org-1';
 
@@ -399,7 +399,7 @@ describe('KanbanBoardService', () => {
       // Arrange
       const projectId = 'nonexistent';
       const fromStage = 'creation' as PipelineStage;
-      const toStage = 'internal_approval' as PipelineStage;
+      const toStage = 'approval' as PipelineStage;
       const userId = 'user-1';
       const organizationId = 'org-1';
 
@@ -420,7 +420,7 @@ describe('KanbanBoardService', () => {
       // Arrange
       const projectId = 'project-1';
       const fromStage = 'creation' as PipelineStage;
-      const toStage = 'internal_approval' as PipelineStage;
+      const toStage = 'approval' as PipelineStage;
       const userId = 'user-1';
       const organizationId = 'org-1';
 

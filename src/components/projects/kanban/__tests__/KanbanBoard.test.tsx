@@ -566,11 +566,11 @@ describe('KanbanBoard', () => {
     const originalNodeEnv = process.env.NODE_ENV;
 
     afterAll(() => {
-      process.env.NODE_ENV = originalNodeEnv;
+      (process.env as any).NODE_ENV = originalNodeEnv;
     });
 
     it('sollte Debug-Info im Development-Mode anzeigen', () => {
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
       
       render(<KanbanBoard {...defaultProps} />);
       
@@ -581,7 +581,7 @@ describe('KanbanBoard', () => {
     });
 
     it('sollte Debug-Info im Production-Mode verstecken', () => {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       
       render(<KanbanBoard {...defaultProps} />);
       
@@ -589,7 +589,7 @@ describe('KanbanBoard', () => {
     });
 
     it('sollte korrekte Layout-Info im Debug-Panel anzeigen', async () => {
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
       Object.defineProperty(window, 'innerWidth', { value: 500 });
       
       const { rerender } = render(<KanbanBoard {...defaultProps} />);

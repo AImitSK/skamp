@@ -27,6 +27,7 @@ export interface BoardHeaderProps {
     name: string;
     avatar?: string;
     currentProject?: string;
+    lastSeen?: Date | { seconds: number };
   }>;
   filters: BoardFilters;
   onFiltersChange: (filters: BoardFilters) => void;
@@ -37,6 +38,7 @@ export interface BoardHeaderProps {
   viewMode?: 'board' | 'list';
   onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
+  onMoreOptions?: () => void;
 }
 
 // ========================================
