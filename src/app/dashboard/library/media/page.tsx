@@ -482,6 +482,79 @@ export default function MediathekPage() {
     }
   }, [selectedAssets, draggedAsset, organizationId, mediaAssets, moveFolderMutation, moveAssetMutation, clearSelection]);
 
+  // BREADCRUMB DROP HANDLER - für Drag & Drop auf Parent-Ordner
+  const handleBreadcrumbDrop = useCallback(async (targetFolderId: string | undefined, e: React.DragEvent) => {
+    // Verhindern, dass man auf den aktuellen Ordner droppt
+    if (targetFolderId === currentFolderId) return;
+
+    const dragData = e.dataTransfer.getData('text/plain');
+
+    // Ordner verschieben
+    if (dragData.startsWith('folder:')) {
+      const folderId = dragData.replace('folder:', '');
+
+      try {
+        setMoving(true);
+
+        await moveFolderMutation.mutateAsync({
+          folderId,
+          newParentId: targetFolderId,
+          organizationId: organizationId!
+        });
+
+        const targetName = targetFolderId
+          ? allFolders.find(f => f.id === targetFolderId)?.name || 'Ordner'
+          : 'Root';
+        toastService.success(`Ordner nach "${targetName}" verschoben`);
+
+      } catch (error) {
+        toastService.error('Der Ordner konnte nicht verschoben werden');
+      } finally {
+        setMoving(false);
+        setDraggedFolder(null);
+      }
+      return;
+    }
+
+    // Assets verschieben
+    let assetsToMove: string[] = [];
+
+    if (selectedAssets.size > 0) {
+      assetsToMove = Array.from(selectedAssets);
+    } else if (draggedAsset?.id) {
+      assetsToMove = [draggedAsset.id];
+    }
+
+    if (assetsToMove.length === 0 || !organizationId) return;
+
+    const count = assetsToMove.length;
+
+    try {
+      setMoving(true);
+
+      if (count > 1) {
+        await handleBulkMove(targetFolderId);
+      } else {
+        await moveAssetMutation.mutateAsync({
+          assetId: assetsToMove[0],
+          newFolderId: targetFolderId,
+          organizationId
+        });
+
+        const targetName = targetFolderId
+          ? allFolders.find(f => f.id === targetFolderId)?.name || 'Ordner'
+          : 'Root';
+        toastService.success(`Datei nach "${targetName}" verschoben`);
+      }
+
+    } catch (error) {
+      toastService.error('Die Dateien konnten nicht verschoben werden');
+    } finally {
+      setMoving(false);
+      setDraggedAsset(null);
+    }
+  }, [currentFolderId, selectedAssets, draggedAsset, organizationId, allFolders, moveFolderMutation, moveAssetMutation, handleBulkMove]);
+
   // Existing handlers
   const handleCreateFolder = useCallback(() => {
     setEditingFolder(undefined);
@@ -684,16 +757,6 @@ export default function MediathekPage() {
         </div>
       )}
 
-      {/* Breadcrumb Navigation */}
-      {breadcrumbs.length > 0 && (
-        <div className="mb-4">
-          <BreadcrumbNavigation
-            breadcrumbs={breadcrumbs}
-            onNavigate={handleNavigateToFolder}
-          />
-        </div>
-      )}
-
       {/* Toolbar */}
       <MediaToolbar
         searchTerm={searchTerm}
@@ -710,6 +773,17 @@ export default function MediathekPage() {
         onBulkDelete={handleBulkDelete}
         disabled={draggedFolder !== null || !organizationId}
       />
+
+      {/* Breadcrumb Navigation - unter Toolbar, näher an Dateien */}
+      {breadcrumbs.length > 0 && (
+        <div className="mt-4 mb-4">
+          <BreadcrumbNavigation
+            breadcrumbs={breadcrumbs}
+            onNavigate={handleNavigateToFolder}
+            onBreadcrumbDrop={handleBreadcrumbDrop}
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div className="mt-8">
