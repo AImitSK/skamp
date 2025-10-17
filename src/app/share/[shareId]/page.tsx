@@ -178,6 +178,11 @@ export default function SharePage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-50">
         <div className="text-center">
+          <img
+            src="/logo_skamp.svg"
+            alt="CeleroPress"
+            className="h-10 w-auto mx-auto mb-6"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-sm text-zinc-600">Lade geteilten Inhalt...</p>
         </div>
@@ -188,8 +193,17 @@ export default function SharePage() {
   // Error State (from React Query or local)
   if (shareLinkError || error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50 p-4">
         <div className="max-w-md w-full bg-white rounded-lg border border-zinc-200 p-8 text-center shadow-sm">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img
+              src="/logo_skamp.svg"
+              alt="CeleroPress"
+              className="h-8 w-auto"
+            />
+          </div>
+
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <Heading level={2} className="text-zinc-900 font-semibold mb-2">Fehler</Heading>
           <Text className="text-zinc-600 text-sm mb-6">{error || 'Share-Link nicht gefunden oder nicht mehr aktiv.'}</Text>
@@ -199,6 +213,13 @@ export default function SharePage() {
           >
             Erneut versuchen
           </Button>
+
+          {/* Footer */}
+          <div className="text-center mt-8 pt-6 border-t border-zinc-200">
+            <p className="text-xs text-zinc-500">
+              © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -207,8 +228,17 @@ export default function SharePage() {
   // Password Required
   if (passwordRequired) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50 p-4">
         <div className="max-w-md w-full bg-white rounded-lg border border-zinc-200 p-8 shadow-sm">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img
+              src="/logo_skamp.svg"
+              alt="CeleroPress"
+              className="h-8 w-auto"
+            />
+          </div>
+
           <div className="text-center mb-6">
             <LockClosedIcon className="h-16 w-16 text-primary mx-auto mb-4" />
             <Heading level={2} className="text-zinc-900 font-semibold">Passwort erforderlich</Heading>
@@ -239,6 +269,13 @@ export default function SharePage() {
               {validatingPassword ? 'Überprüfe...' : 'Zugriff freischalten'}
             </Button>
           </form>
+
+          {/* Footer */}
+          <div className="text-center mt-8 pt-6 border-t border-zinc-200">
+            <p className="text-xs text-zinc-500">
+              © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -279,8 +316,12 @@ export default function SharePage() {
 
             {/* CeleroPress Logo */}
             <div className="flex-shrink-0 ml-6">
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary">CeleroPress</div>
+              <div className="flex flex-col items-end">
+                <img
+                  src="/logo_skamp.svg"
+                  alt="CeleroPress"
+                  className="h-10 w-auto"
+                />
                 <div className="text-xs text-zinc-500 mt-1">Medien-Freigabe</div>
               </div>
             </div>
