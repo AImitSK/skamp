@@ -55,7 +55,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const progress = useMemo(() => (project as any).progress, [project]);
 
   // Calculate Progress Percentage
-  const progressPercent = useMemo(() => progress?.overallPercent || 0, [progress]);
 
   // Due Date Check with useMemo
   const isDueToday = useMemo(() => {
@@ -236,22 +235,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                 +{projectTags.length - 3}
               </span>
             )}
-          </div>
-        )}
-
-        {/* Progress Bar */}
-        {progressPercent > 0 && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs text-zinc-600 mb-1">
-              <span>Fortschritt</span>
-              <span>{Math.round(progressPercent)}%</span>
-            </div>
-            <div className="w-full bg-zinc-200 rounded-full h-1.5">
-              <div
-                className="bg-blue-600 h-1.5 rounded-full transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
           </div>
         )}
 
