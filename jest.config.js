@@ -27,6 +27,7 @@ const customJestConfig = {
     // Mock react-dnd
     '^react-dnd$': '<rootDir>/src/__mocks__/react-dnd.ts',
     '^react-dnd-html5-backend$': '<rootDir>/src/__mocks__/react-dnd-html5-backend.ts',
+    '^react-dnd-touch-backend$': '<rootDir>/src/__mocks__/react-dnd-touch-backend.ts',
   },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -37,7 +38,7 @@ const customJestConfig = {
   ],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(nanoid|@firebase|firebase|react-dnd|dnd-core|@react-dnd)/)',
+    '/node_modules/(?!(nanoid|@firebase|firebase|react-dnd|dnd-core|@react-dnd|react-dnd-touch-backend)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
