@@ -1,7 +1,7 @@
 // src/components/projects/kanban/card/DeleteConfirmDialog.tsx
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 
@@ -14,7 +14,7 @@ export interface DeleteConfirmDialogProps {
   hasError: boolean;
 }
 
-export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
+export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = memo(({
   isOpen,
   onClose,
   onConfirm,
@@ -90,4 +90,6 @@ export const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
       </div>
     </div>
   );
-};
+});
+
+DeleteConfirmDialog.displayName = 'DeleteConfirmDialog';

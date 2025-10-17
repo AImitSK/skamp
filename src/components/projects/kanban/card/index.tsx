@@ -1,7 +1,7 @@
 // src/components/projects/kanban/card/index.tsx
 'use client';
 
-import React, { memo, useState, useRef, useEffect } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ClockIcon,
@@ -49,20 +49,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
 
-  // Project Properties
-  const projectPriority = (project as any).priority as ProjectPriority;
-  const projectTags = (project as any).tags as string[] || [];
-  const progress = (project as any).progress;
+  // Project Properties with useMemo
+  const projectPriority = useMemo(() => (project as any).priority as ProjectPriority, [project]);
+  const projectTags = useMemo(() => (project as any).tags as string[] || [], [project]);
+  const progress = useMemo(() => (project as any).progress, [project]);
 
   // Calculate Progress Percentage
-  const progressPercent = progress?.overallPercent || 0;
+  const progressPercent = useMemo(() => progress?.overallPercent || 0, [progress]);
 
-  // Due Date Check
-  const isDueToday = project.dueDate &&
-    new Date(project.dueDate.seconds * 1000).toDateString() === new Date().toDateString();
-  const isOverdue = project.dueDate &&
-    new Date(project.dueDate.seconds * 1000) < new Date() &&
-    project.status !== 'completed';
+  // Due Date Check with useMemo
+  const isDueToday = useMemo(() => {
+    if (!project.dueDate) return false;
+    return new Date(project.dueDate.seconds * 1000).toDateString() === new Date().toDateString();
+  }, [project.dueDate]);
+
+  const isOverdue = useMemo(() => {
+    if (!project.dueDate || project.status === 'completed') return false;
+    return new Date(project.dueDate.seconds * 1000) < new Date();
+  }, [project.dueDate, project.status]);
 
   // Load Team Members
   useEffect(() => {
@@ -84,32 +88,32 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     loadTeamMembers();
   }, [currentOrganization?.id]);
 
-  // Handlers
-  const handleCardClick = (e: React.MouseEvent) => {
+  // Handlers with useCallback for performance
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     if (project.id) {
       router.push(`/dashboard/projects/${project.id}`);
     }
-  };
+  }, [project.id, router]);
 
-  const handleQuickAction = (e: React.MouseEvent) => {
+  const handleQuickAction = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowQuickActions(!showQuickActions);
-  };
+    setShowQuickActions(prev => !prev);
+  }, []);
 
-  const handleViewProject = (projectId: string) => {
+  const handleViewProject = useCallback((projectId: string) => {
     router.push(`/dashboard/projects/${projectId}`);
-  };
+  }, [router]);
 
-  const handleEditProject = (projectId: string) => {
+  const handleEditProject = useCallback((projectId: string) => {
     setShowEditWizard(true);
-  };
+  }, []);
 
-  const handleDeleteProject = async (projectId: string) => {
+  const handleDeleteProject = useCallback(async (projectId: string) => {
     setShowDeleteDialog(true);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!currentOrganization?.id) {
       toast.error('Keine Organisation gefunden');
       return;
@@ -130,15 +134,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     } catch (error) {
       toast.error('Fehler beim Löschen des Projekts');
     }
-  };
+  }, [currentOrganization?.id, deleteProjectMutation, project.id, onProjectDeleted]);
 
-  const handleMoveToStage = async (projectId: string, stage: PipelineStage) => {
+  const handleMoveToStage = useCallback(async (projectId: string, stage: PipelineStage) => {
     if (onProjectMove) {
       await onProjectMove(projectId, stage);
     }
-  };
+  }, [onProjectMove]);
 
-  const handleArchiveProject = async (projectId: string) => {
+  const handleArchiveProject = useCallback(async (projectId: string) => {
     if (!currentOrganization?.id) {
       toast.error('Keine Organisation gefunden');
       return;
@@ -159,15 +163,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     } catch (error) {
       toast.error('Fehler beim Archivieren');
     }
-  };
+  }, [currentOrganization?.id, currentOrganization?.ownerId, archiveProjectMutation, onProjectArchived]);
 
-  const handleEditSuccess = (updatedProject: Project) => {
+  const handleEditSuccess = useCallback((updatedProject: Project) => {
     if (onProjectUpdated) {
       onProjectUpdated();
     } else if (onProjectAdded) {
       onProjectAdded();
     }
-  };
+  }, [onProjectUpdated, onProjectAdded]);
 
   return (
     <>
