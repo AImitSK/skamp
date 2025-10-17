@@ -43,6 +43,8 @@ export default function SharePage() {
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [passwordValidated, setPasswordValidated] = useState(false);
+  const [validatingPassword, setValidatingPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Loading state
@@ -57,13 +59,8 @@ export default function SharePage() {
         setError(null);
 
         // Prüfe Passwort-Schutz
-        if (shareLink.settings.passwordRequired && !passwordInput) {
+        if (shareLink.settings.passwordRequired && !passwordValidated) {
           setPasswordRequired(true);
-          return;
-        }
-
-        if (shareLink.settings.passwordRequired && passwordInput !== shareLink.settings.passwordRequired) {
-          setPasswordError(true);
           return;
         }
 
@@ -96,7 +93,7 @@ export default function SharePage() {
     };
 
     loadAdditionalContent();
-  }, [shareLink, passwordInput]);
+  }, [shareLink, passwordValidated]);
 
   // NEU: Lade Campaign-Medien
   const loadCampaignContent = async (shareLink: ShareLink) => {
@@ -142,13 +139,45 @@ export default function SharePage() {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError(false);
-    // useEffect wird automatisch re-triggern wenn passwordInput sich ändert
+    setValidatingPassword(true);
+
+    try {
+      // ✅ API-Route für Passwort-Validierung verwenden
+      const response = await fetch('/api/media/share/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          shareId,
+          password: passwordInput,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        // Passwort korrekt - Content laden
+        setPasswordValidated(true);
+        setPasswordRequired(false);
+      } else {
+        // Passwort falsch
+        setPasswordError(true);
+        setPasswordInput('');
+      }
+    } catch (error) {
+      console.error('Fehler bei Passwort-Validierung:', error);
+      setPasswordError(true);
+    } finally {
+      setValidatingPassword(false);
+    }
   };
 
-  const getFileIcon = (fileType: string) => {
+  const getFileIcon = (fileType: string | undefined) => {
+    if (!fileType) return DocumentIcon;
     if (fileType.startsWith('image/')) return PhotoIcon;
     if (fileType.startsWith('video/')) return VideoCameraIcon;
     if (fileType.includes('pdf') || fileType.includes('document')) return DocumentTextIcon;
@@ -218,8 +247,13 @@ export default function SharePage() {
                 <p className="text-red-500 text-sm mt-1">Falsches Passwort</p>
               )}
             </div>
-            <Button type="submit" className="w-full" color="indigo">
-              Zugriff freischalten
+            <Button
+              type="submit"
+              className="w-full"
+              color="indigo"
+              disabled={validatingPassword || !passwordInput.trim()}
+            >
+              {validatingPassword ? 'Überprüfe...' : 'Zugriff freischalten'}
             </Button>
           </form>
         </div>
@@ -314,7 +348,7 @@ export default function SharePage() {
                   >
                     {/* Preview */}
                     <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
-                      {asset.fileType.startsWith('image/') ? (
+                      {asset.fileType?.startsWith('image/') ? (
                         <img
                           src={asset.downloadUrl}
                           alt={asset.fileName}
@@ -331,7 +365,7 @@ export default function SharePage() {
                         {asset.fileName}
                       </h3>
                       <p className="text-xs text-gray-500 mb-3">
-                        {asset.fileType.split('/')[1]?.toUpperCase() || 'FILE'}
+                        {asset.fileType?.split('/')[1]?.toUpperCase() || 'FILE'}
                       </p>
                       
                       {/* Actions */}
