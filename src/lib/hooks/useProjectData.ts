@@ -79,8 +79,28 @@ export function useMoveProject() {
         organizationId
       );
     },
-    onSuccess: (_, variables) => {
-      // Invalidate alle projekt-bezogenen Queries
+    onMutate: async ({ projectId, targetStage, organizationId }) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ['projects', organizationId] });
+
+      // Snapshot previous value
+      const previousProjects = queryClient.getQueryData(['projects', organizationId]);
+
+      // Optimistic Update: Stage sofort ändern
+      queryClient.setQueryData(['projects', organizationId], (old: Project[] = []) =>
+        old.map((p) => p.id === projectId ? { ...p, currentStage: targetStage } : p)
+      );
+
+      return { previousProjects };
+    },
+    onError: (err, variables, context) => {
+      // Rollback bei Fehler
+      if (context?.previousProjects) {
+        queryClient.setQueryData(['projects', variables.organizationId], context.previousProjects);
+      }
+    },
+    onSettled: (_, __, variables) => {
+      // Background refetch für Konsistenz
       queryClient.invalidateQueries({
         queryKey: ['projects', variables.organizationId]
       });
