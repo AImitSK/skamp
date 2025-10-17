@@ -37,8 +37,6 @@ import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
 import { TeamMember } from '@/types/international';
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
-import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
-import { useBoardRealtime } from '@/hooks/useBoardRealtime';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import Link from 'next/link';
 
@@ -288,21 +286,19 @@ export default function ProjectsPage() {
         <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
           {/* Board View with integrated toolbar */}
           {!loading && !error && projects.length > 0 && currentOrganization && (
-            <BoardProvider organizationId={currentOrganization.id}>
-              <KanbanBoard
-                projects={groupProjectsByStage(projects)}
-                totalProjects={projects.length}
-                activeUsers={[]} // TODO: Get from real-time hook
-                filters={filters}
-                loading={loading}
-                onProjectMove={handleProjectMove}
-                onFiltersChange={handleFiltersChange}
-                onRefresh={() => {}} // Kein Manual Refresh nötig - React Query handled das
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                onNewProject={() => setShowWizard(true)}
-              />
-            </BoardProvider>
+            <KanbanBoard
+              projects={groupProjectsByStage(projects)}
+              totalProjects={projects.length}
+              activeUsers={[]}
+              filters={filters}
+              loading={loading}
+              onProjectMove={handleProjectMove}
+              onFiltersChange={handleFiltersChange}
+              onRefresh={() => {}} // Kein Manual Refresh nötig - React Query handled das
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              onNewProject={() => setShowWizard(true)}
+            />
           )}
 
           {/* Error State */}

@@ -421,12 +421,31 @@ const handleDelete = async (id: string) => {
 
 ```typescript
 // ✅ Gut
-const { data } = useProjects(orgId);
+const { data: projects = [], isLoading } = useProjects(orgId);
+const moveProjectMutation = useMoveProject();
 
-// ❌ Schlecht
+await moveProjectMutation.mutateAsync({
+  projectId,
+  currentStage,
+  targetStage,
+  userId,
+  organizationId
+});
+// React Query handled den Cache automatisch!
+
+// ❌ Schlecht - Manuelles State Management
 const [data, setData] = useState([]);
-useEffect(() => { ... }, []);
+useEffect(() => {
+  loadProjects();
+}, []);
+
+const handleMove = async () => {
+  await kanbanBoardService.moveProject(...);
+  loadProjects(); // ❌ Full Page Reload!
+};
 ```
+
+**WICHTIG:** Nach Mutations **NIEMALS** manuell `loadProjects()` aufrufen! React Query invalidiert den Cache automatisch.
 
 ### 2. Optimistic Updates für bessere UX
 
