@@ -7,10 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { throttle } from "@/lib/utils/throttle";
-import { mediaService } from "@/lib/firebase/media-service";
-import { smartUploadRouter } from "@/lib/firebase/smart-upload-router";
-import { mediaLibraryContextBuilder } from "./utils/context-builder";
-import { getMediaLibraryFeatureFlags, shouldUseSmartRouter } from "./config/feature-flags";
 import {
   useMediaAssets,
   useMediaFolders,
@@ -89,9 +85,6 @@ export default function MediathekPage() {
   const [editingAsset, setEditingAsset] = useState<MediaAsset | undefined>(undefined);
   const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null);
 
-  // Smart Router Feature Flag aus Konfiguration
-  const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
-  const useSmartRouterEnabled = shouldUseSmartRouter();
 
   // Drag & Drop States
   const [draggedAsset, setDraggedAsset] = useState<MediaAsset | null>(null);
@@ -618,6 +611,10 @@ export default function MediathekPage() {
     setShowUploadModal(false);
   }, []);
 
+  const handleUploadSuccess = useCallback(async () => {
+    // ✅ React Query Hook invalidiert automatisch - kein manuelles Refresh nötig
+  }, []);
+
   // Reset page when debounced search changes
   useEffect(() => {
     setCurrentPage(1);
@@ -788,23 +785,11 @@ export default function MediathekPage() {
         />
       )}
 
-      {/* Smart Router Status Badge (Development) */}
-      {process.env.NODE_ENV === 'development' && featureFlags.SMART_ROUTER_LOGGING && (
-        <div className="fixed bottom-4 left-4 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg z-50">
-          <div className="flex items-center gap-2 text-xs">
-            <div className={`w-2 h-2 rounded-full ${
-              useSmartRouterEnabled ? 'bg-green-400' : 'bg-red-400'
-            }`} />
-            <span>Smart Router: {useSmartRouterEnabled ? 'Aktiv' : 'Deaktiviert'}</span>
-          </div>
-        </div>
-      )}
-
       {/* Modals - Only render when organizationId is available */}
       {showUploadModal && organizationId && currentUserId && (
         <UploadModal
           onClose={handleUploadModalClose}
-          onUploadSuccess={() => {}} // React Query auto-invalidates queries
+          onUploadSuccess={handleUploadSuccess}
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
           organizationId={organizationId}
@@ -836,13 +821,13 @@ export default function MediathekPage() {
         />
       )}
 
-      {showAssetDetailsModal && editingAsset && (
+      {showAssetDetailsModal && editingAsset && organizationId && (
         <AssetDetailsModal
           asset={editingAsset}
           currentFolder={getAssetFolder(editingAsset)}
           allFolders={allFolders}
+          organizationId={organizationId}
           onClose={handleCloseAssetDetailsModal}
-          onSave={() => {}} // React Query auto-invalidates queries
         />
       )}
 

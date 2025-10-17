@@ -1,16 +1,12 @@
-// src/app/dashboard/pr-tools/media-library/UploadModal.tsx
+// src/app/dashboard/library/media/UploadModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
-import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { mediaService } from "@/lib/firebase/media-service";
-import { smartUploadRouter, uploadToMediaLibrary } from "@/lib/firebase/smart-upload-router";
-import { mediaLibraryContextBuilder, UploadContextInfo } from "./utils/context-builder";
-import { getMediaLibraryFeatureFlags, shouldUseSmartRouter, getUIFeatureConfig } from "./config/feature-flags";
+import { useUploadMediaAsset } from "@/lib/hooks/useMediaData";
 import {
   CloudArrowUpIcon,
   DocumentTextIcon,
@@ -24,16 +20,8 @@ interface UploadModalProps {
   onUploadSuccess: () => Promise<void>;
   currentFolderId?: string;
   folderName?: string;
-  organizationId: string; // NEW: Required for multi-tenancy
-  userId: string; // NEW: Required for tracking who uploads
-
-  // Campaign Smart Router Integration Props
-  campaignId?: string;
-  campaignName?: string;
-  selectedProjectId?: string;
-  selectedProjectName?: string;
-  uploadType?: 'hero-image' | 'attachment' | 'document';
-  enableSmartRouter?: boolean;
+  organizationId: string;
+  userId: string;
 }
 
 export default function UploadModal({
@@ -43,52 +31,13 @@ export default function UploadModal({
   folderName,
   organizationId,
   userId,
-
-  // Campaign Smart Router Props
-  campaignId,
-  campaignName,
-  selectedProjectId,
-  selectedProjectName,
-  uploadType,
-  enableSmartRouter = false
 }: UploadModalProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
 
-  // Smart Upload Router Integration mit Feature Flags
-  const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
-  const [uiConfig] = useState(() => getUIFeatureConfig());
-  const useSmartRouterEnabled = shouldUseSmartRouter();
-  const [contextInfo, setContextInfo] = useState<UploadContextInfo | null>(null);
-  const [uploadMethod, setUploadMethod] = useState<'smart' | 'legacy'>(
-    useSmartRouterEnabled ? 'smart' : 'legacy'
-  );
-  const [uploadResults, setUploadResults] = useState<Array<{ fileName: string; method: string; path?: string; error?: string }>>([]);
-
-  // Smart Router Context Info laden
-  useEffect(() => {
-    async function loadContextInfo() {
-      try {
-        const info = await mediaLibraryContextBuilder.buildContextInfo({
-          organizationId,
-          userId,
-          currentFolderId,
-          folderName,
-          uploadSource: 'dialog'
-        }, []);
-
-        setContextInfo(info);
-      } catch (error) {
-        // Failed to load context info - fallback to legacy mode
-        setUseSmartRouter(false);
-      }
-    }
-
-    if (useSmartRouterEnabled && uiConfig.showContextInfo && organizationId && userId) {
-      loadContextInfo();
-    }
-  }, [organizationId, userId, currentFolderId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo]);
+  // ✅ React Query Upload Mutation
+  const uploadMutation = useUploadMediaAsset();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -124,119 +73,55 @@ export default function UploadModal({
 
     setUploading(true);
     setUploadProgress({});
-    setUploadResults([]);
 
     try {
-      const uploadPromises = selectedFiles.map(async (file, index) => {
-        const fileKey = `${index}-${file.name}`;
-        const result = { fileName: file.name, method: 'legacy', error: undefined as string | undefined };
-        
-        try {
-          if (useSmartRouterEnabled && uploadMethod === 'smart') {
-            // ✅ IMMER Smart Upload Router verwenden
-            let uploadResult;
+      const BATCH_SIZE = 5; // 5 Dateien parallel (wie in Doku)
+      let successCount = 0;
+      let errorCount = 0;
 
-            if (campaignId) {
-              // Campaign-specific Upload mit strukturierten Pfaden
-              const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
+      // Batch-Upload wie in Dokumentation beschrieben
+      for (let i = 0; i < selectedFiles.length; i += BATCH_SIZE) {
+        const batch = selectedFiles.slice(i, i + BATCH_SIZE);
 
-              uploadResult = await uploadWithContext(
-                file,
-                organizationId,
-                userId,
-                'campaign',
-                {
-                  campaignId,
-                  campaignName,
-                  projectId: selectedProjectId,
-                  projectName: selectedProjectName,
-                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments'
-                },
-                (progress) => {
-                  setUploadProgress(prev => ({
-                    ...prev,
-                    [fileKey]: progress
-                  }));
-                }
-              );
-            } else {
-              // Standard Media Library Upload
-              uploadResult = await uploadToMediaLibrary(
-                file,
-                organizationId,
-                userId,
-                currentFolderId,
-                (progress) => {
-                  setUploadProgress(prev => ({
-                    ...prev,
-                    [fileKey]: progress
-                  }));
-                }
-              );
-            }
+        const results = await Promise.allSettled(
+          batch.map(async (file, batchIndex) => {
+            const fileKey = `${i + batchIndex}-${file.name}`;
 
-            result.method = uploadResult.uploadMethod;
-            result.path = uploadResult.path;
-          } else {
-            // Legacy Upload verwenden
-            await mediaService.uploadMedia(
-              file,
-              organizationId,
-              currentFolderId,
-              (progress) => {
-                setUploadProgress(prev => ({
-                  ...prev,
-                  [fileKey]: progress
-                }));
-              },
-              3, // retryCount
-              { userId } // Pass userId in context
-            );
-
-            result.method = 'legacy';
-            result.path = `organizations/${organizationId}/media`;
-          }
-        } catch (uploadError: any) {
-          // Bei Smart Router Fehler: Fallback auf Legacy (wenn Fallback aktiviert)
-          if (useSmartRouterEnabled && uploadMethod === 'smart' && featureFlags.SMART_ROUTER_FALLBACK) {
             try {
-              await mediaService.uploadMedia(
+              // ✅ React Query Mutation verwenden
+              await uploadMutation.mutateAsync({
                 file,
                 organizationId,
-                currentFolderId,
-                (progress) => {
+                folderId: currentFolderId,
+                onProgress: (progress) => {
                   setUploadProgress(prev => ({
                     ...prev,
                     [fileKey]: progress
                   }));
                 },
-                1, // Reduced retry for fallback
-                { userId }
-              );
+                context: { userId }
+              });
 
-              result.method = 'legacy-fallback';
-              result.path = `organizations/${organizationId}/media`;
-            } catch (fallbackError: any) {
-              result.error = fallbackError.message || 'Upload fehlgeschlagen';
+              successCount++;
+            } catch (error: any) {
+              errorCount++;
+              console.error(`Upload fehlgeschlagen: ${file.name}`, error);
+              throw error;
             }
-          } else {
-            result.error = uploadError.message || 'Upload fehlgeschlagen';
-          }
-        }
-        
-        setUploadResults(prev => [...prev, result]);
-        return result;
-      });
+          })
+        );
+      }
 
-      const results = await Promise.all(uploadPromises);
-      const failedUploads = results.filter(r => r.error);
-      
-      if (failedUploads.length === 0) {
-        toastService.success(`${results.length} ${results.length === 1 ? 'Datei' : 'Dateien'} erfolgreich hochgeladen`);
+      // Success-Handling
+      if (errorCount === 0) {
+        toastService.success(`${successCount} ${successCount === 1 ? 'Datei' : 'Dateien'} erfolgreich hochgeladen`);
         await onUploadSuccess();
         onClose();
+      } else if (successCount > 0) {
+        toastService.warning(`${successCount} Dateien hochgeladen, ${errorCount} fehlgeschlagen`);
+        await onUploadSuccess();
       } else {
-        toastService.error(`${failedUploads.length} von ${results.length} Uploads fehlgeschlagen`);
+        toastService.error(`Alle Uploads fehlgeschlagen (${errorCount} Dateien)`);
       }
     } catch (error) {
       toastService.error('Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut');
@@ -268,7 +153,7 @@ export default function UploadModal({
               <Description>
                 Unterstützte Formate: Bilder (JPG, PNG, GIF), Videos (MP4, MOV), Dokumente (PDF, DOCX)
               </Description>
-              
+
               {/* Drag & Drop Bereich */}
               <div
                 className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 hover:border-gray-900/40 transition-colors"
@@ -310,7 +195,7 @@ export default function UploadModal({
                   {selectedFiles.map((file, index) => {
                     const fileKey = `${index}-${file.name}`;
                     const progress = uploadProgress[fileKey] || 0;
-                    
+
                     return (
                       <div key={fileKey} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3 flex-1">
@@ -325,7 +210,7 @@ export default function UploadModal({
                             {uploading && (
                               <div className="mt-1">
                                 <div className="bg-gray-200 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-[#005fab] h-2 rounded-full transition-all duration-300"
                                     style={{ width: `${progress}%` }}
                                   />
@@ -338,8 +223,8 @@ export default function UploadModal({
                           </div>
                         </div>
                         {!uploading && (
-                          <Button 
-                            plain 
+                          <Button
+                            plain
                             onClick={() => removeFile(index)}
                           >
                             <XMarkIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />

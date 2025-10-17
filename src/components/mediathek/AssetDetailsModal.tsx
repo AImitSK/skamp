@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MediaAsset, MediaFolder } from "@/types/media";
-import { mediaService } from "@/lib/firebase/media-service";
+import { useUpdateMediaAsset } from "@/lib/hooks/useMediaData";
 import {
   PhotoIcon,
   VideoCameraIcon,
@@ -19,20 +19,21 @@ interface AssetDetailsModalProps {
   asset: MediaAsset;
   currentFolder?: MediaFolder;
   allFolders?: MediaFolder[];
+  organizationId: string;
   onClose: () => void;
-  onSave: () => Promise<void>;
 }
 
-export default function AssetDetailsModal({ 
-  asset, 
+export default function AssetDetailsModal({
+  asset,
   currentFolder,
   allFolders = [],
-  onClose, 
-  onSave
+  organizationId,
+  onClose
 }: AssetDetailsModalProps) {
   const [fileName, setFileName] = useState(asset.fileName || '');
   const [description, setDescription] = useState(asset.description || '');
-  const [saving, setSaving] = useState(false);
+
+  const updateAssetMutation = useUpdateMediaAsset();
 
   const getFileIcon = (fileType: string | undefined) => {
     if (!fileType) return DocumentTextIcon;
@@ -53,28 +54,30 @@ export default function AssetDetailsModal({
       return;
     }
 
-    setSaving(true);
     try {
       const updates: Partial<MediaAsset> = {};
-      
+
       if (fileName !== asset.fileName) {
         updates.fileName = fileName.trim();
       }
-      
+
       if (description !== (asset.description || '')) {
         updates.description = description.trim() || undefined;
       }
 
       if (Object.keys(updates).length > 0) {
-        await mediaService.updateAsset(asset.id!, updates);
-        await onSave();
+        await updateAssetMutation.mutateAsync({
+          assetId: asset.id!,
+          updates,
+          organizationId
+        });
+        // ✅ React Query invalidiert automatisch die Queries
       }
-      
+
       onClose();
     } catch (error) {
       // Error handling could be improved with proper user feedback
-    } finally {
-      setSaving(false);
+      console.error('Fehler beim Speichern:', error);
     }
   };
 
@@ -146,15 +149,15 @@ export default function AssetDetailsModal({
       </DialogBody>
 
       <DialogActions>
-        <Button plain onClick={onClose} disabled={saving}>
+        <Button plain onClick={onClose} disabled={updateAssetMutation.isPending}>
           Abbrechen
         </Button>
         <Button
           onClick={handleSave}
-          disabled={!fileName.trim() || saving}
+          disabled={!fileName.trim() || updateAssetMutation.isPending}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {saving ? 'Speichern...' : 'Änderungen speichern'}
+          {updateAssetMutation.isPending ? 'Speichern...' : 'Änderungen speichern'}
         </Button>
       </DialogActions>
     </Dialog>
