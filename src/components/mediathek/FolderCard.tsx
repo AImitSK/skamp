@@ -5,12 +5,12 @@ import { memo } from "react";
 import { MediaFolder } from "@/types/media";
 import { Button } from "@/components/ui/button";
 import {
-  FolderIcon,
   EllipsisVerticalIcon,
   TrashIcon,
   PencilIcon,
   ShareIcon
 } from "@heroicons/react/24/outline";
+import { FolderIcon } from "@heroicons/react/24/solid";
 import {
   Dropdown,
   DropdownButton,
