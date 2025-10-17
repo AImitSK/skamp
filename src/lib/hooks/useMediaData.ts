@@ -334,9 +334,9 @@ export function useCreateFolder() {
       return mediaService.createFolder(folder, context);
     },
     onSuccess: (_, variables) => {
-      // Invalidate folders für die Organization
+      // ✅ Invalidate ALLE Folder-Queries für diese Organization (Root + alle Unterordner)
       queryClient.invalidateQueries({
-        queryKey: mediaQueryKeys.folders(variables.context.organizationId)
+        queryKey: ['media', 'folders', variables.context.organizationId]
       });
       // Invalidate all folders list
       queryClient.invalidateQueries({
@@ -362,7 +362,7 @@ export function useUpdateFolder() {
       return mediaService.updateFolder(folderId, updates);
     },
     onSuccess: (_, variables) => {
-      // Invalidate alle folder queries
+      // ✅ Invalidate ALLE Folder-Queries (alle Organizations + alle Unterordner)
       queryClient.invalidateQueries({
         queryKey: ['media', 'folders']
       });
@@ -370,10 +370,16 @@ export function useUpdateFolder() {
       queryClient.invalidateQueries({
         queryKey: mediaQueryKeys.folder(variables.folderId)
       });
-      // Invalidate breadcrumbs
+      // Invalidate breadcrumbs (Name könnte sich geändert haben)
       queryClient.invalidateQueries({
         queryKey: ['media', 'breadcrumbs']
       });
+      // Invalidate all folders lists (falls organizationId vorhanden)
+      if (variables.organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: mediaQueryKeys.allFolders(variables.organizationId)
+        });
+      }
     },
   });
 }
@@ -393,10 +399,16 @@ export function useDeleteFolder() {
       return mediaService.deleteFolder(folderId);
     },
     onSuccess: (_, variables) => {
-      // Invalidate alle folder queries
+      // ✅ Invalidate ALLE Folder-Queries (alle Organizations + alle Unterordner)
       queryClient.invalidateQueries({
         queryKey: ['media', 'folders']
       });
+      // Invalidate all folders lists (falls organizationId vorhanden)
+      if (variables.organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: mediaQueryKeys.allFolders(variables.organizationId)
+        });
+      }
     },
   });
 }
@@ -420,14 +432,18 @@ export function useMoveFolder() {
       // Update client inheritance
       await mediaService.updateFolderClientInheritance(folderId, organizationId);
     },
-    onSuccess: () => {
-      // Invalidate alle folder queries
+    onSuccess: (_, variables) => {
+      // ✅ Invalidate ALLE Folder-Queries (alle Organizations + alle Unterordner)
       queryClient.invalidateQueries({
         queryKey: ['media', 'folders']
       });
-      // Invalidate breadcrumbs
+      // Invalidate breadcrumbs (Pfad hat sich geändert)
       queryClient.invalidateQueries({
         queryKey: ['media', 'breadcrumbs']
+      });
+      // Invalidate all folders list
+      queryClient.invalidateQueries({
+        queryKey: mediaQueryKeys.allFolders(variables.organizationId)
       });
     },
   });
