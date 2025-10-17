@@ -8,7 +8,6 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { smartUploadRouter, uploadToMediaLibrary } from "@/lib/firebase/smart-upload-router";
 import { mediaLibraryContextBuilder, UploadContextInfo } from "./utils/context-builder";
@@ -18,7 +17,6 @@ import {
   DocumentTextIcon,
   XMarkIcon,
   FolderIcon,
-  BuildingOfficeIcon,
   CogIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -31,7 +29,6 @@ interface UploadModalProps {
   onUploadSuccess: () => Promise<void>;
   currentFolderId?: string;
   folderName?: string;
-  preselectedClientId?: string;
   organizationId: string; // NEW: Required for multi-tenancy
   userId: string; // NEW: Required for tracking who uploads
 
@@ -49,7 +46,6 @@ export default function UploadModal({
   onUploadSuccess,
   currentFolderId,
   folderName,
-  preselectedClientId,
   organizationId,
   userId,
 
@@ -61,11 +57,9 @@ export default function UploadModal({
   uploadType,
   enableSmartRouter = false
 }: UploadModalProps) {
-  const { companies } = useCrmData();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
-  const [selectedClientId, setSelectedClientId] = useState<string>(preselectedClientId || '');
 
   // Smart Upload Router Integration mit Feature Flags
   const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
@@ -77,12 +71,6 @@ export default function UploadModal({
   );
   const [uploadResults, setUploadResults] = useState<Array<{ fileName: string; method: string; path?: string; error?: string }>>([]);
 
-  useEffect(() => {
-    if (preselectedClientId) {
-      setSelectedClientId(preselectedClientId);
-    }
-  }, [preselectedClientId]);
-
   // Smart Router Context Info laden
   useEffect(() => {
     async function loadContextInfo() {
@@ -91,11 +79,10 @@ export default function UploadModal({
           organizationId,
           userId,
           currentFolderId,
-          preselectedClientId: selectedClientId,
           folderName,
           uploadSource: 'dialog'
-        }, companies);
-        
+        }, []);
+
         setContextInfo(info);
       } catch (error) {
         // Failed to load context info - fallback to legacy mode
@@ -106,7 +93,7 @@ export default function UploadModal({
     if (useSmartRouterEnabled && uiConfig.showContextInfo && organizationId && userId) {
       loadContextInfo();
     }
-  }, [organizationId, userId, currentFolderId, selectedClientId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo, companies]);
+  }, [organizationId, userId, currentFolderId, folderName, useSmartRouterEnabled, uiConfig.showContextInfo]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -168,8 +155,7 @@ export default function UploadModal({
                   campaignName,
                   projectId: selectedProjectId,
                   projectName: selectedProjectName,
-                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments',
-                  clientId: selectedClientId
+                  category: uploadType === 'hero-image' ? 'key-visuals' : 'attachments'
                 },
                 (progress) => {
                   setUploadProgress(prev => ({
@@ -193,19 +179,12 @@ export default function UploadModal({
                 }
               );
             }
-            
+
             result.method = uploadResult.uploadMethod;
             result.path = uploadResult.path;
-            
-            // Client-ID nach Upload setzen falls erforderlich
-            if (selectedClientId && uploadResult.asset?.id) {
-              await mediaService.updateAsset(uploadResult.asset.id, {
-                clientId: selectedClientId
-              });
-            }
           } else {
             // Legacy Upload verwenden
-            const uploadedAsset = await mediaService.uploadMedia(
+            await mediaService.uploadMedia(
               file,
               organizationId,
               currentFolderId,
@@ -218,21 +197,15 @@ export default function UploadModal({
               3, // retryCount
               { userId } // Pass userId in context
             );
-            
+
             result.method = 'legacy';
             result.path = `organizations/${organizationId}/media`;
-            
-            if (selectedClientId && uploadedAsset.id) {
-              await mediaService.updateAsset(uploadedAsset.id, {
-                clientId: selectedClientId
-              });
-            }
           }
         } catch (uploadError: any) {
           // Bei Smart Router Fehler: Fallback auf Legacy (wenn Fallback aktiviert)
           if (useSmartRouterEnabled && uploadMethod === 'smart' && featureFlags.SMART_ROUTER_FALLBACK) {
             try {
-              const uploadedAsset = await mediaService.uploadMedia(
+              await mediaService.uploadMedia(
                 file,
                 organizationId,
                 currentFolderId,
@@ -245,15 +218,9 @@ export default function UploadModal({
                 1, // Reduced retry for fallback
                 { userId }
               );
-              
+
               result.method = 'legacy-fallback';
               result.path = `organizations/${organizationId}/media`;
-              
-              if (selectedClientId && uploadedAsset.id) {
-                await mediaService.updateAsset(uploadedAsset.id, {
-                  clientId: selectedClientId
-                });
-              }
             } catch (fallbackError: any) {
               result.error = fallbackError.message || 'Upload fehlgeschlagen';
             }
@@ -283,13 +250,6 @@ export default function UploadModal({
     }
   };
 
-  const getSelectedCompany = () => {
-    if (!selectedClientId) return null;
-    return companies.find(c => c.id === selectedClientId);
-  };
-
-  const selectedCompany = getSelectedCompany();
-
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
       <DialogTitle>Medien hochladen</DialogTitle>
@@ -304,19 +264,6 @@ export default function UploadModal({
                   <Text className="text-blue-800">
                     Dateien werden hochgeladen nach: <strong>{folderName}</strong>
                   </Text>
-                </div>
-              </div>
-            )}
-
-            {/* Vorausgewählter Kunde anzeigen */}
-            {preselectedClientId && selectedCompany && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <BuildingOfficeIcon className="h-4 w-4 text-green-600" />
-                  <Text className="text-green-800">
-                    Upload für Kunde: <strong>{selectedCompany.name}</strong>
-                  </Text>
-                  <Badge color="green">Vorausgewählt</Badge>
                 </div>
               </div>
             )}
@@ -340,18 +287,7 @@ export default function UploadModal({
                     <span>{contextInfo.routing.type === 'organized' ? '📁 Organisiert' : '📋 Standard'}</span>
                     <span>({contextInfo.routing.reason})</span>
                   </div>
-                  
-                  {contextInfo.clientInheritance?.source !== 'none' && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Kunde:</span>
-                      <span>
-                        {contextInfo.clientInheritance.clientName || 'Vererbung aktiv'}
-                        {contextInfo.clientInheritance.source === 'folder' && ' (aus Ordner)'}
-                        {contextInfo.clientInheritance.source === 'preselected' && ' (vorausgewählt)'}
-                      </span>
-                    </div>
-                  )}
-                  
+
                   {contextInfo.expectedTags.length > 0 && (
                     <div className="flex items-start gap-2">
                       <TagIcon className="h-3 w-3 mt-0.5 text-gray-500" />
@@ -396,29 +332,6 @@ export default function UploadModal({
               </div>
             )}
 
-            {/* Client-Auswahl (falls nicht vorausgewählt) */}
-            {!preselectedClientId && (
-              <Field>
-                <Label>Kunde zuordnen (optional)</Label>
-                <Select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                >
-                  <option value="">-- Kein Kunde --</option>
-                  {companies
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                </Select>
-                <Description>
-                  Dateien können später einem Kunden zugeordnet werden.
-                </Description>
-              </Field>
-            )}
-            
             <Field>
               <Label>Dateien auswählen</Label>
               <Description>
@@ -515,7 +428,6 @@ export default function UploadModal({
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li><strong>Dateien:</strong> {selectedFiles.length}</li>
                   <li><strong>Zielordner:</strong> {folderName || 'Root'}</li>
-                  <li><strong>Kunde:</strong> {selectedCompany?.name || 'Nicht zugeordnet'}</li>
                   <li><strong>Gesamtgröße:</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
                   {contextInfo && (
                     <li><strong>Upload-Methode:</strong> {uploadMethod === 'smart' ? 'Smart Router' : 'Legacy'}</li>

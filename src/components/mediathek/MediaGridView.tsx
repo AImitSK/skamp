@@ -14,7 +14,6 @@ interface MediaGridViewProps {
   draggedFolder: MediaFolder | null;
   dragOverFolder: string | null;
   currentFolderId?: string;
-  companies: Array<{ id: string; name: string }>;
   getAssetTooltip: (asset: MediaAsset) => string;
   handleAssetDragStart: (e: React.DragEvent, asset: MediaAsset) => void;
   handleAssetDragEnd: () => void;
@@ -45,7 +44,6 @@ export default function MediaGridView({
   draggedFolder,
   dragOverFolder,
   currentFolderId,
-  companies,
   getAssetTooltip,
   handleAssetDragStart,
   handleAssetDragEnd,
@@ -96,9 +94,6 @@ export default function MediaGridView({
       {assets.map((asset) => {
         const isSelected = selectedAssets.has(asset.id!);
         const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
-        const companyName = asset.clientId
-          ? companies.find(c => c.id === asset.clientId)?.name
-          : undefined;
 
         return (
           <MediaCard
@@ -108,7 +103,6 @@ export default function MediaGridView({
             isDragging={isDragging}
             isSelectionMode={isSelectionMode}
             selectedAssetsCount={selectedAssets.size}
-            companyName={companyName}
             tooltip={getAssetTooltip(asset)}
             onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
             onDragEnd={handleAssetDragEnd}

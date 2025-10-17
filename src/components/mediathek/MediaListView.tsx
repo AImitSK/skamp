@@ -30,7 +30,6 @@ interface MediaListViewProps {
   assets: MediaAsset[];
   selectedAssets: Set<string>;
   isSelectionMode: boolean;
-  companies: Array<{ id: string; name: string }>;
   toggleAssetSelection: (assetId: string) => void;
   setIsSelectionMode: (mode: boolean) => void;
   selectAllAssets: () => void;
@@ -73,7 +72,6 @@ export default function MediaListView({
   assets,
   selectedAssets,
   isSelectionMode,
-  companies,
   toggleAssetSelection,
   setIsSelectionMode,
   selectAllAssets,
@@ -106,7 +104,6 @@ export default function MediaListView({
           <TableHeader>Name</TableHeader>
           <TableHeader>Typ</TableHeader>
           <TableHeader>Größe</TableHeader>
-          <TableHeader>Kunde</TableHeader>
           <TableHeader>Erstellt am</TableHeader>
           <TableHeader>
             <span className="sr-only">Aktionen</span>
@@ -116,10 +113,6 @@ export default function MediaListView({
       <TableBody>
         {/* Render Folders First */}
         {folders.map((folder) => {
-          const associatedCompany = folder.clientId
-            ? companies.find(c => c.id === folder.clientId)
-            : null;
-
           return (
             <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50">
               <TableCell>
@@ -138,15 +131,6 @@ export default function MediaListView({
               </TableCell>
               <TableCell>Ordner</TableCell>
               <TableCell>—</TableCell>
-              <TableCell>
-                {associatedCompany ? (
-                  <Badge color="blue" className="text-xs">
-                    {associatedCompany.name}
-                  </Badge>
-                ) : (
-                  <Text>—</Text>
-                )}
-              </TableCell>
               <TableCell>
                 {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
               </TableCell>
@@ -178,9 +162,6 @@ export default function MediaListView({
 
         {/* Render Media Assets */}
         {assets.map((asset) => {
-          const associatedCompany = asset.clientId
-            ? companies.find(c => c.id === asset.clientId)
-            : null;
           const FileIcon = getFileIcon(asset.fileType);
 
           return (
@@ -213,15 +194,6 @@ export default function MediaListView({
               </TableCell>
               <TableCell>
                 <Text>{formatFileSize(asset.metadata?.fileSize)}</Text>
-              </TableCell>
-              <TableCell>
-                {associatedCompany ? (
-                  <Badge color="blue" className="text-xs">
-                    {associatedCompany.name}
-                  </Badge>
-                ) : (
-                  <Text>—</Text>
-                )}
               </TableCell>
               <TableCell>
                 {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}

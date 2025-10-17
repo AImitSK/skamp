@@ -3,7 +3,6 @@
 
 import { memo } from "react";
 import { MediaAsset } from "@/types/media";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dropdown,
@@ -30,7 +29,6 @@ interface MediaCardProps {
   isDragging: boolean;
   isSelectionMode: boolean;
   selectedAssetsCount: number;
-  companyName?: string;
   tooltip?: string;
   onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
@@ -62,7 +60,6 @@ const MediaCard = memo(function MediaCard({
   isDragging,
   isSelectionMode,
   selectedAssetsCount,
-  companyName,
   tooltip,
   onDragStart,
   onDragEnd,
@@ -185,17 +182,9 @@ const MediaCard = memo(function MediaCard({
 
       {/* File Info */}
       <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-900 truncate mb-2" title={asset.fileName}>
+        <h3 className="text-sm font-medium text-gray-900 truncate" title={asset.fileName}>
           {asset.fileName}
         </h3>
-
-        {companyName && (
-          <div>
-            <Badge color="blue" className="text-xs">
-              {companyName}
-            </Badge>
-          </div>
-        )}
       </div>
     </div>
   );

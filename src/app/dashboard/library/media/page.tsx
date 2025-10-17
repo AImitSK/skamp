@@ -4,7 +4,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useCrmData } from "@/context/CrmDataContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { throttle } from "@/lib/utils/throttle";
@@ -49,7 +48,6 @@ type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const { user } = useAuth();
-  const { companies } = useCrmData();
   const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -91,9 +89,6 @@ export default function MediathekPage() {
   const [editingAsset, setEditingAsset] = useState<MediaAsset | undefined>(undefined);
   const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null);
 
-  // Upload-spezifische States
-  const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>(undefined);
-  
   // Smart Router Feature Flag aus Konfiguration
   const [featureFlags] = useState(() => getMediaLibraryFeatureFlags());
   const useSmartRouterEnabled = shouldUseSmartRouter();
@@ -147,23 +142,6 @@ export default function MediathekPage() {
       setCurrentUserId(user.uid);
     }
   }, [user, currentOrganization]);
-
-  // URL-Parameter Handler
-  useEffect(() => {
-    const uploadFor = searchParams.get('uploadFor');
-    
-    if (uploadFor && companies.length > 0) {
-      const company = companies.find(c => c.id === uploadFor);
-      if (company) {
-        setPreselectedClientId(uploadFor);
-        setShowUploadModal(true);
-        
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('uploadFor');
-        router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-      }
-    }
-  }, [searchParams, companies, router]);
 
   // ✅ React Query: No manual loadData() needed - queries auto-fetch and cache
 
@@ -633,13 +611,11 @@ export default function MediathekPage() {
 
   // Upload Modal Handlers
   const handleUploadModalOpen = useCallback(() => {
-    setPreselectedClientId(undefined);
     setShowUploadModal(true);
   }, []);
 
   const handleUploadModalClose = useCallback(() => {
     setShowUploadModal(false);
-    setPreselectedClientId(undefined);
   }, []);
 
   // Reset page when debounced search changes
@@ -680,13 +656,8 @@ export default function MediathekPage() {
       tooltip += `\n\nBeschreibung: ${asset.description}`;
     }
 
-    const company = asset.clientId ? companies.find(c => c.id === asset.clientId) : null;
-    if (company) {
-      tooltip += `\nKunde: ${company.name}`;
-    }
-
     return tooltip;
-  }, [companies]);
+  }, []);
 
 
 
@@ -764,7 +735,6 @@ export default function MediathekPage() {
                   draggedFolder={draggedFolder}
                   dragOverFolder={dragOverFolder}
                   currentFolderId={currentFolderId}
-                  companies={companies}
                   getAssetTooltip={getAssetTooltip}
                   handleAssetDragStart={handleAssetDragStart}
                   handleAssetDragEnd={handleAssetDragEnd}
@@ -791,7 +761,6 @@ export default function MediathekPage() {
                   assets={paginatedAssets}
                   selectedAssets={selectedAssets}
                   isSelectionMode={isSelectionMode}
-                  companies={companies}
                   toggleAssetSelection={toggleAssetSelection}
                   setIsSelectionMode={setIsSelectionMode}
                   selectAllAssets={selectAllAssets}
@@ -838,7 +807,6 @@ export default function MediathekPage() {
           onUploadSuccess={() => {}} // React Query auto-invalidates queries
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
-          preselectedClientId={preselectedClientId}
           organizationId={organizationId}
           userId={currentUserId}
         />
