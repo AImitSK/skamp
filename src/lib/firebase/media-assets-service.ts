@@ -135,6 +135,9 @@ export async function uploadMedia(
               storagePath,
               downloadUrl,
               ...(folderId && { folderId }),
+              metadata: {
+                fileSize: file.size, // Dateigröße in Bytes
+              },
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
             };

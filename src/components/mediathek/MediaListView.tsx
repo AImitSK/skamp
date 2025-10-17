@@ -58,6 +58,16 @@ const getFileIcon = (fileType: string | undefined) => {
   }
 };
 
+const formatFileSize = (bytes: number | undefined): string => {
+  if (!bytes || bytes === 0) return '—';
+
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const size = bytes / Math.pow(1024, i);
+
+  return `${size.toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`;
+};
+
 export default function MediaListView({
   folders,
   assets,
@@ -202,7 +212,7 @@ export default function MediaListView({
                 <Text>{asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
               </TableCell>
               <TableCell>
-                <Text>—</Text>
+                <Text>{formatFileSize(asset.metadata?.fileSize)}</Text>
               </TableCell>
               <TableCell>
                 {associatedCompany ? (
