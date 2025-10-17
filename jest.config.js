@@ -24,6 +24,9 @@ const customJestConfig = {
     '^firebase/firestore$': '<rootDir>/src/__tests__/__mocks__/firebase/firestore.ts',
     '^firebase/storage$': '<rootDir>/src/__tests__/__mocks__/firebase/storage.ts',
     '^firebase/app$': '<rootDir>/src/__tests__/__mocks__/firebase/app.ts',
+    // Mock react-dnd
+    '^react-dnd$': '<rootDir>/src/__mocks__/react-dnd.ts',
+    '^react-dnd-html5-backend$': '<rootDir>/src/__mocks__/react-dnd-html5-backend.ts',
   },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -34,7 +37,7 @@ const customJestConfig = {
   ],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(nanoid|@firebase|firebase)/)',
+    '/node_modules/(?!(nanoid|@firebase|firebase|react-dnd|dnd-core|@react-dnd)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
