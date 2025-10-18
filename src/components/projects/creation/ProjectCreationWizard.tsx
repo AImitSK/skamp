@@ -1,38 +1,40 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
   RocketLaunchIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { 
-  ProjectCreationWizardData, 
-  ProjectCreationResult, 
+import {
+  ProjectCreationWizardData,
+  ProjectCreationResult,
   ProjectCreationOptions,
-  ValidationResult,
-  ProjectPriority 
+  ProjectPriority
 } from '@/types/project';
 import { projectService } from '@/lib/firebase/project-service';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { useAuth } from '@/context/AuthContext';
 import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
-import { TagInput } from '@/components/ui/tag-input';
-import { ClientSelector } from './ClientSelector';
-import { TeamMemberMultiSelect } from './TeamMemberMultiSelect';
 import { CreationSuccessDashboard } from './CreationSuccessDashboard';
 import { Tag, TagColor } from '@/types/crm';
-import { nanoid } from 'nanoid';
+
+// Step Components
+import { ProjectStep, ClientStep, TeamStep } from './steps';
+import { WizardStep, ProjectCreationFormData } from './steps/types';
+
+// Navigation Components
+import { StepTabs } from './components/StepTabs';
+import { StepActions } from './components/StepActions';
 
 // Alert Component
-function Alert({ 
-  type = 'error', 
-  title, 
+function Alert({
+  type = 'error',
+  title,
   message,
   onDismiss
-}: { 
+}: {
   type?: 'error' | 'warning' | 'info';
   title?: string;
   message: string;
@@ -88,68 +90,76 @@ interface ProjectCreationWizardProps {
   organizationId: string;
 }
 
-export function ProjectCreationWizard({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  organizationId 
+export function ProjectCreationWizard({
+  isOpen,
+  onClose,
+  onSuccess,
+  organizationId
 }: ProjectCreationWizardProps) {
   const { user } = useAuth();
-  
+
+  // Multi-Step State
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
+  const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [creationOptions, setCreationOptions] = useState<ProjectCreationOptions | null>(null);
   const [creationResult, setCreationResult] = useState<ProjectCreationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  
-  // Vereinfachte Wizard-Daten
-  const [formData, setFormData] = useState({
+
+  // Form Data State
+  const [formData, setFormData] = useState<ProjectCreationFormData>({
+    // Step 1: Projekt
     title: '',
     description: '',
-    clientId: '',
     priority: 'medium' as ProjectPriority,
-    projectManager: '',
-    assignedTeamMembers: [] as string[],
-    createCampaignImmediately: false
+    tags: [],
+    createCampaignImmediately: true, // Default: AN
+
+    // Step 2: Kunde
+    clientId: '',
+
+    // Step 3: Team
+    assignedTeamMembers: [],
+    projectManager: ''
   });
 
-  // Lade Creation Options beim Öffnen und reset bei Close
+  // Load Creation Options und Tags beim Öffnen
   useEffect(() => {
     if (isOpen) {
-      // Reset creation result when opening
+      // Reset state when opening
       setCreationResult(null);
       setError(null);
-      
-      // Reset form data when opening - find composite ID for project manager
-      const userMember = user?.uid && creationOptions?.availableTeamMembers?.find(member => 
+      setCurrentStep(1);
+      setCompletedSteps([]);
+
+      // Find composite ID for project manager
+      const userMember = user?.uid && creationOptions?.availableTeamMembers?.find(member =>
         member.id.includes(user.uid)
       );
-      
+
+      // Reset form data
       setFormData({
         title: '',
         description: '',
-        clientId: '',
         priority: 'medium' as ProjectPriority,
-        projectManager: userMember ? userMember.id : '',
+        tags: [],
+        createCampaignImmediately: true, // Default: AN
+        clientId: '',
         assignedTeamMembers: user?.uid ? [user.uid] : [],
-        createCampaignImmediately: false
+        projectManager: userMember ? userMember.id : ''
       });
-      
-      // Reset tags
-      setSelectedTagIds([]);
-      
+
       if (!creationOptions) {
         loadCreationOptions();
       }
-      
-      // Load tags
+
       if (user?.uid) {
         loadTags();
       }
     }
   }, [isOpen, user?.uid]);
-
 
   const loadCreationOptions = async () => {
     try {
@@ -157,6 +167,7 @@ export function ProjectCreationWizard({
       const options = await projectService.getProjectCreationOptions(organizationId);
       setCreationOptions(options);
     } catch (error) {
+      console.error('Failed to load creation options:', error);
     } finally {
       setIsLoading(false);
     }
@@ -168,6 +179,7 @@ export function ProjectCreationWizard({
       const userTags = await tagsService.getAll(organizationId, user?.uid);
       setTags(userTags);
     } catch (error) {
+      console.error('Failed to load tags:', error);
     }
   };
 
@@ -180,7 +192,6 @@ export function ProjectCreationWizard({
         organizationId
       );
 
-      // Reload tags after creation
       await loadTags();
       return tagId;
     } catch (error) {
@@ -188,50 +199,80 @@ export function ProjectCreationWizard({
     }
   };
 
-  const updateFormData = (updates: Partial<typeof formData>) => {
-    setFormData(prev => ({ 
-      ...prev, 
+  const updateFormData = (updates: Partial<ProjectCreationFormData>) => {
+    setFormData(prev => ({
+      ...prev,
       ...updates
     }));
   };
 
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
+  // Step Validation
+  const isStepValid = useMemo(() => {
+    switch (currentStep) {
+      case 1:
+        // Projekt: Titel min 3 Zeichen
+        return formData.title.trim().length >= 3;
+      case 2:
+        // Kunde: ClientId erforderlich
+        return !!formData.clientId;
+      case 3:
+        // Team: Optional, immer valid
+        return true;
+      default:
+        return false;
+    }
+  }, [currentStep, formData]);
 
-    // Validation
-    if (!formData.title.trim()) {
-      setError('Projekt-Titel ist erforderlich');
-      return;
+  // Navigation Handlers
+  const handleNext = () => {
+    if (!isStepValid) return;
+
+    // Mark current step as completed
+    setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
+
+    // Move to next step
+    setCurrentStep((prev) => Math.min(3, prev + 1) as WizardStep);
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep((prev) => Math.max(1, prev - 1) as WizardStep);
+  };
+
+  const handleStepChange = (step: WizardStep) => {
+    // Allow navigating to completed steps or current step
+    if (completedSteps.includes(step) || step <= currentStep) {
+      setCurrentStep(step);
     }
-    if (!formData.clientId) {
-      setError('Bitte wählen Sie einen Kunden aus');
-      return;
-    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!user || !isStepValid) return;
 
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Create simplified wizard data
+
+      // Create wizard data from formData
       const wizardData: ProjectCreationWizardData = {
         title: formData.title,
         description: formData.description,
         clientId: formData.clientId,
         priority: formData.priority,
         color: '#005fab',
-        tags: selectedTagIds,
+        tags: formData.tags,
         assignedTeamMembers: formData.assignedTeamMembers,
         projectManager: formData.projectManager || undefined,
         templateId: undefined,
         customTasks: [],
         startDate: undefined,
         createCampaignImmediately: formData.createCampaignImmediately,
-        campaignTitle: formData.createCampaignImmediately ? `${formData.title} - PR-Kampagne` : '',
+        campaignTitle: formData.createCampaignImmediately
+          ? `${formData.title} - PR-Kampagne`
+          : '',
         initialAssets: [],
         distributionLists: [],
-        completedSteps: [1, 2, 3, 4],
-        currentStep: 4
+        completedSteps: [1, 2, 3],
+        currentStep: 3
       };
 
       const result = await projectService.createProjectFromWizard(
@@ -243,7 +284,6 @@ export function ProjectCreationWizard({
       if (result.success) {
         setCreationResult(result);
         onSuccess(result);
-        // Don't auto-close - let user close manually
       } else {
         const errorDetails = result.error || (result as any).message || 'Unbekannter Fehler';
         setError(`Projekt konnte nicht erstellt werden: ${errorDetails}`);
@@ -280,7 +320,7 @@ export function ProjectCreationWizard({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -297,6 +337,13 @@ export function ProjectCreationWizard({
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <StepTabs
+          currentStep={currentStep}
+          onStepChange={handleStepChange}
+          completedSteps={completedSteps}
+        />
+
         {/* Error Alert */}
         {error && (
           <div className="px-6 py-4">
@@ -308,191 +355,43 @@ export function ProjectCreationWizard({
           </div>
         )}
 
+        {/* Step Content */}
+        <div className="px-6 py-6 overflow-y-auto flex-1">
+          {currentStep === 1 && (
+            <ProjectStep
+              formData={formData}
+              onUpdate={updateFormData}
+              creationOptions={creationOptions}
+              tags={tags}
+              onCreateTag={handleCreateTag}
+            />
+          )}
+          {currentStep === 2 && (
+            <ClientStep
+              formData={formData}
+              onUpdate={updateFormData}
+              creationOptions={creationOptions}
+            />
+          )}
+          {currentStep === 3 && (
+            <TeamStep
+              formData={formData}
+              onUpdate={updateFormData}
+              creationOptions={creationOptions}
+            />
+          )}
+        </div>
 
-        {/* Form */}
-        <form 
-          onSubmit={handleCreateProject} 
-          onKeyDown={(e) => {
-            // Prevent form submission on Enter key except for:
-            // - Submit button
-            // - Textarea (for line breaks)
-            const target = e.target as HTMLElement;
-            if (e.key === 'Enter' &&
-                target.tagName !== 'BUTTON' &&
-                target.tagName !== 'TEXTAREA') {
-              e.preventDefault();
-            }
-          }}
-          className="px-6 py-6">
-          <div className="space-y-6">
-            {/* Projekt-Titel */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Projekt-Titel *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => updateFormData({ title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                placeholder="z.B. Produktlaunch Q2 2024"
-              />
-            </div>
-            
-            {/* Beschreibung */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Beschreibung
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => updateFormData({ description: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                placeholder="Kurze Beschreibung des Projekts..."
-              />
-            </div>
-
-            {/* Kunde */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kunde *
-              </label>
-              <ClientSelector
-                clients={creationOptions?.availableClients || []}
-                selectedClientId={formData.clientId}
-                onSelect={(clientId) => updateFormData({ clientId })}
-              />
-            </div>
-
-            {/* Priorität */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Priorität
-              </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => updateFormData({ priority: e.target.value as ProjectPriority })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="low">Niedrig</option>
-                <option value="medium">Mittel</option>
-                <option value="high">Hoch</option>
-                <option value="urgent">Dringend</option>
-              </select>
-            </div>
-
-
-            {/* Tags */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
-              </label>
-              <TagInput
-                selectedTagIds={selectedTagIds}
-                availableTags={tags}
-                onChange={setSelectedTagIds}
-                onCreateTag={handleCreateTag}
-              />
-            </div>
-
-            {/* Team-Mitglieder */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Team-Mitglieder
-              </label>
-              <TeamMemberMultiSelect
-                teamMembers={creationOptions?.availableTeamMembers || []}
-                selectedMembers={formData.assignedTeamMembers}
-                onSelectionChange={(members) => {
-                  updateFormData({ assignedTeamMembers: members });
-                  
-                  // Auto-select current user as project manager if they are in the team
-                  if (user?.uid && members.includes(user.uid) && !formData.projectManager) {
-                    // Find the user's composite ID from available team members
-                    const userMember = creationOptions?.availableTeamMembers?.find(member => 
-                      member.id.includes(user.uid)
-                    );
-                    if (userMember) {
-                      updateFormData({ projectManager: userMember.id });
-                    }
-                  }
-                  
-                  // Clear project manager if they are no longer in the team
-                  if (formData.projectManager && !members.some(selectedId => 
-                    formData.projectManager === selectedId || formData.projectManager.includes(selectedId)
-                  )) {
-                    updateFormData({ projectManager: '' });
-                  }
-                }}
-              />
-              
-              {/* Projekt-Manager aus ausgewählten Team-Mitgliedern */}
-              {formData.assignedTeamMembers.length > 0 && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Projekt-Manager / Besitzer
-                  </label>
-                  <select
-                    value={formData.projectManager}
-                    onChange={(e) => updateFormData({ projectManager: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  >
-                    {creationOptions?.availableTeamMembers
-                      ?.filter(member => formData.assignedTeamMembers.some(selectedId => 
-                        member.id === selectedId || member.id.includes(selectedId)
-                      ))
-                      .map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.displayName} ({member.role})
-                          {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
-                        </option>
-                      ))
-                    }
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* PR-Kampagne erstellen */}
-            <div className="flex items-start space-x-3">
-              <input
-                id="createCampaign"
-                type="checkbox"
-                checked={formData.createCampaignImmediately}
-                onChange={(e) => updateFormData({ createCampaignImmediately: e.target.checked })}
-                className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <div>
-                <label htmlFor="createCampaign" className="text-sm font-medium text-gray-700 cursor-pointer">
-                  PR-Kampagne erstellen
-                </label>
-                <Text className="text-sm text-gray-600 mt-1">
-                  Erstellt automatisch eine verknüpfte PR-Kampagne für dieses Projekt.
-                </Text>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-            <Button
-              type="button"
-              color="secondary"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Abbrechen
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || !formData.title || !formData.clientId}
-            >
-              {isLoading ? 'Erstelle Projekt...' : 'Projekt erstellen'}
-            </Button>
-          </div>
-        </form>
+        {/* Actions */}
+        <StepActions
+          currentStep={currentStep}
+          isLoading={isLoading}
+          isStepValid={isStepValid}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onCancel={onClose}
+          onSubmit={handleCreateProject}
+        />
       </div>
     </div>
   );
