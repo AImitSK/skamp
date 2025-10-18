@@ -885,9 +885,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
-### Phase 3.5: Bugfixes nach User-Testing
+### Phase 3.5: Bugfixes nach User-Testing ✅
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Completed
 **Aufwand:** ~4 Stunden
 
 #### Bug 1: Kanban Card zeigt Tag-IDs statt Tag-Namen ✅
@@ -964,7 +964,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **Commits:** `5353e958`
 
-#### Bugfix 7: Notification Error - project_assignment ❌
+#### Bugfix 7: Notification Error - project_assignment ✅
 
 **Problem:**
 ```
@@ -972,31 +972,20 @@ Error: Invalid context for notification type: project_assignment
 at c.create (549-f46abe3cd2eb3c72.js:1:2181)
 ```
 
-**Status:** ⏸️ TODO
-**Analyse:**
-- `notificationsService.create()` wirft Fehler
-- Notification-Type `project_assignment` hat "Invalid context"
-- linkType ist falsch: `'campaign'` sollte `'project'` sein
-- Metadata fehlt möglicherweise required fields
+**Root Cause:**
+- `notificationsService.create()` warf Fehler bei Notification-Type `project_assignment`
+- linkType war falsch: `'campaign'` statt `'project'`
+- Metadata hatte falsches Format: `{ campaignTitle }` statt `{ projectTitle, projectId }`
 
-**Fix (TODO):**
-```typescript
-// In project-service.ts Zeile 1592-1604
-await notificationsService.create({
-  userId: memberId,
-  organizationId,
-  type: 'project_assignment',
-  title: 'Neues Projekt zugewiesen',
-  message: `Du wurdest dem Projekt "${wizardData.title}" zugewiesen.`,
-  linkId: createdProjectId,
-  linkType: 'project', // ← ÄNDERN von 'campaign' zu 'project'
-  isRead: false,
-  metadata: {
-    projectTitle: wizardData.title, // ← ÄNDERN von campaignTitle
-    projectId: createdProjectId     // ← HINZUFÜGEN
-  }
-});
-```
+**Fix:**
+- linkType von `'campaign'` zu `'project'` geändert (Zeile 1599)
+- metadata.campaignTitle zu projectTitle geändert (Zeile 1602)
+- metadata.projectId hinzugefügt (Zeile 1603)
+
+**Betroffene Datei:**
+- `src/lib/firebase/project-service.ts` (Zeilen 1599, 1601-1604)
+
+**Commits:** `f915379f`
 
 ---
 
