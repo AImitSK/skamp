@@ -158,47 +158,25 @@ export function ProjectCreationWizard({
 
   // Auto-select current user as team member AND project manager when creationOptions loads
   useEffect(() => {
-    console.log('=== AUTO-SELECT USER DEBUG ===');
-    console.log('isOpen:', isOpen);
-    console.log('user?.uid:', user?.uid);
-    console.log('creationOptions?.availableTeamMembers:', creationOptions?.availableTeamMembers?.length);
-
     if (isOpen && user?.uid && creationOptions?.availableTeamMembers && creationOptions.availableTeamMembers.length > 0) {
-      console.log('ALL TEAM MEMBERS:');
-      creationOptions.availableTeamMembers.forEach(member => {
-        console.log('  - ID:', member.id, '| userId:', (member as any).userId, '| Name:', member.displayName);
-      });
-
       const userMember = creationOptions.availableTeamMembers.find(member =>
         (member as any).userId === user.uid
       );
 
-      console.log('userMember found:', userMember?.displayName, userMember?.id);
-
       if (userMember) {
         setFormData(prev => {
-          console.log('prev.projectManager:', prev.projectManager);
-          console.log('prev.assignedTeamMembers:', prev.assignedTeamMembers);
-
           // Only set if not already set (to avoid infinite loop)
           if (prev.projectManager === '' && prev.assignedTeamMembers.length === 0) {
-            console.log('✅ AUTO-SELECTING USER:', user.uid, userMember.id);
             return {
               ...prev,
               assignedTeamMembers: [userMember.id],
               projectManager: userMember.id
             };
           }
-          console.log('⚠️ SKIPPING AUTO-SELECT (already set)');
           return prev;
         });
-      } else {
-        console.log('❌ USER MEMBER NOT FOUND');
       }
-    } else {
-      console.log('❌ CONDITIONS NOT MET');
     }
-    console.log('=== END AUTO-SELECT DEBUG ===');
   }, [isOpen, user?.uid, creationOptions]);
 
   const loadCreationOptions = async () => {
@@ -396,7 +374,7 @@ export function ProjectCreationWizard({
         )}
 
         {/* Step Content */}
-        <div className="px-6 py-6 overflow-y-auto flex-1">
+        <div className="px-6 py-6 h-[500px] overflow-y-auto">
           {currentStep === 1 && (
             <ProjectStep
               formData={formData}
