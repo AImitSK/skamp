@@ -1596,10 +1596,11 @@ export const projectService = {
                 title: 'Neues Projekt zugewiesen',
                 message: `Du wurdest dem Projekt "${wizardData.title}" zugewiesen.`,
                 linkId: createdProjectId,
-                linkType: 'campaign' as LinkType,
+                linkType: 'project' as LinkType,
                 isRead: false,
                 metadata: {
-                  campaignTitle: wizardData.title
+                  projectTitle: wizardData.title,
+                  projectId: createdProjectId
                 }
               });
               notificationsSent++;
