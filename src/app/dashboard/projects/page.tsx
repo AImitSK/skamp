@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -385,8 +384,15 @@ export default function ProjectsPage() {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-6">
-        <Heading>Projekte</Heading>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-semibold text-zinc-900">Projekte</h1>
+        <Button
+          onClick={() => setShowWizard(true)}
+          className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
+        >
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Neues Projekt
+        </Button>
       </div>
 
       {/* Toolbar */}
@@ -405,15 +411,6 @@ export default function ProjectsPage() {
               className="block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 h-10"
             />
           </div>
-
-          {/* Primary Action */}
-          <Button
-            onClick={() => setShowWizard(true)}
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Neues Projekt
-          </Button>
 
           {/* View Mode Toggle */}
           <div className="flex items-center bg-zinc-100 rounded-lg p-1">
