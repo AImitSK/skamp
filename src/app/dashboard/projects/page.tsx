@@ -38,6 +38,7 @@ import { TeamMember } from '@/types/international';
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
+import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
 import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
 
@@ -92,38 +93,21 @@ export default function ProjectsPage() {
   const [filters, setFilters] = useState<BoardFilters>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
-  const [showActive, setShowActive] = useState(true);
-  const [showArchived, setShowArchived] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Gefilterte Projekte basierend auf Checkboxen und Suche
-  const projects = React.useMemo(() => {
-    let filtered = allProjects;
+  // ✅ NEU: Filter-Hook verwenden
+  const {
+    showActive,
+    showArchived,
+    filteredProjects,
+    toggleActive,
+    toggleArchived,
+  } = useProjectFilters(allProjects, searchTerm);
 
-    // Status-Filter
-    if (showActive && showArchived) {
-      filtered = allProjects;
-    } else if (showActive) {
-      filtered = allProjects.filter(p => p.status !== 'archived');
-    } else if (showArchived) {
-      filtered = allProjects.filter(p => p.status === 'archived');
-    } else {
-      return [];
-    }
-
-    // Such-Filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.title.toLowerCase().includes(searchLower) ||
-        p.customer?.name?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [allProjects, showActive, showArchived, searchTerm]);
+  // Gefilterte Projekte aus Hook verwenden
+  const projects = filteredProjects;
 
   const loading = isLoading;
 
@@ -475,7 +459,7 @@ export default function ProjectsPage() {
                       <input
                         type="checkbox"
                         checked={showActive}
-                        onChange={(e) => setShowActive(e.target.checked)}
+                        onChange={(e) => toggleActive(e.target.checked)}
                         className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                       />
                       <span>Aktiv</span>
@@ -487,7 +471,7 @@ export default function ProjectsPage() {
                       <input
                         type="checkbox"
                         checked={showArchived}
-                        onChange={(e) => setShowArchived(e.target.checked)}
+                        onChange={(e) => toggleArchived(e.target.checked)}
                         className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                       />
                       <span>Archiv</span>
