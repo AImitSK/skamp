@@ -16,6 +16,22 @@ interface ClientSelectorProps {
   onSelect: (clientId: string) => void;
 }
 
+// Helper function to translate company types to German
+function getCompanyTypeLabel(type: string): string {
+  const translations: Record<string, string> = {
+    'customer': 'Kunde',
+    'supplier': 'Lieferant',
+    'partner': 'Partner',
+    'publisher': 'Verlag',
+    'media_house': 'Medienhaus',
+    'agency': 'Agentur',
+    'enterprise': 'Unternehmen',
+    'startup': 'Start-up',
+    'other': 'Sonstiges'
+  };
+  return translations[type] || type;
+}
+
 export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -102,7 +118,7 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
                   </h4>
                   <div className="flex items-center space-x-4 mt-1">
                     <span className="text-xs text-gray-500">
-                      Typ: {client.type}
+                      Typ: {getCompanyTypeLabel(client.type)}
                     </span>
                     <span className="text-xs text-gray-500">
                       {client.contactCount} Kontakte
@@ -119,7 +135,7 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
                       ? 'bg-green-100 text-green-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {client.type}
+                    {getCompanyTypeLabel(client.type)}
                   </span>
                 </div>
               </div>

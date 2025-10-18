@@ -38,3 +38,33 @@ export const getStatusColor = (status: string): string => {
       return 'bg-blue-100 text-blue-800';
   }
 };
+
+export const getPriorityLabel = (priority?: ProjectPriority): string => {
+  switch (priority) {
+    case 'urgent':
+      return 'Dringend';
+    case 'high':
+      return 'Hoch';
+    case 'medium':
+      return 'Mittel';
+    case 'low':
+      return 'Niedrig';
+    default:
+      return 'Keine';
+  }
+};
+
+export const getStatusLabel = (status: string): string => {
+  switch (status) {
+    case 'active':
+      return 'Aktiv';
+    case 'on_hold':
+      return 'Pausiert';
+    case 'completed':
+      return 'Abgeschlossen';
+    case 'cancelled':
+      return 'Abgebrochen';
+    default:
+      return status;
+  }
+};

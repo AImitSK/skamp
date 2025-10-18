@@ -20,8 +20,10 @@ import { de } from 'date-fns/locale/de';
 import { useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import toast from 'react-hot-toast';
 import { ProjectCardProps } from './types';
-import { getPriorityColor, getPriorityIcon, getStatusColor } from './helpers';
+import { getPriorityColor, getPriorityIcon, getStatusColor, getPriorityLabel, getStatusLabel } from './helpers';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { tagsService } from '@/lib/firebase/tags-service';
+import { Tag } from '@/types/crm';
 
 export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   project,
@@ -40,6 +42,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
   const quickActionButtonRef = useRef<HTMLButtonElement>(null);
 
   // React Query Mutations
@@ -51,8 +54,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   // Project Properties with useMemo
   const projectPriority = useMemo(() => (project as any).priority as ProjectPriority, [project]);
-  const projectTags = useMemo(() => (project as any).tags as string[] || [], [project]);
+  const projectTagIds = useMemo(() => (project as any).tags as string[] || [], [project]);
   const progress = useMemo(() => (project as any).progress, [project]);
+
+  // Map tag IDs to tag names
+  const projectTagNames = useMemo(() => {
+    if (!projectTagIds.length || !tags.length) return [];
+    return projectTagIds
+      .map(tagId => tags.find(t => t.id === tagId)?.name)
+      .filter(Boolean) as string[];
+  }, [projectTagIds, tags]);
 
   // Calculate Progress Percentage
 
@@ -86,6 +97,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
     loadTeamMembers();
   }, [currentOrganization?.id]);
+
+  // Load Tags
+  useEffect(() => {
+    const loadTags = async () => {
+      if (!currentOrganization?.id) return;
+
+      try {
+        const allTags = await tagsService.getAll(currentOrganization.id, project.userId);
+        setTags(allTags);
+      } catch (error) {
+        // Silent fail - tags are optional UI enhancement
+      }
+    };
+
+    loadTags();
+  }, [currentOrganization?.id, project.userId]);
 
   // Handlers with useCallback for performance
   const handleCardClick = useCallback((e: React.MouseEvent) => {
@@ -220,19 +247,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         </div>
 
         {/* Tags */}
-        {projectTags.length > 0 && (
+        {projectTagNames.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {projectTags.slice(0, 3).map((tag, index) => (
+            {projectTagNames.slice(0, 3).map((tagName, index) => (
               <span
                 key={index}
                 className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-800"
               >
-                {tag}
+                {tagName}
               </span>
             ))}
-            {projectTags.length > 3 && (
+            {projectTagNames.length > 3 && (
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-600">
-                +{projectTags.length - 3}
+                +{projectTagNames.length - 3}
               </span>
             )}
           </div>
@@ -278,13 +305,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             {projectPriority && (
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(projectPriority)}`}>
                 {getPriorityIcon(projectPriority)}
-                <span className="ml-1">{projectPriority}</span>
+                <span className="ml-1">{getPriorityLabel(projectPriority)}</span>
               </span>
             )}
 
             {/* Status Badge */}
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
-              {project.status}
+              {getStatusLabel(project.status)}
             </span>
           </div>
         </div>

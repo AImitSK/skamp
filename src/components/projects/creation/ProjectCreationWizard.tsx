@@ -134,11 +134,6 @@ export function ProjectCreationWizard({
       setCurrentStep(1);
       setCompletedSteps([]);
 
-      // Find composite ID for project manager
-      const userMember = user?.uid && creationOptions?.availableTeamMembers?.find(member =>
-        member.id.includes(user.uid)
-      );
-
       // Reset form data
       setFormData({
         title: '',
@@ -147,8 +142,8 @@ export function ProjectCreationWizard({
         tags: [],
         createCampaignImmediately: true, // Default: AN
         clientId: '',
-        assignedTeamMembers: user?.uid ? [user.uid] : [],
-        projectManager: userMember ? userMember.id : ''
+        assignedTeamMembers: [],
+        projectManager: ''
       });
 
       if (!creationOptions) {
@@ -160,6 +155,23 @@ export function ProjectCreationWizard({
       }
     }
   }, [isOpen, user?.uid]);
+
+  // Auto-select current user as team member and project manager when creationOptions loads
+  useEffect(() => {
+    if (isOpen && user?.uid && creationOptions?.availableTeamMembers) {
+      const userMember = creationOptions.availableTeamMembers.find(member =>
+        member.id.includes(user.uid)
+      );
+
+      if (userMember && formData.assignedTeamMembers.length === 0) {
+        setFormData(prev => ({
+          ...prev,
+          assignedTeamMembers: [user.uid],
+          projectManager: userMember.id
+        }));
+      }
+    }
+  }, [isOpen, user?.uid, creationOptions, formData.assignedTeamMembers.length]);
 
   const loadCreationOptions = async () => {
     try {
