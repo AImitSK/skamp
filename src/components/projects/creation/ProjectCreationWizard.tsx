@@ -158,20 +158,26 @@ export function ProjectCreationWizard({
 
   // Auto-select current user as team member and project manager when creationOptions loads
   useEffect(() => {
-    if (isOpen && user?.uid && creationOptions?.availableTeamMembers) {
+    if (isOpen && user?.uid && creationOptions?.availableTeamMembers && creationOptions.availableTeamMembers.length > 0) {
       const userMember = creationOptions.availableTeamMembers.find(member =>
         member.id.includes(user.uid)
       );
 
-      if (userMember && formData.assignedTeamMembers.length === 0) {
-        setFormData(prev => ({
-          ...prev,
-          assignedTeamMembers: [user.uid],
-          projectManager: userMember.id
-        }));
+      if (userMember) {
+        setFormData(prev => {
+          // Only set if not already set (to avoid infinite loop)
+          if (prev.assignedTeamMembers.length === 0 && prev.projectManager === '') {
+            return {
+              ...prev,
+              assignedTeamMembers: [user.uid],
+              projectManager: userMember.id
+            };
+          }
+          return prev;
+        });
       }
     }
-  }, [isOpen, user?.uid, creationOptions, formData.assignedTeamMembers.length]);
+  }, [isOpen, user?.uid, creationOptions]);
 
   const loadCreationOptions = async () => {
     try {
