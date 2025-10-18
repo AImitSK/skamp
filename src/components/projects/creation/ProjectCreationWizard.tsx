@@ -166,11 +166,11 @@ export function ProjectCreationWizard({
     if (isOpen && user?.uid && creationOptions?.availableTeamMembers && creationOptions.availableTeamMembers.length > 0) {
       console.log('ALL TEAM MEMBERS:');
       creationOptions.availableTeamMembers.forEach(member => {
-        console.log('  - ID:', member.id, '| Name:', member.displayName);
+        console.log('  - ID:', member.id, '| userId:', (member as any).userId, '| Name:', member.displayName);
       });
 
       const userMember = creationOptions.availableTeamMembers.find(member =>
-        member.id.includes(user.uid)
+        (member as any).userId === user.uid
       );
 
       console.log('userMember found:', userMember?.displayName, userMember?.id);

@@ -1680,6 +1680,7 @@ export const projectService = {
       
       const availableTeamMembers = teamMembers.map(member => ({
         id: member.id,
+        userId: member.userId,
         displayName: member.displayName,
         email: member.email,
         role: member.role,
