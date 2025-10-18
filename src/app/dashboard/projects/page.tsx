@@ -13,7 +13,6 @@ import {
   Squares2X2Icon,
   ListBulletIcon,
   FunnelIcon,
-  ChevronDownIcon,
   CheckIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
@@ -28,11 +27,7 @@ import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
 import { toastService } from '@/lib/utils/toast';
-import NoActiveProjectsState from './components/empty-states/NoActiveProjectsState';
-import NoArchivedProjectsState from './components/empty-states/NoArchivedProjectsState';
-import NoFiltersSelectedState from './components/empty-states/NoFiltersSelectedState';
-import NoProjectsAtAllState from './components/empty-states/NoProjectsAtAllState';
-import ProjectTable from './components/tables/ProjectTable';
+import ListView from './components/views/ListView';
 
 // Kanban Layout Wrapper Komponente
 const KanbanLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -473,68 +468,24 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Loading State */}
-      {loading && viewMode === 'list' && (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-            <p className="text-zinc-600">Projekte werden geladen...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Results Info */}
-      {!loading && !error && viewMode === 'list' && (
-        <div className="mb-4 flex items-center justify-between">
-          <Text className="text-sm text-zinc-600">
-            {projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'}
-            {searchTerm && (
-              <span className="ml-2">· gefiltert von {allProjects.length} gesamt</span>
-            )}
-          </Text>
-        </div>
-      )}
-
-      {/* Table View */}
-      {!loading && !error && viewMode === 'list' && (
-        <div className="space-y-4">
-          {/* Archiv Info-Banner wenn nur Archiv-Filter aktiv */}
-          {showArchived && !showActive && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <FunnelIcon className="h-5 w-5 text-blue-600 mr-2" />
-                <div>
-                  <h3 className="text-sm font-medium text-blue-900">
-                    Archivansicht aktiv
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {projects.length > 0 && (
-            <ProjectTable
-              projects={projects}
-              teamMembers={teamMembers}
-              loadingTeam={loadingTeam}
-              currentOrganizationId={currentOrganization.id}
-              userId={user?.uid || ''}
-              onEdit={handleEditProject}
-              onArchive={handleArchive}
-              onUnarchive={handleUnarchive}
-              onDelete={handleDelete}
-            />
-          )}
-          
-          {/* Empty State für Tabellenansicht */}
-          {projects.length === 0 && showActive && !showArchived && <NoActiveProjectsState />}
-          {projects.length === 0 && showArchived && !showActive && <NoArchivedProjectsState />}
-          {projects.length === 0 && (!showActive && !showArchived) && <NoFiltersSelectedState />}
-          {projects.length === 0 && (showActive && showArchived) && <NoProjectsAtAllState />}
-        </div>
+      {/* List View */}
+      {viewMode === 'list' && !error && (
+        <ListView
+          loading={loading}
+          projects={projects}
+          allProjects={allProjects}
+          searchTerm={searchTerm}
+          showActive={showActive}
+          showArchived={showArchived}
+          teamMembers={teamMembers}
+          loadingTeam={loadingTeam}
+          currentOrganizationId={currentOrganization.id}
+          userId={user?.uid || ''}
+          onEdit={handleEditProject}
+          onArchive={handleArchive}
+          onUnarchive={handleUnarchive}
+          onDelete={handleDelete}
+        />
       )}
 
 
