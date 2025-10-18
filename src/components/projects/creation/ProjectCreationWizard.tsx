@@ -158,25 +158,42 @@ export function ProjectCreationWizard({
 
   // Auto-select current user as team member AND project manager when creationOptions loads
   useEffect(() => {
+    console.log('=== AUTO-SELECT USER DEBUG ===');
+    console.log('isOpen:', isOpen);
+    console.log('user?.uid:', user?.uid);
+    console.log('creationOptions?.availableTeamMembers:', creationOptions?.availableTeamMembers?.length);
+
     if (isOpen && user?.uid && creationOptions?.availableTeamMembers && creationOptions.availableTeamMembers.length > 0) {
       const userMember = creationOptions.availableTeamMembers.find(member =>
         member.id.includes(user.uid)
       );
 
+      console.log('userMember found:', userMember?.displayName, userMember?.id);
+
       if (userMember) {
         setFormData(prev => {
+          console.log('prev.projectManager:', prev.projectManager);
+          console.log('prev.assignedTeamMembers:', prev.assignedTeamMembers);
+
           // Only set if not already set (to avoid infinite loop)
           if (prev.projectManager === '' && prev.assignedTeamMembers.length === 0) {
+            console.log('✅ AUTO-SELECTING USER:', user.uid, userMember.id);
             return {
               ...prev,
               assignedTeamMembers: [user.uid],
               projectManager: userMember.id
             };
           }
+          console.log('⚠️ SKIPPING AUTO-SELECT (already set)');
           return prev;
         });
+      } else {
+        console.log('❌ USER MEMBER NOT FOUND');
       }
+    } else {
+      console.log('❌ CONDITIONS NOT MET');
     }
+    console.log('=== END AUTO-SELECT DEBUG ===');
   }, [isOpen, user?.uid, creationOptions]);
 
   const loadCreationOptions = async () => {
