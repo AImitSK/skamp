@@ -5,25 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Text } from '@/components/ui/text';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import {
   PlusIcon,
   RocketLaunchIcon,
-  EllipsisVerticalIcon,
-  CalendarDaysIcon,
-  UserGroupIcon,
   FolderIcon,
   Squares2X2Icon,
   ListBulletIcon,
-  ViewColumnsIcon,
-  BuildingOfficeIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArchiveBoxIcon,
   FunnelIcon,
   ChevronDownIcon,
   CheckIcon,
@@ -40,11 +28,11 @@ import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
 import { toastService } from '@/lib/utils/toast';
-import Link from 'next/link';
 import NoActiveProjectsState from './components/empty-states/NoActiveProjectsState';
 import NoArchivedProjectsState from './components/empty-states/NoArchivedProjectsState';
 import NoFiltersSelectedState from './components/empty-states/NoFiltersSelectedState';
 import NoProjectsAtAllState from './components/empty-states/NoProjectsAtAllState';
+import ProjectTable from './components/tables/ProjectTable';
 
 // Kanban Layout Wrapper Komponente
 const KanbanLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -237,45 +225,29 @@ export default function ProjectsPage() {
     setViewMode(mode);
   };
 
-  const getProjectStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'green';
-      case 'on_hold': return 'yellow';
-      case 'completed': return 'blue';
-      case 'cancelled': return 'red';
-      default: return 'zinc';
-    }
+  // Table Actions
+  const handleArchive = async (projectId: string) => {
+    if (!currentOrganization) return;
+    await archiveProjectMutation.mutateAsync({
+      projectId,
+      organizationId: currentOrganization.id,
+      userId: user?.uid || ''
+    });
   };
 
-  const getProjectStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active': return 'Aktiv';
-      case 'on_hold': return 'Pausiert';
-      case 'completed': return 'Abgeschlossen';
-      case 'cancelled': return 'Abgebrochen';
-      default: return status;
-    }
+  const handleUnarchive = async (projectId: string) => {
+    if (!currentOrganization) return;
+    await projectService.unarchive(projectId, {
+      organizationId: currentOrganization.id,
+      userId: user?.uid || ''
+    });
   };
 
-  const getCurrentStageLabel = (stage: string) => {
-    switch (stage) {
-      case 'ideas_planning': return 'Planung';
-      case 'creation': return 'Erstellung';
-      case 'approval': return 'Freigabe';
-      case 'distribution': return 'Verteilung';
-      case 'monitoring': return 'Monitoring';
-      case 'completed': return 'Abgeschlossen';
-      default: return stage;
-    }
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+  const handleDelete = async (projectId: string) => {
+    if (!currentOrganization) return;
+    await deleteProjectMutation.mutateAsync({
+      projectId,
+      organizationId: currentOrganization.id
     });
   };
 
@@ -544,259 +516,17 @@ export default function ProjectsPage() {
           )}
 
           {projects.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="px-8 py-4 border-b border-zinc-200 bg-zinc-50">
-            <div className="flex items-center">
-              <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Projekt
-              </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Status
-              </div>
-              <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Projektphase
-              </div>
-              <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Team
-              </div>
-              <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Priorität
-              </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                Aktualisiert
-              </div>
-              <div className="w-12"></div>
-            </div>
-          </div>
-
-          {/* Table Body */}
-          <div className="divide-y divide-zinc-200">
-            {projects.map((project) => {
-              const projectPriority = (project as any).priority as string;
-              
-              return (
-                <div key={project.id} className="px-8 py-5 hover:bg-zinc-50 transition-colors">
-                  <div className="flex items-center">
-                    {/* Projekt Title mit Kunde */}
-                    <div className="flex-1 px-4 min-w-0">
-                      <Link
-                        href={`/dashboard/projects/${project.id}`}
-                        className="text-sm font-semibold text-zinc-900 hover:text-primary block truncate"
-                        title={project.title}
-                      >
-                        {project.title}
-                      </Link>
-                      {project.customer && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                          <span className="text-xs text-zinc-500 truncate">
-                            {project.customer.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="w-32 px-4">
-                      <Badge color={getProjectStatusColor(project.status)}>
-                        {getProjectStatusLabel(project.status)}
-                      </Badge>
-                    </div>
-
-                    {/* Projektphase als Text */}
-                    <div className="w-40 px-4">
-                      <div className="text-sm text-zinc-900">
-                        {getCurrentStageLabel(project.currentStage)}
-                      </div>
-                    </div>
-
-                    {/* Team Avatare */}
-                    <div className="w-40 px-4">
-                      {project.assignedTo && project.assignedTo.length > 0 ? (
-                        <div className="flex -space-x-2">
-                          {(() => {
-                            const uniqueMembers = [];
-                            const seenMemberIds = new Set();
-
-                            for (const userId of project.assignedTo) {
-                              const member = teamMembers.find(m => m.userId === userId || m.id === userId);
-                              if (member && !seenMemberIds.has(member.id)) {
-                                uniqueMembers.push({ userId, member });
-                                seenMemberIds.add(member.id);
-                              } else if (!member) {
-                                uniqueMembers.push({ userId, member: null });
-                              }
-                            }
-
-                            return uniqueMembers;
-                          })().slice(0, 3).map(({ userId, member }) => {
-                            
-                            if (!member || loadingTeam) {
-                              // Fallback für unbekannte Member
-                              return (
-                                <div
-                                  key={userId}
-                                  className="w-7 h-7 rounded-full bg-zinc-300 flex items-center justify-center text-zinc-600 text-xs font-medium ring-2 ring-white"
-                                  title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
-                                >
-                                  {loadingTeam ? "..." : "?"}
-                                </div>
-                              );
-                            }
-                            
-                            // Generate initials as fallback
-                            const initials = member.displayName
-                              .split(' ')
-                              .map(n => n[0])
-                              .join('')
-                              .toUpperCase()
-                              .slice(0, 2);
-                            
-                            return (
-                              <Avatar
-                                key={userId}
-                                className="size-7 ring-2 ring-white"
-                                src={member.photoUrl}
-                                initials={initials}
-                                title={member.displayName}
-                              />
-                            );
-                          })}
-                          {(() => {
-                            const uniqueMembers = [];
-                            const seenMemberIds = new Set();
-
-                            for (const userId of project.assignedTo) {
-                              const member = teamMembers.find(m => m.userId === userId || m.id === userId);
-                              if (member && !seenMemberIds.has(member.id)) {
-                                uniqueMembers.push({ userId, member });
-                                seenMemberIds.add(member.id);
-                              } else if (!member) {
-                                uniqueMembers.push({ userId, member: null });
-                              }
-                            }
-
-                            return uniqueMembers.length > 3 ? (
-                              <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-600 text-xs font-medium ring-2 ring-white">
-                                +{uniqueMembers.length - 3}
-                              </div>
-                            ) : null;
-                          })()}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-zinc-500">Kein Team</span>
-                      )}
-                    </div>
-
-                    {/* Priorität */}
-                    <div className="w-24 px-4">
-                      {projectPriority ? (
-                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                          projectPriority === 'urgent' ? 'bg-red-50 text-red-700 ring-red-600/20' :
-                          projectPriority === 'high' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
-                          projectPriority === 'medium' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
-                          projectPriority === 'low' ? 'bg-green-50 text-green-700 ring-green-600/20' :
-                          'bg-zinc-50 text-zinc-700 ring-zinc-600/20'
-                        }`}>
-                          {projectPriority === 'urgent' ? 'Dringend' :
-                           projectPriority === 'high' ? 'Hoch' :
-                           projectPriority === 'medium' ? 'Mittel' :
-                           projectPriority === 'low' ? 'Niedrig' : '-'}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-zinc-500">-</span>
-                      )}
-                    </div>
-
-                    {/* Aktualisiert */}
-                    <div className="w-32 px-4">
-                      <div className="text-xs text-zinc-600">
-                        {formatDate(project.updatedAt)}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="w-12 flex justify-end">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 stroke-[2.5]" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          <DropdownItem href={`/dashboard/projects/${project.id}`}>
-                            <EyeIcon className="h-4 w-4" />
-                            Projekt anzeigen
-                          </DropdownItem>
-                          <DropdownItem onClick={() => handleEditProject(project)}>
-                            <PencilIcon className="h-4 w-4" />
-                            Bearbeiten
-                          </DropdownItem>
-                          <DropdownDivider />
-                          {project.status === 'archived' ? (
-                            <DropdownItem
-                              onClick={async () => {
-                                try {
-                                  await projectService.unarchive(project.id!, {
-                                    organizationId: currentOrganization.id,
-                                    userId: user?.uid || ''
-                                  });
-                                  toastService.success(`Projekt "${project.title}" reaktiviert`);
-                                } catch (error) {
-                                  toastService.error('Projekt konnte nicht reaktiviert werden');
-                                }
-                              }}
-                            >
-                              <ArchiveBoxIcon className="h-4 w-4" />
-                              Reaktivieren
-                            </DropdownItem>
-                          ) : (
-                            <DropdownItem
-                              onClick={async () => {
-                                try {
-                                  await archiveProjectMutation.mutateAsync({
-                                    projectId: project.id!,
-                                    organizationId: currentOrganization.id,
-                                    userId: user?.uid || ''
-                                  });
-                                  toastService.success(`Projekt "${project.title}" archiviert`);
-                                } catch (error) {
-                                  toastService.error('Projekt konnte nicht archiviert werden');
-                                }
-                              }}
-                            >
-                              <ArchiveBoxIcon className="h-4 w-4" />
-                              Archivieren
-                            </DropdownItem>
-                          )}
-                          <DropdownDivider />
-                          <DropdownItem
-                            onClick={async () => {
-                              if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-                                try {
-                                  const projectTitle = project.title;
-                                  await deleteProjectMutation.mutateAsync({
-                                    projectId: project.id!,
-                                    organizationId: currentOrganization.id
-                                  });
-                                  toastService.success(`Projekt "${projectTitle}" erfolgreich gelöscht`);
-                                } catch (error) {
-                                  toastService.error('Projekt konnte nicht gelöscht werden');
-                                }
-                              }
-                            }}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">Löschen</span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-            </div>
+            <ProjectTable
+              projects={projects}
+              teamMembers={teamMembers}
+              loadingTeam={loadingTeam}
+              currentOrganizationId={currentOrganization.id}
+              userId={user?.uid || ''}
+              onEdit={handleEditProject}
+              onArchive={handleArchive}
+              onUnarchive={handleUnarchive}
+              onDelete={handleDelete}
+            />
           )}
           
           {/* Empty State für Tabellenansicht */}
