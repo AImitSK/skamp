@@ -41,6 +41,10 @@ import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from
 import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
 import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
+import NoActiveProjectsState from './components/empty-states/NoActiveProjectsState';
+import NoArchivedProjectsState from './components/empty-states/NoArchivedProjectsState';
+import NoFiltersSelectedState from './components/empty-states/NoFiltersSelectedState';
+import NoProjectsAtAllState from './components/empty-states/NoProjectsAtAllState';
 
 // Kanban Layout Wrapper Komponente
 const KanbanLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -796,53 +800,10 @@ export default function ProjectsPage() {
           )}
           
           {/* Empty State für Tabellenansicht */}
-          {projects.length === 0 && showActive && !showArchived && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <RocketLaunchIcon className="mx-auto h-12 w-12 text-zinc-400" />
-              <h3 className="mt-2 text-sm font-medium text-zinc-900">
-                Keine aktiven Projekte
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">
-                Erstelle dein erstes Projekt oder aktiviere den Archiv-Filter.
-              </p>
-            </div>
-          )}
-
-          {projects.length === 0 && showArchived && !showActive && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <FolderIcon className="mx-auto h-12 w-12 text-zinc-400" />
-              <h3 className="mt-2 text-sm font-medium text-zinc-900">
-                Keine archivierten Projekte
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">
-                Archivierte Projekte werden hier angezeigt.
-              </p>
-            </div>
-          )}
-
-          {projects.length === 0 && (!showActive && !showArchived) && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <FunnelIcon className="mx-auto h-12 w-12 text-zinc-400" />
-              <h3 className="mt-2 text-sm font-medium text-zinc-900">
-                Keine Filter ausgewählt
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">
-                Wähle "Aktiv" oder "Archiv" im Filter-Menü aus.
-              </p>
-            </div>
-          )}
-
-          {projects.length === 0 && (showActive && showArchived) && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <FolderIcon className="mx-auto h-12 w-12 text-zinc-400" />
-              <h3 className="mt-2 text-sm font-medium text-zinc-900">
-                Keine Projekte vorhanden
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">
-                Erstelle dein erstes Projekt mit dem Wizard.
-              </p>
-            </div>
-          )}
+          {projects.length === 0 && showActive && !showArchived && <NoActiveProjectsState />}
+          {projects.length === 0 && showArchived && !showActive && <NoArchivedProjectsState />}
+          {projects.length === 0 && (!showActive && !showArchived) && <NoFiltersSelectedState />}
+          {projects.length === 0 && (showActive && showArchived) && <NoProjectsAtAllState />}
         </div>
       )}
 
