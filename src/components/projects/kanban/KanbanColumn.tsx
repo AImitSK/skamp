@@ -2,6 +2,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageColor, getStageConfig } from './kanban-constants';
 import { ProjectCard } from './ProjectCard';
@@ -106,7 +107,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
         ) : projects.length === 0 ? (
           // Empty State
           <div className={`text-center py-8 ${stageColors.text} opacity-50`}>
-            <div className="text-2xl mb-2">📋</div>
+            <ClipboardDocumentListIcon className="mx-auto h-12 w-12 mb-2" />
             <p className="text-sm">Keine Projekte</p>
             <p className="text-xs">
               Ziehe Projekte hierher oder erstelle ein neues

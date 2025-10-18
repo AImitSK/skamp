@@ -107,29 +107,17 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         <div className="flex items-center space-x-2">
           {/* View Mode Toggle */}
           {onViewModeChange && (
-            <div className="flex items-center border border-gray-300 rounded-lg">
+            <div className="flex items-center bg-zinc-100 rounded-lg p-1">
               <button
                 onClick={() => onViewModeChange('board')}
-                className={`
-                  px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
-                  ${viewMode === 'board'
-                    ? 'bg-primary text-white'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
+                className={`p-2 rounded transition-colors ${viewMode === 'board' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
                 title="Board-Ansicht"
               >
                 <Squares2X2Icon className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onViewModeChange('list')}
-                className={`
-                  px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
-                  ${viewMode === 'list'
-                    ? 'bg-primary text-white'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
+                className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
                 title="Listen-Ansicht"
               >
                 <ListBulletIcon className="h-4 w-4" />
