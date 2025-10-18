@@ -100,7 +100,7 @@ src/app/dashboard/projects/page.tsx: 791 Zeilen
 | Schritt | Aufgabe | Dauer | Status | Output |
 |---------|---------|-------|--------|--------|
 | **3.0** | Pre-Refactoring Cleanup | 30 Min | ✅ Erledigt | Bereits sauber |
-| **3.1** | Filter-Hook erstellen | 1h | ⏳ Pending | `useProjectFilters.ts` |
+| **3.1** | Filter-Hook erstellen | 1h | ✅ Erledigt | `useProjectFilters.ts` (68 Zeilen) |
 | **3.2** | Empty-State Komponenten | 1h | ⏳ Pending | 4 Komponenten |
 | **3.3** | ProjectTable-Komponente | 2h | ⏳ Pending | `ProjectTable.tsx` |
 | **3.4** | ListView-Komponente | 1h | ⏳ Pending | `ListView.tsx` |
@@ -200,9 +200,21 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
-## Phase 3.1: Filter-Hook erstellen
+## Phase 3.1: Filter-Hook erstellen ✅
 
+**Status:** ✅ Abgeschlossen (2025-10-18)
 **Ziel:** Filter-Logik aus page.tsx in wiederverwendbaren Hook auslagern
+
+### Ergebnis
+
+- ✅ Hook erstellt: `useProjectFilters.ts` (68 Zeilen)
+- ✅ Filter-Logik aus page.tsx extrahiert (~15 Zeilen gespart)
+- ✅ Alte Filter-States entfernt (showActive, showArchived)
+- ✅ Altes useMemo (27 Zeilen) entfernt
+- ✅ Filter-Dropdown verwendet toggleActive/toggleArchived
+- ✅ TypeScript: Keine Fehler
+
+**Commit:** `8f3bd18a` - feat: Phase 3.1 - Filter-Hook erstellt und integriert
 
 ### 3.1.1 Hook erstellen
 
