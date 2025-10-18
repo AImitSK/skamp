@@ -1,20 +1,14 @@
 // src/components/projects/kanban/BoardHeader.tsx - Board Header für Plan 10/9
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
   Squares2X2Icon,
-  ArrowPathIcon,
   UserGroupIcon,
   PlusIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
-
-import { BoardFilters } from '@/lib/kanban/kanban-board-service';
-// Falls useDebounce Hook existiert, importieren - sonst eigene Implementation unten
 
 // ========================================
 // INTERFACES
@@ -29,37 +23,10 @@ export interface BoardHeaderProps {
     currentProject?: string;
     lastSeen?: Date | { seconds: number };
   }>;
-  filters: BoardFilters;
-  onFiltersChange: (filters: BoardFilters) => void;
-  onRefresh?: () => void;
-  showFilters: boolean;
-  onToggleFilters: () => void;
-  // New props for extended toolbar
   viewMode?: 'board' | 'list';
   onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
-  onMoreOptions?: () => void;
 }
-
-// ========================================
-// DEBOUNCE HOOK (Fallback wenn nicht vorhanden)
-// ========================================
-
-const useDebounceSearch = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  React.useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
 
 // ========================================
 // BOARD HEADER KOMPONENTE
@@ -68,57 +35,10 @@ const useDebounceSearch = (value: string, delay: number) => {
 export const BoardHeader: React.FC<BoardHeaderProps> = ({
   totalProjects,
   activeUsers,
-  filters,
-  onFiltersChange,
-  onRefresh,
-  showFilters,
-  onToggleFilters,
   viewMode = 'board',
   onViewModeChange,
   onNewProject
 }) => {
-  // Search State
-  const [searchValue, setSearchValue] = useState(filters.search || '');
-  const debouncedSearch = useDebounceSearch(searchValue, 300);
-
-  // Update filters when search changes
-  React.useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      onFiltersChange({ ...filters, search: debouncedSearch });
-    }
-  }, [debouncedSearch, filters, onFiltersChange]);
-
-  // Active Filter Count
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.search) count++;
-    if (filters.customers?.length) count++;
-    if (filters.teamMembers?.length) count++;
-    if (filters.priority?.length) count++;
-    if (filters.tags?.length) count++;
-    if (filters.dateRange) count++;
-    if (filters.overdue) count++;
-    if (filters.critical) count++;
-    return count;
-  }, [filters]);
-
-  // Handle Search Change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-  };
-
-  // Clear Search
-  const clearSearch = () => {
-    setSearchValue('');
-    onFiltersChange({ ...filters, search: '' });
-  };
-
-  // Handle Refresh
-  const handleRefresh = () => {
-    if (onRefresh) {
-      onRefresh();
-    }
-  };
 
   return (
     <div className="board-header bg-white px-6 py-4">
@@ -185,28 +105,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 
         {/* Right Side - New Toolbar */}
         <div className="flex items-center space-x-2">
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Projekte suchen..."
-              className="w-64 pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              value={searchValue}
-              onChange={handleSearchChange}
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-            </div>
-            {searchValue && (
-              <button
-                onClick={clearSearch}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <span className="text-sm">×</span>
-              </button>
-            )}
-          </div>
-
           {/* View Mode Toggle */}
           {onViewModeChange && (
             <div className="flex items-center border border-gray-300 rounded-lg">
@@ -239,34 +137,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             </div>
           )}
 
-          {/* Filter Button */}
-          <button
-            onClick={onToggleFilters}
-            className={`px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center whitespace-nowrap ${
-              showFilters
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-            title="Filter"
-          >
-            <FunnelIcon className="h-4 w-4" />
-            {activeFilterCount > 0 && (
-              <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-
-          {/* Refresh Button */}
-          <button
-            onClick={handleRefresh}
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Aktualisieren"
-          >
-            <ArrowPathIcon className="h-4 w-4" />
-          </button>
-
-
           {/* New Project Button */}
           {onNewProject && (
             <Button 
@@ -279,69 +149,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           )}
         </div>
       </div>
-
-      {/* Active Filters Display */}
-      {activeFilterCount > 0 && (
-        <div className="mt-4 flex items-center space-x-2">
-          <span className="text-sm text-gray-600">Aktive Filter:</span>
-          <div className="flex items-center space-x-2">
-            {filters.search && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
-                Suche: "{filters.search}"
-                <button
-                  onClick={() => onFiltersChange({ ...filters, search: '' })}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.customers && filters.customers.length > 0 && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                {filters.customers.length} Kunde(n)
-                <button
-                  onClick={() => onFiltersChange({ ...filters, customers: [] })}
-                  className="ml-2 text-green-600 hover:text-green-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.overdue && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800">
-                Überfällig
-                <button
-                  onClick={() => onFiltersChange({ ...filters, overdue: false })}
-                  className="ml-2 text-red-600 hover:text-red-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.critical && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-800">
-                Kritisch
-                <button
-                  onClick={() => onFiltersChange({ ...filters, critical: false })}
-                  className="ml-2 text-orange-600 hover:text-orange-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-          </div>
-          
-          {/* Clear All Filters */}
-          {activeFilterCount > 1 && (
-            <button
-              onClick={() => onFiltersChange({})}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Alle entfernen
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };

@@ -22,7 +22,6 @@ import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
 import { TeamMember } from '@/types/international';
-import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
@@ -77,7 +76,6 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
-  const [filters, setFilters] = useState<BoardFilters>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -210,11 +208,6 @@ export default function ProjectsPage() {
     }
   };
 
-  // Handle filter changes
-  const handleFiltersChange = (newFilters: BoardFilters) => {
-    setFilters(newFilters);
-  };
-
   // Handle view mode change
   const handleViewModeChange = (mode: 'board' | 'list' | 'calendar') => {
     setViewMode(mode);
@@ -265,11 +258,8 @@ export default function ProjectsPage() {
               projects={groupProjectsByStage(projects)}
               totalProjects={projects.length}
               activeUsers={[]}
-              filters={filters}
               loading={loading}
               onProjectMove={handleProjectMove}
-              onFiltersChange={handleFiltersChange}
-              onRefresh={() => {}} // Kein Manual Refresh nötig - React Query handled das
               viewMode={viewMode}
               onViewModeChange={handleViewModeChange}
               onNewProject={() => setShowWizard(true)}

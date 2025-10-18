@@ -9,7 +9,6 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { useState, useEffect } from 'react';
 
 import { Project, PipelineStage } from '@/types/project';
-import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { 
   STAGE_COLORS, 
@@ -20,7 +19,6 @@ import {
 
 import { KanbanColumn } from './KanbanColumn';
 import { BoardHeader } from './BoardHeader';
-import { BoardFilterPanel } from './BoardFilterPanel';
 import { MobileKanbanAccordion } from './MobileKanbanAccordion';
 import { UserPresenceOverlay } from './UserPresenceOverlay';
 
@@ -38,17 +36,12 @@ export interface KanbanBoardProps {
     currentProject?: string;
     lastSeen: { seconds: number } | Date;
   }>;
-  filters: BoardFilters;
   loading: boolean;
   onProjectMove: (projectId: string, targetStage: PipelineStage) => Promise<void>;
-  onFiltersChange: (filters: BoardFilters) => void;
   onProjectSelect?: (projectId: string) => void;
-  onRefresh?: () => void;
-  // New props for extended toolbar
   viewMode?: 'board' | 'list';
   onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
-  onMoreOptions?: () => void;
 }
 
 // ========================================
@@ -59,16 +52,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   projects,
   totalProjects,
   activeUsers,
-  filters,
   loading,
   onProjectMove,
-  onFiltersChange,
   onProjectSelect,
-  onRefresh,
   viewMode = 'board',
   onViewModeChange,
-  onNewProject,
-  onMoreOptions
+  onNewProject
 }) => {
   // Window Size für Responsive Design
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -124,10 +113,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 projects={stageProjects}
                 onProjectMove={onProjectMove}
                 onProjectSelect={onProjectSelect}
-                onProjectAdded={onRefresh}
-                onProjectDeleted={onRefresh}
-                onProjectArchived={onRefresh}
-                onProjectUpdated={onRefresh}
+                onProjectAdded={() => {}}
+                onProjectDeleted={() => {}}
+                onProjectArchived={() => {}}
+                onProjectUpdated={() => {}}
                 useDraggableProject={useDraggableProject}
                 useDropZone={useDropZone}
                 getStageName={getStageName}
@@ -157,9 +146,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     </div>
   );
 
-  // Filter Panel State
-  const [showFilters, setShowFilters] = React.useState(false);
-
   return (
     <DndProvider backend={dndBackend} options={dndBackendOptions}>
       <div className="kanban-board-container bg-white flex flex-col h-full">
@@ -167,26 +153,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         <BoardHeader
           totalProjects={totalProjects}
           activeUsers={activeUsers}
-          filters={filters}
-          onFiltersChange={onFiltersChange}
-          onRefresh={onRefresh}
-          showFilters={showFilters}
-          onToggleFilters={() => setShowFilters(!showFilters)}
           viewMode={viewMode}
           onViewModeChange={onViewModeChange}
           onNewProject={onNewProject}
-          onMoreOptions={onMoreOptions}
         />
-
-        {/* Filter Panel */}
-        {showFilters && (
-          <BoardFilterPanel
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            onClose={() => setShowFilters(false)}
-            projectCount={totalProjects}
-          />
-        )}
 
         {/* User Presence Overlay */}
         <UserPresenceOverlay activeUsers={activeUsers} />
@@ -216,10 +186,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <div className="text-6xl mb-4">📋</div>
             <h3 className="text-lg font-medium mb-2">Keine Projekte gefunden</h3>
             <p className="text-sm">
-              {Object.keys(filters).length > 0
-                ? 'Versuche deine Filter zu ändern oder ein neues Projekt zu erstellen.'
-                : 'Erstelle dein erstes Projekt, um loszulegen.'
-              }
+              Erstelle dein erstes Projekt, um loszulegen.
             </p>
           </div>
         )}

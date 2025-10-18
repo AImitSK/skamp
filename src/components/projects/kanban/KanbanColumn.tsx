@@ -90,11 +90,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
           </div>
           
         </div>
-        
-        {/* Stage Name */}
-        <p className={`text-xs mt-1 ${stageColors.text} opacity-75`}>
-          {stageConfig.shortName}
-        </p>
       </div>
 
       {/* Projects List */}
