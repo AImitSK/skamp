@@ -38,6 +38,7 @@ import { TeamMember } from '@/types/international';
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
+import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
 
 // Kanban Layout Wrapper Komponente
@@ -165,7 +166,7 @@ export default function ProjectsPage() {
   };
 
   const handleWizardSuccess = (result: ProjectCreationResult) => {
-    console.log('Projekt erfolgreich erstellt:', result);
+    toastService.success(`Projekt "${result.project.title}" erfolgreich erstellt`);
     // React Query invalidiert automatisch den Cache
   };
 
@@ -175,6 +176,7 @@ export default function ProjectsPage() {
   };
 
   const handleEditSuccess = (updatedProject: Project) => {
+    toastService.success(`Projekt "${updatedProject.title}" erfolgreich aktualisiert`);
     // React Query invalidiert automatisch den Cache
   };
 
@@ -207,11 +209,13 @@ export default function ProjectsPage() {
     if (!user || !currentOrganization?.id) return;
 
     try {
-      // Find current stage
+      // Find current stage and project
       let currentStage: PipelineStage | null = null;
+      let projectTitle = '';
       for (const project of projects) {
         if (project.id === projectId) {
           currentStage = project.currentStage;
+          projectTitle = project.title;
           break;
         }
       }
@@ -229,9 +233,9 @@ export default function ProjectsPage() {
         organizationId: currentOrganization.id
       });
 
-      // Kein loadProjects() mehr - React Query handled den Cache
+      toastService.success(`Projekt "${projectTitle}" erfolgreich verschoben`);
     } catch (error: any) {
-      console.error('Move error:', error);
+      toastService.error('Projekt konnte nicht verschoben werden');
     }
   };
 
@@ -746,9 +750,9 @@ export default function ProjectsPage() {
                                     organizationId: currentOrganization.id,
                                     userId: user?.uid || ''
                                   });
-                                  // React Query invalidiert automatisch
+                                  toastService.success(`Projekt "${project.title}" reaktiviert`);
                                 } catch (error) {
-                                  console.error('Fehler beim Reaktivieren:', error);
+                                  toastService.error('Projekt konnte nicht reaktiviert werden');
                                 }
                               }}
                             >
@@ -764,8 +768,9 @@ export default function ProjectsPage() {
                                     organizationId: currentOrganization.id,
                                     userId: user?.uid || ''
                                   });
+                                  toastService.success(`Projekt "${project.title}" archiviert`);
                                 } catch (error) {
-                                  console.error('Fehler beim Archivieren:', error);
+                                  toastService.error('Projekt konnte nicht archiviert werden');
                                 }
                               }}
                             >
@@ -778,12 +783,14 @@ export default function ProjectsPage() {
                             onClick={async () => {
                               if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
                                 try {
+                                  const projectTitle = project.title;
                                   await deleteProjectMutation.mutateAsync({
                                     projectId: project.id!,
                                     organizationId: currentOrganization.id
                                   });
+                                  toastService.success(`Projekt "${projectTitle}" erfolgreich gelöscht`);
                                 } catch (error) {
-                                  console.error('Fehler beim Löschen:', error);
+                                  toastService.error('Projekt konnte nicht gelöscht werden');
                                 }
                               }
                             }}
