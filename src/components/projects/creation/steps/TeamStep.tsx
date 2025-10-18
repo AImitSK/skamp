@@ -48,28 +48,22 @@ export default function TeamStep({
         />
       </Field>
 
-      {/* Projekt-Manager - nur anzeigen wenn Team-Mitglieder gewählt */}
-      {formData.assignedTeamMembers.length > 0 && (
-        <Field>
-          <Label>Projekt-Manager / Besitzer</Label>
-          <Select
-            value={formData.projectManager}
-            onChange={(e) => onUpdate({ projectManager: e.target.value })}
-          >
-            {creationOptions?.availableTeamMembers
-              ?.filter(member => formData.assignedTeamMembers.some(selectedId =>
-                member.id === selectedId || member.id.includes(selectedId)
-              ))
-              .map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.displayName} ({member.role})
-                  {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
-                </option>
-              ))
-            }
-          </Select>
-        </Field>
-      )}
+      {/* Projekt-Manager / Besitzer - immer anzeigen */}
+      <Field>
+        <Label>Projekt-Manager / Besitzer</Label>
+        <Select
+          value={formData.projectManager}
+          onChange={(e) => onUpdate({ projectManager: e.target.value })}
+        >
+          <option value="">-- Bitte wählen --</option>
+          {creationOptions?.availableTeamMembers?.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.displayName} ({member.role})
+              {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
+            </option>
+          ))}
+        </Select>
+      </Field>
     </FieldGroup>
   );
 }

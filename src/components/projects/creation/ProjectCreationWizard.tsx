@@ -156,7 +156,7 @@ export function ProjectCreationWizard({
     }
   }, [isOpen, user?.uid]);
 
-  // Auto-select current user as team member and project manager when creationOptions loads
+  // Auto-select current user as project manager (NOT as team member) when creationOptions loads
   useEffect(() => {
     if (isOpen && user?.uid && creationOptions?.availableTeamMembers && creationOptions.availableTeamMembers.length > 0) {
       const userMember = creationOptions.availableTeamMembers.find(member =>
@@ -165,11 +165,11 @@ export function ProjectCreationWizard({
 
       if (userMember) {
         setFormData(prev => {
-          // Only set if not already set (to avoid infinite loop)
-          if (prev.assignedTeamMembers.length === 0 && prev.projectManager === '') {
+          // Only set project manager if not already set (to avoid infinite loop)
+          // Do NOT pre-select as team member - user stays unchecked
+          if (prev.projectManager === '') {
             return {
               ...prev,
-              assignedTeamMembers: [user.uid],
               projectManager: userMember.id
             };
           }

@@ -1580,10 +1580,45 @@ export const projectService = {
         }
       }
 
+      // Team benachrichtigen - IMMER, unabhängig von Kampagne/Assets
+      if (wizardData.assignedTeamMembers && wizardData.assignedTeamMembers.length > 0) {
+        try {
+          const { notificationsService } = await import('./notifications-service');
+
+          let notificationsSent = 0;
+          // Benachrichtige alle zugewiesenen Team-Mitglieder
+          for (const memberId of wizardData.assignedTeamMembers) {
+            try {
+              await notificationsService.create({
+                userId: memberId,
+                organizationId,
+                type: 'project_assignment',
+                title: 'Neues Projekt zugewiesen',
+                message: `Du wurdest dem Projekt "${wizardData.title}" zugewiesen.`,
+                linkId: createdProjectId,
+                linkType: 'campaign' as LinkType,
+                isRead: false,
+                metadata: {
+                  campaignTitle: wizardData.title
+                }
+              });
+              notificationsSent++;
+            } catch (notifyError: any) {
+              console.error(`Benachrichtigung für ${memberId} fehlgeschlagen:`, notifyError);
+            }
+          }
+
+          if (notificationsSent > 0) {
+            result.infos.push(`${notificationsSent} Team-Mitglieder benachrichtigt`);
+          }
+        } catch (error: any) {
+          result.warnings.push(`Team-Benachrichtigung fehlgeschlagen: ${error.message}`);
+        }
+      }
+
       // Next Steps definieren
       result.nextSteps = [
         'Projekt-Details verfeinern',
-        'Team-Mitglieder benachrichtigen',
         'Erste Tasks zuweisen'
       ];
 
