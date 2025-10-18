@@ -185,7 +185,7 @@ export function ProjectCreationWizard({
             console.log('✅ AUTO-SELECTING USER:', user.uid, userMember.id);
             return {
               ...prev,
-              assignedTeamMembers: [user.uid],
+              assignedTeamMembers: [userMember.id],
               projectManager: userMember.id
             };
           }
