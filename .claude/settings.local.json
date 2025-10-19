@@ -2,28 +2,13 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(git checkout:*)",
-      "Bash(git push:*)",
-      "Bash(npm run typecheck:*)",
-      "Bash(npm run type-check:*)",
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Phase 1 - React Query Integration für Listen-Modul abgeschlossen\n\n- Custom Hooks in useListsData.ts erstellt (useLists, useList, useCreateList, useUpdateList, useDeleteList, useBulkDeleteLists)\n- page.tsx vollständig auf React Query umgestellt\n  - Alte loadData Funktion und useEffect entfernt\n  - Alle Handler verwenden jetzt React Query Mutations\n  - Automatische Cache-Invalidierung implementiert\n- [listId]/page.tsx auf React Query umgestellt\n  - useList Hook für Listendaten\n  - useUpdateList Mutation für Updates\n  - Query Invalidierung für Refresh-Operationen\n\nVorteile:\n- Automatisches Caching und Background-Updates\n- Optimistic Updates und Error Handling\n- Weniger Boilerplate Code\n- Bessere Performance durch intelligentes Caching\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Phase 2.1 - Shared Components extrahiert und integriert\n\nShared Components erstellt:\n- Alert.tsx (85 Zeilen) - Wiederverwendbare Alert-Komponente\n- ConfirmDialog.tsx (70 Zeilen) - Wiederverwendbare Bestätigungsdialog-Komponente\n- EmptyState.tsx (40 Zeilen) - Wiederverwendbare Empty-State-Komponente\n\nIntegration in page.tsx:\n- Inline Alert-Komponente entfernt (54 Zeilen)\n- Inline Confirmation Dialog entfernt (41 Zeilen)\n- Imports für Alert und ConfirmDialog hinzugefügt\n- Nicht mehr benötigte Icon-Imports entfernt (ExclamationTriangleIcon, InformationCircleIcon)\n- Dialog-Komponenten-Imports entfernt\n\nIntegration in [listId]/page.tsx:\n- Inline Alert-Komponente entfernt (55 Zeilen)\n- Import für Alert hinzugefügt\n- Nicht mehr benötigte Icon-Imports entfernt (CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, InformationCircleIcon)\n\nVorteile:\n- Code-Duplikation eliminiert (~150 Zeilen gespart)\n- Konsistentes UI-Verhalten über alle Listen-Pages\n- Einfachere Wartung durch zentrale Komponenten\n- Wiederverwendbare Komponenten für zukünftige Features\n\nKeine TypeScript-Fehler in den Listen-Dateien.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Phase 2.2 - ListModal in Sections aufgeteilt\n\nModularisierung der ListModal-Komponente (629 Zeilen → 8 Dateien):\n\nNeue Section-Komponenten erstellt:\n- types.ts (73 Zeilen) - Shared TypeScript types und Helper-Funktionen\n- BasicInfoSection.tsx (77 Zeilen) - Name, Beschreibung, Kategorie, Listen-Typ\n- CompanyFiltersSection.tsx (83 Zeilen) - Firmen-Filter (Typen, Branchen, Tags, Länder)\n- PersonFiltersSection.tsx (77 Zeilen) - Personen-Filter (E-Mail, Telefon, Sprachen)\n- JournalistFiltersSection.tsx (52 Zeilen) - Journalisten-Filter (Beats/Ressorts)\n- PreviewSection.tsx (105 Zeilen) - Live-Vorschau der gefilterten Kontakte\n- ContactSelectorSection.tsx (28 Zeilen) - Manuelle Kontaktauswahl für statische Listen\n- index.tsx (293 Zeilen) - Main Component mit State-Management und Orchestrierung\n\nListModal.tsx Änderungen:\n- Alte 629-Zeilen-Datei → ListModal.backup.tsx verschoben\n- Neue 3-Zeilen-Datei erstellt, die index.tsx re-exportiert\n- Bestehende Imports bleiben kompatibel\n\nFixes:\n- CheckCircleIcon Import in [listId]/page.tsx hinzugefügt\n- Alert-Komponente Props korrigiert (title hinzugefügt)\n\nVorteile:\n- ~336 Zeilen Code durch Modularisierung besser organisiert\n- Jede Section ist eigenständig testbar\n- Bessere Code-Lesbarkeit und Wartbarkeit\n- Einfachere Navigation durch kleinere Dateien\n- Wiederverwendbare Section-Komponenten\n\nKeine TypeScript-Fehler in den Listen-Dateien.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)",
-      "Bash(npm test:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npx eslint:*)",
-      "Bash(git rm:*)",
-      "Bash(npx cloc:*)",
-      "Bash(npm run test:coverage:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm install:*)",
-      "Bash(git pull:*)",
-      "Bash(npx jscpd:*)",
-      "Bash(Ist das dafür zu klein?\"\n\nÄnderungen:\n\n1. Initialen-Generierung implementiert:\n   - getInitials() Funktion extrahiert Vor- und Nachname-Initialen\n   - \"Max Mustermann\" → \"MM\"\n   - \"Stefan\" → \"ST\" (bei 1 Wort: erste 2 Buchstaben)\n   - Immer uppercase\n\n2. Initialen an Avatar-Komponente übergeben:\n   - initials={member.photoUrl ? undefined : getInitials(member.displayName)}\n   - Nur wenn kein Foto vorhanden, werden Initialen angezeigt\n   - Avatar-Komponente rendert Initialen als SVG (responsive)\n\n3. Avatar-Größe nochmal erhöht:\n   VORHER: h-8 w-8 (32px)\n   JETZT:  h-10 w-10 (40px)\n   - 25% größer für bessere Lesbarkeit der Initialen\n   - 40px ist Standard-Größe für Avatar mit Text\n\n4. Badge-Text-Größe angepasst:\n   VORHER: text-xs\n   JETZT:  text-sm\n   - Proportional zur größeren Avatar-Größe\n\nTechnische Details:\n- Avatar-Komponente nutzt SVG mit viewBox=\"0 0 100 100\"\n- Text ist automatisch responsive und zentriert\n- Hintergrundfarbe: bg-[#dedc00] (CeleroPress Gelb)\n- Border: 2px weiß für Overlapping-Effekt\n\nVORHER:\n❌ Keine Initialen angezeigt (nur leerer gelber Avatar)\n❌ 32px könnte für Text zu klein sein\n\nJETZT:\n✅ Initialen werden automatisch generiert (MM, SK, etc.)\n✅ 40px Größe ideal für 2-Buchstaben-Text\n✅ Fallback: Foto → Initialen → nichts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(for file in \"C:\\Skamp\\skamp\\docs\\projects\\folders\\README.md\" \"C:\\Skamp\\skamp\\docs\\projects\\folders\\api\\README.md\" \"C:\\Skamp\\skamp\\docs\\projects\\folders\\api\\media-folders-service.md\" \"C:\\Skamp\\skamp\\docs\\projects\\folders\\components\\README.md\" \"C:\\Skamp\\skamp\\docs\\projects\\folders\\adr\\README.md\")",
+      "Bash(done)",
+      "Bash(git push origin main)",
+      "Bash(npm test -- --testPathPattern=\"folders\" --passWithNoTests)"
     ],
     "deny": [],
+    "ask": [],
     "defaultMode": "acceptEdits"
   }
 }

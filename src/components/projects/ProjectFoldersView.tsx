@@ -235,13 +235,9 @@ export default function ProjectFoldersView({
   }, []);
 
   const handleMoveSuccess = useCallback(() => {
-    // Refresh current view nach dem Verschieben
-    if (selectedFolderId) {
-      loadFolderContent(selectedFolderId);
-    } else {
-      // Zurück zur Hauptansicht und alles neu laden
-      setCurrentAssets([]);
-    }
+    // Zurück zur Root-Ansicht und navigationStack zurücksetzen
+    // Fix: Verhindert falsche Breadcrumbs nach Verschieben
+    handleGoToRoot();
 
     // Parent-Daten und Ordner-Counts aktualisieren
     onRefresh();
@@ -250,7 +246,7 @@ export default function ProjectFoldersView({
     }, 500);
 
     showAlert('success', 'Datei wurde erfolgreich verschoben.');
-  }, [selectedFolderId, loadFolderContent, setCurrentAssets, onRefresh, loadAllFolders, showAlert]);
+  }, [handleGoToRoot, onRefresh, loadAllFolders, showAlert]);
 
   // Use handleAssetClick from useFileActions (optimized with useCallback)
   const handleAssetClick = useCallback((asset: any) => handleAssetClickBase(asset, handleEditDocument),
