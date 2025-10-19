@@ -220,9 +220,8 @@ export function ProjectEditWizard({
       (updateData as any).priority = formData.priority || 'medium';
       (updateData as any).tags = formData.tags;
 
-      if (formData.projectManager) {
-        updateData.projectManager = formData.projectManager;
-      }
+      // projectManager immer setzen (auch wenn leer = entfernt)
+      updateData.projectManager = formData.projectManager || undefined;
 
       // Update customer if client changed
       if (formData.clientId && creationOptions?.availableClients) {
@@ -236,7 +235,8 @@ export function ProjectEditWizard({
       }
 
       await projectService.update(project.id, updateData, {
-        organizationId: organizationId
+        organizationId: organizationId,
+        userId: user.uid
       });
 
       setSuccessMessage('Projekt erfolgreich aktualisiert');
