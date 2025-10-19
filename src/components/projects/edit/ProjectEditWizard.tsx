@@ -85,6 +85,14 @@ export function ProjectEditWizard({
       const assignedMembers = project.assignedTo || [];
       const projectMgr = project.projectManager || '';
 
+      console.log('🔍 ProjectEditWizard LOAD:', {
+        projectId: project.id,
+        projectManager: project.projectManager,
+        projectManagerType: typeof project.projectManager,
+        assignedTo: project.assignedTo,
+        projectMgrVariable: projectMgr
+      });
+
       // Stelle sicher, dass projectManager in assignedTeamMembers ist
       const finalAssignedMembers = projectMgr && !assignedMembers.includes(projectMgr)
         ? [...assignedMembers, projectMgr]
