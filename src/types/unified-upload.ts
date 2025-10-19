@@ -38,7 +38,7 @@ export interface UnifiedUploadContext {
   inheritClientId?: boolean;
   
   // Context Metadata
-  contextSource: 'explicit' | 'inherited' | 'smart_router';
+  contextSource: 'explicit' | 'inherited';
   contextTimestamp: Timestamp;
 }
 
@@ -157,8 +157,7 @@ export type PipelinePhase =
 /**
  * Unified Upload Methods - Wie wurde hochgeladen
  */
-export type UnifiedUploadMethod = 
-  | 'smart_router'
+export type UnifiedUploadMethod =
   | 'direct_service'
   | 'legacy_wrapper'
   | 'batch_optimized'
@@ -307,10 +306,9 @@ export interface UploadWarning {
   autoResolvable: boolean;
 }
 
-export type WarningCode = 
+export type WarningCode =
   | 'LARGE_FILE_SIZE'
   | 'CONTEXT_INHERITANCE_FAILED'
-  | 'SMART_ROUTER_UNAVAILABLE'
   | 'LEGACY_SERVICE_USED'
   | 'PERFORMANCE_DEGRADED'
   | 'QUOTA_WARNING'
@@ -448,7 +446,7 @@ export class UnifiedUploadError extends Error {
   }
 }
 
-export type UploadErrorCode = 
+export type UploadErrorCode =
   | 'VALIDATION_FAILED'
   | 'CONTEXT_RESOLUTION_FAILED'
   | 'SERVICE_UNAVAILABLE'
@@ -457,8 +455,7 @@ export type UploadErrorCode =
   | 'QUOTA_EXCEEDED'
   | 'NETWORK_ERROR'
   | 'TIMEOUT'
-  | 'LEGACY_SERVICE_ERROR'
-  | 'SMART_ROUTER_ERROR';
+  | 'LEGACY_SERVICE_ERROR';
 
 // =====================
 // PATH PREVIEW TYPES

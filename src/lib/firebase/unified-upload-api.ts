@@ -26,9 +26,7 @@ import { Timestamp } from 'firebase/firestore';
 // Service Imports
 import { mediaService } from './media-service';
 import { campaignMediaService } from './campaign-media-service';
-import { projectUploadService } from './project-upload-service';
 import { brandingService } from './branding-service';
-import { smartUploadRouter } from './smart-upload-router';
 
 // Utilities
 import { uploadPerformanceManager } from './upload-performance-manager';
@@ -584,16 +582,7 @@ class UnifiedUploadAPIService {
     confidence: number;
     reasoning: string[];
   }> {
-    // Smart Router entscheidet basierend auf Context
-    if (options.enableSmartRouting && context.uploadTarget !== 'branding') {
-      return {
-        service: 'smartUploadRouter',
-        method: 'smartUpload',
-        confidence: 95,
-        reasoning: ['Smart Router aktiviert', 'Context unterstützt intelligentes Routing']
-      };
-    }
-
+    // Smart Router wurde entfernt - direkte Service-Auswahl
     // Service-spezifische Entscheidungen
     switch (context.uploadTarget) {
       case 'campaign':
@@ -603,15 +592,7 @@ class UnifiedUploadAPIService {
           confidence: 90,
           reasoning: ['Campaign-spezifischer Upload', 'Optimiert für Campaign-Assets']
         };
-      
-      case 'project':
-        return {
-          service: 'projectUploadService',
-          method: 'uploadToProject',
-          confidence: 85,
-          reasoning: ['Project-spezifischer Upload', 'Batch-Optimierung verfügbar']
-        };
-      
+
       case 'branding':
         return {
           service: 'brandingService',
@@ -619,8 +600,9 @@ class UnifiedUploadAPIService {
           confidence: 80,
           reasoning: ['Branding-spezifischer Upload', 'Direkte Service-Integration']
         };
-      
+
       case 'media_library':
+      case 'project':
       default:
         return {
           service: 'mediaService',
@@ -644,52 +626,18 @@ class UnifiedUploadAPIService {
     const startTime = Date.now();
 
     // Service Call basierend auf Routing-Entscheidung
+    // Smart Router wurde entfernt - verwende direkte Service-Calls
     let asset: MediaAsset | undefined;
     let servicePath: string;
 
-    if (routingDecision.service === 'smartUploadRouter') {
-      const smartResult = await smartUploadRouter.smartUpload(
-        file,
-        {
-          organizationId: context.organizationId,
-          userId: context.userId,
-          uploadType: this.mapUploadTargetToSmartRouter(context.uploadTarget),
-          projectId: context.projectId,
-          campaignId: context.campaignId,
-          folderId: context.folderId,
-          clientId: context.clientId,
-          phase: context.phase === 'archived' ? 'monitoring' : context.phase,
-          autoTags: context.autoTags
-        },
-        options.onProgress ? (progress) => {
-          options.onProgress!({
-            phase: 'uploading',
-            overallProgress: progress,
-            currentPhaseProgress: progress,
-            phaseDescription: 'Smart Router Upload',
-            fileName: file.name,
-            bytesTransferred: (file.size * progress) / 100,
-            totalBytes: file.size,
-            transferRate: 0,
-            estimatedRemainingMs: 0,
-            startedAt: Timestamp.fromMillis(startTime)
-          });
-        } : undefined
-      );
-      
-      asset = smartResult.asset;
-      servicePath = smartResult.path;
-    } else {
-      // Direkte Service-Calls (Legacy oder spezifisch)
-      asset = await this.executeDirectServiceCall(file, context, routingDecision, options);
-      servicePath = `organizations/${context.organizationId}/media`;
-    }
+    asset = await this.executeDirectServiceCall(file, context, routingDecision, options);
+    servicePath = `organizations/${context.organizationId}/media`;
 
     return {
       success: true,
       uploadId,
       asset,
-      uploadMethod: 'smart_router',
+      uploadMethod: 'direct_service',
       serviceUsed: routingDecision.service,
       storagePath: servicePath,
       performanceMetrics: this.getDefaultMetrics(startTime),
@@ -700,7 +648,7 @@ class UnifiedUploadAPIService {
       },
       recommendations: [],
       warnings: [],
-      smartRouterUsed: routingDecision.service === 'smartUploadRouter',
+      smartRouterUsed: false, // Smart Router wurde entfernt
       routingDecision: {
         selectedService: routingDecision.service,
         routingReason: routingDecision.reasoning.join(', '),
@@ -760,7 +708,7 @@ class UnifiedUploadAPIService {
       },
       recommendations: [],
       warnings: [],
-      smartRouterUsed: routingDecision.service === 'smartUploadRouter',
+      smartRouterUsed: false, // Smart Router wurde entfernt
       routingDecision: {
         selectedService: routingDecision.service,
         routingReason: routingDecision.reasoning.join(', '),

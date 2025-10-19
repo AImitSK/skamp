@@ -1,8 +1,6 @@
 // src/components/campaigns/utils/campaign-context-builder.ts
-// Campaign Context Builder für Smart Upload Router Integration Phase 2
+// Campaign Context Builder für Campaign Upload Context
 // Intelligent Campaign Upload Context Detection und Hybrid-Architektur-Support
-
-import { UploadContext } from '@/lib/firebase/smart-upload-router';
 
 // =====================
 // CAMPAIGN CONTEXT INTERFACES
@@ -11,7 +9,17 @@ import { UploadContext } from '@/lib/firebase/smart-upload-router';
 /**
  * Campaign-spezifischer Upload-Kontext
  */
-export interface CampaignUploadContext extends UploadContext {
+export interface CampaignUploadContext {
+  // Base Context Properties
+  organizationId: string;
+  userId: string;
+  uploadType: string;
+  folderId?: string;
+  clientId?: string;
+  autoTags?: string[];
+  projectId?: string; // Project Context
+
+  // Campaign-specific Properties
   campaignId: string;
   campaignName?: string;
   selectedProjectId?: string;

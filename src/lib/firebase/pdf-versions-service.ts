@@ -21,7 +21,7 @@ import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
 import { pdfTemplateService } from './pdf-template-service';
-import { smartUploadRouter } from './smart-upload-router';
+// Smart Upload Router entfernt - verwende mediaService direkt
 // NEW: Import für Enhanced Edit-Lock System
 // ENTFERNT: import { approvalWorkflowService } from './approval-workflow-service';
 import type { EditLockReason, UnlockRequest } from '@/types/pr';
@@ -824,18 +824,25 @@ class PDFVersionsService {
               throw new Error('Projekt-Ordner nicht gefunden');
             }
           } else {
-            // Fallback für Campaigns ohne Projekt - verwende Smart Router
-            const uploadContext: any = {
-              organizationId: organizationId,
-              userId: userId,
-              uploadType: 'campaign',
-              campaignId: campaignId || 'temp_campaign',
-              phase: 'internal_approval',
-              category: 'press',
-              autoTags: ['generated_pdf', 'approval_version']
-            };
+            // Fallback für Campaigns ohne Projekt - verwende mediaService direkt
+            const uploadedAsset = await mediaService.uploadMedia(
+              pdfFile,
+              organizationId,
+              undefined, // folderId
+              undefined, // onProgress
+              3, // maxRetries
+              {
+                userId: userId,
+                clientId: undefined
+              }
+            );
 
-            uploadResult = await smartUploadRouter.smartUpload(pdfFile, uploadContext);
+            uploadResult = {
+              path: `organizations/${organizationId}/media`,
+              service: 'mediaService.uploadMedia',
+              asset: uploadedAsset,
+              uploadMethod: 'legacy' as const
+            };
           }
           
           if (!uploadResult.asset) {

@@ -175,15 +175,15 @@ export function KeyVisualSection({
           throw new Error('Projekt-Ordner nicht gefunden');
         }
       } else {
-        // Fallback für Campaigns ohne Projekt
-        const { uploadWithContext } = await import('@/lib/firebase/smart-upload-router');
-        const uploadResult = await uploadWithContext(
-          croppedFile,
+        // Fallback für Campaigns ohne Projekt - Legacy Upload
+        const uploadResult = await uploadCampaignHeroImage({
           organizationId,
           userId,
-          'campaign',
-          { campaignId, campaignName, category: 'key-visuals', clientId }
-        );
+          campaignId,
+          campaignName,
+          clientId,
+          file: croppedFile
+        });
         downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;
       }
       

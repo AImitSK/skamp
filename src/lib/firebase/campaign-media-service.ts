@@ -1,10 +1,9 @@
 // src/lib/firebase/campaign-media-service.ts
-// Campaign Media Service für Smart Upload Router Integration Phase 2
-// Dedizierter Service für Campaign Media Management mit Smart Router Integration
+// Campaign Media Service für Campaign Media Management
+// Dedizierter Service für Campaign Media Management mit Legacy Upload
 
-import { smartUploadRouter, UploadResult } from './smart-upload-router';
-import { 
-  campaignContextBuilder, 
+import {
+  campaignContextBuilder,
   CampaignUploadContext,
   CampaignUploadType,
   createHeroImageContext,
@@ -19,6 +18,20 @@ import {
 } from '@/components/campaigns/config/campaign-feature-flags';
 import { mediaService } from './media-service';
 import { MediaAsset } from '@/types/media';
+
+// =====================
+// UPLOAD RESULT INTERFACE
+// =====================
+
+/**
+ * Upload Result (ersetzt smartUploadRouter.UploadResult)
+ */
+export interface UploadResult {
+  path: string;
+  service: string;
+  asset?: MediaAsset;
+  uploadMethod: 'legacy' | 'direct';
+}
 
 // =====================
 // SERVICE INTERFACES
@@ -43,7 +56,14 @@ export interface CampaignUploadParams {
 /**
  * Campaign Upload Result mit erweiterten Informationen
  */
-export interface CampaignUploadResult extends UploadResult {
+export interface CampaignUploadResult {
+  // Upload Result Properties
+  path: string;
+  service: string;
+  asset?: MediaAsset;
+  uploadMethod: 'legacy' | 'direct';
+
+  // Campaign-specific Properties
   campaignContext: CampaignUploadContext;
   usedSmartRouter: boolean;
   storageInfo: {
@@ -112,31 +132,14 @@ class CampaignMediaService {
         clientId: params.clientId
       });
 
-      // 4. Upload-Strategie entscheiden
-      let uploadResult: UploadResult;
-      let usedSmartRouter = false;
-
-      if (smartRouterEnabled && uploadTypeEnabled) {
-        // Smart Router Upload
-        uploadResult = await this.executeSmartRouterUpload(
-          params.file,
-          campaignContext,
-          params.onProgress
-        );
-        usedSmartRouter = true;
-        
-      } else if (migrationStatus.useLegacyFallback) {
-        // Legacy Fallback Upload
-        uploadResult = await this.executeLegacyUpload(
-          params.file,
-          campaignContext,
-          params.onProgress
-        );
-        usedSmartRouter = false;
-        
-      } else {
-        throw new Error('Upload nicht möglich: Smart Router deaktiviert und kein Fallback erlaubt');
-      }
+      // 4. Upload ausführen (Legacy Upload)
+      // Smart Router wurde entfernt - verwende immer Legacy Upload
+      const uploadResult: UploadResult = await this.executeLegacyUpload(
+        params.file,
+        campaignContext,
+        params.onProgress
+      );
+      const usedSmartRouter = false;
 
       // 5. Storage-Info bestimmen
       const storageConfig = campaignContextBuilder.buildStorageConfig(campaignContext);
@@ -343,41 +346,6 @@ class CampaignMediaService {
   // =====================
   // PRIVATE METHODS
   // =====================
-
-  /**
-   * Smart Router Upload ausführen
-   */
-  private async executeSmartRouterUpload(
-    file: File,
-    context: CampaignUploadContext,
-    onProgress?: (progress: number) => void
-  ): Promise<UploadResult> {
-    
-    // Upload Context für Smart Router konvertieren
-    // Phase Mapping zwischen Campaign und Smart Upload Router
-    const phaseMapping = {
-      'draft': 'ideas_planning' as const,
-      'review': 'internal_approval' as const,
-      'approved': 'customer_approval' as const,
-      'published': 'distribution' as const,
-      'archived': 'monitoring' as const
-    };
-    
-    const mappedPhase = context.pipelineStage ? phaseMapping[context.pipelineStage] : undefined;
-    
-    const uploadContext = {
-      organizationId: context.organizationId,
-      userId: context.userId,
-      projectId: context.selectedProjectId,
-      campaignId: context.campaignId,
-      uploadType: context.uploadType,
-      clientId: context.clientId,
-      phase: mappedPhase,
-      autoTags: context.autoTags
-    };
-
-    return smartUploadRouter.smartUpload(file, uploadContext, onProgress);
-  }
 
   /**
    * Legacy Upload ausführen

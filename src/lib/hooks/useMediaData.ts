@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mediaService } from '@/lib/firebase/media-service';
 import * as sharesService from '@/lib/firebase/media-shares-service';
 import { MediaAsset, MediaFolder, ShareLink } from '@/types/media';
-import type { UploadContext } from '@/lib/firebase/smart-upload-router';
+import type { UploadContext } from '@/app/dashboard/library/media/utils/context-builder';
 
 // ===================================
 // QUERY KEYS

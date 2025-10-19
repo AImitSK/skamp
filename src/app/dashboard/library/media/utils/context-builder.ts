@@ -1,8 +1,18 @@
-// src/app/dashboard/pr-tools/media-library/utils/context-builder.ts
-// Context Builder Utility für Smart Upload Router Integration
-// Erstellt intelligenten Upload-Kontext basierend auf verfügbaren Informationen
+// src/app/dashboard/library/media/utils/context-builder.ts
+// Context Builder Utility für Media Library Uploads
+// Erstellt Upload-Kontext basierend auf verfügbaren Informationen
 
-import { UploadContext } from '@/lib/firebase/smart-upload-router';
+/**
+ * Upload Context Interface (ersetzt smart-upload-router.UploadContext)
+ */
+export interface UploadContext {
+  organizationId: string;
+  userId: string;
+  uploadType: string;
+  folderId?: string;
+  clientId?: string;
+  autoTags?: string[];
+}
 
 /**
  * Media Library Upload Context Parameter
@@ -103,17 +113,13 @@ export class MediaLibraryContextBuilder {
     params: MediaLibraryUploadParams,
     companies: Array<{ id: string; name: string }> = []
   ): Promise<UploadContextInfo> {
-    // Smart Router Pfad-Vorschau
-    const { smartUploadRouter } = await import('@/lib/firebase/smart-upload-router');
     const context = this.buildUploadContext(params);
 
+    // Einfacher Pfad (Smart Router entfernt)
     let targetPath = '';
-    try {
-      targetPath = await smartUploadRouter.previewStoragePath(
-        'beispiel-datei.jpg',
-        context
-      );
-    } catch (error) {
+    if (params.currentFolderId && params.folderName) {
+      targetPath = `organizations/${params.organizationId}/media/${params.folderName}/`;
+    } else {
       targetPath = `organizations/${params.organizationId}/media/Unzugeordnet/`;
     }
 
