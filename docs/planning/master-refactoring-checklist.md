@@ -88,23 +88,47 @@ Keine offenen Punkte - Alle Phasen erfolgreich abgeschlossen ✅
 ### 0.2 Communication Components
 
 **Entry Point:** `src/components/projects/communication/`
-**Komponenten:** 7 (FloatingChat, TeamChat, CommunicationModal, etc.)
-**LOC:** ~400+
-**Aufwand:** M (Medium)
+**Komponenten:** 7 (FloatingChat, TeamChat, CommunicationModal, AssetPickerModal, AssetPreview, MentionDropdown, Test)
+**LOC:** ~2.713 Zeilen (KORREKTUR: nicht ~400+!)
+**Aufwand:** L (Large) - 3-4 Tage (UPDATE: M→L wegen höherer LOC)
 **Verwendet in:** Alle Tabs (GlobalChat)
 
+**Probleme identifiziert:**
+- TeamChat.tsx: 1096 Zeilen ⚠️ SEHR GROSS!
+- CommunicationModal.tsx: 536 Zeilen ⚠️ GROSS!
+- Kein React Query (useState + useEffect Pattern)
+- LocalStorage-Logik in Komponente (sollte in Hook)
+
 **Tracking:**
-- [ ] **Plan erstellt:** `docs/planning/shared/communication-components-refactoring.md`
+- [x] **Plan erstellt:** `docs/planning/shared/communication-components-refactoring.md`
 - [ ] **Implementierung durchgeführt**
 
 **Ergebnis-Zusammenfassung:**
 ```
 [Nach Implementierung ausfüllen]
+
+Geplante Änderungen:
+- TeamChat.tsx: 1096 Zeilen → 7 modulare Dateien (~970 Zeilen gesamt)
+- CommunicationModal.tsx: 536 Zeilen → 5 modulare Dateien (~690 Zeilen gesamt)
+- 7 Custom Hooks für React Query Integration
+- 47 Tests geplant (Hook Tests + Component Tests + Integration Tests)
+- 2.500+ Zeilen Dokumentation
 ```
 
 **TODOs / Offene Punkte:**
 ```
 [Nach Implementierung ausfüllen]
+
+Geplant:
+- Phase 0: Setup & Backup
+- Phase 0.5: Pre-Refactoring Cleanup
+- Phase 1: React Query Integration (7 Hooks)
+- Phase 2: Modularisierung (TeamChat → 7 Dateien, CommunicationModal → 5 Dateien)
+- Phase 3: Performance-Optimierung
+- Phase 4: Testing (47 Tests)
+- Phase 5: Dokumentation (2.500+ Zeilen)
+- Phase 6: Code Quality
+- Phase 7: Merge to Main
 ```
 
 ---
@@ -440,11 +464,13 @@ Keine offenen Punkte - Alle Phasen erfolgreich abgeschlossen ✅
 ### Aufwands-Verteilung
 
 - **XL (X-Large):** 2 Module (Tasks, Daten) - ~4-5 Tage/Modul
-- **L (Large):** 3 Module (ProjectFolders, Verteiler, Pressemeldung) - ~3-4 Tage/Modul
-- **M (Medium):** 6 Module - ~2-3 Tage/Modul
+- **L (Large):** 4 Module (ProjectFolders ✅, Communication Components, Verteiler, Pressemeldung) - ~3-4 Tage/Modul
+- **M (Medium):** 5 Module - ~2-3 Tage/Modul
 - **S (Small):** 2 Module - ~1 Tag/Modul
 
-**Geschätzter Gesamt-Aufwand:** 30-40 Tage
+**Geschätzter Gesamt-Aufwand:** 33-43 Tage
+
+**Update:** Communication Components von M→L erhöht (2.713 LOC statt ~400+)
 
 ---
 
