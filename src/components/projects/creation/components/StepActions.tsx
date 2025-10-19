@@ -7,23 +7,27 @@ import { WizardStep } from '../steps/types';
 import clsx from 'clsx';
 
 interface StepActionsProps {
-  currentStep: WizardStep;
+  currentStep: number;
+  totalSteps?: number; // Default: 3
   isLoading: boolean;
   isStepValid: boolean;
   onPrevious: () => void;
   onNext: () => void;
   onCancel: () => void;
   onSubmit: () => void;
+  submitLabel?: string; // Default: 'Projekt erstellen'
 }
 
 export function StepActions({
   currentStep,
+  totalSteps = 3,
   isLoading,
   isStepValid,
   onPrevious,
   onNext,
   onCancel,
-  onSubmit
+  onSubmit,
+  submitLabel = 'Projekt erstellen'
 }: StepActionsProps) {
   return (
     <div className="flex justify-between px-6 py-4 border-t border-gray-200">
@@ -50,7 +54,7 @@ export function StepActions({
           Abbrechen
         </Button>
 
-        {currentStep < 3 ? (
+        {currentStep < totalSteps ? (
           <Button
             type="button"
             onClick={onNext}
@@ -64,7 +68,7 @@ export function StepActions({
             onClick={onSubmit}
             disabled={isLoading}
           >
-            {isLoading ? 'Erstelle Projekt...' : 'Projekt erstellen'}
+            {isLoading ? `${submitLabel}...` : submitLabel}
           </Button>
         )}
       </div>

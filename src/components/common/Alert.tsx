@@ -11,12 +11,13 @@ import {
 
 export interface AlertProps {
   type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { 
-    label: string; 
-    onClick: () => void; 
+  title?: string;
+  message: string;
+  action?: {
+    label: string;
+    onClick: () => void;
   };
+  onDismiss?: () => void;
   className?: string;
 }
 
@@ -58,11 +59,12 @@ const icons = {
   error: XCircleIcon
 };
 
-export function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
+export function Alert({
+  type = 'info',
+  title,
+  message,
   action,
+  onDismiss,
   className = ""
 }: AlertProps) {
   const styles = alertStyles[type];
@@ -72,21 +74,21 @@ export function Alert({
     <div className={`rounded-lg p-4 ${styles.container} ${className}`}>
       <div className="flex">
         <div className="shrink-0">
-          <Icon 
-            aria-hidden="true" 
-            className={`h-5 w-5 ${styles.icon}`} 
+          <Icon
+            aria-hidden="true"
+            className={`h-5 w-5 ${styles.icon}`}
           />
         </div>
         <div className="ml-3 flex-1 md:flex md:justify-between">
           <div>
-            <Text className={`font-medium ${styles.title}`}>
-              {title}
-            </Text>
-            {message && (
-              <Text className={`mt-2 text-sm ${styles.message}`}>
-                {message}
+            {title && (
+              <Text className={`font-medium ${styles.title}`}>
+                {title}
               </Text>
             )}
+            <Text className={`${title ? 'mt-2' : ''} text-sm ${styles.message}`}>
+              {message}
+            </Text>
           </div>
           {action && (
             <p className="mt-3 text-sm md:mt-0 md:ml-6">
@@ -100,6 +102,20 @@ export function Alert({
             </p>
           )}
         </div>
+        {onDismiss && (
+          <div className="ml-auto pl-3">
+            <button
+              type="button"
+              className={`inline-flex rounded-md p-1.5 ${styles.title} hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2`}
+              onClick={onDismiss}
+            >
+              <span className="sr-only">Schließen</span>
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

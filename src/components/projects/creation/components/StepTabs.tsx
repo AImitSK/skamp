@@ -5,28 +5,40 @@ import React from 'react';
 import {
   RocketLaunchIcon,
   BuildingOfficeIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  MegaphoneIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { WizardStep, StepConfig } from '../steps/types';
 
-const STEP_CONFIGS: StepConfig[] = [
+const DEFAULT_STEP_CONFIGS: StepConfig[] = [
   { id: 1, label: 'Projekt', icon: RocketLaunchIcon },
   { id: 2, label: 'Kunde', icon: BuildingOfficeIcon },
   { id: 3, label: 'Team', icon: UserGroupIcon }
 ];
 
+const DEFAULT_STEP_ICONS = [RocketLaunchIcon, BuildingOfficeIcon, UserGroupIcon, MegaphoneIcon];
+
 interface StepTabsProps {
-  currentStep: WizardStep;
-  onStepChange: (step: WizardStep) => void;
-  completedSteps: WizardStep[];
+  currentStep: number;
+  onStepChange: (step: number) => void;
+  completedSteps: number[];
+  stepLabels?: string[]; // Optional custom labels
 }
 
-export function StepTabs({ currentStep, onStepChange, completedSteps }: StepTabsProps) {
+export function StepTabs({ currentStep, onStepChange, completedSteps, stepLabels }: StepTabsProps) {
+  // Generate step configs from labels or use defaults
+  const stepConfigs = stepLabels
+    ? stepLabels.map((label, index) => ({
+        id: index + 1,
+        label,
+        icon: DEFAULT_STEP_ICONS[index] || RocketLaunchIcon
+      }))
+    : DEFAULT_STEP_CONFIGS;
   return (
     <div className="border-b border-gray-200">
       <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
-        {STEP_CONFIGS.map((step) => {
+        {stepConfigs.map((step) => {
           const Icon = step.icon;
           const isActive = currentStep === step.id;
           const isCompleted = completedSteps.includes(step.id);
