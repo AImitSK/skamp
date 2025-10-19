@@ -48,6 +48,8 @@ import MoveAssetModal from './folders/components/MoveAssetModal';
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
 import { useDocumentEditor } from './folders/hooks/useDocumentEditor';
+// Types
+import type { ProjectFoldersViewProps } from './folders/types';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -78,20 +80,15 @@ function FolderSkeleton() {
 }
 
 // Main Component
-interface ProjectFoldersViewProps {
-  projectId: string;
-  organizationId: string;
-  projectFolders: any;
-  foldersLoading: boolean;
-  onRefresh: () => void;
-}
-
 export default function ProjectFoldersView({
   projectId,
   organizationId,
   projectFolders,
   foldersLoading,
-  onRefresh
+  onRefresh,
+  filterByFolder = 'all',
+  initialFolderId,
+  onFolderChange
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
 
@@ -111,7 +108,13 @@ export default function ProjectFoldersView({
     handleBackClick,
     loadFolderContent,
     loadAllFolders
-  } = useFolderNavigation({ organizationId, projectFolders });
+  } = useFolderNavigation({
+    organizationId,
+    projectFolders,
+    filterByFolder,
+    initialFolderId,
+    onFolderChange
+  });
 
   const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
     setAlert({ type, message });
@@ -155,178 +158,6 @@ export default function ProjectFoldersView({
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
-
-  // Initial load - zeige die Unterordner des Hauptordners
-  useEffect(() => {
-    if (projectFolders?.subfolders) {
-      setCurrentFolders(projectFolders.subfolders);
-      // Wenn assets direkt mitgeliefert werden (für Strategie-Tab), zeige sie
-      setCurrentAssets(projectFolders.assets || []);
-      setBreadcrumbs([]);
-
-      // Wenn assets vorhanden sind, bedeutet das wir direkt in einem Ordner starten
-      // (z.B. Strategie-Tab startet direkt im Dokumente-Ordner)
-      if (projectFolders.assets && projectFolders.mainFolder?.id) {
-        setSelectedFolderId(projectFolders.mainFolder.id);
-      }
-
-      // Lade alle Ordner für Verschieben-Modal
-      loadAllFolders();
-    }
-  }, [projectFolders]);
-
-
-  const loadAllFolders = async () => {
-    if (!projectFolders?.subfolders) return;
-    
-    try {
-      const allFoldersFlat: any[] = [];
-      
-      // Rekursive Funktion um alle Unterordner zu sammeln (aber nicht die Hauptordner selbst)
-      const collectFolders = async (folders: any[], level = 0) => {
-        for (const folder of folders) {
-          // Nur Unterordner hinzufügen, nicht die Hauptordner (Medien, Dokumente, Pressemeldungen)
-          if (level > 0) {
-            allFoldersFlat.push({
-              ...folder,
-              level,
-              displayName: '  '.repeat(level - 1) + folder.name
-            });
-          }
-          
-          // Lade Unterordner falls vorhanden
-          try {
-            const subfolders = await getFolders(organizationId, folder.id);
-            if (subfolders.length > 0) {
-              await collectFolders(subfolders, level + 1);
-            }
-          } catch (error) {
-            console.error(`Fehler beim Laden der Unterordner für ${folder.id}:`, error);
-          }
-        }
-      };
-      
-      await collectFolders(projectFolders.subfolders, 0);
-      setAllFolders(allFoldersFlat);
-    } catch (error) {
-      console.error('Fehler beim Laden aller Ordner:', error);
-    }
-  };
-
-
-  // Vereinfachtes Breadcrumb-System - wir bauen den Pfad während der Navigation auf
-  const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
-
-  const loadFolderContentWithStack = async (folderId: string, stack: {id: string, name: string}[]) => {
-    setLoading(true);
-    try {
-      // Lade Inhalte des spezifischen Ordners
-      const [folders, assets] = await Promise.all([
-        getFolders(organizationId, folderId),
-        getMediaAssets(organizationId, folderId)
-      ]);
-      setCurrentFolders(folders);
-      setCurrentAssets(assets);
-
-      // Breadcrumbs aus dem übergebenen Stack setzen
-      setBreadcrumbs([...stack]);
-    } catch (error) {
-      console.error('Fehler beim Laden der Ordnerinhalte:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadFolderContent = async (folderId?: string) => {
-    setLoading(true);
-    try {
-      if (folderId) {
-        // Lade Inhalte des spezifischen Ordners
-        const [folders, assets] = await Promise.all([
-          getFolders(organizationId, folderId),
-          getMediaAssets(organizationId, folderId)
-        ]);
-        setCurrentFolders(folders);
-        setCurrentAssets(assets);
-
-        // Breadcrumbs immer aus navigationStack setzen
-        setBreadcrumbs([...navigationStack]);
-      } else {
-        // Zurück zur Hauptansicht (Unterordner des Projektordners)
-        setCurrentFolders(projectFolders?.subfolders || []);
-        setCurrentAssets([]);
-        setBreadcrumbs([]);
-        setNavigationStack([]); // Stack zurücksetzen
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Ordnerinhalte:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFolderClick = (folderId: string) => {
-    // Erweitere den navigationStack BEVOR loadFolderContent aufgerufen wird
-    const folder = currentFolders.find(f => f.id === folderId) || 
-                   projectFolders?.subfolders?.find((f: any) => f.id === folderId);
-    if (folder) {
-      const newStack = [...navigationStack, { id: folder.id, name: folder.name }];
-      setNavigationStack(newStack);
-      
-      // Setze selectedFolderId und lade Ordnerinhalt
-      setSelectedFolderId(folderId);
-      loadFolderContentWithStack(folderId, newStack);
-    }
-  };
-  
-
-  const handleGoToRoot = () => {
-    if (projectFolders.assets && projectFolders.mainFolder?.id) {
-      // Im Strategie-Tab: Zurück zum Dokumente-Ordner (der hier Root ist)
-      setSelectedFolderId(projectFolders.mainFolder.id);
-      setNavigationStack([]);
-      setCurrentFolders(projectFolders.subfolders || []);
-      setCurrentAssets(projectFolders.assets || []);
-      setBreadcrumbs([]);
-    } else {
-      // Im Daten-Tab: Zurück zu den 3 Hauptordnern
-      setSelectedFolderId(undefined);
-      setNavigationStack([]);
-      loadFolderContent();
-    }
-  };
-
-  const handleBreadcrumbClick = (clickedIndex: number) => {
-    // Navigiere zu der geklickten Breadcrumb-Ebene
-    const targetStack = navigationStack.slice(0, clickedIndex + 1);
-    const targetFolder = targetStack[targetStack.length - 1];
-    
-    setNavigationStack(targetStack);
-    setSelectedFolderId(targetFolder.id);
-    loadFolderContentWithStack(targetFolder.id, targetStack);
-  };
-
-  const handleBackClick = () => {
-    if (navigationStack.length > 0) {
-      // Entferne den letzten Ordner vom Stack
-      const newStack = navigationStack.slice(0, -1);
-      setNavigationStack(newStack);
-      
-      if (newStack.length > 0) {
-        // Gehe zum vorherigen Ordner im Stack
-        const previousFolder = newStack[newStack.length - 1];
-        setSelectedFolderId(previousFolder.id);
-        loadFolderContent(previousFolder.id);
-      } else {
-        // Zurück zur Hauptansicht
-        setSelectedFolderId(undefined);
-        loadFolderContent();
-      }
-    } else {
-      setSelectedFolderId(undefined);
-      loadFolderContent();
-    }
-  };
 
   // Enhanced Drag & Drop Handlers
   const handleMainDragOver = (e: React.DragEvent) => {
@@ -394,11 +225,6 @@ export default function ProjectFoldersView({
     showAlert('success', 'Ordner wurde erfolgreich erstellt.');
   };
 
-  const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  };
-
   const handleMoveAsset = (asset: any) => {
     setAssetToMove(asset);
     setShowMoveModal(true);
@@ -410,162 +236,20 @@ export default function ProjectFoldersView({
       loadFolderContent(selectedFolderId);
     } else {
       // Zurück zur Hauptansicht und alles neu laden
-      setCurrentFolders(projectFolders?.subfolders || []);
       setCurrentAssets([]);
-      setBreadcrumbs([]);
     }
-    
+
     // Parent-Daten und Ordner-Counts aktualisieren
     onRefresh();
     setTimeout(() => {
       loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
-    
+
     showAlert('success', 'Datei wurde erfolgreich verschoben.');
   };
-
-  const handleDeleteAsset = (assetId: string, fileName: string) => {
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Datei löschen',
-      message: `Möchten Sie die Datei "${fileName}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-      onConfirm: () => confirmDeleteAsset(assetId, fileName)
-    });
-  };
   
-  // Document Editor Handlers
-  const handleCreateDocument = () => {
-    setEditingDocument(null);
-    setShowDocumentEditor(true);
-  };
-  
-  const handleEditDocument = (asset: any) => {
-    const document: InternalDocument = {
-      ...asset,
-      contentRef: asset.contentRef // Keine Fallback-Logik - muss exakt stimmen
-    };
-
-    setEditingDocument(document);
-    setShowDocumentEditor(true);
-  };
-  
-  const handleDocumentSave = () => {
-    // Refresh current view after document save
-    if (selectedFolderId) {
-      loadFolderContent(selectedFolderId);
-    } else {
-      onRefresh();
-    }
-    setShowDocumentEditor(false);
-    setEditingDocument(null);
-    
-    showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
-  };
-  
-  // Check if we are in "Dokumente" folder
-  const isInDocumentsFolder = () => {
-    return breadcrumbs.some(b => b.name === 'Dokumente') || 
-           currentFolders.some(f => f.name === 'Dokumente');
-  };
-  
-  // Handle asset click - open documents in editor (NOT download)
-  const handleAssetClick = (asset: any) => {
-    // Check if it's a document type that should open in editor
-    const isEditableDocument = asset.fileType === 'celero-doc' || 
-                              asset.fileName?.endsWith('.celero-doc');
-    
-    if (isEditableDocument) {
-      // Open in editor for viewing/editing
-      handleEditDocument(asset);
-    } else {
-      // Open normally for other file types (including .docx)
-      window.open(asset.downloadUrl, '_blank');
-    }
-  };
-  
-  // Convert HTML to RTF
-  const convertHtmlToRtf = (html: string, title: string): string => {
-    // Remove HTML tags and convert basic formatting to RTF
-    let text = html
-      // Convert headings
-      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\\par\\fs28\\b $1\\b0\\fs24\\par\\par')
-      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\\par\\fs26\\b $1\\b0\\fs24\\par\\par')
-      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\\par\\fs24\\b $1\\b0\\fs24\\par\\par')
-      // Convert bold and italic
-      .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '\\b $1\\b0')
-      .replace(/<b[^>]*>(.*?)<\/b>/gi, '\\b $1\\b0')
-      .replace(/<em[^>]*>(.*?)<\/em>/gi, '\\i $1\\i0')
-      .replace(/<i[^>]*>(.*?)<\/i>/gi, '\\i $1\\i0')
-      // Convert underline
-      .replace(/<u[^>]*>(.*?)<\/u>/gi, '\\ul $1\\ul0')
-      // Convert paragraphs
-      .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\\par\\par')
-      // Convert line breaks
-      .replace(/<br[^>]*>/gi, '\\par')
-      // Convert lists
-      .replace(/<ul[^>]*>/gi, '')
-      .replace(/<\/ul>/gi, '\\par')
-      .replace(/<li[^>]*>(.*?)<\/li>/gi, '\\bullet $1\\par')
-      // Remove any remaining HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Decode HTML entities
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      // Clean up extra spaces and line breaks
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // RTF header and formatting
-    const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
-\\f0\\fs24 ${text}
-}`;
-
-    return rtfContent;
-  };
-
-  // Download document as RTF or other formats
-  const handleDownloadDocument = async (asset: any) => {
-    try {
-      if (asset.contentRef) {
-        // Load document content
-        const content = await documentContentService.loadDocument(asset.contentRef);
-        if (content) {
-          // Convert to RTF
-          const rtfContent = convertHtmlToRtf(content.content, asset.fileName.replace('.celero-doc', ''));
-          
-          // Create RTF download
-          const blob = new Blob([rtfContent], { type: 'application/rtf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${asset.fileName.replace('.celero-doc', '')}.rtf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } else {
-          alert('Dokument-Inhalt konnte nicht geladen werden.');
-        }
-      } else if (asset.downloadUrl) {
-        // Regular download for non-celero documents (DOCX, PDF, etc.)
-        const a = document.createElement('a');
-        a.href = asset.downloadUrl;
-        a.download = asset.fileName;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        alert('Diese Datei kann nicht heruntergeladen werden - keine downloadUrl verfügbar.');
-      }
-    } catch (error) {
-      console.error('Fehler beim Download:', error);
-      alert('Fehler beim Download des Dokuments.');
-    }
-  };
+  // Use handleAssetClick from useFileActions
+  const handleAssetClick = (asset: any) => handleAssetClickBase(asset, handleEditDocument);
 
   const confirmDeleteAsset = async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
@@ -651,7 +335,7 @@ export default function ProjectFoldersView({
             </Button>
           )}
           {/* Document Editor Buttons - nur im Dokumente-Ordner UND nicht im Root sichtbar */}
-          {selectedFolderId && isInDocumentsFolder() && (
+          {selectedFolderId && filterByFolder === 'Dokumente' && (
             <div className="flex items-center space-x-2">
               <Button
                 plain
@@ -698,7 +382,7 @@ export default function ProjectFoldersView({
             onClick={handleGoToRoot}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
-            {projectFolders.assets ? 'Dokumente' : 'Projekt-Ordner'}
+            {filterByFolder === 'Dokumente' ? 'Dokumente' : 'Projekt-Ordner'}
           </button>
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
@@ -918,11 +602,8 @@ export default function ProjectFoldersView({
       {showDocumentEditor && (
         <DocumentEditorModal
           isOpen={showDocumentEditor}
-          onClose={() => {
-            setShowDocumentEditor(false);
-            setEditingDocument(null);
-          }}
-          onSave={handleDocumentSave}
+          onClose={handleCloseEditor}
+          onSave={handleDocumentSaveBase}
           document={editingDocument}
           folderId={selectedFolderId || projectFolders?.id}
           organizationId={organizationId}

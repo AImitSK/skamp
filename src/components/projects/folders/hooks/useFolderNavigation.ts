@@ -5,6 +5,9 @@ import { getMediaAssets } from '@/lib/firebase/media-assets-service';
 interface UseFolderNavigationProps {
   organizationId: string;
   projectFolders: any;
+  filterByFolder?: 'all' | 'Dokumente';
+  initialFolderId?: string;
+  onFolderChange?: (folderId: string) => void;
 }
 
 /**
@@ -14,7 +17,10 @@ interface UseFolderNavigationProps {
  */
 export function useFolderNavigation({
   organizationId,
-  projectFolders
+  projectFolders,
+  filterByFolder = 'all',
+  initialFolderId,
+  onFolderChange
 }: UseFolderNavigationProps) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [currentFolders, setCurrentFolders] = useState<any[]>([]);
@@ -31,13 +37,18 @@ export function useFolderNavigation({
       setCurrentAssets(projectFolders.assets || []);
       setBreadcrumbs([]);
 
-      if (projectFolders.assets && projectFolders.mainFolder?.id) {
+      // Initialer Ordner basierend auf Props
+      if (initialFolderId) {
+        setSelectedFolderId(initialFolderId);
+        onFolderChange?.(initialFolderId);
+      } else if (projectFolders.assets && projectFolders.mainFolder?.id) {
         setSelectedFolderId(projectFolders.mainFolder.id);
+        onFolderChange?.(projectFolders.mainFolder.id);
       }
 
       loadAllFolders();
     }
-  }, [projectFolders]);
+  }, [projectFolders, initialFolderId]);
 
   const loadAllFolders = async () => {
     if (!projectFolders?.subfolders) return;
@@ -122,6 +133,9 @@ export function useFolderNavigation({
       setNavigationStack(newStack);
       setSelectedFolderId(folderId);
       loadFolderContentWithStack(folderId, newStack);
+
+      // Callback aufrufen
+      onFolderChange?.(folderId);
     }
   };
 
