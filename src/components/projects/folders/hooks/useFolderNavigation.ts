@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getFolders } from '@/lib/firebase/media-folders-service';
 import { getMediaAssets } from '@/lib/firebase/media-assets-service';
 
@@ -30,27 +30,8 @@ export function useFolderNavigation({
   const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
   const [allFolders, setAllFolders] = useState<any[]>([]);
 
-  // Initial load
-  useEffect(() => {
-    if (projectFolders?.subfolders) {
-      setCurrentFolders(projectFolders.subfolders);
-      setCurrentAssets(projectFolders.assets || []);
-      setBreadcrumbs([]);
-
-      // Initialer Ordner basierend auf Props
-      if (initialFolderId) {
-        setSelectedFolderId(initialFolderId);
-        onFolderChange?.(initialFolderId);
-      } else if (projectFolders.assets && projectFolders.mainFolder?.id) {
-        setSelectedFolderId(projectFolders.mainFolder.id);
-        onFolderChange?.(projectFolders.mainFolder.id);
-      }
-
-      loadAllFolders();
-    }
-  }, [projectFolders, initialFolderId]);
-
-  const loadAllFolders = async () => {
+  // Load all folders recursively (optimized with useCallback)
+  const loadAllFolders = useCallback(async () => {
     if (!projectFolders?.subfolders) return;
 
     try {
@@ -82,9 +63,30 @@ export function useFolderNavigation({
     } catch (error) {
       console.error('Fehler beim Laden aller Ordner:', error);
     }
-  };
+  }, [organizationId, projectFolders]);
 
-  const loadFolderContentWithStack = async (folderId: string, stack: {id: string, name: string}[]) => {
+  // Initial load
+  useEffect(() => {
+    if (projectFolders?.subfolders) {
+      setCurrentFolders(projectFolders.subfolders);
+      setCurrentAssets(projectFolders.assets || []);
+      setBreadcrumbs([]);
+
+      // Initialer Ordner basierend auf Props
+      if (initialFolderId) {
+        setSelectedFolderId(initialFolderId);
+        onFolderChange?.(initialFolderId);
+      } else if (projectFolders.assets && projectFolders.mainFolder?.id) {
+        setSelectedFolderId(projectFolders.mainFolder.id);
+        onFolderChange?.(projectFolders.mainFolder.id);
+      }
+
+      loadAllFolders();
+    }
+  }, [projectFolders, initialFolderId, loadAllFolders]);
+
+  // Load folder content with breadcrumb stack (optimized with useCallback)
+  const loadFolderContentWithStack = useCallback(async (folderId: string, stack: {id: string, name: string}[]) => {
     setLoading(true);
     try {
       const [folders, assets] = await Promise.all([
@@ -99,9 +101,10 @@ export function useFolderNavigation({
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId]);
 
-  const loadFolderContent = async (folderId?: string) => {
+  // Load folder content (optimized with useCallback)
+  const loadFolderContent = useCallback(async (folderId?: string) => {
     setLoading(true);
     try {
       if (folderId) {
@@ -123,9 +126,10 @@ export function useFolderNavigation({
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId, navigationStack, projectFolders]);
 
-  const handleFolderClick = (folderId: string) => {
+  // Handle folder click (optimized with useCallback)
+  const handleFolderClick = useCallback((folderId: string) => {
     const folder = currentFolders.find(f => f.id === folderId) ||
                    projectFolders?.subfolders?.find((f: any) => f.id === folderId);
     if (folder) {
@@ -137,9 +141,10 @@ export function useFolderNavigation({
       // Callback aufrufen
       onFolderChange?.(folderId);
     }
-  };
+  }, [currentFolders, projectFolders, navigationStack, loadFolderContentWithStack, onFolderChange]);
 
-  const handleGoToRoot = () => {
+  // Handle go to root (optimized with useCallback)
+  const handleGoToRoot = useCallback(() => {
     if (projectFolders.assets && projectFolders.mainFolder?.id) {
       setSelectedFolderId(projectFolders.mainFolder.id);
       setNavigationStack([]);
@@ -151,18 +156,20 @@ export function useFolderNavigation({
       setNavigationStack([]);
       loadFolderContent();
     }
-  };
+  }, [projectFolders, loadFolderContent]);
 
-  const handleBreadcrumbClick = (clickedIndex: number) => {
+  // Handle breadcrumb click (optimized with useCallback)
+  const handleBreadcrumbClick = useCallback((clickedIndex: number) => {
     const targetStack = navigationStack.slice(0, clickedIndex + 1);
     const targetFolder = targetStack[targetStack.length - 1];
 
     setNavigationStack(targetStack);
     setSelectedFolderId(targetFolder.id);
     loadFolderContentWithStack(targetFolder.id, targetStack);
-  };
+  }, [navigationStack, loadFolderContentWithStack]);
 
-  const handleBackClick = () => {
+  // Handle back click (optimized with useCallback)
+  const handleBackClick = useCallback(() => {
     if (navigationStack.length > 0) {
       const newStack = navigationStack.slice(0, -1);
       setNavigationStack(newStack);
@@ -179,7 +186,7 @@ export function useFolderNavigation({
       setSelectedFolderId(undefined);
       loadFolderContent();
     }
-  };
+  }, [navigationStack, loadFolderContent]);
 
   return {
     selectedFolderId,
