@@ -1178,7 +1178,8 @@ export default function ProjectDetailPage() {
                   projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
-                  project={project}
+                  filterByFolder="Dokumente"
+                  initialFolderId={dokumenteFolder.mainFolder?.id}
                 />
               )}
             </div>
@@ -1203,7 +1204,7 @@ export default function ProjectDetailPage() {
                   projectFolders={projectFolders}
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
-                  project={project}
+                  filterByFolder="all"
                 />
               )}
             </div>
