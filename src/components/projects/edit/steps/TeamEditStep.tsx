@@ -26,19 +26,11 @@ export default function TeamEditStep({
     }
   };
 
-  // DEBUG: Log values
   const filteredMembers = creationOptions?.availableTeamMembers?.filter((member: any) =>
     formData.assignedTeamMembers.some(selectedId =>
       member.id === selectedId || member.id.includes(selectedId)
     )
   ) || [];
-
-  console.log('🔍 TeamEditStep DEBUG:', {
-    projectManager: formData.projectManager,
-    assignedTeamMembers: formData.assignedTeamMembers,
-    filteredMemberIds: filteredMembers.map((m: any) => m.id),
-    allMembers: creationOptions?.availableTeamMembers?.map((m: any) => ({ id: m.id, name: m.displayName }))
-  });
 
   return (
     <FieldGroup>

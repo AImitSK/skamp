@@ -1459,6 +1459,7 @@ export const projectService = {
         status: 'active',
         currentStage: 'ideas_planning',
         assignedTo: wizardData.assignedTeamMembers,
+        projectManager: wizardData.projectManager,
 
         // Tags und Priority aus Wizard-Daten
         tags: wizardData.tags || [],
