@@ -269,25 +269,35 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-3">
             {/* Team Members */}
-            {teamMembers.length > 0 && (
-              <div className="flex -space-x-1">
-                {teamMembers.slice(0, 3).map((member) => (
-                  <Avatar
-                    key={member.id}
-                    src={member.photoUrl}
-                    alt={member.displayName}
-                    className="h-5 w-5 rounded-full border-2 border-white"
-                  />
-                ))}
-                {teamMembers.length > 3 && (
-                  <div className="h-5 w-5 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-zinc-600">
-                      +{teamMembers.length - 3}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            {(() => {
+              // Filtere nur zugewiesene Team-Mitglieder
+              const assignedMembers = teamMembers.filter(member =>
+                project.assignedTo?.includes(member.id) ||
+                project.assignedTo?.includes(member.userId || '')
+              );
+
+              if (assignedMembers.length === 0) return null;
+
+              return (
+                <div className="flex -space-x-2">
+                  {assignedMembers.slice(0, 3).map((member) => (
+                    <Avatar
+                      key={member.id}
+                      src={member.photoUrl}
+                      alt={member.displayName}
+                      className="h-8 w-8 rounded-full border-2 border-white"
+                    />
+                  ))}
+                  {assignedMembers.length > 3 && (
+                    <div className="h-8 w-8 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
+                      <span className="text-xs font-medium text-zinc-600">
+                        +{assignedMembers.length - 3}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Due Date */}
             {project.dueDate && (
