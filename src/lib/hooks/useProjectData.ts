@@ -194,13 +194,15 @@ export function useUpdateProject() {
     mutationFn: async ({
       projectId,
       projectData,
-      organizationId
+      organizationId,
+      userId
     }: {
       projectId: string;
       projectData: Partial<Project>;
       organizationId: string;
+      userId: string;
     }) => {
-      await projectService.update(projectId, projectData, { organizationId });
+      await projectService.update(projectId, projectData, { organizationId, userId });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

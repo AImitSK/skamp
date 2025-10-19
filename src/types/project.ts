@@ -54,10 +54,10 @@ export interface Project {
   dueDate?: Timestamp;
   deadline?: Timestamp;
   completedAt?: Timestamp;
-  
+
   // Team
   assignedTo?: string[];
-  managerId?: string;
+  projectManager?: string;
 
   // Projekt-Kategorisierung und Priorisierung
   tags?: string[];

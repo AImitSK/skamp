@@ -110,8 +110,8 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
             project.assignedTo?.includes(member.userId || '') ||
             project.userId === member.id ||
             project.userId === member.userId ||
-            project.managerId === member.id ||
-            project.managerId === member.userId
+            project.projectManager === member.id ||
+            project.projectManager === member.userId
           );
           setAssignedMembers(assigned);
         }

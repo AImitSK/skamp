@@ -115,7 +115,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               project.userId === memberUserId ||
               project.userId === userId ||
               // Check ob User der Projekt-Manager ist
-              (project.managerId && (project.managerId === memberUserId || project.managerId === userId))
+              (project.projectManager && (project.projectManager === memberUserId || project.projectManager === userId))
             );
 
             console.log('Team-Mitgliedschaft Check:', {
@@ -123,7 +123,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               memberUserId,
               memberId, // Die wichtige ID!
               projectUserId: project.userId,
-              projectManagerId: project.managerId,
+              projectManagerId: project.projectManager,
               assignedTo: project.assignedTo,
               isMember,
               // Debug: Prüfungen einzeln
@@ -132,7 +132,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 memberUserIdInAssigned: project.assignedTo && project.assignedTo.includes(memberUserId),
                 userIdInAssigned: project.assignedTo && project.assignedTo.includes(userId),
                 isProjectAdmin: project.userId === memberUserId || project.userId === userId,
-                isProjectManager: project.managerId && (project.managerId === memberUserId || project.managerId === userId)
+                isProjectManager: project.projectManager && (project.projectManager === memberUserId || project.projectManager === userId)
               }
             });
 
@@ -142,7 +142,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
             const isMember = Boolean(
               (project.assignedTo && project.assignedTo.includes(userId)) ||
               project.userId === userId ||
-              (project.managerId && project.managerId === userId)
+              (project.projectManager && project.projectManager === userId)
             );
 
             console.log('Direkte Team-Mitgliedschaft Check (kein Member gefunden):', {

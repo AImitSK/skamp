@@ -1145,7 +1145,7 @@ export default function ProjectDetailPage() {
                 <ProjectTaskManager
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
-                  projectManagerId={project.managerId || project.userId}
+                  projectManagerId={project.projectManager || project.userId}
                   teamMembers={teamMembers}
                   projectTeamMemberIds={project.assignedTo}
                   projectTitle={project.title}

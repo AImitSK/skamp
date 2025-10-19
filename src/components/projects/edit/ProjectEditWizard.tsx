@@ -237,7 +237,8 @@ export function ProjectEditWizard({
       {
         projectId: project.id,
         projectData: updateData,
-        organizationId: organizationId
+        organizationId: organizationId,
+        userId: user.uid
       },
       {
         onSuccess: () => {
