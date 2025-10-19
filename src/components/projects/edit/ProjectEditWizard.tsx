@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Tag } from '@/types/crm';
 import { Alert } from '@/components/common/Alert';
 import { useUpdateProject } from '@/lib/hooks/useProjectData';
+import { Timestamp } from 'firebase/firestore';
 
 // Step Components
 import {
@@ -211,7 +212,7 @@ export function ProjectEditWizard({
       status: formData.status,
       currentStage: formData.currentStage,
       assignedTo: formData.assignedTeamMembers,
-      updatedAt: new Date(),
+      updatedAt: Timestamp.now(),
       updatedBy: user.uid
     };
 
@@ -219,8 +220,13 @@ export function ProjectEditWizard({
     (updateData as any).priority = formData.priority || 'medium';
     (updateData as any).tags = formData.tags;
 
-    // projectManager immer setzen (auch wenn leer = entfernt)
-    updateData.projectManager = formData.projectManager || undefined;
+    // projectManager nur setzen wenn vorhanden, sonst Feld komplett weglassen
+    if (formData.projectManager) {
+      updateData.projectManager = formData.projectManager;
+    } else {
+      // Wenn leer, explizit auf null setzen um das Feld zu löschen
+      updateData.projectManager = null as any;
+    }
 
     // Update customer if client changed
     if (formData.clientId && creationOptions?.availableClients) {
