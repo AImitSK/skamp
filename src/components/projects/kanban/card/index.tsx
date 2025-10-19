@@ -278,19 +278,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
               if (assignedMembers.length === 0) return null;
 
+              // Generiere Initialen aus displayName
+              const getInitials = (name: string) => {
+                const parts = name.trim().split(' ');
+                if (parts.length >= 2) {
+                  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                }
+                return name.substring(0, 2).toUpperCase();
+              };
+
               return (
                 <div className="flex -space-x-2">
                   {assignedMembers.slice(0, 3).map((member) => (
                     <Avatar
                       key={member.id}
                       src={member.photoUrl}
+                      initials={member.photoUrl ? undefined : getInitials(member.displayName)}
                       alt={member.displayName}
-                      className="h-8 w-8 rounded-full border-2 border-white"
+                      className="h-10 w-10 rounded-full border-2 border-white"
                     />
                   ))}
                   {assignedMembers.length > 3 && (
-                    <div className="h-8 w-8 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
-                      <span className="text-xs font-medium text-zinc-600">
+                    <div className="h-10 w-10 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
+                      <span className="text-sm font-medium text-zinc-600">
                         +{assignedMembers.length - 3}
                       </span>
                     </div>
