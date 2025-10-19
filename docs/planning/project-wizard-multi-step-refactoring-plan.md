@@ -1762,26 +1762,38 @@ npm test -- projects/creation
 
 ## 🚀 Potenzielle Erweiterungen & TODOs
 
-### ⚠️ KRITISCH - ProjectEditWizard Refactoring
+### ✅ ProjectEditWizard Refactoring - COMPLETED
 
-**Status:** ⏸️ TODO (vergessen!)
+**Status:** ✅ COMPLETED
 **Datei:** `src/components/projects/edit/ProjectEditWizard.tsx`
-**Zeilen:** 628 Zeilen
-**Problem:**
-- ProjectCreationWizard wurde refactored (Multi-Step, feste Höhe, etc.)
-- ProjectEditWizard ist noch im **alten Layout**
-- User sieht beim Editieren das alte Modal
-- Inkonsistente UX zwischen Create und Edit
+**Zeilen:** 710 → 365 Zeilen (-345 Zeilen, -48.6%)
+**Commit:** `d4b1f1c0`
 
-**TODO:**
-- [ ] ProjectEditWizard auf Multi-Step Pattern umstellen
-- [ ] Gleiche Step-Struktur wie ProjectCreationWizard
-- [ ] Feste Höhe h-[500px] implementieren
-- [ ] Gleiche Tab-Navigation
-- [ ] Step Components wiederverwenden wo möglich
-- [ ] Edit-spezifische Anpassungen (z.B. "Speichern" statt "Erstellen")
+**Umgesetzt:**
+- [x] ProjectEditWizard auf Multi-Step Pattern umgestellt
+- [x] 4 Steps statt 1 großes Formular (Projekt → Kunde → Team → Kampagnen)
+- [x] Feste Höhe h-[500px] implementiert
+- [x] Tab-Navigation wie ProjectCreationWizard
+- [x] Step Components erstellt:
+  - ProjectEditStep.tsx (Projekt-Details mit Status, Pipeline-Phase, Fälligkeitsdatum, Tags)
+  - ClientEditStep.tsx (Kunde - ClientSelector wiederverwendet)
+  - TeamEditStep.tsx (Team - TeamMemberMultiSelect wiederverwendet)
+  - CampaignsEditStep.tsx (Kampagnen-Verwaltung - NEU!)
+- [x] Shared Alert erweitert (onDismiss, optional title)
+- [x] StepTabs erweitert (stepLabels Parameter für 4 Steps)
+- [x] StepActions erweitert (totalSteps, submitLabel Parameter)
+- [x] Edit-spezifische Anpassungen ("Änderungen speichern" statt "Erstellen")
 
-**Geschätzter Aufwand:** 3-4 Stunden
+**Neue Features:**
+- Step 4: Kampagnen-Verwaltung (Verknüpfte Kampagnen anzeigen, Neue erstellen)
+
+**Vorteile:**
+- 48.6% Code-Reduktion
+- Konsistente UX zwischen Create und Edit
+- Wiederverwendung von 5 bestehenden Komponenten
+- Kampagnen-Step nur in Edit (nicht in Creation)
+
+**Tatsächlicher Aufwand:** ~2 Stunden
 
 ---
 
