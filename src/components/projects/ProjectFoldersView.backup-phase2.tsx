@@ -38,11 +38,6 @@ import {
   useDeleteFolder,
   useUpdateMediaAsset,
 } from '@/lib/hooks/useMediaData';
-// Extrahierte Komponenten
-import Alert from './folders/components/Alert';
-import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
-import FolderCreateDialog from './folders/components/FolderCreateDialog';
-import UploadZone from './folders/components/UploadZone';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -69,6 +64,71 @@ function FolderSkeleton() {
         </div>
       ))}
     </div>
+  );
+}
+
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  message 
+}: { 
+  type?: 'info' | 'error' | 'success';
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    error: 'bg-red-50 text-red-700',
+    success: 'bg-green-50 text-green-700'
+  };
+
+  const iconColor = type === 'error' ? 'text-red-400' : 
+                   type === 'success' ? 'text-green-400' : 'text-blue-400';
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <InformationCircleIcon aria-hidden="true" className={`size-5 ${iconColor}`} />
+        </div>
+        <div className="ml-3">
+          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Confirm Dialog Component
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel
+}: {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onCancel}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogBody>
+        <Text>{message}</Text>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onCancel}>
+          Abbrechen
+        </Button>
+        <Button onClick={onConfirm} className="bg-red-600 text-white hover:bg-red-700">
+          Löschen
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -263,6 +323,306 @@ function MoveAssetModal({
           disabled={moving || selectedFolderId === null}
         >
           {moving ? 'Wird verschoben...' : 'Hier verschieben'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Create Folder Modal Component
+function CreateFolderModal({
+  isOpen,
+  onClose,
+  onCreateSuccess,
+  parentFolderId,
+  organizationId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateSuccess: () => void;
+  parentFolderId?: string;
+  organizationId: string;
+}) {
+  const { user } = useAuth();
+  const [folderName, setFolderName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
+
+  const showAlert = (message: string) => {
+    setAlert({ type: 'error', message });
+    setTimeout(() => setAlert(null), 3000);
+  };
+
+  const handleCreate = async () => {
+    if (!folderName.trim() || !user?.uid) return;
+
+    setCreating(true);
+    try {
+      await createFolder({
+        userId: user.uid,
+        name: folderName.trim(),
+        parentFolderId,
+        description: `Unterordner erstellt von ${user.displayName || user.email}`
+      }, { organizationId, userId: user.uid });
+
+      setFolderName('');
+      onCreateSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Ordners:', error);
+      showAlert('Fehler beim Erstellen des Ordners. Bitte versuchen Sie es erneut.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogTitle>Neuen Ordner erstellen</DialogTitle>
+      <DialogBody className="space-y-4">
+        {alert && <Alert type={alert.type} message={alert.message} />}
+        
+        <div>
+          <label htmlFor="folderName" className="block text-sm font-medium text-gray-700 mb-2">
+            Ordnername
+          </label>
+          <input
+            id="folderName"
+            type="text"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            placeholder="Ordnername eingeben..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={creating}
+            maxLength={50}
+          />
+        </div>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={creating}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleCreate}
+          disabled={!folderName.trim() || creating}
+        >
+          {creating ? 'Wird erstellt...' : 'Ordner erstellen'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Upload Modal Component
+function ProjectUploadModal({
+  isOpen,
+  onClose,
+  onUploadSuccess,
+  currentFolderId,
+  folderName,
+  organizationId,
+  projectId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onUploadSuccess: () => void;
+  currentFolderId?: string;
+  folderName?: string;
+  organizationId: string;
+  projectId: string;
+}) {
+  const { user } = useAuth();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
+
+  const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files);
+      setSelectedFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(files => files.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) {
+      return <PhotoIcon className="w-5 h-5 text-blue-500" />;
+    }
+    return <DocumentTextIcon className="w-5 h-5 text-gray-500" />;
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0 || !user?.uid) return;
+
+    setUploading(true);
+    setAlert(null);
+
+    try {
+      const uploadPromises = selectedFiles.map(async (file) => {
+        const progressCallback = (progress: number) => {
+          setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
+        };
+
+        // Upload ohne clientId
+        return await uploadMedia(
+          file,
+          organizationId,
+          currentFolderId,
+          progressCallback,
+          3,
+          { userId: user.uid }
+        );
+      });
+
+      await Promise.all(uploadPromises);
+
+      showAlert('success', `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei wurde' : 'Dateien wurden'} erfolgreich hochgeladen.`);
+      setSelectedFiles([]); // Upload-Liste zurücksetzen
+      setTimeout(() => {
+        onUploadSuccess();
+        onClose();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Upload-Fehler:', error);
+      showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
+    } finally {
+      setUploading(false);
+      setUploadProgress({});
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogTitle>
+        <div className="flex items-center">
+          <CloudArrowUpIcon className="w-5 h-5 mr-2 text-blue-600" />
+          Dateien hochladen
+          {folderName && (
+            <Badge className="ml-2" color="blue">
+              {folderName}
+            </Badge>
+          )}
+        </div>
+      </DialogTitle>
+      
+      <DialogBody className="space-y-6">
+        {alert && <Alert type={alert.type} message={alert.message} />}
+
+        {/* Drag & Drop Area */}
+        <div
+          className="border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          <CloudArrowUpIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          <Text className="text-lg font-medium text-gray-900 mb-2">
+            Dateien hier ablegen oder
+          </Text>
+          <label className="cursor-pointer">
+            <span className="font-medium text-blue-600 hover:text-blue-500">
+              durchsuchen
+            </span>
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+        
+        {/* Selected Files */}
+        {selectedFiles.length > 0 && (
+          <div className="space-y-2">
+            <Text className="font-medium">Ausgewählte Dateien ({selectedFiles.length})</Text>
+            <div className="max-h-40 overflow-y-auto space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      {getFileIcon(file)}
+                      <div className="min-w-0 flex-1">
+                        <Text className="text-sm font-medium truncate">
+                          {file.name}
+                        </Text>
+                        <Text className="text-xs text-gray-500">
+                          {formatFileSize(file.size)}
+                        </Text>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {uploading && uploadProgress[file.name] !== undefined && (
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress[file.name]}%` }}
+                          />
+                        </div>
+                      )}
+
+                      {!uploading && (
+                        <Button
+                          plain
+                          onClick={() => removeFile(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogBody>
+      
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={uploading}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleUpload}
+          disabled={selectedFiles.length === 0 || uploading}
+        >
+          {uploading ? 'Wird hochgeladen...' : `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei' : 'Dateien'} hochladen`}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1038,7 +1398,7 @@ export default function ProjectFoldersView({
       </div>
 
       {/* Upload Modal */}
-      <UploadZone
+      <ProjectUploadModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         onUploadSuccess={handleUploadSuccess}
@@ -1049,7 +1409,7 @@ export default function ProjectFoldersView({
       />
 
       {/* Create Folder Modal */}
-      <FolderCreateDialog
+      <CreateFolderModal
         isOpen={showCreateFolderModal}
         onClose={() => setShowCreateFolderModal(false)}
         onCreateSuccess={handleCreateFolderSuccess}
@@ -1087,7 +1447,7 @@ export default function ProjectFoldersView({
       
       {/* Confirm Dialog */}
       {confirmDialog && (
-        <DeleteConfirmDialog
+        <ConfirmDialog
           isOpen={confirmDialog.isOpen}
           title={confirmDialog.title}
           message={confirmDialog.message}
