@@ -35,8 +35,8 @@
 ### Entry Points
 
 1. **Komponente:**
-   - `src/components/projects/ProjectFoldersView.tsx` (~800 LOC)
-   - `src/components/projects/components/SmartUploadInfoPanel.tsx` (~200 LOC)
+   - `src/components/projects/ProjectFoldersView.tsx` (~1.239 LOC nach Smart Router Entfernung)
+   - ~~`src/components/projects/components/SmartUploadInfoPanel.tsx`~~ ❌ Entfernt
 
 2. **Verwendet in:**
    - `src/app/dashboard/projects/[projectId]/page.tsx` (Strategie Tab)
@@ -50,28 +50,21 @@
 - mediaAssetsService        // ✅ Direkt importiert (nicht lazy)
 - projectService
 - documentContentService
-
-// Utils
-- projectFolderContextBuilder  // ⚠️ Smart Router - separat zu klären
-
-// Feature Flags
-- project-folder-feature-flags.ts  // ⚠️ Smart Router - separat zu klären
 ```
 
-**Hinweis:** Smart Router Features (projectUploadService, projectFolderContextBuilder) werden separat evaluiert.
+**✅ Update:** Smart Router wurde entfernt (331 Zeilen eliminiert - nicht benötigt im Daten-Tab).
 
 ### Sub-Komponenten
 
 ```
-ProjectFoldersView.tsx
-├── SmartUploadInfoPanel
-│   ├── SmartUploadInfoBadge
-│   └── DragDropStatusIndicator
+ProjectFoldersView.tsx (~1.239 LOC nach Smart Router Entfernung)
 ├── FolderNavigation (inline)
 ├── FileList (inline)
 ├── UploadZone (inline)
 └── DeleteConfirmDialog (inline)
 ```
+
+**Entfernt:** SmartUploadInfoPanel, SmartUploadInfoBadge, DragDropStatusIndicator (Smart Router Features)
 
 ---
 
@@ -100,8 +93,7 @@ src/components/projects/folders/
 │   ├── FileListItem.tsx               # Single File (~100 LOC)
 │   ├── UploadZone.tsx                 # Drag & Drop Upload (~150 LOC)
 │   ├── FolderCreateDialog.tsx         # New Folder Modal (~100 LOC)
-│   ├── DeleteConfirmDialog.tsx        # Delete Confirmation (~80 LOC)
-│   └── SmartUploadInfoPanel.tsx       # Upload Info (moved)
+│   └── DeleteConfirmDialog.tsx        # Delete Confirmation (~80 LOC)
 ├── hooks/
 │   ├── useFolderNavigation.ts         # Folder-State Logic
 │   ├── useFileUpload.ts               # Upload Logic
@@ -149,16 +141,13 @@ src/components/projects/ProjectFoldersView.tsx  # Re-export (3 Zeilen)
   ```bash
   # Zeilen zählen
   npx cloc src/components/projects/ProjectFoldersView.tsx
-  npx cloc src/components/projects/components/SmartUploadInfoPanel.tsx
+  # ✅ Aktuell: ~1.239 LOC (nach Smart Router Entfernung)
   ```
 
 - [ ] Backups erstellen
   ```bash
   cp src/components/projects/ProjectFoldersView.tsx \
      src/components/projects/ProjectFoldersView.backup.tsx
-
-  cp src/components/projects/components/SmartUploadInfoPanel.tsx \
-     src/components/projects/components/SmartUploadInfoPanel.backup.tsx
   ```
 
 - [ ] Verwendung analysieren
@@ -184,8 +173,7 @@ src/components/projects/ProjectFoldersView.tsx  # Re-export (3 Zeilen)
 ### Durchgeführt
 - Feature-Branch: `feature/project-folders-refactoring`
 - Ist-Zustand analysiert:
-  - ProjectFoldersView.tsx: ~800 Zeilen
-  - SmartUploadInfoPanel.tsx: ~200 Zeilen
+  - ProjectFoldersView.tsx: ~1.239 Zeilen (nach Smart Router Entfernung)
   - Verwendet in: 2 Tabs (Strategie, Daten)
 - Backups erstellt
 - Dependencies: Alle vorhanden
@@ -193,7 +181,12 @@ src/components/projects/ProjectFoldersView.tsx  # Re-export (3 Zeilen)
 ### Problem identifiziert
 - **CODE DUPLICATION:** Identischer Code in 2 Tabs
 - **Keine Parameterisierung:** Fest kodiert für jeweiligen Tab
-- **Zu groß:** 800 LOC → Schwer wartbar
+- **Noch immer groß:** ~1.239 LOC → Modularisierung notwendig
+
+### Smart Router bereits entfernt
+- ✅ Smart Router entfernt (-331 Zeilen)
+- ✅ SmartUploadInfoPanel gelöscht
+- ✅ Komponente vereinfacht
 
 ### Bereit für Phase 0.5 (Cleanup)
 ```
@@ -205,8 +198,8 @@ git commit -m "chore: Phase 0 - Setup für ProjectFoldersView Refactoring
 
 - Backups erstellt
 - Analyse: CODE DUPLICATION in 2 Tabs identifiziert
-- ProjectFoldersView.tsx: ~800 LOC
-- SmartUploadInfoPanel.tsx: ~200 LOC
+- ProjectFoldersView.tsx: ~1.239 LOC (nach Smart Router Entfernung)
+- Smart Router bereits entfernt (-331 Zeilen)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -219,9 +212,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **Ziel:** Toten Code entfernen BEVOR modularisiert wird
 
-**Dauer:** 2-3 Stunden (große Komponente!)
+**Dauer:** 1-2 Stunden (Komponente bereits reduziert auf 1.239 LOC)
 
-**⚠️ WICHTIG:** Smart Router Features (projectUploadService, SmartUploadInfoPanel, projectFolderContextBuilder) werden in dieser Phase **NICHT** angefasst. Diese werden separat evaluiert.
+**✅ Update:** Smart Router wurde bereits entfernt (331 Zeilen eliminiert).
 
 #### 0.5.1 TODO-Kommentare
 
@@ -327,7 +320,6 @@ rg "^[[:space:]]*//" src/components/projects/ProjectFoldersView.tsx | wc -l
 
 ```bash
 npx eslint src/components/projects/ProjectFoldersView.tsx --fix
-npx eslint src/components/projects/components/SmartUploadInfoPanel.tsx --fix
 ```
 
 **Aktion:**
@@ -369,17 +361,21 @@ npm run dev
 ```markdown
 ## Phase 0.5: Pre-Refactoring Cleanup ✅
 
-### Entfernt
-- [X] TODO-Kommentare
-- ~[Y] Debug-Console-Logs
-- [Z] Deprecated Functions
-- [A] Unused State-Variablen (~10?)
-- [B] Kommentierte Code-Blöcke
-- Unused imports (via ESLint)
+### Bereits durchgeführt (v1.2)
+- ✅ Smart Router entfernt (-331 Zeilen)
+- ✅ SmartUploadInfoPanel gelöscht
+- ✅ Komponente vereinfacht
 
-### Ergebnis
-- ProjectFoldersView.tsx: ~800 → ~750 Zeilen (-50 Zeilen toter Code)
-- SmartUploadInfoPanel.tsx: ~200 → ~190 Zeilen
+### Noch zu tun
+- [ ] TODO-Kommentare entfernen
+- [ ] Debug-Console-Logs entfernen
+- [ ] Deprecated Functions entfernen
+- [ ] Unused State-Variablen entfernen
+- [ ] Kommentierte Code-Blöcke löschen
+- [ ] Unused imports entfernen (via ESLint)
+
+### Erwartetes Ergebnis
+- ProjectFoldersView.tsx: ~1.239 → ~1.150 Zeilen (-~90 Zeilen toter Code)
 - Saubere Basis für React Query Integration
 
 ### Manueller Test
@@ -930,34 +926,17 @@ Datei: `src/components/projects/folders/components/DeleteConfirmDialog.tsx`
 
 **Größe:** ~80 LOC
 
-**2.3.6 SmartUploadInfoPanel.tsx (verschieben)**
+**2.3.6 ~~SmartUploadInfoPanel.tsx~~ ❌ ENTFERNT**
 
-**Größe:** ~354 Zeilen (größer als ursprünglich angenommen!)
+**Status:** ✅ Bereits entfernt (Teil des Smart Routers)
 
-**Hinweis:** SmartUploadInfoPanel ist Teil des Smart Routers (wird separat evaluiert).
+**Grund:** Smart Router wurde komplett entfernt (331 Zeilen eliminiert).
+- SmartUploadInfoPanel (~354 Zeilen) - GELÖSCHT
+- SmartUploadInfoBadge - GELÖSCHT
+- DragDropStatusIndicator - GELÖSCHT
+- Nicht benötigt im Daten-Tab (User wählt Ordner manuell)
 
-**Optionen:**
-
-**Option A:** Einfach verschieben (wenn Smart Router behalten wird)
-```bash
-mv src/components/projects/components/SmartUploadInfoPanel.tsx \
-   src/components/projects/folders/components/SmartUploadInfoPanel.tsx
-```
-
-**Option B:** Weiter modularisieren (wenn zu groß):
-```
-SmartUploadInfoPanel/
-├── index.tsx                   (~100 Zeilen) - Main Component
-├── SmartUploadInfoBadge.tsx    (~80 Zeilen)
-├── DragDropStatusIndicator.tsx (~80 Zeilen)
-└── SmartRoutingPreview.tsx     (~90 Zeilen)
-```
-
-**Option C:** Entfernen (wenn Smart Router nicht benötigt)
-- SmartUploadInfoPanel komplett entfernen (~354 Zeilen)
-- Durch einfaches Upload-Status-Panel ersetzen (~50 Zeilen)
-
-**Entscheidung:** Wird separat getroffen nach Smart Router Evaluation.
+**Dieser Schritt kann übersprungen werden.**
 
 #### 2.4 Hooks extrahieren
 
@@ -1115,9 +1094,9 @@ export type { ProjectFoldersViewProps } from './folders/types';
 - [ ] Ordnerstruktur angelegt
 - [ ] types.ts erstellt
 - [ ] 6 Komponenten extrahiert (FolderNavigation, FileList, FileListItem, UploadZone, CreateDialog, DeleteDialog)
-- [ ] SmartUploadInfoPanel verschoben
+- [ ] ~~SmartUploadInfoPanel verschoben~~ ✅ Bereits entfernt (Smart Router)
 - [ ] 3 Hooks extrahiert (useFolderNavigation, useFileUpload, useFileActions)
-- [ ] Main Component vereinfacht (~800 → ~200 LOC)
+- [ ] Main Component vereinfacht (~1.239 → ~200 LOC)
 - [ ] Backward Compatibility sichergestellt
 - [ ] Imports aktualisiert
 
@@ -1843,6 +1822,35 @@ npm test -- folders
 
 ## 🔄 Änderungshistorie
 
+### Version 1.2 (2025-01-19) - Smart Router entfernt
+
+**Smart Router komplett entfernt:**
+
+✅ **Code-Reduktion:**
+- ProjectFoldersView.tsx: 1.528 LOC → 1.239 LOC (-289 Zeilen, -19%)
+- Git Diff: -382 Zeilen gelöscht, +51 Zeilen hinzugefügt
+- Netto: **-331 Zeilen eliminiert**
+
+✅ **Entfernte Komponenten:**
+- SmartUploadInfoPanel (~354 Zeilen) - GELÖSCHT
+- SmartUploadInfoBadge - GELÖSCHT
+- DragDropStatusIndicator - GELÖSCHT
+
+✅ **Entfernte Services:**
+- projectUploadService - GELÖSCHT
+- projectFolderContextBuilder - GELÖSCHT
+- getUploadFeatureConfig - GELÖSCHT
+
+✅ **Vereinfachungen:**
+- Upload Modal: Einfaches Drag & Drop ohne Smart Features
+- Folder Drop: Öffnet Upload Modal statt direktem Upload
+- User hat volle Kontrolle über Uploads
+- Keine automatischen Uploads ohne Bestätigung
+
+**Grund:** Smart Router nicht benötigt im Daten-Tab (User wählt Ordner manuell).
+
+---
+
 ### Version 1.1 (2025-01-19) - Media-Refactoring Integration
 
 **Anpassungen basierend auf Media-Refactoring (docs/media/):**
@@ -1863,25 +1871,12 @@ npm test -- folders
 - 100% Success-Rate
 - Overall-Progress-Tracking
 
-✅ **SmartUploadInfoPanel:**
-- Größe korrigiert: ~354 Zeilen (nicht ~200)
-- 3 Optionen definiert: Verschieben / Modularisieren / Entfernen
-
-⚠️ **Smart Router:**
-- Status: Wird separat evaluiert
-- Im Media-Bereich erfolgreich entfernt (nicht benötigt)
-- Im Projekt-Bereich evtl. nützlich (Verzeichnisstruktur anlegen, etc.)
-- Komponenten: projectUploadService, SmartUploadInfoPanel, projectFolderContextBuilder
-- Code-Umfang: ~300+ Zeilen
-
-**Nächster Schritt:** Smart Router Evaluation separat durchführen.
-
 ---
 
 **Erstellt:** 2025-01-19
-**Aktualisiert:** 2025-01-19 (v1.1 - Media-Refactoring Integration)
+**Aktualisiert:** 2025-01-19 (v1.2 - Smart Router entfernt)
 **Maintainer:** CeleroPress Team
-**Status:** 📋 Geplant → 🚀 Bereit für Implementierung (nach Smart Router Evaluation)
+**Status:** 🚀 Bereit für Implementierung
 
 ---
 
