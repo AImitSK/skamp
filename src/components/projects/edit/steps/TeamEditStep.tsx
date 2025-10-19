@@ -38,22 +38,29 @@ export default function TeamEditStep({
         />
       </Field>
 
-      {/* Projekt-Manager / Besitzer - immer anzeigen */}
-      <Field>
-        <Label>Projekt-Manager / Besitzer</Label>
-        <Select
-          value={formData.projectManager}
-          onChange={(e) => onUpdate({ projectManager: e.target.value })}
-        >
-          <option value="">-- Bitte wählen --</option>
-          {creationOptions?.availableTeamMembers?.map((member: any) => (
-            <option key={member.id} value={member.id}>
-              {member.displayName} ({member.role})
-              {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      {/* Projekt-Manager / Besitzer */}
+      {formData.assignedTeamMembers.length > 0 && (
+        <Field>
+          <Label>Projekt-Manager / Besitzer</Label>
+          <Select
+            value={formData.projectManager}
+            onChange={(e) => onUpdate({ projectManager: e.target.value })}
+          >
+            <option value="">-- Bitte wählen --</option>
+            {creationOptions?.availableTeamMembers
+              ?.filter((member: any) => formData.assignedTeamMembers.some(selectedId =>
+                member.id === selectedId || member.id.includes(selectedId)
+              ))
+              .map((member: any) => (
+                <option key={member.id} value={member.id}>
+                  {member.displayName} ({member.role})
+                  {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
+                </option>
+              ))
+            }
+          </Select>
+        </Field>
+      )}
     </FieldGroup>
   );
 }

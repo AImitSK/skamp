@@ -86,16 +86,6 @@ export default function ProjectEditStep({
         </Select>
       </Field>
 
-      {/* Fälligkeitsdatum */}
-      <Field>
-        <Label>Fälligkeitsdatum</Label>
-        <Input
-          type="date"
-          value={formData.dueDate}
-          onChange={(e) => onUpdate({ dueDate: e.target.value })}
-        />
-      </Field>
-
       {/* Tags */}
       <Field>
         <Label>Tags</Label>

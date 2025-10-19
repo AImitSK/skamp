@@ -166,52 +166,54 @@ export default function CampaignsEditStep({
           </div>
         )}
 
-        {/* Neue Kampagne erstellen */}
-        <div className="border-t border-gray-200 pt-4 mt-6">
-          <div className="flex items-start space-x-3 mb-4">
-            <input
-              id="createNewCampaign"
-              type="checkbox"
-              checked={createNewCampaign}
-              onChange={(e) => {
-                setCreateNewCampaign(e.target.checked);
-                if (!e.target.checked) {
-                  setCampaignTitle('');
-                }
-              }}
-              className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <div className="flex-1">
-              <label htmlFor="createNewCampaign" className="text-sm font-medium text-gray-700 cursor-pointer">
-                Neue PR-Kampagne erstellen
-              </label>
-              <Text className="text-sm text-gray-600 mt-1">
-                Erstelle eine neue Kampagne und verknüpfe sie automatisch mit diesem Projekt.
-              </Text>
+        {/* Neue Kampagne erstellen - nur wenn noch keine Kampagne existiert */}
+        {linkedCampaigns.length === 0 && (
+          <div className="border-t border-gray-200 pt-4 mt-6">
+            <div className="flex items-start space-x-3 mb-4">
+              <input
+                id="createNewCampaign"
+                type="checkbox"
+                checked={createNewCampaign}
+                onChange={(e) => {
+                  setCreateNewCampaign(e.target.checked);
+                  if (!e.target.checked) {
+                    setCampaignTitle('');
+                  }
+                }}
+                className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <label htmlFor="createNewCampaign" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Neue PR-Kampagne erstellen
+                </label>
+                <Text className="text-sm text-gray-600 mt-1">
+                  Erstelle eine neue Kampagne und verknüpfe sie automatisch mit diesem Projekt.
+                </Text>
+              </div>
             </div>
-          </div>
 
-          {createNewCampaign && (
-            <div className="ml-7 space-y-4">
-              <Field>
-                <Label>Kampagnen-Titel *</Label>
-                <Input
-                  type="text"
-                  value={campaignTitle}
-                  onChange={(e) => setCampaignTitle(e.target.value)}
-                  placeholder={`${formData.title} - PR-Kampagne`}
-                />
-              </Field>
-              <Button
-                type="button"
-                onClick={handleCreateCampaign}
-                disabled={!campaignTitle.trim() || isCreating}
-              >
-                {isCreating ? 'Erstelle...' : 'Kampagne erstellen'}
-              </Button>
-            </div>
-          )}
-        </div>
+            {createNewCampaign && (
+              <div className="ml-7 space-y-4">
+                <Field>
+                  <Label>Kampagnen-Titel *</Label>
+                  <Input
+                    type="text"
+                    value={campaignTitle}
+                    onChange={(e) => setCampaignTitle(e.target.value)}
+                    placeholder={`${formData.title} - PR-Kampagne`}
+                  />
+                </Field>
+                <Button
+                  type="button"
+                  onClick={handleCreateCampaign}
+                  disabled={!campaignTitle.trim() || isCreating}
+                >
+                  {isCreating ? 'Erstelle...' : 'Kampagne erstellen'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </FieldGroup>
   );

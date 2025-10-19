@@ -62,7 +62,6 @@ export function ProjectEditWizard({
     status: 'active',
     priority: 'medium',
     currentStage: 'ideas_planning',
-    dueDate: '',
     tags: [],
 
     // Step 2: Kunde
@@ -89,9 +88,6 @@ export function ProjectEditWizard({
         status: project.status || 'active',
         priority: (project as any).priority || 'medium',
         currentStage: project.currentStage || 'ideas_planning',
-        dueDate: project.dueDate
-          ? new Date((project.dueDate as any).seconds * 1000).toISOString().split('T')[0]
-          : '',
         tags: (project as any).tags || [],
         clientId: project.customer?.id || '',
         assignedTeamMembers: project.assignedTo || [],
@@ -215,13 +211,6 @@ export function ProjectEditWizard({
       // Add optional fields
       (updateData as any).priority = formData.priority || 'medium';
       (updateData as any).tags = formData.tags;
-
-      if (formData.dueDate) {
-        updateData.dueDate = {
-          seconds: new Date(formData.dueDate).getTime() / 1000,
-          nanoseconds: 0
-        } as any;
-      }
 
       if (formData.projectManager) {
         updateData.projectManager = formData.projectManager;

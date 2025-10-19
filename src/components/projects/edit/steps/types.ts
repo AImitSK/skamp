@@ -18,7 +18,6 @@ export interface ProjectEditFormData {
   status: string;
   priority: ProjectPriority;
   currentStage: PipelineStage;
-  dueDate: string; // ISO date string (YYYY-MM-DD)
   tags: string[]; // Tag IDs
 
   // Step 2: Kunde
