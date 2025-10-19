@@ -58,7 +58,7 @@ const PIPELINE_STAGE_INFO: Record<PipelineStage, PipelineStageInfo> = {
     ]
   },
   'creation': {
-    name: 'Erstellung',
+    name: 'Content und Materialien',
     description: 'Asset-Produktion und Content-Entwicklung',
     defaultFolder: 'Medien',
     color: 'purple',
@@ -69,28 +69,17 @@ const PIPELINE_STAGE_INFO: Record<PipelineStage, PipelineStageInfo> = {
       'Rohmaterial → Medien'
     ]
   },
-  'internal_approval': {
-    name: 'Interne Freigabe',
-    description: 'Interne Qualitätskontrolle und Freigabe',
+  'approval': {
+    name: 'Freigabe',
+    description: 'Interne und externe Qualitätskontrolle und Freigabe',
     defaultFolder: 'Dokumente',
     color: 'yellow',
-    icon: '🔍',
-    tips: [
-      'Review-Dokumente → Dokumente',
-      'Finale Assets → Medien',
-      'Feedback-Dateien → Dokumente'
-    ]
-  },
-  'customer_approval': {
-    name: 'Kunden-Freigabe',
-    description: 'Kundenabstimmung und finale Freigabe',
-    defaultFolder: 'Pressemeldungen',
-    color: 'orange',
     icon: '✅',
     tips: [
-      'Finale Texte → Pressemeldungen',
+      'Review-Dokumente → Dokumente',
       'Freigabe-Dokumente → Dokumente',
-      'Approved Assets → Medien'
+      'Finale Assets → Medien',
+      'Feedback-Dateien → Dokumente'
     ]
   },
   'distribution': {

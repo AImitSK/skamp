@@ -461,15 +461,18 @@ export default function ProjectDetailPage() {
 
   const getStageLabel = (stage: string) => {
     switch (stage) {
-      case 'ideas_planning': return 'Ideenplanung';
-      case 'planning': return 'Planung';
-      case 'content_creation': return 'Content-Erstellung';
-      case 'internal_review': return 'Interne Prüfung';
-      case 'internal_approval': return 'Interne Freigabe';
-      case 'customer_approval': return 'Kundenfreigabe';
+      case 'ideas_planning': return 'Ideen & Planung';
+      case 'creation': return 'Content und Materialien';
+      case 'approval': return 'Freigabe';
       case 'distribution': return 'Verteilung';
       case 'monitoring': return 'Monitoring';
       case 'completed': return 'Abgeschlossen';
+      // Legacy Stages (falls noch in alten Daten vorhanden)
+      case 'planning': return 'Planung (Legacy)';
+      case 'content_creation': return 'Content-Erstellung (Legacy)';
+      case 'internal_review': return 'Interne Prüfung (Legacy)';
+      case 'internal_approval': return 'Freigabe';
+      case 'customer_approval': return 'Freigabe';
       default: return stage;
     }
   };
@@ -511,9 +514,8 @@ export default function ProjectDetailPage() {
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
       case 'ideas_planning': return 'Ideen & Planung';
-      case 'creation': return 'Erstellung';
-      case 'internal_approval': return 'Interne Freigabe';
-      case 'customer_approval': return 'Kundenfreigabe';
+      case 'creation': return 'Content und Materialien';
+      case 'approval': return 'Freigabe';
       case 'distribution': return 'Verteilung';
       case 'monitoring': return 'Monitoring';
       case 'completed': return 'Abgeschlossen';

@@ -77,10 +77,9 @@ export default function ProjectEditStep({
           onChange={(e) => onUpdate({ currentStage: e.target.value as any })}
         >
           <option value="ideas_planning">Ideen & Planung</option>
-          <option value="creation">Erstellung</option>
-          <option value="internal_approval">Interne Freigabe</option>
-          <option value="customer_approval">Kundenfreigabe</option>
-          <option value="distribution">Distribution</option>
+          <option value="creation">Content und Materialien</option>
+          <option value="approval">Freigabe</option>
+          <option value="distribution">Verteilung</option>
           <option value="monitoring">Monitoring</option>
           <option value="completed">Abgeschlossen</option>
         </Select>

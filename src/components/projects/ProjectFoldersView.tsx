@@ -1481,7 +1481,7 @@ export default function ProjectFoldersView({
             currentFolder={breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : undefined}
             recommendations={fileRecommendations}
             warnings={pipelineWarnings}
-            pipelineLocked={project.currentStage === 'internal_approval' || project.currentStage === 'customer_approval'}
+            pipelineLocked={project.currentStage === 'approval'}
             onToggleSmartRouting={() => setUseSmartRouting(!useSmartRouting)}
           />
         </div>
