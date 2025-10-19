@@ -43,6 +43,11 @@ import Alert from './folders/components/Alert';
 import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
 import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
+import MoveAssetModal from './folders/components/MoveAssetModal';
+// Custom Hooks
+import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
+import { useFileActions } from './folders/hooks/useFileActions';
+import { useDocumentEditor } from './folders/hooks/useDocumentEditor';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -72,203 +77,6 @@ function FolderSkeleton() {
   );
 }
 
-// Move Asset Modal Component - FTP Style Navigation
-function MoveAssetModal({
-  isOpen,
-  onClose,
-  onMoveSuccess,
-  asset,
-  availableFolders,
-  currentFolderId,
-  organizationId,
-  rootFolder
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onMoveSuccess: () => void;
-  asset: any;
-  availableFolders: any[];
-  currentFolderId?: string;
-  organizationId: string;
-  rootFolder?: { id: string; name: string };
-}) {
-  const [currentPath, setCurrentPath] = useState<{id: string, name: string}[]>([]);
-  const [currentFolders, setCurrentFolders] = useState<any[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [moving, setMoving] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
-  
-  // Modal zurücksetzen und Hauptordner laden wenn geöffnet wird
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentPath([]);
-      setSelectedFolderId(null);
-      setAlert(null);
-
-      if (rootFolder) {
-        // Im Strategie-Tab: Zeige den Dokumente-Ordner als Root mit seinen Unterordnern
-        setCurrentPath([{ id: rootFolder.id, name: rootFolder.name }]);
-        setSelectedFolderId(rootFolder.id);
-        setCurrentFolders(availableFolders || []);
-      } else {
-        // Im Daten-Tab: Lade die 3 Hauptordner (Medien, Dokumente, Pressemeldungen)
-        setCurrentFolders(availableFolders || []);
-      }
-    }
-  }, [isOpen, availableFolders, rootFolder]);
-
-  const showAlert = (message: string) => {
-    setAlert({ type: 'error', message });
-    setTimeout(() => setAlert(null), 3000);
-  };
-
-  const handleFolderClick = async (folder: any) => {
-    try {
-      // Navigiere in den Ordner hinein
-      const subfolders = await getFolders(organizationId, folder.id);
-      setCurrentFolders(subfolders);
-      setCurrentPath([...currentPath, { id: folder.id, name: folder.name }]);
-      setSelectedFolderId(folder.id); // Aktueller Ordner ist ausgewählt
-    } catch (error) {
-      console.error('Fehler beim Laden des Ordners:', error);
-      showAlert('Fehler beim Laden des Ordners.');
-    }
-  };
-
-  const handleBackClick = async () => {
-    if (currentPath.length === 0) return;
-
-    try {
-      if (currentPath.length === 1) {
-        if (rootFolder) {
-          // Im Strategie-Tab: Kann nicht weiter zurück als zum Dokumente-Ordner
-          return;
-        } else {
-          // Im Daten-Tab: Zurück zu den Hauptordnern
-          setCurrentFolders(availableFolders || []);
-          setCurrentPath([]);
-          setSelectedFolderId(null);
-        }
-      } else {
-        // Zurück zum vorherigen Ordner
-        const parentFolder = currentPath[currentPath.length - 2];
-        const subfolders = await getFolders(organizationId, parentFolder.id);
-        setCurrentFolders(subfolders);
-        setCurrentPath(currentPath.slice(0, -1));
-        setSelectedFolderId(parentFolder.id);
-      }
-    } catch (error) {
-      console.error('Fehler beim Zurücknavigieren:', error);
-      showAlert('Fehler beim Navigieren.');
-    }
-  };
-
-  const handleMove = async () => {
-    if (!asset?.id || selectedFolderId === null) return;
-
-    setMoving(true);
-    try {
-      await updateAsset(asset.id, {
-        folderId: selectedFolderId
-      });
-
-      onMoveSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Fehler beim Verschieben der Datei:', error);
-      showAlert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
-    } finally {
-      setMoving(false);
-    }
-  };
-
-  if (!isOpen || !asset) return null;
-
-  const getPathString = () => {
-    if (currentPath.length === 0) return 'Projekt-Ordner';
-    return 'Projekt-Ordner > ' + currentPath.map(p => p.name).join(' > ');
-  };
-
-  return (
-    <Dialog open={isOpen} onClose={onClose} size="lg">
-      <DialogTitle>Datei verschieben</DialogTitle>
-      <DialogBody className="space-y-4">
-        {alert && <Alert type={alert.type} message={alert.message} />}
-        
-        {/* Zu verschiebende Datei anzeigen */}
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-            <Text className="font-medium text-blue-900">{asset?.fileName}</Text>
-          </div>
-        </div>
-        
-        {/* Aktueller Pfad */}
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <Text className="text-sm font-medium text-gray-700">Aktueller Pfad:</Text>
-          <Text className="text-sm text-gray-600">{getPathString()}</Text>
-        </div>
-        
-        {/* Ordner-Navigation */}
-        <div className="border rounded-lg max-h-64 overflow-y-auto">
-          {/* Zurück-Button */}
-          {currentPath.length > 0 && (
-            <div 
-              className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b"
-              onClick={handleBackClick}
-            >
-              <FolderIcon className="w-5 h-5 text-gray-500" />
-              <Text className="text-sm font-medium text-gray-700">..</Text>
-            </div>
-          )}
-          
-          {/* Ordner-Liste */}
-          {currentFolders.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <Text className="text-sm">Keine Unterordner vorhanden</Text>
-              {selectedFolderId && (
-                <Text className="text-xs mt-1">Sie können hier verschieben</Text>
-              )}
-            </div>
-          ) : (
-            currentFolders.map((folder) => (
-              <div 
-                key={folder.id}
-                className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                onClick={() => handleFolderClick(folder)}
-              >
-                <FolderIcon className="w-5 h-5 text-blue-500" />
-                <Text className="text-sm font-medium">{folder.name}</Text>
-                <div className="ml-auto text-gray-400">→</div>
-              </div>
-            ))
-          )}
-        </div>
-        
-        {/* Zielordner-Info */}
-        {selectedFolderId && (
-          <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-            <Text className="text-sm font-medium text-green-800">
-              ✓ Verschieben nach: {getPathString()}
-            </Text>
-          </div>
-        )}
-      </DialogBody>
-      <DialogActions>
-        <Button plain onClick={onClose} disabled={moving}>
-          Abbrechen
-        </Button>
-        <Button
-          onClick={handleMove}
-          disabled={moving || selectedFolderId === null}
-        >
-          {moving ? 'Wird verschoben...' : 'Hier verschieben'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 // Main Component
 interface ProjectFoldersViewProps {
   projectId: string;
@@ -286,29 +94,66 @@ export default function ProjectFoldersView({
   onRefresh
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
-  const [currentFolders, setCurrentFolders] = useState<any[]>([]);
-  const [currentAssets, setCurrentAssets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+
+  // Custom Hooks für Business Logic
+  const {
+    selectedFolderId,
+    setSelectedFolderId,
+    currentFolders,
+    currentAssets,
+    setCurrentAssets,
+    loading,
+    breadcrumbs,
+    allFolders,
+    handleFolderClick,
+    handleGoToRoot,
+    handleBreadcrumbClick,
+    handleBackClick,
+    loadFolderContent,
+    loadAllFolders
+  } = useFolderNavigation({ organizationId, projectFolders });
+
+  const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const {
+    confirmDialog,
+    setConfirmDialog,
+    handleDeleteAsset,
+    handleDownloadDocument,
+    handleAssetClick: handleAssetClickBase
+  } = useFileActions({
+    organizationId,
+    onSuccess: (msg) => showAlert('success', msg),
+    onError: (msg) => showAlert('error', msg)
+  });
+
+  const {
+    showDocumentEditor,
+    editingDocument,
+    handleCreateDocument,
+    handleEditDocument,
+    handleDocumentSave: handleDocumentSaveBase,
+    handleCloseEditor
+  } = useDocumentEditor({
+    onSaveSuccess: () => {
+      if (selectedFolderId) {
+        loadFolderContent(selectedFolderId);
+      } else {
+        onRefresh();
+      }
+      showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
+    }
+  });
+
+  // Local Component State (UI only)
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
-  const [breadcrumbs, setBreadcrumbs] = useState<Array<{id: string, name: string}>>([]);
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
-  const [allFolders, setAllFolders] = useState<any[]>([]);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-  } | null>(null);
-  
-  // Document Editor States
-  const [showDocumentEditor, setShowDocumentEditor] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<InternalDocument | null>(null);
-
-  // Enhanced Drag & Drop States
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
   // Initial load - zeige die Unterordner des Hauptordners
