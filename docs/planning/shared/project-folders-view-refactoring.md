@@ -1,7 +1,8 @@
 # ProjectFoldersView Refactoring - Implementierungsplan
 
-**Version:** 1.0
+**Version:** 1.1 (mit Admin SDK Integration)
 **Erstellt:** 2025-01-19
+**Aktualisiert:** 2025-01-19 (Admin SDK Phase hinzugefügt)
 **Status:** 📋 Geplant
 **Priorität:** 🔴 KRITISCH (blockiert 2 Tab-Refactorings!)
 
@@ -124,7 +125,9 @@ src/components/projects/ProjectFoldersView.tsx  # Re-export (3 Zeilen)
 
 ---
 
-## 🚀 Die 7 Phasen
+## 🚀 Die 8 Phasen
+
+**NEU in v1.1:** Phase 1.5 - Admin SDK Migration (Security-Critical)
 
 ### Phase 0: Vorbereitung & Setup
 
@@ -776,6 +779,546 @@ git add .
 git commit -m "feat: Phase 1 - React Query Integration für ProjectFoldersView"
 ```
 ```
+
+---
+
+### Phase 1.5: Admin SDK Migration (KRITISCH für Security)
+
+**Ziel:** Server-Side Validation für Delete & Upload Operations
+
+**Dauer:** 2-3 Tage (parallel zu Phase 2 möglich!)
+
+**Priorität:** 🔴 KRITISCH - Sicherheitslücken schließen
+
+#### Warum jetzt?
+
+✅ **Perfect Timing:** React Query Hooks sind bereits erstellt (Phase 1)
+✅ **Security-Gap:** Aktuelle Architektur hat kritische Sicherheitslücken
+✅ **Clean Architecture:** Server-Side Validation = beste Practice
+✅ **Future-Proof:** Audit-Logs, Quota-Management, Virus-Scan später einfach
+
+**Siehe Details:** `docs/planning/shared/project-folders-admin-sdk-analysis.md`
+
+#### 1.5.1 Admin SDK Setup
+
+**Voraussetzungen prüfen:**
+
+```bash
+# Admin SDK installiert?
+npm list firebase-admin
+
+# Falls nicht:
+npm install firebase-admin
+```
+
+**Admin SDK Init-Datei erstellen:**
+
+Datei: `src/lib/firebase/admin.ts`
+
+```typescript
+import admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  });
+}
+
+export const adminDb = admin.firestore();
+export const adminStorage = admin.storage();
+export const adminAuth = admin.auth();
+```
+
+**Environment Variables:**
+```env
+FIREBASE_ADMIN_PROJECT_ID=your-project-id
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+#### 1.5.2 Deletion API Routes (KRITISCH)
+
+**API Route: `/api/v1/folders/[folderId]` (DELETE)**
+
+Datei: `src/app/api/v1/folders/[folderId]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { adminDb } from '@/lib/firebase/admin';
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { folderId: string } }
+) {
+  try {
+    // 1. Authentifizierung
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const { folderId } = params;
+    const { organizationId } = await request.json();
+
+    // 2. User's Organization validieren
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userOrganizationId = userDoc.data()?.organizationId;
+
+    if (organizationId !== userOrganizationId) {
+      return NextResponse.json(
+        { error: 'Forbidden: Organization mismatch' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Folder abrufen und validieren
+    const folderDoc = await adminDb
+      .collection('media_folders')
+      .doc(folderId)
+      .get();
+
+    if (!folderDoc.exists) {
+      return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
+    }
+
+    const folderData = folderDoc.data();
+    if (folderData?.organizationId !== organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // 4. Prüfen ob Ordner leer ist
+    const assetsSnapshot = await adminDb
+      .collection('media_assets')
+      .where('folderId', '==', folderId)
+      .limit(1)
+      .get();
+
+    if (!assetsSnapshot.empty) {
+      return NextResponse.json(
+        { error: 'Folder not empty - delete files first' },
+        { status: 400 }
+      );
+    }
+
+    // 5. Prüfen ob Unterordner existieren
+    const subFoldersSnapshot = await adminDb
+      .collection('media_folders')
+      .where('parentFolderId', '==', folderId)
+      .limit(1)
+      .get();
+
+    if (!subFoldersSnapshot.empty) {
+      return NextResponse.json(
+        { error: 'Folder has subfolders - delete them first' },
+        { status: 400 }
+      );
+    }
+
+    // 6. Löschen (Admin SDK = bypassed Security Rules)
+    await adminDb.collection('media_folders').doc(folderId).delete();
+
+    // 7. Audit-Log erstellen (optional aber empfohlen)
+    await adminDb.collection('audit_logs').add({
+      action: 'folder_deleted',
+      userId,
+      folderId,
+      folderName: folderData?.name,
+      organizationId,
+      timestamp: new Date(),
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Folder deletion error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+**API Route: `/api/v1/media/[assetId]` (DELETE)**
+
+Datei: `src/app/api/v1/media/[assetId]/route.ts`
+
+```typescript
+// Ähnliche Struktur wie Folder-Delete
+// - User-Validierung
+// - Organization-Check
+// - Storage-File löschen (adminStorage.bucket().file().delete())
+// - Firestore-Doc löschen
+// - Audit-Log
+```
+
+#### 1.5.3 Client-Side Hooks anpassen
+
+**useDeleteFolder Hook aktualisieren:**
+
+Datei: `src/lib/hooks/useMediaData.ts`
+
+```typescript
+export function useDeleteFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      folderId: string;
+      organizationId: string;
+      projectId: string;
+    }) => {
+      // ✅ API Route aufrufen (Server-Side Validation)
+      const response = await fetch(`/api/v1/folders/${data.folderId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId: data.organizationId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Folder deletion failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['project-folders', variables.organizationId, variables.projectId]
+      });
+    },
+  });
+}
+```
+
+**useDeleteFile Hook aktualisieren:**
+
+```typescript
+export function useDeleteFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      assetId: string;
+      organizationId: string;
+      folderId: string;
+    }) => {
+      // ✅ API Route aufrufen
+      const response = await fetch(`/api/v1/media/${data.assetId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId: data.organizationId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'File deletion failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['folder-assets', variables.organizationId, variables.folderId]
+      });
+    },
+  });
+}
+```
+
+#### 1.5.4 Upload Validation API (HOCH)
+
+**API Route: `/api/v1/media/upload` (POST)**
+
+Datei: `src/app/api/v1/media/upload/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { adminDb, adminStorage } from '@/lib/firebase/admin';
+
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf', 'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'video/mp4', 'video/quicktime',
+];
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Authentifizierung
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
+    // 2. FormData parsen
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const organizationId = formData.get('organizationId') as string;
+    const folderId = formData.get('folderId') as string;
+    const projectId = formData.get('projectId') as string;
+
+    if (!file || !organizationId || !folderId || !projectId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // 3. User's Organization validieren
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userOrganizationId = userDoc.data()?.organizationId;
+
+    if (organizationId !== userOrganizationId) {
+      return NextResponse.json(
+        { error: 'Forbidden: Organization mismatch' },
+        { status: 403 }
+      );
+    }
+
+    // 4. File-Type Validation
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: `File type not allowed: ${file.type}` },
+        { status: 400 }
+      );
+    }
+
+    // 5. File-Size Validation
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB (max: 100MB)` },
+        { status: 400 }
+      );
+    }
+
+    // 6. Folder-Validierung
+    const folderDoc = await adminDb.collection('media_folders').doc(folderId).get();
+    if (!folderDoc.exists || folderDoc.data()?.organizationId !== organizationId) {
+      return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
+    }
+
+    // 7. File zu Storage hochladen (Admin SDK)
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const fileName = `${Date.now()}_${file.name}`;
+    const storagePath = `organizations/${organizationId}/media/${fileName}`;
+
+    const bucket = adminStorage.bucket();
+    const fileRef = bucket.file(storagePath);
+
+    await fileRef.save(fileBuffer, {
+      metadata: {
+        contentType: file.type,
+        metadata: {
+          uploadedBy: userId,
+          organizationId,
+          folderId,
+          projectId,
+        },
+      },
+    });
+
+    // 8. Download-URL generieren
+    const [downloadUrl] = await fileRef.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 Jahr
+    });
+
+    // 9. Asset in Firestore erstellen
+    const assetRef = adminDb.collection('media_assets').doc();
+    await assetRef.set({
+      id: assetRef.id,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      storagePath,
+      downloadUrl,
+      folderId,
+      projectId,
+      organizationId,
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      asset: {
+        id: assetRef.id,
+        fileName: file.name,
+        downloadUrl,
+        fileSize: file.size,
+        fileType: file.type,
+      },
+    });
+  } catch (error) {
+    console.error('File upload error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+**useUploadFile Hook anpassen:**
+
+```typescript
+export function useUploadFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      file: File;
+      organizationId: string;
+      folderId: string;
+      projectId: string;
+      onProgress?: (progress: number) => void;
+    }) => {
+      // ✅ API Route aufrufen (Server-Side Validation)
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('organizationId', data.organizationId);
+      formData.append('folderId', data.folderId);
+      formData.append('projectId', data.projectId);
+
+      const response = await fetch('/api/v1/media/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['folder-assets', variables.organizationId, variables.folderId]
+      });
+    },
+  });
+}
+```
+
+#### 1.5.5 Tests für API Routes
+
+**Test-Datei:** `src/app/api/v1/folders/__tests__/delete.test.ts`
+
+```typescript
+describe('DELETE /api/v1/folders/[folderId]', () => {
+  it('should delete empty folder', async () => {
+    // Test: Erfolgreiche Löschung
+  });
+
+  it('should reject unauthorized user', async () => {
+    // Test: 401 Unauthorized
+  });
+
+  it('should reject wrong organization', async () => {
+    // Test: 403 Forbidden
+  });
+
+  it('should reject non-empty folder', async () => {
+    // Test: 400 Bad Request (Folder not empty)
+  });
+
+  it('should reject folder with subfolders', async () => {
+    // Test: 400 Bad Request (Has subfolders)
+  });
+});
+```
+
+#### Checkliste Phase 1.5
+
+**Setup:**
+- [ ] Firebase Admin SDK installiert
+- [ ] Environment Variables konfiguriert
+- [ ] `src/lib/firebase/admin.ts` erstellt
+
+**Deletion APIs:**
+- [ ] `/api/v1/folders/[folderId]` (DELETE) implementiert
+- [ ] `/api/v1/media/[assetId]` (DELETE) implementiert
+- [ ] useDeleteFolder Hook angepasst
+- [ ] useDeleteFile Hook angepasst
+
+**Upload Validation:**
+- [ ] `/api/v1/media/upload` (POST) implementiert
+- [ ] useUploadFile Hook angepasst
+- [ ] File-Type Validation getestet
+- [ ] File-Size Validation getestet
+
+**Tests:**
+- [ ] API Route Tests geschrieben
+- [ ] Integration Tests aktualisiert
+- [ ] Manual Testing durchgeführt
+
+**Security Checks:**
+- [ ] Organization Mismatch blocked
+- [ ] Empty Folder Check funktioniert
+- [ ] Subfolder Check funktioniert
+- [ ] File-Type Validation funktioniert
+
+#### Phase-Bericht Template
+
+```markdown
+## Phase 1.5: Admin SDK Migration ✅
+
+### Implementiert
+- ✅ Admin SDK Setup (admin.ts)
+- ✅ Deletion APIs: /api/v1/folders/[folderId], /api/v1/media/[assetId]
+- ✅ Upload Validation API: /api/v1/media/upload
+- ✅ Client-Side Hooks angepasst (useDeleteFolder, useDeleteFile, useUploadFile)
+
+### Security-Verbesserungen
+- ✅ Server-Side Organization Checks
+- ✅ Empty Folder Validation
+- ✅ Subfolder Checks
+- ✅ File-Type Validation (Server-Side)
+- ✅ File-Size Limits enforced
+- ✅ Audit-Logs für Compliance
+
+### Vorteile
+- **Sicherheit:** ↑↑↑ (von 4/10 auf 9/10)
+- **Code Quality:** ↑↑ (Server-Side Validation)
+- **Compliance:** ✅ Audit-Logs ready
+- **Future-Proof:** Quota-Management, Virus-Scan später einfach
+
+### Tests
+- API Route Tests: [X]/[X] bestanden
+- Integration Tests: Aktualisiert
+- Security Tests: Alle bestanden
+
+### Commit
+```bash
+git add .
+git commit -m "feat: Phase 1.5 - Admin SDK Migration (Security-Critical)
+
+- Deletion APIs mit Server-Side Validation
+- Upload Validation mit File-Type/Size Checks
+- Organization-Level Permission Checks
+- Audit-Logs für Compliance
+- Client-Side Hooks angepasst
+
+Security-Verbesserung: 4/10 → 9/10
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+```
+
+**Hinweis:** Phase 1.5 kann parallel zu Phase 2 (Modularisierung) durchgeführt werden, da die Hooks bereits erstellt sind (Phase 1).
 
 ---
 
@@ -1821,6 +2364,51 @@ npm test -- folders
 ---
 
 ## 🔄 Änderungshistorie
+
+### Version 1.1 (2025-01-19) - Admin SDK Integration hinzugefügt
+
+**Phase 1.5 eingefügt:**
+
+✅ **Neue Security-Phase zwischen Phase 1 und Phase 2:**
+- Admin SDK Migration für Server-Side Validation
+- Deletion APIs: `/api/v1/folders/[folderId]`, `/api/v1/media/[assetId]`
+- Upload Validation API: `/api/v1/media/upload`
+- File-Type & File-Size Validation (Server-Side)
+- Organization-Level Permission Checks
+- Empty Folder & Subfolder Validation
+- Audit-Logs für Compliance
+
+✅ **Sicherheits-Verbesserungen:**
+- Server-Side Deletion mit Permission Checks
+- Upload Validation mit File-Type/Size Limits
+- Multi-Tenancy Organization Checks
+- Audit-Logs für alle kritischen Operationen
+- Defense-in-Depth Architektur
+
+✅ **Dokumentation:**
+- Detaillierte API Route Implementierungen
+- Hook-Anpassungen für Client-Side
+- Test-Strategien für Security
+- Environment Variables Setup
+- Admin SDK Initialisierung
+
+**Warum jetzt?**
+- ✅ Perfect Timing: React Query Hooks bereits erstellt (Phase 1)
+- ✅ Security-Gap: Aktuelle Architektur hat kritische Sicherheitslücken
+- ✅ Clean Architecture: Server-Side Validation = beste Practice
+- ✅ Future-Proof: Audit-Logs, Quota-Management, Virus-Scan später einfach
+
+**Erwartete Verbesserungen:**
+- **Sicherheit:** ↑↑↑ (von 4/10 auf 9/10)
+- **Code Quality:** ↑↑ (Server-Side Validation)
+- **Compliance:** ✅ Audit-Logs ready
+- **Wartbarkeit:** ↑ (Klare API-Boundaries)
+
+**Referenz:** `docs/planning/shared/project-folders-admin-sdk-analysis.md`
+
+**Dauer:** +2-3 Tage (parallel zu Phase 2 möglich)
+
+---
 
 ### Version 1.2 (2025-01-19) - Smart Router entfernt
 
