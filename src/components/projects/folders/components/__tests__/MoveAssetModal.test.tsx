@@ -119,7 +119,7 @@ describe('MoveAssetModal Component', () => {
     const mockSubfolders = [
       { id: 'sub-1', name: 'Unterordner 1' },
       { id: 'sub-2', name: 'Unterordner 2' }
-    ];
+    ] as any[];
     mockGetFolders.mockResolvedValueOnce(mockSubfolders);
 
     render(

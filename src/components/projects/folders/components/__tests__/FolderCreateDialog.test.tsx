@@ -23,7 +23,7 @@ describe('FolderCreateDialog Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({ user: mockUser } as any);
-    mockCreateFolder.mockResolvedValue(undefined);
+    mockCreateFolder.mockResolvedValue('new-folder-id');
   });
 
   it('sollte nicht rendern wenn isOpen=false', () => {

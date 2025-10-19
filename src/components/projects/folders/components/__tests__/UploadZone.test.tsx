@@ -23,7 +23,12 @@ describe('UploadZone Component', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockUseAuth.mockReturnValue({ user: mockUser } as any);
-    mockUploadMedia.mockResolvedValue(undefined);
+    mockUploadMedia.mockResolvedValue({
+      id: 'asset-123',
+      fileName: 'test.pdf',
+      fileType: 'application/pdf',
+      downloadUrl: 'https://example.com/test.pdf'
+    } as any);
   });
 
   afterEach(() => {
