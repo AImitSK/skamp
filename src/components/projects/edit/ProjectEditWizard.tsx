@@ -82,6 +82,14 @@ export function ProjectEditWizard({
       setCompletedSteps([]);
 
       // Initialisiere Form-Daten mit Projekt-Werten
+      const assignedMembers = project.assignedTo || [];
+      const projectMgr = project.projectManager || '';
+
+      // Stelle sicher, dass projectManager in assignedTeamMembers ist
+      const finalAssignedMembers = projectMgr && !assignedMembers.includes(projectMgr)
+        ? [...assignedMembers, projectMgr]
+        : assignedMembers;
+
       setFormData({
         title: project.title || '',
         description: project.description || '',
@@ -90,8 +98,8 @@ export function ProjectEditWizard({
         currentStage: project.currentStage || 'ideas_planning',
         tags: (project as any).tags || [],
         clientId: project.customer?.id || '',
-        assignedTeamMembers: project.assignedTo || [],
-        projectManager: project.projectManager || ''
+        assignedTeamMembers: finalAssignedMembers,
+        projectManager: projectMgr
       });
 
       if (!creationOptions) {
