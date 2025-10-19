@@ -20,9 +20,9 @@ const DEFAULT_STEP_CONFIGS: StepConfig[] = [
 const DEFAULT_STEP_ICONS = [RocketLaunchIcon, BuildingOfficeIcon, UserGroupIcon, MegaphoneIcon];
 
 interface StepTabsProps {
-  currentStep: number;
-  onStepChange: (step: number) => void;
-  completedSteps: number[];
+  currentStep: WizardStep;
+  onStepChange: (step: WizardStep) => void;
+  completedSteps: WizardStep[];
   stepLabels?: string[]; // Optional custom labels
   allowAllSteps?: boolean; // Für Edit-Modus: Alle Steps immer klickbar
 }
@@ -48,14 +48,14 @@ export function StepTabs({
         {stepConfigs.map((step) => {
           const Icon = step.icon;
           const isActive = currentStep === step.id;
-          const isCompleted = completedSteps.includes(step.id);
+          const isCompleted = completedSteps.includes(step.id as WizardStep);
           const isClickable = allowAllSteps || isCompleted || step.id <= currentStep;
 
           return (
             <button
               key={step.id}
               type="button"
-              onClick={() => isClickable && onStepChange(step.id)}
+              onClick={() => isClickable && onStepChange(step.id as WizardStep)}
               disabled={!isClickable}
               className={clsx(
                 'group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap',

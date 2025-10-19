@@ -16,7 +16,7 @@ jest.mock('@/components/ui/button', () => ({
       onClick={onClick}
       disabled={disabled}
       data-testid={`button-${color || type}`}
-      data-disabled={disabled}
+      data-disabled={disabled ? 'true' : 'false'}
     >
       {children}
     </button>
@@ -131,7 +131,9 @@ describe('DeleteConfirmDialog', () => {
       const deleteButton = screen.getByText('Lösche...').closest('button')!;
       const cancelButton = screen.getByText('Abbrechen').closest('button')!;
 
-      expect(deleteButton).toHaveAttribute('data-disabled', 'true');
+      // Delete button is a native button, uses 'disabled' attribute
+      expect(deleteButton).toHaveAttribute('disabled');
+      // Cancel button is Button component, uses 'data-disabled' attribute from mock
       expect(cancelButton).toHaveAttribute('data-disabled', 'true');
     });
 
