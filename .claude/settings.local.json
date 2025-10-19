@@ -20,7 +20,8 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(git pull:*)",
-      "Bash(npx jscpd:*)"
+      "Bash(npx jscpd:*)",
+      "Bash(Ist das dafür zu klein?\"\n\nÄnderungen:\n\n1. Initialen-Generierung implementiert:\n   - getInitials() Funktion extrahiert Vor- und Nachname-Initialen\n   - \"Max Mustermann\" → \"MM\"\n   - \"Stefan\" → \"ST\" (bei 1 Wort: erste 2 Buchstaben)\n   - Immer uppercase\n\n2. Initialen an Avatar-Komponente übergeben:\n   - initials={member.photoUrl ? undefined : getInitials(member.displayName)}\n   - Nur wenn kein Foto vorhanden, werden Initialen angezeigt\n   - Avatar-Komponente rendert Initialen als SVG (responsive)\n\n3. Avatar-Größe nochmal erhöht:\n   VORHER: h-8 w-8 (32px)\n   JETZT:  h-10 w-10 (40px)\n   - 25% größer für bessere Lesbarkeit der Initialen\n   - 40px ist Standard-Größe für Avatar mit Text\n\n4. Badge-Text-Größe angepasst:\n   VORHER: text-xs\n   JETZT:  text-sm\n   - Proportional zur größeren Avatar-Größe\n\nTechnische Details:\n- Avatar-Komponente nutzt SVG mit viewBox=\"0 0 100 100\"\n- Text ist automatisch responsive und zentriert\n- Hintergrundfarbe: bg-[#dedc00] (CeleroPress Gelb)\n- Border: 2px weiß für Overlapping-Effekt\n\nVORHER:\n❌ Keine Initialen angezeigt (nur leerer gelber Avatar)\n❌ 32px könnte für Text zu klein sein\n\nJETZT:\n✅ Initialen werden automatisch generiert (MM, SK, etc.)\n✅ 40px Größe ideal für 2-Buchstaben-Text\n✅ Fallback: Foto → Initialen → nichts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

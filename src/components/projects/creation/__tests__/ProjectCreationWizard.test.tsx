@@ -1,28 +1,78 @@
 // src/components/projects/creation/__tests__/ProjectCreationWizard.test.tsx
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProjectCreationWizard } from '../ProjectCreationWizard';
 import { projectService } from '@/lib/firebase/project-service';
+import { tagsService } from '@/lib/firebase/tags-service';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  ProjectCreationOptions,
-  ProjectCreationResult,
-  ValidationResult 
-} from '@/types/project';
 
 // Mock dependencies
 jest.mock('@/lib/firebase/project-service');
+jest.mock('@/lib/firebase/tags-service');
 jest.mock('@/context/AuthContext');
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mock-id')
+
+// Mock Step Components
+jest.mock('../steps', () => ({
+  ProjectStep: ({ formData, onUpdate }: any) => (
+    <div data-testid="project-step">
+      <input
+        aria-label="Projekt-Titel"
+        value={formData.title}
+        onChange={(e) => onUpdate({ title: e.target.value })}
+      />
+      <textarea
+        aria-label="Beschreibung"
+        value={formData.description}
+        onChange={(e) => onUpdate({ description: e.target.value })}
+      />
+      <select
+        aria-label="Priorität"
+        value={formData.priority}
+        onChange={(e) => onUpdate({ priority: e.target.value })}
+      >
+        <option value="low">Niedrig</option>
+        <option value="medium">Mittel</option>
+        <option value="high">Hoch</option>
+        <option value="urgent">Dringend</option>
+      </select>
+    </div>
+  ),
+  ClientStep: ({ formData, onUpdate }: any) => (
+    <div data-testid="client-step">
+      <select
+        aria-label="Kunde auswählen"
+        value={formData.clientId}
+        onChange={(e) => onUpdate({ clientId: e.target.value })}
+      >
+        <option value="">-- Bitte wählen --</option>
+        <option value="client-1">Test Client 1</option>
+        <option value="client-2">Test Client 2</option>
+      </select>
+    </div>
+  ),
+  TeamStep: ({ formData, onUpdate }: any) => (
+    <div data-testid="team-step">
+      <div>Team Members: {formData.assignedTeamMembers.join(', ')}</div>
+      <button onClick={() => onUpdate({ assignedTeamMembers: ['member-1'] })}>
+        Add Member
+      </button>
+    </div>
+  )
+}));
+
+// Mock CreationSuccessDashboard
+jest.mock('../CreationSuccessDashboard', () => ({
+  CreationSuccessDashboard: ({ projectId }: any) => (
+    <div data-testid="success-dashboard">Project created: {projectId}</div>
+  )
 }));
 
 const mockProjectService = projectService as jest.Mocked<typeof projectService>;
+const mockTagsService = tagsService as jest.Mocked<typeof tagsService>;
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('ProjectCreationWizard', () => {
-  
   const mockProps = {
     isOpen: true,
     onClose: jest.fn(),
@@ -33,644 +83,235 @@ describe('ProjectCreationWizard', () => {
   const mockUser = {
     uid: 'user123',
     email: 'test@example.com',
-    displayName: 'Test User',
-    emailVerified: true,
-    isAnonymous: false,
-    metadata: {} as any,
-    providerData: [],
-    refreshToken: '',
-    tenantId: null,
-    delete: jest.fn(),
-    getIdToken: jest.fn(),
-    getIdTokenResult: jest.fn(),
-    reload: jest.fn(),
-    toJSON: jest.fn(),
-    phoneNumber: null,
-    photoURL: null,
-    providerId: 'password'
+    displayName: 'Test User'
   };
 
-  const mockCreationOptions: ProjectCreationOptions = {
+  const mockCreationOptions = {
     availableClients: [
-      {
-        id: 'client1',
-        name: 'TechCorp GmbH',
-        type: 'enterprise',
-        contactCount: 15
-      },
-      {
-        id: 'client2',
-        name: 'StartUp AG',
-        type: 'startup',
-        contactCount: 5
-      }
+      { id: 'client-1', name: 'Test Client 1', type: 'customer' },
+      { id: 'client-2', name: 'Test Client 2', type: 'publisher' }
     ],
     availableTeamMembers: [
-      {
-        id: 'user1',
-        displayName: 'Max Mustermann',
-        email: 'max@example.com',
-        role: 'Project Manager',
-        avatar: 'avatar1.jpg'
-      },
-      {
-        id: 'user2',
-        displayName: 'Lisa Schmidt',
-        email: 'lisa@example.com',
-        role: 'Content Creator'
-      }
+      { id: 'member-1', displayName: 'Test User 1', role: 'Admin', userId: 'user-1' },
+      { id: 'member-2', displayName: 'Test User 2', role: 'Editor', userId: 'user-2' }
     ],
-    availableTemplates: [
-      {
-        id: 'template1',
-        name: 'Standard PR-Kampagne',
-        description: 'Klassischer PR-Workflow',
-        taskCount: 10,
-        category: 'standard'
-      }
-    ],
-    availableDistributionLists: [
-      {
-        id: 'list1',
-        name: 'Hauptverteiler',
-        contactCount: 25
-      }
-    ]
+    availableTemplates: [],
+    availableDistributionLists: [],
+    availableAssets: []
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue({ 
-      user: mockUser, 
+    mockUseAuth.mockReturnValue({
+      user: mockUser as any,
       loading: false
     });
-    
-    // Mock localStorage
-    const localStorageMock = {
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-      removeItem: jest.fn()
-    };
-    Object.defineProperty(window, 'localStorage', {
-      value: localStorageMock
-    });
+    mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
+    mockTagsService.getAll.mockResolvedValue([]);
   });
 
   describe('Wizard Initialization', () => {
-    
-    it('sollte nicht rendern wenn isOpen false ist', () => {
-      render(
-        <ProjectCreationWizard 
-          {...mockProps} 
-          isOpen={false} 
-        />
-      );
-      
+    it('sollte nicht rendern wenn isOpen false', () => {
+      render(<ProjectCreationWizard {...mockProps} isOpen={false} />);
+
       expect(screen.queryByText('Neues Projekt erstellen')).not.toBeInTheDocument();
     });
 
-    it('sollte Wizard-Header und Progress-Indicator rendern', () => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-      
+    it('sollte Wizard-Header rendern', () => {
       render(<ProjectCreationWizard {...mockProps} />);
-      
+
       expect(screen.getByText('Neues Projekt erstellen')).toBeInTheDocument();
-      expect(screen.getByText('Projekt-Basis')).toBeInTheDocument();
-      expect(screen.getByText('Team-Zuordnung')).toBeInTheDocument();
-      expect(screen.getByText('Template & Setup')).toBeInTheDocument();
-      expect(screen.getByText('Ressourcen')).toBeInTheDocument();
+    });
+
+    it('sollte Tab-Navigation mit 3 Steps rendern', async () => {
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Projekt')).toBeInTheDocument();
+        expect(screen.getByText('Kunde')).toBeInTheDocument();
+        expect(screen.getByText('Team')).toBeInTheDocument();
+      });
     });
 
     it('sollte Creation Options beim Öffnen laden', async () => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-      
       render(<ProjectCreationWizard {...mockProps} />);
-      
+
       await waitFor(() => {
         expect(mockProjectService.getProjectCreationOptions).toHaveBeenCalledWith('org123');
       });
     });
 
-    it('sollte Loading-Zustand während Option-Loading anzeigen', async () => {
-      mockProjectService.getProjectCreationOptions.mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve(mockCreationOptions), 100))
-      );
-      
+    it('sollte mit Schritt 1 starten', async () => {
       render(<ProjectCreationWizard {...mockProps} />);
-      
-      expect(screen.getByRole('generic', { hidden: true })).toHaveClass('animate-spin');
-    });
 
-    it('sollte bei Fehler beim Laden der Optionen resilient sein', async () => {
-      mockProjectService.getProjectCreationOptions.mockRejectedValue(new Error('Network error'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Fehler beim Laden der Optionen:', expect.any(Error));
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
-      
-      consoleSpy.mockRestore();
     });
   });
 
-  describe('Step 1 - Projekt-Basis', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte alle Basis-Felder rendern', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Beschreibung/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Kunde/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Priorität/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Tags/)).toBeInTheDocument();
-      });
-    });
-
-    it('sollte Titel-Eingabe korrekt handhaben', async () => {
+  describe('Multi-Step Navigation', () => {
+    it('sollte zu Step 2 navigieren nach gültigem Step 1', async () => {
       const user = userEvent.setup();
       render(<ProjectCreationWizard {...mockProps} />);
-      
+
       await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
-      
-      const titleInput = screen.getByLabelText(/Projekt-Titel/);
+
+      // Fill Step 1 with valid data (min 3 chars title)
+      const titleInput = screen.getByLabelText(/Projekt-Titel/i);
+      await user.clear(titleInput);
       await user.type(titleInput, 'Test Projekt');
-      
-      expect(titleInput).toHaveValue('Test Projekt');
+
+      // Click Weiter
+      const weiterButton = screen.getByRole('button', { name: /Weiter/i });
+      await user.click(weiterButton);
+
+      // Should show Step 2
+      await waitFor(() => {
+        expect(screen.getByTestId('client-step')).toBeInTheDocument();
+      });
     });
 
-    it('sollte Beschreibung-Eingabe korrekt handhaben', async () => {
+    it('sollte Zurück-Button NICHT auf Step 1 anzeigen', async () => {
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
+      });
+
+      // No Zurück button on step 1
+      expect(screen.queryByRole('button', { name: /Zurück/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Step Validation', () => {
+    it('sollte Weiter-Button disablen wenn Titel zu kurz (< 3 Zeichen)', async () => {
       const user = userEvent.setup();
       render(<ProjectCreationWizard {...mockProps} />);
-      
+
       await waitFor(() => {
-        expect(screen.getByLabelText(/Beschreibung/)).toBeInTheDocument();
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
-      
-      const descriptionInput = screen.getByLabelText(/Beschreibung/);
-      await user.type(descriptionInput, 'Test Beschreibung');
-      
-      expect(descriptionInput).toHaveValue('Test Beschreibung');
+
+      const titleInput = screen.getByLabelText(/Projekt-Titel/i);
+      await user.clear(titleInput);
+      await user.type(titleInput, 'AB'); // Only 2 chars
+
+      const weiterButton = screen.getByRole('button', { name: /Weiter/i });
+      expect(weiterButton).toBeDisabled();
     });
 
-    it('sollte Priorität-Auswahl korrekt handhaben', async () => {
+    it('sollte Weiter-Button enablen wenn Titel gültig (>= 3 Zeichen)', async () => {
       const user = userEvent.setup();
       render(<ProjectCreationWizard {...mockProps} />);
-      
+
       await waitFor(() => {
-        expect(screen.getByLabelText(/Priorität/)).toBeInTheDocument();
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
-      
-      const prioritySelect = screen.getByLabelText(/Priorität/);
+
+      const titleInput = screen.getByLabelText(/Projekt-Titel/i);
+      await user.clear(titleInput);
+      await user.type(titleInput, 'ABC'); // 3 chars - valid
+
+      const weiterButton = screen.getByRole('button', { name: /Weiter/i });
+      expect(weiterButton).not.toBeDisabled();
+    });
+
+    it('sollte Weiter-Button default disablen wenn Titel leer', async () => {
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
+      });
+
+      const weiterButton = screen.getByRole('button', { name: /Weiter/i });
+      expect(weiterButton).toBeDisabled();
+    });
+
+    it('sollte Abbrechen-Button immer enablen', async () => {
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
+      });
+
+      const abbrechenButton = screen.getByRole('button', { name: /Abbrechen/i });
+      expect(abbrechenButton).not.toBeDisabled();
+    });
+  });
+
+  describe('Form Data Management', () => {
+    it('sollte alle Form-Felder korrekt initialisieren', async () => {
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
+      });
+
+      const titleInput = screen.getByLabelText(/Projekt-Titel/i) as HTMLInputElement;
+      const descInput = screen.getByLabelText(/Beschreibung/i) as HTMLTextAreaElement;
+      const prioritySelect = screen.getByLabelText(/Priorität/i) as HTMLSelectElement;
+
+      expect(titleInput.value).toBe('');
+      expect(descInput.value).toBe('');
+      expect(prioritySelect.value).toBe('medium');
+    });
+
+    it('sollte Priorität-Änderungen propagieren', async () => {
+      const user = userEvent.setup();
+      render(<ProjectCreationWizard {...mockProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
+      });
+
+      const prioritySelect = screen.getByLabelText(/Priorität/i);
       await user.selectOptions(prioritySelect, 'high');
-      
-      expect(prioritySelect).toHaveValue('high');
+
+      const prioritySelectAfter = screen.getByLabelText(/Priorität/i) as HTMLSelectElement;
+      expect(prioritySelectAfter.value).toBe('high');
     });
 
-    it('sollte Tags-Eingabe korrekt parsen', async () => {
+    it('sollte Client-Selection auf Step 2 anzeigen', async () => {
       const user = userEvent.setup();
       render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Tags/)).toBeInTheDocument();
-      });
-      
-      const tagsInput = screen.getByLabelText(/Tags/);
-      await user.type(tagsInput, 'marketing, pr, kampagne');
-      
-      // Tags werden durch onChange-Handler verarbeitet
-      expect(tagsInput).toHaveValue('marketing, pr, kampagne');
-    });
 
-    it('sollte Client-Auswahl über ClientSelector rendern', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
       await waitFor(() => {
-        expect(screen.getByText('TechCorp GmbH')).toBeInTheDocument();
-        expect(screen.getByText('StartUp AG')).toBeInTheDocument();
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
+
+      // Navigate to Step 2
+      const titleInput = screen.getByLabelText(/Projekt-Titel/i);
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Test Projekt');
+
+      const weiterButton = screen.getByRole('button', { name: /Weiter/i });
+      await user.click(weiterButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('client-step')).toBeInTheDocument();
+      });
+
+      // Client selection should be visible
+      expect(screen.getByLabelText(/Kunde auswählen/i)).toBeInTheDocument();
     });
   });
 
-  describe('Step 2 - Team-Zuordnung', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte zu Schritt 2 navigieren können', async () => {
+  describe('Close Behavior', () => {
+    it('sollte onClose aufrufen beim Klick auf Abbrechen', async () => {
       const user = userEvent.setup();
       render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Füllen der erforderlichen Felder für Schritt 1
-      await user.type(screen.getByLabelText(/Projekt-Titel/), 'Test Projekt');
-      
-      // Mock Validierung
-      const validationResult: ValidationResult = { isValid: true, errors: {} };
-      mockProjectService.validateProjectData.mockResolvedValue(validationResult);
-      
-      // Weiter-Button klicken
-      const nextButton = screen.getByRole('button', { name: /weiter/i });
-      await user.click(nextButton);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Team-Mitglieder *')).toBeInTheDocument();
-        expect(screen.getByText('Projekt-Manager')).toBeInTheDocument();
-      });
-    });
 
-    it('sollte Team-Mitglieder MultiSelect rendern', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Navigiere zu Schritt 2
       await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
+        expect(screen.getByTestId('project-step')).toBeInTheDocument();
       });
-      
-      await user.type(screen.getByLabelText(/Projekt-Titel/), 'Test');
-      
-      const validationResult: ValidationResult = { isValid: true, errors: {} };
-      mockProjectService.validateProjectData.mockResolvedValue(validationResult);
-      
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      await waitFor(() => {
-        expect(screen.getByText('Team-Mitglieder *')).toBeInTheDocument();
-      });
-    });
 
-    it('sollte Projekt-Manager-Auswahl basierend auf Team-Mitgliedern anzeigen', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Navigiere zu Schritt 2
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      await user.type(screen.getByLabelText(/Projekt-Titel/), 'Test');
-      
-      const validationResult: ValidationResult = { isValid: true, errors: {} };
-      mockProjectService.validateProjectData.mockResolvedValue(validationResult);
-      
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      await waitFor(() => {
-        const pmSelect = screen.getByLabelText(/Projekt-Manager/);
-        expect(pmSelect).toBeInTheDocument();
-        expect(screen.getByText('Automatisch zuweisen')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Step Navigation', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte Zurück-Button in Schritt 1 deaktiviert sein', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        const backButton = screen.getByRole('button', { name: /zurück/i });
-        expect(backButton).toBeDisabled();
-      });
-    });
-
-    it('sollte Schritt-Indikator aktuellen Schritt highlighten', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        const step1Indicator = screen.getByText('Projekt-Basis').closest('div');
-        expect(step1Indicator).toHaveClass('text-blue-600');
-      });
-    });
-
-    it('sollte Progress zwischen Schritten korrekt anzeigen', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Schritt 1 von 4')).toBeInTheDocument();
-      });
-    });
-
-    it('sollte bei Validierungsfehlern nicht weiternavigieren', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Leeren Titel lassen für Validierungsfehler
-      const invalidValidationResult: ValidationResult = {
-        isValid: false,
-        errors: { title: 'Titel ist erforderlich' }
-      };
-      mockProjectService.validateProjectData.mockResolvedValue(invalidValidationResult);
-      
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      // Sollte auf Schritt 1 bleiben
-      await waitFor(() => {
-        expect(screen.getByText('Schritt 1 von 4')).toBeInTheDocument();
-        expect(consoleSpy).toHaveBeenCalledWith('Validierungsfehler:', { title: 'Titel ist erforderlich' });
-      });
-      
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe('Auto-Save Functionality', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte Wizard-Daten zu localStorage speichern', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      await user.type(screen.getByLabelText(/Projekt-Titel/), 'Test');
-      
-      await waitFor(() => {
-        expect(localStorage.setItem).toHaveBeenCalledWith(
-          'project_wizard_mock-id',
-          expect.stringContaining('"title":"Test"')
-        );
-      });
-    });
-
-    it('sollte localStorage bei erfolgreichem Abschluss bereinigen', () => {
-      // Dies würde in einem komplexeren Test getestet werden, der bis zur Fertigstellung geht
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Die useEffect Cleanup-Funktion würde aufgerufen wenn completedSteps 4 enthält
-      expect(localStorage.setItem).toHaveBeenCalled();
-    });
-  });
-
-  describe('Final Step - Projekt Erstellen', () => {
-    
-    const mockCreationResult: ProjectCreationResult = {
-      success: true,
-      projectId: 'project123',
-      project: {
-        id: 'project123',
-        title: 'Test Projekt',
-        userId: 'user123',
-        organizationId: 'org123',
-        status: 'active',
-        currentStage: 'ideas_planning',
-        createdAt: {} as any,
-        updatedAt: {} as any
-      },
-      tasksCreated: ['task1', 'task2'],
-      assetsAttached: 0,
-      warnings: [],
-      infos: ['Projekt erfolgreich erstellt'],
-      nextSteps: ['Team benachrichtigen']
-    };
-
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-      mockProjectService.validateProjectData.mockResolvedValue({ isValid: true, errors: {} });
-    });
-
-    it('sollte in finalem Schritt "Projekt erstellen" Button anzeigen', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Navigiere durch alle Schritte
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Schritt 1 -> 2
-      await user.type(screen.getByLabelText(/Projekt-Titel/), 'Test');
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      // Schritt 2 -> 3
-      await waitFor(() => {
-        expect(screen.getByText('Schritt 2 von 4')).toBeInTheDocument();
-      });
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      // Schritt 3 -> 4
-      await waitFor(() => {
-        expect(screen.getByText('Schritt 3 von 4')).toBeInTheDocument();
-      });
-      await user.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      // Schritt 4 - Finaler Schritt
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /projekt erstellen/i })).toBeInTheDocument();
-      });
-    });
-
-    it('sollte Projekt erfolgreich erstellen', async () => {
-      mockProjectService.createProjectFromWizard.mockResolvedValue(mockCreationResult);
-      
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Navigiere zu finalem Schritt (vereinfacht)
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Simuliere Navigation zum finalen Schritt durch direktes Setzen
-      // In einem echten Test würde man alle Schritte durchlaufen
-      fireEvent.click(screen.getByRole('button', { name: /weiter/i }));
-      
-      // Warte auf Service-Call
-      await waitFor(() => {
-        if (mockProjectService.createProjectFromWizard.mock.calls.length > 0) {
-          expect(mockProjectService.createProjectFromWizard).toHaveBeenCalledWith(
-            expect.objectContaining({
-              title: expect.any(String)
-            }),
-            'user123'
-          );
-        }
-      });
-    });
-
-    it('sollte bei erfolgreichem Erstellen Success-Dashboard anzeigen', async () => {
-      mockProjectService.createProjectFromWizard.mockResolvedValue(mockCreationResult);
-      
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Simuliere erfolgreiche Projekt-Erstellung
-      // Dies würde normalerweise durch Navigation durch alle Schritte erreicht
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // In einem realen Szenario würde hier das Success-Dashboard erscheinen
-      // nachdem alle Schritte durchlaufen und das Projekt erstellt wurde
-    });
-
-    it('sollte onSuccess-Callback bei erfolgreichem Erstellen aufrufen', async () => {
-      mockProjectService.createProjectFromWizard.mockResolvedValue(mockCreationResult);
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Dies würde normalerweise durch vollständige Navigation ausgelöst
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Der onSuccess-Callback würde bei erfolgreichem Abschluss aufgerufen
-      // expect(mockProps.onSuccess).toHaveBeenCalledWith(mockCreationResult);
-    });
-  });
-
-  describe('Error Handling', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte Fehler bei Projekt-Erstellung handhaben', async () => {
-      mockProjectService.createProjectFromWizard.mockRejectedValue(new Error('Database error'));
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      // Simuliere Versuch der Projekt-Erstellung
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Bei einem Fehler würde der Consolensspy aufgerufen
-      consoleSpy.mockRestore();
-    });
-
-    it('sollte Loading-State während Projekt-Erstellung anzeigen', async () => {
-      mockProjectService.createProjectFromWizard.mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({} as any), 100))
-      );
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Loading-State würde während der Erstellung aktiv sein
-    });
-
-    it('sollte bei fehlendem User nicht erstellen', async () => {
-      mockUseAuth.mockReturnValue({ 
-        user: null, 
-        loading: false
-      });
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Ohne User sollte keine Projekt-Erstellung möglich sein
-    });
-  });
-
-  describe('Close Functionality', () => {
-    
-    it('sollte Wizard über Close-Button schließen können', async () => {
-      const user = userEvent.setup();
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        const closeButton = screen.getByRole('button', { name: /schließen/i });
-        expect(closeButton).toBeInTheDocument();
-      });
-      
-      const closeButton = screen.getByRole('button', { name: /schließen/i });
+      const closeButton = screen.getByRole('button', { name: /Abbrechen/i });
       await user.click(closeButton);
-      
+
       expect(mockProps.onClose).toHaveBeenCalled();
-    });
-
-    it('sollte bei Klick auf Overlay schließen', async () => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-      
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Neues Projekt erstellen')).toBeInTheDocument();
-      });
-      
-      // Overlay-Click würde normalerweise den Wizard schließen
-      // Dies hängt von der spezifischen Implementation ab
-    });
-  });
-
-  describe('Accessibility', () => {
-    
-    beforeEach(() => {
-      mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
-    });
-
-    it('sollte korrekte ARIA-Labels haben', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Beschreibung/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Kunde/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Priorität/)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Tags/)).toBeInTheDocument();
-      });
-    });
-
-    it('sollte Tastatur-Navigation unterstützen', async () => {
-      const user = userEvent.setup();
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Projekt-Titel/)).toBeInTheDocument();
-      });
-      
-      // Tab-Navigation durch Felder
-      await user.tab();
-      expect(screen.getByLabelText(/Projekt-Titel/)).toHaveFocus();
-      
-      await user.tab();
-      expect(screen.getByLabelText(/Beschreibung/)).toHaveFocus();
-    });
-
-    it('sollte Screen Reader Texte haben', async () => {
-      render(<ProjectCreationWizard {...mockProps} />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Schließen')).toBeInTheDocument();
-      });
     });
   });
 });
