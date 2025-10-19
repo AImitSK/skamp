@@ -26,6 +26,20 @@ export default function TeamEditStep({
     }
   };
 
+  // DEBUG: Log values
+  const filteredMembers = creationOptions?.availableTeamMembers?.filter((member: any) =>
+    formData.assignedTeamMembers.some(selectedId =>
+      member.id === selectedId || member.id.includes(selectedId)
+    )
+  ) || [];
+
+  console.log('🔍 TeamEditStep DEBUG:', {
+    projectManager: formData.projectManager,
+    assignedTeamMembers: formData.assignedTeamMembers,
+    filteredMemberIds: filteredMembers.map((m: any) => m.id),
+    allMembers: creationOptions?.availableTeamMembers?.map((m: any) => ({ id: m.id, name: m.displayName }))
+  });
+
   return (
     <FieldGroup>
       {/* Team-Mitglieder */}
@@ -47,17 +61,12 @@ export default function TeamEditStep({
             onChange={(e) => onUpdate({ projectManager: e.target.value })}
           >
             <option value="">-- Bitte wählen --</option>
-            {creationOptions?.availableTeamMembers
-              ?.filter((member: any) => formData.assignedTeamMembers.some(selectedId =>
-                member.id === selectedId || member.id.includes(selectedId)
-              ))
-              .map((member: any) => (
-                <option key={member.id} value={member.id}>
-                  {member.displayName} ({member.role})
-                  {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
-                </option>
-              ))
-            }
+            {filteredMembers.map((member: any) => (
+              <option key={member.id} value={member.id}>
+                {member.displayName} ({member.role})
+                {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
+              </option>
+            ))}
           </Select>
         </Field>
       )}
