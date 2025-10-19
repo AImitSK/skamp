@@ -943,15 +943,11 @@ export default function ProjectFoldersView({
   };
   
   const handleEditDocument = (asset: any) => {
-    console.log('handleEditDocument called with asset:', asset);
-    console.log('asset.contentRef:', asset.contentRef);
-    
     const document: InternalDocument = {
       ...asset,
       contentRef: asset.contentRef // Keine Fallback-Logik - muss exakt stimmen
     };
-    
-    console.log('Prepared document for editor:', document);
+
     setEditingDocument(document);
     setShowDocumentEditor(true);
   };
@@ -1058,7 +1054,6 @@ export default function ProjectFoldersView({
         }
       } else if (asset.downloadUrl) {
         // Regular download for non-celero documents (DOCX, PDF, etc.)
-        console.log('Downloading regular file:', asset.fileName, 'URL:', asset.downloadUrl);
         const a = document.createElement('a');
         a.href = asset.downloadUrl;
         a.download = asset.fileName;
@@ -1067,7 +1062,6 @@ export default function ProjectFoldersView({
         a.click();
         document.body.removeChild(a);
       } else {
-        console.warn('No download method available for file:', asset);
         alert('Diese Datei kann nicht heruntergeladen werden - keine downloadUrl verfügbar.');
       }
     } catch (error) {
