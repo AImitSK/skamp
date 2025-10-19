@@ -12,6 +12,7 @@ import { tagsService } from '@/lib/firebase/tags-service';
 import { useAuth } from '@/context/AuthContext';
 import { Tag } from '@/types/crm';
 import { Alert } from '@/components/common/Alert';
+import { useUpdateProject } from '@/lib/hooks/useProjectData';
 
 // Step Components
 import {
@@ -42,13 +43,13 @@ export function ProjectEditWizard({
   organizationId
 }: ProjectEditWizardProps) {
   const { user } = useAuth();
+  const updateProject = useUpdateProject();
 
   // Multi-Step State
   const [currentStep, setCurrentStep] = useState<EditWizardStep>(1);
   const [completedSteps, setCompletedSteps] = useState<EditWizardStep[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [creationOptions, setCreationOptions] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -202,60 +203,61 @@ export function ProjectEditWizard({
   const handleSaveProject = async () => {
     if (!user || !project.id || !isStepValid) return;
 
-    try {
-      setIsSaving(true);
-      setError(null);
+    setError(null);
 
-      const updateData: Partial<Project> = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        currentStage: formData.currentStage,
-        assignedTo: formData.assignedTeamMembers,
-        updatedAt: new Date(),
-        updatedBy: user.uid
-      };
+    const updateData: Partial<Project> = {
+      title: formData.title,
+      description: formData.description,
+      status: formData.status,
+      currentStage: formData.currentStage,
+      assignedTo: formData.assignedTeamMembers,
+      updatedAt: new Date(),
+      updatedBy: user.uid
+    };
 
-      // Add optional fields
-      (updateData as any).priority = formData.priority || 'medium';
-      (updateData as any).tags = formData.tags;
+    // Add optional fields
+    (updateData as any).priority = formData.priority || 'medium';
+    (updateData as any).tags = formData.tags;
 
-      // projectManager immer setzen (auch wenn leer = entfernt)
-      updateData.projectManager = formData.projectManager || undefined;
+    // projectManager immer setzen (auch wenn leer = entfernt)
+    updateData.projectManager = formData.projectManager || undefined;
 
-      // Update customer if client changed
-      if (formData.clientId && creationOptions?.availableClients) {
-        const selectedClient = creationOptions.availableClients.find((c: any) => c.id === formData.clientId);
-        if (selectedClient) {
-          updateData.customer = {
-            id: selectedClient.id,
-            name: selectedClient.name || selectedClient.companyName
-          };
+    // Update customer if client changed
+    if (formData.clientId && creationOptions?.availableClients) {
+      const selectedClient = creationOptions.availableClients.find((c: any) => c.id === formData.clientId);
+      if (selectedClient) {
+        updateData.customer = {
+          id: selectedClient.id,
+          name: selectedClient.name || selectedClient.companyName
+        };
+      }
+    }
+
+    updateProject.mutate(
+      {
+        projectId: project.id,
+        projectData: updateData,
+        organizationId: organizationId
+      },
+      {
+        onSuccess: () => {
+          setSuccessMessage('Projekt erfolgreich aktualisiert');
+
+          // Call success callback with updated project
+          const updatedProject = { ...project, ...updateData };
+          onSuccess(updatedProject);
+
+          // Auto-close after short delay
+          setTimeout(() => {
+            onClose();
+          }, 1500);
+        },
+        onError: (error: any) => {
+          console.error('Fehler beim Speichern:', error);
+          setError(`Fehler beim Speichern des Projekts: ${error.message || 'Unbekannter Fehler'}`);
         }
       }
-
-      await projectService.update(project.id, updateData, {
-        organizationId: organizationId,
-        userId: user.uid
-      });
-
-      setSuccessMessage('Projekt erfolgreich aktualisiert');
-
-      // Call success callback with updated project
-      const updatedProject = { ...project, ...updateData };
-      onSuccess(updatedProject);
-
-      // Auto-close after short delay
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-
-    } catch (error: any) {
-      console.error('Fehler beim Speichern:', error);
-      setError(`Fehler beim Speichern des Projekts: ${error.message || 'Unbekannter Fehler'}`);
-    } finally {
-      setIsSaving(false);
-    }
+    );
   };
 
   if (!isOpen) return null;
@@ -348,7 +350,7 @@ export function ProjectEditWizard({
         <StepActions
           currentStep={currentStep}
           totalSteps={4}
-          isLoading={isSaving}
+          isLoading={updateProject.isPending}
           isStepValid={isStepValid}
           onPrevious={handlePrevious}
           onNext={handleNext}
