@@ -704,6 +704,65 @@ export function useRemovePipelineAsset() {
 }
 
 // ===================================
+// BULK OPERATIONS
+// ===================================
+
+/**
+ * Bulk-Upload (Multiple Files mit Batching)
+ *
+ * Wie Media-Refactoring ADR-0004:
+ * - Batch-Size = 5 (optimal: 78% schneller, 100% Success-Rate)
+ * - Overall-Progress-Tracking
+ * - Error-Handling pro Datei
+ */
+export function useBulkUploadFiles() {
+  const uploadFile = useUploadMediaAsset();
+
+  return async (params: {
+    files: File[];
+    organizationId: string;
+    folderId?: string;
+    onProgress?: (completed: number, total: number) => void;
+    context?: Partial<UploadContext>;
+  }) => {
+    const BATCH_SIZE = 5; // ✅ Optimal nach Media-Refactoring Performance-Tests
+    const results = [];
+    let completedFiles = 0;
+
+    for (let i = 0; i < params.files.length; i += BATCH_SIZE) {
+      const batch = params.files.slice(i, i + BATCH_SIZE);
+
+      const batchResults = await Promise.all(
+        batch.map(async (file) => {
+          try {
+            const result = await uploadFile.mutateAsync({
+              file,
+              organizationId: params.organizationId,
+              folderId: params.folderId,
+              onProgress: (progress) => {
+                // Individual file progress (optional)
+              },
+              context: params.context,
+            });
+            completedFiles++;
+            params.onProgress?.(completedFiles, params.files.length);
+            return { status: 'success' as const, file, result };
+          } catch (error) {
+            completedFiles++;
+            params.onProgress?.(completedFiles, params.files.length);
+            return { status: 'error' as const, file, error };
+          }
+        })
+      );
+
+      results.push(...batchResults);
+    }
+
+    return results;
+  };
+}
+
+// ===================================
 // HELPER: Manuelle Cache-Invalidierung
 // ===================================
 

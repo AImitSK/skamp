@@ -27,6 +27,17 @@ import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
 import type { PipelineStage } from '@/types/project';
+// React Query Hooks
+import {
+  useMediaFolders,
+  useMediaAssets,
+  useCreateFolder,
+  useUploadMediaAsset,
+  useBulkUploadFiles,
+  useDeleteMediaAsset,
+  useDeleteFolder,
+  useUpdateMediaAsset,
+} from '@/lib/hooks/useMediaData';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -348,6 +359,7 @@ function CreateFolderModal({
     setCreating(true);
     try {
       await createFolder({
+        userId: user.uid,
         name: folderName.trim(),
         parentFolderId,
         description: `Unterordner erstellt von ${user.displayName || user.email}`
