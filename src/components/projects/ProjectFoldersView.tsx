@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { 
   FolderIcon, 
@@ -57,8 +57,8 @@ const DocumentEditorModal = dynamic(
   { ssr: false }
 );
 
-// Skeleton Loader Component
-function FolderSkeleton() {
+// Skeleton Loader Component (optimized with React.memo)
+const FolderSkeleton = React.memo(function FolderSkeleton() {
   return (
     <div className="animate-pulse space-y-3">
       {[1, 2, 3].map((i) => (
@@ -77,7 +77,7 @@ function FolderSkeleton() {
       ))}
     </div>
   );
-}
+});
 
 // Main Component
 export default function ProjectFoldersView({
@@ -116,10 +116,21 @@ export default function ProjectFoldersView({
     onFolderChange
   });
 
-  const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
+  // Alert handler (optimized with useCallback)
+  const showAlert = useCallback((type: 'info' | 'error' | 'success', message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
-  };
+  }, []);
+
+  // Document save success callback (optimized with useCallback)
+  const handleDocumentSaveSuccess = useCallback(() => {
+    if (selectedFolderId) {
+      loadFolderContent(selectedFolderId);
+    } else {
+      onRefresh();
+    }
+    showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
+  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
 
   const {
     confirmDialog,
@@ -141,14 +152,7 @@ export default function ProjectFoldersView({
     handleDocumentSave: handleDocumentSaveBase,
     handleCloseEditor
   } = useDocumentEditor({
-    onSaveSuccess: () => {
-      if (selectedFolderId) {
-        loadFolderContent(selectedFolderId);
-      } else {
-        onRefresh();
-      }
-      showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
-    }
+    onSaveSuccess: handleDocumentSaveSuccess
   });
 
   // Local Component State (UI only)
@@ -159,13 +163,13 @@ export default function ProjectFoldersView({
   const [assetToMove, setAssetToMove] = useState<any>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
-  // Enhanced Drag & Drop Handlers
-  const handleMainDragOver = (e: React.DragEvent) => {
+  // Enhanced Drag & Drop Handlers (optimized with useCallback)
+  const handleMainDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
-  };
-  
-  const handleMainDrop = async (e: React.DragEvent) => {
+  }, []);
+
+  const handleMainDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOverFolder(null);
 
@@ -173,28 +177,28 @@ export default function ProjectFoldersView({
       const files = Array.from(e.dataTransfer.files);
       setShowUploadModal(true);
     }
-  };
-  
-  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+  }, []);
+
+  const handleFolderDragOver = useCallback((e: React.DragEvent, folderId: string) => {
     e.preventDefault();
     e.stopPropagation();
     setDragOverFolder(folderId);
-  };
-  
-  const handleFolderDragLeave = (e: React.DragEvent) => {
+  }, []);
+
+  const handleFolderDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     // Only clear if we're really leaving the folder
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
-    
+
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setDragOverFolder(null);
     }
-  };
-  
-  const handleFolderDrop = async (e: React.DragEvent, folderId: string, folderName: string) => {
+  }, []);
+
+  const handleFolderDrop = useCallback(async (e: React.DragEvent, folderId: string, folderName: string) => {
     e.preventDefault();
     e.stopPropagation();
     setDragOverFolder(null);
@@ -204,18 +208,18 @@ export default function ProjectFoldersView({
       setSelectedFolderId(folderId);
       setShowUploadModal(true);
     }
-  };
-  
-  const handleUploadSuccess = () => {
+  }, [setSelectedFolderId]);
+
+  const handleUploadSuccess = useCallback(() => {
     // Refresh current view
     if (selectedFolderId) {
       loadFolderContent(selectedFolderId);
     }
     // Always refresh parent data and folder counts
     onRefresh();
-  };
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
 
-  const handleCreateFolderSuccess = () => {
+  const handleCreateFolderSuccess = useCallback(() => {
     // Refresh current view after folder creation
     if (selectedFolderId) {
       loadFolderContent(selectedFolderId);
@@ -223,14 +227,14 @@ export default function ProjectFoldersView({
       onRefresh();
     }
     showAlert('success', 'Ordner wurde erfolgreich erstellt.');
-  };
+  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
 
-  const handleMoveAsset = (asset: any) => {
+  const handleMoveAsset = useCallback((asset: any) => {
     setAssetToMove(asset);
     setShowMoveModal(true);
-  };
+  }, []);
 
-  const handleMoveSuccess = () => {
+  const handleMoveSuccess = useCallback(() => {
     // Refresh current view nach dem Verschieben
     if (selectedFolderId) {
       loadFolderContent(selectedFolderId);
@@ -246,12 +250,13 @@ export default function ProjectFoldersView({
     }, 500);
 
     showAlert('success', 'Datei wurde erfolgreich verschoben.');
-  };
-  
-  // Use handleAssetClick from useFileActions
-  const handleAssetClick = (asset: any) => handleAssetClickBase(asset, handleEditDocument);
+  }, [selectedFolderId, loadFolderContent, setCurrentAssets, onRefresh, loadAllFolders, showAlert]);
 
-  const confirmDeleteAsset = async (assetId: string, fileName: string) => {
+  // Use handleAssetClick from useFileActions (optimized with useCallback)
+  const handleAssetClick = useCallback((asset: any) => handleAssetClickBase(asset, handleEditDocument),
+    [handleAssetClickBase, handleEditDocument]);
+
+  const confirmDeleteAsset = useCallback(async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
 
     try {
@@ -277,7 +282,20 @@ export default function ProjectFoldersView({
       console.error('Fehler beim Löschen der Datei:', error);
       showAlert('error', 'Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
     }
-  };
+  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+
+  // File statistics (optimized with useMemo)
+  const fileStats = useMemo(() => {
+    return {
+      total: currentAssets.length,
+      totalSize: currentAssets.reduce((sum, asset) => sum + (asset.fileSize || 0), 0),
+      byType: currentAssets.reduce((acc, asset) => {
+        const type = asset.fileType || 'unknown';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+  }, [currentAssets]);
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return '0 Bytes';

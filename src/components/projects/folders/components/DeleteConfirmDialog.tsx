@@ -10,6 +10,7 @@ import type { DeleteConfirmDialogProps } from '../types';
  * DeleteConfirmDialog Component
  *
  * Bestätigungsdialog für Lösch-Operationen (Files/Folders)
+ * Optimiert mit React.memo
  *
  * @example
  * ```tsx
@@ -22,7 +23,7 @@ import type { DeleteConfirmDialogProps } from '../types';
  * />
  * ```
  */
-export default function DeleteConfirmDialog({
+const DeleteConfirmDialog = React.memo(function DeleteConfirmDialog({
   isOpen,
   title,
   message,
@@ -47,4 +48,6 @@ export default function DeleteConfirmDialog({
       </DialogActions>
     </Dialog>
   );
-}
+});
+
+export default DeleteConfirmDialog;

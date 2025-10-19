@@ -24,8 +24,9 @@ interface MoveAssetModalProps {
  * MoveAssetModal Component
  *
  * FTP-Style Navigation zum Verschieben von Assets zwischen Ordnern
+ * Optimiert mit React.memo
  */
-export default function MoveAssetModal({
+const MoveAssetModal = React.memo(function MoveAssetModal({
   isOpen,
   onClose,
   onMoveSuccess,
@@ -210,4 +211,6 @@ export default function MoveAssetModal({
       </DialogActions>
     </Dialog>
   );
-}
+});
+
+export default MoveAssetModal;

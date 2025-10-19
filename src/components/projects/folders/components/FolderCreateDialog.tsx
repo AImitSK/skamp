@@ -12,8 +12,9 @@ import type { FolderCreateDialogProps } from '../types';
  * FolderCreateDialog Component
  *
  * Modal zum Erstellen neuer Unterordner
+ * Optimiert mit React.memo
  */
-export default function FolderCreateDialog({
+const FolderCreateDialog = React.memo(function FolderCreateDialog({
   isOpen,
   onClose,
   onCreateSuccess,
@@ -90,4 +91,6 @@ export default function FolderCreateDialog({
       </DialogActions>
     </Dialog>
   );
-}
+});
+
+export default FolderCreateDialog;

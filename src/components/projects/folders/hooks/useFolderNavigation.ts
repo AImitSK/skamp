@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getFolders } from '@/lib/firebase/media-folders-service';
 import { getMediaAssets } from '@/lib/firebase/media-assets-service';
 

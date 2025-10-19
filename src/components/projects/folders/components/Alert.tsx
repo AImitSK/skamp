@@ -9,8 +9,9 @@ import type { AlertProps } from '../types';
  * Alert Component
  *
  * Wiederverwendbare Alert-Komponente für Feedback
+ * Optimiert mit React.memo
  */
-export default function Alert({
+const Alert = React.memo(function Alert({
   type = 'info',
   message
 }: AlertProps) {
@@ -35,4 +36,6 @@ export default function Alert({
       </div>
     </div>
   );
-}
+});
+
+export default Alert;

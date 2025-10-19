@@ -29,8 +29,9 @@ interface UploadZoneProps {
  * UploadZone Component
  *
  * Modal für Drag & Drop Upload mit Progress-Tracking
+ * Optimiert mit React.memo
  */
-export default function UploadZone({
+const UploadZone = React.memo(function UploadZone({
   isOpen,
   onClose,
   onUploadSuccess,
@@ -232,4 +233,6 @@ export default function UploadZone({
       </DialogActions>
     </Dialog>
   );
-}
+});
+
+export default UploadZone;
