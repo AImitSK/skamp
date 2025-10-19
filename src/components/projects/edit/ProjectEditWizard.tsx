@@ -195,10 +195,9 @@ export function ProjectEditWizard({
   };
 
   const handleStepChange = (step: number) => {
-    // Allow navigating to completed steps or current step
-    if (completedSteps.includes(step as EditWizardStep) || step <= currentStep) {
-      setCurrentStep(step as EditWizardStep);
-    }
+    // Edit-Modus: Erlaube freie Navigation zu allen Steps
+    // (Daten wurden bereits beim Erstellen validiert)
+    setCurrentStep(step as EditWizardStep);
   };
 
   const handleSaveProject = async () => {
@@ -294,6 +293,7 @@ export function ProjectEditWizard({
           onStepChange={handleStepChange}
           completedSteps={completedSteps}
           stepLabels={['Projekt', 'Kunde', 'Team', 'Kampagnen']}
+          allowAllSteps={true}
         />
 
         {/* Success/Error Messages */}
@@ -364,6 +364,7 @@ export function ProjectEditWizard({
           onCancel={onClose}
           onSubmit={handleSaveProject}
           submitLabel="Änderungen speichern"
+          showSubmitOnAllSteps={true}
         />
       </div>
     </div>

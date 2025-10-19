@@ -24,9 +24,16 @@ interface StepTabsProps {
   onStepChange: (step: number) => void;
   completedSteps: number[];
   stepLabels?: string[]; // Optional custom labels
+  allowAllSteps?: boolean; // Für Edit-Modus: Alle Steps immer klickbar
 }
 
-export function StepTabs({ currentStep, onStepChange, completedSteps, stepLabels }: StepTabsProps) {
+export function StepTabs({
+  currentStep,
+  onStepChange,
+  completedSteps,
+  stepLabels,
+  allowAllSteps = false
+}: StepTabsProps) {
   // Generate step configs from labels or use defaults
   const stepConfigs = stepLabels
     ? stepLabels.map((label, index) => ({
@@ -42,7 +49,7 @@ export function StepTabs({ currentStep, onStepChange, completedSteps, stepLabels
           const Icon = step.icon;
           const isActive = currentStep === step.id;
           const isCompleted = completedSteps.includes(step.id);
-          const isClickable = isCompleted || step.id <= currentStep;
+          const isClickable = allowAllSteps || isCompleted || step.id <= currentStep;
 
           return (
             <button
@@ -54,7 +61,7 @@ export function StepTabs({ currentStep, onStepChange, completedSteps, stepLabels
                 'group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap',
                 isActive
                   ? 'border-[#005fab] text-[#005fab]'
-                  : isCompleted
+                  : isClickable
                   ? 'border-transparent text-gray-700 hover:border-gray-300 hover:text-gray-900 cursor-pointer'
                   : 'border-transparent text-gray-400 cursor-not-allowed'
               )}
@@ -64,7 +71,7 @@ export function StepTabs({ currentStep, onStepChange, completedSteps, stepLabels
                   'mr-2 h-5 w-5',
                   isActive
                     ? 'text-[#005fab]'
-                    : isCompleted
+                    : isClickable
                     ? 'text-gray-500 group-hover:text-gray-700'
                     : 'text-gray-400'
                 )}
