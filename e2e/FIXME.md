@@ -1,21 +1,38 @@
-# ⚠️ E2E-Tests müssen korrigiert werden!
+# ⚠️ E2E-Tests: Status-Update
 
-**Status:** ❌ Alle 11 Tests fehlgeschlagen (2025-10-20)
+**Status:** ⚠️ Login funktioniert, aber Organisation fehlt (2025-10-20)
 
-## 🐛 Hauptproblem
+## ✅ Behobene Probleme
 
-Die bestehenden E2E-Tests (`*.spec.ts`) basieren auf **falschen Annahmen** über die App-Struktur:
+1. ✅ Login-Route korrigiert (`/` statt `/login`)
+2. ✅ Selektoren korrigiert (`#email` und `#password`)
+3. ✅ URL-Pattern korrigiert (Regex statt String-Match)
+4. ✅ Auth-Helper erstellt und in allen Tests integriert
 
-### Falsche Annahmen:
-1. ❌ **Login-Route:** Tests erwarten `/login` → **existiert NICHT!**
-2. ❌ **Email-Selektor:** Tests verwenden `[name="email"]` → **Korrekt ist `#email`**
-3. ❌ **Password-Selektor:** Tests verwenden `[name="password"]` → **Korrekt ist `#password`**
+## 🐛 Verbleibendes Hauptproblem
 
-### Tatsächliche App-Struktur:
-- ✅ Login-Page ist unter **`/`** (Root-Route!)
-- ✅ Email-Input: `<input id="email" />`
-- ✅ Password-Input: `<input id="password" />`
-- ✅ Submit-Button: `<button type="submit">Anmelden</button>`
+**Test-User hat keine Organisation!**
+
+Die bestehenden E2E-Tests (`*.spec.ts`) schlagen jetzt aus folgendem Grund fehl:
+
+### Dashboard zeigt:
+```
+⚠️ Keine Organisation gefunden
+
+Sie sind derzeit keiner Organisation zugeordnet.
+Bitte warten Sie auf eine Einladung oder kontaktieren Sie Ihren Administrator.
+```
+
+### Das bedeutet:
+- ✅ Login funktioniert (User ist authentifiziert)
+- ✅ Redirect zu `/dashboard` funktioniert
+- ❌ **Test-User hat keine Organisation → kann CRM nicht nutzen!**
+
+### Was passiert:
+1. Test-User (test@example.com) wird in Firebase erstellt
+2. Aber: `teamMemberService.createOwner()` wird NICHT aufgerufen
+3. Ergebnis: User hat keine `organizationId` in Firestore
+4. Dashboard zeigt Fehler statt Inhalte
 
 ## 📋 Betroffene Test-Dateien
 

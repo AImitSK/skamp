@@ -23,7 +23,8 @@ export async function login(page: Page, email: string, password: string) {
   await page.click('button[type="submit"]');
 
   // Warten auf erfolgreichen Login (Redirect zu Dashboard)
-  await page.waitForURL('/dashboard/**', { timeout: 15000 });
+  // Pattern: /dashboard oder /dashboard/irgendwas
+  await page.waitForURL(/\/dashboard/, { timeout: 15000 });
 }
 
 /**

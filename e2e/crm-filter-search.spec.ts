@@ -1,14 +1,11 @@
 // e2e/crm-filter-search.spec.ts
 import { test, expect } from '@playwright/test';
+import { login, TEST_USER } from './auth-helper';
 
 test.describe('CRM Filter and Search', () => {
   test.beforeEach(async ({ page }) => {
-    // Login
-    await page.goto('/login');
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.fill('[name="password"]', 'password');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard/**');
+    // ✅ Korrigierter Login mit auth-helper
+    await login(page, TEST_USER.email, TEST_USER.password);
   });
 
   test('filters companies by type', async ({ page }) => {
@@ -16,13 +13,13 @@ test.describe('CRM Filter and Search', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Open filter panel
     await page.click('[aria-label="Filter"]');
 
     // Wait for filter panel to open
-    await page.waitForSelector('text=Typ');
+    await page.waitForSelector('text=Typ', { timeout: 5000 });
 
     // Select customer filter
     await page.click('text=Kunde');
@@ -43,7 +40,7 @@ test.describe('CRM Filter and Search', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Enter search term
     const searchInput = page.locator('input[placeholder*="Suche"]');
@@ -53,7 +50,7 @@ test.describe('CRM Filter and Search', () => {
     await page.waitForTimeout(500);
 
     // Verify search results
-    await expect(page.locator('text=Test AG')).toBeVisible();
+    await expect(page.locator('text=Test AG')).toBeVisible({ timeout: 5000 });
   });
 
   test('filters contacts by journalist status', async ({ page }) => {
@@ -61,7 +58,7 @@ test.describe('CRM Filter and Search', () => {
     await page.goto('/dashboard/contacts/crm/contacts');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Open filter panel
     await page.click('[aria-label="Filter"]');
@@ -85,7 +82,7 @@ test.describe('CRM Filter and Search', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Open filter panel
     await page.click('[aria-label="Filter"]');
@@ -107,7 +104,7 @@ test.describe('CRM Filter and Search', () => {
 
     // Active filter count should be visible
     const filterBadge = page.locator('[aria-label="Filter"] >> text=/[1-9]/');
-    await expect(filterBadge).toBeVisible();
+    await expect(filterBadge).toBeVisible({ timeout: 5000 });
   });
 
   test('clears all filters', async ({ page }) => {
@@ -115,7 +112,7 @@ test.describe('CRM Filter and Search', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Open filter panel
     await page.click('[aria-label="Filter"]');

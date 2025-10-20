@@ -1,16 +1,12 @@
 // e2e/crm-bulk-export.spec.ts
 import { test, expect } from '@playwright/test';
+import { login, TEST_USER } from './auth-helper';
 import * as fs from 'fs';
-import * as path from 'path';
 
 test.describe('CRM Bulk Export', () => {
   test.beforeEach(async ({ page }) => {
-    // Login
-    await page.goto('/login');
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.fill('[name="password"]', 'password');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard/**');
+    // ✅ Korrigierter Login mit auth-helper
+    await login(page, TEST_USER.email, TEST_USER.password);
   });
 
   test('exports all companies', async ({ page }) => {
@@ -18,7 +14,7 @@ test.describe('CRM Bulk Export', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Click export button
     const exportButton = page.locator('button', { hasText: /Exportieren|Export/i });
@@ -58,7 +54,7 @@ test.describe('CRM Bulk Export', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Select multiple companies
     const checkboxes = await page.locator('table input[type="checkbox"]').all();
@@ -90,7 +86,7 @@ test.describe('CRM Bulk Export', () => {
     await page.goto('/dashboard/contacts/crm/contacts');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Click export button
     const exportButton = page.locator('button', { hasText: /Exportieren|Export/i });
@@ -130,7 +126,7 @@ test.describe('CRM Bulk Export', () => {
     await page.goto('/dashboard/contacts/crm/companies');
 
     // Wait for data to load
-    await page.waitForSelector('table');
+    await page.waitForSelector('table', { timeout: 10000 });
 
     // Open filter panel
     await page.click('[aria-label="Filter"]');
