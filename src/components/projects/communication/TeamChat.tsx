@@ -81,14 +81,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
         setTeamMembers(members);
 
-        // Debug: Alle Team-Mitglieder ausgeben
-        console.log('Alle Team-Mitglieder:', members.map(m => ({
-          id: m.id,
-          userId: m.userId,
-          displayName: m.displayName,
-          email: m.email
-        })));
-
         if (project) {
           // Finde das aktuelle User Member-Objekt
           const currentMember = members.find(m =>
@@ -118,24 +110,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               (project.projectManager && (project.projectManager === memberUserId || project.projectManager === userId))
             );
 
-            console.log('Team-Mitgliedschaft Check:', {
-              currentUserId: userId,
-              memberUserId,
-              memberId, // Die wichtige ID!
-              projectUserId: project.userId,
-              projectManagerId: project.projectManager,
-              assignedTo: project.assignedTo,
-              isMember,
-              // Debug: Prüfungen einzeln
-              checks: {
-                memberIdInAssigned: project.assignedTo && project.assignedTo.includes(memberId),
-                memberUserIdInAssigned: project.assignedTo && project.assignedTo.includes(memberUserId),
-                userIdInAssigned: project.assignedTo && project.assignedTo.includes(userId),
-                isProjectAdmin: project.userId === memberUserId || project.userId === userId,
-                isProjectManager: project.projectManager && (project.projectManager === memberUserId || project.projectManager === userId)
-              }
-            });
-
             setIsTeamMember(isMember);
           } else {
             // Wenn kein Member gefunden wurde, prüfe direkt mit userId
@@ -144,13 +118,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
               project.userId === userId ||
               (project.projectManager && project.projectManager === userId)
             );
-
-            console.log('Direkte Team-Mitgliedschaft Check (kein Member gefunden):', {
-              userId,
-              projectUserId: project.userId,
-              assignedTo: project.assignedTo,
-              isMember
-            });
 
             setIsTeamMember(isMember);
           }

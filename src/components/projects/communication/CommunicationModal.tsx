@@ -517,7 +517,9 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
               {activeView === 'external' && (
                 <Button
                   outline
-                  onClick={() => console.log('E-Mail verknüpfen')}
+                  onClick={() => {
+                    // TODO: E-Mail verknüpfen Feature implementieren
+                  }}
                 >
                   <LinkIcon className="w-4 h-4 mr-2" />
                   E-Mail verknüpfen
