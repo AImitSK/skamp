@@ -46,3 +46,9 @@ nul
 
 # Firebase Service Account (contains secrets)
 service-account.json
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
