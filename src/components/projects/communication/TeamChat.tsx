@@ -24,6 +24,7 @@ import { MentionDropdown } from './MentionDropdown';
 import { AssetPickerModal, SelectedAsset } from './AssetPickerModal';
 import { AssetPreview } from './AssetPreview';
 import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
+import { useTeamMessages, useSendMessage, useMessageReaction } from '@/lib/hooks/useTeamMessages';
 
 interface TeamChatProps {
   projectId: string;
@@ -42,15 +43,16 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   userDisplayName,
   lastReadTimestamp
 }) => {
-  const [messages, setMessages] = useState<FirebaseTeamMessage[]>([]);
+  // React Query Hooks für Messages (ersetzt useState + useEffect)
+  const { data: messages = [], isLoading: loading } = useTeamMessages(projectId);
+  const sendMessageMutation = useSendMessage();
+  const reactionMutation = useMessageReaction();
+
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
   const [isTeamMember, setIsTeamMember] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [currentUserPhoto, setCurrentUserPhoto] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // @-Mention State
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -166,36 +168,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     };
   }, [showAssetPicker, showEmojiPicker]);
 
-  // Abonniere Nachrichten
+  // Auto-Scroll zu neuen Messages (wenn neue Messages kommen)
   useEffect(() => {
-    if (!projectId || !organizationId) return;
-
-    setLoading(true);
-
-    // Beende vorheriges Abonnement
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current();
+    if (messages.length > 0 && !loading) {
+      setTimeout(() => scrollToBottom(), 300);
     }
-
-    // Abonniere neue Nachrichten
-    unsubscribeRef.current = teamChatService.subscribeToMessages(
-      projectId,
-      (newMessages) => {
-        setMessages(newMessages);
-        setLoading(false);
-        // Scrolle zu neuen Nachrichten
-        setTimeout(() => scrollToBottom(), 300);
-      },
-      100 // Lade bis zu 100 Nachrichten
-    );
-
-    // Cleanup beim Unmount
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-    };
-  }, [projectId, organizationId]);
+  }, [messages.length, loading]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -212,21 +190,21 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   }, [loading, messages.length]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !userId || !organizationId || !isTeamMember || sending) return;
+    if (!newMessage.trim() || !userId || !organizationId || !isTeamMember || sendMessageMutation.isPending) return;
 
-    setSending(true);
     try {
       // Extrahiere Mentions
       const mentions = teamChatService.extractMentions(newMessage);
 
-      // Sende Nachricht
-      await teamChatService.sendMessage(projectId, {
+      // Sende Nachricht via React Query Mutation
+      await sendMessageMutation.mutateAsync({
+        projectId,
         content: newMessage,
         authorId: userId,
         authorName: userDisplayName,
         authorPhotoUrl: currentUserPhoto,
+        organizationId,
         mentions,
-        organizationId
       });
 
       // Push-Notifications für @-Mentions senden
@@ -261,8 +239,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       setTimeout(() => scrollToBottom(), 100);
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht:', error);
-    } finally {
-      setSending(false);
     }
   };
 
@@ -713,7 +689,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     setShowEmojiPicker(false);
   };
 
-  // Reaction Handler
+  // Reaction Handler (React Query Mutation)
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!userId || !userDisplayName) {
       console.error('Kein gültiger User für Reaction');
@@ -721,13 +697,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
 
     try {
-      await teamChatService.toggleReaction(
+      await reactionMutation.mutateAsync({
         projectId,
         messageId,
         emoji,
         userId,
-        userDisplayName
-      );
+        userName: userDisplayName,
+      });
     } catch (error) {
       console.error('Fehler beim Reagieren:', error);
     }
@@ -950,7 +926,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   placeholder=""
                   rows={1}
                   className="w-full text-base border border-gray-300 rounded-lg px-3 py-2 pr-20 focus:ring-blue-500 focus:border-blue-500 resize-none h-[44px] leading-relaxed"
-                  disabled={sending}
+                  disabled={sendMessageMutation.isPending}
                 />
 
                 {/* Icons Container mit weißem Hintergrund */}
@@ -961,7 +937,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     onClick={() => setShowAssetPicker(true)}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     title="Asset anhängen"
-                    disabled={sending}
+                    disabled={sendMessageMutation.isPending}
                   >
                     <PaperClipIcon className="h-4 w-4" />
                   </button>
@@ -972,7 +948,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                     onClick={() => setShowEmojiPicker(true)}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     title="Emoji einfügen"
-                    disabled={sending}
+                    disabled={sendMessageMutation.isPending}
                   >
                     <FaceSmileIcon className="h-4 w-4" />
                   </button>
@@ -992,10 +968,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
               <button
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sending}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
                 className="h-[44px] min-h-[44px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
               >
-                {sending ? (
+                {sendMessageMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 ) : (
                   <ArrowRightIcon className="h-4 w-4" />
