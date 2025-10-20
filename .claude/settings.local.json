@@ -6,7 +6,15 @@
       "Bash(done)",
       "Bash(git push origin main)",
       "Bash(npm test -- --testPathPattern=\"folders\" --passWithNoTests)",
-      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: E2E-Test Probleme dokumentiert + Lösungen\n\nAnalyse-Ergebnis: Alle 11 E2E-Tests fehlgeschlagen\nHauptproblem: Falsche Login-Route und Selektoren\n\nErstellte Dateien:\n- e2e/FIXME.md - Vollständige Problemdokumentation\n- e2e/auth-helper.ts - Shared Login-Helper\n- e2e/crm-company-contact-creation-FIXED.spec.ts - Korrigierter Beispiel-Test\n\nProbleme identifiziert:\n❌ Tests erwarten /login → App hat Login unter /\n❌ Tests verwenden [name=\"email\"] → Korrekt ist #email\n❌ Tests verwenden [name=\"password\"] → Korrekt ist #password\n\nNächste Schritte (dokumentiert in FIXME.md):\n1. Test-User in Firebase erstellen (test@example.com)\n2. Alle *.spec.ts mit auth-helper korrigieren\n3. CRM-Routen verifizieren\n4. Tests erneut ausführen\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: E2E-Test Probleme dokumentiert + Lösungen\n\nAnalyse-Ergebnis: Alle 11 E2E-Tests fehlgeschlagen\nHauptproblem: Falsche Login-Route und Selektoren\n\nErstellte Dateien:\n- e2e/FIXME.md - Vollständige Problemdokumentation\n- e2e/auth-helper.ts - Shared Login-Helper\n- e2e/crm-company-contact-creation-FIXED.spec.ts - Korrigierter Beispiel-Test\n\nProbleme identifiziert:\n❌ Tests erwarten /login → App hat Login unter /\n❌ Tests verwenden [name=\"email\"] → Korrekt ist #email\n❌ Tests verwenden [name=\"password\"] → Korrekt ist #password\n\nNächste Schritte (dokumentiert in FIXME.md):\n1. Test-User in Firebase erstellen (test@example.com)\n2. Alle *.spec.ts mit auth-helper korrigieren\n3. CRM-Routen verifizieren\n4. Tests erneut ausführen\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git add e2e/communication-*.spec.ts docs/planning/shared/communication-components-refactoring/04-testing-dokumentation.md)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx eslint:*)",
+      "Bash(test:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:coverage:*)"
     ],
     "deny": [],
     "ask": [],
