@@ -23,14 +23,12 @@ describe('MessageInput', () => {
       displayName: 'Alice Smith',
       email: 'alice@example.com',
       role: 'member',
-      addedAt: new Date(),
     },
     {
       userId: 'user-2',
       displayName: 'Bob Johnson',
       email: 'bob@example.com',
       role: 'member',
-      addedAt: new Date(),
     },
   ];
 

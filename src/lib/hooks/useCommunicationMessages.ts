@@ -9,20 +9,22 @@ import { projectCommunicationService, ProjectCommunicationFeed } from '@/lib/fir
  */
 export function useCommunicationFeed(
   projectId: string | undefined,
+  organizationId: string | undefined,
   options?: {
     limitCount?: number;
   }
 ) {
   return useQuery<ProjectCommunicationFeed>({
-    queryKey: ['communication-feed', projectId, options?.limitCount],
+    queryKey: ['communication-feed', projectId, organizationId, options?.limitCount],
     queryFn: async () => {
-      if (!projectId) throw new Error('No projectId');
+      if (!projectId || !organizationId) throw new Error('No projectId or organizationId');
       return projectCommunicationService.getProjectCommunicationFeed(
         projectId,
-        options?.limitCount
+        organizationId,
+        options || {}
       );
     },
-    enabled: !!projectId,
+    enabled: !!projectId && !!organizationId,
     staleTime: 2 * 60 * 1000, // 2 Minuten (Communication Feed updates weniger häufig als Team Chat)
   });
 }
@@ -38,12 +40,16 @@ export function useCreateInternalNote() {
       projectId: string;
       content: string;
       author: string;
+      organizationId: string;
+      attachments?: any[];
       mentions?: string[];
     }) => {
       return projectCommunicationService.createInternalNote(
         data.projectId,
         data.content,
         data.author,
+        data.organizationId,
+        data.attachments || [],
         data.mentions
       );
     },
@@ -64,12 +70,16 @@ export function useLinkEmailToProject() {
 
   return useMutation({
     mutationFn: async (data: {
-      projectId: string;
       emailThreadId: string;
+      projectId: string;
+      method: 'manual' | 'automatic';
+      organizationId?: string;
     }) => {
       return projectCommunicationService.linkEmailToProject(
+        data.emailThreadId,
         data.projectId,
-        data.emailThreadId
+        data.method,
+        data.organizationId
       );
     },
     onSuccess: (_, variables) => {

@@ -2,11 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  ArrowRightIcon,
   AtSymbolIcon,
   ExclamationTriangleIcon,
-  PaperClipIcon,
-  FaceSmileIcon,
   HandThumbUpIcon,
   HandThumbDownIcon,
   HandRaisedIcon
@@ -23,6 +20,7 @@ import { Timestamp } from 'firebase/firestore';
 import { MentionDropdown } from './MentionDropdown';
 import { AssetPickerModal, SelectedAsset } from './AssetPickerModal';
 import { AssetPreview } from './AssetPreview';
+import { MessageInput } from './TeamChat/MessageInput';
 import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
 import { useTeamMessages, useSendMessage, useMessageReaction } from '@/lib/hooks/useTeamMessages';
 
@@ -418,19 +416,25 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
   }, [newMessage, cursorPosition]);
 
-  const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
-    // Suche in teamMembers mit beiden ID-Varianten
-    const member = teamMembers.find(m =>
-      m.userId === authorId ||
-      m.id === authorId ||
-      (authorName && m.displayName === authorName)
-    );
+  // useMemo: Team-Member Lookup Map für bessere Performance
+  const teamMemberMap = useMemo(() => {
+    const map = new Map<string, { name: string; photoUrl?: string }>();
+    teamMembers.forEach(member => {
+      const info = { name: member.displayName, photoUrl: member.photoUrl };
+      if (member.userId) map.set(member.userId, info);
+      if (member.id) map.set(member.id, info);
+      if (member.displayName) map.set(member.displayName, info);
+    });
+    return map;
+  }, [teamMembers]);
 
-    if (member) {
-      return {
-        name: member.displayName,
-        photoUrl: member.photoUrl
-      };
+  const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
+    // Nutze Map für O(1) Lookup statt O(n) find
+    const info = teamMemberMap.get(authorId) ||
+                 (authorName ? teamMemberMap.get(authorName) : null);
+
+    if (info) {
+      return info;
     }
 
     // Fallback für unbekannte Mitglieder
@@ -552,7 +556,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     return (
       <>
         {parts.map((part, index) => {
-          if (part.type === 'asset') {
+          if (part.type === 'asset' && part.assetId && part.assetType && part.linkText && part.projectId) {
             return (
               <div key={index} className="my-2">
                 <AssetPreview
@@ -562,14 +566,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                   projectId={part.projectId}
                   organizationId={organizationId}
                   isOwnMessage={isOwnMessage}
-                  onAssetClick={() => handleAssetLinkClick(part.assetType, part.projectId, part.assetId)}
+                  onAssetClick={() => handleAssetLinkClick(part.assetType!, part.projectId!, part.assetId!)}
                 />
               </div>
             );
           }
 
           // Text-Teil: Prüfe auf Standard-URLs und verarbeite Emojis
-          let textContent = part.content;
+          let textContent = part.content || '';
 
           // URL-Links verarbeiten
           const urlMatches = textContent.match(urlRegex);
@@ -584,12 +588,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({
                 isOwnMessage ? 'text-primary-600 hover:text-primary-700' : 'text-blue-600 hover:text-blue-800'
               }">${urlMatch}</a>`;
 
-              textContent = textContent.replace(urlMatch, linkElement);
+              textContent = textContent!.replace(urlMatch, linkElement);
             });
           }
 
           // Emojis ersetzen
-          textContent = replaceEmojis(textContent);
+          textContent = replaceEmojis(textContent!);
 
           return (
             <span
@@ -913,73 +917,23 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
       {/* Eingabebereich - nur für Team-Mitglieder */}
       {isTeamMember && (
-        <div className="border-t border-gray-200 px-4 pt-4 pb-2 bg-white">
-          <div>
-            {/* Nachrichteneingabe */}
-            <div className="flex items-center space-x-3">
-              <div className="flex-1 relative">
-                <textarea
-                  ref={textareaRef}
-                  value={newMessage}
-                  onChange={handleTextChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder=""
-                  rows={1}
-                  className="w-full text-base border border-gray-300 rounded-lg px-3 py-2 pr-20 focus:ring-blue-500 focus:border-blue-500 resize-none h-[44px] leading-relaxed"
-                  disabled={sendMessageMutation.isPending}
-                />
-
-                {/* Icons Container mit weißem Hintergrund */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-white rounded-md flex items-center space-x-1 px-1">
-                  {/* Asset-Button */}
-                  <button
-                    type="button"
-                    onClick={() => setShowAssetPicker(true)}
-                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Asset anhängen"
-                    disabled={sendMessageMutation.isPending}
-                  >
-                    <PaperClipIcon className="h-4 w-4" />
-                  </button>
-
-                  {/* Emoji-Button */}
-                  <button
-                    type="button"
-                    onClick={() => setShowEmojiPicker(true)}
-                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Emoji einfügen"
-                    disabled={sendMessageMutation.isPending}
-                  >
-                    <FaceSmileIcon className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* @-Mention Dropdown */}
-                <MentionDropdown
-                  isVisible={showMentionDropdown}
-                  position={mentionDropdownPosition}
-                  searchTerm={mentionSearchTerm}
-                  teamMembers={teamMembers}
-                  selectedIndex={selectedMentionIndex}
-                  onSelect={selectMention}
-                  onClose={() => setShowMentionDropdown(false)}
-                />
-              </div>
-
-              <button
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                className="h-[44px] min-h-[44px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
-              >
-                {sendMessageMutation.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <ArrowRightIcon className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <MessageInput
+          newMessage={newMessage}
+          sending={sendMessageMutation.isPending}
+          textareaRef={textareaRef}
+          handleTextChange={handleTextChange}
+          handleKeyDown={handleKeyDown}
+          handleSendMessage={handleSendMessage}
+          setShowAssetPicker={setShowAssetPicker}
+          setShowEmojiPicker={setShowEmojiPicker}
+          showMentionDropdown={showMentionDropdown}
+          mentionDropdownPosition={mentionDropdownPosition}
+          mentionSearchTerm={mentionSearchTerm}
+          teamMembers={teamMembers}
+          selectedMentionIndex={selectedMentionIndex}
+          selectMention={selectMention}
+          setShowMentionDropdown={setShowMentionDropdown}
+        />
       )}
 
       {/* Asset Picker Modal */}
