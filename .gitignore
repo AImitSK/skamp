@@ -43,3 +43,6 @@ next-env.d.ts
 docs_old/
 *.backup/
 nul
+
+# Firebase Service Account (contains secrets)
+service-account.json

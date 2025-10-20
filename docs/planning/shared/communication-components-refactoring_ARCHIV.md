@@ -1,10 +1,11 @@
 # Communication Components Refactoring - Implementierungsplan
 
-**Version:** 1.0
+**Version:** 2.0
 **Erstellt:** 2025-10-19
+**Aktualisiert:** 2025-10-20
 **Status:** 📋 Geplant
 **Modul:** Phase 0.2 - Shared Components
-**Aufwand:** L (Large) - 3-4 Tage
+**Aufwand:** XL (Extra Large) - 8-11 Tage (inkl. Admin SDK Integration)
 
 ---
 
@@ -15,7 +16,8 @@ Die Communication Components sind **kritische Shared Components**, die in **alle
 **Wichtige Korrektur:**
 - **Geschätzte LOC in Master Checklist:** ~400+
 - **Tatsächliche LOC:** **2.713 Zeilen** (fast 7x mehr!)
-- **Aufwand-Update:** M (Medium) → **L (Large)** - 3-4 Tage
+- **Aufwand-Update:** M (Medium) → **XL (Extra Large)** - 8-11 Tage
+- **Admin SDK Integration:** Phase 1.5 für kritische Security-Verbesserungen hinzugefügt
 
 ---
 
@@ -119,7 +121,7 @@ GESAMT:                          ~2.713 Zeilen
 
 ---
 
-## 🚀 Die 7 Phasen
+## 🚀 Die 8 Phasen
 
 ### Phase 0: Vorbereitung & Setup
 
@@ -705,6 +707,831 @@ const { isOpen, setIsOpen } = useFloatingChatState(projectId);
 ```bash
 git add .
 git commit -m "feat: Phase 1 - React Query Integration für Communication Components abgeschlossen
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+```
+
+---
+
+### Phase 1.5: Admin SDK Integration (KRITISCH!) 🔐
+
+**Ziel:** Server-Side Validation für kritische Security-Verbesserungen
+
+**Dauer:** 5-7 Tage
+
+**Warum jetzt?**
+- ✅ **Kritische Security-Gaps:** Spam-Prevention, Permission-Checks
+- ✅ **Perfect Timing:** Refactoring ist beste Zeit für Architektur-Änderungen
+- ✅ **React Query bereits fertig:** Hooks können direkt angepasst werden
+- ✅ **Compliance:** Audit-Logs für GDPR/ISO-Compliance
+- ✅ **Effizienz:** Nur einmal durch die Code-Basis gehen
+
+#### Voraussetzungen prüfen
+
+```bash
+# Firebase Admin SDK installieren
+npm install firebase-admin
+
+# Service Account Key generieren (Firebase Console)
+# → Project Settings → Service Accounts → Generate new private key
+```
+
+**Environment Variables (.env.local):**
+```env
+FIREBASE_ADMIN_PROJECT_ID=your-project-id
+FIREBASE_ADMIN_CLIENT_EMAIL=your-service-account@....iam.gserviceaccount.com
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+#### 1.5.1: Admin SDK Setup
+
+**Datei:** `src/lib/firebase/admin.ts`
+
+```typescript
+import admin from 'firebase-admin';
+
+// Admin SDK initialisieren (Singleton-Pattern)
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+    console.log('✅ Firebase Admin SDK initialized');
+  } catch (error) {
+    console.error('❌ Firebase Admin SDK initialization failed:', error);
+    throw error;
+  }
+}
+
+export const adminDb = admin.firestore();
+export const adminAuth = admin.auth();
+export default admin;
+```
+
+**Test:**
+```bash
+# Admin SDK testen
+node -e "require('./src/lib/firebase/admin.js'); console.log('Admin SDK OK!');"
+```
+
+#### 1.5.2: API Route - Message Deletion (DELETE)
+
+**Datei:** `src/app/api/v1/messages/[messageId]/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { adminDb } from '@/lib/firebase/admin';
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { messageId: string } }
+) {
+  try {
+    // 1. Authentifizierung
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const { messageId } = params;
+    const { projectId, organizationId } = await request.json();
+
+    // 2. Organization validieren
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userOrganizationId = userDoc.data()?.organizationId;
+
+    if (organizationId !== userOrganizationId) {
+      return NextResponse.json(
+        { error: 'Forbidden: Organization mismatch' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Message abrufen
+    const messageRef = adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('teamMessages')
+      .doc(messageId);
+
+    const messageDoc = await messageRef.get();
+
+    if (!messageDoc.exists) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+    }
+
+    const messageData = messageDoc.data();
+
+    // 4. Permission-Check: Nur eigene Messages löschen (oder Admin)
+    const userRole = userDoc.data()?.role || 'member';
+    const isOwnMessage = messageData?.authorId === userId;
+    const isAdmin = userRole === 'admin';
+
+    if (!isOwnMessage && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: Can only delete own messages' },
+        { status: 403 }
+      );
+    }
+
+    // 5. Time-Limit Check (nur innerhalb 15 Minuten löschen)
+    const messageTimestamp = messageData?.timestamp?.toDate();
+    const now = new Date();
+    const minutesSinceMessage = (now.getTime() - messageTimestamp.getTime()) / 1000 / 60;
+
+    if (minutesSinceMessage > 15 && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Cannot delete messages older than 15 minutes' },
+        { status: 400 }
+      );
+    }
+
+    // 6. Soft-Delete (für Compliance/Audit)
+    await messageRef.update({
+      deleted: true,
+      deletedAt: new Date(),
+      deletedBy: userId,
+      _originalContent: messageData?.content,
+      content: '[Nachricht gelöscht]'
+    });
+
+    // 7. Audit-Log erstellen
+    await adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('audit_logs')
+      .add({
+        action: 'message_deleted',
+        userId,
+        messageId,
+        messageContent: messageData?.content,
+        timestamp: new Date(),
+        projectId,
+        organizationId,
+      });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Message deletion error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### 1.5.3: API Route - Message Editing (PATCH)
+
+**Datei:** `src/app/api/v1/messages/[messageId]/route.ts` (im gleichen File)
+
+```typescript
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { messageId: string } }
+) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const { newContent, projectId, organizationId } = await request.json();
+
+    // Content-Validation
+    if (!newContent || newContent.trim().length === 0) {
+      return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 });
+    }
+
+    if (newContent.length > 5000) {
+      return NextResponse.json({ error: 'Content too long (max 5000 chars)' }, { status: 400 });
+    }
+
+    // Message abrufen
+    const messageRef = adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('teamMessages')
+      .doc(params.messageId);
+
+    const messageDoc = await messageRef.get();
+    const messageData = messageDoc.data();
+
+    // Permission-Check (nur eigene Messages)
+    if (messageData?.authorId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden: Can only edit own messages' },
+        { status: 403 }
+      );
+    }
+
+    // Time-Limit (nur innerhalb 15 Minuten editierbar)
+    const messageTimestamp = messageData?.timestamp?.toDate();
+    const now = new Date();
+    const minutesSinceMessage = (now.getTime() - messageTimestamp.getTime()) / 1000 / 60;
+
+    if (minutesSinceMessage > 15) {
+      return NextResponse.json(
+        { error: 'Cannot edit messages older than 15 minutes' },
+        { status: 400 }
+      );
+    }
+
+    // Edit-History erstellen (für Audit)
+    const editHistory = messageData?.editHistory || [];
+    editHistory.push({
+      previousContent: messageData?.content,
+      editedAt: new Date(),
+      editedBy: userId,
+    });
+
+    // Message aktualisieren
+    await messageRef.update({
+      content: newContent,
+      edited: true,
+      editedAt: new Date(),
+      editHistory,
+    });
+
+    // Audit-Log
+    await adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('audit_logs')
+      .add({
+        action: 'message_edited',
+        userId,
+        messageId: params.messageId,
+        previousContent: messageData?.content,
+        newContent,
+        timestamp: new Date(),
+        projectId,
+        organizationId,
+      });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Message edit error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+```
+
+#### 1.5.4: API Route - Message Sending mit Validation (POST)
+
+**Datei:** `src/app/api/v1/messages/route.ts`
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { adminDb } from '@/lib/firebase/admin';
+
+// Rate-Limiting (in-memory, besser: Redis)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+const MAX_MESSAGES_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 Minute
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Authentifizierung
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const {
+      projectId,
+      organizationId,
+      content,
+      mentions,
+      attachments,
+    } = await request.json();
+
+    // 2. Rate-Limiting Check
+    const now = Date.now();
+    const rateLimitKey = `${userId}:${projectId}`;
+    const rateLimitData = rateLimitMap.get(rateLimitKey);
+
+    if (rateLimitData) {
+      if (now < rateLimitData.resetAt) {
+        if (rateLimitData.count >= MAX_MESSAGES_PER_MINUTE) {
+          return NextResponse.json(
+            { error: 'Rate limit exceeded. Try again in a minute.' },
+            { status: 429 }
+          );
+        }
+        rateLimitData.count++;
+      } else {
+        rateLimitMap.set(rateLimitKey, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+      }
+    } else {
+      rateLimitMap.set(rateLimitKey, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    }
+
+    // 3. Organization validieren
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.data();
+
+    if (!userData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (userData.organizationId !== organizationId) {
+      return NextResponse.json(
+        { error: 'Forbidden: Organization mismatch' },
+        { status: 403 }
+      );
+    }
+
+    // 4. Team-Member Check
+    const projectDoc = await adminDb.collection('projects').doc(projectId).get();
+
+    if (!projectDoc.exists) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const projectData = projectDoc.data();
+    const isTeamMember = projectData?.teamMembers?.includes(userId);
+    const isAdmin = userData.role === 'admin';
+
+    if (!isTeamMember && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: Not a team member' },
+        { status: 403 }
+      );
+    }
+
+    // 5. Content-Validation
+    if (!content || content.trim().length === 0) {
+      return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 });
+    }
+
+    if (content.length > 5000) {
+      return NextResponse.json(
+        { error: 'Content too long (max 5000 chars)' },
+        { status: 400 }
+      );
+    }
+
+    // 6. Content-Moderation (Profanity-Filter - Beispiel)
+    const profanityWords = ['badword1', 'badword2']; // In Praxis: externe Library
+    const hasProfanity = profanityWords.some(word =>
+      content.toLowerCase().includes(word)
+    );
+
+    if (hasProfanity) {
+      return NextResponse.json(
+        { error: 'Message contains inappropriate content' },
+        { status: 400 }
+      );
+    }
+
+    // 7. Mention-Validation
+    if (mentions && mentions.length > 0) {
+      const teamMembersSnapshot = await adminDb
+        .collection('organizations')
+        .doc(organizationId)
+        .collection('team_members')
+        .where('userId', 'in', mentions)
+        .get();
+
+      const validMentions = teamMembersSnapshot.docs.map(doc => doc.data().userId);
+      const invalidMentions = mentions.filter((m: string) => !validMentions.includes(m));
+
+      if (invalidMentions.length > 0) {
+        return NextResponse.json(
+          { error: `Invalid mentions: ${invalidMentions.join(', ')}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 8. Attachment-Validation
+    if (attachments && attachments.length > 0) {
+      const assetIds = attachments.map((a: any) => a.id);
+
+      const assetsSnapshot = await adminDb
+        .collection('organizations')
+        .doc(organizationId)
+        .collection('media_assets')
+        .where('__name__', 'in', assetIds)
+        .get();
+
+      if (assetsSnapshot.size !== assetIds.length) {
+        return NextResponse.json(
+          { error: 'Some attachments are invalid or not accessible' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 9. Message erstellen (Admin SDK)
+    const messageRef = adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('teamMessages')
+      .doc();
+
+    await messageRef.set({
+      id: messageRef.id,
+      content,
+      authorId: userId,
+      authorName: userData.displayName || 'Unknown',
+      authorPhotoUrl: userData.photoURL,
+      mentions: mentions || [],
+      attachments: attachments || [],
+      reactions: [],
+      timestamp: new Date(),
+      edited: false,
+      deleted: false,
+      projectId,
+      organizationId,
+    });
+
+    // 10. Notifications erstellen (für Mentions)
+    if (mentions && mentions.length > 0) {
+      const batch = adminDb.batch();
+
+      mentions.forEach((mentionedUserId: string) => {
+        const notificationRef = adminDb
+          .collection('users')
+          .doc(mentionedUserId)
+          .collection('notifications')
+          .doc();
+
+        batch.set(notificationRef, {
+          type: 'mention',
+          projectId,
+          messageId: messageRef.id,
+          from: userId,
+          fromName: userData.displayName,
+          content: content.substring(0, 100),
+          timestamp: new Date(),
+          read: false,
+        });
+      });
+
+      await batch.commit();
+    }
+
+    // 11. Audit-Log
+    await adminDb
+      .collection('projects')
+      .doc(projectId)
+      .collection('audit_logs')
+      .add({
+        action: 'message_sent',
+        userId,
+        messageId: messageRef.id,
+        timestamp: new Date(),
+        projectId,
+        organizationId,
+      });
+
+    return NextResponse.json({
+      success: true,
+      messageId: messageRef.id,
+    });
+  } catch (error) {
+    console.error('Message send error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### 1.5.5: React Query Hooks anpassen
+
+**useTeamMessages.ts anpassen:**
+
+```typescript
+// src/lib/hooks/useTeamMessages.ts
+
+// DELETE Hook anpassen
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      messageId: string;
+      projectId: string;
+      organizationId: string;
+    }) => {
+      // API Route aufrufen statt direkt Firestore
+      const response = await fetch(`/api/v1/messages/${data.messageId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: data.projectId,
+          organizationId: data.organizationId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Delete failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['team-messages', variables.projectId]
+      });
+    },
+  });
+}
+
+// EDIT Hook anpassen
+export function useEditMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      messageId: string;
+      projectId: string;
+      organizationId: string;
+      newContent: string;
+    }) => {
+      const response = await fetch(`/api/v1/messages/${data.messageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: data.projectId,
+          organizationId: data.organizationId,
+          newContent: data.newContent,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Edit failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['team-messages', variables.projectId]
+      });
+    },
+  });
+}
+
+// SEND Hook anpassen
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      projectId: string;
+      organizationId: string;
+      content: string;
+      mentions?: string[];
+      attachments?: any[];
+    }) => {
+      const response = await fetch('/api/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Send failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['team-messages', variables.projectId]
+      });
+    },
+  });
+}
+```
+
+#### 1.5.6: UI für Edit/Delete hinzufügen
+
+**MessageItem.tsx anpassen:**
+
+```typescript
+// src/components/projects/communication/TeamChat/MessageItem.tsx
+import { useDeleteMessage, useEditMessage } from '@/lib/hooks/useTeamMessages';
+
+export const MessageItem: React.FC<MessageItemProps> = ({
+  message,
+  userId,
+  projectId,
+  organizationId,
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(message.content);
+
+  const deleteMessage = useDeleteMessage();
+  const editMessage = useEditMessage();
+
+  const isOwnMessage = message.authorId === userId;
+
+  const handleDelete = async () => {
+    if (!confirm('Nachricht wirklich löschen?')) return;
+
+    try {
+      await deleteMessage.mutateAsync({
+        messageId: message.id,
+        projectId,
+        organizationId,
+      });
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleEdit = async () => {
+    try {
+      await editMessage.mutateAsync({
+        messageId: message.id,
+        projectId,
+        organizationId,
+        newContent: editContent,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  return (
+    <div className="message-item">
+      {/* ... existing message rendering ... */}
+
+      {/* Edit/Delete Buttons (nur für eigene Messages) */}
+      {isOwnMessage && !message.deleted && (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="text-xs text-zinc-600 hover:text-zinc-900"
+          >
+            Bearbeiten
+          </button>
+          <button
+            onClick={handleDelete}
+            className="text-xs text-red-600 hover:text-red-900"
+          >
+            Löschen
+          </button>
+        </div>
+      )}
+
+      {/* Edit Form */}
+      {isEditing && (
+        <div className="mt-2">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+          <div className="flex gap-2 mt-2">
+            <button onClick={handleEdit} className="btn-primary">
+              Speichern
+            </button>
+            <button onClick={() => setIsEditing(false)} className="btn-secondary">
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit-History Anzeige */}
+      {message.edited && message.editHistory?.length > 0 && (
+        <details className="mt-2 text-xs text-zinc-500">
+          <summary>Bearbeitungsverlauf ({message.editHistory.length})</summary>
+          <ul className="mt-1 space-y-1">
+            {message.editHistory.map((edit, idx) => (
+              <li key={idx}>
+                {new Date(edit.editedAt).toLocaleString()}: {edit.previousContent}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+};
+```
+
+#### Checkliste Phase 1.5
+
+- [ ] **Setup**
+  - [ ] Firebase Admin SDK installiert
+  - [ ] Service Account Key generiert
+  - [ ] Environment Variables konfiguriert
+  - [ ] Admin SDK initialisiert (`src/lib/firebase/admin.ts`)
+
+- [ ] **API Routes erstellt**
+  - [ ] `/api/v1/messages/[messageId]/route.ts` (DELETE + PATCH)
+  - [ ] `/api/v1/messages/route.ts` (POST)
+
+- [ ] **Features implementiert**
+  - [ ] Message Deletion mit Permission-Checks
+  - [ ] Message Editing mit Edit-History
+  - [ ] Message Sending mit Rate-Limiting
+  - [ ] Content-Moderation (Profanity-Filter)
+  - [ ] Mention-Validation
+  - [ ] Attachment-Validation
+  - [ ] Audit-Logs für alle Operationen
+
+- [ ] **Hooks angepasst**
+  - [ ] useDeleteMessage → API Route
+  - [ ] useEditMessage → API Route
+  - [ ] useSendMessage → API Route
+
+- [ ] **UI Updates**
+  - [ ] Edit/Delete Buttons in MessageItem
+  - [ ] Edit-Form in MessageItem
+  - [ ] Edit-History Anzeige
+  - [ ] Error-Handling für Rate-Limits
+
+- [ ] **Tests**
+  - [ ] API Route Tests (DELETE, PATCH, POST)
+  - [ ] Rate-Limiting Tests
+  - [ ] Permission-Check Tests
+  - [ ] UI Tests für Edit/Delete
+
+- [ ] **Manueller Test**
+  - [ ] Message löschen (eigene Message)
+  - [ ] Message löschen (fremde Message → sollte fehlschlagen)
+  - [ ] Message editieren (innerhalb 15min)
+  - [ ] Message editieren (nach 15min → sollte fehlschlagen)
+  - [ ] Message senden (normal)
+  - [ ] Message senden (Rate-Limit erreichen → sollte fehlschlagen)
+  - [ ] Edit-History anzeigen
+
+#### Phase-Bericht Template
+
+```markdown
+## Phase 1.5: Admin SDK Integration ✅
+
+### Implementiert
+- Admin SDK Setup (`src/lib/firebase/admin.ts`)
+- 3 API Routes:
+  - DELETE `/api/v1/messages/[messageId]` (Message Deletion)
+  - PATCH `/api/v1/messages/[messageId]` (Message Editing)
+  - POST `/api/v1/messages` (Message Sending mit Validation)
+
+### Security-Features
+- ✅ Permission-Checks (nur eigene Messages editieren/löschen)
+- ✅ Time-Limits (Messages nur 15min editierbar)
+- ✅ Rate-Limiting (10 Messages/Minute)
+- ✅ Content-Moderation (Profanity-Filter)
+- ✅ Mention-Validation (nur Team-Members)
+- ✅ Attachment-Validation (Assets gehören zu Organization)
+- ✅ Audit-Logs für alle Operationen
+- ✅ Edit-History für Transparency
+
+### UI-Updates
+- Edit/Delete Buttons in MessageItem
+- Edit-Form mit Save/Cancel
+- Edit-History Anzeige (collapsible)
+- Error-Handling für Rate-Limits
+
+### Tests
+- [X] API Route Tests
+- [X] Permission-Check Tests
+- [X] Rate-Limiting Tests
+- [X] UI Tests
+
+### Ergebnis
+- **Sicherheit:** ↑↑↑ (von 3/10 auf 9/10)
+- **Spam-Prevention:** ↑↑↑ (von 0/10 auf 9/10)
+- **Compliance:** ✅ Audit-Logs ready
+- **User-Experience:** ↑↑ Edit-History sichtbar
+
+### Commit
+```bash
+git add .
+git commit -m "feat: Phase 1.5 - Admin SDK Integration für Security & Validation
+
+- Message Deletion/Editing API Routes
+- Rate-Limiting (10 msg/min)
+- Content-Moderation
+- Audit-Logs
+- Edit-History
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -2491,8 +3318,9 @@ npm test -- communication
 
 #### Checkliste Merge
 
-- [ ] Alle 7 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup)
-- [ ] Alle Tests bestehen (47/47)
+- [ ] Alle 8 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup + Phase 1.5 Admin SDK)
+- [ ] Alle Tests bestehen (47+ Tests)
+- [ ] Admin SDK API Routes getestet
 - [ ] Dokumentation vollständig (2.500+ Zeilen)
 - [ ] Feature-Branch gepushed
 - [ ] Main gemerged
@@ -2506,28 +3334,44 @@ npm test -- communication
 ## ✅ Communication Components Refactoring erfolgreich abgeschlossen!
 
 ### Status
-- **Alle 7 Phasen:** Abgeschlossen (inkl. Pre-Refactoring Cleanup)
-- **Tests:** 47/47 bestanden (100% Pass Rate)
-- **Coverage:** 85%
+- **Alle 8 Phasen:** Abgeschlossen (inkl. Pre-Refactoring Cleanup + Admin SDK Integration)
+- **Tests:** 47+ Tests bestanden (100% Pass Rate)
+- **Coverage:** 85%+
 - **Dokumentation:** 2.500+ Zeilen
+- **Security:** Massiv verbessert (3/10 → 9/10)
 
 ### Änderungen
-- +~1.500 Zeilen hinzugefügt (Tests, Hooks, Dokumentation)
+- +~2.000 Zeilen hinzugefügt (Tests, Hooks, API Routes, Dokumentation)
 - -~400 Zeilen entfernt (toter Code, Cleanup)
-- ~20 Dateien geändert
+- ~25 Dateien geändert
+- +3 API Routes erstellt
 
 ### Highlights
-- ✅ React Query Integration mit 7 Custom Hooks
+- ✅ React Query Integration mit 7+ Custom Hooks
+- ✅ **Admin SDK Integration mit Server-Side Validation** ← NEU
+- ✅ **Rate-Limiting (10 msg/min) & Spam-Prevention** ← NEU
+- ✅ **Audit-Logs für Compliance (GDPR-ready)** ← NEU
+- ✅ **Edit-History & Time-Limits (15min)** ← NEU
 - ✅ TeamChat.tsx: 1096 Zeilen → 7 modulare Dateien (~970 Zeilen gesamt)
 - ✅ CommunicationModal.tsx: 536 Zeilen → 5 modulare Dateien (~690 Zeilen gesamt)
 - ✅ Performance-Optimierungen (useCallback, useMemo, React.memo)
-- ✅ Comprehensive Test Suite (47 Tests, 85% Coverage)
+- ✅ Comprehensive Test Suite (47+ Tests, 85% Coverage)
 - ✅ 2.500+ Zeilen Dokumentation
+
+### Security-Verbesserungen (Phase 1.5)
+- ✅ Message Deletion/Editing nur für eigene Messages
+- ✅ Rate-Limiting gegen Spam
+- ✅ Content-Moderation (Profanity-Filter)
+- ✅ Mention-Validation (nur Team-Members)
+- ✅ Attachment-Validation (Organization-Check)
+- ✅ Vollständige Audit-Logs
+- ✅ Edit-History für Transparency
 
 ### Nächste Schritte
 - [ ] Production-Deployment vorbereiten
-- [ ] Team-Demo durchführen
-- [ ] Monitoring aufsetzen
+- [ ] Team-Demo durchführen (inkl. neue Edit/Delete Features)
+- [ ] Monitoring aufsetzen (Rate-Limits überwachen)
+- [ ] Admin-Dashboard für Audit-Logs erstellen
 - [ ] Phase 1.1 starten: Project Detail Page
 ```
 
@@ -2543,23 +3387,35 @@ npm test -- communication
 - **TypeScript-Fehler:** 0
 - **ESLint-Warnings:** 0
 
+### Security (NEU mit Phase 1.5)
+
+- **Sicherheit:** ↑↑↑ (von 3/10 auf 9/10)
+- **Spam-Prevention:** ↑↑↑ (von 0/10 auf 9/10 - Rate-Limiting aktiv)
+- **Compliance:** ✅ Audit-Logs ready (GDPR/ISO)
+- **Permission-Checks:** ✅ Server-Side Validation
+- **Content-Moderation:** ✅ Profanity-Filter aktiv
+- **API Routes:** 3 neue Endpoints (DELETE, PATCH, POST)
+
 ### Testing
 
-- **Test-Coverage:** 85%
-- **Anzahl Tests:** 47 Tests
+- **Test-Coverage:** 85%+
+- **Anzahl Tests:** 47+ Tests (inkl. API Route Tests)
 - **Pass-Rate:** 100%
+- **API Tests:** DELETE, PATCH, POST Routes getestet
 
 ### Performance
 
 - **Re-Renders:** Reduktion um ~60%
 - **Initial Load:** < 200ms
 - **Message-Rendering:** < 50ms pro Message
+- **API Latency:** < 300ms (Server-Side Validation)
 
 ### Dokumentation
 
 - **Zeilen:** 2.500+ Zeilen
 - **Dateien:** 5 Dokumente
 - **Code-Beispiele:** 20+ Beispiele
+- **API Dokumentation:** ✅ Vollständig (Admin SDK Endpoints)
 
 ---
 
@@ -2606,22 +3462,35 @@ npm test -- communication
 
 1. **Master Checklist aktualisieren:**
    - Phase 0.2 als abgeschlossen markieren
-   - Ergebnis-Zusammenfassung eintragen
+   - Ergebnis-Zusammenfassung eintragen (inkl. Admin SDK Integration)
+   - Security-Verbesserungen dokumentieren
    - TODOs dokumentieren
 
-2. **Phase 1.1 starten:**
+2. **Admin SDK Monitoring:**
+   - Rate-Limit Metriken überwachen
+   - Audit-Logs prüfen
+   - Spam-Versuche auswerten
+   - Performance der API Routes messen
+
+3. **Phase 1.1 starten:**
    - Project Detail Page (Orchestrator)
    - ProjectContext einführen
    - Props-Drilling reduzieren
 
-3. **Phase 2: Tab-Module:**
+4. **Phase 2: Tab-Module:**
    - Overview Tab (P1)
    - Tasks Tab (P1)
    - Strategie Tab (P2)
    - etc.
 
+5. **Weitere Admin SDK Integration (Optional):**
+   - Reaction Management (Firestore Transactions)
+   - Bulk Operations (Admin-Only)
+   - Analytics-Dashboard für Chat-Aktivität
+
 ---
 
-**Zuletzt aktualisiert:** 2025-10-19
+**Zuletzt aktualisiert:** 2025-10-20
 **Maintainer:** CeleroPress Team
 **Projekt:** CeleroPress Projects-Module Refactoring
+**Version:** 2.0 - mit Admin SDK Integration (Phase 1.5)
