@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teamChatService, TeamMessage } from '@/lib/firebase/team-chat-service';
 import { useEffect } from 'react';
+import { authenticatedFetch } from '@/lib/utils/api-client';
 
 /**
  * Hook für Team-Chat-Messages mit Real-time Updates
@@ -40,6 +41,7 @@ export function useTeamMessages(projectId: string | undefined) {
 
 /**
  * Hook zum Senden einer Team-Chat-Message
+ * Verwendet Admin SDK API Route für Server-Side Validation
  */
 export function useSendMessage() {
   const queryClient = useQueryClient();
@@ -54,11 +56,18 @@ export function useSendMessage() {
       organizationId: string;
       mentions?: string[];
     }) => {
-      const { projectId, ...messageData } = data;
-      return teamChatService.sendMessage(projectId, {
-        ...messageData,
-        mentions: messageData.mentions || [],
+      // API Route aufrufen mit Auth Token
+      const response = await authenticatedFetch('/api/v1/messages', {
+        method: 'POST',
+        body: JSON.stringify(data),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -100,6 +109,7 @@ export function useMessageReaction() {
 
 /**
  * Hook für Message Edit
+ * Verwendet Admin SDK API Route für Server-Side Validation
  */
 export function useEditMessage() {
   const queryClient = useQueryClient();
@@ -110,11 +120,21 @@ export function useEditMessage() {
       messageId: string;
       newContent: string;
     }) => {
-      return teamChatService.editMessage(
-        data.projectId,
-        data.messageId,
-        data.newContent
-      );
+      // API Route aufrufen mit Auth Token
+      const response = await authenticatedFetch(`/api/v1/messages/${data.messageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          projectId: data.projectId,
+          newContent: data.newContent,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to edit message');
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -126,6 +146,7 @@ export function useEditMessage() {
 
 /**
  * Hook für Message Delete
+ * Verwendet Admin SDK API Route für Server-Side Validation
  */
 export function useDeleteMessage() {
   const queryClient = useQueryClient();
@@ -135,10 +156,20 @@ export function useDeleteMessage() {
       projectId: string;
       messageId: string;
     }) => {
-      return teamChatService.deleteMessage(
-        data.projectId,
-        data.messageId
+      // API Route aufrufen mit Auth Token
+      const response = await authenticatedFetch(
+        `/api/v1/messages/${data.messageId}?projectId=${data.projectId}`,
+        {
+          method: 'DELETE',
+        }
       );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete message');
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
