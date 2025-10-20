@@ -113,6 +113,7 @@ export const MessageInput: React.FC<MessageInputProps> = React.memo(({
             onClick={handleSendMessage}
             disabled={!newMessage.trim() || sending}
             className="h-[44px] min-h-[44px] px-4 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
+            aria-label="Send"
           >
             {sending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -124,4 +125,6 @@ export const MessageInput: React.FC<MessageInputProps> = React.memo(({
       </div>
     </div>
   );
-}));
+});
+
+MessageInput.displayName = 'MessageInput';
