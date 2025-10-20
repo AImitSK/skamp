@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ArrowRightIcon,
   AtSymbolIcon,
@@ -322,7 +322,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
   };
 
   // @-Mention Handler
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart;
 
@@ -355,9 +355,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     } else {
       setShowMentionDropdown(false);
     }
-  };
+  }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (showMentionDropdown) {
       const filteredMembers = teamMembers.filter(member =>
         member.displayName.toLowerCase().includes(mentionSearchTerm.toLowerCase()) ||
@@ -392,9 +392,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       e.preventDefault();
       handleSendMessage();
     }
-  };
+  }, [showMentionDropdown, teamMembers, mentionSearchTerm, selectedMentionIndex]);
 
-  const selectMention = (member: TeamMember) => {
+  const selectMention = useCallback((member: TeamMember) => {
     const beforeCursor = newMessage.substring(0, cursorPosition);
     const afterCursor = newMessage.substring(cursorPosition);
 
@@ -416,7 +416,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         }
       }, 0);
     }
-  };
+  }, [newMessage, cursorPosition]);
 
   const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
     // Suche in teamMembers mit beiden ID-Varianten
@@ -689,8 +689,8 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     setShowEmojiPicker(false);
   };
 
-  // Reaction Handler (React Query Mutation)
-  const handleReaction = async (messageId: string, emoji: string) => {
+  // Reaction Handler (React Query Mutation) - Optimiert mit useCallback
+  const handleReaction = useCallback(async (messageId: string, emoji: string) => {
     if (!userId || !userDisplayName) {
       console.error('Kein gültiger User für Reaction');
       return;
@@ -707,7 +707,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     } catch (error) {
       console.error('Fehler beim Reagieren:', error);
     }
-  };
+  }, [projectId, userId, userDisplayName, reactionMutation]);
 
   return (
     <>

@@ -38,7 +38,7 @@ interface MessageInputProps {
   setShowMentionDropdown: (show: boolean) => void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({
+export const MessageInput: React.FC<MessageInputProps> = React.memo(({
   newMessage,
   sending,
   textareaRef,
@@ -124,4 +124,4 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       </div>
     </div>
   );
-};
+}));
