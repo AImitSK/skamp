@@ -3,13 +3,6 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import {
-  Squares2X2Icon,
-  BuildingOfficeIcon,
-  ExclamationTriangleIcon,
-  CalendarDaysIcon,
-  TagIcon,
-} from '@heroicons/react/24/outline';
 import { useProject } from '../../context/ProjectContext';
 import { Tag } from '@/types/crm';
 
@@ -45,11 +38,14 @@ const getStageLabel = (stage: string) => {
  * ProjectInfoBar Component
  *
  * Zeigt kompakte Info-Zeile mit:
- * - Phase
- * - Kunde (mit Link)
- * - Priorität
- * - Deadline
- * - Tags
+ * - Phase (ohne Icon)
+ * - Kunde (mit Link, ohne Icon)
+ * - Priorität (mit Badge, ohne Icon)
+ * - Deadline (ohne Icon)
+ * - Tags (mit Badges, ohne Icon)
+ *
+ * Design: Bewusst ohne Icons, um visuelle Überladung zu vermeiden
+ * (Tab-Navigation darunter hat bereits viele Icons)
  */
 export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }: ProjectInfoBarProps) {
   const router = useRouter();
@@ -66,7 +62,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
       <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
         {/* Aktuelle Phase */}
         <div className="flex items-center gap-1.5">
-          <Squares2X2Icon className="w-4 h-4 text-gray-400" />
           <span className="font-medium">Phase:</span>
           <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
         </div>
@@ -74,7 +69,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
         {/* Kunde */}
         {project.customer && (
           <div className="flex items-center gap-1.5">
-            <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
             <span className="font-medium">Kunde:</span>
             <button
               className="text-primary hover:text-primary-hover hover:underline text-sm"
@@ -88,7 +82,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
 
         {/* Priorität */}
         <div className="flex items-center gap-1.5">
-          <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
           <span className="font-medium">Priorität:</span>
           <Badge
             color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
@@ -101,7 +94,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
         {/* Deadline wenn vorhanden */}
         {project.deadline && (
           <div className="flex items-center gap-1.5">
-            <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
             <span className="font-medium">Deadline:</span>
             <span className="text-gray-900">
               {project.deadline?.toDate().toLocaleDateString('de-DE', {
@@ -116,7 +108,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
         {/* Tags - ans Ende und nur wenn vorhanden */}
         {projectTags.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <TagIcon className="w-4 h-4 text-gray-400" />
             <span className="font-medium">Tags:</span>
             <div className="flex items-center gap-1">
               {projectTags.slice(0, 3).map(tag => (
