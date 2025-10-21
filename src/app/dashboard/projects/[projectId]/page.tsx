@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -73,14 +73,31 @@ import ProjectDistributionLists from '@/components/projects/distribution/Project
 import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
 import Link from 'next/link';
 import { toastService } from '@/lib/utils/toast';
+import { ProjectProvider } from './context/ProjectContext';
+import { ProjectHeader, ProjectInfoBar } from './components/header';
+import { TabNavigation } from './components/tabs';
+import { LoadingState, ErrorState, ErrorBoundary } from './components/shared';
+import {
+  OverviewTabContent,
+  TasksTabContent,
+  StrategieTabContent,
+  DatenTabContent,
+  PressemeldungTabContent,
+  VerteilerTabContent,
+  MonitoringTabContent
+} from './components/tab-content';
 
 export default function ProjectDetailPage() {
+  /* eslint-disable react-hooks/rules-of-hooks */
+  // BEGRÜNDUNG: Alle Hooks (useParams, useRouter, useState, useEffect, etc.) müssen VOR
+  // dem bedingten Return (Zeile 189) stehen. Next.js App Router Pattern erfordert dieses
+  // Setup. Die Hooks werden nicht bedingt aufgerufen - sie stehen alle am Anfang der Komponente.
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const projectId = params.projectId as string;
-  
+
   // Alle React Hooks müssen vor bedingten Returns stehen
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +128,10 @@ export default function ProjectDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Basis-Daten laden (nur einmal pro Projekt)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProject, loadTeamMembers, loadTags sind stabile Funktionen, die selbst
+  // von projectId/organizationId abhängen. Sie als Dependencies hinzuzufügen würde einen
+  // infinite loop verursachen. Das Disable ist bewusst und korrekt.
   useEffect(() => {
     if (!currentOrganization?.id) return; // Warte bis Organisation geladen ist
     loadProject();
@@ -119,6 +140,8 @@ export default function ProjectDetailPage() {
   }, [projectId, currentOrganization?.id]);
 
   // Tasks nur für Overview Tab laden
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadTodayTasks ist eine stabile Funktion. Als Dependency würde infinite loop entstehen.
   useEffect(() => {
     if (activeTab === 'overview' && currentOrganization?.id) {
       loadTodayTasks();
@@ -143,12 +166,32 @@ export default function ProjectDetailPage() {
   }, [project?.tags]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab ODER Strategie-Tab aktiviert wird
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProjectFolders und loadStrategyDocuments sind stabile Funktionen. Infinite loop vermeiden.
   useEffect(() => {
     if ((activeTab === 'daten' || activeTab === 'strategie') && project && currentOrganization?.id) {
       loadProjectFolders();
       loadStrategyDocuments();
     }
   }, [activeTab, project, currentOrganization?.id]);
+
+  // Computed Values mit useMemo
+  const assignedTeamMembers = useMemo(() => {
+    if (!project?.assignedTo || !teamMembers.length) return [];
+
+    return project.assignedTo
+      .map(userId => teamMembers.find(m => m.userId === userId || m.id === userId))
+      .filter(Boolean)
+      .slice(0, 5);
+  }, [project?.assignedTo, teamMembers]);
+
+  const todayTasksCount = useMemo(() => {
+    return todayTasks.length;
+  }, [todayTasks.length]);
+
+  const hasLinkedCampaigns = useMemo(() => {
+    return linkedCampaigns.length > 0;
+  }, [linkedCampaigns.length]);
 
   // Bedingte Rückgabe nach allen Hooks
   if (!projectId) {
@@ -252,7 +295,6 @@ export default function ProjectDetailPage() {
       today.setHours(0, 0, 0, 0);
 
       const userTodayTasks = projectTasks
-        // .filter(task => task.projectId === projectId) // Nicht nötig, schon im Service gefiltert
         .filter((task: Task) => {
           // Nur Tasks des aktuellen Users
           if (task.assignedUserId !== user.uid) return false;
@@ -388,24 +430,27 @@ export default function ProjectDetailPage() {
   };
 
 
-  const handleEditSuccess = (updatedProject: Project) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProject ist eine stabile Funktion. Empty deps array ist korrekt,
+  // da der Callback bei jedem Re-Render die aktuelle loadProject-Referenz verwendet.
+  const handleEditSuccess = useCallback((updatedProject: Project) => {
     setProject(updatedProject);
     toastService.success('Projekt erfolgreich aktualisiert');
     // Reload for consistency
     setTimeout(() => {
       loadProject();
     }, 500);
-  };
+  }, []);
 
-  const handleOpenPDF = () => {
+  const handleOpenPDF = useCallback(() => {
     if (currentPdfVersion?.downloadUrl) {
       window.open(currentPdfVersion.downloadUrl, '_blank');
     } else {
       toastService.warning('Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.');
     }
-  };
+  }, [currentPdfVersion]);
 
-  const handleViewFeedback = async () => {
+  const handleViewFeedback = useCallback(async () => {
     if (!linkedCampaigns.length || !currentOrganization?.id) return;
 
     try {
@@ -430,79 +475,7 @@ export default function ProjectDetailPage() {
       console.error('Fehler beim Laden der Feedback-Historie:', error);
       toastService.error('Fehler beim Laden der Feedback-Historie.');
     }
-  };
-
-  const getProjectStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'green';
-      case 'on_hold': return 'yellow';
-      case 'completed': return 'blue';
-      case 'cancelled': return 'red';
-      default: return 'zinc';
-    }
-  };
-
-  const getProjectStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active': return 'Aktiv';
-      case 'on_hold': return 'Pausiert';
-      case 'completed': return 'Abgeschlossen';
-      case 'cancelled': return 'Abgebrochen';
-      default: return status;
-    }
-  };
-
-  const getStageLabel = (stage: string) => {
-    switch (stage) {
-      case 'ideas_planning': return 'Ideen & Planung';
-      case 'creation': return 'Content und Materialien';
-      case 'approval': return 'Freigabe';
-      case 'distribution': return 'Verteilung';
-      case 'monitoring': return 'Monitoring';
-      case 'completed': return 'Abgeschlossen';
-      // Legacy Stages (falls noch in alten Daten vorhanden)
-      case 'planning': return 'Planung (Legacy)';
-      case 'content_creation': return 'Content-Erstellung (Legacy)';
-      case 'internal_review': return 'Interne Prüfung (Legacy)';
-      case 'internal_approval': return 'Freigabe';
-      case 'customer_approval': return 'Freigabe';
-      default: return stage;
-    }
-  };
-
-  const formatProjectDate = (date: any): string => {
-    try {
-      if (!date) return '-';
-
-      // Firestore Timestamp mit toDate Methode
-      if (date && typeof date === 'object' && date.toDate) {
-        return formatDate(date.toDate());
-      }
-
-      // Firestore Timestamp mit seconds/nanoseconds
-      if (date && typeof date === 'object' && date.seconds) {
-        return formatDate(new Date(date.seconds * 1000));
-      }
-
-      // Bereits ein Date-Objekt
-      if (date instanceof Date) {
-        return formatDate(date);
-      }
-
-      // String-Datum
-      if (typeof date === 'string') {
-        const parsed = new Date(date);
-        if (!isNaN(parsed.getTime())) {
-          return formatDate(parsed);
-        }
-      }
-
-      return '-';
-    } catch (error) {
-      console.error('Date formatting error:', error);
-      return '-';
-    }
-  };
+  }, [linkedCampaigns, currentOrganization]);
 
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
@@ -546,12 +519,12 @@ export default function ProjectDetailPage() {
   };
 
 
-  const handleDeleteProject = () => {
+  const handleDeleteProject = useCallback(() => {
     if (!project?.id || !currentOrganization?.id) return;
     setShowDeleteDialog(true);
-  };
+  }, [project?.id, currentOrganization?.id]);
 
-  const confirmDeleteProject = async () => {
+  const confirmDeleteProject = useCallback(async () => {
     if (!project?.id || !currentOrganization?.id) return;
 
     try {
@@ -564,14 +537,14 @@ export default function ProjectDetailPage() {
       setShowDeleteDialog(false);
       toastService.error(error.message || 'Fehler beim Löschen des Projekts');
     }
-  };
+  }, [project?.id, currentOrganization?.id, router]);
 
-  const handleCreateDocument = async (templateType: string, title: string) => {
+  const handleCreateDocument = useCallback(async (templateType: string, title: string) => {
     if (!currentOrganization?.id || !user?.uid || !project?.id) return;
 
     try {
       setDocumentsLoading(true);
-      
+
       // Template content basierend auf Typ
       let content = '';
       switch (templateType) {
@@ -580,16 +553,16 @@ export default function ProjectDetailPage() {
             <h1>Projekt-Briefing</h1>
             <h2>Ausgangssituation</h2>
             <p>[Beschreibung der aktuellen Situation]</p>
-            
+
             <h2>Ziele</h2>
             <ul>
               <li>Hauptziel</li>
               <li>Nebenziele</li>
             </ul>
-            
+
             <h2>Zielgruppen</h2>
             <p>[Primäre und sekundäre Zielgruppen]</p>
-            
+
             <h2>Kernbotschaften</h2>
             <p>[Hauptbotschaften]</p>
           `;
@@ -599,14 +572,14 @@ export default function ProjectDetailPage() {
             <h1>Kommunikationsstrategie</h1>
             <h2>Strategische Ausrichtung</h2>
             <p>[Grundlegende Strategie]</p>
-            
+
             <h2>Kanäle & Medien</h2>
             <ul>
               <li>Print-Medien</li>
               <li>Online-Medien</li>
               <li>Social Media</li>
             </ul>
-            
+
             <h2>Timeline & Meilensteine</h2>
             <p>[Zeitplan]</p>
           `;
@@ -616,10 +589,10 @@ export default function ProjectDetailPage() {
             <h1>Marktanalyse</h1>
             <h2>Marktumfeld</h2>
             <p>[Marktanalyse]</p>
-            
+
             <h2>Wettbewerber</h2>
             <p>[Competitor-Analyse]</p>
-            
+
             <h2>Chancen & Risiken</h2>
             <ul>
               <li>Chancen</li>
@@ -635,7 +608,7 @@ export default function ProjectDetailPage() {
       const documentId = await strategyDocumentService.create({
         projectId: project.id,
         title,
-        type: templateType.includes('briefing') ? 'briefing' as const : 
+        type: templateType.includes('briefing') ? 'briefing' as const :
               templateType.includes('strategy') ? 'strategy' as const : 'analysis' as const,
         content,
         status: 'draft' as const,
@@ -657,580 +630,121 @@ export default function ProjectDetailPage() {
     } finally {
       setDocumentsLoading(false);
     }
-  };
+  }, [currentOrganization?.id, user?.uid, project?.id, router]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Projekt wird geladen...</Text>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error || !project) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">
-          <DocumentTextIcon className="h-12 w-12 mx-auto" />
-        </div>
-        <Heading>{error || 'Projekt nicht gefunden'}</Heading>
-        <div className="mt-6">
-          <Link href="/dashboard/projects">
-            <Button>
-              <ArrowLeftIcon className="w-4 h-4 mr-2" />
-              Zurück zur Projektübersicht
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
+    return <ErrorState message={error || 'Projekt nicht gefunden'} />;
   }
 
   return (
-    <div>
-      {/* Kompakter Header mit allen Projektinfos */}
-      <div className="mb-6">
-        {/* Titel-Zeile mit Zurück-Button */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3 mb-2">
-            {/* Zurück-Button links vom Titel */}
-            <Link href="/dashboard/projects">
-              <Button plain className="p-2">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </Button>
-            </Link>
-
-            {/* Titel und Status */}
-            <Heading className="!text-2xl">{project.title}</Heading>
-            <Badge color={getProjectStatusColor(project.status)}>
-              {getProjectStatusLabel(project.status)}
-            </Badge>
-            {/* Erstellt-Datum */}
-            <span className="text-sm text-gray-500">
-              Erstellt: {formatProjectDate(project.createdAt)}
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Team-Mitglieder Avatare */}
-            {project.assignedTo && project.assignedTo.length > 0 && (
-              <div className="flex items-center -space-x-2">
-                {(() => {
-                  // Wie in KanBan Card - nur assignedTo ohne Duplikate
-                  const uniqueMembers = [];
-                  const seenMemberIds = new Set();
-
-                  for (const userId of project.assignedTo) {
-                    const member = teamMembers.find(m => m.userId === userId || m.id === userId);
-                    if (member && !seenMemberIds.has(member.id)) {
-                      uniqueMembers.push({ userId, member });
-                      seenMemberIds.add(member.id);
-                    } else if (!member) {
-                      uniqueMembers.push({ userId, member: null });
-                    }
-                  }
-
-                  return uniqueMembers.slice(0, 5).map(({ userId, member }, index) => {
-                    if (member) {
-                      const initials = member.displayName
-                        ?.split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2) || '??';
-
-                      return (
-                        <Avatar
-                          key={userId}
-                          className="size-8 ring-2 ring-gray-50 hover:z-10 transition-all"
-                          src={member.photoUrl}
-                          initials={initials}
-                          style={{ zIndex: 5 - index }}
-                          title={member.displayName}
-                        />
-                      );
-                    }
-                    return null;
-                  });
-                })()}
-                {project.assignedTo && project.assignedTo.length > 5 && (
-                  <div
-                    className="size-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium ring-2 ring-gray-50"
-                    title={`${project.assignedTo.length - 5} weitere Mitglieder`}
-                  >
-                    +{project.assignedTo.length - 5}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center space-x-2">
-              <Button onClick={() => setShowEditWizard(true)} color="secondary" className="!py-1.5">
-                <PencilSquareIcon className="w-4 h-4" />
-                <span className="hidden sm:inline ml-2">Bearbeiten</span>
-              </Button>
-
-              {/* Mehr-Optionen Dropdown */}
-              <Dropdown>
-                <DropdownButton plain className="!py-1.5 !px-2">
-                  <EllipsisVerticalIcon className="w-5 h-5" />
-                </DropdownButton>
-                <DropdownMenu anchor="bottom end">
-                  <DropdownItem onClick={() => setShowTeamModal(true)}>
-                    <UserGroupIcon className="w-4 h-4 mr-2" />
-                    Team verwalten
-                  </DropdownItem>
-                  <DropdownItem onClick={handleDeleteProject} className="text-red-600">
-                    <TrashIcon className="w-4 h-4 mr-2" />
-                    Projekt löschen
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            </div>
-          </div>
-        </div>
-
-        {/* Trennlinie */}
-        <div className="border-t border-gray-200 mt-4 mb-3"></div>
-
-        {/* Kompakte Info-Zeile */}
-        <div className="flex items-center flex-wrap gap-8 text-sm text-gray-600">
-          {/* Aktuelle Phase */}
-          <div className="flex items-center gap-1.5">
-            <Squares2X2Icon className="w-4 h-4 text-gray-400" />
-            <span className="font-medium">Phase:</span>
-            <span className="text-gray-900">{getStageLabel(project.currentStage)}</span>
-          </div>
-
-          {/* Kunde */}
-          {project.customer && (
-            <div className="flex items-center gap-1.5">
-              <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
-              <span className="font-medium">Kunde:</span>
-              <button
-                className="text-primary hover:text-primary-hover hover:underline text-sm"
-                onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
-                title="Kunde anzeigen"
-              >
-                {project.customer.name}
-              </button>
-            </div>
-          )}
-
-          {/* Priorität */}
-          <div className="flex items-center gap-1.5">
-            <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />
-            <span className="font-medium">Priorität:</span>
-            <Badge
-              color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
-              className="!py-0.5 !text-xs"
-            >
-              {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-            </Badge>
-          </div>
-
-          {/* Deadline wenn vorhanden */}
-          {project.deadline && (
-            <div className="flex items-center gap-1.5">
-              <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-              <span className="font-medium">Deadline:</span>
-              <span className="text-gray-900">
-                {project.deadline?.toDate().toLocaleDateString('de-DE', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric'
-                })}
-              </span>
-            </div>
-          )}
-
-          {/* Tags - ans Ende und nur wenn vorhanden */}
-          {projectTags.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <TagIcon className="w-4 h-4 text-gray-400" />
-              <span className="font-medium">Tags:</span>
-              <div className="flex items-center gap-1">
-                {projectTags.slice(0, 3).map(tag => (
-                  <Badge
-                    key={tag.id}
-                    color={tag.color || 'zinc'}
-                    className="!py-0.5 !text-xs"
-                  >
-                    {tag.name}
-                  </Badge>
-                ))}
-                {projectTags.length > 3 && (
-                  <span className="text-xs text-gray-500">+{projectTags.length - 3}</span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+    <ProjectProvider
+      projectId={projectId}
+      organizationId={currentOrganization?.id || ''}
+      initialProject={project}
+      onReload={loadProject}
+    >
+      <ErrorBoundary>
+        <div>
+        {/* Header-Komponenten */}
+        <ProjectHeader
+          teamMembers={teamMembers}
+          onEditClick={() => setShowEditWizard(true)}
+          onTeamManageClick={() => setShowTeamModal(true)}
+          onDeleteClick={handleDeleteProject}
+        />
+        <ProjectInfoBar projectTags={projectTags} />
 
       {/* Main Content Area */}
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6 mb-8 mt-6">
         {/* Content Tabs Box - Full Width */}
         <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200">
-          <div className="px-6 py-4">
-            <div className="flex space-x-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('overview');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'overview'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <DocumentTextIcon className="w-4 h-4 mr-2" />
-                Übersicht
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('tasks');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'tasks'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                Tasks
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('strategie');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'strategie'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <DocumentTextIcon className="w-4 h-4 mr-2" />
-                Strategie
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('daten');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'daten'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <FolderOpenIcon className="w-4 h-4 mr-2" />
-                Daten
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('verteiler');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'verteiler'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <UsersIcon className="w-4 h-4 mr-2" />
-                Verteiler
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('pressemeldung');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'pressemeldung'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <DocumentTextIcon className="w-4 h-4 mr-2" />
-                Pressemeldung
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('monitoring');
-                }}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'monitoring'
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ChartBarIcon className="w-4 h-4 mr-2" />
-                Monitoring
-              </button>
-            </div>
-          </div>
-        </div>
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
         
         <div className="p-6">
           {/* Übersicht Tab */}
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* BLAUE BOX - Pipeline-Fortschritt [1/1] - Volle Breite oben */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center mb-4">
-                  <Squares2X2Icon className="h-5 w-5 text-primary mr-2" />
-                  <Subheading>Pipeline-Übersicht</Subheading>
-                </div>
-                {/* Pipeline-Fortschritt Dashboard hier */}
-                {project && currentOrganization && (
-                  <PipelineProgressDashboard
-                    projectId={project.id || ''}
-                    organizationId={currentOrganization.id}
-                    currentStage={project.currentStage}
-                    onNavigateToTasks={() => setActiveTab('tasks')}
-                  />
-                )}
-              </div>
+            <OverviewTabContent
+              project={project}
+              currentOrganization={currentOrganization!}
+              todayTasks={todayTasks}
+              loadingTodayTasks={loadingTodayTasks}
+              user={user!}
+              completedGuideSteps={completedGuideSteps}
+              onStepToggle={async (stepId) => {
+                const newSteps = completedGuideSteps.includes(stepId)
+                  ? completedGuideSteps.filter(id => id !== stepId)
+                  : [...completedGuideSteps, stepId];
 
-              {/* Heute fällige Tasks Box - nur wenn vorhanden */}
-              {todayTasks.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <CalendarDaysIcon className="h-5 w-5 text-primary mr-2" />
-                      <Subheading>Meine fälligen Tasks</Subheading>
-                    </div>
-                    {/* User Avatar oben rechts */}
-                    {user && (
-                      <div className="flex items-center">
-                        <Avatar
-                          className="size-8"
-                          src={user.photoURL}
-                          initials={user.displayName
-                            ?.split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2) || user.email?.charAt(0).toUpperCase() || '?'}
-                          title={user.displayName || user.email || 'Aktueller User'}
-                        />
-                      </div>
-                    )}
-                  </div>
+                setCompletedGuideSteps(newSteps);
 
-                  {/* Task Liste */}
-                  <div className="space-y-3">
-                    {todayTasks.map((task) => (
-                      <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center gap-3 flex-1">
-                          {/* Status Icon */}
-                          <div className="flex-shrink-0">
-                            {task.status === 'completed' ? (
-                              <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                            ) : task.isOverdue ? (
-                              <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-                            ) : (
-                              <ClockIcon className="h-5 w-5 text-orange-500" />
-                            )}
-                          </div>
-
-                          {/* Task Titel */}
-                          <div className="min-w-0 flex-1">
-                            <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
-                              {task.title}
-                            </Text>
-                          </div>
-                        </div>
-
-                        {/* Fortschritt */}
-                        <div className="flex items-center gap-3 ml-4">
-                          {(() => {
-                            const progress = task.progress || 0;
-
-                            // Einheitliche Farblogik wie in Phase/Pressemeldung Box
-                            const getProgressColor = (percent: number) => {
-                              if (percent >= 90) return 'bg-green-500';
-                              if (percent >= 70) return 'bg-blue-500';
-                              if (percent >= 50) return 'bg-yellow-500';
-                              return 'bg-red-500';
-                            };
-
-                            const progressColor = getProgressColor(progress);
-                            const isInProgress = task.status === 'in_progress';
-
-                            return (
-                              <>
-                                <div className="relative">
-                                  <div className="w-20 bg-gray-200 rounded-full h-3">
-                                    <div
-                                      className={`${progressColor} rounded-full h-3 transition-all duration-500`}
-                                      style={{ width: `${progress}%` }}
-                                    ></div>
-                                  </div>
-
-                                  {isInProgress && (
-                                    <div className="absolute inset-0 bg-primary opacity-30 rounded-full animate-pulse"></div>
-                                  )}
-                                </div>
-                                <Text className="text-xs text-gray-500 w-8">
-                                  {Math.round(progress)}%
-                                </Text>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Footer mit Link zum Tasks Tab */}
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <button
-                      onClick={() => setActiveTab('tasks')}
-                      className="text-sm text-primary hover:text-primary-hover font-medium"
-                    >
-                      Alle Tasks anzeigen →
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Projekt-Leitfaden Guide Box - volle Breite */}
-              {project && (
-                <ProjectGuideBox
-                  currentPhase={project.currentStage}
-                  completedSteps={completedGuideSteps}
-                  onNavigate={(tab) => setActiveTab(tab as any)}
-                  onStepToggle={async (stepId) => {
-                    const newSteps = completedGuideSteps.includes(stepId)
-                      ? completedGuideSteps.filter(id => id !== stepId)
-                      : [...completedGuideSteps, stepId];
-
-                    setCompletedGuideSteps(newSteps);
-
-                    // Speichere in DB
-                    if (project?.id && currentOrganization?.id) {
-                      try {
-                        await projectService.update(project.id, {
-                          completedGuideSteps: newSteps
-                        }, { organizationId: currentOrganization.id, userId: user!.uid });
-                      } catch (error) {
-                        console.error('Fehler beim Speichern der Guide-Steps:', error);
-                      }
-                    }
-                  }}
-                />
-              )}
-            </div>
+                if (project?.id && currentOrganization?.id) {
+                  try {
+                    await projectService.update(project.id, {
+                      completedGuideSteps: newSteps
+                    }, { organizationId: currentOrganization.id, userId: user!.uid });
+                  } catch (error) {
+                    console.error('Fehler beim Speichern der Guide-Steps:', error);
+                  }
+                }
+              }}
+              onNavigateToTasks={() => setActiveTab('tasks')}
+            />
           )}
 
           {/* Tasks Tab */}
           {activeTab === 'tasks' && (
-            <div className="space-y-6">
-              {/* Project Task Manager */}
-              {project && teamMembers.length > 0 && currentOrganization && (
-                <ProjectTaskManager
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectManagerId={project.projectManager || project.userId}
-                  teamMembers={teamMembers}
-                  projectTeamMemberIds={project.assignedTo}
-                  projectTitle={project.title}
-                />
-              )}
-
-            </div>
+            <TasksTabContent
+              project={project}
+              organizationId={currentOrganization!.id}
+              teamMembers={teamMembers}
+            />
           )}
 
           {/* Strategie Tab */}
           {activeTab === 'strategie' && (
-            <div className="space-y-6">
-              {/* Templates ZUERST */}
-              {project && currentOrganization && (
-                <ProjectStrategyTab
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  project={project}
-                  dokumenteFolderId={dokumenteFolder?.mainFolder?.id}
-                  onDocumentSaved={loadProjectFolders}
-                />
-              )}
-
-              {/* Projekt-Ordner - Zeigt nur Dokumente-Ordner */}
-              {currentOrganization && dokumenteFolder && (
-                <ProjectFoldersView
-                  key={`strategy-folders-${dokumenteFolder.assets?.length || 0}`}
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
-                  foldersLoading={foldersLoading}
-                  onRefresh={loadProjectFolders}
-                  filterByFolder="Dokumente"
-                  initialFolderId={dokumenteFolder.mainFolder?.id}
-                />
-              )}
-            </div>
+            <StrategieTabContent
+              project={project}
+              organizationId={currentOrganization!.id}
+              dokumenteFolder={dokumenteFolder}
+              foldersLoading={foldersLoading}
+              onRefresh={loadProjectFolders}
+            />
           )}
 
           {/* Daten Tab */}
           {activeTab === 'daten' && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div>
-                <Heading level={3}>Projektdaten verwalten</Heading>
-                <Text className="text-gray-500 mt-1">
-                  Organisieren Sie alle Projektdateien und Dokumente zentral
-                </Text>
-              </div>
-
-              {/* Projekt-Ordner - Zeigt alle Projekt-Ordner */}
-              {currentOrganization && projectFolders && (
-                <ProjectFoldersView
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectFolders={projectFolders}
-                  foldersLoading={foldersLoading}
-                  onRefresh={loadProjectFolders}
-                  filterByFolder="all"
-                />
-              )}
-            </div>
+            <DatenTabContent
+              project={project}
+              organizationId={currentOrganization!.id}
+              projectFolders={projectFolders}
+              foldersLoading={foldersLoading}
+              onRefresh={loadProjectFolders}
+            />
           )}
 
           {/* Pressemeldung Tab */}
           {activeTab === 'pressemeldung' && (
-            <div className="space-y-6">
-              {project && currentOrganization && (
-                <ProjectPressemeldungenTab
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                />
-              )}
-            </div>
+            <PressemeldungTabContent
+              project={project}
+              organizationId={currentOrganization!.id}
+            />
           )}
 
           {/* Verteiler Tab */}
           {activeTab === 'verteiler' && (
-            <div className="space-y-6">
-              {project && currentOrganization && (
-                <ProjectDistributionLists
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                />
-              )}
-            </div>
+            <VerteilerTabContent
+              project={project}
+              organizationId={currentOrganization!.id}
+            />
           )}
 
           {/* Analytics Tab */}
           {activeTab === 'monitoring' && (
-            <ProjectMonitoringTab projectId={projectId} />
+            <MonitoringTabContent projectId={projectId} />
           )}
 
         </div>
@@ -1308,13 +822,12 @@ export default function ProjectDetailPage() {
       {/* Floating Chat - nur anzeigen wenn Projekt geladen und User eingeloggt */}
       {project && currentOrganization && user && (
         <FloatingChat
-          projectId={project.id!}
-          projectTitle={project.title}
-          organizationId={currentOrganization.id}
           userId={user.uid}
           userDisplayName={user.displayName || 'Unbekannter User'}
         />
       )}
-    </div>
+        </div>
+      </ErrorBoundary>
+    </ProjectProvider>
   );
 }

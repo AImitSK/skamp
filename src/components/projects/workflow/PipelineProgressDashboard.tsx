@@ -11,22 +11,16 @@ import {
   TrophyIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
+import { useProject } from '@/app/dashboard/projects/[projectId]/context/ProjectContext';
 
-interface PipelineProgressDashboardProps {
-  projectId: string;
-  organizationId: string;
-  currentStage: PipelineStage;
-  onNavigateToTasks?: () => void;
-}
+interface PipelineProgressDashboardProps {}
 
-export default function PipelineProgressDashboard({
-  projectId,
-  organizationId,
-  currentStage,
-  onNavigateToTasks
-}: PipelineProgressDashboardProps) {
+export default function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
+  // Context verwenden statt Props
+  const { project, projectId, organizationId, setActiveTab } = useProject();
+  const currentStage = project?.currentStage || 'creation';
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('month');
-  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({
     overallPercent: 0,
@@ -42,7 +36,7 @@ export default function PipelineProgressDashboard({
 
       try {
         setLoading(true);
-        const projectTasks = await taskService.getByProject(projectId, organizationId);
+        const projectTasks = await taskService.getByProjectId(projectId, organizationId);
         setTasks(projectTasks);
 
         // Berechne Fortschritt
@@ -170,7 +164,7 @@ export default function PipelineProgressDashboard({
             </div>
             {tasks.length === 0 && (
               <button
-                onClick={onNavigateToTasks}
+                onClick={() => setActiveTab('tasks')}
                 className="text-xs text-blue-100 hover:text-white mt-1 underline"
               >
                 Tasks erstellen
