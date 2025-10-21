@@ -17,6 +17,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useFloatingChatState } from '@/lib/hooks/useFloatingChatState';
 
 interface FloatingChatProps {
   projectId: string;
@@ -33,52 +34,15 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
   userId,
   userDisplayName
 }) => {
-  // Chat-Zustand aus LocalStorage laden oder Default verwenden
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      // Prüfe ob es der erste Besuch dieses Projekts ist
-      const visitedProjects = JSON.parse(localStorage.getItem('visited-projects') || '[]');
-      const isFirstVisit = !visitedProjects.includes(projectId);
+  // Chat-Zustand mit Custom Hook (LocalStorage-Logik ausgelagert)
+  const { isOpen, setIsOpen } = useFloatingChatState(projectId);
 
-      // Globaler Key für den Chat-Zustand
-      const savedState = localStorage.getItem('chat-open-state');
-
-      if (isFirstVisit) {
-        // Projekt als besucht markieren
-        visitedProjects.push(projectId);
-        localStorage.setItem('visited-projects', JSON.stringify(visitedProjects));
-
-        // Beim ersten Besuch: Wenn kein gespeicherter Zustand existiert, öffne den Chat
-        if (savedState === null) {
-          localStorage.setItem('chat-open-state', 'true');
-          return true;
-        }
-        // Wenn es einen gespeicherten Zustand gibt, respektiere ihn auch beim ersten Besuch
-        return savedState === 'true';
-      }
-
-      // Bei bereits besuchten Projekten: Verwende den gespeicherten Zustand
-      if (savedState !== null) {
-        return savedState === 'true';
-      }
-
-      return false; // Default geschlossen
-    }
-    return false;
-  });
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastReadTimestamp, setLastReadTimestamp] = useState<Date | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [assignedMembers, setAssignedMembers] = useState<TeamMember[]>([]);
   const [showClearChatDialog, setShowClearChatDialog] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(false);
-
-  // Chat-Zustand in LocalStorage speichern (globaler Key)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('chat-open-state', isOpen.toString());
-    }
-  }, [isOpen]);
 
   // Animation nur beim ersten Mount triggern, wenn Chat bereits offen ist
   useEffect(() => {

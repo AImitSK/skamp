@@ -79,10 +79,14 @@ export class TeamChatService {
       const messages: TeamMessage[] = [];
 
       snapshot.forEach((doc) => {
-        messages.push({
-          id: doc.id,
-          ...doc.data()
-        } as TeamMessage);
+        const data = doc.data();
+        // Filtere gelöschte Messages raus (Soft-Delete) - gleich wie subscribeToMessages
+        if (data.deleted !== true) {
+          messages.push({
+            id: doc.id,
+            ...data
+          } as TeamMessage);
+        }
       });
 
       // Nachrichten in chronologischer Reihenfolge zurückgeben
@@ -110,10 +114,13 @@ export class TeamChatService {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        messages.push({
-          id: doc.id,
-          ...data
-        } as TeamMessage);
+        // Filtere gelöschte Messages raus (Soft-Delete)
+        if (data.deleted !== true) {
+          messages.push({
+            id: doc.id,
+            ...data
+          } as TeamMessage);
+        }
       });
 
       // Nachrichten in chronologischer Reihenfolge
@@ -262,8 +269,6 @@ export class TeamChatService {
       await updateDoc(messageRef, {
         reactions: updatedReactions
       });
-
-      console.log(`Reaction ${emoji} für Nachricht ${messageId} aktualisiert`);
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Reaction:', error);
       throw error;

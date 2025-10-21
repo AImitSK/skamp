@@ -14,7 +14,7 @@
 1. 🔴 **KRITISCH:** Message Deletion & Editing (Security + Audit)
 2. 🔴 **KRITISCH:** Message Sending Validation (Spam + Rate-Limiting)
 3. 🟡 **HOCH:** Multi-Tenancy Permission Checks (Security)
-4. 🟡 **HOCH:** Attachment Validation (Security)
+4. 🟡 **HOCH:** Attachment Validation (Security) 
 5. 🟢 **MITTEL:** Mention Validation (User-Experience)
 6. 🟢 **MITTEL:** Bulk Message Operations (Performance)
 
