@@ -10,6 +10,9 @@ import { ReactionBar } from './ReactionBar';
 import { TeamMessage } from './types';
 import { useEditMessage, useDeleteMessage } from '@/lib/hooks/useTeamMessages';
 import { toastService } from '@/lib/utils/toast';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 
 interface MessageItemProps {
   message: TeamMessage;
@@ -56,6 +59,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   const [editedContent, setEditedContent] = useState(message.content);
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Hooks
   const editMessageMutation = useEditMessage();
@@ -271,17 +275,19 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
     }
   };
 
-  // Handler: Message löschen
-  const handleDelete = async () => {
-    if (!confirm('Möchten Sie diese Nachricht wirklich löschen?')) {
-      return;
-    }
+  // Handler: Message löschen (öffnet Dialog)
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
 
+  // Handler: Message löschen bestätigen
+  const confirmDelete = async () => {
     try {
       await deleteMessageMutation.mutateAsync({
         projectId,
         messageId: message.id
       });
+      setShowDeleteDialog(false);
       toastService.success('Nachricht wurde gelöscht');
     } catch (err: any) {
       toastService.error(err.message || 'Fehler beim Löschen der Nachricht');
@@ -465,6 +471,34 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           title={userDisplayName}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+        <DialogTitle>Nachricht löschen</DialogTitle>
+        <DialogBody>
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <TrashIcon className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <Text className="text-gray-900">
+                Möchten Sie diese Nachricht wirklich löschen?
+              </Text>
+              <Text className="text-gray-500 mt-2">
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </Text>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setShowDeleteDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button color="red" onClick={confirmDelete} disabled={deleteMessageMutation.isPending}>
+            {deleteMessageMutation.isPending ? 'Löschen...' : 'Nachricht löschen'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 });
