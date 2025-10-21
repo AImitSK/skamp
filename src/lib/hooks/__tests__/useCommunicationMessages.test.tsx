@@ -53,7 +53,7 @@ describe('useCommunicationFeed', () => {
     (projectCommunicationService.getProjectCommunicationFeed as jest.Mock).mockResolvedValue(mockFeed);
 
     const { result } = renderHook(
-      () => useCommunicationFeed('project-123'),
+      () => useCommunicationFeed('project-123', 'org-123'),
       { wrapper: createWrapper() }
     );
 
@@ -61,13 +61,14 @@ describe('useCommunicationFeed', () => {
     expect(result.current.data).toEqual(mockFeed);
     expect(projectCommunicationService.getProjectCommunicationFeed).toHaveBeenCalledWith(
       'project-123',
-      undefined
+      'org-123',
+      {}
     );
   });
 
   it('sollte Query disablen wenn projectId undefined', async () => {
     const { result } = renderHook(
-      () => useCommunicationFeed(undefined),
+      () => useCommunicationFeed(undefined, undefined),
       { wrapper: createWrapper() }
     );
 
@@ -87,14 +88,15 @@ describe('useCommunicationFeed', () => {
     (projectCommunicationService.getProjectCommunicationFeed as jest.Mock).mockResolvedValue(mockFeed);
 
     const { result } = renderHook(
-      () => useCommunicationFeed('project-123', { limitCount: 50 }),
+      () => useCommunicationFeed('project-123', 'org-123', { limitCount: 50 }),
       { wrapper: createWrapper() }
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(projectCommunicationService.getProjectCommunicationFeed).toHaveBeenCalledWith(
       'project-123',
-      50
+      'org-123',
+      { limitCount: 50 }
     );
   });
 });
@@ -115,6 +117,7 @@ describe('useCreateInternalNote', () => {
       projectId: 'project-123',
       content: 'Test internal note',
       author: 'Test User',
+      organizationId: 'org-123',
       mentions: ['@user2']
     });
 
@@ -122,6 +125,8 @@ describe('useCreateInternalNote', () => {
       'project-123',
       'Test internal note',
       'Test User',
+      'org-123',
+      [],
       ['@user2']
     );
   });
@@ -151,7 +156,8 @@ describe('useCreateInternalNote', () => {
     await result.current.mutateAsync({
       projectId: 'project-123',
       content: 'Test note',
-      author: 'Test User'
+      author: 'Test User',
+      organizationId: 'org-123'
     });
 
     expect(invalidateSpy).toHaveBeenCalledWith({
@@ -172,12 +178,16 @@ describe('useLinkEmailToProject', () => {
 
     await result.current.mutateAsync({
       projectId: 'project-123',
-      emailThreadId: 'thread-456'
+      emailThreadId: 'thread-456',
+      method: 'manual',
+      organizationId: 'org-123'
     });
 
     expect(projectCommunicationService.linkEmailToProject).toHaveBeenCalledWith(
+      'thread-456',
       'project-123',
-      'thread-456'
+      'manual',
+      'org-123'
     );
   });
 
@@ -203,7 +213,9 @@ describe('useLinkEmailToProject', () => {
 
     await result.current.mutateAsync({
       projectId: 'project-123',
-      emailThreadId: 'thread-456'
+      emailThreadId: 'thread-456',
+      method: 'manual',
+      organizationId: 'org-123'
     });
 
     expect(invalidateSpy).toHaveBeenCalledWith({
