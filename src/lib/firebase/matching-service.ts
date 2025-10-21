@@ -121,49 +121,27 @@ export async function importCandidateWithAutoMatching(params: {
     let contactDataToUse: any;
 
     if (params.useAiMerge && candidate.variants.length > 1) {
-      console.log('\n🤖 ===== KI-DATEN-MERGE AKTIVIERT =====');
-      console.log(`📊 Merge ${candidate.variants.length} Varianten mit Gemini AI...`);
+      console.log('\n🤖 ===== KI-DATEN-MERGE AKTIVIERT (GENKIT) =====');
+      console.log(`📊 Merge ${candidate.variants.length} Varianten mit Gemini AI via Genkit...`);
 
       try {
-        const response = await fetch('/api/ai/merge-variants', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variants: candidate.variants })
+        // ✅ Genkit Flow verwenden statt fetch
+        const { mergeVariantsFlow } = await import('@/lib/ai/flows/merge-variants');
+        const mergedData = await mergeVariantsFlow({ variants: candidate.variants });
+
+        console.log('✅ AI-Merge erfolgreich (Genkit)!');
+        console.log('📋 Gemergter Datensatz:', {
+          name: mergedData.displayName,
+          emails: mergedData.emails?.length || 0,
+          phones: mergedData.phones?.length || 0,
+          beats: mergedData.beats?.length || 0,
+          publications: mergedData.publications?.length || 0
         });
 
-        const result = await response.json();
+        contactDataToUse = mergedData;
 
-        if (result.success && result.mergedData) {
-          console.log('✅ AI-Merge erfolgreich!');
-          console.log('📋 Gemergter Datensatz:', {
-            name: result.mergedData.displayName,
-            emails: result.mergedData.emails?.length || 0,
-            phones: result.mergedData.phones?.length || 0,
-            beats: result.mergedData.beats?.length || 0,
-            publications: result.mergedData.publications?.length || 0
-          });
-
-          contactDataToUse = result.mergedData;
-
-          // ✅ WICHTIG: Stelle sicher, dass publications-Array existiert
-          // Falls KI es nicht zurückgibt, sammle aus allen Varianten
-          if (!contactDataToUse.publications || contactDataToUse.publications.length === 0) {
-            const allPublications = new Set<string>();
-            for (const variant of candidate.variants) {
-              if (variant.contactData.publications) {
-                variant.contactData.publications.forEach(pub => allPublications.add(pub));
-              }
-            }
-            contactDataToUse.publications = Array.from(allPublications);
-            console.log(`⚠️  KI gab keine Publications zurück → ${contactDataToUse.publications.length} aus Varianten gesammelt`);
-          }
-        } else {
-          console.error('❌ AI-Merge fehlgeschlagen:', result.error);
-          console.log('⤵️  Fallback: Nutze ausgewählte Variante');
-          contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
-        }
       } catch (error) {
-        console.error('❌ AI-Merge Error:', error);
+        console.error('❌ Genkit AI-Merge Error:', error);
         console.log('⤵️  Fallback: Nutze ausgewählte Variante');
         contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
       }

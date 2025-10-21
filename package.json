@@ -25,7 +25,9 @@
     "seed:matching-test": "npx tsx scripts/seed-matching-test-data.ts",
     "cleanup:matching-test": "npx tsx scripts/cleanup-matching-test-data.ts",
     "type-check": "tsc --noEmit",
-    "check:indexes": "npx tsx scripts/check-firestore-indexes.ts"
+    "check:indexes": "npx tsx scripts/check-firestore-indexes.ts",
+    "genkit:dev": "genkit start",
+    "genkit:flow": "genkit flow:run"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.18",
@@ -34,6 +36,7 @@
     "@fullcalendar/list": "^6.1.18",
     "@fullcalendar/react": "^6.1.18",
     "@fullcalendar/timegrid": "^6.1.18",
+    "@genkit-ai/googleai": "^1.21.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.4",
@@ -67,6 +70,7 @@
     "firebase": "^11.9.1",
     "firebase-admin": "^13.5.0",
     "framer-motion": "^12.18.1",
+    "genkit": "^1.21.0",
     "i18n-iso-countries": "^7.14.0",
     "mustache": "^4.2.0",
     "nanoid": "^5.1.6",
@@ -105,6 +109,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "eslint-plugin-mdx": "^3.6.0",
+    "genkit-cli": "^1.21.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
