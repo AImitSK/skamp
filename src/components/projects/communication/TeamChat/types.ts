@@ -15,8 +15,19 @@ export interface TeamMessage {
   timestamp: Timestamp | Date;
   mentions?: string[];
   edited?: boolean;
+  editedAt?: Timestamp | Date;
+  editHistory?: EditHistoryEntry[];
   reactions?: MessageReaction[];
   organizationId: string;
+  deleted?: boolean;
+  deletedAt?: Timestamp | Date;
+  deletedBy?: string;
+}
+
+export interface EditHistoryEntry {
+  previousContent: string;
+  editedAt: Timestamp | Date;
+  editedBy: string;
 }
 
 export interface MessageReaction {

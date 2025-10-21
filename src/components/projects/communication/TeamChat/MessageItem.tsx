@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
-import { AtSymbolIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { AtSymbolIcon, PencilIcon, TrashIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Avatar } from '@/components/ui/avatar';
 import { AssetPreview } from '../AssetPreview';
 import { mediaService } from '@/lib/firebase/media-service';
 import { Timestamp } from 'firebase/firestore';
 import { ReactionBar } from './ReactionBar';
 import { TeamMessage } from './types';
+import { useEditMessage, useDeleteMessage } from '@/lib/hooks/useTeamMessages';
 
 interface MessageItemProps {
   message: TeamMessage;
@@ -48,6 +49,17 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   onShowTooltip
 }) {
   const isOwnMessage = message.authorId === userId;
+
+  // Edit/Delete States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(message.content);
+  const [showEditHistory, setShowEditHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Hooks
+  const editMessageMutation = useEditMessage();
+  const deleteMessageMutation = useDeleteMessage();
 
   const getInitials = (name: string): string => {
     return name
@@ -222,8 +234,73 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
     );
   };
 
+  // Handler: Edit starten
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditedContent(message.content);
+    setError(null);
+  };
+
+  // Handler: Edit abbrechen
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedContent(message.content);
+    setError(null);
+  };
+
+  // Handler: Edit speichern
+  const handleSaveEdit = async () => {
+    if (!editedContent.trim()) {
+      setError('Nachricht darf nicht leer sein');
+      return;
+    }
+
+    if (editedContent === message.content) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      await editMessageMutation.mutateAsync({
+        projectId,
+        messageId: message.id,
+        newContent: editedContent
+      });
+      setIsEditing(false);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Fehler beim Bearbeiten der Nachricht');
+    }
+  };
+
+  // Handler: Message löschen
+  const handleDelete = async () => {
+    if (!confirm('Möchten Sie diese Nachricht wirklich löschen?')) {
+      return;
+    }
+
+    try {
+      await deleteMessageMutation.mutateAsync({
+        projectId,
+        messageId: message.id
+      });
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Fehler beim Löschen der Nachricht');
+    }
+  };
+
+  // Handler: Edit-History Toggle
+  const toggleEditHistory = () => {
+    setShowEditHistory(!showEditHistory);
+  };
+
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+    <div
+      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {!isOwnMessage && (
         <Avatar
           className="size-8 flex-shrink-0 mr-3 self-end"
@@ -238,12 +315,73 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           ? 'bg-primary-50 text-gray-900 rounded-l-lg rounded-tr-lg'
           : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
       } px-4 py-2 shadow-sm`}>
-        {/* Nachrichteninhalt zuerst */}
-        <div className={`text-base break-words whitespace-pre-wrap leading-relaxed mb-2 ${
-          isOwnMessage ? 'text-gray-900' : 'text-gray-800'
-        }`}>
-          {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
-        </div>
+        {/* Edit/Delete Buttons (nur eigene Messages + hover) */}
+        {isOwnMessage && isHovered && !isEditing && (
+          <div className="absolute -top-2 -right-2 flex space-x-1">
+            <button
+              onClick={handleStartEdit}
+              className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-50 border border-gray-200"
+              title="Bearbeiten"
+            >
+              <PencilIcon className="h-3.5 w-3.5 text-gray-600" />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="p-1.5 bg-white rounded-full shadow-md hover:bg-red-50 border border-gray-200"
+              title="Löschen"
+              disabled={deleteMessageMutation.isPending}
+            >
+              <TrashIcon className="h-3.5 w-3.5 text-red-600" />
+            </button>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
+        {/* Edit-Form (wenn im Edit-Modus) */}
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none"
+              rows={3}
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleCancelEdit}
+                className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={editMessageMutation.isPending}
+              >
+                <XMarkIcon className="h-4 w-4 inline mr-1" />
+                Abbrechen
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-3 py-1.5 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                disabled={editMessageMutation.isPending}
+              >
+                <CheckIcon className="h-4 w-4 inline mr-1" />
+                {editMessageMutation.isPending ? 'Speichern...' : 'Speichern'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Nachrichteninhalt */}
+            <div className={`text-base break-words whitespace-pre-wrap leading-relaxed mb-2 ${
+              isOwnMessage ? 'text-gray-900' : 'text-gray-800'
+            }`}>
+              {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
+            </div>
+          </>
+        )}
 
         {/* Mentions */}
         {message.mentions && message.mentions.length > 0 && (
@@ -259,12 +397,50 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           </div>
         )}
 
-        {/* Bearbeitet-Hinweis */}
-        {message.edited && (
-          <div className={`text-xs mt-1 ${
-            isOwnMessage ? 'text-gray-600' : 'text-gray-400'
-          }`}>
-            (bearbeitet)
+        {/* Bearbeitet-Hinweis + Edit-History */}
+        {message.edited && !isEditing && (
+          <div className="mt-2">
+            <button
+              onClick={toggleEditHistory}
+              className={`text-xs ${
+                isOwnMessage ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-gray-600'
+              } underline`}
+            >
+              {message.editHistory && message.editHistory.length > 0
+                ? `(bearbeitet - ${message.editHistory.length}x)`
+                : '(bearbeitet)'}
+            </button>
+
+            {/* Edit-History Dropdown */}
+            {showEditHistory && message.editHistory && message.editHistory.length > 0 && (
+              <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2">Bearbeitungsverlauf</h4>
+                <div className="space-y-2">
+                  {message.editHistory.map((entry, index) => {
+                    const editDate = entry.editedAt instanceof Timestamp
+                      ? entry.editedAt.toDate()
+                      : entry.editedAt;
+
+                    return (
+                      <div key={index} className="text-xs text-gray-600 pb-2 border-b border-gray-100 last:border-0">
+                        <div className="font-medium text-gray-700 mb-1">
+                          {editDate.toLocaleString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        <div className="text-gray-500 italic">
+                          "{entry.previousContent}"
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
