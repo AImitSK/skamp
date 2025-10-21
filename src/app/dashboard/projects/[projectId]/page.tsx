@@ -252,7 +252,6 @@ export default function ProjectDetailPage() {
       today.setHours(0, 0, 0, 0);
 
       const userTodayTasks = projectTasks
-        // .filter(task => task.projectId === projectId) // Nicht nötig, schon im Service gefiltert
         .filter((task: Task) => {
           // Nur Tasks des aktuellen Users
           if (task.assignedUserId !== user.uid) return false;
