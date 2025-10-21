@@ -79,10 +79,14 @@ export class TeamChatService {
       const messages: TeamMessage[] = [];
 
       snapshot.forEach((doc) => {
-        messages.push({
-          id: doc.id,
-          ...doc.data()
-        } as TeamMessage);
+        const data = doc.data();
+        // Filtere gelöschte Messages raus (Soft-Delete) - gleich wie subscribeToMessages
+        if (data.deleted !== true) {
+          messages.push({
+            id: doc.id,
+            ...data
+          } as TeamMessage);
+        }
       });
 
       // Nachrichten in chronologischer Reihenfolge zurückgeben
