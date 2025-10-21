@@ -18,8 +18,13 @@ export { UnreadIndicator } from './TeamChat/UnreadIndicator';
 // Re-export Types
 export type { TeamMessage, MessageReaction, TeamMember } from './TeamChat/types';
 
+// CommunicationModal + Sub-Komponenten
+export { CommunicationModal, type CommunicationModalProps, type ProjectMessage } from './CommunicationModal';
+export { MessageFilters } from './CommunicationModal/MessageFilters';
+export { MessageFeed } from './CommunicationModal/MessageFeed';
+export { MessageComposer } from './CommunicationModal/MessageComposer';
+
 // Andere Communication Components
-export { CommunicationModal } from './CommunicationModal';
 export { FloatingChat } from './FloatingChat';
 export { MentionDropdown } from './MentionDropdown';
 export { AssetPickerModal, type SelectedAsset } from './AssetPickerModal';
