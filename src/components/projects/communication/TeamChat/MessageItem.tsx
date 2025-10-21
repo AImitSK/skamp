@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import { ReactionBar } from './ReactionBar';
 import { TeamMessage } from './types';
 import { useEditMessage, useDeleteMessage } from '@/lib/hooks/useTeamMessages';
+import { toastService } from '@/lib/utils/toast';
 
 interface MessageItemProps {
   message: TeamMessage;
@@ -54,7 +55,6 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [showEditHistory, setShowEditHistory] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
   // Hooks
@@ -238,20 +238,18 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
   const handleStartEdit = () => {
     setIsEditing(true);
     setEditedContent(message.content);
-    setError(null);
   };
 
   // Handler: Edit abbrechen
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedContent(message.content);
-    setError(null);
   };
 
   // Handler: Edit speichern
   const handleSaveEdit = async () => {
     if (!editedContent.trim()) {
-      setError('Nachricht darf nicht leer sein');
+      toastService.error('Nachricht darf nicht leer sein');
       return;
     }
 
@@ -267,9 +265,9 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
         newContent: editedContent
       });
       setIsEditing(false);
-      setError(null);
+      toastService.success('Nachricht wurde bearbeitet');
     } catch (err: any) {
-      setError(err.message || 'Fehler beim Bearbeiten der Nachricht');
+      toastService.error(err.message || 'Fehler beim Bearbeiten der Nachricht');
     }
   };
 
@@ -284,9 +282,9 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
         projectId,
         messageId: message.id
       });
-      setError(null);
+      toastService.success('Nachricht wurde gelöscht');
     } catch (err: any) {
-      setError(err.message || 'Fehler beim Löschen der Nachricht');
+      toastService.error(err.message || 'Fehler beim Löschen der Nachricht');
     }
   };
 
@@ -333,13 +331,6 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
             >
               <TrashIcon className="h-3.5 w-3.5 text-red-600" />
             </button>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-            {error}
           </div>
         )}
 
