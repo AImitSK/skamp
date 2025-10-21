@@ -17,7 +17,9 @@
       "Bash(npm run test:coverage:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(git add \"C:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\app\\dashboard\\projects\\[projectId]\\page.backup.tsx\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nchore: Phase 0 - Setup & Backup für Project Detail Page Refactoring\n\n- Feature-Branch erstellt: feature/project-detail-page-refactoring\n- Backup page.tsx erstellt (1.319 Zeilen)\n- Ist-Zustand: 1 Datei, 1.319 Zeilen Code\n- Toast-Service bereits integriert ✅\n- Admin SDK nicht nötig (Security Rules reichen) ✅\n\nHinweis: Ursprünglich 1.412 Zeilen, durch Toast-Integration \nbereits auf 1.319 Zeilen reduziert (-93 Zeilen)\n\nBereit für Phase 0.5 (Pre-Refactoring Cleanup)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": [],
