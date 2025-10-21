@@ -344,21 +344,29 @@ Phase 0-6.5 vollständig:
 
 **Entry Point:** `[projectId]/page.tsx` (overview case)
 **Komponenten:** 3 (PipelineProgressDashboard, ProjectGuideBox, FloatingChat)
-**LOC:** ~300+
-**Aufwand:** M (Medium)
-**Abhängigkeiten:** 0.2 Communication Components
+**LOC:** ~755 (KORREKTUR: nicht ~300+!)
+**Aufwand:** M (Medium) - 2-3 Tage
+**Abhängigkeiten:** 0.2 Communication Components ✅
+
+**Besonderheiten:**
+- Toast-Service Integration (kein lokaler Alert-State)
+- Kein Admin SDK erforderlich (Guide Steps Security ausreichend)
+- Code-Duplication: fixedProgressMap (2x → 1x)
 
 **Tracking:**
-- [ ] **Plan erstellt:** `docs/planning/tabs/overview-tab-refactoring.md`
+- [x] **Plan erstellt:** `docs/planning/tabs/overview-tab-refactoring.md`
+- [x] **Admin SDK Prüfung:** Nicht erforderlich
 - [ ] **Implementierung durchgeführt**
 
 **Ergebnis-Zusammenfassung:**
 ```
 [Nach Implementierung ausfüllen]
-- PipelineProgressDashboard refactored: Ja/Nein
-- ProjectGuideBox refactored: Ja/Nein
-- Code-Reduktion: X Zeilen → Y Zeilen
+- React Query Integration: Ja/Nein
+- Code-Duplication eliminiert: Ja/Nein
+- Toast-Service integriert: Ja/Nein
 - Test-Ergebnis: X/Y Tests passed
+- Coverage: X%
+- Dokumentation: X+ Zeilen
 ```
 
 **TODOs / Offene Punkte:**
