@@ -9,12 +9,14 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { useState, useEffect } from 'react';
 
 import { Project, PipelineStage } from '@/types/project';
+import { TeamMember } from '@/types/international';
+import { Tag } from '@/types/crm';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
-import { 
-  STAGE_COLORS, 
-  RESPONSIVE_CONFIG, 
+import {
+  STAGE_COLORS,
+  RESPONSIVE_CONFIG,
   getAllStages,
-  getResponsiveConfig 
+  getResponsiveConfig
 } from './kanban-constants';
 
 import { KanbanColumn } from './KanbanColumn';
@@ -42,6 +44,8 @@ export interface KanbanBoardProps {
   viewMode?: 'board' | 'list';
   onViewModeChange?: (mode: 'board' | 'list') => void;
   onNewProject?: () => void;
+  teamMembers?: TeamMember[];
+  tags?: Tag[];
 }
 
 // ========================================
@@ -57,7 +61,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onProjectSelect,
   viewMode = 'board',
   onViewModeChange,
-  onNewProject
+  onNewProject,
+  teamMembers = [],
+  tags = []
 }) => {
   // Window Size für Responsive Design
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -121,6 +127,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 useDropZone={useDropZone}
                 getStageName={getStageName}
                 loading={loading}
+                teamMembers={teamMembers}
+                tags={tags}
               />
             </div>
           );

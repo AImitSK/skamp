@@ -4,6 +4,8 @@
 import React, { memo } from 'react';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { Project, PipelineStage } from '@/types/project';
+import { TeamMember } from '@/types/international';
+import { Tag } from '@/types/crm';
 import { getStageColor, getStageConfig } from './kanban-constants';
 import { ProjectCard } from './ProjectCard';
 import { VirtualizedProjectList } from './VirtualizedProjectList';
@@ -25,6 +27,8 @@ export interface KanbanColumnProps {
   useDropZone: (stage: PipelineStage) => any;
   getStageName: (stage: PipelineStage) => string;
   loading: boolean;
+  teamMembers?: TeamMember[];
+  tags?: Tag[];
 }
 
 // ========================================
@@ -43,7 +47,9 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   useDraggableProject,
   useDropZone,
   getStageName,
-  loading
+  loading,
+  teamMembers = [],
+  tags = []
 }) => {
   const stageConfig = getStageConfig(stage);
   const stageColors = getStageColor(stage);
@@ -126,6 +132,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             onProjectUpdated={onProjectUpdated}
             useDraggableProject={useDraggableProject}
             loading={loading}
+            teamMembers={teamMembers}
+            tags={tags}
           />
         )}
       </div>

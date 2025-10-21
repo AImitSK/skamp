@@ -20,8 +20,10 @@ import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCre
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
+import { tagsService } from '@/lib/firebase/tags-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
 import { TeamMember } from '@/types/international';
+import { Tag } from '@/types/crm';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { useMoveProject, useProjects, useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
 import { useProjectFilters } from '@/lib/hooks/useProjectFilters';
@@ -78,6 +80,8 @@ export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(true);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const filterDropdownRef = useRef<HTMLDivElement>(null);
@@ -98,6 +102,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     loadTeamMembers();
+    loadTags();
   }, [currentOrganization?.id]);
 
   // Close filter dropdown on click outside
@@ -121,7 +126,7 @@ export default function ProjectsPage() {
 
   const loadTeamMembers = async () => {
     if (!currentOrganization?.id) return;
-    
+
     try {
       setLoadingTeam(true);
       const members = await teamMemberService.getByOrganization(currentOrganization.id);
@@ -131,6 +136,20 @@ export default function ProjectsPage() {
       console.error('Error loading team members:', error);
     } finally {
       setLoadingTeam(false);
+    }
+  };
+
+  const loadTags = async () => {
+    if (!currentOrganization?.id || !user?.uid) return;
+
+    try {
+      setLoadingTags(true);
+      const allTags = await tagsService.getAll(currentOrganization.id, user.uid);
+      setTags(allTags);
+    } catch (error) {
+      console.error('Error loading tags:', error);
+    } finally {
+      setLoadingTags(false);
     }
   };
 
@@ -263,6 +282,8 @@ export default function ProjectsPage() {
               viewMode={viewMode}
               onViewModeChange={handleViewModeChange}
               onNewProject={() => setShowWizard(true)}
+              teamMembers={teamMembers}
+              tags={tags}
             />
           )}
 

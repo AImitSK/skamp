@@ -5,6 +5,8 @@ import React, { memo, useMemo } from 'react';
 // TODO: react-window Package Installation erforderlich
 // import { FixedSizeList as List } from 'react-window';
 import { Project } from '@/types/project';
+import { TeamMember } from '@/types/international';
+import { Tag } from '@/types/crm';
 import { ProjectCard } from './ProjectCard';
 import { PERFORMANCE_CONFIG } from './kanban-constants';
 
@@ -23,6 +25,8 @@ export interface VirtualizedProjectListProps {
   onProjectUpdated?: () => void;
   useDraggableProject: (project: Project) => any;
   loading?: boolean;
+  teamMembers?: TeamMember[];
+  tags?: Tag[];
 }
 
 interface ListItemProps {
@@ -37,6 +41,8 @@ interface ListItemProps {
     onProjectArchived?: () => void;
     onProjectUpdated?: () => void;
     useDraggableProject: (project: Project) => any;
+    teamMembers?: TeamMember[];
+    tags?: Tag[];
   };
 }
 
@@ -45,7 +51,7 @@ interface ListItemProps {
 // ========================================
 
 const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
-  const { projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject } = data;
+  const { projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject, teamMembers, tags } = data;
   const project = projects[index];
 
   if (!project) {
@@ -68,6 +74,8 @@ const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
           onProjectArchived={onProjectArchived}
           onProjectUpdated={onProjectUpdated}
           useDraggableProject={useDraggableProject}
+          teamMembers={teamMembers}
+          tags={tags}
         />
       </div>
     </div>
@@ -103,7 +111,9 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   onProjectArchived,
   onProjectUpdated,
   useDraggableProject,
-  loading = false
+  loading = false,
+  teamMembers = [],
+  tags = []
 }) => {
   // Memoized data object for list items
   const itemData = useMemo(() => ({
@@ -114,8 +124,10 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
     onProjectDeleted,
     onProjectArchived,
     onProjectUpdated,
-    useDraggableProject
-  }), [projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject]);
+    useDraggableProject,
+    teamMembers,
+    tags
+  }), [projects, onProjectSelect, onProjectMove, onProjectAdded, onProjectDeleted, onProjectArchived, onProjectUpdated, useDraggableProject, teamMembers, tags]);
 
   // Performance threshold - virtualize only for large lists
   const shouldVirtualize = projects.length >= PERFORMANCE_CONFIG.virtualScrolling.threshold;
@@ -157,6 +169,8 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
             onSelect={onProjectSelect}
             onProjectMove={onProjectMove}
             useDraggableProject={useDraggableProject}
+            teamMembers={teamMembers}
+            tags={tags}
           />
         ))}
       </div>
@@ -178,6 +192,8 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
           onProjectArchived={onProjectArchived}
           onProjectUpdated={onProjectUpdated}
           useDraggableProject={useDraggableProject}
+          teamMembers={teamMembers}
+          tags={tags}
         />
       ))}
     </div>

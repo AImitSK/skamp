@@ -12,8 +12,6 @@ import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import { ProjectQuickActionsMenu } from '../ProjectQuickActionsMenu';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { Avatar } from '@/components/ui/avatar';
-import { teamMemberService } from '@/lib/firebase/organization-service';
-import { TeamMember } from '@/types/international';
 import { useOrganization } from '@/context/OrganizationContext';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { de } from 'date-fns/locale/de';
@@ -22,8 +20,6 @@ import toast from 'react-hot-toast';
 import { ProjectCardProps } from './types';
 import { getPriorityColor, getPriorityIcon, getStatusColor, getPriorityLabel, getStatusLabel } from './helpers';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
-import { tagsService } from '@/lib/firebase/tags-service';
-import { Tag } from '@/types/crm';
 
 export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   project,
@@ -33,16 +29,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   onProjectDeleted,
   onProjectArchived,
   onProjectUpdated,
-  useDraggableProject
+  useDraggableProject,
+  teamMembers = [],
+  tags = []
 }) => {
   const router = useRouter();
   const { currentOrganization } = useOrganization();
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loadingTeam, setLoadingTeam] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [tags, setTags] = useState<Tag[]>([]);
   const quickActionButtonRef = useRef<HTMLButtonElement>(null);
 
   // React Query Mutations
@@ -78,41 +73,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     return new Date(project.dueDate.seconds * 1000) < new Date();
   }, [project.dueDate, project.status]);
 
-  // Load Team Members
-  useEffect(() => {
-    const loadTeamMembers = async () => {
-      if (!currentOrganization?.id) return;
-
-      try {
-        setLoadingTeam(true);
-        const members = await teamMemberService.getByOrganization(currentOrganization.id);
-        const activeMembers = members.filter(m => m.status === 'active');
-        setTeamMembers(activeMembers);
-      } catch (error) {
-        // Silent fail - team members are optional UI enhancement
-      } finally {
-        setLoadingTeam(false);
-      }
-    };
-
-    loadTeamMembers();
-  }, [currentOrganization?.id]);
-
-  // Load Tags
-  useEffect(() => {
-    const loadTags = async () => {
-      if (!currentOrganization?.id) return;
-
-      try {
-        const allTags = await tagsService.getAll(currentOrganization.id, project.userId);
-        setTags(allTags);
-      } catch (error) {
-        // Silent fail - tags are optional UI enhancement
-      }
-    };
-
-    loadTags();
-  }, [currentOrganization?.id, project.userId]);
+  // ✅ PERFORMANCE FIX: Team Members & Tags via Props (statt useEffect)
+  // Verhindert 50x Team Members + 50x Tags Queries (100 Queries → 0 Queries!)
+  // Team Members & Tags werden nun einmal auf Page-Level geladen und via Props durchgereicht
 
   // Handlers with useCallback for performance
   const handleCardClick = useCallback((e: React.MouseEvent) => {
