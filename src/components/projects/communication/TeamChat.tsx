@@ -176,7 +176,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
   }, [loading, messages.length]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !userId || !organizationId || !isTeamMember || sendMessageMutation.isPending) return;
 
     try {
@@ -227,7 +227,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht:', error);
     }
-  };
+  }, [newMessage, userId, organizationId, isTeamMember, sendMessageMutation, projectId, userDisplayName, currentUserPhoto, teamMembers, projectTitle]);
 
 
   // @-Mention Handler
@@ -329,7 +329,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
 
   // Asset Selection Handler
-  const handleAssetSelect = (asset: SelectedAsset) => {
+  const handleAssetSelect = useCallback((asset: SelectedAsset) => {
     let assetText = '';
 
     if (asset.type === 'asset') {
@@ -367,10 +367,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         textarea.focus();
       }, 0);
     }
-  };
+  }, [projectId]);
 
   // Emoji Selection Handler
-  const handleEmojiSelect = (emoji: string) => {
+  const handleEmojiSelect = useCallback((emoji: string) => {
     if (textareaRef.current) {
       const textarea = textareaRef.current;
       const currentValue = textarea.value;
@@ -392,7 +392,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
 
     setShowEmojiPicker(false);
-  };
+  }, []);
 
   // Reaction Handler (React Query Mutation) - Optimiert mit useCallback
   const handleReaction = useCallback(async (messageId: string, emoji: string) => {
