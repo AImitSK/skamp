@@ -76,7 +76,7 @@ import { toastService } from '@/lib/utils/toast';
 import { ProjectProvider } from './context/ProjectContext';
 import { ProjectHeader, ProjectInfoBar } from './components/header';
 import { TabNavigation } from './components/tabs';
-import { LoadingState, ErrorState } from './components/shared';
+import { LoadingState, ErrorState, ErrorBoundary } from './components/shared';
 import {
   OverviewTabContent,
   TasksTabContent,
@@ -89,6 +89,9 @@ import {
 
 export default function ProjectDetailPage() {
   /* eslint-disable react-hooks/rules-of-hooks */
+  // BEGRÜNDUNG: Alle Hooks (useParams, useRouter, useState, useEffect, etc.) müssen VOR
+  // dem bedingten Return (Zeile 189) stehen. Next.js App Router Pattern erfordert dieses
+  // Setup. Die Hooks werden nicht bedingt aufgerufen - sie stehen alle am Anfang der Komponente.
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -126,6 +129,9 @@ export default function ProjectDetailPage() {
 
   // Basis-Daten laden (nur einmal pro Projekt)
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProject, loadTeamMembers, loadTags sind stabile Funktionen, die selbst
+  // von projectId/organizationId abhängen. Sie als Dependencies hinzuzufügen würde einen
+  // infinite loop verursachen. Das Disable ist bewusst und korrekt.
   useEffect(() => {
     if (!currentOrganization?.id) return; // Warte bis Organisation geladen ist
     loadProject();
@@ -135,6 +141,7 @@ export default function ProjectDetailPage() {
 
   // Tasks nur für Overview Tab laden
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadTodayTasks ist eine stabile Funktion. Als Dependency würde infinite loop entstehen.
   useEffect(() => {
     if (activeTab === 'overview' && currentOrganization?.id) {
       loadTodayTasks();
@@ -160,6 +167,7 @@ export default function ProjectDetailPage() {
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab ODER Strategie-Tab aktiviert wird
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProjectFolders und loadStrategyDocuments sind stabile Funktionen. Infinite loop vermeiden.
   useEffect(() => {
     if ((activeTab === 'daten' || activeTab === 'strategie') && project && currentOrganization?.id) {
       loadProjectFolders();
@@ -423,6 +431,8 @@ export default function ProjectDetailPage() {
 
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // BEGRÜNDUNG: loadProject ist eine stabile Funktion. Empty deps array ist korrekt,
+  // da der Callback bei jedem Re-Render die aktuelle loadProject-Referenz verwendet.
   const handleEditSuccess = useCallback((updatedProject: Project) => {
     setProject(updatedProject);
     toastService.success('Projekt erfolgreich aktualisiert');
@@ -637,7 +647,8 @@ export default function ProjectDetailPage() {
       initialProject={project}
       onReload={loadProject}
     >
-      <div>
+      <ErrorBoundary>
+        <div>
         {/* Header-Komponenten */}
         <ProjectHeader
           teamMembers={teamMembers}
@@ -815,7 +826,8 @@ export default function ProjectDetailPage() {
           userDisplayName={user.displayName || 'Unbekannter User'}
         />
       )}
-      </div>
+        </div>
+      </ErrorBoundary>
     </ProjectProvider>
   );
 }

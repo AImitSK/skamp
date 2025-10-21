@@ -11,24 +11,17 @@ import { TeamMember } from '@/types/international';
 import { Tag } from '@/types/crm';
 import { Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
-
-// Mock Firestore Timestamp with proper toDate() method
-const createMockTimestamp = (date: Date) => ({
-  toDate: () => date,
-  seconds: Math.floor(date.getTime() / 1000),
-  nanoseconds: 0,
-});
+import { createMockTimestamp } from '../helpers/mock-data';
 
 const mockProject: Project = {
   id: 'project-123',
+  userId: 'user-123',
   title: 'Integration Test Project',
   description: 'Test Description',
   status: 'active',
   currentStage: 'ideas_planning',
   priority: 'high',
   organizationId: 'org-123',
-  createdBy: 'user-123',
-  updatedBy: 'user-123',
   createdAt: createMockTimestamp(new Date('2025-01-15')) as any,
   updatedAt: createMockTimestamp(new Date()) as any,
   assignedTo: ['user-123'],
@@ -48,21 +41,17 @@ const mockTeamMembers: TeamMember[] = [
     organizationId: 'org-123',
     role: 'member',
     status: 'active',
-    createdAt: createMockTimestamp(new Date()) as any,
-    updatedAt: createMockTimestamp(new Date()) as any,
+    invitedAt: createMockTimestamp(new Date()) as any,
+    invitedBy: 'admin-123',
   },
 ];
 
 const mockTags: Tag[] = [
   {
     id: 'tag-1',
+    userId: 'user-123',
     name: 'Test Tag',
     color: 'blue',
-    organizationId: 'org-123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: 'user-123',
-    updatedBy: 'user-123',
   },
 ];
 
