@@ -1,7 +1,7 @@
 // src/components/projects/communication/CommunicationModal.tsx - Kommunikations-Feed Modal
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   XMarkIcon,
   ChatBubbleLeftRightIcon,
@@ -108,6 +108,63 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     }
   };
 
+  // Performance-Optimierung: Gefilterte Communication Feed Entries
+  const filteredCommunicationEntries = useMemo(() => {
+    if (!communicationFeed?.entries) return [];
+
+    let result = communicationFeed.entries;
+
+    // Filter nach Typ
+    if (filterType !== 'all') {
+      result = result.filter((entry: any) => {
+        // Map filterType zu entry.type
+        const typeMapping: Record<string, string[]> = {
+          'email': ['email-thread'],
+          'call': ['call-log'],
+          'meeting': ['meeting-note'],
+          'note': ['internal-note']
+        };
+        return typeMapping[filterType]?.includes(entry.type);
+      });
+    }
+
+    // Filter nach Suchbegriff
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter((entry: any) => {
+        return (
+          entry.title?.toLowerCase().includes(lowerSearch) ||
+          entry.preview?.toLowerCase().includes(lowerSearch) ||
+          entry.emailData?.participants?.some((p: any) =>
+            p.email?.toLowerCase().includes(lowerSearch) ||
+            p.name?.toLowerCase().includes(lowerSearch)
+          )
+        );
+      });
+    }
+
+    return result;
+  }, [communicationFeed, filterType, searchTerm]);
+
+  // Performance-Optimierung: Gefilterte Team Messages
+  const filteredProjectMessages = useMemo(() => {
+    let result = projectMessages;
+
+    // Filter nach Suchbegriff
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter((message) => {
+        return (
+          message.content.toLowerCase().includes(lowerSearch) ||
+          message.authorName.toLowerCase().includes(lowerSearch) ||
+          message.mentions.some((mention) => mention.toLowerCase().includes(lowerSearch))
+        );
+      });
+    }
+
+    return result;
+  }, [projectMessages, searchTerm]);
+
   // Handle backdrop click
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -156,8 +213,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
         {/* Content Area */}
         <MessageFeed
           activeView={activeView}
-          communicationFeed={communicationFeed}
-          projectMessages={projectMessages}
+          communicationFeed={communicationFeed ? { ...communicationFeed, entries: filteredCommunicationEntries } : null}
+          projectMessages={filteredProjectMessages}
         />
 
         {/* Team-Chat Input (nur sichtbar wenn Team-Tab aktiv) */}
@@ -179,11 +236,11 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
               {activeView === 'external' ? (
-                communicationFeed ? 
-                  `${communicationFeed.entries.length} externe Einträge` : 
+                communicationFeed ?
+                  `${filteredCommunicationEntries.length} von ${communicationFeed.entries.length} externen Einträgen` :
                   'Lade externe Kommunikation...'
               ) : (
-                `${projectMessages.length} Team-Nachrichten`
+                `${filteredProjectMessages.length} von ${projectMessages.length} Team-Nachrichten`
               )}
             </div>
             <div className="flex space-x-3">
