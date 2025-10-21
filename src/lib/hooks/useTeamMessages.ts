@@ -171,7 +171,29 @@ export function useDeleteMessage() {
 
       return response.json();
     },
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['team-messages', variables.projectId] });
+
+      // Snapshot previous value
+      const previousMessages = queryClient.getQueryData(['team-messages', variables.projectId]);
+
+      // Optimistically remove message from cache
+      queryClient.setQueryData(['team-messages', variables.projectId], (old: any) => {
+        if (!old) return old;
+        return old.filter((msg: any) => msg.id !== variables.messageId);
+      });
+
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['team-messages', variables.projectId], context.previousMessages);
+      }
+    },
+    onSettled: (_, __, variables) => {
+      // Always refetch after mutation
       queryClient.invalidateQueries({
         queryKey: ['team-messages', variables.projectId]
       });

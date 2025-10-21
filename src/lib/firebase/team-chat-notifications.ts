@@ -129,11 +129,6 @@ export class TeamChatNotificationsService {
     const mentionPattern = /@([\w\s]+?)(?=\s{2,}|$|[,.!?]|\n)/g;
     const mentions = messageContent.match(mentionPattern);
 
-    console.log('\n🔍 Debug - extractMentionedUserIds:');
-    console.log('Message:', messageContent);
-    console.log('Gefundene Mentions:', mentions);
-    console.log('Verfügbare Team-Mitglieder:', teamMembers.map(m => m.displayName));
-
     if (!mentions) {
       return [];
     }
@@ -141,12 +136,11 @@ export class TeamChatNotificationsService {
     const mentionedUserIds: string[] = [];
 
     mentions.forEach(mention => {
-      const mentionText = mention.substring(1); // Entferne @
-      console.log(`\n🔎 Suche Member für Mention: "${mentionText}"`);
+      const mentionText = mention.substring(1).trim(); // Entferne @ und Whitespace
 
       // Suche nach exaktem Treffer des displayName
       let member = teamMembers.find(m =>
-        m.displayName === mentionText // Exakter Match mit dem, was eingefügt wurde
+        m.displayName.trim() === mentionText // Exakter Match (mit trim)
       );
 
       if (!member) {
@@ -156,27 +150,16 @@ export class TeamChatNotificationsService {
         );
       }
 
-      console.log('Gefundenes Member:', member ? {
-        id: member.id,
-        userId: member.userId,
-        displayName: member.displayName,
-        email: member.email
-      } : 'NICHT GEFUNDEN');
-
       if (member) {
         // Präferiere userId, falls verfügbar
         const userId = member.userId || member.id;
-        console.log(`Verwende User-ID: ${userId} für ${member.displayName}`);
 
         if (userId && !mentionedUserIds.includes(userId)) {
           mentionedUserIds.push(userId);
         }
-      } else {
-        console.warn(`❌ Kein Team-Mitglied gefunden für Mention: "${mentionText}"`);
       }
     });
 
-    console.log('Final mentionedUserIds:', mentionedUserIds);
     return mentionedUserIds;
   }
 
