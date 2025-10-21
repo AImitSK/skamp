@@ -1,26 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import {
-  AtSymbolIcon,
-  ExclamationTriangleIcon,
-  HandThumbUpIcon,
-  HandThumbDownIcon,
-  HandRaisedIcon
-} from '@heroicons/react/24/outline';
-import { Button } from '@/components/ui/button';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Text } from '@/components/ui/text';
-import { Avatar } from '@/components/ui/avatar';
-import { teamChatService, TeamMessage as FirebaseTeamMessage, MessageReaction } from '@/lib/firebase/team-chat-service';
+import { teamChatService } from '@/lib/firebase/team-chat-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
-import { mediaService } from '@/lib/firebase/media-service';
-import { TeamMember } from '@/types/international';
-import { Timestamp } from 'firebase/firestore';
-import { MentionDropdown } from './MentionDropdown';
 import { AssetPickerModal, SelectedAsset } from './AssetPickerModal';
-import { AssetPreview } from './AssetPreview';
 import { MessageInput } from './TeamChat/MessageInput';
+import { MessageList } from './TeamChat/MessageList';
+import { TeamMember } from './TeamChat/types';
 import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
 import { useTeamMessages, useSendMessage, useMessageReaction } from '@/lib/hooks/useTeamMessages';
 
@@ -240,84 +229,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
   };
 
-  const formatTimestamp = (timestamp: Timestamp | Date): string => {
-    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    return date.toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Datum für Tagesseparator formatieren
-  const formatDateSeparator = (timestamp: Timestamp | Date): string => {
-    const date = timestamp instanceof Timestamp ? timestamp.toDate() : timestamp;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (messageDate.getTime() === today.getTime()) {
-      return 'Heute';
-    } else if (messageDate.getTime() === yesterday.getTime()) {
-      return 'Gestern';
-    } else {
-      return date.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      });
-    }
-  };
-
-  // Prüfe ob neuer Tag beginnt
-  const isNewDay = (currentMessage: FirebaseTeamMessage, previousMessage: FirebaseTeamMessage | null): boolean => {
-    if (!previousMessage || !currentMessage.timestamp || !previousMessage.timestamp) return false;
-
-    const currentDate = currentMessage.timestamp instanceof Timestamp
-      ? currentMessage.timestamp.toDate()
-      : currentMessage.timestamp;
-    const previousDate = previousMessage.timestamp instanceof Timestamp
-      ? previousMessage.timestamp.toDate()
-      : previousMessage.timestamp;
-
-    const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-    const previousDay = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate());
-
-    return currentDay.getTime() !== previousDay.getTime();
-  };
-
-  // Prüfe ob "Neue Nachrichten" Separator angezeigt werden soll
-  const shouldShowNewMessagesSeparator = (currentMessage: FirebaseTeamMessage, index: number): boolean => {
-    if (!lastReadTimestamp || !currentMessage.timestamp) return false;
-
-    const currentDate = currentMessage.timestamp instanceof Timestamp
-      ? currentMessage.timestamp.toDate()
-      : currentMessage.timestamp;
-
-    // Ist diese Nachricht nach dem lastReadTimestamp?
-    const isNewMessage = currentDate > lastReadTimestamp;
-
-    if (!isNewMessage) return false;
-
-    // Prüfe ob die vorherige Nachricht älter als lastReadTimestamp ist
-    if (index === 0) return true; // Erste Nachricht und sie ist neu
-
-    const previousMessage = messages[index - 1];
-    if (!previousMessage.timestamp) return true;
-
-    const previousDate = previousMessage.timestamp instanceof Timestamp
-      ? previousMessage.timestamp.toDate()
-      : previousMessage.timestamp;
-
-    return previousDate <= lastReadTimestamp;
-  };
 
   // @-Mention Handler
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -416,216 +327,6 @@ export const TeamChat: React.FC<TeamChatProps> = ({
     }
   }, [newMessage, cursorPosition]);
 
-  // useMemo: Team-Member Lookup Map für bessere Performance
-  const teamMemberMap = useMemo(() => {
-    const map = new Map<string, { name: string; photoUrl?: string }>();
-    teamMembers.forEach(member => {
-      const info = { name: member.displayName, photoUrl: member.photoUrl };
-      if (member.userId) map.set(member.userId, info);
-      if (member.id) map.set(member.id, info);
-      if (member.displayName) map.set(member.displayName, info);
-    });
-    return map;
-  }, [teamMembers]);
-
-  const getAuthorInfo = (authorId: string, authorName?: string): { name: string; photoUrl?: string } => {
-    // Nutze Map für O(1) Lookup statt O(n) find
-    const info = teamMemberMap.get(authorId) ||
-                 (authorName ? teamMemberMap.get(authorName) : null);
-
-    if (info) {
-      return info;
-    }
-
-    // Fallback für unbekannte Mitglieder
-    return {
-      name: authorName || 'Unbekannter User',
-      photoUrl: undefined
-    };
-  };
-
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Emoji-Mapping für Text-Smileys
-  const emojiMap: { [key: string]: string } = {
-    ':)': '😊',
-    ':-)': '😊',
-    ';)': '😉',
-    ';-)': '😉',
-    ':D': '😃',
-    ':-D': '😃',
-    ':d': '😃',
-    ':(': '😢',
-    ':-(': '😢',
-    ':P': '😛',
-    ':-P': '😛',
-    ':p': '😛',
-    ':o': '😮',
-    ':O': '😮',
-    ':-o': '😮',
-    ':-O': '😮',
-    ':|': '😐',
-    ':-|': '😐',
-    ':*': '😘',
-    ':-*': '😘',
-    '<3': '❤️',
-    '</3': '💔',
-    ':s': '😕',
-    ':-s': '😕',
-    ':S': '😕',
-    ':-S': '😕',
-    ':\\': '😕',
-    ':-\\': '😕',
-    ':/': '😕',
-    ':-/': '😕',
-    '>:(': '😠',
-    '>:-(': '😠',
-    ':x': '😵',
-    ':-x': '😵',
-    ':X': '😵',
-    ':-X': '😵'
-  };
-
-  // Funktion zur Ersetzung von Text-Smileys durch Emojis
-  const replaceEmojis = (text: string): string => {
-    let result = text;
-    Object.entries(emojiMap).forEach(([textEmoji, emoji]) => {
-      // Escape spezielle Regex-Zeichen
-      const escapedTextEmoji = textEmoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Verwende Wort-Grenzen für bessere Erkennung
-      const regex = new RegExp(`\\b${escapedTextEmoji}\\b|(?<=\\s|^)${escapedTextEmoji}(?=\\s|$)`, 'g');
-      result = result.replace(regex, emoji);
-    });
-    return result;
-  };
-
-  // Funktion zur Erkennung und Formatierung von Links, Assets + Emojis
-  const formatMessageWithLinksAndEmojis = (content: string, isOwnMessage: boolean): JSX.Element => {
-    const parts = [];
-    let lastIndex = 0;
-
-    // Asset-Links Pattern
-    const assetRegex = /\[([^\]]+)\]\((asset):\/\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\)/g;
-
-    // Standard-Links Pattern
-    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
-
-    // Finde alle Asset-Links
-    let match;
-    while ((match = assetRegex.exec(content)) !== null) {
-      // Text vor dem Asset-Link
-      if (match.index > lastIndex) {
-        const beforeText = content.substring(lastIndex, match.index);
-        if (beforeText) {
-          parts.push({ type: 'text', content: beforeText });
-        }
-      }
-
-      // Asset-Link
-      parts.push({
-        type: 'asset',
-        linkText: match[1],
-        assetType: match[2],
-        projectId: match[3],
-        assetId: match[4]
-      });
-
-      lastIndex = assetRegex.lastIndex;
-    }
-
-    // Text nach dem letzten Asset-Link
-    if (lastIndex < content.length) {
-      const remainingText = content.substring(lastIndex);
-      if (remainingText) {
-        parts.push({ type: 'text', content: remainingText });
-      }
-    }
-
-    // Wenn keine Asset-Links gefunden, behandle als normalen Text
-    if (parts.length === 0) {
-      parts.push({ type: 'text', content });
-    }
-
-    return (
-      <>
-        {parts.map((part, index) => {
-          if (part.type === 'asset' && part.assetId && part.assetType && part.linkText && part.projectId) {
-            return (
-              <div key={index} className="my-2">
-                <AssetPreview
-                  assetId={part.assetId}
-                  assetType={part.assetType as 'asset' | 'folder'}
-                  linkText={part.linkText}
-                  projectId={part.projectId}
-                  organizationId={organizationId}
-                  isOwnMessage={isOwnMessage}
-                  onAssetClick={() => handleAssetLinkClick(part.assetType!, part.projectId!, part.assetId!)}
-                />
-              </div>
-            );
-          }
-
-          // Text-Teil: Prüfe auf Standard-URLs und verarbeite Emojis
-          let textContent = part.content || '';
-
-          // URL-Links verarbeiten
-          const urlMatches = textContent.match(urlRegex);
-          if (urlMatches) {
-            urlMatches.forEach(urlMatch => {
-              let url = urlMatch;
-              if (!urlMatch.startsWith('http://') && !urlMatch.startsWith('https://')) {
-                url = 'https://' + urlMatch;
-              }
-
-              const linkElement = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline ${
-                isOwnMessage ? 'text-primary-600 hover:text-primary-700' : 'text-blue-600 hover:text-blue-800'
-              }">${urlMatch}</a>`;
-
-              textContent = textContent!.replace(urlMatch, linkElement);
-            });
-          }
-
-          // Emojis ersetzen
-          textContent = replaceEmojis(textContent!);
-
-          return (
-            <span
-              key={index}
-              dangerouslySetInnerHTML={{ __html: textContent }}
-            />
-          );
-        })}
-      </>
-    );
-  };
-
-  // Handler für Asset-Link-Clicks
-  const handleAssetLinkClick = async (type: string, projectIdFromLink: string, assetId: string) => {
-    // Sicherheitsprüfung: nur Assets aus dem aktuellen Projekt
-    if (projectIdFromLink !== projectId) {
-      console.warn('Asset gehört nicht zu diesem Projekt');
-      return;
-    }
-
-    try {
-      if (type === 'asset') {
-        // Asset direkt öffnen/downloaden
-        const asset = await mediaService.getMediaAssetById(assetId);
-        if (asset && asset.downloadUrl) {
-          window.open(asset.downloadUrl, '_blank');
-        }
-      }
-    } catch (error) {
-      console.error('Fehler beim Öffnen des Assets:', error);
-    }
-  };
 
   // Asset Selection Handler
   const handleAssetSelect = (asset: SelectedAsset) => {
@@ -747,173 +448,22 @@ export const TeamChat: React.FC<TeamChatProps> = ({
       )}
 
       {/* Nachrichten-Bereich */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6 pb-4 space-y-4">
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <Text className="text-gray-500 mt-2">Lade Nachrichten...</Text>
-          </div>
-        ) : messages.length > 0 ? (
-          <>
-            {messages.map((message, index) => {
-              const authorInfo = message.authorPhotoUrl
-                ? { name: message.authorName, photoUrl: message.authorPhotoUrl }
-                : getAuthorInfo(message.authorId, message.authorName);
-
-              const isOwnMessage = message.authorId === userId;
-              const previousMessage = index > 0 ? messages[index - 1] : null;
-              const isFirstInGroup = !previousMessage || previousMessage.authorId !== message.authorId;
-              const showDateSeparator = index === 0 || isNewDay(message, previousMessage);
-              const showNewMessagesSeparator = shouldShowNewMessagesSeparator(message, index);
-
-              return (
-                <React.Fragment key={message.id}>
-                  {/* Datums-Separator */}
-                  {showDateSeparator && message.timestamp && (
-                    <div className="flex justify-center my-4">
-                      <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                        {formatDateSeparator(message.timestamp)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* "Neue Nachrichten" Separator */}
-                  {showNewMessagesSeparator && (
-                    <div className="flex items-center my-4">
-                      <div className="flex-1 border-t border-green-300"></div>
-                      <div className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-medium mx-3">
-                        Neue Nachrichten
-                      </div>
-                      <div className="flex-1 border-t border-green-300"></div>
-                    </div>
-                  )}
-
-                  <div
-                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-4' : 'mt-1'}`}
-                  >
-                  {!isOwnMessage && (
-                    <Avatar
-                      className="size-8 flex-shrink-0 mr-3 self-end"
-                      src={authorInfo.photoUrl}
-                      initials={getInitials(authorInfo.name || message.authorName)}
-                      title={authorInfo.name || message.authorName}
-                    />
-                  )}
-
-                  <div className={`relative min-w-[200px] max-w-xs lg:max-w-md xl:max-w-lg ${
-                    isOwnMessage
-                      ? 'bg-primary-50 text-gray-900 rounded-l-lg rounded-tr-lg'
-                      : 'bg-gray-100 text-gray-900 rounded-r-lg rounded-tl-lg'
-                  } px-4 py-2 shadow-sm`}>
-                    {/* Nachrichteninhalt zuerst */}
-                    <div className={`text-base break-words whitespace-pre-wrap leading-relaxed mb-2 ${
-                      isOwnMessage ? 'text-gray-900' : 'text-gray-800'
-                    }`}>
-                      {formatMessageWithLinksAndEmojis(message.content, isOwnMessage)}
-                    </div>
-
-                    {/* Mentions */}
-                    {message.mentions && message.mentions.length > 0 && (
-                      <div className="flex items-center mt-2 space-x-1">
-                        <AtSymbolIcon className={`h-3 w-3 ${
-                          isOwnMessage ? 'text-gray-600' : 'text-gray-400'
-                        }`} />
-                        <span className={`text-xs ${
-                          isOwnMessage ? 'text-gray-600' : 'text-gray-500'
-                        }`}>
-                          {message.mentions.join(', ')}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Bearbeitet-Hinweis */}
-                    {message.edited && (
-                      <div className={`text-xs mt-1 ${
-                        isOwnMessage ? 'text-gray-600' : 'text-gray-400'
-                      }`}>
-                        (bearbeitet)
-                      </div>
-                    )}
-
-
-                    {/* Untere Zeile: Reactions und Uhrzeit */}
-                    <div className="flex items-center justify-between">
-                      {/* Reactions links */}
-                      <div className="flex items-center gap-1">
-                      {[
-                        { emoji: '👍', icon: HandThumbUpIcon, label: 'Gefällt mir' },
-                        { emoji: '👎', icon: HandThumbDownIcon, label: 'Gefällt mir nicht' },
-                        { emoji: '🤚', icon: HandRaisedIcon, label: 'Entscheide ihr / Enthaltung' }
-                      ].map(({ emoji, icon: IconComponent, label }) => {
-                        // Finde die Reaction für dieses Emoji
-                        const reaction = message.reactions?.find(r => r.emoji === emoji);
-                        const hasUserReacted = reaction ? reaction.userIds.includes(userId) : false;
-                        const count = reaction ? reaction.count : 0;
-
-                        return (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReaction(message.id!, emoji)}
-                            onMouseEnter={() => count > 0 ? setShowReactionTooltip(`${message.id}-${emoji}`) : null}
-                            onMouseLeave={() => setShowReactionTooltip(null)}
-                            className={`relative flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
-                              hasUserReacted
-                                ? isOwnMessage
-                                  ? 'bg-primary-100 text-gray-800'             // Geklickt: Wie Namens-Badge (hellblau)
-                                  : 'bg-gray-200 text-gray-700'             // Geklickt: Wie Namens-Badge (grau)
-                                : isOwnMessage
-                                  ? 'bg-primary-50 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Hellblau
-                                  : 'bg-gray-100 bg-opacity-80 text-gray-700'  // Ungeklickt: 80% vom Blasen-Grau
-                            }`}
-                            title={label}
-                          >
-                            <IconComponent className="h-4 w-4" />
-                            {count > 0 && <span className="text-xs">{count}</span>}
-
-                            {/* Tooltip nur bei Count > 0 */}
-                            {showReactionTooltip === `${message.id}-${emoji}` && count > 0 && (
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap z-10">
-                                {reaction?.userNames.join(', ')}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                      </div>
-
-                      {/* Uhrzeit rechts */}
-                      <span className={`text-xs ${
-                        isOwnMessage ? 'text-gray-600' : 'text-gray-500'
-                      } ml-2 flex-shrink-0`}>
-                        {message.timestamp ? formatTimestamp(message.timestamp) : 'Unbekannt'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {isOwnMessage && (
-                    <Avatar
-                      className="size-8 flex-shrink-0 ml-3 self-end"
-                      src={currentUserPhoto}
-                      initials={getInitials(userDisplayName)}
-                      title={userDisplayName}
-                    />
-                  )}
-                </div>
-                </React.Fragment>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="bg-gray-50 rounded-lg p-8 mx-4">
-              <Text className="text-gray-500 text-center">
-                Noch keine Nachrichten. {isTeamMember ? 'Starten Sie die Unterhaltung!' : 'Nur Team-Mitglieder können Nachrichten senden.'}
-              </Text>
-            </div>
-          </div>
-        )}
-      </div>
+      <MessageList
+        messages={messages}
+        loading={loading}
+        userId={userId}
+        organizationId={organizationId}
+        projectId={projectId}
+        isTeamMember={isTeamMember}
+        currentUserPhoto={currentUserPhoto}
+        userDisplayName={userDisplayName}
+        lastReadTimestamp={lastReadTimestamp}
+        messagesEndRef={messagesEndRef}
+        teamMembers={teamMembers}
+        showReactionTooltip={showReactionTooltip}
+        onReaction={handleReaction}
+        onShowTooltip={setShowReactionTooltip}
+      />
 
       {/* Eingabebereich - nur für Team-Mitglieder */}
       {isTeamMember && (
