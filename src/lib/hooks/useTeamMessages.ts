@@ -79,6 +79,7 @@ export function useSendMessage() {
 
 /**
  * Hook für Message Reactions (Toggle)
+ * Mit Optimistic Updates für sofortige UI-Reaktion
  */
 export function useMessageReaction() {
   const queryClient = useQueryClient();
@@ -99,11 +100,68 @@ export function useMessageReaction() {
         data.userName
       );
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['team-messages', variables.projectId]
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['team-messages', variables.projectId] });
+
+      // Snapshot previous value
+      const previousMessages = queryClient.getQueryData(['team-messages', variables.projectId]);
+
+      // Optimistically update reactions
+      queryClient.setQueryData(['team-messages', variables.projectId], (old: any) => {
+        if (!old) return old;
+
+        return old.map((msg: any) => {
+          if (msg.id !== variables.messageId) return msg;
+
+          const currentReactions = msg.reactions || [];
+
+          // Remove all user's reactions first
+          let updatedReactions = currentReactions.map((reaction: any) => ({
+            ...reaction,
+            userIds: reaction.userIds.filter((id: string) => id !== variables.userId),
+            userNames: reaction.userNames.filter((_: string, index: number) =>
+              reaction.userIds[index] !== variables.userId
+            ),
+            count: reaction.userIds.filter((id: string) => id !== variables.userId).length
+          })).filter((reaction: any) => reaction.count > 0);
+
+          // Check if user already had this reaction
+          const hadThisReaction = currentReactions.some((r: any) =>
+            r.emoji === variables.emoji && r.userIds.includes(variables.userId)
+          );
+
+          if (!hadThisReaction) {
+            // Add new reaction
+            const existingReactionIndex = updatedReactions.findIndex((r: any) => r.emoji === variables.emoji);
+
+            if (existingReactionIndex >= 0) {
+              updatedReactions[existingReactionIndex].userIds.push(variables.userId);
+              updatedReactions[existingReactionIndex].userNames.push(variables.userName);
+              updatedReactions[existingReactionIndex].count++;
+            } else {
+              updatedReactions.push({
+                emoji: variables.emoji,
+                userIds: [variables.userId],
+                userNames: [variables.userName],
+                count: 1
+              });
+            }
+          }
+
+          return { ...msg, reactions: updatedReactions };
+        });
       });
+
+      return { previousMessages };
     },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['team-messages', variables.projectId], context.previousMessages);
+      }
+    },
+    // onSettled entfernt - kein Refetch nötig, Firebase Real-time übernimmt
   });
 }
 

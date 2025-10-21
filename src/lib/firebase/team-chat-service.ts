@@ -265,8 +265,6 @@ export class TeamChatService {
       await updateDoc(messageRef, {
         reactions: updatedReactions
       });
-
-      console.log(`Reaction ${emoji} für Nachricht ${messageId} aktualisiert`);
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Reaction:', error);
       throw error;
