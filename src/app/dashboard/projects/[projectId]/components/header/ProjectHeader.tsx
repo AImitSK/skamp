@@ -138,7 +138,7 @@ const formatProjectDate = (date: any): string => {
  * - Bearbeiten-Button
  * - Mehr-Optionen Dropdown (Team verwalten, Löschen)
  */
-export function ProjectHeader({
+export const ProjectHeader = React.memo(function ProjectHeader({
   teamMembers,
   onEditClick,
   onTeamManageClick,
@@ -251,4 +251,4 @@ export function ProjectHeader({
       </div>
     </div>
   );
-}
+});

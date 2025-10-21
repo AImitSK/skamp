@@ -51,7 +51,7 @@ const getStageLabel = (stage: string) => {
  * - Deadline
  * - Tags
  */
-export function ProjectInfoBar({ projectTags }: ProjectInfoBarProps) {
+export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }: ProjectInfoBarProps) {
   const router = useRouter();
   const { project } = useProject();
 
@@ -137,4 +137,4 @@ export function ProjectInfoBar({ projectTags }: ProjectInfoBarProps) {
       </div>
     </>
   );
-}
+});

@@ -46,7 +46,7 @@ interface TabNavigationProps {
  *
  * Zeigt 7 Tab-Buttons mit Icons und Active-State Highlighting
  */
-export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
+export const TabNavigation = React.memo(function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className="border-b border-gray-200">
       <div className="px-6 py-4">
@@ -75,4 +75,4 @@ export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
       </div>
     </div>
   );
-}
+});

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -162,6 +162,24 @@ export default function ProjectDetailPage() {
       loadStrategyDocuments();
     }
   }, [activeTab, project, currentOrganization?.id]);
+
+  // Computed Values mit useMemo
+  const assignedTeamMembers = useMemo(() => {
+    if (!project?.assignedTo || !teamMembers.length) return [];
+
+    return project.assignedTo
+      .map(userId => teamMembers.find(m => m.userId === userId || m.id === userId))
+      .filter(Boolean)
+      .slice(0, 5);
+  }, [project?.assignedTo, teamMembers]);
+
+  const todayTasksCount = useMemo(() => {
+    return todayTasks.length;
+  }, [todayTasks.length]);
+
+  const hasLinkedCampaigns = useMemo(() => {
+    return linkedCampaigns.length > 0;
+  }, [linkedCampaigns.length]);
 
   // Bedingte Rückgabe nach allen Hooks
   if (!projectId) {
@@ -400,24 +418,24 @@ export default function ProjectDetailPage() {
   };
 
 
-  const handleEditSuccess = (updatedProject: Project) => {
+  const handleEditSuccess = useCallback((updatedProject: Project) => {
     setProject(updatedProject);
     toastService.success('Projekt erfolgreich aktualisiert');
     // Reload for consistency
     setTimeout(() => {
       loadProject();
     }, 500);
-  };
+  }, []);
 
-  const handleOpenPDF = () => {
+  const handleOpenPDF = useCallback(() => {
     if (currentPdfVersion?.downloadUrl) {
       window.open(currentPdfVersion.downloadUrl, '_blank');
     } else {
       toastService.warning('Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.');
     }
-  };
+  }, [currentPdfVersion]);
 
-  const handleViewFeedback = async () => {
+  const handleViewFeedback = useCallback(async () => {
     if (!linkedCampaigns.length || !currentOrganization?.id) return;
 
     try {
@@ -442,7 +460,7 @@ export default function ProjectDetailPage() {
       console.error('Fehler beim Laden der Feedback-Historie:', error);
       toastService.error('Fehler beim Laden der Feedback-Historie.');
     }
-  };
+  }, [linkedCampaigns, currentOrganization]);
 
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
@@ -486,12 +504,12 @@ export default function ProjectDetailPage() {
   };
 
 
-  const handleDeleteProject = () => {
+  const handleDeleteProject = useCallback(() => {
     if (!project?.id || !currentOrganization?.id) return;
     setShowDeleteDialog(true);
-  };
+  }, [project?.id, currentOrganization?.id]);
 
-  const confirmDeleteProject = async () => {
+  const confirmDeleteProject = useCallback(async () => {
     if (!project?.id || !currentOrganization?.id) return;
 
     try {
@@ -504,14 +522,14 @@ export default function ProjectDetailPage() {
       setShowDeleteDialog(false);
       toastService.error(error.message || 'Fehler beim Löschen des Projekts');
     }
-  };
+  }, [project?.id, currentOrganization?.id, router]);
 
-  const handleCreateDocument = async (templateType: string, title: string) => {
+  const handleCreateDocument = useCallback(async (templateType: string, title: string) => {
     if (!currentOrganization?.id || !user?.uid || !project?.id) return;
 
     try {
       setDocumentsLoading(true);
-      
+
       // Template content basierend auf Typ
       let content = '';
       switch (templateType) {
@@ -520,16 +538,16 @@ export default function ProjectDetailPage() {
             <h1>Projekt-Briefing</h1>
             <h2>Ausgangssituation</h2>
             <p>[Beschreibung der aktuellen Situation]</p>
-            
+
             <h2>Ziele</h2>
             <ul>
               <li>Hauptziel</li>
               <li>Nebenziele</li>
             </ul>
-            
+
             <h2>Zielgruppen</h2>
             <p>[Primäre und sekundäre Zielgruppen]</p>
-            
+
             <h2>Kernbotschaften</h2>
             <p>[Hauptbotschaften]</p>
           `;
@@ -539,14 +557,14 @@ export default function ProjectDetailPage() {
             <h1>Kommunikationsstrategie</h1>
             <h2>Strategische Ausrichtung</h2>
             <p>[Grundlegende Strategie]</p>
-            
+
             <h2>Kanäle & Medien</h2>
             <ul>
               <li>Print-Medien</li>
               <li>Online-Medien</li>
               <li>Social Media</li>
             </ul>
-            
+
             <h2>Timeline & Meilensteine</h2>
             <p>[Zeitplan]</p>
           `;
@@ -556,10 +574,10 @@ export default function ProjectDetailPage() {
             <h1>Marktanalyse</h1>
             <h2>Marktumfeld</h2>
             <p>[Marktanalyse]</p>
-            
+
             <h2>Wettbewerber</h2>
             <p>[Competitor-Analyse]</p>
-            
+
             <h2>Chancen & Risiken</h2>
             <ul>
               <li>Chancen</li>
@@ -575,7 +593,7 @@ export default function ProjectDetailPage() {
       const documentId = await strategyDocumentService.create({
         projectId: project.id,
         title,
-        type: templateType.includes('briefing') ? 'briefing' as const : 
+        type: templateType.includes('briefing') ? 'briefing' as const :
               templateType.includes('strategy') ? 'strategy' as const : 'analysis' as const,
         content,
         status: 'draft' as const,
@@ -597,7 +615,7 @@ export default function ProjectDetailPage() {
     } finally {
       setDocumentsLoading(false);
     }
-  };
+  }, [currentOrganization?.id, user?.uid, project?.id, router]);
 
   if (loading) {
     return <LoadingState />;

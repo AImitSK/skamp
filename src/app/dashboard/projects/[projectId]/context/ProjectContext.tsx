@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { Project } from '@/types/project';
 
 /**
@@ -65,13 +65,13 @@ export function ProjectProvider({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const reloadProject = async () => {
+  const reloadProject = useCallback(async () => {
     if (onReload) {
       await onReload();
     }
-  };
+  }, [onReload]);
 
-  const value: ProjectContextValue = {
+  const value: ProjectContextValue = useMemo(() => ({
     project,
     setProject,
     projectId,
@@ -83,7 +83,7 @@ export function ProjectProvider({
     error,
     setError,
     reloadProject,
-  };
+  }), [project, projectId, organizationId, activeTab, loading, error, reloadProject]);
 
   return (
     <ProjectContext.Provider value={value}>
