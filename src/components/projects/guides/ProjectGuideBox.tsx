@@ -21,6 +21,7 @@ import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/sol
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
+import { useProject } from '@/app/dashboard/projects/[projectId]/context/ProjectContext';
 
 interface GuideStep {
   id: string;
@@ -40,9 +41,7 @@ interface GuidePhase {
 }
 
 interface ProjectGuideBoxProps {
-  currentPhase: string;
   completedSteps?: string[];
-  onNavigate: (tab: string) => void;
   onStepToggle?: (stepId: string) => void;
   className?: string;
 }
@@ -177,12 +176,13 @@ const GUIDE_PHASES: GuidePhase[] = [
 ];
 
 export default function ProjectGuideBox({
-  currentPhase,
   completedSteps = [],
-  onNavigate,
   onStepToggle,
   className = ''
 }: ProjectGuideBoxProps) {
+  // Context verwenden statt Props
+  const { project, setActiveTab } = useProject();
+  const currentPhase = project?.currentStage || 'ideas_planning';
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [progress, setProgress] = useState(0);
 
@@ -214,7 +214,7 @@ export default function ProjectGuideBox({
 
   const handleStepClick = (step: GuideStep) => {
     if (step.tab) {
-      onNavigate(step.tab);
+      setActiveTab(step.tab as any);
     } else if (step.action === 'chat') {
       // Trigger Chat öffnen
       const event = new CustomEvent('openProjectChat');

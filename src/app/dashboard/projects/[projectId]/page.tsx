@@ -73,6 +73,7 @@ import ProjectDistributionLists from '@/components/projects/distribution/Project
 import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
 import Link from 'next/link';
 import { toastService } from '@/lib/utils/toast';
+import { ProjectProvider } from './context/ProjectContext';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -687,8 +688,14 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div>
-      {/* Kompakter Header mit allen Projektinfos */}
+    <ProjectProvider
+      projectId={projectId}
+      organizationId={currentOrganization?.id || ''}
+      initialProject={project}
+      onReload={loadProject}
+    >
+      <div>
+        {/* Kompakter Header mit allen Projektinfos */}
       <div className="mb-6">
         {/* Titel-Zeile mit Zurück-Button */}
         <div className="flex items-start justify-between">
@@ -989,12 +996,7 @@ export default function ProjectDetailPage() {
                 </div>
                 {/* Pipeline-Fortschritt Dashboard hier */}
                 {project && currentOrganization && (
-                  <PipelineProgressDashboard
-                    projectId={project.id || ''}
-                    organizationId={currentOrganization.id}
-                    currentStage={project.currentStage}
-                    onNavigateToTasks={() => setActiveTab('tasks')}
-                  />
+                  <PipelineProgressDashboard />
                 )}
               </div>
 
@@ -1104,9 +1106,7 @@ export default function ProjectDetailPage() {
               {/* Projekt-Leitfaden Guide Box - volle Breite */}
               {project && (
                 <ProjectGuideBox
-                  currentPhase={project.currentStage}
                   completedSteps={completedGuideSteps}
-                  onNavigate={(tab) => setActiveTab(tab as any)}
                   onStepToggle={async (stepId) => {
                     const newSteps = completedGuideSteps.includes(stepId)
                       ? completedGuideSteps.filter(id => id !== stepId)
@@ -1307,13 +1307,11 @@ export default function ProjectDetailPage() {
       {/* Floating Chat - nur anzeigen wenn Projekt geladen und User eingeloggt */}
       {project && currentOrganization && user && (
         <FloatingChat
-          projectId={project.id!}
-          projectTitle={project.title}
-          organizationId={currentOrganization.id}
           userId={user.uid}
           userDisplayName={user.displayName || 'Unbekannter User'}
         />
       )}
-    </div>
+      </div>
+    </ProjectProvider>
   );
 }

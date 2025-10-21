@@ -18,22 +18,20 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useFloatingChatState } from '@/lib/hooks/useFloatingChatState';
+import { useProject } from '@/app/dashboard/projects/[projectId]/context/ProjectContext';
 
 interface FloatingChatProps {
-  projectId: string;
-  projectTitle: string;
-  organizationId: string;
   userId: string;
   userDisplayName: string;
 }
 
 export const FloatingChat: React.FC<FloatingChatProps> = ({
-  projectId,
-  projectTitle,
-  organizationId,
   userId,
   userDisplayName
 }) => {
+  // Context verwenden statt Props
+  const { project, projectId, organizationId } = useProject();
+  const projectTitle = project?.title || 'Unbekanntes Projekt';
   // Chat-Zustand mit Custom Hook (LocalStorage-Logik ausgelagert)
   const { isOpen, setIsOpen } = useFloatingChatState(projectId);
 
@@ -328,7 +326,7 @@ export const FloatingChat: React.FC<FloatingChatProps> = ({
           <Button plain onClick={() => setShowClearChatDialog(false)}>
             Abbrechen
           </Button>
-          <Button color="red" onClick={confirmClearChat}>
+          <Button onClick={confirmClearChat} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
             Chat-Verlauf löschen
           </Button>
         </DialogActions>
