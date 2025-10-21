@@ -72,6 +72,7 @@ import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
 import ProjectDistributionLists from '@/components/projects/distribution/ProjectDistributionLists';
 import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
 import Link from 'next/link';
+import { toastService } from '@/lib/utils/toast';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -108,12 +109,6 @@ export default function ProjectDetailPage() {
 
   // Dialog States
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
-  const [showFeedbackErrorDialog, setShowFeedbackErrorDialog] = useState(false);
-  const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
-  const [showDocumentErrorDialog, setShowDocumentErrorDialog] = useState(false);
-  const [showDeleteErrorDialog, setShowDeleteErrorDialog] = useState(false);
-  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   // Basis-Daten laden (nur einmal pro Projekt)
   useEffect(() => {
@@ -395,6 +390,7 @@ export default function ProjectDetailPage() {
 
   const handleEditSuccess = (updatedProject: Project) => {
     setProject(updatedProject);
+    toastService.success('Projekt erfolgreich aktualisiert');
     // Reload for consistency
     setTimeout(() => {
       loadProject();
@@ -405,7 +401,7 @@ export default function ProjectDetailPage() {
     if (currentPdfVersion?.downloadUrl) {
       window.open(currentPdfVersion.downloadUrl, '_blank');
     } else {
-      setShowPdfErrorDialog(true);
+      toastService.warning('Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.');
     }
   };
 
@@ -425,17 +421,14 @@ export default function ProjectDetailPage() {
           setSelectedApproval(fullApproval);
           setShowFeedbackModal(true);
         } else {
-          setFeedbackErrorMessage('Keine Freigabe-Daten für diese Kampagne vorhanden.');
-          setShowFeedbackErrorDialog(true);
+          toastService.warning('Keine Freigabe-Daten für diese Kampagne vorhanden.');
         }
       } else {
-        setFeedbackErrorMessage('Keine Freigabe-Daten für diese Kampagne vorhanden.');
-        setShowFeedbackErrorDialog(true);
+        toastService.warning('Keine Freigabe-Daten für diese Kampagne vorhanden.');
       }
     } catch (error) {
       console.error('Fehler beim Laden der Feedback-Historie:', error);
-      setFeedbackErrorMessage('Fehler beim Laden der Feedback-Historie.');
-      setShowFeedbackErrorDialog(true);
+      toastService.error('Fehler beim Laden der Feedback-Historie.');
     }
   };
 
@@ -564,12 +557,12 @@ export default function ProjectDetailPage() {
     try {
       await projectService.delete(project.id, { organizationId: currentOrganization.id });
       setShowDeleteDialog(false);
+      toastService.success('Projekt erfolgreich gelöscht');
       router.push('/dashboard/projects');
     } catch (error: any) {
       console.error('Fehler beim Löschen:', error);
-      setDeleteErrorMessage(error.message || 'Unbekannter Fehler beim Löschen des Projekts');
       setShowDeleteDialog(false);
-      setShowDeleteErrorDialog(true);
+      toastService.error(error.message || 'Fehler beim Löschen des Projekts');
     }
   };
 
@@ -656,10 +649,11 @@ export default function ProjectDetailPage() {
 
       // Liste aktualisieren und zur Editor-Seite navigieren
       await loadStrategyDocuments();
+      toastService.success('Dokument erfolgreich erstellt');
       router.push(`/dashboard/strategy-documents/${documentId}`);
     } catch (error) {
       console.error('Fehler beim Erstellen des Strategiedokuments:', error);
-      setShowDocumentErrorDialog(true);
+      toastService.error('Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut.');
     } finally {
       setDocumentsLoading(false);
     }
@@ -1292,92 +1286,6 @@ export default function ProjectDetailPage() {
           </Button>
           <Button onClick={confirmDeleteProject} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
             Projekt löschen
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* PDF Error Dialog */}
-      <Dialog open={showPdfErrorDialog} onClose={() => setShowPdfErrorDialog(false)}>
-        <DialogTitle>PDF nicht verfügbar</DialogTitle>
-        <DialogBody>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <InformationCircleIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <Text className="text-gray-900">
-                Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.
-              </Text>
-            </div>
-          </div>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowPdfErrorDialog(false)}>
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Feedback Error Dialog */}
-      <Dialog open={showFeedbackErrorDialog} onClose={() => setShowFeedbackErrorDialog(false)}>
-        <DialogTitle>Feedback nicht verfügbar</DialogTitle>
-        <DialogBody>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <InformationCircleIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <Text className="text-gray-900">{feedbackErrorMessage}</Text>
-            </div>
-          </div>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowFeedbackErrorDialog(false)}>
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Document Error Dialog */}
-      <Dialog open={showDocumentErrorDialog} onClose={() => setShowDocumentErrorDialog(false)}>
-        <DialogTitle>Dokumenterstellung fehlgeschlagen</DialogTitle>
-        <DialogBody>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <Text className="text-gray-900">
-                Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut.
-              </Text>
-            </div>
-          </div>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowDocumentErrorDialog(false)}>
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Error Dialog */}
-      <Dialog open={showDeleteErrorDialog} onClose={() => setShowDeleteErrorDialog(false)}>
-        <DialogTitle>Löschung fehlgeschlagen</DialogTitle>
-        <DialogBody>
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <Text className="text-gray-900">
-                Fehler beim Löschen des Projekts: {deleteErrorMessage}
-              </Text>
-            </div>
-          </div>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteErrorDialog(false)}>
-            OK
           </Button>
         </DialogActions>
       </Dialog>
