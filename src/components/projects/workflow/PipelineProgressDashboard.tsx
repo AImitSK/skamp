@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { PipelineStage } from '@/types/project';
 import { taskService } from '@/lib/firebase/task-service';
 import { ProjectTask } from '@/types/tasks';
+import { toastService } from '@/lib/utils/toast';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -19,7 +20,6 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
   const currentStage = project?.currentStage || 'creation';
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('month');
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState({
@@ -69,7 +69,7 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
           lastUpdated: new Date()
         });
       } catch (error) {
-        console.error('Fehler beim Laden der Tasks:', error);
+        toastService.error('Fehler beim Laden der Tasks');
       } finally {
         setLoading(false);
       }
