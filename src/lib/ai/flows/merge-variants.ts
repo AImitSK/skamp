@@ -109,13 +109,21 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
       console.log('✅ AI-Merge erfolgreich!');
       console.log('📋 Gemergter Datensatz:', {
         name: result.output.displayName,
-        emails: result.output.emails.length,
+        emails: result.output.emails?.length || 0,
         phones: result.output.phones?.length || 0,
         beats: result.output.beats?.length || 0,
         publications: result.output.publications?.length || 0
       });
 
-      // ✅ WICHTIG: Fallback für Publications (falls KI keine zurückgibt)
+      // ✅ WICHTIG: Fallbacks für fehlende Required-Felder (falls KI Schema nicht perfekt befolgt)
+
+      // Emails ist REQUIRED im Schema
+      if (!result.output.emails || result.output.emails.length === 0) {
+        console.log('⚠️  KI gab keine Emails zurück → Nehme von erster Variante');
+        result.output.emails = variants[0].contactData.emails;
+      }
+
+      // Publications (optional, aber wichtig)
       if (!result.output.publications || result.output.publications.length === 0) {
         const allPublications = new Set<string>();
         for (const variant of variants) {
@@ -124,7 +132,9 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
           }
         }
         result.output.publications = Array.from(allPublications);
-        console.log(`⚠️  KI gab keine Publications zurück → ${result.output.publications.length} aus Varianten gesammelt`);
+        if (result.output.publications.length > 0) {
+          console.log(`⚠️  KI gab keine Publications zurück → ${result.output.publications.length} aus Varianten gesammelt`);
+        }
       }
 
       return result.output;
