@@ -15,8 +15,8 @@ export const ai = genkit({
   plugins: [googleAI()]
 });
 
-// Direkt Model-String verwenden (stabiler als Exports)
-export const gemini15FlashModel = 'googleai/gemini-1.5-flash-latest';
+// Direkt Model-String verwenden - OHNE -latest Suffix!
+export const gemini15FlashModel = 'googleai/gemini-1.5-flash';
 
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';
