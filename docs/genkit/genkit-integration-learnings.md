@@ -363,6 +363,14 @@ const nextConfig = {
 ```bash
 # Terminal: Dev-Server mit Genkit starten
 npx genkit start -- npm run dev
+
+# Local Starten mit:
+
+$env:GENKIT_ENV = "dev"; npm run dev
+npx genkit start
+
+
+
 ```
 
 - **Next.js:** http://localhost:3000
