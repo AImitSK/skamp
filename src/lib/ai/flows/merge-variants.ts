@@ -1,7 +1,6 @@
 // src/lib/ai/flows/merge-variants.ts
 // Genkit Flow für intelligentes Mergen von Kontakt-Varianten
-
-import 'server-only'; // ✅ Nur auf dem Server ausführen
+// HINWEIS: Nur via dynamischem Import in Server-Context verwenden!
 
 import { ai, gemini20Flash } from '../genkit-config';
 import {

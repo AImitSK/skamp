@@ -1,7 +1,7 @@
 // src/lib/ai/genkit-config.ts
 // Zentrale Genkit-Konfiguration für alle AI-Flows
-
-import 'server-only'; // ✅ Sicherstellen dass dieser Code nur auf dem Server läuft
+// HINWEIS: Nur via dynamischem Import in Server-Context verwenden!
+// Webpack Config externalisiert diese Module für Client-Bundle
 
 import { genkit } from 'genkit';
 import { googleAI, gemini20Flash } from '@genkit-ai/googleai';
