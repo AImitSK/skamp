@@ -15,8 +15,9 @@ export const ai = genkit({
   plugins: [googleAI()]
 });
 
-// Direkt Model-String verwenden - OHNE -latest Suffix!
-export const gemini15FlashModel = 'googleai/gemini-1.5-flash';
+// Gemini 2.5 Flash (stabil, 1.5 ist retired!)
+// WICHTIG: In JS/TS OHNE 'googleai/' Präfix!
+export const gemini25FlashModel = googleAI.model('gemini-2.5-flash');
 
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';
