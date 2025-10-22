@@ -9,8 +9,8 @@ import { z } from 'zod';
 export const EmailSchema = z.object({
   email: z.string().email(),
   type: z.enum(['business', 'private', 'other']),
-  isPrimary: z.boolean().optional(),
-  isVerified: z.boolean().optional()
+  isPrimary: z.boolean().nullish(),
+  isVerified: z.boolean().nullish()
 });
 
 /**
@@ -19,7 +19,7 @@ export const EmailSchema = z.object({
 export const PhoneSchema = z.object({
   number: z.string(),
   type: z.enum(['business', 'mobile', 'private', 'other']),
-  isPrimary: z.boolean().optional()
+  isPrimary: z.boolean().nullish()
 });
 
 /**
@@ -28,7 +28,7 @@ export const PhoneSchema = z.object({
 export const SocialProfileSchema = z.object({
   platform: z.string(),
   url: z.string().url(),
-  handle: z.string().optional()
+  handle: z.string().nullish()
 });
 
 /**
@@ -37,8 +37,8 @@ export const SocialProfileSchema = z.object({
 export const NameSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
-  title: z.string().optional(),
-  suffix: z.string().optional()
+  title: z.string().nullish(), // Erlaubt null + undefined
+  suffix: z.string().nullish() // Erlaubt null + undefined
 });
 
 /**
@@ -53,26 +53,26 @@ export const MergedContactSchema = z.object({
 
   // Kontakt-Informationen (dedupliziert)
   emails: z.array(EmailSchema).min(1, 'Mindestens eine E-Mail erforderlich'),
-  phones: z.array(PhoneSchema).optional(),
+  phones: z.array(PhoneSchema).nullish(),
 
   // Geschäftliche Zuordnung
-  position: z.string().optional(),
-  department: z.string().optional(),
-  companyName: z.string().optional(),
-  companyId: z.string().optional(),
+  position: z.string().nullish(),
+  department: z.string().nullish(),
+  companyName: z.string().nullish(),
+  companyId: z.string().nullish(),
 
   // Media-Profil
   hasMediaProfile: z.boolean(),
-  beats: z.array(z.string()).optional(),
-  mediaTypes: z.array(z.enum(['print', 'online', 'tv', 'radio', 'podcast'])).optional(),
-  publications: z.array(z.string()).optional(),
+  beats: z.array(z.string()).nullish(),
+  mediaTypes: z.array(z.enum(['print', 'online', 'tv', 'radio', 'podcast'])).nullish(),
+  publications: z.array(z.string()).nullish(),
 
   // Social Media
-  socialProfiles: z.array(SocialProfileSchema).optional(),
+  socialProfiles: z.array(SocialProfileSchema).nullish(),
 
   // Qualitäts-Indikatoren
-  photoUrl: z.string().url().optional(),
-  website: z.string().url().optional()
+  photoUrl: z.string().url().nullish(),
+  website: z.string().url().nullish()
 });
 
 /**
@@ -86,18 +86,18 @@ export const VariantSchema = z.object({
     name: NameSchema,
     displayName: z.string(),
     emails: z.array(EmailSchema),
-    phones: z.array(PhoneSchema).optional(),
-    position: z.string().optional(),
-    department: z.string().optional(),
-    companyName: z.string().optional(),
-    companyId: z.string().optional(),
+    phones: z.array(PhoneSchema).nullish(),
+    position: z.string().nullish(),
+    department: z.string().nullish(),
+    companyName: z.string().nullish(),
+    companyId: z.string().nullish(),
     hasMediaProfile: z.boolean(),
-    beats: z.array(z.string()).optional(),
-    mediaTypes: z.array(z.enum(['print', 'online', 'tv', 'radio', 'podcast'])).optional(),
-    publications: z.array(z.string()).optional(),
-    socialProfiles: z.array(SocialProfileSchema).optional(),
-    photoUrl: z.string().optional(),
-    website: z.string().optional()
+    beats: z.array(z.string()).nullish(),
+    mediaTypes: z.array(z.enum(['print', 'online', 'tv', 'radio', 'podcast'])).nullish(),
+    publications: z.array(z.string()).nullish(),
+    socialProfiles: z.array(SocialProfileSchema).nullish(),
+    photoUrl: z.string().nullish(),
+    website: z.string().nullish()
   })
 });
 
