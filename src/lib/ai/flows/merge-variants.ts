@@ -37,59 +37,24 @@ export const mergeVariantsFlow = ai.defineFlow(
     console.log(`🤖 Genkit Flow: Merging ${variants.length} variants with AI...`);
 
     // Baue intelligenten Prompt
-    const prompt = `Du bist ein Daten-Merge-Experte für Journalisten-Kontakte.
+    const prompt = `Merge diese ${variants.length} Journalist-Varianten zu einem optimalen Datensatz.
 
-AUFGABE:
-Merge diese ${variants.length} Varianten eines Journalisten zu EINEM optimalen Datensatz.
-
-VARIANTEN:
+VARIANTEN (JSON):
 ${JSON.stringify(variants, null, 2)}
 
 MERGE-REGELN:
+- NAME: Vollständigste Form (title, firstName, lastName, suffix)
+- EMAILS: Alle dedupliziert, geschäftliche = primary
+- PHONES: Alle dedupliziert, mobile = primary
+- POSITION: Spezifischste Position
+- COMPANY: Vollständigster Name
+- BEATS/MEDIA_TYPES/PUBLICATIONS: ALLE kombinieren (dedupliziert)
+- SOCIAL_PROFILES: Alle dedupliziert (nach platform)
+- hasMediaProfile: true wenn mindestens eine Variante Journalist ist
 
-1. NAME:
-   - Wähle den vollständigsten Namen (mit title/suffix wenn vorhanden)
-   - Bevorzuge formale Schreibweise (Dr., Prof.)
+WICHTIG: Nur vorhandene Daten verwenden, nichts erfinden!
 
-2. E-MAILS:
-   - Vereinige ALLE eindeutigen E-Mail-Adressen
-   - Dedupliziere (gleiche E-Mails nur einmal)
-   - Markiere eine als primary (bevorzugt: geschäftliche E-Mail von Medienunternehmen)
-   - Wenn eine E-Mail @spiegel.de, @zeit.de, @faz.net etc. → isPrimary = true
-
-3. TELEFONE:
-   - Vereinige ALLE eindeutigen Telefonnummern
-   - Dedupliziere
-   - Markiere eine als primary (bevorzugt: mobile)
-
-4. POSITION:
-   - Wähle die aussagekräftigste/aktuellste Position
-   - Bevorzuge spezifischere Titel (z.B. "Chefredakteur Politik" > "Redakteur")
-
-5. COMPANY:
-   - Wähle den vollständigsten Company-Namen
-   - Bei Konflikt: Verwende die Company mit der verifizierten E-Mail-Domain
-
-6. MEDIA PROFILE:
-   - hasMediaProfile = true wenn IRGENDEINE Variante Journalist ist
-   - beats: Vereinigung ALLER Beats (dedupliziert)
-   - mediaTypes: Vereinigung ALLER mediaTypes (dedupliziert)
-   - publications: Vereinigung ALLER Publications (dedupliziert)
-
-7. SOCIAL PROFILES:
-   - Vereinige ALLE Social Profiles (dedupliziert nach platform)
-
-8. QUALITÄT:
-   - photoUrl: Wähle die erste verfügbare URL
-   - website: Wähle die erste verfügbare URL
-
-WICHTIG:
-- Keine Informationen erfinden!
-- Nur vorhandene Daten verwenden
-- Bei Unsicherheit: Nimm den Wert aus der Variante mit den meisten Daten
-- displayName: Formatiere als "Vorname Nachname" (ohne title/suffix)
-
-Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
+Antworte NUR mit dem gemergten JSON im Schema-Format.`;
 
     try {
       // Genkit Generate mit Structured Output
@@ -100,8 +65,8 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
         },
         prompt,
         config: {
-          temperature: 0.1, // Low = deterministischer
-          maxOutputTokens: 2048,
+          temperature: 0.3, // Erhöht: Verhindert "stuck" bei komplexen Merges
+          maxOutputTokens: 4096, // Erhöht: Genug Platz für komplette Response
           topP: 0.95
         }
       });
