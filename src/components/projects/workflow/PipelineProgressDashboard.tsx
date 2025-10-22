@@ -1,8 +1,9 @@
 'use client';
 
-import { PipelineStage } from '@/types/project';
+import { PipelineStage, PIPELINE_STAGE_PROGRESS } from '@/types/project';
 import { toastService } from '@/lib/utils/toast';
 import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
+import { getProgressColor } from '@/lib/utils/progress-helpers';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -27,17 +28,8 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
     toastService.error('Fehler beim Laden der Tasks');
   }
 
-  // Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
-  const fixedProgressMap = {
-    'ideas_planning': 0,    // 0% Ideen & Planung
-    'creation': 20,         // 20% Content und Materialien
-    'approval': 40,         // 40% Freigabe
-    'distribution': 60,     // 60% Verteilung
-    'monitoring': 80,       // 80% Monitoring
-    'completed': 100        // 100% Abgeschlossen
-  };
-
-  const pipelinePercent = (fixedProgressMap as any)[currentStage] || 0;
+  // Pipeline-Fortschritt aus zentraler Konstante
+  const pipelinePercent = PIPELINE_STAGE_PROGRESS[currentStage] || 0;
 
   const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
@@ -60,17 +52,10 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
   const getStageStatus = (stage: PipelineStage): 'completed' | 'current' | 'upcoming' => {
     const currentIndex = stageOrder.indexOf(currentStage);
     const stageIndex = stageOrder.indexOf(stage);
-    
+
     if (stageIndex < currentIndex) return 'completed';
     if (stageIndex === currentIndex) return 'current';
     return 'upcoming';
-  };
-
-  const getProgressColor = (percent: number) => {
-    if (percent >= 90) return 'bg-green-500';
-    if (percent >= 70) return 'bg-blue-500';
-    if (percent >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
   };
 
   const getMilestoneIcon = (achieved: boolean) => {
@@ -80,6 +65,33 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
       <TrophyIcon className="w-5 h-5 text-gray-300" />
     );
   };
+
+  // Loading Skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-primary rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-6 bg-blue-400 rounded w-48 animate-pulse"></div>
+            <div className="h-6 w-6 bg-blue-400 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Skeleton für 3 Spalten */}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-3">
+                <div className="h-4 bg-blue-400 rounded w-32 animate-pulse"></div>
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 bg-blue-400 rounded w-16 animate-pulse"></div>
+                  <div className="flex-1 bg-blue-400 rounded-full h-3 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 h-3 bg-blue-400 rounded w-48 animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -158,7 +170,6 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
 
         <div className="mt-4 text-xs text-blue-100">
           Letztes Update: {new Date().toLocaleString('de-DE')}
-          {isLoading && <span className="ml-2">(Wird geladen...)</span>}
         </div>
       </div>
 
