@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { PipelineStage } from '@/types/project';
-import { taskService } from '@/lib/firebase/task-service';
-import { ProjectTask } from '@/types/tasks';
 import { toastService } from '@/lib/utils/toast';
+import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -20,63 +18,26 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
   const currentStage = project?.currentStage || 'creation';
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState({
-    overallPercent: 0,
-    taskCompletion: 0,
-    criticalTasksRemaining: 0,
-    lastUpdated: new Date()
-  });
 
-  // Lade Tasks und berechne Fortschritt
-  useEffect(() => {
-    const loadTasksAndCalculateProgress = async () => {
-      if (!projectId || !organizationId) return;
+  // React Query Hook für Tasks und Progress
+  const { tasks, progress, isLoading, error } = useProjectTasks(projectId, organizationId);
 
-      try {
-        setLoading(true);
-        const projectTasks = await taskService.getByProjectId(projectId, organizationId);
-        setTasks(projectTasks);
+  // Error Handling
+  if (error) {
+    toastService.error('Fehler beim Laden der Tasks');
+  }
 
-        // Berechne Fortschritt
-        const totalTasks = projectTasks.length;
-        const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
-        const criticalTasks = projectTasks.filter(task =>
-          (task.priority === 'urgent' || task.priority === 'high') &&
-          task.status !== 'completed'
-        ).length;
+  // Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
+  const fixedProgressMap = {
+    'ideas_planning': 0,    // 0% Ideen & Planung
+    'creation': 20,         // 20% Content und Materialien
+    'approval': 40,         // 40% Freigabe
+    'distribution': 60,     // 60% Verteilung
+    'monitoring': 80,       // 80% Monitoring
+    'completed': 100        // 100% Abgeschlossen
+  };
 
-        // Wenn keine Tasks vorhanden, setze Fortschritt auf 100%
-        const taskCompletionPercent = totalTasks === 0 ? 100 : Math.round((completedTasks / totalTasks) * 100);
-
-        // Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
-        const fixedProgressMap = {
-          'ideas_planning': 0,    // 0% Ideen & Planung
-          'creation': 20,         // 20% Content und Materialien
-          'approval': 40,         // 40% Freigabe
-          'distribution': 60,     // 60% Verteilung
-          'monitoring': 80,       // 80% Monitoring
-          'completed': 100        // 100% Abgeschlossen
-        };
-
-        const pipelinePercent = (fixedProgressMap as any)[currentStage] || 0;
-
-        setProgress({
-          overallPercent: pipelinePercent,
-          taskCompletion: taskCompletionPercent,
-          criticalTasksRemaining: criticalTasks,
-          lastUpdated: new Date()
-        });
-      } catch (error) {
-        toastService.error('Fehler beim Laden der Tasks');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTasksAndCalculateProgress();
-  }, [projectId, organizationId, currentStage]);
+  const pipelinePercent = (fixedProgressMap as any)[currentStage] || 0;
 
   const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
@@ -137,12 +98,12 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
             <p className="text-blue-100 text-sm mb-2">Gesamt-Fortschritt</p>
             <div className="flex items-center space-x-3">
               <div className="text-3xl font-bold">
-                {Math.round(progress.overallPercent)}%
+                {Math.round(pipelinePercent)}%
               </div>
               <div className="flex-1 bg-blue-500 rounded-full h-3">
                 <div
                   className="bg-white rounded-full h-3 transition-all duration-300"
-                  style={{ width: `${progress.overallPercent}%` }}
+                  style={{ width: `${pipelinePercent}%` }}
                 ></div>
               </div>
             </div>
@@ -196,8 +157,8 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
         </div>
 
         <div className="mt-4 text-xs text-blue-100">
-          Letztes Update: {progress.lastUpdated.toLocaleString('de-DE')}
-          {loading && <span className="ml-2">(Wird geladen...)</span>}
+          Letztes Update: {new Date().toLocaleString('de-DE')}
+          {isLoading && <span className="ml-2">(Wird geladen...)</span>}
         </div>
       </div>
 
