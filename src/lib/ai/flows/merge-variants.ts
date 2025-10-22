@@ -103,8 +103,8 @@ KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusä
       console.log('✅ AI-Merge Response erhalten!');
       console.log('🐛 DEBUG - Raw result:', JSON.stringify(result, null, 2).substring(0, 500));
 
-      // Manuelles JSON Parsing (da kein Structured Output)
-      const textOutput = result.text();
+      // Extrahiere Text aus Genkit Response Struktur
+      const textOutput = result.message?.content?.[0]?.text || result.text?.() || JSON.stringify(result);
       console.log('🐛 DEBUG - Text Output (erste 500 chars):', textOutput.substring(0, 500));
 
       // Parse JSON
