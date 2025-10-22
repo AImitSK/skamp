@@ -1,0 +1,425 @@
+[
+  {
+    "testCaseId": "scenario-1-title-preservation",
+    "input": {
+      "variants": [
+        {
+          "organizationId": "org-001",
+          "organizationName": "Süddeutsche Zeitung",
+          "contactId": "contact-001",
+          "contactData": {
+            "name": {
+              "firstName": "Anna",
+              "lastName": "Schmidt",
+              "title": "Dr."
+            },
+            "displayName": "Dr. Anna Schmidt",
+            "emails": [
+              {
+                "email": "a.schmidt@sz.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 89 123456",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Chefredakteurin",
+            "department": "Politik",
+            "companyName": "Süddeutsche Zeitung",
+            "companyId": "company-sz",
+            "hasMediaProfile": true,
+            "beats": ["Bundespolitik"],
+            "mediaTypes": ["print"],
+            "publications": ["Süddeutsche Zeitung"]
+          }
+        },
+        {
+          "organizationId": "org-002",
+          "organizationName": "SZ Online",
+          "contactId": "contact-002",
+          "contactData": {
+            "name": {
+              "firstName": "Anna",
+              "lastName": "Schmidt"
+            },
+            "displayName": "Anna Schmidt",
+            "emails": [
+              {
+                "email": "a.schmidt@sz.de",
+                "type": "business",
+                "isPrimary": true
+              },
+              {
+                "email": "anna.schmidt@gmail.com",
+                "type": "private",
+                "isPrimary": false
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 89 123456",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Redakteurin",
+            "companyName": "Süddeutsche Zeitung",
+            "hasMediaProfile": true,
+            "beats": ["Bundespolitik", "Europapolitik"],
+            "mediaTypes": ["online"],
+            "publications": ["Süddeutsche Zeitung", "SZ Online"]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "expectedTitle": "Dr.",
+      "expectedEmailCount": 2,
+      "expectedBeatsCount": 2,
+      "expectedPublicationsCount": 2
+    }
+  },
+  {
+    "testCaseId": "scenario-2-multiple-phones",
+    "input": {
+      "variants": [
+        {
+          "organizationId": "org-003",
+          "organizationName": "Der Spiegel",
+          "contactId": "contact-003",
+          "contactData": {
+            "name": {
+              "firstName": "Max",
+              "lastName": "Müller"
+            },
+            "displayName": "Max Müller",
+            "emails": [
+              {
+                "email": "m.mueller@spiegel.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 40 12345",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Investigativ-Reporter",
+            "companyName": "Der Spiegel",
+            "hasMediaProfile": true,
+            "beats": ["Wirtschaft", "Finanzwesen"],
+            "mediaTypes": ["print"],
+            "publications": ["Der Spiegel"]
+          }
+        },
+        {
+          "organizationId": "org-004",
+          "organizationName": "Spiegel Online",
+          "contactId": "contact-004",
+          "contactData": {
+            "name": {
+              "firstName": "Max",
+              "lastName": "Müller"
+            },
+            "displayName": "Max Müller",
+            "emails": [
+              {
+                "email": "m.mueller@spiegel.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 40 12345",
+                "type": "business",
+                "isPrimary": true
+              },
+              {
+                "number": "+49 171 9876543",
+                "type": "mobile",
+                "isPrimary": false
+              }
+            ],
+            "position": "Investigativ-Reporter",
+            "companyName": "Der Spiegel",
+            "hasMediaProfile": true,
+            "beats": ["Wirtschaft", "Korruption"],
+            "mediaTypes": ["online"],
+            "publications": ["Spiegel Online"]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "expectedEmailCount": 1,
+      "expectedPhoneCount": 2,
+      "expectedBeatsCount": 3,
+      "expectedPublicationsCount": 2
+    }
+  },
+  {
+    "testCaseId": "scenario-3-social-profiles-merge",
+    "input": {
+      "variants": [
+        {
+          "organizationId": "org-005",
+          "organizationName": "FAZ",
+          "contactId": "contact-005",
+          "contactData": {
+            "name": {
+              "firstName": "Lisa",
+              "lastName": "Weber",
+              "title": "Prof."
+            },
+            "displayName": "Prof. Lisa Weber",
+            "emails": [
+              {
+                "email": "l.weber@faz.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Wirtschaftsexpertin",
+            "companyName": "Frankfurter Allgemeine Zeitung",
+            "hasMediaProfile": true,
+            "beats": ["Wirtschaft"],
+            "mediaTypes": ["print"],
+            "publications": ["FAZ"],
+            "socialProfiles": [
+              {
+                "platform": "Twitter",
+                "url": "https://twitter.com/lisa_weber_faz",
+                "handle": "@lisa_weber_faz"
+              }
+            ]
+          }
+        },
+        {
+          "organizationId": "org-006",
+          "organizationName": "FAZ Online",
+          "contactId": "contact-006",
+          "contactData": {
+            "name": {
+              "firstName": "Lisa",
+              "lastName": "Weber",
+              "title": "Prof."
+            },
+            "displayName": "Prof. Lisa Weber",
+            "emails": [
+              {
+                "email": "l.weber@faz.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Wirtschaftsexpertin",
+            "companyName": "Frankfurter Allgemeine Zeitung",
+            "hasMediaProfile": true,
+            "beats": ["Wirtschaft", "Finanzmärkte"],
+            "mediaTypes": ["online"],
+            "publications": ["FAZ", "FAZ Online"],
+            "socialProfiles": [
+              {
+                "platform": "LinkedIn",
+                "url": "https://linkedin.com/in/lisa-weber",
+                "handle": "lisa-weber"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "expectedTitle": "Prof.",
+      "expectedEmailCount": 1,
+      "expectedBeatsCount": 2,
+      "expectedPublicationsCount": 2,
+      "expectedSocialProfilesCount": 2
+    }
+  },
+  {
+    "testCaseId": "scenario-4-missing-data-handling",
+    "input": {
+      "variants": [
+        {
+          "organizationId": "org-007",
+          "organizationName": "Die Zeit",
+          "contactId": "contact-007",
+          "contactData": {
+            "name": {
+              "firstName": "Tom",
+              "lastName": "Schneider"
+            },
+            "displayName": "Tom Schneider",
+            "emails": [
+              {
+                "email": "t.schneider@zeit.de",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Kulturredakteur",
+            "companyName": "Die Zeit",
+            "hasMediaProfile": true,
+            "beats": ["Kultur"],
+            "mediaTypes": ["print"],
+            "publications": ["Die Zeit"]
+          }
+        },
+        {
+          "organizationId": "org-008",
+          "organizationName": "Zeit Online",
+          "contactId": "contact-008",
+          "contactData": {
+            "name": {
+              "firstName": "Tom",
+              "lastName": "Schneider"
+            },
+            "displayName": "Tom Schneider",
+            "emails": [
+              {
+                "email": "t.schneider@zeit.de",
+                "type": "business",
+                "isPrimary": true
+              },
+              {
+                "email": "tom.schneider@yahoo.de",
+                "type": "private",
+                "isPrimary": false
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 40 888888",
+                "type": "mobile",
+                "isPrimary": true
+              }
+            ],
+            "position": "Kulturredakteur",
+            "companyName": "Die Zeit",
+            "hasMediaProfile": true,
+            "beats": ["Kultur", "Literatur", "Film"],
+            "mediaTypes": ["online"],
+            "publications": ["Die Zeit", "Zeit Online"]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "expectedEmailCount": 2,
+      "expectedPhoneCount": 1,
+      "expectedBeatsCount": 3,
+      "expectedPublicationsCount": 2
+    }
+  },
+  {
+    "testCaseId": "scenario-5-three-variants",
+    "input": {
+      "variants": [
+        {
+          "organizationId": "org-009",
+          "organizationName": "Handelsblatt",
+          "contactId": "contact-009",
+          "contactData": {
+            "name": {
+              "firstName": "Sarah",
+              "lastName": "Fischer"
+            },
+            "displayName": "Sarah Fischer",
+            "emails": [
+              {
+                "email": "s.fischer@handelsblatt.com",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Börsenreporterin",
+            "companyName": "Handelsblatt",
+            "hasMediaProfile": true,
+            "beats": ["Börse"],
+            "mediaTypes": ["print"],
+            "publications": ["Handelsblatt"]
+          }
+        },
+        {
+          "organizationId": "org-010",
+          "organizationName": "Handelsblatt Online",
+          "contactId": "contact-010",
+          "contactData": {
+            "name": {
+              "firstName": "Sarah",
+              "lastName": "Fischer"
+            },
+            "displayName": "Sarah Fischer",
+            "emails": [
+              {
+                "email": "s.fischer@handelsblatt.com",
+                "type": "business",
+                "isPrimary": true
+              },
+              {
+                "email": "sarah.fischer@web.de",
+                "type": "private",
+                "isPrimary": false
+              }
+            ],
+            "position": "Börsenreporterin",
+            "companyName": "Handelsblatt",
+            "hasMediaProfile": true,
+            "beats": ["Börse", "DAX"],
+            "mediaTypes": ["online"],
+            "publications": ["Handelsblatt", "Handelsblatt Online"]
+          }
+        },
+        {
+          "organizationId": "org-011",
+          "organizationName": "Handelsblatt Podcast",
+          "contactId": "contact-011",
+          "contactData": {
+            "name": {
+              "firstName": "Sarah",
+              "lastName": "Fischer"
+            },
+            "displayName": "Sarah Fischer",
+            "emails": [
+              {
+                "email": "s.fischer@handelsblatt.com",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "phones": [
+              {
+                "number": "+49 211 887700",
+                "type": "business",
+                "isPrimary": true
+              }
+            ],
+            "position": "Börsenreporterin & Podcast-Host",
+            "companyName": "Handelsblatt",
+            "hasMediaProfile": true,
+            "beats": ["Börse", "Finanzen", "Investieren"],
+            "mediaTypes": ["podcast"],
+            "publications": ["Handelsblatt", "Handelsblatt Morning Briefing"]
+          }
+        }
+      ]
+    },
+    "reference": {
+      "expectedEmailCount": 2,
+      "expectedPhoneCount": 1,
+      "expectedBeatsCount": 4,
+      "expectedPublicationsCount": 3,
+      "expectedMediaTypesCount": 3
+    }
+  }
+]

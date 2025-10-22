@@ -36,6 +36,7 @@
     "@fullcalendar/list": "^6.1.18",
     "@fullcalendar/react": "^6.1.18",
     "@fullcalendar/timegrid": "^6.1.18",
+    "@genkit-ai/evaluator": "^1.21.0",
     "@genkit-ai/googleai": "^1.21.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
