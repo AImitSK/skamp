@@ -36,38 +36,55 @@ export const mergeVariantsFlow = ai.defineFlow(
 
     console.log(`🤖 Genkit Flow: Merging ${variants.length} variants with AI...`);
 
-    // Baue intelligenten Prompt mit Beispiel
-    const prompt = `Merge diese ${variants.length} Journalist-Varianten zu EINEM Datensatz.
+    // Extrahiere nur contactData für einfacheren Prompt
+    const contactDataOnly = variants.map(v => v.contactData);
 
-VARIANTEN:
-${JSON.stringify(variants, null, 2)}
+    // Baue Prompt mit Output-Template
+    const prompt = `Merge ${variants.length} Journalist-Kontakte zu EINEM optimalen Kontakt.
 
-MERGE-STRATEGIE (WICHTIG - lies genau!):
+INPUT - Kontakte zum Mergen:
+${JSON.stringify(contactDataOnly, null, 2)}
 
-1. NAME: Nimm vollständigste Form
-   - Wenn Variante hat title → übernehme title
-   - Wenn Variante hat suffix → übernehme suffix
+AUFGABE: Erstelle EIN gemergtes Contact-Objekt mit dieser EXAKTEN Struktur:
 
-2. EMAILS: Sammle ALLE einzigartigen Emails aus ALLEN Varianten
-   - Dedupliziere (gleiche Email nur 1x)
-   - Geschäftliche Email (@spiegel.de etc.) = isPrimary: true
+{
+  "name": {
+    "firstName": "...",
+    "lastName": "...",
+    "title": "..." (optional: Dr., Prof., etc.),
+    "suffix": "..." (optional)
+  },
+  "displayName": "Vorname Nachname",
+  "emails": [
+    { "email": "...", "type": "business|private", "isPrimary": true }
+  ],
+  "phones": [
+    { "number": "...", "type": "mobile|business", "isPrimary": true }
+  ],
+  "position": "...",
+  "department": "...",
+  "companyName": "...",
+  "companyId": "...",
+  "hasMediaProfile": true,
+  "beats": ["..."],
+  "mediaTypes": ["print", "online", "tv"],
+  "publications": ["..."],
+  "socialProfiles": [
+    { "platform": "...", "url": "...", "handle": "..." }
+  ],
+  "photoUrl": "...",
+  "website": "..."
+}
 
-3. PHONES: Sammle ALLE einzigartigen Phones aus ALLEN Varianten
-   - Mobile = isPrimary: true
+MERGE-REGELN:
+- NAME: Vollständigste Form (mit title falls vorhanden)
+- EMAILS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
+- PHONES: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
+- BEATS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
+- PUBLICATIONS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
+- MEDIA_TYPES: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
 
-4. BEATS: Sammle ALLE einzigartigen Beats aus ALLEN Varianten
-   - Beispiel: Var1 hat ["Politik"], Var2 hat ["Politik", "Wirtschaft"] → Result: ["Politik", "Wirtschaft"]
-
-5. PUBLICATIONS: Sammle ALLE einzigartigen Publications aus ALLEN Varianten
-   - Beispiel: Var1 hat ["Spiegel"], Var2 hat ["Spiegel", "Spiegel Online"] → Result: ["Spiegel", "Spiegel Online"]
-
-6. MEDIA_TYPES: Sammle ALLE einzigartigen mediaTypes aus ALLEN Varianten
-
-7. SOCIAL_PROFILES: Sammle ALLE einzigartigen Profiles (dedupliziert nach platform)
-
-KRITISCH: "ALLE" bedeutet wirklich ALLE! Gehe durch jede Variante und sammle jeden Wert!
-
-Antworte NUR mit dem gemergten JSON.`;
+KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusätzlichen Felder!`;
 
     try {
       // Genkit Generate mit Structured Output
@@ -78,8 +95,8 @@ Antworte NUR mit dem gemergten JSON.`;
         },
         prompt,
         config: {
-          temperature: 0.3, // Erhöht: Verhindert "stuck" bei komplexen Merges
-          maxOutputTokens: 4096, // Erhöht: Genug Platz für komplette Response
+          temperature: 0.5, // Höher: Gemini folgt Schema besser
+          maxOutputTokens: 4096, // Genug Platz für komplette Response
           topP: 0.95
         }
       });
