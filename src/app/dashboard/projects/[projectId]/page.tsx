@@ -195,6 +195,25 @@ export default function ProjectDetailPage() {
     setActiveTab(tab);
   }, [router, searchParams]);
 
+  // Handler für Guide-Step Toggle (mit useCallback für Performance)
+  const handleStepToggle = useCallback(async (stepId: string) => {
+    const newSteps = completedGuideSteps.includes(stepId)
+      ? completedGuideSteps.filter(id => id !== stepId)
+      : [...completedGuideSteps, stepId];
+
+    setCompletedGuideSteps(newSteps);
+
+    if (project?.id && currentOrganization?.id && user?.uid) {
+      try {
+        await projectService.update(project.id, {
+          completedGuideSteps: newSteps
+        }, { organizationId: currentOrganization.id, userId: user.uid });
+      } catch (error) {
+        console.error('Fehler beim Speichern der Guide-Steps:', error);
+      }
+    }
+  }, [completedGuideSteps, project?.id, currentOrganization?.id, user?.uid]);
+
   // Computed Values mit useMemo
   const assignedTeamMembers = useMemo(() => {
     if (!project?.assignedTo || !teamMembers.length) return [];
@@ -696,23 +715,7 @@ export default function ProjectDetailPage() {
               loadingTodayTasks={loadingTodayTasks}
               user={user!}
               completedGuideSteps={completedGuideSteps}
-              onStepToggle={async (stepId) => {
-                const newSteps = completedGuideSteps.includes(stepId)
-                  ? completedGuideSteps.filter(id => id !== stepId)
-                  : [...completedGuideSteps, stepId];
-
-                setCompletedGuideSteps(newSteps);
-
-                if (project?.id && currentOrganization?.id) {
-                  try {
-                    await projectService.update(project.id, {
-                      completedGuideSteps: newSteps
-                    }, { organizationId: currentOrganization.id, userId: user!.uid });
-                  } catch (error) {
-                    console.error('Fehler beim Speichern der Guide-Steps:', error);
-                  }
-                }
-              }}
+              onStepToggle={handleStepToggle}
               onNavigateToTasks={() => handleTabChange('tasks')}
             />
           )}

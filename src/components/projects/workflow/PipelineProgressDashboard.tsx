@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useCallback, useMemo } from 'react';
 import { PipelineStage, PIPELINE_STAGE_PROGRESS } from '@/types/project';
 import { toastService } from '@/lib/utils/toast';
 import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
@@ -15,7 +16,7 @@ import { useProject } from '@/app/dashboard/projects/[projectId]/context/Project
 
 interface PipelineProgressDashboardProps {}
 
-export default function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
+function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
   const currentStage = project?.currentStage || 'creation';
@@ -31,23 +32,29 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
   // Pipeline-Fortschritt aus zentraler Konstante
   const pipelinePercent = PIPELINE_STAGE_PROGRESS[currentStage] || 0;
 
-  const stageLabels: Record<PipelineStage, string> = {
+  // useMemo für konstante Objekte (verhindert Re-Creation bei jedem Render)
+  const stageLabels = useMemo<Record<PipelineStage, string>>(() => ({
     'ideas_planning': 'Ideen & Planung',
     'creation': 'Content und Materialien',
     'approval': 'Freigabe',
     'distribution': 'Verteilung',
     'monitoring': 'Monitoring',
     'completed': 'Abgeschlossen'
-  } as any;
+  }), []);
 
-  const stageOrder: PipelineStage[] = [
+  const stageOrder = useMemo<PipelineStage[]>(() => [
     'ideas_planning',
     'creation',
     'approval',
     'distribution',
     'monitoring',
     'completed'
-  ];
+  ], []);
+
+  // useCallback für Handler (stabile Referenz, verhindert Re-Renders von Child-Komponenten)
+  const handleNavigateToTasks = useCallback(() => {
+    setActiveTab('tasks');
+  }, [setActiveTab]);
 
   const getStageStatus = (stage: PipelineStage): 'completed' | 'current' | 'upcoming' => {
     const currentIndex = stageOrder.indexOf(currentStage);
@@ -137,7 +144,7 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
             </div>
             {tasks.length === 0 && (
               <button
-                onClick={() => setActiveTab('tasks')}
+                onClick={handleNavigateToTasks}
                 className="text-xs text-blue-100 hover:text-white mt-1 underline"
               >
                 Tasks erstellen
@@ -193,3 +200,6 @@ export default function PipelineProgressDashboard({}: PipelineProgressDashboardP
     </div>
   );
 }
+
+// React.memo verhindert Re-Renders wenn Props gleich bleiben
+export default React.memo(PipelineProgressDashboard);
