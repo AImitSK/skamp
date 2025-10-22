@@ -107,6 +107,7 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
       });
 
       console.log('✅ AI-Merge erfolgreich!');
+      console.log('🐛 DEBUG - Raw result:', JSON.stringify(result, null, 2).substring(0, 500));
       console.log('📋 Gemergter Datensatz:', {
         name: result.output.displayName,
         emails: result.output.emails?.length || 0,
@@ -114,6 +115,9 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
         beats: result.output.beats?.length || 0,
         publications: result.output.publications?.length || 0
       });
+
+      // 🐛 DEBUG: Log komplettes Output um zu sehen was Gemini zurückgibt
+      console.log('🐛 DEBUG - Komplettes Genkit Output:', JSON.stringify(result.output, null, 2));
 
       // 🛡️ Validierung: Prüfe ob Genkit ein valides Objekt zurückgab
       if (!result.output || typeof result.output !== 'object') {
