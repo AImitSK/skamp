@@ -87,67 +87,77 @@ MERGE-REGELN:
 KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusätzlichen Felder!`;
 
     try {
-      // Genkit Generate mit Structured Output
+      // Genkit Generate mit JSON Mode (nicht Structured Output!)
+      // Structured Output hat Probleme mit verschachtelten Objekten
       const result = await ai.generate({
         model: gemini25FlashModel,
-        output: {
-          schema: MergedContactSchema
-        },
         prompt,
         config: {
-          temperature: 0.5, // Höher: Gemini folgt Schema besser
-          maxOutputTokens: 4096, // Genug Platz für komplette Response
-          topP: 0.95
+          temperature: 0.5,
+          maxOutputTokens: 4096,
+          topP: 0.95,
+          response_mime_type: 'application/json' // ✅ JSON Mode
         }
       });
 
-      console.log('✅ AI-Merge erfolgreich!');
+      console.log('✅ AI-Merge Response erhalten!');
       console.log('🐛 DEBUG - Raw result:', JSON.stringify(result, null, 2).substring(0, 500));
-      console.log('📋 Gemergter Datensatz:', {
-        name: result.output.displayName,
-        emails: result.output.emails?.length || 0,
-        phones: result.output.phones?.length || 0,
-        beats: result.output.beats?.length || 0,
-        publications: result.output.publications?.length || 0
-      });
 
-      // 🐛 DEBUG: Log komplettes Output um zu sehen was Gemini zurückgibt
-      console.log('🐛 DEBUG - Komplettes Genkit Output:', JSON.stringify(result.output, null, 2));
+      // Manuelles JSON Parsing (da kein Structured Output)
+      const textOutput = result.text();
+      console.log('🐛 DEBUG - Text Output (erste 500 chars):', textOutput.substring(0, 500));
 
-      // 🛡️ Validierung: Prüfe ob Genkit ein valides Objekt zurückgab
-      if (!result.output || typeof result.output !== 'object') {
-        console.error('❌ Genkit gab kein valides Objekt zurück:', result.output);
-        throw new Error('Invalid Genkit output: Not an object');
+      // Parse JSON
+      let parsedOutput;
+      try {
+        parsedOutput = JSON.parse(textOutput);
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError);
+        console.error('Text war:', textOutput.substring(0, 1000));
+        throw new Error('Failed to parse JSON from Gemini response');
       }
 
-      if (!result.output.displayName || !result.output.name) {
-        console.error('❌ Genkit gab kein valides Contact-Objekt zurück (fehlender Name)');
-        throw new Error('Invalid Genkit output: Missing required name fields');
+      // Validiere gegen Schema
+      const validated = MergedContactSchema.parse(parsedOutput);
+
+      console.log('✅ AI-Merge erfolgreich und validiert!');
+      console.log('📋 Gemergter Datensatz:', {
+        name: validated.displayName,
+        emails: validated.emails?.length || 0,
+        phones: validated.phones?.length || 0,
+        beats: validated.beats?.length || 0,
+        publications: validated.publications?.length || 0
+      });
+
+      // 🛡️ Validierung: Prüfe Pflichtfelder
+      if (!validated.displayName || !validated.name) {
+        console.error('❌ Validierung fehlgeschlagen: Fehlende Pflichtfelder');
+        throw new Error('Invalid output: Missing required name fields');
       }
 
       // ✅ WICHTIG: Fallbacks für fehlende Required-Felder (falls KI Schema nicht perfekt befolgt)
 
       // Emails ist REQUIRED im Schema
-      if (!result.output.emails?.length) {
+      if (!validated.emails?.length) {
         console.log('⚠️  KI gab keine Emails zurück → Nehme von erster Variante');
-        result.output.emails = variants[0].contactData.emails;
+        validated.emails = variants[0].contactData.emails;
       }
 
       // Publications (optional, aber wichtig)
-      if (!result.output.publications?.length) {
+      if (!validated.publications?.length) {
         const allPublications = new Set<string>();
         for (const variant of variants) {
           if (variant.contactData.publications?.length) {
             variant.contactData.publications.forEach(pub => allPublications.add(pub));
           }
         }
-        result.output.publications = Array.from(allPublications);
-        if (result.output.publications.length > 0) {
-          console.log(`⚠️  KI gab keine Publications zurück → ${result.output.publications.length} aus Varianten gesammelt`);
+        validated.publications = Array.from(allPublications);
+        if (validated.publications.length > 0) {
+          console.log(`⚠️  KI gab keine Publications zurück → ${validated.publications.length} aus Varianten gesammelt`);
         }
       }
 
-      return result.output;
+      return validated;
 
     } catch (error) {
       console.error('❌ AI-Merge fehlgeschlagen:', error);
