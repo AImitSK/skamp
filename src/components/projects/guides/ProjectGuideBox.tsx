@@ -268,7 +268,7 @@ export default function ProjectGuideBox({
           return (
             <div key={phase.id} className={
               status === 'completed' ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
-              status === 'current' ? 'bg-blue-50/30' : ''
+              status === 'current' ? 'bg-blue-100' : ''
             }>
               {/* Phase Header */}
               <button

@@ -15,10 +15,11 @@ import {
   limit
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { 
-  Project, 
-  ProjectFilters, 
+import {
+  Project,
+  ProjectFilters,
   PipelineStage,
+  PIPELINE_STAGE_PROGRESS,
   ProjectCreationWizardData,
   ProjectCreationResult,
   ProjectCreationOptions,
@@ -1246,21 +1247,12 @@ export const projectService = {
       const currentProject = await this.getById(projectId, { organizationId: orgId });
       const currentStage = currentProject?.currentStage || 'ideas_planning';
 
-      const fixedProgressMap = {
-        'ideas_planning': 0,
-        'creation': 20,
-        'approval': 40,
-        'distribution': 60,
-        'monitoring': 80,
-        'completed': 100
-      };
-
       stages.forEach(stage => {
         stageProgress[stage] = 0;
       });
 
-      // Setze Progress basierend auf aktuellem Stage
-      const overallPercent = fixedProgressMap[currentStage as keyof typeof fixedProgressMap] || 0;
+      // Setze Progress basierend auf aktuellem Stage (aus zentraler Konstante)
+      const overallPercent = PIPELINE_STAGE_PROGRESS[currentStage] || 0;
 
 
       const progress = {

@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
-import { PipelineStage, PIPELINE_STAGE_PROGRESS } from '@/types/project';
-import { toastService } from '@/lib/utils/toast';
-import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
-import { getProgressColor } from '@/lib/utils/progress-helpers';
+import { useState, useEffect } from 'react';
+import { PipelineStage } from '@/types/project';
+import { taskService } from '@/lib/firebase/task-service';
+import { ProjectTask } from '@/types/tasks';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -16,53 +15,101 @@ import { useProject } from '@/app/dashboard/projects/[projectId]/context/Project
 
 interface PipelineProgressDashboardProps {}
 
-function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
+export default function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
   // Context verwenden statt Props
   const { project, projectId, organizationId, setActiveTab } = useProject();
   const currentStage = project?.currentStage || 'creation';
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('month');
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState({
+    overallPercent: 0,
+    taskCompletion: 0,
+    criticalTasksRemaining: 0,
+    lastUpdated: new Date()
+  });
 
-  // React Query Hook für Tasks und Progress
-  const { tasks, progress, isLoading, error } = useProjectTasks(projectId, organizationId);
+  // Lade Tasks und berechne Fortschritt
+  useEffect(() => {
+    const loadTasksAndCalculateProgress = async () => {
+      if (!projectId || !organizationId) return;
 
-  // Error Handling
-  if (error) {
-    toastService.error('Fehler beim Laden der Tasks');
-  }
+      try {
+        setLoading(true);
+        const projectTasks = await taskService.getByProjectId(projectId, organizationId);
+        setTasks(projectTasks);
 
-  // Pipeline-Fortschritt aus zentraler Konstante
-  const pipelinePercent = PIPELINE_STAGE_PROGRESS[currentStage] || 0;
+        // Berechne Fortschritt
+        const totalTasks = projectTasks.length;
+        const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
+        const criticalTasks = projectTasks.filter(task =>
+          (task.priority === 'urgent' || task.priority === 'high') &&
+          task.status !== 'completed'
+        ).length;
 
-  // useMemo für konstante Objekte (verhindert Re-Creation bei jedem Render)
-  const stageLabels = useMemo<Record<PipelineStage, string>>(() => ({
+        // Wenn keine Tasks vorhanden, setze Fortschritt auf 100%
+        const taskCompletionPercent = totalTasks === 0 ? 100 : Math.round((completedTasks / totalTasks) * 100);
+
+        // Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
+        const fixedProgressMap = {
+          'ideas_planning': 0,    // 0% Ideen & Planung
+          'creation': 20,         // 20% Content und Materialien
+          'approval': 40,         // 40% Freigabe
+          'distribution': 60,     // 60% Verteilung
+          'monitoring': 80,       // 80% Monitoring
+          'completed': 100        // 100% Abgeschlossen
+        };
+
+        const pipelinePercent = (fixedProgressMap as any)[currentStage] || 0;
+
+        setProgress({
+          overallPercent: pipelinePercent,
+          taskCompletion: taskCompletionPercent,
+          criticalTasksRemaining: criticalTasks,
+          lastUpdated: new Date()
+        });
+      } catch (error) {
+        console.error('Fehler beim Laden der Tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTasksAndCalculateProgress();
+  }, [projectId, organizationId, currentStage]);
+
+  const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
     'creation': 'Content und Materialien',
     'approval': 'Freigabe',
     'distribution': 'Verteilung',
     'monitoring': 'Monitoring',
     'completed': 'Abgeschlossen'
-  }), []);
+  } as any;
 
-  const stageOrder = useMemo<PipelineStage[]>(() => [
+  const stageOrder: PipelineStage[] = [
     'ideas_planning',
     'creation',
     'approval',
     'distribution',
     'monitoring',
     'completed'
-  ], []);
-
-  // useCallback für Handler (stabile Referenz, verhindert Re-Renders von Child-Komponenten)
-  const handleNavigateToTasks = useCallback(() => {
-    setActiveTab('tasks');
-  }, [setActiveTab]);
+  ];
 
   const getStageStatus = (stage: PipelineStage): 'completed' | 'current' | 'upcoming' => {
     const currentIndex = stageOrder.indexOf(currentStage);
     const stageIndex = stageOrder.indexOf(stage);
-
+    
     if (stageIndex < currentIndex) return 'completed';
     if (stageIndex === currentIndex) return 'current';
     return 'upcoming';
+  };
+
+  const getProgressColor = (percent: number) => {
+    if (percent >= 90) return 'bg-green-500';
+    if (percent >= 70) return 'bg-blue-500';
+    if (percent >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
   const getMilestoneIcon = (achieved: boolean) => {
@@ -72,33 +119,6 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
       <TrophyIcon className="w-5 h-5 text-gray-300" />
     );
   };
-
-  // Loading Skeleton
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-primary rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-6 bg-blue-400 rounded w-48 animate-pulse"></div>
-            <div className="h-6 w-6 bg-blue-400 rounded animate-pulse"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Skeleton für 3 Spalten */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-3">
-                <div className="h-4 bg-blue-400 rounded w-32 animate-pulse"></div>
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 bg-blue-400 rounded w-16 animate-pulse"></div>
-                  <div className="flex-1 bg-blue-400 rounded-full h-3 animate-pulse"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 h-3 bg-blue-400 rounded w-48 animate-pulse"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -117,12 +137,12 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
             <p className="text-blue-100 text-sm mb-2">Gesamt-Fortschritt</p>
             <div className="flex items-center space-x-3">
               <div className="text-3xl font-bold">
-                {Math.round(pipelinePercent)}%
+                {Math.round(progress.overallPercent)}%
               </div>
               <div className="flex-1 bg-blue-500 rounded-full h-3">
                 <div
                   className="bg-white rounded-full h-3 transition-all duration-300"
-                  style={{ width: `${pipelinePercent}%` }}
+                  style={{ width: `${progress.overallPercent}%` }}
                 ></div>
               </div>
             </div>
@@ -144,7 +164,7 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
             </div>
             {tasks.length === 0 && (
               <button
-                onClick={handleNavigateToTasks}
+                onClick={() => setActiveTab('tasks')}
                 className="text-xs text-blue-100 hover:text-white mt-1 underline"
               >
                 Tasks erstellen
@@ -176,7 +196,8 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
         </div>
 
         <div className="mt-4 text-xs text-blue-100">
-          Letztes Update: {new Date().toLocaleString('de-DE')}
+          Letztes Update: {progress.lastUpdated.toLocaleString('de-DE')}
+          {loading && <span className="ml-2">(Wird geladen...)</span>}
         </div>
       </div>
 
@@ -200,6 +221,3 @@ function PipelineProgressDashboard({}: PipelineProgressDashboardProps) {
     </div>
   );
 }
-
-// React.memo verhindert Re-Renders wenn Props gleich bleiben
-export default React.memo(PipelineProgressDashboard);

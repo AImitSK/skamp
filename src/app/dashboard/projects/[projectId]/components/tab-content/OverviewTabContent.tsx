@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
@@ -32,7 +32,7 @@ interface OverviewTabContentProps {
   onNavigateToTasks: () => void;
 }
 
-export function OverviewTabContent({
+function OverviewTabContentComponent({
   project,
   currentOrganization,
   todayTasks,
@@ -166,3 +166,6 @@ export function OverviewTabContent({
     </div>
   );
 }
+
+// React.memo verhindert Re-Renders wenn Props gleich bleiben (wichtig: 8 Props!)
+export const OverviewTabContent = memo(OverviewTabContentComponent);

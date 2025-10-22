@@ -11,6 +11,20 @@ export type PipelineStage =
   | 'monitoring'         // Monitoring-Phase
   | 'completed';         // Abgeschlossen
 
+/**
+ * Feste Pipeline-Fortschritt-Werte basierend auf aktueller Phase
+ *
+ * Eliminiert Code-Duplication zwischen PipelineProgressDashboard und project-service
+ */
+export const PIPELINE_STAGE_PROGRESS: Record<PipelineStage, number> = {
+  'ideas_planning': 0,    // 0% Ideen & Planung
+  'creation': 20,         // 20% Content und Materialien
+  'approval': 40,         // 40% Freigabe
+  'distribution': 60,     // 60% Verteilung
+  'monitoring': 80,       // 80% Monitoring
+  'completed': 100        // 100% Abgeschlossen
+} as const;
+
 // Legacy Stage-Namen für Rückwärtskompatibilität in Tests
 export type LegacyPipelineStage = 
   | 'planning'           // Legacy: maps to 'ideas_planning'

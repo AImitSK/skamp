@@ -44,6 +44,8 @@ interface ProjectProviderProps {
   projectId: string;
   organizationId: string;
   initialProject?: Project | null;
+  initialActiveTab?: ProjectContextValue['activeTab'];
+  onTabChange?: (tab: ProjectContextValue['activeTab']) => void;
   onReload?: () => Promise<void>;
 }
 
@@ -58,12 +60,22 @@ export function ProjectProvider({
   projectId,
   organizationId,
   initialProject = null,
+  initialActiveTab = 'overview',
+  onTabChange,
   onReload,
 }: ProjectProviderProps) {
   const [project, setProject] = useState<Project | null>(initialProject);
-  const [activeTab, setActiveTab] = useState<ProjectContextValue['activeTab']>('overview');
+  const [activeTab, setActiveTabInternal] = useState<ProjectContextValue['activeTab']>(initialActiveTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Wrapper für setActiveTab - nutzt onTabChange callback wenn verfügbar
+  const setActiveTab = useCallback((tab: ProjectContextValue['activeTab']) => {
+    setActiveTabInternal(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+  }, [onTabChange]);
 
   const reloadProject = useCallback(async () => {
     if (onReload) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -94,16 +94,20 @@ export default function ProjectDetailPage() {
   // Setup. Die Hooks werden nicht bedingt aufgerufen - sie stehen alle am Anfang der Komponente.
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const projectId = params.projectId as string;
+
+  // Tab aus URL lesen (oder 'overview' als default)
+  const tabFromUrl = (searchParams.get('tab') as 'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring') || 'overview';
 
   // Alle React Hooks müssen vor bedingten Returns stehen
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring'>(tabFromUrl);
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [dokumenteFolder, setDokumenteFolder] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
@@ -174,6 +178,41 @@ export default function ProjectDetailPage() {
       loadStrategyDocuments();
     }
   }, [activeTab, project, currentOrganization?.id]);
+
+  // URL-basierte Tab-Navigation
+  useEffect(() => {
+    // Synchronisiere State mit URL wenn sich URL ändert
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  const handleTabChange = useCallback((tab: typeof activeTab) => {
+    // Update URL mit shallow routing (kein Page-Reload)
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.push(`?${params.toString()}`, { scroll: false });
+
+    // Update State
+    setActiveTab(tab);
+  }, [router, searchParams]);
+
+  // Handler für Guide-Step Toggle (mit useCallback für Performance)
+  const handleStepToggle = useCallback(async (stepId: string) => {
+    const newSteps = completedGuideSteps.includes(stepId)
+      ? completedGuideSteps.filter(id => id !== stepId)
+      : [...completedGuideSteps, stepId];
+
+    setCompletedGuideSteps(newSteps);
+
+    if (project?.id && currentOrganization?.id && user?.uid) {
+      try {
+        await projectService.update(project.id, {
+          completedGuideSteps: newSteps
+        }, { organizationId: currentOrganization.id, userId: user.uid });
+      } catch (error) {
+        console.error('Fehler beim Speichern der Guide-Steps:', error);
+      }
+    }
+  }, [completedGuideSteps, project?.id, currentOrganization?.id, user?.uid]);
 
   // Computed Values mit useMemo
   const assignedTeamMembers = useMemo(() => {
@@ -645,6 +684,8 @@ export default function ProjectDetailPage() {
       projectId={projectId}
       organizationId={currentOrganization?.id || ''}
       initialProject={project}
+      initialActiveTab={activeTab}
+      onTabChange={handleTabChange}
       onReload={loadProject}
     >
       <ErrorBoundary>
@@ -662,7 +703,7 @@ export default function ProjectDetailPage() {
       <div className="space-y-6 mb-8 mt-6">
         {/* Content Tabs Box - Full Width */}
         <div className="bg-white rounded-lg border border-gray-200">
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         
         <div className="p-6">
           {/* Übersicht Tab */}
@@ -674,24 +715,8 @@ export default function ProjectDetailPage() {
               loadingTodayTasks={loadingTodayTasks}
               user={user!}
               completedGuideSteps={completedGuideSteps}
-              onStepToggle={async (stepId) => {
-                const newSteps = completedGuideSteps.includes(stepId)
-                  ? completedGuideSteps.filter(id => id !== stepId)
-                  : [...completedGuideSteps, stepId];
-
-                setCompletedGuideSteps(newSteps);
-
-                if (project?.id && currentOrganization?.id) {
-                  try {
-                    await projectService.update(project.id, {
-                      completedGuideSteps: newSteps
-                    }, { organizationId: currentOrganization.id, userId: user!.uid });
-                  } catch (error) {
-                    console.error('Fehler beim Speichern der Guide-Steps:', error);
-                  }
-                }
-              }}
-              onNavigateToTasks={() => setActiveTab('tasks')}
+              onStepToggle={handleStepToggle}
+              onNavigateToTasks={() => handleTabChange('tasks')}
             />
           )}
 
