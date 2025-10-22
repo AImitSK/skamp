@@ -8,10 +8,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// Unterstütze beide Env-Variablen (GEMINI_API_KEY oder GOOGLE_GENAI_API_KEY)
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY nicht gesetzt!');
+  console.error('GEMINI_API_KEY oder GOOGLE_GENAI_API_KEY nicht gesetzt!');
 }
 
 export async function POST(request: NextRequest) {

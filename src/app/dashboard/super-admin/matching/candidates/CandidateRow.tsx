@@ -167,27 +167,15 @@ function CandidateRow({
     try {
       setActionLoading(true);
 
-      // ✅ API Route nutzen statt direkten Import (Genkit läuft nur server-side)
-      const response = await fetch('/api/matching/import-candidate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          candidateId: candidate.id!,
-          selectedVariantIndex: 0,
-          userId: user.uid,
-          userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
-          organizationId: currentOrganization?.id || user.uid,
-          useAiMerge: useAiMerge // ✅ Nutzt globalen Toggle
-        })
+      // ✅ Import läuft client-side (Firebase Auth), nur AI-Merge über API Route
+      const result = await matchingService.importCandidateWithAutoMatching({
+        candidateId: candidate.id!,
+        selectedVariantIndex: 0,
+        userId: user.uid,
+        userEmail: user.email || '', // ✅ Für SuperAdmin-Erkennung
+        organizationId: currentOrganization?.id || user.uid,
+        useAiMerge: useAiMerge // ✅ Nutzt globalen Toggle
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Import failed');
-      }
 
       if (result.success) {
         toast.success('Kandidat importiert!', { id: toastId });

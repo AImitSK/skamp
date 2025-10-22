@@ -125,23 +125,38 @@ export async function importCandidateWithAutoMatching(params: {
       console.log(`📊 Merge ${candidate.variants.length} Varianten mit Gemini AI via Genkit...`);
 
       try {
-        // ✅ Genkit Flow verwenden statt fetch
-        const { mergeVariantsFlow } = await import('@/lib/ai/flows/merge-variants');
-        const mergedData = await mergeVariantsFlow({ variants: candidate.variants });
-
-        console.log('✅ AI-Merge erfolgreich (Genkit)!');
-        console.log('📋 Gemergter Datensatz:', {
-          name: mergedData.displayName,
-          emails: mergedData.emails?.length || 0,
-          phones: mergedData.phones?.length || 0,
-          beats: mergedData.beats?.length || 0,
-          publications: mergedData.publications?.length || 0
+        // ✅ API Route verwenden (server-side, läuft in Edge/Vercel Function)
+        const response = await fetch('/api/ai/merge-variants', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ variants: candidate.variants })
         });
 
-        contactDataToUse = mergedData;
+        if (!response.ok) {
+          throw new Error(`API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || 'KI-Merge fehlgeschlagen');
+        }
+
+        console.log('✅ AI-Merge erfolgreich (Gemini 2.0 Flash)!');
+        console.log('📋 Gemergter Datensatz:', {
+          name: result.mergedData.displayName,
+          emails: result.mergedData.emails?.length || 0,
+          phones: result.mergedData.phones?.length || 0,
+          beats: result.mergedData.beats?.length || 0,
+          publications: result.mergedData.publications?.length || 0
+        });
+
+        contactDataToUse = result.mergedData;
 
       } catch (error) {
-        console.error('❌ Genkit AI-Merge Error:', error);
+        console.error('❌ AI-Merge Error:', error);
         console.log('⤵️  Fallback: Nutze ausgewählte Variante');
         contactDataToUse = candidate.variants[params.selectedVariantIndex].contactData;
       }
