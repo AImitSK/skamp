@@ -115,19 +115,30 @@ Antworte NUR mit dem gemergten JSON-Objekt im korrekten Schema-Format.`;
         publications: result.output.publications?.length || 0
       });
 
+      // 🛡️ Validierung: Prüfe ob Genkit ein valides Objekt zurückgab
+      if (!result.output || typeof result.output !== 'object') {
+        console.error('❌ Genkit gab kein valides Objekt zurück:', result.output);
+        throw new Error('Invalid Genkit output: Not an object');
+      }
+
+      if (!result.output.displayName || !result.output.name) {
+        console.error('❌ Genkit gab kein valides Contact-Objekt zurück (fehlender Name)');
+        throw new Error('Invalid Genkit output: Missing required name fields');
+      }
+
       // ✅ WICHTIG: Fallbacks für fehlende Required-Felder (falls KI Schema nicht perfekt befolgt)
 
       // Emails ist REQUIRED im Schema
-      if (!result.output.emails || result.output.emails.length === 0) {
+      if (!result.output.emails?.length) {
         console.log('⚠️  KI gab keine Emails zurück → Nehme von erster Variante');
         result.output.emails = variants[0].contactData.emails;
       }
 
       // Publications (optional, aber wichtig)
-      if (!result.output.publications || result.output.publications.length === 0) {
+      if (!result.output.publications?.length) {
         const allPublications = new Set<string>();
         for (const variant of variants) {
-          if (variant.contactData.publications) {
+          if (variant.contactData.publications?.length) {
             variant.contactData.publications.forEach(pub => allPublications.add(pub));
           }
         }
