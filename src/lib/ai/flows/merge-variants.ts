@@ -36,25 +36,38 @@ export const mergeVariantsFlow = ai.defineFlow(
 
     console.log(`🤖 Genkit Flow: Merging ${variants.length} variants with AI...`);
 
-    // Baue intelligenten Prompt
-    const prompt = `Merge diese ${variants.length} Journalist-Varianten zu einem optimalen Datensatz.
+    // Baue intelligenten Prompt mit Beispiel
+    const prompt = `Merge diese ${variants.length} Journalist-Varianten zu EINEM Datensatz.
 
-VARIANTEN (JSON):
+VARIANTEN:
 ${JSON.stringify(variants, null, 2)}
 
-MERGE-REGELN:
-- NAME: Vollständigste Form (title, firstName, lastName, suffix)
-- EMAILS: Alle dedupliziert, geschäftliche = primary
-- PHONES: Alle dedupliziert, mobile = primary
-- POSITION: Spezifischste Position
-- COMPANY: Vollständigster Name
-- BEATS/MEDIA_TYPES/PUBLICATIONS: ALLE kombinieren (dedupliziert)
-- SOCIAL_PROFILES: Alle dedupliziert (nach platform)
-- hasMediaProfile: true wenn mindestens eine Variante Journalist ist
+MERGE-STRATEGIE (WICHTIG - lies genau!):
 
-WICHTIG: Nur vorhandene Daten verwenden, nichts erfinden!
+1. NAME: Nimm vollständigste Form
+   - Wenn Variante hat title → übernehme title
+   - Wenn Variante hat suffix → übernehme suffix
 
-Antworte NUR mit dem gemergten JSON im Schema-Format.`;
+2. EMAILS: Sammle ALLE einzigartigen Emails aus ALLEN Varianten
+   - Dedupliziere (gleiche Email nur 1x)
+   - Geschäftliche Email (@spiegel.de etc.) = isPrimary: true
+
+3. PHONES: Sammle ALLE einzigartigen Phones aus ALLEN Varianten
+   - Mobile = isPrimary: true
+
+4. BEATS: Sammle ALLE einzigartigen Beats aus ALLEN Varianten
+   - Beispiel: Var1 hat ["Politik"], Var2 hat ["Politik", "Wirtschaft"] → Result: ["Politik", "Wirtschaft"]
+
+5. PUBLICATIONS: Sammle ALLE einzigartigen Publications aus ALLEN Varianten
+   - Beispiel: Var1 hat ["Spiegel"], Var2 hat ["Spiegel", "Spiegel Online"] → Result: ["Spiegel", "Spiegel Online"]
+
+6. MEDIA_TYPES: Sammle ALLE einzigartigen mediaTypes aus ALLEN Varianten
+
+7. SOCIAL_PROFILES: Sammle ALLE einzigartigen Profiles (dedupliziert nach platform)
+
+KRITISCH: "ALLE" bedeutet wirklich ALLE! Gehe durch jede Variante und sammle jeden Wert!
+
+Antworte NUR mit dem gemergten JSON.`;
 
     try {
       // Genkit Generate mit Structured Output
