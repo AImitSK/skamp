@@ -1,6 +1,8 @@
 // src/lib/ai/genkit-config.ts
 // Zentrale Genkit-Konfiguration für alle AI-Flows
 
+import 'server-only'; // ✅ Sicherstellen dass dieser Code nur auf dem Server läuft
+
 import { genkit } from 'genkit';
 import { googleAI, gemini20Flash } from '@genkit-ai/googleai';
 
