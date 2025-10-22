@@ -4,7 +4,7 @@
 // Webpack Config externalisiert diese Module für Client-Bundle
 
 import { genkit } from 'genkit';
-import { googleAI, gemini20Flash } from '@genkit-ai/googleai';
+import { googleAI, gemini15Flash } from '@genkit-ai/googleai';
 
 /**
  * Genkit Instance mit Google AI Plugin
@@ -13,11 +13,11 @@ import { googleAI, gemini20Flash } from '@genkit-ai/googleai';
  */
 export const ai = genkit({
   plugins: [googleAI()],
-  model: gemini20Flash // Default Model
+  model: gemini15Flash // Stabil + Produktionsreif (nicht Preview!)
 });
 
 // Export Models für einfachen Import
-export { gemini20Flash };
+export { gemini15Flash };
 
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';

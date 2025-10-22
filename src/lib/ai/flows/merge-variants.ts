@@ -2,7 +2,7 @@
 // Genkit Flow für intelligentes Mergen von Kontakt-Varianten
 // HINWEIS: Nur via dynamischem Import in Server-Context verwenden!
 
-import { ai, gemini20Flash } from '../genkit-config';
+import { ai, gemini15Flash } from '../genkit-config';
 import {
   MergeVariantsInputSchema,
   MergedContactSchema,
@@ -89,7 +89,7 @@ KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusä
     try {
       // Genkit Generate mit Structured Output
       const result = await ai.generate({
-        model: gemini20Flash,
+        model: gemini15Flash,
         output: {
           schema: MergedContactSchema
         },
