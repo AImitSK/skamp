@@ -38,7 +38,7 @@ export class FirebaseAIService {
   private readonly templatesUrl = '/api/ai/templates';
   private readonly healthUrl = '/api/ai/health';
   private readonly emailAnalysisUrl = '/api/ai/email-insights'; // MIGRATED: Genkit-based API
-  private readonly emailResponseUrl = '/api/ai/email-response';
+  private readonly emailResponseUrl = '/api/ai/email-response-suggestions'; // MIGRATED: Genkit-based API
   
   async generatePressRelease(prompt: string): Promise<string> {
     try {
