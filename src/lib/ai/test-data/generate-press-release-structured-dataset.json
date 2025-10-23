@@ -1,0 +1,130 @@
+[
+  {
+    "testCaseId": "scenario-1-tech-product-launch",
+    "description": "Tech-Startup Produktlaunch mit allen Elementen",
+    "input": {
+      "prompt": "DataFlow startet KI-Plattform SmartAnalytics Pro für Unternehmensdaten-Analyse. 10x schnellere Verarbeitung, 80% Zeitersparnis. Ab 299€/Monat verfügbar.",
+      "context": {
+        "industry": "technology",
+        "tone": "modern",
+        "audience": "b2b",
+        "companyName": "DataFlow"
+      },
+      "documentContext": null
+    },
+    "reference": {
+      "headlineMinLength": 40,
+      "headlineMaxLength": 75,
+      "leadMinLength": 80,
+      "leadMaxLength": 200,
+      "bodyParagraphsCount": {"min": 3, "max": 4},
+      "hashtagsCount": {"min": 2, "max": 3},
+      "quoteRequired": true,
+      "socialOptimized": true
+    }
+  },
+  {
+    "testCaseId": "scenario-2-healthcare-innovation",
+    "description": "Gesundheitswesen - Telemedizin-System",
+    "input": {
+      "prompt": "MediCare GmbH führt Telemedizin-System ein. 500 Hausarztpraxen verbunden. 60% Reduktion der Wartezeiten. 5 Millionen Euro Förderung vom Bundesgesundheitsministerium.",
+      "context": {
+        "industry": "healthcare",
+        "tone": "formal",
+        "audience": "media",
+        "companyName": "MediCare GmbH"
+      },
+      "documentContext": null
+    },
+    "reference": {
+      "headlineMinLength": 40,
+      "headlineMaxLength": 75,
+      "leadMinLength": 80,
+      "leadMaxLength": 200,
+      "bodyParagraphsCount": {"min": 3, "max": 4},
+      "hashtagsCount": {"min": 2, "max": 3},
+      "quoteRequired": true,
+      "socialOptimized": true
+    }
+  },
+  {
+    "testCaseId": "scenario-3-sustainability",
+    "description": "Nachhaltigkeitsinitiative - CO2-Reduktion",
+    "input": {
+      "prompt": "TechParts stellt Produktion auf 100% erneuerbare Energien um. 45.000 Tonnen CO2 Reduktion pro Jahr. 50 Millionen Euro Investment in Solar und Wind. Umstellung bis Ende 2025.",
+      "context": {
+        "industry": "manufacturing",
+        "tone": "formal",
+        "audience": "media",
+        "companyName": "TechParts"
+      },
+      "documentContext": null
+    },
+    "reference": {
+      "headlineMinLength": 40,
+      "headlineMaxLength": 75,
+      "leadMinLength": 80,
+      "leadMaxLength": 200,
+      "bodyParagraphsCount": {"min": 3, "max": 4},
+      "hashtagsCount": {"min": 2, "max": 3},
+      "quoteRequired": true,
+      "socialOptimized": true
+    }
+  },
+  {
+    "testCaseId": "scenario-4-startup-funding",
+    "description": "Startup - Seed-Finanzierung",
+    "input": {
+      "prompt": "PropTech HomeMatch schließt 2 Millionen Euro Seed-Runde ab. KI-gestütztes Wohnungs-Matching. 50.000 Nutzer in 3 Monaten. Expansion nach Österreich und Schweiz geplant.",
+      "context": {
+        "industry": "technology",
+        "tone": "startup",
+        "audience": "media",
+        "companyName": "HomeMatch"
+      },
+      "documentContext": null
+    },
+    "reference": {
+      "headlineMinLength": 40,
+      "headlineMaxLength": 75,
+      "leadMinLength": 80,
+      "leadMaxLength": 200,
+      "bodyParagraphsCount": {"min": 3, "max": 4},
+      "hashtagsCount": {"min": 2, "max": 3},
+      "quoteRequired": true,
+      "socialOptimized": true
+    }
+  },
+  {
+    "testCaseId": "scenario-5-with-documents",
+    "description": "Mit Dokumenten-Kontext",
+    "input": {
+      "prompt": "CloudSystems übernimmt KI-Startup DeepLearn für 120 Millionen Euro",
+      "context": {
+        "industry": "technology",
+        "tone": "formal",
+        "audience": "media",
+        "companyName": "CloudSystems AG"
+      },
+      "documentContext": {
+        "documents": [
+          {
+            "fileName": "acquisition-details.md",
+            "plainText": "CloudSystems AG übernimmt DeepLearn GmbH. Transaktion: 120 Mio. EUR. DeepLearn: 85 Mitarbeiter, 200 Enterprise-Kunden in DACH. CloudSystems: 2.500 Mitarbeiter, 450 Mio. EUR Jahresumsatz.",
+            "excerpt": "Details zur Übernahme von DeepLearn durch CloudSystems"
+          }
+        ]
+      }
+    },
+    "reference": {
+      "headlineMinLength": 40,
+      "headlineMaxLength": 75,
+      "leadMinLength": 80,
+      "leadMaxLength": 200,
+      "bodyParagraphsCount": {"min": 3, "max": 4},
+      "hashtagsCount": {"min": 2, "max": 3},
+      "quoteRequired": true,
+      "socialOptimized": true
+    }
+  }
+]

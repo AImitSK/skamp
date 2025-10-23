@@ -1,0 +1,266 @@
+[
+  {
+    "testCaseId": "scenario-1-tech-startup-launch",
+    "description": "Tech-Startup Produktlaunch mit konkreten Zahlen",
+    "input": {
+      "content": "Das Berliner Startup DataFlow hat heute die KI-Plattform SmartAnalytics Pro vorgestellt, die Unternehmensdaten zehnmal schneller analysiert als herkömmliche Tools. Die Software nutzt maschinelles Lernen und kann komplexe Datensätze in Echtzeit verarbeiten. DataFlow verspricht eine Zeitersparnis von bis zu 80 Prozent bei der Datenanalyse. Die Lösung ist ab sofort für KMUs und Enterprise-Kunden verfügbar und kostet ab 299 Euro pro Monat.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "technology",
+        "tone": "modern",
+        "audience": "b2b"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["DataFlow", "KI", "SmartAnalytics", "Datenanalyse"],
+      "minSeoScore": 70,
+      "qualityCriteria": {
+        "newsworthy": true,
+        "containsNumbers": true,
+        "clearSubject": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-2-healthcare-innovation",
+    "description": "Gesundheitswesen - Medizinische Innovation mit Patientenfokus",
+    "input": {
+      "content": "Die MediCare GmbH aus München führt ein neues Telemedizin-System ein, das Patienten in ländlichen Gebieten besseren Zugang zu Fachärzten ermöglicht. Das System verbindet über 500 Hausarztpraxen mit Spezialisten in Universitätskliniken. Erste Pilotprojekte zeigen eine Reduktion der Wartezeiten um 60 Prozent. Das Bundesgesundheitsministerium unterstützt das Projekt mit 5 Millionen Euro Fördergeldern.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "healthcare",
+        "tone": "formal",
+        "audience": "media"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["MediCare", "Telemedizin", "Patienten"],
+      "minSeoScore": 70,
+      "qualityCriteria": {
+        "trustworthy": true,
+        "patientFocused": true,
+        "clearBenefit": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-3-financial-services",
+    "description": "Finanzwesen - Neue Dienstleistung mit Sicherheitsfokus",
+    "input": {
+      "content": "Die FinanzPlus Bank startet einen neuen digitalen Vermögensberatungsservice mit KI-gestützter Risikoanalyse. Kunden können ihre Portfolios automatisch optimieren lassen und erhalten personalisierte Anlageempfehlungen. Der Service erfüllt alle BaFin-Anforderungen und verwendet Ende-zu-Ende-Verschlüsselung. Über 10.000 Kunden haben sich bereits in der Betaphase angemeldet.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "finance",
+        "tone": "formal",
+        "audience": "b2b"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["FinanzPlus", "KI", "Vermögensberatung"],
+      "minSeoScore": 70,
+      "qualityCriteria": {
+        "conservative": true,
+        "securityFocused": true,
+        "compliant": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-4-manufacturing-sustainability",
+    "description": "Produktion - Nachhaltigkeitsinitiative mit CO2-Reduktion",
+    "input": {
+      "content": "Der Automobilzulieferer TechParts stellt seine Produktion auf 100 Prozent erneuerbare Energien um und reduziert damit den CO2-Ausstoß um 45.000 Tonnen pro Jahr. Das Unternehmen investiert 50 Millionen Euro in Solarpanels und Windkraftanlagen an allen deutschen Standorten. Die Umstellung soll bis Ende 2025 abgeschlossen sein. TechParts beschäftigt 3.500 Mitarbeiter und beliefert alle großen deutschen Automobilhersteller.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "manufacturing",
+        "tone": "formal",
+        "audience": "media"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["TechParts", "CO2", "erneuerbare"],
+      "minSeoScore": 70,
+      "qualityCriteria": {
+        "sustainabilityFocused": true,
+        "containsNumbers": true,
+        "industryRelevant": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-5-short-content",
+    "description": "Kurzer Content - Minimalinformation testen",
+    "input": {
+      "content": "StartupHub eröffnet neuen Coworking-Space in Hamburg mit 200 Arbeitsplätzen. Die Eröffnung findet am 15. März statt.",
+      "currentHeadline": null,
+      "context": null
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["StartupHub", "Coworking", "Hamburg"],
+      "minSeoScore": 65,
+      "qualityCriteria": {
+        "clearSubject": true,
+        "location": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-6-improve-existing-headline",
+    "description": "Bestehende schwache Headline verbessern",
+    "input": {
+      "content": "Die EcoTech GmbH hat ein neues Recycling-Verfahren entwickelt, das Elektronikschrott zu 95 Prozent wiederverwerten kann. Das patentierte Verfahren trennt seltene Erden und Edelmetalle effizienter als bisherige Methoden. Großkunden aus der Elektronikindustrie haben bereits Interesse bekundet. Die Pilotanlage in Frankfurt verarbeitet täglich bis zu 5 Tonnen Elektroschrott.",
+      "currentHeadline": "Neue Technologie für Recycling",
+      "context": {
+        "industry": "technology",
+        "tone": "modern",
+        "audience": "b2b"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["EcoTech", "Recycling", "Elektronikschrott"],
+      "minSeoScore": 75,
+      "qualityCriteria": {
+        "betterThanOriginal": true,
+        "specificSubject": true,
+        "containsNumbers": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-7-long-complex-content",
+    "description": "Langer, komplexer Content mit vielen Details",
+    "input": {
+      "content": "Die CloudSystems AG, führender Anbieter von Enterprise-Cloud-Lösungen mit Hauptsitz in Stuttgart, gibt heute die Übernahme des KI-Startups DeepLearn aus Berlin bekannt. Die Transaktion im Wert von 120 Millionen Euro stärkt CloudSystems' Position im Bereich künstlicher Intelligenz und maschinellem Lernen. DeepLearn entwickelt seit 2019 innovative Lösungen für automatisierte Datenanalyse und hat bereits über 200 Enterprise-Kunden in Deutschland, Österreich und der Schweiz. Die 85 Mitarbeiter von DeepLearn werden in die CloudSystems-Organisation integriert und arbeiten künftig am neuen Standort München. CloudSystems beschäftigt derzeit 2.500 Mitarbeiter weltweit und erzielte im letzten Geschäftsjahr einen Umsatz von 450 Millionen Euro. CEO Dr. Martin Weber erklärt: 'Mit der Übernahme von DeepLearn erweitern wir unser Portfolio um hochspezialisierte KI-Kompetenz und können unseren Kunden noch leistungsfähigere Cloud-Lösungen anbieten.' Die Transaktion steht noch unter dem Vorbehalt der kartellrechtlichen Genehmigung und soll bis Ende Q2 2025 abgeschlossen sein.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "technology",
+        "tone": "formal",
+        "audience": "media"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["CloudSystems", "DeepLearn", "Übernahme", "KI"],
+      "minSeoScore": 80,
+      "qualityCriteria": {
+        "focusOnMainNews": true,
+        "containsNumbers": true,
+        "companyNames": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-8-b2c-consumer-product",
+    "description": "B2C Produkt - Emotionale Ansprache",
+    "input": {
+      "content": "Die FitLife App erreicht 1 Million Downloads und wird zur beliebtesten Fitness-App in Deutschland. Nutzer können personalisierte Trainingspläne erstellen, Ernährung tracken und sich mit Freunden vernetzen. Die App ist kostenlos und finanziert sich über Premium-Features. Besonders beliebt sind die 15-Minuten-Workouts für zu Hause, die keine Geräte erfordern. FitLife wurde 2023 in Hamburg gegründet und hat mittlerweile 15 Mitarbeiter.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "technology",
+        "tone": "modern",
+        "audience": "consumer"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["FitLife", "Fitness", "App"],
+      "minSeoScore": 75,
+      "qualityCriteria": {
+        "consumerFocused": true,
+        "milestoneAchievement": true,
+        "accessibleLanguage": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-9-no-numbers-abstract",
+    "description": "Abstrakter Content ohne konkrete Zahlen",
+    "input": {
+      "content": "Die Digital Consulting Group erweitert ihr Beratungsportfolio um Nachhaltigkeits- und ESG-Services. Unternehmen können künftig Unterstützung bei der Entwicklung von Nachhaltigkeitsstrategien und der Erfüllung von ESG-Kriterien erhalten. Das neue Angebot richtet sich vor allem an mittelständische Unternehmen, die ihre Nachhaltigkeitsziele professionalisieren möchten. Ein Team von erfahrenen Nachhaltigkeitsexperten steht ab sofort zur Verfügung.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "technology",
+        "tone": "formal",
+        "audience": "b2b"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["Digital Consulting", "Nachhaltigkeit", "ESG"],
+      "minSeoScore": 70,
+      "qualityCriteria": {
+        "clearServiceOffering": true,
+        "targetAudience": true
+      }
+    }
+  },
+  {
+    "testCaseId": "scenario-10-startup-tone",
+    "description": "Startup-Tonalität - Energiegeladen und mutig",
+    "input": {
+      "content": "Das PropTech-Startup HomeMatch revolutioniert die Wohnungssuche mit KI-gestütztem Matching. Die Plattform analysiert Präferenzen von Wohnungssuchenden und schlägt passende Objekte vor, bevor diese öffentlich inseriert werden. In den ersten drei Monaten haben bereits 50.000 Nutzer die Plattform registriert. HomeMatch hat gerade eine Seed-Finanzierung über 2 Millionen Euro abgeschlossen und plant die Expansion nach Österreich und die Schweiz.",
+      "currentHeadline": null,
+      "context": {
+        "industry": "technology",
+        "tone": "startup",
+        "audience": "media"
+      }
+    },
+    "reference": {
+      "expectedHeadlineCount": 3,
+      "minLength": 40,
+      "maxLength": 75,
+      "shouldHaveActiveVerb": true,
+      "expectedStyles": ["Faktisch-Direkt", "Nutzen-Orientiert", "Kontext-Reich"],
+      "keywordsShouldAppear": ["HomeMatch", "KI", "Wohnungssuche"],
+      "minSeoScore": 75,
+      "qualityCriteria": {
+        "disruptive": true,
+        "growthFocused": true,
+        "innovative": true
+      }
+    }
+  }
+]

@@ -14,6 +14,11 @@ interface HeadlineGeneratorProps {
 interface HeadlineOption {
   id: string;
   title: string;
+  length: number;
+  hasActiveVerb: boolean;
+  keywordDensity: number;
+  seoScore: number;
+  style: string;
 }
 
 export function HeadlineGenerator({
@@ -39,27 +44,19 @@ export function HeadlineGenerator({
     }
 
     try {
-      // Nutze bestehende KI-Infrastruktur wie im FloatingAIToolbar
-      const prompt = `Du bist ein erfahrener PR-Experte. Erstelle 3 professionelle Headlines für diese Pressemitteilung.
+      // ══════════════════════════════════════════════════════════════
+      // GENKIT FLOW - Strukturierte Headlines mit Metadaten
+      // ══════════════════════════════════════════════════════════════
 
-WICHTIGE REGELN:
-- Jede Headline zwischen 40-60 Zeichen (optimal für PR-SEO)
-- Prägnant und aufmerksamkeitserregend
-- Für deutsche Medien geeignet
-- Keine HTML-Tags, keine Formatierung
-- Keine Nummerierung, keine Anführungszeichen
-- Nur reiner Text
-
-${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pressemitteilung:\n${contentToAnalyze}\n\nGib NUR die 3 Headlines zurück als reinen Text, jede in einer neuen Zeile:`;
-
-      const response = await fetch('/api/ai/generate', {
+      const response = await fetch('/api/ai/generate-headlines', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: prompt,
-          mode: 'generate'
+          content: contentToAnalyze,
+          currentHeadline: currentTitle || null,
+          context: null // Kann später erweitert werden (industry, tone, audience)
         }),
       });
 
@@ -68,33 +65,19 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
       }
 
       const data = await response.json();
-      const generatedText = data.generatedText || '';
-      
-      // Parse Headlines aus der Antwort - AGGRESSIVES HTML-Cleaning
-      const headlineLines = generatedText
-        .split('\n')
-        .map((line: string) => {
-          // Entferne ALLE HTML-Tags komplett
-          let cleaned = line.replace(/<[^>]*>/g, '');
-          // Entferne Markdown-Formatierung
-          cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1');
-          cleaned = cleaned.replace(/\*(.*?)\*/g, '$1');
-          cleaned = cleaned.replace(/__(.*?)__/g, '$1');
-          cleaned = cleaned.replace(/_(.*?)_/g, '$1');
-          // Entferne Anführungszeichen und Nummerierung
-          cleaned = cleaned.replace(/^\d+\.\s*/, '');
-          cleaned = cleaned.replace(/^["“”\-\s]*|["“”\s]*$/g, '');
-          return cleaned.trim();
-        })
-        .filter((line: string) => line.length > 0 && line.length >= 20 && line.length <= 80) // Nur sinnvolle Längen
-        .slice(0, 3); // Maximal 3 Headlines
-      
-      if (headlineLines.length > 0) {
-        const headlineOptions: HeadlineOption[] = headlineLines.map((title: string, index: number) => ({
+
+      // Strukturierte Antwort vom Genkit Flow
+      if (data.success && data.headlines && data.headlines.length > 0) {
+        const headlineOptions: HeadlineOption[] = data.headlines.map((h: any, index: number) => ({
           id: `headline-${index}`,
-          title: title // Bereits komplett gereinigt
+          title: h.headline,
+          length: h.length,
+          hasActiveVerb: h.hasActiveVerb,
+          keywordDensity: h.keywordDensity,
+          seoScore: h.seoScore,
+          style: h.style
         }));
-        
+
         setHeadlines(headlineOptions);
         setShowSuggestions(true);
       } else {
@@ -178,12 +161,22 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-gray-500">{headline.style}</span>
+                      {headline.hasActiveVerb && (
+                        <span className="text-xs text-green-600 font-medium">✓ Aktiv</span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-900 leading-relaxed break-words">
                       {headline.title}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {headline.title.length} Zeichen
-                    </p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <span>{headline.length} Zeichen</span>
+                      <span>•</span>
+                      <span>SEO: {headline.seoScore}%</span>
+                      <span>•</span>
+                      <span>Keywords: {headline.keywordDensity}%</span>
+                    </div>
                   </div>
                   <CheckIcon className="h-4 w-4 text-gray-400 group-hover:text-[#005fab] flex-shrink-0 mt-0.5" />
                 </div>
