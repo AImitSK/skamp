@@ -4,7 +4,7 @@
 // Webpack Config externalisiert diese Module für Client-Bundle
 
 import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
 import { genkitEval, GenkitMetric } from '@genkit-ai/evaluator';
 
 /**
