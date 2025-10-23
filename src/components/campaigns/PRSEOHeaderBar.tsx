@@ -686,86 +686,46 @@ export function PRSEOHeaderBar({
     return { totalScore, breakdown, recommendations };
   }, [keywords, getThresholds, getPRTypeModifiers, calculateSocialScore]);
 
-  // KI-Analyse für einzelnes Keyword
+  // KI-Analyse für einzelnes Keyword - POWERED BY GENKIT!
   const analyzeKeywordWithAI = useCallback(async (keyword: string, text: string): Promise<Partial<KeywordMetrics>> => {
     try {
       setIsAnalyzing(true);
-      
-      const response = await fetch('/api/ai/generate', {
+
+      // ══════════════════════════════════════════════════════════════
+      // GENKIT FLOW AUFRUF über API Route
+      // ══════════════════════════════════════════════════════════════
+      const response = await fetch('/api/ai/analyze-keyword-seo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `Du bist ein SEO-Analyst. Analysiere das Keyword "${keyword}" im folgenden PR-Text und bewerte es objektiv.
-
-Text:
-"""
-${text}
-"""
-
-Aufgabe:
-1. Semantische Relevanz (0-100): Wie gut passt das Keyword zum Inhalt?
-2. Kontext-Qualität (0-100): Wie natürlich ist das Keyword eingebunden?
-3. Zielgruppe: Erkenne die Hauptzielgruppe (B2B, B2C, Verbraucher, Fachpublikum, etc.)
-4. Tonalität: Erkenne den Schreibstil (Sachlich, Emotional, Verkäuferisch, Professionell, etc.)
-5. Verwandte Begriffe: 3 Begriffe die im Text vorkommen und zum Keyword passen
-
-Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text).
-Gib ECHTE BEWERTUNGEN, keine Beispielwerte!
-Beispiel-Format (nutze deine eigenen Werte):
-{"semanticRelevance": DEIN_WERT, "contextQuality": DEIN_WERT, "targetAudience": "DEINE_ANALYSE", "tonality": "DEINE_ANALYSE", "relatedTerms": ["ECHTER_BEGRIFF1", "ECHTER_BEGRIFF2", "ECHTER_BEGRIFF3"]}`
+          keyword,
+          text
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Check both possible response formats
-        const responseText = data.generatedText || data.content;
-        
-        if (!data || !responseText) {
+
+        // Neue strukturierte Response (bereits geparst!)
+        if (data && data.success) {
           return {
-            semanticRelevance: 50,
-            contextQuality: 50,
-            relatedTerms: []
+            semanticRelevance: Math.min(100, Math.max(0, data.semanticRelevance || 50)),
+            contextQuality: Math.min(100, Math.max(0, data.contextQuality || 50)),
+            targetAudience: data.targetAudience || 'Unbekannt',
+            tonality: data.tonality || 'Neutral',
+            relatedTerms: Array.isArray(data.relatedTerms) ? data.relatedTerms.slice(0, 3) : []
           };
-        }
-        
-        try {
-          // Versuche direktes JSON-Parse
-          const result = JSON.parse(responseText);
-          return {
-            semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
-            contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
-            targetAudience: result.targetAudience || 'Unbekannt',
-            tonality: result.tonality || 'Neutral',
-            relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
-          };
-        } catch (parseError) {
-          // Fallback: Versuche JSON aus Text zu extrahieren
-          try {
-            const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
-            if (jsonMatch) {
-              const result = JSON.parse(jsonMatch[0]);
-              return {
-                semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
-                contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
-                targetAudience: result.targetAudience || 'Unbekannt',
-                tonality: result.tonality || 'Neutral',
-                relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
-              };
-            } else {
-            }
-          } catch (secondParseError) {
-          }
         }
       } else {
+        console.error('❌ SEO-Analyse API Fehler:', response.statusText);
       }
     } catch (error) {
+      console.error('❌ SEO-Analyse Fehler:', error);
     } finally {
       setIsAnalyzing(false);
     }
 
-    // Fallback-Werte
+    // Fallback-Werte bei Fehler
     return {
       semanticRelevance: 50,
       contextQuality: 50,

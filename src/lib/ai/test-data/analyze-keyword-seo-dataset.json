@@ -1,0 +1,303 @@
+{
+  "$schema": "https://github.com/firebase/genkit/blob/main/genkit-tools/common/src/eval/types.ts",
+  "testCases": [
+    {
+      "testCaseId": "seo-keyword-b2b-high-relevance",
+      "input": {
+        "keyword": "Enterprise Software",
+        "text": "Unser neues Enterprise Software System revolutioniert die Geschäftsprozesse in mittelständischen Unternehmen. Die Enterprise Software Lösung bietet umfassende Integration mit bestehenden ERP-Systemen und ermöglicht eine nahtlose Skalierung für wachsende Business-Anforderungen. Mit unserer Enterprise Software steigern Unternehmen ihre Produktivität um durchschnittlich 35% und reduzieren Betriebskosten signifikant."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "B2B",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Professionell",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-b2c-high-relevance",
+      "input": {
+        "keyword": "Smartphone",
+        "text": "Das neue Smartphone begeistert mit brillantem Display und kinderleichter Bedienung. Endlich ein Smartphone, das alle Familienmitglieder verstehen! Mit 5 Jahren Garantie und kostenlosem Support ist dieses Smartphone die perfekte Wahl für jeden Haushalt. Über 50.000 zufriedene Kunden vertrauen bereits auf unser Smartphone."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "B2C",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Verkäuferisch",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-fachpublikum-technical",
+      "input": {
+        "keyword": "Quantencomputing",
+        "text": "Die Implementierung von Quantencomputing-Algorithmen auf supraleitenden Qubits erfordert präzise Kalibrierung bei Temperaturen nahe dem absoluten Nullpunkt. Unsere Quantencomputing-Architektur erreicht eine Kohärenzzeit von 100 Mikrosekunden bei 99,9% Gate-Fidelity. Die Fehlerkorrektur im Quantencomputing nutzt topologische Codes zur Stabilisierung logischer Qubits."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [90, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Fachpublikum",
+        "targetAudienceConfidence": [85, 100],
+        "tonality": "Fachlich",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-medien-press-release",
+      "input": {
+        "keyword": "Börsenkurs",
+        "text": "Die XYZ AG verzeichnet einen historischen Anstieg des Börsenkurses um 47% seit Jahresbeginn. Analysten führen den starken Börsenkurs auf die erfolgreiche Expansion in asiatische Märkte zurück. Der Vorstand bekräftigte das Ziel, den positiven Börsenkurs-Trend durch weitere Produktinnovationen zu unterstützen."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [80, 100],
+        "targetAudience": "Medien",
+        "targetAudienceConfidence": [75, 100],
+        "tonality": "Sachlich",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-investoren-financial",
+      "input": {
+        "keyword": "ROI",
+        "text": "Unsere Strategie zielt auf nachhaltigen ROI für alle Stakeholder. Im abgelaufenen Geschäftsjahr erreichten wir einen ROI von 23%, deutlich über Branchendurchschnitt. Die geplanten Investitionen in KI-Technologie werden den ROI bis 2026 auf prognostizierte 30% steigern."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Investoren",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Professionell",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-verbraucher-casual",
+      "input": {
+        "keyword": "Rezept",
+        "text": "Dieses einfache Rezept gelingt wirklich jedem! Mit nur 5 Zutaten zauberst du ein leckeres Abendessen. Das Rezept ist perfekt für stressige Wochentage und schmeckt der ganzen Familie. Probiere das Rezept heute noch aus und lass dich überraschen!"
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Verbraucher",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Locker",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-mitarbeiter-internal",
+      "input": {
+        "keyword": "Homeoffice",
+        "text": "Ab nächstem Monat gilt unsere neue Homeoffice-Regelung für alle Abteilungen. Das Homeoffice-Modell umfasst bis zu 3 Tage pro Woche nach individueller Absprache mit Teamleads. Zur Unterstützung der Homeoffice-Arbeit stellen wir ergonomische Büromöbel und technische Ausstattung bereit."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [90, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Mitarbeiter",
+        "targetAudienceConfidence": [85, 100],
+        "tonality": "Formell",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-oeffentlichkeit-broad",
+      "input": {
+        "keyword": "Klimaschutz",
+        "text": "Unsere Klimaschutz-Initiative setzt neue Maßstäbe in der Branche. Durch innovative Klimaschutz-Technologien reduzieren wir CO2-Emissionen um 60% bis 2030. Jeder kann zum Klimaschutz beitragen – gemeinsam schaffen wir eine nachhaltige Zukunft für kommende Generationen."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Öffentlichkeit",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Inspirierend",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-low-relevance",
+      "input": {
+        "keyword": "Kryptowährung",
+        "text": "Unser Unternehmen entwickelt innovative Software-Lösungen für den Einzelhandel. Mit über 20 Jahren Erfahrung optimieren wir Kassensysteme und Warenwirtschaft. Die neue Cloud-Plattform ermöglicht Echtzeit-Inventur und automatische Bestellprozesse."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [0, 20],
+        "contextQuality": [0, 20],
+        "targetAudience": "B2B",
+        "keywordFit": "poor"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-moderate-relevance",
+      "input": {
+        "keyword": "Künstliche Intelligenz",
+        "text": "Die Digitalisierung verändert unsere Arbeitswelt grundlegend. Neue Technologien wie Machine Learning und Automatisierung steigern die Effizienz. Unternehmen müssen sich anpassen, um wettbewerbsfähig zu bleiben. Innovation ist der Schlüssel zum Erfolg."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [40, 65],
+        "contextQuality": [40, 65],
+        "targetAudience": "B2B",
+        "keywordFit": "fair"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-keyword-stuffing",
+      "input": {
+        "keyword": "SEO",
+        "text": "SEO ist wichtig. SEO verbessert Rankings. Gutes SEO braucht Zeit. SEO SEO SEO. Unsere SEO-Agentur macht SEO. SEO SEO."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [60, 85],
+        "contextQuality": [0, 35],
+        "targetAudience": "B2B",
+        "keywordFit": "poor",
+        "recommendations": ["Keyword-Stuffing vermeiden"]
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-natural-integration",
+      "input": {
+        "keyword": "Nachhaltigkeit",
+        "text": "Als familiengeführtes Unternehmen liegt uns die Zukunft unserer Kinder am Herzen. Deshalb haben wir Nachhaltigkeit fest in unserer Unternehmensstrategie verankert. Von CO2-neutraler Produktion über faire Lieferketten bis zu recycelbaren Verpackungen – wir leben Verantwortung. Diese nachhaltige Ausrichtung macht uns zum bevorzugten Partner für umweltbewusste Kunden."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "B2C",
+        "tonality": "Emotional",
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-emotional-tone",
+      "input": {
+        "keyword": "Familie",
+        "text": "Unsere Produkte bringen Familien zusammen. Ob beim gemeinsamen Spieleabend oder beim entspannten Sonntagsfrühstück – Familie ist das Wichtigste im Leben. Mit unseren kinderfreundlichen Designs schaffen wir unvergessliche Familienmomente. Weil jede Familie einzigartig ist."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "B2C",
+        "targetAudienceConfidence": [80, 100],
+        "tonality": "Emotional",
+        "tonalityConfidence": [85, 100],
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-sachlich-neutral",
+      "input": {
+        "keyword": "Quartalsbericht",
+        "text": "Der Quartalsbericht für Q3/2024 weist einen Umsatzanstieg von 12% gegenüber Vorjahr aus. Die Zahlen aus dem Quartalsbericht zeigen solides Wachstum in allen Geschäftsbereichen. Details zum vollständigen Quartalsbericht sind auf der Investor-Relations-Website verfügbar."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [80, 100],
+        "targetAudience": "Investoren",
+        "tonality": "Sachlich",
+        "tonalityConfidence": [85, 100],
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-related-terms-rich",
+      "input": {
+        "keyword": "Cloud Computing",
+        "text": "Unsere Cloud Computing Plattform bietet skalierbare Infrastruktur für moderne Unternehmen. Die Cloud-Lösung integriert nahtlos mit Container-Orchestrierung, Serverless Functions und verteilten Datenbanken. Dank Kubernetes, Docker und Microservices-Architektur erreichen Sie maximale Flexibilität im Cloud Computing."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Fachpublikum",
+        "tonality": "Fachlich",
+        "keywordFit": "excellent",
+        "relatedTerms": ["Kubernetes", "Docker", "Microservices", "Container", "Serverless"]
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-edge-minimal-text",
+      "input": {
+        "keyword": "Innovation",
+        "text": "Wir sind innovativ. Innovation treibt uns an. Neue Ideen entstehen täglich."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [70, 90],
+        "contextQuality": [50, 75],
+        "targetAudience": "Unbekannt",
+        "targetAudienceConfidence": [20, 50],
+        "tonality": "Neutral",
+        "keywordFit": "good"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-edge-keyword-missing",
+      "input": {
+        "keyword": "Blockchain",
+        "text": "Unsere Softwarelösungen revolutionieren die Finanzbranche mit modernsten Verschlüsselungstechnologien. Distributed Ledger Technology und Smart Contracts ermöglichen sichere Transaktionen. Die dezentrale Architektur garantiert Transparenz und Unveränderlichkeit aller Datensätze."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [65, 85],
+        "contextQuality": [70, 90],
+        "targetAudience": "Fachpublikum",
+        "tonality": "Fachlich",
+        "keywordFit": "good",
+        "relatedTerms": ["Distributed Ledger", "Smart Contracts", "dezentrale Architektur"]
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-edge-very-long-text",
+      "input": {
+        "keyword": "Digitale Transformation",
+        "text": "Die digitale Transformation ist mehr als nur ein Buzzword – sie ist die fundamentale Neuausrichtung von Geschäftsmodellen im 21. Jahrhundert. Unternehmen, die digitale Transformation ernst nehmen, investieren in cloudbasierte Infrastrukturen, KI-gestützte Prozesse und datengetriebene Entscheidungsfindung. Die digitale Transformation betrifft alle Unternehmensbereiche: von Marketing und Vertrieb über Produktion bis hin zu HR und Finanzwesen. Erfolgreiche digitale Transformation erfordert nicht nur technologische Innovation, sondern auch einen kulturellen Wandel innerhalb der Organisation. Mitarbeiter müssen befähigt werden, neue Tools zu nutzen und agile Arbeitsweisen zu adaptieren. Die digitale Transformation ist kein einmaliges Projekt, sondern ein kontinuierlicher Prozess der Anpassung an sich wandelnde Marktbedingungen. Führende Unternehmen verstehen digitale Transformation als strategischen Wettbewerbsvorteil und investieren nachhaltig in digitale Kompetenzen. Die COVID-19-Pandemie hat die Notwendigkeit der digitalen Transformation noch verstärkt und Unternehmen gezwungen, in Rekordzeit Remote-Work-Infrastrukturen aufzubauen. Heute zeigt sich: Organisationen mit fortgeschrittener digitaler Transformation sind resilienter, anpassungsfähiger und kundenorientierter. Die nächste Phase der digitalen Transformation wird durch Technologien wie Quantencomputing, Edge Computing und 6G-Netze geprägt sein. Unternehmen müssen jetzt die Grundlagen legen, um von diesen zukünftigen Innovationen profitieren zu können. Digitale Transformation ist keine Option mehr – sie ist Pflicht für jedes zukunftsorientierte Unternehmen."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [90, 100],
+        "contextQuality": [75, 90],
+        "targetAudience": "B2B",
+        "tonality": "Professionell",
+        "keywordFit": "excellent",
+        "recommendations": ["Text zu keyword-lastig - natürlichere Integration empfohlen"]
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-mixed-tone-confidence",
+      "input": {
+        "keyword": "Karriere",
+        "text": "Starten Sie Ihre Karriere bei einem der führenden Technologieunternehmen Deutschlands! Wir bieten spannende Karriere-Perspektiven in einem dynamischen Umfeld. Ob als Junior-Entwickler oder Senior-Manager – bei uns findet jeder seinen idealen Karriere-Pfad. Bewerben Sie sich jetzt!"
+      },
+      "expectedOutput": {
+        "semanticRelevance": [85, 100],
+        "contextQuality": [85, 100],
+        "targetAudience": "Mitarbeiter",
+        "targetAudienceConfidence": [60, 85],
+        "tonality": "Verkäuferisch",
+        "tonalityConfidence": [70, 90],
+        "keywordFit": "excellent"
+      }
+    },
+    {
+      "testCaseId": "seo-keyword-niche-technical",
+      "input": {
+        "keyword": "CRISPR-Cas9",
+        "text": "Die CRISPR-Cas9 Technologie ermöglicht präzise Genom-Editierung auf Einzelnukleotid-Ebene. Unsere CRISPR-Cas9 Forschungsplattform nutzt Guide-RNAs mit optimierter Spezifität, um Off-Target-Effekte zu minimieren. Die Anwendung von CRISPR-Cas9 in therapeutischen Kontexten erfordert rigorose Validierung der Editing-Effizienz und Sicherheitsprofile."
+      },
+      "expectedOutput": {
+        "semanticRelevance": [90, 100],
+        "contextQuality": [90, 100],
+        "targetAudience": "Fachpublikum",
+        "targetAudienceConfidence": [90, 100],
+        "tonality": "Fachlich",
+        "tonalityConfidence": [90, 100],
+        "keywordFit": "excellent",
+        "relatedTerms": ["Genom-Editierung", "Guide-RNAs", "Off-Target-Effekte"]
+      }
+    }
+  ]
+}
