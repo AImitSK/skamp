@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     // Request Body parsen
     const data: GenerateRequest = await request.json();
-    const { prompt, mode, existingContent, context } = data;
+    const { prompt, existingContent, context } = data;
+
+    // Mode mit Default-Wert (für Abwärtskompatibilität)
+    const mode = data.mode || 'generate';
 
     // Validierung
     if (!prompt || prompt.trim() === '') {
