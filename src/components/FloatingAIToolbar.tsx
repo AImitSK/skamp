@@ -466,14 +466,17 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
       }
 
       console.log(`🤖 KI-${action} (${hasFullContext ? 'mit Kontext' : 'direkt'}):`, userPrompt.substring(0, 100) + '...');
-      
-      // NUTZE CUSTOM INSTRUCTION API für alle normalen KI-Funktionen
-      const response = await fetch('/api/ai/custom-instruction', {
+
+      // ══════════════════════════════════════════════════════════════
+      // 🆕 GENKIT MIGRATION: Nutze text-transform Flow statt custom-instruction
+      // ══════════════════════════════════════════════════════════════
+      const response = await fetch('/api/ai/text-transform', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          originalText: text,
-          instruction: `${action.toUpperCase()}: ${systemPrompt}\n\n${userPrompt}`
+          text: text,
+          action: action,
+          fullDocument: hasFullContext ? fullDocument : null
         })
       });
 
@@ -612,13 +615,18 @@ Antworte NUR mit dem Text im neuen Ton.`;
       }
       
       console.log(`🎵 Ton-Änderung zu "${tone}" (${hasFullContext ? 'mit Kontext' : 'ohne Kontext'}):`, userPrompt.substring(0, 100) + '...');
-      
-      const response = await fetch('/api/ai/generate', {
+
+      // ══════════════════════════════════════════════════════════════
+      // 🆕 GENKIT MIGRATION: Nutze text-transform Flow für change-tone
+      // ══════════════════════════════════════════════════════════════
+      const response = await fetch('/api/ai/text-transform', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: systemPrompt + '\n\n' + userPrompt,
-          mode: 'generate'
+        body: JSON.stringify({
+          text: selectedText,
+          action: 'change-tone',
+          tone: tone,
+          fullDocument: hasFullContext ? fullDocument : null
         })
       });
 
@@ -937,17 +945,22 @@ Antwort: "XYZ Corp bietet Services an."
 
 WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
-      console.log('🎯 Custom Instruction:', { 
-        instruction: customInstruction, 
-        selectedText: selectedText.substring(0, 50) + '...' 
+      console.log('🎯 Custom Instruction:', {
+        instruction: customInstruction,
+        selectedText: selectedText.substring(0, 50) + '...'
       });
 
-      const response = await fetch('/api/ai/custom-instruction', {
+      // ══════════════════════════════════════════════════════════════
+      // 🆕 GENKIT MIGRATION: Nutze text-transform Flow für custom instructions
+      // ══════════════════════════════════════════════════════════════
+      const response = await fetch('/api/ai/text-transform', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          originalText: selectedText,
-          instruction: customInstruction
+          text: selectedText,
+          action: 'custom',
+          instruction: customInstruction,
+          fullDocument: fullDocument || null
         })
       });
 

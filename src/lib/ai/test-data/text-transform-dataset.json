@@ -1,0 +1,456 @@
+[
+  {
+    "testCaseId": "rephrase-1-press-release-intro",
+    "description": "Rephrase: Pressemitteilungs-Intro umformulieren (sollte ±5 Wörter bleiben)",
+    "input": {
+      "text": "Das Berliner Technologie-Unternehmen DataFlow gibt heute die Markteinführung seiner innovativen KI-Plattform SmartAnalytics Pro bekannt, die Unternehmensdaten bis zu zehnmal schneller analysiert als herkömmliche Lösungen.",
+      "action": "rephrase",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "rephrase",
+      "minWordCount": 25,
+      "maxWordCount": 35,
+      "originalWordCount": 30,
+      "shouldPreserveKeyInfo": true,
+      "keywordsShouldAppear": ["DataFlow", "KI", "SmartAnalytics", "schneller"],
+      "qualityCriteria": {
+        "differentWording": true,
+        "sameLength": true,
+        "sameMeaning": true,
+        "noNewInfo": true
+      }
+    }
+  },
+  {
+    "testCaseId": "rephrase-2-with-context",
+    "description": "Rephrase: Mit Dokument-Kontext (sollte terminologisch konsistent bleiben)",
+    "input": {
+      "text": "Die neue Funktion ermöglicht es Nutzern, ihre Datensätze in Echtzeit zu synchronisieren.",
+      "action": "rephrase",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": "Unsere Plattform DataSync bietet verschiedene Features zur Datenverwaltung. Die neue Funktion ermöglicht es Nutzern, ihre Datensätze in Echtzeit zu synchronisieren. DataSync ist die führende Lösung für Enterprise-Kunden."
+    },
+    "reference": {
+      "action": "rephrase",
+      "minWordCount": 10,
+      "maxWordCount": 18,
+      "originalWordCount": 14,
+      "shouldPreserveContext": true,
+      "qualityCriteria": {
+        "differentWording": true,
+        "contextAware": true,
+        "consistentTerminology": true
+      }
+    }
+  },
+  {
+    "testCaseId": "shorten-1-long-paragraph",
+    "description": "Shorten: Langen Absatz um ~30% kürzen (aber Kernaussagen behalten)",
+    "input": {
+      "text": "Die MediCare GmbH aus München führt ein revolutionäres Telemedizin-System ein, das Patienten in ländlichen und abgelegenen Gebieten einen deutlich besseren Zugang zu Fachärzten ermöglicht. Das innovative System verbindet über 500 Hausarztpraxen mit hochqualifizierten Spezialisten in Universitätskliniken. Erste Pilotprojekte haben bereits gezeigt, dass die Wartezeiten für Patienten um beeindruckende 60 Prozent reduziert werden können.",
+      "action": "shorten",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "shorten",
+      "originalWordCount": 57,
+      "targetWordCount": 40,
+      "minWordCount": 35,
+      "maxWordCount": 45,
+      "reductionPercent": 30,
+      "shouldPreserveKeyInfo": true,
+      "keywordsShouldAppear": ["MediCare", "Telemedizin", "Patienten", "60 Prozent"],
+      "qualityCriteria": {
+        "significantlyShorter": true,
+        "mainPointsPreserved": true,
+        "noInformationLoss": true
+      }
+    }
+  },
+  {
+    "testCaseId": "shorten-2-dense-technical",
+    "description": "Shorten: Dichten technischen Text straffen",
+    "input": {
+      "text": "Unsere hochmoderne Plattform nutzt fortschrittliche Machine-Learning-Algorithmen sowie Deep-Learning-Technologien, um komplexe und umfangreiche Datensätze in Echtzeit zu analysieren und dabei gleichzeitig präzise und verlässliche Insights zu generieren.",
+      "action": "shorten",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "shorten",
+      "originalWordCount": 27,
+      "targetWordCount": 19,
+      "minWordCount": 16,
+      "maxWordCount": 22,
+      "reductionPercent": 30,
+      "qualityCriteria": {
+        "removedFiller": true,
+        "technicalAccuracy": true,
+        "concise": true
+      }
+    }
+  },
+  {
+    "testCaseId": "expand-1-short-bullet",
+    "description": "Expand: Kurzen Bullet-Point um ~50% erweitern",
+    "input": {
+      "text": "Die App bietet personalisierte Trainingspläne und Ernährungstracking.",
+      "action": "expand",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "expand",
+      "originalWordCount": 8,
+      "targetWordCount": 12,
+      "minWordCount": 11,
+      "maxWordCount": 14,
+      "expansionPercent": 50,
+      "qualityCriteria": {
+        "significantlyLonger": true,
+        "naturalExpansion": true,
+        "noRedundancy": true,
+        "preservedMeaning": true
+      }
+    }
+  },
+  {
+    "testCaseId": "expand-2-with-context",
+    "description": "Expand: Mit Kontext erweitern (sollte konsistent zum Dokument sein)",
+    "input": {
+      "text": "Das System reduziert die Wartezeiten erheblich.",
+      "action": "expand",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": "Unsere innovative Telemedizin-Lösung verbindet Hausärzte mit Spezialisten. Das System reduziert die Wartezeiten erheblich. Pilotprojekte zeigen vielversprechende Ergebnisse in ländlichen Regionen."
+    },
+    "reference": {
+      "action": "expand",
+      "originalWordCount": 7,
+      "targetWordCount": 11,
+      "minWordCount": 9,
+      "maxWordCount": 12,
+      "expansionPercent": 50,
+      "shouldPreserveContext": true,
+      "qualityCriteria": {
+        "contextAware": true,
+        "relevantDetails": true,
+        "consistentTone": true
+      }
+    }
+  },
+  {
+    "testCaseId": "elaborate-1-keyword-to-sentence",
+    "description": "Elaborate: Stichpunkt zu vollständigem Satz ausformulieren",
+    "input": {
+      "text": "KI-gestützte Risikoanalyse",
+      "action": "elaborate",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "elaborate",
+      "originalWordCount": 2,
+      "minWordCount": 10,
+      "shouldBeCompleteSentence": true,
+      "qualityCriteria": {
+        "fullSentence": true,
+        "explanatory": true,
+        "professional": true,
+        "expandedMeaning": true
+      }
+    }
+  },
+  {
+    "testCaseId": "elaborate-2-fragment-to-paragraph",
+    "description": "Elaborate: Fragment zu erklärendem Absatz ausformulieren",
+    "input": {
+      "text": "Neuer digitaler Vermögensberatungsservice",
+      "action": "elaborate",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": "Die FinanzPlus Bank startet einen neuen digitalen Vermögensberatungsservice mit KI-gestützter Risikoanalyse. Der Service erfüllt alle BaFin-Anforderungen und verwendet Ende-zu-Ende-Verschlüsselung."
+    },
+    "reference": {
+      "action": "elaborate",
+      "originalWordCount": 3,
+      "minWordCount": 15,
+      "shouldPreserveContext": true,
+      "qualityCriteria": {
+        "multiSentence": true,
+        "contextIntegrated": true,
+        "informative": true
+      }
+    }
+  },
+  {
+    "testCaseId": "change-tone-1-formal-to-casual",
+    "description": "Change-Tone: Von formell zu casual ändern",
+    "input": {
+      "text": "Wir freuen uns, Ihnen mitteilen zu dürfen, dass die Transaktion erfolgreich abgeschlossen wurde und sämtliche vertraglichen Vereinbarungen vollumfänglich erfüllt wurden.",
+      "action": "change-tone",
+      "tone": "casual",
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "change-tone",
+      "targetTone": "casual",
+      "originalWordCount": 20,
+      "minWordCount": 15,
+      "maxWordCount": 25,
+      "qualityCriteria": {
+        "toneMatches": true,
+        "sameMeaning": true,
+        "naturalLanguage": true,
+        "lessFormality": true
+      }
+    }
+  },
+  {
+    "testCaseId": "change-tone-2-casual-to-professional",
+    "description": "Change-Tone: Von casual zu professional ändern",
+    "input": {
+      "text": "Hey Leute, checkt mal unsere neue App aus! Die ist echt der Hammer und macht Fitness super easy. Probiert's einfach mal aus!",
+      "action": "change-tone",
+      "tone": "professional",
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "change-tone",
+      "targetTone": "professional",
+      "originalWordCount": 20,
+      "minWordCount": 15,
+      "maxWordCount": 25,
+      "qualityCriteria": {
+        "toneMatches": true,
+        "sameMeaning": true,
+        "businessAppropriate": true,
+        "moreFormal": true
+      }
+    }
+  },
+  {
+    "testCaseId": "change-tone-3-formal-to-friendly",
+    "description": "Change-Tone: Von formell zu friendly mit Kontext",
+    "input": {
+      "text": "Das Unternehmen wird in den kommenden Monaten erhebliche Investitionen in die Infrastruktur vornehmen.",
+      "action": "change-tone",
+      "tone": "friendly",
+      "instruction": null,
+      "fullDocument": "Unsere Firma wächst rasant. Das Unternehmen wird in den kommenden Monaten erhebliche Investitionen in die Infrastruktur vornehmen. Wir freuen uns auf diese spannende Phase."
+    },
+    "reference": {
+      "action": "change-tone",
+      "targetTone": "friendly",
+      "originalWordCount": 13,
+      "minWordCount": 10,
+      "maxWordCount": 18,
+      "shouldPreserveContext": true,
+      "qualityCriteria": {
+        "toneMatches": true,
+        "warm": true,
+        "approachable": true,
+        "contextAware": true
+      }
+    }
+  },
+  {
+    "testCaseId": "change-tone-4-neutral-to-confident",
+    "description": "Change-Tone: Von neutral zu confident ändern",
+    "input": {
+      "text": "Wir denken, dass unser Produkt möglicherweise einige Vorteile bieten könnte.",
+      "action": "change-tone",
+      "tone": "confident",
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "change-tone",
+      "targetTone": "confident",
+      "originalWordCount": 11,
+      "minWordCount": 8,
+      "maxWordCount": 15,
+      "qualityCriteria": {
+        "toneMatches": true,
+        "assertive": true,
+        "noHesitation": true,
+        "strongLanguage": true
+      }
+    }
+  },
+  {
+    "testCaseId": "custom-1-simple-replacement",
+    "description": "Custom: Einfache Ersetzung - Firmennamen ändern",
+    "input": {
+      "text": "Die Firma ABC bietet verschiedene Cloud-Lösungen für Unternehmen an.",
+      "action": "custom",
+      "tone": null,
+      "instruction": "Ändere den Firmennamen von ABC zu XYZ",
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "custom",
+      "originalWordCount": 10,
+      "minWordCount": 9,
+      "maxWordCount": 11,
+      "expectedChange": "ABC → XYZ",
+      "qualityCriteria": {
+        "instructionFollowed": true,
+        "minimalChange": true,
+        "preciseChange": true,
+        "nothingElseChanged": true
+      }
+    }
+  },
+  {
+    "testCaseId": "custom-2-number-update",
+    "description": "Custom: Zahlen-Update - Preis ändern",
+    "input": {
+      "text": "Das Produkt kostet 299 Euro pro Monat und enthält alle Premium-Features.",
+      "action": "custom",
+      "tone": null,
+      "instruction": "Ändere den Preis von 299 Euro auf 399 Euro",
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "custom",
+      "originalWordCount": 12,
+      "minWordCount": 11,
+      "maxWordCount": 13,
+      "expectedChange": "299 → 399",
+      "qualityCriteria": {
+        "instructionFollowed": true,
+        "exactNumberChange": true,
+        "nothingElseChanged": true
+      }
+    }
+  },
+  {
+    "testCaseId": "custom-3-add-information",
+    "description": "Custom: Information hinzufügen",
+    "input": {
+      "text": "Die Konferenz findet am 15. März statt.",
+      "action": "custom",
+      "tone": null,
+      "instruction": "Füge den Veranstaltungsort 'Berlin Congress Center' hinzu",
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "custom",
+      "originalWordCount": 7,
+      "minWordCount": 10,
+      "maxWordCount": 15,
+      "expectedAddition": "Berlin Congress Center",
+      "qualityCriteria": {
+        "instructionFollowed": true,
+        "informationAdded": true,
+        "naturalIntegration": true,
+        "originalTextPreserved": true
+      }
+    }
+  },
+  {
+    "testCaseId": "custom-4-complex-instruction",
+    "description": "Custom: Komplexe Anweisung mit mehreren Änderungen",
+    "input": {
+      "text": "Das Startup wurde 2023 gegründet und hat 10 Mitarbeiter.",
+      "action": "custom",
+      "tone": null,
+      "instruction": "Ändere das Jahr auf 2022 und die Mitarbeiteranzahl auf 15",
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "custom",
+      "originalWordCount": 10,
+      "minWordCount": 9,
+      "maxWordCount": 12,
+      "expectedChanges": ["2023 → 2022", "10 → 15"],
+      "qualityCriteria": {
+        "instructionFollowed": true,
+        "multipleChanges": true,
+        "allChangesApplied": true,
+        "nothingExtraChanged": true
+      }
+    }
+  },
+  {
+    "testCaseId": "edge-case-1-very-short-text",
+    "description": "Edge Case: Sehr kurzer Text (nur 3 Wörter) - rephrase",
+    "input": {
+      "text": "Die App funktioniert.",
+      "action": "rephrase",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "rephrase",
+      "originalWordCount": 3,
+      "minWordCount": 2,
+      "maxWordCount": 5,
+      "qualityCriteria": {
+        "differentWording": true,
+        "sameMeaning": true,
+        "shortText": true
+      }
+    }
+  },
+  {
+    "testCaseId": "edge-case-2-very-long-text",
+    "description": "Edge Case: Sehr langer Text (>100 Wörter) - shorten",
+    "input": {
+      "text": "Die CloudSystems AG, ein führender Anbieter von Enterprise-Cloud-Lösungen mit Hauptsitz in Stuttgart und weiteren Standorten in Berlin, München und Hamburg, gibt heute die strategische Übernahme des vielversprechenden KI-Startups DeepLearn aus Berlin bekannt. Die Transaktion im beeindruckenden Wert von 120 Millionen Euro stärkt CloudSystems' Position im wachsenden Bereich künstlicher Intelligenz und maschinellem Lernen erheblich. DeepLearn entwickelt seit seiner Gründung im Jahr 2019 innovative und hochspezialisierte Lösungen für automatisierte Datenanalyse und hat bereits über 200 zufriedene Enterprise-Kunden in Deutschland, Österreich und der Schweiz gewonnen. Die 85 hochqualifizierten Mitarbeiter von DeepLearn werden vollständig in die bestehende CloudSystems-Organisation integriert und arbeiten künftig am brandneuen Standort München an spannenden Projekten. CloudSystems beschäftigt derzeit bereits 2.500 engagierte Mitarbeiter weltweit und erzielte im vergangenen Geschäftsjahr einen beachtlichen Umsatz von 450 Millionen Euro.",
+      "action": "shorten",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "shorten",
+      "originalWordCount": 127,
+      "targetWordCount": 89,
+      "minWordCount": 80,
+      "maxWordCount": 95,
+      "reductionPercent": 30,
+      "qualityCriteria": {
+        "significantReduction": true,
+        "mainPointsPreserved": true,
+        "readability": true
+      }
+    }
+  },
+  {
+    "testCaseId": "edge-case-3-special-characters",
+    "description": "Edge Case: Text mit Sonderzeichen und Zahlen",
+    "input": {
+      "text": "Die API unterstützt OAuth 2.0, JWT-Tokens und hat eine 99,9% Uptime-Garantie (SLA).",
+      "action": "rephrase",
+      "tone": null,
+      "instruction": null,
+      "fullDocument": null
+    },
+    "reference": {
+      "action": "rephrase",
+      "originalWordCount": 13,
+      "minWordCount": 11,
+      "maxWordCount": 17,
+      "qualityCriteria": {
+        "differentWording": true,
+        "technicalAccuracy": true,
+        "numbersPreserved": true,
+        "acronymsPreserved": true
+      }
+    }
+  }
+]

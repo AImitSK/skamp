@@ -1,4 +1,8 @@
 // src/app/api/ai/custom-instruction/route.ts
+// ⚠️ DEPRECATED: Diese Route wird durch /api/ai/text-transform ersetzt
+// Bitte migrieren Sie zu /api/ai/text-transform mit action='custom'
+// Diese Route bleibt für Abwärtskompatibilität erhalten
+
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -16,6 +20,9 @@ interface CustomInstructionRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // ⚠️ DEPRECATION WARNING
+    console.warn('⚠️ DEPRECATED: /api/ai/custom-instruction wird verwendet. Bitte migrieren Sie zu /api/ai/text-transform');
+
     // API Key Check - wie in generate route
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY ist nicht verfügbar in custom-instruction route');
