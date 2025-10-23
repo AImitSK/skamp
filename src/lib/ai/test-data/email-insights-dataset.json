@@ -1,0 +1,403 @@
+[
+  {
+    "testId": "email-insights-001",
+    "name": "Urgent Support Request - System Down",
+    "input": {
+      "emailContent": "DRINGEND: Unser gesamtes CRM-System ist seit 2 Stunden down! Wir können nicht auf Kundendaten zugreifen und verlieren gerade aktive Geschäfte. Das ist ein NOTFALL! Bitte sofort zurückrufen unter 0171-1234567. Wir brauchen JETZT Hilfe!!!",
+      "subject": "NOTFALL: CRM System komplett ausgefallen!",
+      "fromEmail": "max.mueller@enterprise-gmbh.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "urgent",
+      "intent": "complaint",
+      "priority": "urgent",
+      "category": "support",
+      "slaRecommendation": "1h",
+      "escalationNeeded": true,
+      "minConfidence": 0.85
+    },
+    "description": "Kritischer System-Ausfall mit höchster Dringlichkeit - sollte urgent, high confidence und Eskalation triggern"
+  },
+
+  {
+    "testId": "email-insights-002",
+    "name": "Positive Customer Compliment",
+    "input": {
+      "emailContent": "Hallo liebes Team,\n\nich wollte einfach mal ein großes Dankeschön loswerden! Euer Support ist wirklich fantastisch. Mein Problem wurde innerhalb von 30 Minuten gelöst und der Mitarbeiter war super freundlich und kompetent. So macht Zusammenarbeit Spaß! Weiter so!",
+      "subject": "Danke für den tollen Support!",
+      "fromEmail": "sarah.schmidt@happycustomer.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "positive",
+      "intent": "compliment",
+      "priority": "low",
+      "category": "support",
+      "actionRequired": false,
+      "minConfidence": 0.80
+    },
+    "description": "Positives Feedback - niedriger Priority, kein Action Required"
+  },
+
+  {
+    "testId": "email-insights-003",
+    "name": "Sales Inquiry - Enterprise Deal",
+    "input": {
+      "emailContent": "Guten Tag,\n\nwir sind ein mittelständisches Unternehmen mit 250 Mitarbeitern und suchen nach einer CRM-Lösung für unser Vertriebsteam. Könnten Sie uns bitte ein individuelles Angebot für eine Enterprise-Lizenz zusenden? Wir hätten gerne auch eine Demo-Präsentation.\n\nBudget: ca. 50.000€/Jahr\nZeitraum: Q2 2025\n\nFreundliche Grüße",
+      "subject": "Anfrage: Enterprise CRM-Lösung für 250 User",
+      "fromEmail": "thomas.weber@mittelstand-ag.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "high",
+      "category": "sales",
+      "suggestedDepartment": "sales",
+      "minConfidence": 0.85
+    },
+    "description": "Hochwertige Sales-Anfrage - high priority, Sales-Team"
+  },
+
+  {
+    "testId": "email-insights-004",
+    "name": "Billing Question - Invoice Issue",
+    "input": {
+      "emailContent": "Hallo,\n\nich habe eine Frage zu Rechnung #INV-2024-0815. Der Betrag scheint nicht zu stimmen - wir hatten doch einen Rabatt von 15% vereinbart? Auf der Rechnung sind aber nur 10% abgezogen. Könnte das bitte jemand prüfen?",
+      "subject": "Frage zur Rechnung #INV-2024-0815",
+      "fromEmail": "buchhaltung@kunde-xyz.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "question",
+      "priority": "normal",
+      "category": "billing",
+      "actionRequired": true,
+      "minConfidence": 0.80
+    },
+    "description": "Billing-Frage - normale Priority, Buchhaltungs-Team"
+  },
+
+  {
+    "testId": "email-insights-005",
+    "name": "Angry Customer Complaint",
+    "input": {
+      "emailContent": "Ich bin absolut enttäuscht von eurem Service! Das ist jetzt das DRITTE Mal in 2 Wochen, dass die Software abstürzt. Wir haben einen Vertrag und erwarten funktionierende Software! Wenn das nicht sofort gelöst wird, werden wir den Vertrag kündigen und rechtliche Schritte prüfen. Das ist inakzeptabel!",
+      "subject": "Beschwerde: Wiederkehrende Software-Abstürze",
+      "fromEmail": "angry.customer@firma.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "negative",
+      "intent": "complaint",
+      "priority": "high",
+      "category": "support",
+      "escalationNeeded": true,
+      "minConfidence": 0.85
+    },
+    "description": "Verärgerte Beschwerde mit Kündigungsdrohung - high priority, Eskalation"
+  },
+
+  {
+    "testId": "email-insights-006",
+    "name": "Partnership Proposal",
+    "input": {
+      "emailContent": "Sehr geehrte Damen und Herren,\n\nwir sind ein führender Anbieter von Marketing-Automation-Tools und würden gerne eine strategische Partnerschaft mit Ihnen eingehen. Unsere Lösungen würden sich perfekt in Ihr CRM-System integrieren lassen.\n\nIch würde mich freuen, wenn wir einen Termin für ein erstes Kennenlerngespräch vereinbaren könnten.\n\nMit freundlichen Grüßen\nDr. Michael Schneider\nCEO, MarketingPro GmbH",
+      "subject": "Partnerschaftsanfrage: Integration Marketing-Automation",
+      "fromEmail": "m.schneider@marketingpro.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "normal",
+      "category": "partnership",
+      "minConfidence": 0.75
+    },
+    "description": "Partnerschaftsanfrage - Business Development Team"
+  },
+
+  {
+    "testId": "email-insights-007",
+    "name": "Job Application - HR",
+    "input": {
+      "emailContent": "Sehr geehrte Damen und Herren,\n\nanbei sende ich Ihnen meine Bewerbungsunterlagen für die Position als Senior Software Engineer. Ich habe 8 Jahre Erfahrung mit React und TypeScript und würde mich freuen, Teil Ihres Teams zu werden.\n\nMit freundlichen Grüßen\nLisa Hoffmann",
+      "subject": "Bewerbung: Senior Software Engineer",
+      "fromEmail": "lisa.hoffmann@gmail.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "normal",
+      "category": "hr",
+      "suggestedDepartment": "hr",
+      "minConfidence": 0.90
+    },
+    "description": "Bewerbung - HR Team, sehr klare Kategorisierung"
+  },
+
+  {
+    "testId": "email-insights-008",
+    "name": "Marketing Campaign Inquiry",
+    "input": {
+      "emailContent": "Hallo,\n\nwir planen eine große Produkteinführung im Q3 und suchen nach Möglichkeiten, diese in eurem Newsletter zu platzieren. Habt ihr ein Media-Kit mit Preisen und Reichweiten? Wir würden auch gerne über eine längerfristige Zusammenarbeit sprechen.",
+      "subject": "Anfrage: Newsletter-Werbung für Produktlaunch",
+      "fromEmail": "marketing@startup-ventures.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "normal",
+      "category": "marketing",
+      "minConfidence": 0.80
+    },
+    "description": "Marketing-Anfrage - Marketing Team"
+  },
+
+  {
+    "testId": "email-insights-009",
+    "name": "Legal Data Privacy Request",
+    "input": {
+      "emailContent": "Sehr geehrte Damen und Herren,\n\ngemäß Art. 15 DSGVO fordere ich hiermit Auskunft über alle personenbezogenen Daten, die Sie über mich gespeichert haben. Bitte senden Sie mir eine vollständige Kopie aller Daten innerhalb der gesetzlichen Frist von 30 Tagen.\n\nMit freundlichen Grüßen\nRechtsanwalt Dr. Klaus Becker",
+      "subject": "DSGVO-Auskunftsersuchen gemäß Art. 15 DSGVO",
+      "fromEmail": "kanzlei.becker@rechtsanwaelte.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "high",
+      "category": "legal",
+      "escalationNeeded": true,
+      "minConfidence": 0.90
+    },
+    "description": "DSGVO-Anfrage - Legal Team, high priority wegen Fristen"
+  },
+
+  {
+    "testId": "email-insights-010",
+    "name": "Simple Question - Low Priority",
+    "input": {
+      "emailContent": "Hi,\n\nkurze Frage: Kann man die Farbe des Dashboards ändern?\n\nDanke!",
+      "subject": "Frage zur Dashboard-Farbe",
+      "fromEmail": "user@example.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "question",
+      "priority": "low",
+      "category": "support",
+      "slaRecommendation": "48h",
+      "minConfidence": 0.75
+    },
+    "description": "Einfache Frage - low priority, Standard-Support"
+  },
+
+  {
+    "testId": "email-insights-011",
+    "name": "Feature Request with Business Value",
+    "input": {
+      "emailContent": "Hallo Team,\n\nwir würden uns sehr über ein Feature zur automatischen Backup-Erstellung wünschen. Das würde unsere Compliance-Anforderungen erfüllen und wäre für uns ein wichtiges Kaufkriterium für die nächste Vertragsverlängerung.\n\nGibt es sowas schon auf der Roadmap?",
+      "subject": "Feature Request: Automatische Backups",
+      "fromEmail": "produktmanager@enterprise.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "normal",
+      "category": "support",
+      "actionRequired": true,
+      "minConfidence": 0.70
+    },
+    "description": "Feature Request mit Business Value - normal priority"
+  },
+
+  {
+    "testId": "email-insights-012",
+    "name": "Payment Overdue Notification Response",
+    "input": {
+      "emailContent": "Guten Tag,\n\nich habe gerade Ihre Mahnung erhalten. Die Verzögerung tut mir leid - die Rechnung ist bereits überwiesen (siehe Anlage). Die Zahlung sollte morgen bei Ihnen eingehen.\n\nEntschuldigung für die Umstände!",
+      "subject": "RE: Zahlungserinnerung Rechnung #12345",
+      "fromEmail": "finance@company.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "information",
+      "priority": "normal",
+      "category": "billing",
+      "actionRequired": false,
+      "minConfidence": 0.80
+    },
+    "description": "Information über erfolgte Zahlung - Billing Team"
+  },
+
+  {
+    "testId": "email-insights-013",
+    "name": "VIP Customer - Urgent Request",
+    "input": {
+      "emailContent": "Hallo,\n\nwir haben morgen eine wichtige Präsentation vor dem Vorstand und benötigen dringend die Export-Funktion für unsere Dashboards. Leider funktioniert der CSV-Export nicht. Können Sie das heute noch fixen?\n\nWir sind Enterprise-Kunde seit 5 Jahren.\n\nDr. Anna Meier\nCOO, BigCorp AG",
+      "subject": "URGENT: CSV-Export funktioniert nicht",
+      "fromEmail": "a.meier@bigcorp.de",
+      "analysisType": "full",
+      "context": {
+        "customerInfo": "VIP Enterprise Customer, 5 years, 500.000€/year contract"
+      }
+    },
+    "expectedOutput": {
+      "sentiment": "urgent",
+      "intent": "request",
+      "priority": "urgent",
+      "category": "support",
+      "slaRecommendation": "1h",
+      "escalationNeeded": true,
+      "minConfidence": 0.85
+    },
+    "description": "VIP-Kunde mit dringendem Request - immediate response"
+  },
+
+  {
+    "testId": "email-insights-014",
+    "name": "Internal Communication - Employee Question",
+    "input": {
+      "emailContent": "Hey Team,\n\nkann mir jemand erklären, wie das neue Urlaubsantrag-System funktioniert? Ich finde den Button nicht 😅\n\nDanke!\nMartin",
+      "subject": "Frage: Neues Urlaubssystem",
+      "fromEmail": "martin.klein@firma-internal.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "question",
+      "priority": "low",
+      "category": "hr",
+      "actionRequired": true,
+      "minConfidence": 0.70
+    },
+    "description": "Interne Mitarbeiter-Frage - HR Support"
+  },
+
+  {
+    "testId": "email-insights-015",
+    "name": "Edge Case - Very Short Email",
+    "input": {
+      "emailContent": "Bitte um Rückruf.",
+      "subject": "Rückruf",
+      "fromEmail": "kunde@firma.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "normal",
+      "category": "other",
+      "minConfidence": 0.40
+    },
+    "description": "Edge Case: Sehr kurze Email - niedrige Confidence erwartet"
+  },
+
+  {
+    "testId": "email-insights-016",
+    "name": "Mixed Signals - Positive but Urgent",
+    "input": {
+      "emailContent": "Hallo liebes Team,\n\nerstmal vielen Dank für eure tolle Arbeit! Allerdings haben wir gerade ein kritisches Problem entdeckt: Kundendaten werden nicht korrekt synchronisiert. Das müssen wir heute noch lösen, da morgen unser Audit stattfindet.\n\nKönnt ihr bitte dringend schauen?\n\nLiebe Grüße",
+      "subject": "Dringend: Sync-Problem vor Audit",
+      "fromEmail": "compliance@kunde.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "urgent",
+      "intent": "request",
+      "priority": "urgent",
+      "category": "support",
+      "slaRecommendation": "4h",
+      "minConfidence": 0.70
+    },
+    "description": "Mixed Signals: Höflich aber dringend - sollte urgent erkennen"
+  },
+
+  {
+    "testId": "email-insights-017",
+    "name": "Newsletter Unsubscribe Request",
+    "input": {
+      "emailContent": "Bitte entfernen Sie mich aus Ihrem Newsletter-Verteiler. Ich möchte keine weiteren Marketing-Emails mehr erhalten.",
+      "subject": "Newsletter abbestellen",
+      "fromEmail": "unsubscribe@customer.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "request",
+      "priority": "low",
+      "category": "marketing",
+      "actionRequired": true,
+      "minConfidence": 0.85
+    },
+    "description": "Newsletter Unsubscribe - Marketing Team, low priority"
+  },
+
+  {
+    "testId": "email-insights-018",
+    "name": "Technical Bug Report - Detailed",
+    "input": {
+      "emailContent": "Hallo Support,\n\nich habe einen Bug gefunden:\n\nSchritte zur Reproduktion:\n1. Dashboard öffnen\n2. Filter auf \"Letzten 30 Tage\" setzen\n3. Export als PDF klicken\n\nErgebnis: Fehler 500\nErwartet: PDF-Download\n\nBrowser: Chrome 120\nOS: Windows 11\nAccount: Premium\n\nScreenshot im Anhang.\n\nBitte um Fix!",
+      "subject": "Bug Report: PDF-Export wirft Error 500",
+      "fromEmail": "developer@tech-company.io",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "complaint",
+      "priority": "normal",
+      "category": "support",
+      "actionRequired": true,
+      "minConfidence": 0.85
+    },
+    "description": "Detaillierter Bug Report - Support Team, strukturiert"
+  },
+
+  {
+    "testId": "email-insights-019",
+    "name": "Contract Renewal Question",
+    "input": {
+      "emailContent": "Guten Tag,\n\nunser Vertrag läuft im März aus. Wir würden gerne verlängern, hätten aber gerne bessere Konditionen bei höherer User-Anzahl. Können wir dazu einen Termin vereinbaren?\n\nWir planen, von 50 auf 150 User zu erweitern.\n\nFreundliche Grüße\nPetra Wagner\nHead of IT",
+      "subject": "Vertragsverlängerung + Expansion",
+      "fromEmail": "p.wagner@growing-company.de",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "positive",
+      "intent": "request",
+      "priority": "high",
+      "category": "sales",
+      "suggestedDepartment": "sales",
+      "minConfidence": 0.85
+    },
+    "description": "Upsell Opportunity - Sales Team, high priority"
+  },
+
+  {
+    "testId": "email-insights-020",
+    "name": "Spam-like but Legitimate",
+    "input": {
+      "emailContent": "🚀 MEGA ANGEBOT 🚀\n\nHallo! Wir haben ein SUPER Angebot für Sie! 50% RABATT auf alle Premium-Features! NUR HEUTE!\n\nKlicken Sie hier: www.competitor.com\n\n💰💰💰",
+      "subject": "🔥 EXKLUSIV: 50% RABATT - NUR HEUTE!!!",
+      "fromEmail": "marketing@competitor.com",
+      "analysisType": "full"
+    },
+    "expectedOutput": {
+      "sentiment": "neutral",
+      "intent": "other",
+      "priority": "low",
+      "category": "marketing",
+      "actionRequired": false,
+      "minConfidence": 0.50
+    },
+    "description": "Spam-ähnlich - sollte low priority und low confidence haben"
+  }
+]

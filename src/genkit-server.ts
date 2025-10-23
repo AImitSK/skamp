@@ -14,13 +14,15 @@ export { generatePressReleaseStructuredFlow } from './lib/ai/flows/generate-pres
 export { generateHeadlinesFlow } from './lib/ai/flows/generate-headlines';
 export { textTransformFlow } from './lib/ai/flows/text-transform';
 export { analyzeKeywordSEOFlow } from './lib/ai/flows/analyze-keyword-seo';
+export { emailInsightsFlow } from './lib/ai/flows/email-insights';
 export * from './lib/ai/evaluators/merge-quality-evaluators';
 export * from './lib/ai/evaluators/headline-quality-evaluators';
 export * from './lib/ai/evaluators/press-release-structured-evaluators';
 export * from './lib/ai/evaluators/text-transform-evaluators';
 export * from './lib/ai/evaluators/seo-keyword-evaluators';
+export * from './lib/ai/evaluators/email-insights-evaluators';
 
 console.log('✅ Genkit Server gestartet!');
-console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO');
-console.log('📊 Evaluators registriert: merge-quality, headline-quality, pr-structured-quality, text-transform-quality, seo-keyword-quality');
+console.log('📦 Flows registriert: mergeVariants, generatePressRelease, generatePressReleaseStructured, generateHeadlines, textTransform, analyzeKeywordSEO, emailInsights');
+console.log('📊 Evaluators registriert: merge-quality, headline-quality, pr-structured-quality, text-transform-quality, seo-keyword-quality, email-insights-quality');
 console.log('🌐 Developer UI: http://localhost:4002 (oder anderer Port)');
