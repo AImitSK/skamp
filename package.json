@@ -26,7 +26,8 @@
     "cleanup:matching-test": "npx tsx scripts/cleanup-matching-test-data.ts",
     "type-check": "tsc --noEmit",
     "check:indexes": "npx tsx scripts/check-firestore-indexes.ts",
-    "genkit:dev": "genkit start",
+    "genkit:dev": "genkit start -- npx tsx --watch src/genkit-server.ts",
+    "genkit:ui:start": "genkit start -- npx tsx --watch src/genkit-server.ts",
     "genkit:flow": "genkit flow:run"
   },
   "dependencies": {
@@ -36,7 +37,8 @@
     "@fullcalendar/list": "^6.1.18",
     "@fullcalendar/react": "^6.1.18",
     "@fullcalendar/timegrid": "^6.1.18",
-    "@genkit-ai/googleai": "^1.21.0",
+    "@genkit-ai/evaluator": "^1.21.0",
+    "@genkit-ai/google-genai": "^1.21.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.4",
@@ -88,7 +90,7 @@
     "react-image-crop": "^11.0.10",
     "recharts": "^2.15.4",
     "rss-parser": "^3.13.0",
-    "swagger-ui-react": "^5.27.1",
+    "swagger-ui-react": "^5.29.5",
     "xlsx": "^0.18.5",
     "zod": "^4.0.10"
   },

@@ -40,19 +40,63 @@ export const mergeVariantsFlow = ai.defineFlow(
     const contactDataOnly = variants.map(v => v.contactData);
 
     // Baue Prompt mit Output-Template
-    const prompt = `Merge ${variants.length} Journalist-Kontakte zu EINEM optimalen Kontakt.
+    const prompt = `Du bist ein Daten-Merge-Experte. Deine Aufgabe ist es, ${variants.length} Journalist-Kontakte zu EINEM vollständigen Kontakt zu mergen.
 
-INPUT - Kontakte zum Mergen:
+WICHTIG: Du musst ALLE Daten aus ALLEN ${variants.length} Kontakten sammeln und kombinieren. NIEMALS nur einen Kontakt nehmen!
+
+INPUT - ${variants.length} Kontakte zum Mergen:
 ${JSON.stringify(contactDataOnly, null, 2)}
 
-AUFGABE: Erstelle EIN gemergtes Contact-Objekt mit dieser EXAKTEN Struktur:
+SCHRITT-FÜR-SCHRITT MERGE-PROZESS:
+
+1. EMAILS sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDE E-Mail-Adresse
+   - Dedupliziere basierend auf E-Mail-Adresse (case-insensitive)
+   - Behalte alle unterschiedlichen E-Mails
+
+2. BEATS sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDEN Beat/Themenschwerpunkt
+   - Dedupliziere (case-insensitive)
+   - Beispiel: ["Bundespolitik"] + ["Bundespolitik", "Europapolitik"] = ["Bundespolitik", "Europapolitik"]
+
+3. PUBLICATIONS sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDE Publication
+   - Dedupliziere (case-insensitive)
+   - Beispiel: ["Süddeutsche Zeitung"] + ["Süddeutsche Zeitung", "SZ Online"] = ["Süddeutsche Zeitung", "SZ Online"]
+
+4. PHONES sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDE Telefonnummer
+   - Dedupliziere basierend auf number
+   - Behalte alle unterschiedlichen Telefonnummern
+
+5. SOCIAL PROFILES sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDES Social Profile
+   - Dedupliziere basierend auf platform
+
+6. MEDIA TYPES sammeln:
+   - Gehe durch JEDEN der ${variants.length} Kontakte
+   - Sammle JEDEN Media Type
+   - Dedupliziere
+
+7. NAME & TITLE:
+   - Nimm den vollständigsten Namen (mit title falls vorhanden)
+
+8. POSITION:
+   - Nimm die detaillierteste/höchste Position
+
+OUTPUT-STRUKTUR (EXAKT so zurückgeben):
 
 {
   "name": {
     "firstName": "...",
     "lastName": "...",
-    "title": "..." (optional: Dr., Prof., etc.),
-    "suffix": "..." (optional)
+    "title": "..." (Dr., Prof., etc. ODER null wenn nicht vorhanden),
+    "suffix": "..." (ODER null)
   },
   "displayName": "Vorname Nachname",
   "emails": [
@@ -76,15 +120,23 @@ AUFGABE: Erstelle EIN gemergtes Contact-Objekt mit dieser EXAKTEN Struktur:
   "website": "..."
 }
 
-MERGE-REGELN:
-- NAME: Vollständigste Form (mit title falls vorhanden)
-- EMAILS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
-- PHONES: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
-- BEATS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
-- PUBLICATIONS: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
-- MEDIA_TYPES: ALLE aus ALLEN Kontakten sammeln (dedupliziert)
+BEISPIEL:
+Input:
+  Kontakt 1: emails: ["a@test.de"], beats: ["Politik"]
+  Kontakt 2: emails: ["a@test.de", "b@test.de"], beats: ["Politik", "Wirtschaft"]
 
-KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusätzlichen Felder!`;
+Korrekter Output:
+  emails: ["a@test.de", "b@test.de"]  // BEIDE E-Mails!
+  beats: ["Politik", "Wirtschaft"]     // BEIDE Beats!
+
+Falscher Output (NIEMALS so!):
+  emails: ["a@test.de"]                // ❌ b@test.de fehlt!
+  beats: ["Politik"]                   // ❌ Wirtschaft fehlt!
+
+KRITISCH:
+- Antworte NUR mit einem JSON-Objekt
+- KEIN Array, KEIN Text davor/danach
+- ALLE Daten aus ALLEN ${variants.length} Kontakten müssen enthalten sein!`;
 
     try {
       // Genkit Generate mit JSON Mode (nicht Structured Output!)
@@ -93,7 +145,7 @@ KRITISCH: Antworte NUR mit einem Objekt dieser Struktur. KEIN Array! KEINE zusä
         model: gemini25FlashModel,
         prompt,
         config: {
-          temperature: 0.5,
+          temperature: 0.2, // Niedrig für konsistentes Merging
           maxOutputTokens: 4096,
           topP: 0.95,
           response_mime_type: 'application/json' // ✅ JSON Mode
