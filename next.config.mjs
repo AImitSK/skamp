@@ -36,7 +36,7 @@ const nextConfig = {
       config.externals = config.externals || [];
       config.externals.push({
         '@google/generative-ai': 'commonjs @google/generative-ai',
-        '@genkit-ai/googleai': 'commonjs @genkit-ai/googleai',
+        '@genkit-ai/google-genai': 'commonjs @genkit-ai/google-genai',
         '@genkit-ai/core': 'commonjs @genkit-ai/core',
         'genkit': 'commonjs genkit',
         '@grpc/grpc-js': 'commonjs @grpc/grpc-js',
