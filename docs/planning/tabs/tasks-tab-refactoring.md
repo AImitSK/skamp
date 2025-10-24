@@ -35,6 +35,11 @@ Dieses Dokument beschreibt das Refactoring des Tasks Tabs mit Integration des "M
 - ✅ Design System (bereits compliant)
 - ✅ Admin SDK (NICHT erforderlich - Security Rules reichen)
 
+**Spezialisierte Agenten:**
+- 🤖 **refactoring-test** - Phase 4 (Testing)
+- 🤖 **refactoring-dokumentation** - Phase 5 (Dokumentation)
+- 🤖 **refactoring-quality-check** - Vor Phase 7 (Quality Gate)
+
 ---
 
 ## 🎯 Ziele
@@ -675,6 +680,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 #### Ziel
 Comprehensive Test Suite mit >80% Coverage
 
+#### 🤖 Spezialisierter Agent: refactoring-test
+
+**WICHTIG:** Diese Phase wird von dem spezialisierten `refactoring-test` Agent durchgeführt!
+
+**Agent-Features:**
+- ✅ 100% Test-Implementierung (KEINE TODOs, KEINE "analog" Kommentare)
+- ✅ Hook Tests (useMyTasks, useProjectTasks)
+- ✅ Component Tests (TaskList, TaskListItem, TaskFilterPanel, etc.)
+- ✅ Integration Tests (CRUD-Flow)
+- ✅ Mock Setup (Firebase, Auth, Organization Context)
+- ✅ Coverage-Report
+
+**Aufruf:**
+```bash
+# Agent proaktiv nach Phase 3 starten
+# Der Agent erstellt ALLE Tests vollständig
+```
+
 #### 4.1 Hook Tests
 
 **Datei:** `src/lib/hooks/__tests__/useMyTasks.test.tsx`
@@ -849,6 +872,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 #### Ziel
 Vollständige, wartbare Dokumentation
+
+#### 🤖 Spezialisierter Agent: refactoring-dokumentation
+
+**WICHTIG:** Diese Phase wird von dem spezialisierten `refactoring-dokumentation` Agent durchgeführt!
+
+**Agent-Features:**
+- ✅ Vollständige README.md (800+ Zeilen)
+- ✅ API-Dokumentation (1.000+ Zeilen)
+- ✅ Component-Dokumentation (900+ Zeilen)
+- ✅ ADRs (Architecture Decision Records)
+- ✅ Code-Beispiele
+- ✅ Troubleshooting-Guides
+
+**Aufruf:**
+```bash
+# Agent proaktiv nach Phase 4 starten
+# Der Agent erstellt ALLE Dokumentation vollständig
+```
 
 #### 5.1 Struktur anlegen
 
@@ -1131,6 +1172,83 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
+## 🔍 Phase 6.5: Quality Gate Check
+
+#### 🤖 Spezialisierter Agent: refactoring-quality-check
+
+**WICHTIG:** Dieser Agent wird PROAKTIV vor Phase 7 (Merge) ausgeführt!
+
+**Warum wichtig?**
+Der Quality Check stellt sicher, dass ALLE Refactoring-Phasen VOLLSTÄNDIG implementiert wurden:
+- ✅ Nicht nur Dateien erstellt, sondern auch integriert
+- ✅ Alter Code entfernt (keine toten Imports)
+- ✅ Tests laufen und bestehen
+- ✅ Dokumentation vollständig
+
+**Agent-Checks:**
+1. **Modularisierung:** Sind alle 5 Komponenten erstellt UND importiert?
+2. **Alter Code:** Wurden alte Implementierungen entfernt?
+3. **Tests:** Laufen alle 73 Tests? Coverage >80%?
+4. **Dokumentation:** Sind alle 5 Docs vorhanden?
+5. **Integration:** Funktioniert Dashboard Widget + Tasks Tab?
+6. **TypeScript:** 0 Fehler in refactorierten Dateien?
+7. **Build:** npm run build erfolgreich?
+
+**Aufruf:**
+```bash
+# Agent wird PROAKTIV vor dem Merge ausgeführt
+# Bei Problemen: STOP - erst fixen, dann erneut checken
+```
+
+**Output:**
+- ✅ **PASS:** Alle Checks bestanden → Ready für Merge
+- ❌ **FAIL:** Probleme gefunden → Detaillierter Report mit Fixes
+
+### Checkliste Phase 6.5
+
+- [ ] refactoring-quality-check Agent ausgeführt
+- [ ] Alle Checks bestanden
+- [ ] Probleme (falls vorhanden) behoben
+- [ ] Agent erneut ausgeführt (bei Fixes)
+- [ ] Final PASS erhalten
+
+### Phase-Bericht
+
+```markdown
+## Phase 6.5: Quality Gate Check ✅
+
+### Agent-Report
+- ✅ Modularisierung: Alle Komponenten integriert
+- ✅ Alter Code: Vollständig entfernt
+- ✅ Tests: 73/73 bestanden, Coverage [X]%
+- ✅ Dokumentation: Alle 5 Docs vorhanden
+- ✅ Integration: Dashboard + Tasks Tab funktionieren
+- ✅ TypeScript: 0 Fehler
+- ✅ Build: Erfolgreich
+
+### Probleme gefunden
+- [Keine] oder [Liste von behobenen Problemen]
+
+### Status
+✅ READY FOR MERGE
+
+### Commit
+```bash
+git add .
+git commit -m "chore: Phase 6.5 - Quality Gate Check bestanden
+
+- refactoring-quality-check Agent ausgeführt
+- Alle Checks bestanden
+- Ready für Merge to Main
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+```
+
+---
+
 ## 🔄 Phase 7: Merge zu Main
 
 ### Workflow
@@ -1152,9 +1270,10 @@ npm test -- tasks
 
 ### Checkliste Merge
 
-- [ ] Alle 7 Phasen abgeschlossen
-- [ ] Alle Tests bestehen
-- [ ] Dokumentation vollständig
+- [ ] Alle 7 Phasen abgeschlossen (inkl. Phase 6.5)
+- [ ] **refactoring-quality-check Agent:** PASS ✅
+- [ ] Alle Tests bestehen (73/73)
+- [ ] Dokumentation vollständig (3.200+ Zeilen)
 - [ ] Feature-Branch gepushed
 - [ ] Main gemerged
 - [ ] Main gepushed
@@ -1192,6 +1311,57 @@ npm test -- tasks
 - [ ] Team-Demo
 - [ ] User-Feedback sammeln
 ```
+
+---
+
+## 🤖 Spezialisierte Agenten - Übersicht
+
+### Phase 4: refactoring-test
+
+**Zweck:** Erstellt vollständige Test-Suite mit 100% Implementierung
+
+**Features:**
+- Hook Tests mit React Query Mocks
+- Component Tests mit Testing Library
+- Integration Tests für CRUD-Flow
+- KEINE TODOs oder "analog" Kommentare
+- Coverage-Report (>80%)
+
+**Wird proaktiv gestartet:** Nach Phase 3 (Performance-Optimierung)
+
+---
+
+### Phase 5: refactoring-dokumentation
+
+**Zweck:** Erstellt umfassende Modul-Dokumentation
+
+**Features:**
+- README.md mit Architektur-Diagrammen
+- API-Dokumentation für Hooks
+- Component-Dokumentation mit Props
+- Architecture Decision Records (ADRs)
+- Code-Beispiele und Troubleshooting
+
+**Wird proaktiv gestartet:** Nach Phase 4 (Testing)
+
+---
+
+### Phase 6.5: refactoring-quality-check
+
+**Zweck:** Stellt sicher, dass ALLE Phasen VOLLSTÄNDIG implementiert wurden
+
+**Checks:**
+1. Modularisierung vollständig?
+2. Alter Code entfernt?
+3. Tests laufen?
+4. Dokumentation vorhanden?
+5. Integration funktioniert?
+6. TypeScript ohne Fehler?
+7. Build erfolgreich?
+
+**Wird proaktiv gestartet:** VOR Phase 7 (Merge to Main)
+
+**Output:** PASS ✅ oder FAIL ❌ mit detailliertem Report
 
 ---
 
