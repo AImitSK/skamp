@@ -196,6 +196,25 @@ service cloud.firestore {
     }
 
     // ========================================
+    // TASKS SYSTEM
+    // ========================================
+
+    // Tasks Collection - Org-Member Zugriff
+    match /tasks/{taskId} {
+      // Lesen: Nur Tasks der eigenen Organisation
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+
+      // Erstellen: Nur für eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update & Löschen: Nur Tasks der eigenen Organisation
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
