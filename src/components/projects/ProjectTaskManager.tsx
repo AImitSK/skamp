@@ -102,9 +102,10 @@ export function ProjectTaskManager({
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
+  const [viewMode, setViewMode] = useState<'all' | 'mine'>('all');
   const [filters, setFilters] = useState<TaskFilters>({
-    teamTasks: true,
-    assignedToMe: false,
+    today: false,
+    overdue: false,
     assignedUserId: user?.uid
   });
 
@@ -127,9 +128,12 @@ export function ProjectTaskManager({
     loadTasks();
   }, [loadTasks]);
 
-  // Filter tasks based on current filters
+  // Filter tasks based on view mode and filters
   const filteredTasks = tasks.filter(task => {
-    if (filters.assignedToMe && task.assignedUserId !== user?.uid) return false;
+    // View Mode Filter
+    if (viewMode === 'mine' && task.assignedUserId !== user?.uid) return false;
+
+    // Today Filter
     if (filters.today) {
       if (!task.dueDate) return false;
       const today = new Date();
@@ -138,7 +142,10 @@ export function ProjectTaskManager({
       dueDate.setHours(0, 0, 0, 0);
       return dueDate.getTime() === today.getTime();
     }
+
+    // Overdue Filter
     if (filters.overdue && !task.isOverdue) return false;
+
     return true;
   });
 
@@ -325,12 +332,20 @@ export function ProjectTaskManager({
       <div className="flex items-center justify-between">
         <div>
           <Heading level={2}>Projekt-Tasks</Heading>
-          <Text className="text-gray-600">
-            {filteredTasks.length} {filteredTasks.length === 1 ? 'Task' : 'Tasks'}
-            {filters.assignedToMe && ' (Meine Tasks)'}
-            {filters.today && ' (Heute fällig)'}
-            {filters.overdue && ' (Überfällig)'}
-          </Text>
+          <div className="flex items-center gap-2 flex-wrap mt-1">
+            <Text className="text-gray-600">
+              {filteredTasks.length} {filteredTasks.length === 1 ? 'Task' : 'Tasks'}
+            </Text>
+            {viewMode === 'mine' && (
+              <Badge color="blue" className="text-xs">Meine Tasks</Badge>
+            )}
+            {filters.today && (
+              <Badge color="blue" className="text-xs">Heute fällig</Badge>
+            )}
+            {filters.overdue && (
+              <Badge color="blue" className="text-xs">Überfällig</Badge>
+            )}
+          </div>
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
@@ -341,35 +356,22 @@ export function ProjectTaskManager({
         </Button>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => setFilters(prev => ({ ...prev, teamTasks: !prev.teamTasks, assignedToMe: false }))}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
-                     border transition-colors font-medium text-sm whitespace-nowrap
-                     ${filters.teamTasks
-                       ? 'border-[#005fab] bg-[#005fab] text-white'
-                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
-                     }`}
+      {/* Filter Controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* View Mode Select */}
+        <select
+          value={viewMode}
+          onChange={(e) => setViewMode(e.target.value as 'all' | 'mine')}
+          className="rounded-lg border border-zinc-300 bg-white px-4 h-10
+                     text-sm text-zinc-700 font-medium
+                     focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+                     hover:bg-zinc-50 transition-colors"
         >
-          Alle Team-Tasks
-        </button>
-        <button
-          onClick={() => setFilters(prev => ({
-            ...prev,
-            assignedToMe: !prev.assignedToMe,
-            teamTasks: false,
-            assignedUserId: user?.uid
-          }))}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
-                     border transition-colors font-medium text-sm whitespace-nowrap
-                     ${filters.assignedToMe
-                       ? 'border-[#005fab] bg-[#005fab] text-white'
-                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
-                     }`}
-        >
-          Meine Tasks
-        </button>
+          <option value="all">Alle Tasks</option>
+          <option value="mine">Meine Tasks</option>
+        </select>
+
+        {/* Filter Toggle Buttons */}
         <button
           onClick={() => setFilters(prev => ({ ...prev, today: !prev.today }))}
           className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
@@ -553,7 +555,7 @@ export function ProjectTaskManager({
             Keine Tasks gefunden
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            {Object.values(filters).some(Boolean)
+            {(filters.today || filters.overdue || viewMode === 'mine')
               ? 'Versuche andere Filter oder erstelle eine neue Task.'
               : 'Erstelle die erste Task für dieses Projekt.'
             }
