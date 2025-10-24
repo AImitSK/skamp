@@ -48,12 +48,19 @@ import MoveAssetModal from './folders/components/MoveAssetModal';
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
 import { useDocumentEditor } from './folders/hooks/useDocumentEditor';
+import { useSpreadsheetEditor } from './folders/hooks/useSpreadsheetEditor';
 // Types
 import type { ProjectFoldersViewProps } from './folders/types';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
   () => import('./DocumentEditorModal'),
+  { ssr: false }
+);
+
+// Lazy load Spreadsheet Editor Modal
+const SpreadsheetEditorModal = dynamic(
+  () => import('./SpreadsheetEditorModal'),
   { ssr: false }
 );
 
@@ -153,6 +160,18 @@ export default function ProjectFoldersView({
     handleCloseEditor
   } = useDocumentEditor({
     onSaveSuccess: handleDocumentSaveSuccess
+  });
+
+  const {
+    showSpreadsheetEditor,
+    editingSpreadsheet,
+    initialSpreadsheetData,
+    handleCreateSpreadsheet,
+    handleEditSpreadsheet,
+    handleSpreadsheetSave,
+    handleCloseEditor: handleCloseSpreadsheetEditor
+  } = useSpreadsheetEditor({
+    onSaveSuccess: handleDocumentSaveSuccess // Reuse same success callback
   });
 
   // Local Component State (UI only)
@@ -362,7 +381,7 @@ export default function ProjectFoldersView({
               </Button>
               <Button
                 plain
-                onClick={() => {/* TODO: Tabellen-Editor */}}
+                onClick={() => handleCreateSpreadsheet()}
                 disabled={loading}
                 title="Tabelle erstellen"
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -624,7 +643,21 @@ export default function ProjectFoldersView({
           projectId={projectId}
         />
       )}
-      
+
+      {/* Spreadsheet Editor Modal */}
+      {showSpreadsheetEditor && (
+        <SpreadsheetEditorModal
+          isOpen={showSpreadsheetEditor}
+          onClose={handleCloseSpreadsheetEditor}
+          onSave={handleSpreadsheetSave}
+          document={editingSpreadsheet}
+          folderId={selectedFolderId || projectFolders?.id}
+          organizationId={organizationId}
+          projectId={projectId}
+          initialData={initialSpreadsheetData || undefined}
+        />
+      )}
+
       {/* Confirm Dialog */}
       {confirmDialog && (
         <DeleteConfirmDialog
