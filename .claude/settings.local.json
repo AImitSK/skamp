@@ -23,7 +23,15 @@
       "WebFetch(domain:genkit.dev)",
       "Bash(for:*)",
       "Bash(do echo \"$file:\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git merge feature/communication-components-refactoring-production --no-ff -m \"$(cat <<''EOF''\nmerge: Genkit Migration für PR-Generierung (Strukturiert + Einfach)\n\nFeature Branch: feature/communication-components-refactoring-production\nCommits: 167062bb, 448f5e53\n\nZUSAMMENFASSUNG DER MIGRATION:\n\nNeue Dateien:\n✅ src/lib/ai/schemas/press-release-structured-schemas.ts (74 Zeilen)\n✅ src/lib/ai/flows/generate-press-release-structured.ts (680 Zeilen)\n\nModifizierte Dateien:\n✅ src/app/api/ai/generate-structured/route.ts (732 → 120 Zeilen, -84%)\n✅ src/app/api/ai/generate/route.ts (mode Default-Fix)\n✅ src/genkit-server.ts (Flow Export)\n\nFeatures:\n- Strukturierte PR-Generierung auf Genkit migriert\n- Vollständige Prompt Library integriert (700+ Zeilen)\n- 7 Industry-Prompts, 4 Tone-Prompts, 3 Audience-Prompts\n- PR-SEO Score Optimierung (85-95% Target)\n- Dokumenten-Kontext Support (bis zu 3 Dateien, 15k chars)\n- Verbessertes Quote-Parsing (aus Body-Paragraphen)\n\nBug Fixes:\n- maxOutputTokens: 2048 → 8192 (Gemini Extended Thinking)\n- Default mode=''generate'' für Abwärtskompatibilität\n\nProduction-Tests: ✅ Erfolgreich\nCode-Reduktion: -612 Zeilen (-84%)\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npm run genkit:dev)",
+      "mcp__genkit__run_flow",
+      "mcp__genkit__lookup_genkit_docs",
+      "Bash(genkit eval:flow generateHeadlines --input src/lib/ai/test-data/generate-headlines-dataset.json)",
+      "mcp__genkit__get_trace",
+      "mcp__genkit__list_flows",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": [],
