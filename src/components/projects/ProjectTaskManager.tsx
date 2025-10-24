@@ -1,8 +1,10 @@
 // src/components/projects/ProjectTaskManager.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -102,8 +104,11 @@ export function ProjectTaskManager({
   projectTitle
 }: ProjectTaskManagerProps) {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<ProjectTask[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // React Query Hook für Task-Loading
+  const { tasks, isLoading } = useProjectTasks(projectId, organizationId);
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'mine'>('all');
@@ -123,24 +128,10 @@ export function ProjectTaskManager({
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Load tasks
-  const loadTasks = useCallback(async () => {
-    if (!organizationId || !projectId) return;
-
-    try {
-      setLoading(true);
-      const projectTasks = await taskService.getByProject(projectId, organizationId);
-      setTasks(projectTasks);
-    } catch (error) {
-      console.error('Error loading project tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, organizationId]);
-
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  // Invalidate queries helper
+  const invalidateTasks = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['project-tasks', projectId, organizationId] });
+  }, [queryClient, projectId, organizationId]);
 
   // Filter und Sortierung
   const filteredAndSortedTasks = (() => {
@@ -244,7 +235,7 @@ export function ProjectTaskManager({
   const handleCompleteTask = async (taskId: string, taskTitle: string) => {
     try {
       await taskService.markAsCompleted(taskId);
-      await loadTasks();
+      invalidateTasks();
       toastService.success(`"${taskTitle}" als erledigt markiert`);
     } catch (error) {
       console.error('Error completing task:', error);
@@ -262,7 +253,7 @@ export function ProjectTaskManager({
       onConfirm: async () => {
         try {
           await taskService.delete(taskId);
-          await loadTasks();
+          invalidateTasks();
           toastService.success(`"${taskTitle}" erfolgreich gelöscht`);
         } catch (error) {
           console.error('Error deleting task:', error);
@@ -280,8 +271,6 @@ export function ProjectTaskManager({
     }
 
     try {
-      setLoading(true);
-
       // Erstelle alle Vorlagen-Tasks nacheinander mit kleinen Delays
       // für korrekte Reihenfolge basierend auf Timestamps
       for (let i = 0; i < TASK_TEMPLATES.length; i++) {
@@ -304,16 +293,14 @@ export function ProjectTaskManager({
         await taskService.create(taskData);
       }
 
-      // Lade Tasks neu
-      await loadTasks();
+      // Invalidate queries to reload tasks
+      invalidateTasks();
 
       // Erfolgs-Toast
       toastService.success(`${TASK_TEMPLATES.length} Standard-Tasks erfolgreich erstellt`);
     } catch (error) {
       console.error('Error creating template tasks:', error);
       toastService.error('Fehler beim Erstellen der Vorlagen-Tasks');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -326,7 +313,7 @@ export function ProjectTaskManager({
 
     try {
       await taskService.updateProgress(task.id!, newProgress);
-      await loadTasks();
+      invalidateTasks();
     } catch (error) {
       console.error('Error updating progress:', error);
     }
@@ -382,7 +369,7 @@ export function ProjectTaskManager({
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="bg-white rounded-lg border p-6">
         <div className="animate-pulse">
@@ -857,7 +844,7 @@ export function ProjectTaskManager({
             <Button
               onClick={handleCreateTemplateTasks}
               outline
-              disabled={loading}
+              disabled={isLoading}
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
               Task Vorlage verwenden
@@ -870,7 +857,7 @@ export function ProjectTaskManager({
       <TaskCreateModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={loadTasks}
+        onSuccess={invalidateTasks}
         projectId={projectId}
         organizationId={organizationId}
         projectManagerId={projectManagerId}
@@ -882,7 +869,7 @@ export function ProjectTaskManager({
         <TaskEditModal
           isOpen={!!editingTask}
           onClose={() => setEditingTask(null)}
-          onSuccess={loadTasks}
+          onSuccess={invalidateTasks}
           task={editingTask}
           teamMembers={getProjectTeamMembers()}
         />
