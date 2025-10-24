@@ -105,7 +105,7 @@ export default function SpreadsheetEditorModal({
         const { documentId, assetId } = await documentContentService.createDocument(
           jsonContent,
           {
-            fileName: `${title}.json`,
+            fileName: `${title}.celero-sheet`,
             folderId,
             organizationId,
             projectId,

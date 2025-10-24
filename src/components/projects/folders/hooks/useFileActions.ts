@@ -84,22 +84,62 @@ export function useFileActions({
 }`;
   };
 
+  const convertSpreadsheetToCsv = (jsonContent: string): string => {
+    try {
+      const data = JSON.parse(jsonContent);
+      const rows = data.data || [];
+
+      return rows
+        .map((row: Array<{ value: string }>) =>
+          row.map(cell => {
+            const value = cell.value || '';
+            // Escape quotes and wrap in quotes if contains comma or quote
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        )
+        .join('\n');
+    } catch (error) {
+      console.error('Fehler beim Konvertieren der Tabelle:', error);
+      return '';
+    }
+  };
+
   const handleDownloadDocument = async (asset: any) => {
     try {
       if (asset.contentRef) {
         const content = await documentContentService.loadDocument(asset.contentRef);
         if (content) {
-          const rtfContent = convertHtmlToRtf(content.content, asset.fileName.replace('.celero-doc', ''));
+          const isSpreadsheet = asset.fileType === 'celero-sheet' ||
+                               asset.fileName?.endsWith('.celero-sheet');
 
-          const blob = new Blob([rtfContent], { type: 'application/rtf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${asset.fileName.replace('.celero-doc', '')}.rtf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          if (isSpreadsheet) {
+            // Export Spreadsheet as CSV
+            const csvContent = convertSpreadsheetToCsv(content.content);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${asset.fileName.replace('.celero-sheet', '')}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } else {
+            // Export Document as RTF
+            const rtfContent = convertHtmlToRtf(content.content, asset.fileName.replace('.celero-doc', ''));
+            const blob = new Blob([rtfContent], { type: 'application/rtf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${asset.fileName.replace('.celero-doc', '')}.rtf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
         } else {
           alert('Dokument-Inhalt konnte nicht geladen werden.');
         }
@@ -120,13 +160,22 @@ export function useFileActions({
     }
   };
 
-  const handleAssetClick = (asset: any, onEdit: (asset: any) => void) => {
+  const handleAssetClick = (
+    asset: any,
+    onEditDocument: (asset: any) => void,
+    onEditSpreadsheet?: (asset: any) => void
+  ) => {
     const isEditableDocument = asset.fileType === 'celero-doc' ||
                               asset.fileName?.endsWith('.celero-doc');
 
+    const isEditableSpreadsheet = asset.fileType === 'celero-sheet' ||
+                                 asset.fileName?.endsWith('.celero-sheet');
+
     if (isEditableDocument) {
-      onEdit(asset);
-    } else {
+      onEditDocument(asset);
+    } else if (isEditableSpreadsheet && onEditSpreadsheet) {
+      onEditSpreadsheet(asset);
+    } else if (asset.downloadUrl) {
       window.open(asset.downloadUrl, '_blank');
     }
   };

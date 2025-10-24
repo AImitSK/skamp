@@ -268,8 +268,10 @@ export default function ProjectFoldersView({
   }, [handleGoToRoot, onRefresh, loadAllFolders, showAlert]);
 
   // Use handleAssetClick from useFileActions (optimized with useCallback)
-  const handleAssetClick = useCallback((asset: any) => handleAssetClickBase(asset, handleEditDocument),
-    [handleAssetClickBase, handleEditDocument]);
+  const handleAssetClick = useCallback(
+    (asset: any) => handleAssetClickBase(asset, handleEditDocument, handleEditSpreadsheet),
+    [handleAssetClickBase, handleEditDocument, handleEditSpreadsheet]
+  );
 
   const confirmDeleteAsset = useCallback(async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
@@ -323,6 +325,12 @@ export default function ProjectFoldersView({
   const getFileIcon = (asset: any) => {
     if (asset.fileType?.startsWith('image/')) {
       return <PhotoIcon className="w-5 h-5 text-blue-500" />;
+    }
+    if (asset.fileType === 'celero-sheet' || asset.fileName?.endsWith('.celero-sheet')) {
+      return <TableCellsIcon className="w-5 h-5 text-green-600" />;
+    }
+    if (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) {
+      return <DocumentTextIcon className="w-5 h-5 text-blue-600" />;
     }
     return <DocumentTextIcon className="w-5 h-5 text-gray-500" />;
   };
