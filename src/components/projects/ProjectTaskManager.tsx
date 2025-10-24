@@ -198,8 +198,11 @@ export function ProjectTaskManager({
     try {
       setLoading(true);
 
-      // Erstelle alle Vorlagen-Tasks nacheinander
-      for (const template of TASK_TEMPLATES) {
+      // Erstelle alle Vorlagen-Tasks nacheinander mit kleinen Delays
+      // für korrekte Reihenfolge basierend auf Timestamps
+      for (let i = 0; i < TASK_TEMPLATES.length; i++) {
+        const template = TASK_TEMPLATES[i];
+
         const taskData: Omit<ProjectTask, 'id' | 'createdAt' | 'updatedAt' | 'isOverdue' | 'daysUntilDue' | 'overdueBy'> = {
           userId: user.uid,
           organizationId,
@@ -215,6 +218,11 @@ export function ProjectTaskManager({
         };
 
         await taskService.create(taskData);
+
+        // Kurze Pause zwischen den Tasks für korrekte Timestamp-Reihenfolge
+        if (i < TASK_TEMPLATES.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
 
       // Lade Tasks neu
@@ -540,7 +548,7 @@ export function ProjectTaskManager({
             </Button>
             <Button
               onClick={handleCreateTemplateTasks}
-              className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300"
+              outline
               disabled={loading}
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
