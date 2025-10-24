@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
-import { uploadMedia } from '@/lib/firebase/media-assets-service';
 import type { InternalDocument } from '@/types/document-content';
 import SpreadsheetEditor, { type SpreadsheetData } from '../strategy/SpreadsheetEditor';
 
@@ -103,28 +102,17 @@ export default function SpreadsheetEditorModal({
         );
       } else {
         // Neues Dokument erstellen
-        const contentRef = await documentContentService.createDocument(
+        const { documentId, assetId } = await documentContentService.createDocument(
           jsonContent,
-          user.uid
+          {
+            fileName: `${title}.json`,
+            folderId,
+            organizationId,
+            projectId,
+            userId: user.uid,
+            fileType: 'celero-sheet',
+          }
         );
-
-        // Asset-Eintrag erstellen
-        await uploadMedia({
-          file: null,
-          projectId,
-          organizationId,
-          folderId,
-          fileType: 'application/json',
-          fileName: `${title}.json`,
-          contentRef,
-          metadata: {
-            type: 'spreadsheet',
-            rows: data.rows,
-            cols: data.cols,
-            createdBy: user.uid,
-            createdAt: new Date().toISOString(),
-          },
-        });
       }
 
       onSave();
