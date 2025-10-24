@@ -342,41 +342,57 @@ export function ProjectTaskManager({
 
       {/* Filter Buttons */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          plain={!filters.teamTasks}
+        <button
           onClick={() => setFilters(prev => ({ ...prev, teamTasks: !prev.teamTasks, assignedToMe: false }))}
-          className={filters.teamTasks ? 'bg-blue-100 text-blue-700' : ''}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${filters.teamTasks
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
         >
           Alle Team-Tasks
-        </Button>
-        <Button
-          plain={!filters.assignedToMe}
+        </button>
+        <button
           onClick={() => setFilters(prev => ({
             ...prev,
             assignedToMe: !prev.assignedToMe,
             teamTasks: false,
             assignedUserId: user?.uid
           }))}
-          className={filters.assignedToMe ? 'bg-green-100 text-green-700' : ''}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${filters.assignedToMe
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
         >
           Meine Tasks
-        </Button>
-        <Button
-          plain={!filters.today}
+        </button>
+        <button
           onClick={() => setFilters(prev => ({ ...prev, today: !prev.today }))}
-          className={filters.today ? 'bg-orange-100 text-orange-700' : ''}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${filters.today
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
         >
           <CalendarDaysIcon className="w-4 h-4" />
           Heute fällig
-        </Button>
-        <Button
-          plain={!filters.overdue}
+        </button>
+        <button
           onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
-          className={filters.overdue ? 'bg-red-100 text-red-700' : ''}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${filters.overdue
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
         >
           <ExclamationTriangleIcon className="w-4 h-4" />
           Überfällig
-        </Button>
+        </button>
       </div>
 
       {/* Task Table */}
