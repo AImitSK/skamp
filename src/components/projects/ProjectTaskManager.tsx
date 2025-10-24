@@ -439,6 +439,46 @@ export function ProjectTaskManager({
           <option value="mine">Meine Tasks</option>
         </select>
 
+        {/* Quick Filter Buttons */}
+        <button
+          onClick={() => {
+            const isActive = selectedDueDateFilters.includes('today');
+            setSelectedDueDateFilters(
+              isActive
+                ? selectedDueDateFilters.filter(f => f !== 'today')
+                : [...selectedDueDateFilters, 'today']
+            );
+          }}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${selectedDueDateFilters.includes('today')
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
+        >
+          <CalendarDaysIcon className="w-4 h-4" />
+          Heute fällig
+        </button>
+        <button
+          onClick={() => {
+            const isActive = selectedDueDateFilters.includes('overdue');
+            setSelectedDueDateFilters(
+              isActive
+                ? selectedDueDateFilters.filter(f => f !== 'overdue')
+                : [...selectedDueDateFilters, 'overdue']
+            );
+          }}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
+                     border transition-colors font-medium text-sm whitespace-nowrap
+                     ${selectedDueDateFilters.includes('overdue')
+                       ? 'border-[#005fab] bg-[#005fab] text-white'
+                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                     }`}
+        >
+          <ExclamationTriangleIcon className="w-4 h-4" />
+          Überfällig
+        </button>
+
         {/* Filter Popover */}
         <Popover className="relative">
           <Popover.Button
