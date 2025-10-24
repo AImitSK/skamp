@@ -245,9 +245,16 @@ describe('useMyTasks Hook', () => {
 
   describe('Filter: overdue', () => {
     it('filters overdue tasks', async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const mockTasks = [
-        createMockTask({ id: 'task-overdue', title: 'Overdue Task', isOverdue: true }),
-        createMockTask({ id: 'task-normal', title: 'Normal Task', isOverdue: false })
+        createMockTask({ id: 'task-overdue', title: 'Overdue Task', dueDate: Timestamp.fromDate(yesterday) as any }),
+        createMockTask({ id: 'task-normal', title: 'Normal Task', dueDate: Timestamp.fromDate(today) as any })
       ];
 
       mockGetDocs.mockResolvedValue({
