@@ -15,7 +15,7 @@
 import { Button } from '@/components/ui/button';
 import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { taskService } from '@/lib/firebase/task-service';
-import { toastService } from '@/lib/services/toast-service';
+import { toastService } from '@/lib/utils/toast';
 import { ProjectTask, TaskPriority } from '@/types/tasks';
 
 // Task-Vorlagen für Standard-PR-Workflow
