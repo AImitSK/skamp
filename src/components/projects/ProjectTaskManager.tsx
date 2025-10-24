@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { Popover, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import {
   PlusIcon,
   EllipsisVerticalIcon,
@@ -21,7 +23,8 @@ import {
   CalendarDaysIcon,
   UserIcon,
   ChartBarIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import { taskService } from '@/lib/firebase/task-service';
 import { ProjectTask, TaskFilters, TaskStatus, TaskPriority } from '@/types/tasks';
@@ -103,11 +106,12 @@ export function ProjectTaskManager({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
   const [viewMode, setViewMode] = useState<'all' | 'mine'>('all');
-  const [filters, setFilters] = useState<TaskFilters>({
-    today: false,
-    overdue: false,
-    assignedUserId: user?.uid
-  });
+
+  // Erweiterte Filter (multi-select)
+  const [selectedDueDateFilters, setSelectedDueDateFilters] = useState<string[]>([]);
+  const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt' | 'title'>('createdAt');
 
   // Load tasks
   const loadTasks = useCallback(async () => {
@@ -128,26 +132,81 @@ export function ProjectTaskManager({
     loadTasks();
   }, [loadTasks]);
 
-  // Filter tasks based on view mode and filters
-  const filteredTasks = tasks.filter(task => {
-    // View Mode Filter
-    if (viewMode === 'mine' && task.assignedUserId !== user?.uid) return false;
+  // Filter und Sortierung
+  const filteredAndSortedTasks = (() => {
+    let filtered = [...tasks];
 
-    // Today Filter
-    if (filters.today) {
-      if (!task.dueDate) return false;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dueDate = task.dueDate.toDate();
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() === today.getTime();
+    // 1. View Mode Filter
+    if (viewMode === 'mine') {
+      filtered = filtered.filter(task => task.assignedUserId === user?.uid);
     }
 
-    // Overdue Filter
-    if (filters.overdue && !task.isOverdue) return false;
+    // 2. Due Date Filters (OR-verknüpft)
+    if (selectedDueDateFilters.length > 0) {
+      filtered = filtered.filter(task => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-    return true;
-  });
+        return selectedDueDateFilters.some(filter => {
+          if (filter === 'today') {
+            if (!task.dueDate) return false;
+            const dueDate = task.dueDate.toDate();
+            dueDate.setHours(0, 0, 0, 0);
+            return dueDate.getTime() === today.getTime();
+          }
+          if (filter === 'overdue') {
+            return task.isOverdue;
+          }
+          if (filter === 'future') {
+            if (!task.dueDate) return false;
+            const dueDate = task.dueDate.toDate();
+            dueDate.setHours(0, 0, 0, 0);
+            return dueDate.getTime() > today.getTime();
+          }
+          if (filter === 'no-date') {
+            return !task.dueDate;
+          }
+          return false;
+        });
+      });
+    }
+
+    // 3. Status Filters (OR-verknüpft)
+    if (selectedStatusFilters.length > 0) {
+      filtered = filtered.filter(task =>
+        selectedStatusFilters.includes(task.status)
+      );
+    }
+
+    // 4. Assignee Filters (OR-verknüpft)
+    if (selectedAssigneeIds.length > 0) {
+      filtered = filtered.filter(task =>
+        task.assignedUserId && selectedAssigneeIds.includes(task.assignedUserId)
+      );
+    }
+
+    // 5. Sortierung
+    return filtered.sort((a, b) => {
+      if (sortBy === 'dueDate') {
+        if (a.dueDate && b.dueDate) {
+          return a.dueDate.toMillis() - b.dueDate.toMillis();
+        }
+        if (a.dueDate && !b.dueDate) return -1;
+        if (!a.dueDate && b.dueDate) return 1;
+        return 0;
+      }
+      if (sortBy === 'createdAt') {
+        if (a.createdAt && b.createdAt) {
+          return a.createdAt.toMillis() - b.createdAt.toMillis();
+        }
+        return 0;
+      }
+      if (sortBy === 'title') {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+  })();
 
   // Get team member info
   const getTeamMember = (userId: string) => {
@@ -320,6 +379,9 @@ export function ProjectTaskManager({
     );
   }
 
+  // Aktive Filter zählen
+  const activeFiltersCount = selectedDueDateFilters.length + selectedStatusFilters.length + selectedAssigneeIds.length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -328,16 +390,28 @@ export function ProjectTaskManager({
           <Heading level={2}>Projekt-Tasks</Heading>
           <div className="flex items-center gap-2 flex-wrap mt-1">
             <Text className="text-gray-600">
-              {filteredTasks.length} {filteredTasks.length === 1 ? 'Task' : 'Tasks'}
+              {filteredAndSortedTasks.length} {filteredAndSortedTasks.length === 1 ? 'Task' : 'Tasks'}
             </Text>
             {viewMode === 'mine' && (
               <Badge color="blue" className="text-xs">Meine Tasks</Badge>
             )}
-            {filters.today && (
+            {selectedDueDateFilters.includes('today') && (
               <Badge color="blue" className="text-xs">Heute fällig</Badge>
             )}
-            {filters.overdue && (
+            {selectedDueDateFilters.includes('overdue') && (
               <Badge color="blue" className="text-xs">Überfällig</Badge>
+            )}
+            {selectedDueDateFilters.includes('future') && (
+              <Badge color="blue" className="text-xs">Zukünftig</Badge>
+            )}
+            {selectedDueDateFilters.includes('no-date') && (
+              <Badge color="blue" className="text-xs">Kein Datum</Badge>
+            )}
+            {selectedStatusFilters.includes('pending') && (
+              <Badge color="blue" className="text-xs">Offen</Badge>
+            )}
+            {selectedStatusFilters.includes('completed') && (
+              <Badge color="blue" className="text-xs">Erledigt</Badge>
             )}
           </div>
         </div>
@@ -365,35 +439,190 @@ export function ProjectTaskManager({
           <option value="mine">Meine Tasks</option>
         </select>
 
-        {/* Filter Toggle Buttons */}
-        <button
-          onClick={() => setFilters(prev => ({ ...prev, today: !prev.today }))}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
-                     border transition-colors font-medium text-sm whitespace-nowrap
-                     ${filters.today
-                       ? 'border-[#005fab] bg-[#005fab] text-white'
-                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
-                     }`}
-        >
-          <CalendarDaysIcon className="w-4 h-4" />
-          Heute fällig
-        </button>
-        <button
-          onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 h-10
-                     border transition-colors font-medium text-sm whitespace-nowrap
-                     ${filters.overdue
-                       ? 'border-[#005fab] bg-[#005fab] text-white'
-                       : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
-                     }`}
-        >
-          <ExclamationTriangleIcon className="w-4 h-4" />
-          Überfällig
-        </button>
+        {/* Filter Popover */}
+        <Popover className="relative">
+          <Popover.Button
+            className={`inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10 ${
+              activeFiltersCount > 0
+                ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
+                : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+            }`}
+            aria-label="Filter"
+          >
+            <FunnelIcon className="h-4 w-4" />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#005fab] text-xs font-medium text-white">
+                {activeFiltersCount}
+              </span>
+            )}
+          </Popover.Button>
+
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-200"
+            enterFrom="opacity-0 translate-y-1"
+            enterTo="opacity-100 translate-y-0"
+            leave="transition ease-in duration-150"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 translate-y-1"
+          >
+            <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedDueDateFilters([]);
+                        setSelectedStatusFilters([]);
+                        setSelectedAssigneeIds([]);
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
+                </div>
+
+                {/* Fälligkeit Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fälligkeit
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'today', label: 'Heute fällig' },
+                      { value: 'overdue', label: 'Überfällig' },
+                      { value: 'future', label: 'Alle zukünftigen' },
+                      { value: 'no-date', label: 'Kein Datum' }
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedDueDateFilters.includes(option.value)}
+                          onChange={(e) => {
+                            const newValues = e.target.checked
+                              ? [...selectedDueDateFilters, option.value]
+                              : selectedDueDateFilters.filter(v => v !== option.value);
+                            setSelectedDueDateFilters(newValues);
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sortierung */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sortierung
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'dueDate', label: 'Nach Fälligkeit' },
+                      { value: 'createdAt', label: 'Nach Erstellung' },
+                      { value: 'title', label: 'Alphabetisch' }
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          name="sortBy"
+                          checked={sortBy === option.value}
+                          onChange={() => setSortBy(option.value as 'dueDate' | 'createdAt' | 'title')}
+                          className="h-4 w-4 border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'pending', label: 'Offen' },
+                      { value: 'in_progress', label: 'In Bearbeitung' },
+                      { value: 'completed', label: 'Erledigt' }
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedStatusFilters.includes(option.value)}
+                          onChange={(e) => {
+                            const newValues = e.target.checked
+                              ? [...selectedStatusFilters, option.value]
+                              : selectedStatusFilters.filter(v => v !== option.value);
+                            setSelectedStatusFilters(newValues);
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Zuständige Mitglieder Filter */}
+                {getProjectTeamMembers().length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Zuständige Mitglieder
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {getProjectTeamMembers().map((member) => (
+                        <label
+                          key={member.userId || member.id}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedAssigneeIds.includes(member.userId || member.id || '')}
+                            onChange={(e) => {
+                              const memberId = member.userId || member.id || '';
+                              const newValues = e.target.checked
+                                ? [...selectedAssigneeIds, memberId]
+                                : selectedAssigneeIds.filter(v => v !== memberId);
+                              setSelectedAssigneeIds(newValues);
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {member.displayName}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Popover.Panel>
+          </Transition>
+        </Popover>
       </div>
 
       {/* Task Table */}
-      {filteredTasks.length > 0 ? (
+      {filteredAndSortedTasks.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Table Header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -415,7 +644,7 @@ export function ProjectTaskManager({
 
           {/* Table Body */}
           <div className="divide-y divide-gray-200">
-            {filteredTasks.map((task) => {
+            {filteredAndSortedTasks.map((task) => {
               const assignedMember = getTeamMember(task.assignedUserId || '');
 
               return (
@@ -549,7 +778,7 @@ export function ProjectTaskManager({
             Keine Tasks gefunden
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            {(filters.today || filters.overdue || viewMode === 'mine')
+            {(activeFiltersCount > 0 || viewMode === 'mine')
               ? 'Versuche andere Filter oder erstelle eine neue Task.'
               : 'Erstelle die erste Task für dieses Projekt.'
             }
