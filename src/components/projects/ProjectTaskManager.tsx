@@ -219,9 +219,10 @@ export function ProjectTaskManager({
 
         await taskService.create(taskData);
 
-        // Kurze Pause zwischen den Tasks für korrekte Timestamp-Reihenfolge
+        // Pause zwischen den Tasks für korrekte Timestamp-Reihenfolge
+        // 300ms garantieren dass Firestore die Tasks in der richtigen Reihenfolge anlegt
         if (i < TASK_TEMPLATES.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
 
