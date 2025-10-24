@@ -400,7 +400,8 @@ export const taskService = {
       self.findIndex(t => t.id === task.id) === index
     );
 
-    return uniqueTasks;
+    // Füge computed fields hinzu (isOverdue, daysUntilDue, overdueBy)
+    return this.addComputedFields(uniqueTasks as ProjectTask[]) as PipelineAwareTask[];
   },
 
   /**
