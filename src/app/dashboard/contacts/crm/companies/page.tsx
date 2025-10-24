@@ -367,7 +367,7 @@ export default function CompaniesPage() {
         message={confirmDialog.message}
         type={confirmDialog.type}
         onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
