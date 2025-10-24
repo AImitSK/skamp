@@ -15,6 +15,7 @@
 
 'use client';
 
+import React from 'react';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
@@ -43,7 +44,7 @@ interface TaskListItemProps {
   formatDate: (date: any) => string;
 }
 
-export function TaskListItem({
+export const TaskListItem = React.memo(function TaskListItem({
   task,
   assignedMember,
   onEdit,
@@ -182,4 +183,4 @@ export function TaskListItem({
       </div>
     </div>
   );
-}
+});

@@ -13,6 +13,7 @@
 
 'use client';
 
+import React from 'react';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +47,7 @@ interface TaskListProps {
   formatDate: (date: any) => string;
 }
 
-export function TaskList({
+export const TaskList = React.memo(function TaskList({
   tasks,
   isLoading,
   activeFiltersCount,
@@ -167,4 +168,4 @@ export function TaskList({
       </div>
     </div>
   );
-}
+});

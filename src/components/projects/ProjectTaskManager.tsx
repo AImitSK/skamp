@@ -1,7 +1,7 @@
 // src/components/projects/ProjectTaskManager.tsx
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjectTasks } from '@/lib/hooks/useProjectTasks';
@@ -71,7 +71,7 @@ export function ProjectTaskManager({
   }, [queryClient, projectId, organizationId]);
 
   // Filter und Sortierung
-  const filteredAndSortedTasks = (() => {
+  const filteredAndSortedTasks = useMemo(() => {
     let filtered = [...tasks];
 
     // 1. View Mode Filter
@@ -144,15 +144,15 @@ export function ProjectTaskManager({
       }
       return 0;
     });
-  })();
+  }, [tasks, viewMode, selectedDueDateFilters, selectedStatusFilters, selectedAssigneeIds, sortBy, user?.uid]);
 
   // Get team member info
-  const getTeamMember = (userId: string) => {
+  const getTeamMember = useCallback((userId: string) => {
     return teamMembers.find(member => member.userId === userId || member.id === userId);
-  };
+  }, [teamMembers]);
 
   // Get only project team members for task assignment
-  const getProjectTeamMembers = () => {
+  const getProjectTeamMembers = useCallback(() => {
     if (!projectTeamMemberIds || projectTeamMemberIds.length === 0) {
       // Fallback: include project manager at minimum
       return teamMembers.filter(member =>
@@ -166,10 +166,10 @@ export function ProjectTaskManager({
       member.userId === projectManagerId || // Always include project manager
       member.id === projectManagerId
     );
-  };
+  }, [teamMembers, projectTeamMemberIds, projectManagerId]);
 
   // Handle task completion
-  const handleCompleteTask = async (taskId: string, taskTitle: string) => {
+  const handleCompleteTask = useCallback(async (taskId: string, taskTitle: string) => {
     try {
       await taskService.markAsCompleted(taskId);
       invalidateTasks();
@@ -178,10 +178,10 @@ export function ProjectTaskManager({
       console.error('Error completing task:', error);
       toastService.error('Task konnte nicht aktualisiert werden');
     }
-  };
+  }, [invalidateTasks]);
 
   // Handle task deletion
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
+  const handleDeleteTask = useCallback((taskId: string, taskTitle: string) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Task löschen',
@@ -198,11 +198,11 @@ export function ProjectTaskManager({
         }
       }
     });
-  };
+  }, [invalidateTasks]);
 
 
   // Handle progress click
-  const handleProgressClick = async (task: ProjectTask, event: React.MouseEvent) => {
+  const handleProgressClick = useCallback(async (task: ProjectTask, event: React.MouseEvent) => {
     event.stopPropagation();
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const clickPosition = (event.clientX - rect.left) / rect.width;
@@ -214,18 +214,18 @@ export function ProjectTaskManager({
     } catch (error) {
       console.error('Error updating progress:', error);
     }
-  };
+  }, [invalidateTasks]);
 
 
   // Format date
-  const formatDate = (timestamp: Timestamp | undefined) => {
+  const formatDate = useCallback((timestamp: Timestamp | undefined) => {
     if (!timestamp) return '-';
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -243,7 +243,9 @@ export function ProjectTaskManager({
   }
 
   // Aktive Filter zählen
-  const activeFiltersCount = selectedDueDateFilters.length + selectedStatusFilters.length + selectedAssigneeIds.length;
+  const activeFiltersCount = useMemo(() => {
+    return selectedDueDateFilters.length + selectedStatusFilters.length + selectedAssigneeIds.length;
+  }, [selectedDueDateFilters.length, selectedStatusFilters.length, selectedAssigneeIds.length]);
 
   return (
     <div className="space-y-6">

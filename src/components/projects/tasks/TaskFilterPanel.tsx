@@ -17,7 +17,7 @@
 
 'use client';
 
-import { Fragment } from 'react';
+import React, { Fragment } from 'react';
 import { Popover, Transition } from '@headlessui/react';
 import {
   FunnelIcon,
@@ -45,7 +45,7 @@ interface TaskFilterPanelProps {
   onResetFilters: () => void;
 }
 
-export function TaskFilterPanel({
+export const TaskFilterPanel = React.memo(function TaskFilterPanel({
   viewMode,
   selectedDueDateFilters,
   selectedStatusFilters,
@@ -299,4 +299,4 @@ export function TaskFilterPanel({
       </Popover>
     </div>
   );
-}
+});
