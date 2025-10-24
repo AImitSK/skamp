@@ -31,6 +31,7 @@ import { ProjectTask, TaskFilters, TaskStatus, TaskPriority } from '@/types/task
 import { TeamMember } from '@/types/international';
 import { TaskCreateModal } from './TaskCreateModal';
 import { TaskEditModal } from './TaskEditModal';
+import { ConfirmDialog } from '@/app/dashboard/contacts/crm/components/shared';
 import { Timestamp } from 'firebase/firestore';
 import { toastService } from '@/lib/utils/toast';
 
@@ -112,6 +113,15 @@ export function ProjectTaskManager({
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'dueDate' | 'createdAt' | 'title'>('createdAt');
+
+  // Confirm Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Load tasks
   const loadTasks = useCallback(async () => {
@@ -231,27 +241,35 @@ export function ProjectTaskManager({
   };
 
   // Handle task completion
-  const handleCompleteTask = async (taskId: string) => {
+  const handleCompleteTask = async (taskId: string, taskTitle: string) => {
     try {
       await taskService.markAsCompleted(taskId);
       await loadTasks();
+      toastService.success(`"${taskTitle}" als erledigt markiert`);
     } catch (error) {
       console.error('Error completing task:', error);
+      toastService.error('Task konnte nicht aktualisiert werden');
     }
   };
 
   // Handle task deletion
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('Task wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      return;
-    }
-
-    try {
-      await taskService.delete(taskId);
-      await loadTasks();
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
+  const handleDeleteTask = (taskId: string, taskTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Task löschen',
+      message: `Möchten Sie "${taskTitle}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await taskService.delete(taskId);
+          await loadTasks();
+          toastService.success(`"${taskTitle}" erfolgreich gelöscht`);
+        } catch (error) {
+          console.error('Error deleting task:', error);
+          toastService.error('Task konnte nicht gelöscht werden');
+        }
+      }
+    });
   };
 
   // Handle template tasks creation
@@ -799,13 +817,13 @@ export function ProjectTaskManager({
                             Bearbeiten
                           </DropdownItem>
                           {task.status !== 'completed' && (
-                            <DropdownItem onClick={() => handleCompleteTask(task.id!)}>
+                            <DropdownItem onClick={() => handleCompleteTask(task.id!, task.title)}>
                               <CheckCircleIcon className="h-4 w-4" />
                               Als erledigt markieren
                             </DropdownItem>
                           )}
                           <DropdownDivider />
-                          <DropdownItem onClick={() => handleDeleteTask(task.id!)}>
+                          <DropdownItem onClick={() => handleDeleteTask(task.id!, task.title)}>
                             <TrashIcon className="h-4 w-4" />
                             <span className="text-red-600">Löschen</span>
                           </DropdownItem>
@@ -869,6 +887,16 @@ export function ProjectTaskManager({
           teamMembers={getProjectTeamMembers()}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        onConfirm={confirmDialog.onConfirm}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
