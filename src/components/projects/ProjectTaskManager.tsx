@@ -506,153 +506,161 @@ export function ProjectTaskManager({
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 translate-y-1"
           >
-            <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
-                  {activeFiltersCount > 0 && (
+            <Popover.Panel className="absolute right-0 z-10 mt-2 w-[600px] origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {/* Spalte 1: Fälligkeit + Sortierung */}
+                  <div className="space-y-4">
+                    {/* Fälligkeit Filter */}
+                    <div className="mb-[10px]">
+                      <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                        Fälligkeit
+                      </label>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {[
+                          { value: 'today', label: 'Heute fällig' },
+                          { value: 'overdue', label: 'Überfällig' },
+                          { value: 'future', label: 'Alle zukünftigen' },
+                          { value: 'no-date', label: 'Kein Datum' }
+                        ].map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedDueDateFilters.includes(option.value)}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedDueDateFilters, option.value]
+                                  : selectedDueDateFilters.filter(v => v !== option.value);
+                                setSelectedDueDateFilters(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                            />
+                            <span className="text-sm text-zinc-700">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sortierung */}
+                    <div className="mb-[10px]">
+                      <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                        Sortierung
+                      </label>
+                      <div className="space-y-2">
+                        {[
+                          { value: 'dueDate', label: 'Nach Fälligkeit' },
+                          { value: 'createdAt', label: 'Nach Erstellung' },
+                          { value: 'title', label: 'Alphabetisch' }
+                        ].map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="sortBy"
+                              checked={sortBy === option.value}
+                              onChange={() => setSortBy(option.value as 'dueDate' | 'createdAt' | 'title')}
+                              className="h-4 w-4 border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                            />
+                            <span className="text-sm text-zinc-700">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Spalte 2: Status + Zuständige Mitglieder */}
+                  <div className="space-y-4">
+                    {/* Status Filter */}
+                    <div className="mb-[10px]">
+                      <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                        Status
+                      </label>
+                      <div className="space-y-2">
+                        {[
+                          { value: 'pending', label: 'Offen' },
+                          { value: 'in_progress', label: 'In Bearbeitung' },
+                          { value: 'completed', label: 'Erledigt' }
+                        ].map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedStatusFilters.includes(option.value)}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedStatusFilters, option.value]
+                                  : selectedStatusFilters.filter(v => v !== option.value);
+                                setSelectedStatusFilters(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                            />
+                            <span className="text-sm text-zinc-700">
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Zuständige Mitglieder Filter */}
+                    {getProjectTeamMembers().length > 0 && (
+                      <div className="mb-[10px]">
+                        <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                          Zuständige Mitglieder
+                        </label>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {getProjectTeamMembers().map((member) => (
+                            <label
+                              key={member.userId || member.id}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedAssigneeIds.includes(member.userId || member.id || '')}
+                                onChange={(e) => {
+                                  const memberId = member.userId || member.id || '';
+                                  const newValues = e.target.checked
+                                    ? [...selectedAssigneeIds, memberId]
+                                    : selectedAssigneeIds.filter(v => v !== memberId);
+                                  setSelectedAssigneeIds(newValues);
+                                }}
+                                className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                              />
+                              <span className="text-sm text-zinc-700">
+                                {member.displayName}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Reset Button am Ende */}
+                {activeFiltersCount > 0 && (
+                  <div className="flex justify-end pt-2 border-t border-zinc-200">
                     <button
                       onClick={() => {
                         setSelectedDueDateFilters([]);
                         setSelectedStatusFilters([]);
                         setSelectedAssigneeIds([]);
                       }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
+                      className="text-sm text-zinc-500 hover:text-zinc-700 underline"
                     >
                       Zurücksetzen
                     </button>
-                  )}
-                </div>
-
-                {/* Fälligkeit Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fälligkeit
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { value: 'today', label: 'Heute fällig' },
-                      { value: 'overdue', label: 'Überfällig' },
-                      { value: 'future', label: 'Alle zukünftigen' },
-                      { value: 'no-date', label: 'Kein Datum' }
-                    ].map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedDueDateFilters.includes(option.value)}
-                          onChange={(e) => {
-                            const newValues = e.target.checked
-                              ? [...selectedDueDateFilters, option.value]
-                              : selectedDueDateFilters.filter(v => v !== option.value);
-                            setSelectedDueDateFilters(newValues);
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
-                        />
-                        <span className="text-sm text-gray-700">
-                          {option.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sortierung */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sortierung
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { value: 'dueDate', label: 'Nach Fälligkeit' },
-                      { value: 'createdAt', label: 'Nach Erstellung' },
-                      { value: 'title', label: 'Alphabetisch' }
-                    ].map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="sortBy"
-                          checked={sortBy === option.value}
-                          onChange={() => setSortBy(option.value as 'dueDate' | 'createdAt' | 'title')}
-                          className="h-4 w-4 border-gray-300 text-[#005fab] focus:ring-[#005fab]"
-                        />
-                        <span className="text-sm text-gray-700">
-                          {option.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { value: 'pending', label: 'Offen' },
-                      { value: 'in_progress', label: 'In Bearbeitung' },
-                      { value: 'completed', label: 'Erledigt' }
-                    ].map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedStatusFilters.includes(option.value)}
-                          onChange={(e) => {
-                            const newValues = e.target.checked
-                              ? [...selectedStatusFilters, option.value]
-                              : selectedStatusFilters.filter(v => v !== option.value);
-                            setSelectedStatusFilters(newValues);
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
-                        />
-                        <span className="text-sm text-gray-700">
-                          {option.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Zuständige Mitglieder Filter */}
-                {getProjectTeamMembers().length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Zuständige Mitglieder
-                    </label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {getProjectTeamMembers().map((member) => (
-                        <label
-                          key={member.userId || member.id}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedAssigneeIds.includes(member.userId || member.id || '')}
-                            onChange={(e) => {
-                              const memberId = member.userId || member.id || '';
-                              const newValues = e.target.checked
-                                ? [...selectedAssigneeIds, memberId]
-                                : selectedAssigneeIds.filter(v => v !== memberId);
-                              setSelectedAssigneeIds(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {member.displayName}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
