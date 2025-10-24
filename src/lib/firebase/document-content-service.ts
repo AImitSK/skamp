@@ -71,9 +71,14 @@ class DocumentContentService {
       );
 
       // 2. Als "Datei" in Media Assets registrieren
-      const fileName = metadata.fileName.endsWith('.celero-doc') 
-        ? metadata.fileName 
-        : `${metadata.fileName}.celero-doc`;
+      // Füge passende Endung hinzu, falls nicht vorhanden
+      let fileName = metadata.fileName;
+      const hasExtension = fileName.endsWith('.celero-doc') || fileName.endsWith('.celero-sheet');
+
+      if (!hasExtension) {
+        const extension = metadata.fileType === 'celero-sheet' ? '.celero-sheet' : '.celero-doc';
+        fileName = `${fileName}${extension}`;
+      }
 
       const assetMetadata: Partial<InternalDocument> = {
         fileName,

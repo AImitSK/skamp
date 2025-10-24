@@ -112,8 +112,9 @@ export function useFileActions({
       if (asset.contentRef) {
         const content = await documentContentService.loadDocument(asset.contentRef);
         if (content) {
+          // WICHTIG: Spreadsheets ZUERST prüfen (wegen doppelter Endungen)
           const isSpreadsheet = asset.fileType === 'celero-sheet' ||
-                               asset.fileName?.endsWith('.celero-sheet');
+                               asset.fileName?.includes('.celero-sheet');
 
           if (isSpreadsheet) {
             // Export Spreadsheet as CSV
@@ -122,7 +123,12 @@ export function useFileActions({
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${asset.fileName.replace('.celero-sheet', '')}.csv`;
+            // Entferne beide Endungen für sauberen Dateinamen
+            const cleanName = asset.fileName
+              .replace('.celero-sheet.celero-doc', '')
+              .replace('.celero-sheet', '')
+              .replace('.celero-doc', '');
+            a.download = `${cleanName}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -165,16 +171,19 @@ export function useFileActions({
     onEditDocument: (asset: any) => void,
     onEditSpreadsheet?: (asset: any) => void
   ) => {
+    // WICHTIG: Spreadsheets ZUERST prüfen!
+    // (wegen alter .celero-sheet.celero-doc Dateien)
+    const isEditableSpreadsheet = asset.fileType === 'celero-sheet' ||
+                                 asset.fileName?.includes('.celero-sheet');
+
     const isEditableDocument = asset.fileType === 'celero-doc' ||
                               asset.fileName?.endsWith('.celero-doc');
 
-    const isEditableSpreadsheet = asset.fileType === 'celero-sheet' ||
-                                 asset.fileName?.endsWith('.celero-sheet');
-
-    if (isEditableDocument) {
-      onEditDocument(asset);
-    } else if (isEditableSpreadsheet && onEditSpreadsheet) {
+    // Prüfung in dieser Reihenfolge: Spreadsheet → Document → Download
+    if (isEditableSpreadsheet && onEditSpreadsheet) {
       onEditSpreadsheet(asset);
+    } else if (isEditableDocument) {
+      onEditDocument(asset);
     } else if (asset.downloadUrl) {
       window.open(asset.downloadUrl, '_blank');
     }
