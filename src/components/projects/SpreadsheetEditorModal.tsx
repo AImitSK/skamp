@@ -62,21 +62,33 @@ export default function SpreadsheetEditorModal({
 
     setLoading(true);
     try {
-      const docContent = await documentContentService.getDocument(
-        document.contentRef,
-        user.uid
-      );
+      console.log('Loading spreadsheet with contentRef:', document.contentRef);
+      const docContent = await documentContentService.loadDocument(document.contentRef);
 
       if (docContent) {
-        setInitialTitle(document.fileName || 'Tabelle');
+        console.log('Document loaded, parsing content...');
+
+        // Bereinige Dateinamen (entferne Endungen)
+        const cleanTitle = (document.fileName || 'Tabelle')
+          .replace('.celero-sheet.celero-doc', '')
+          .replace('.celero-sheet', '')
+          .replace('.celero-doc', '')
+          .replace('.json', '');
+
+        setInitialTitle(cleanTitle);
+
         // Parse JSON content
         try {
           const data = JSON.parse(docContent.content);
+          console.log('Spreadsheet data parsed:', data);
           setSpreadsheetData(data);
         } catch (error) {
           console.error('Fehler beim Parsen der Spreadsheet-Daten:', error);
+          console.error('Content was:', docContent.content);
           setSpreadsheetData(null);
         }
+      } else {
+        console.error('No document content returned');
       }
     } catch (error) {
       console.error('Fehler beim Laden der Tabelle:', error);
