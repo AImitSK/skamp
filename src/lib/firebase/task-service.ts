@@ -610,11 +610,11 @@ Object.assign(taskService, {
    */
   async getByProject(projectId: string, organizationId: string): Promise<ProjectTask[]> {
     try {
+      // Laden ohne orderBy um Flexibilität bei der Sortierung zu haben
       const q = query(
         collection(db, 'tasks'),
         where('organizationId', '==', organizationId),
-        where('projectId', '==', projectId),
-        orderBy('dueDate', 'asc')
+        where('projectId', '==', projectId)
       );
 
       const snapshot = await getDocs(q);
@@ -623,8 +623,31 @@ Object.assign(taskService, {
         ...doc.data()
       } as ProjectTask));
 
+      // Client-seitige Sortierung:
+      // 1. Tasks mit dueDate nach Fälligkeit
+      // 2. Tasks ohne dueDate nach Erstellungsdatum
+      const sortedTasks = tasks.sort((a, b) => {
+        // Beide haben dueDate -> nach dueDate sortieren
+        if (a.dueDate && b.dueDate) {
+          return a.dueDate.toMillis() - b.dueDate.toMillis();
+        }
+
+        // Nur a hat dueDate -> a kommt zuerst
+        if (a.dueDate && !b.dueDate) return -1;
+
+        // Nur b hat dueDate -> b kommt zuerst
+        if (!a.dueDate && b.dueDate) return 1;
+
+        // Beide haben kein dueDate -> nach createdAt sortieren
+        if (a.createdAt && b.createdAt) {
+          return a.createdAt.toMillis() - b.createdAt.toMillis();
+        }
+
+        return 0;
+      });
+
       // Computed fields hinzufügen
-      return this.addComputedFields(tasks);
+      return this.addComputedFields(sortedTasks);
     } catch (error: any) {
       // Fallback ohne orderBy falls Index fehlt
       if (error.code === 'failed-precondition') {
@@ -639,10 +662,27 @@ Object.assign(taskService, {
           ...doc.data()
         } as ProjectTask));
 
-        // Client-seitige Sortierung nach Fälligkeit
+        // Client-seitige Sortierung:
+        // 1. Tasks mit dueDate nach Fälligkeit
+        // 2. Tasks ohne dueDate nach Erstellungsdatum
         const sortedTasks = tasks.sort((a, b) => {
-          if (!a.dueDate || !b.dueDate) return 0;
-          return a.dueDate.toMillis() - b.dueDate.toMillis();
+          // Beide haben dueDate -> nach dueDate sortieren
+          if (a.dueDate && b.dueDate) {
+            return a.dueDate.toMillis() - b.dueDate.toMillis();
+          }
+
+          // Nur a hat dueDate -> a kommt zuerst
+          if (a.dueDate && !b.dueDate) return -1;
+
+          // Nur b hat dueDate -> b kommt zuerst
+          if (!a.dueDate && b.dueDate) return 1;
+
+          // Beide haben kein dueDate -> nach createdAt sortieren
+          if (a.createdAt && b.createdAt) {
+            return a.createdAt.toMillis() - b.createdAt.toMillis();
+          }
+
+          return 0;
         });
 
         return this.addComputedFields(sortedTasks);
