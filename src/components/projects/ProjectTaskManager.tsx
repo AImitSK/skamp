@@ -20,7 +20,8 @@ import {
   ExclamationTriangleIcon,
   CalendarDaysIcon,
   UserIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 import { taskService } from '@/lib/firebase/task-service';
 import { ProjectTask, TaskFilters, TaskStatus, TaskPriority } from '@/types/tasks';
@@ -28,6 +29,7 @@ import { TeamMember } from '@/types/international';
 import { TaskCreateModal } from './TaskCreateModal';
 import { TaskEditModal } from './TaskEditModal';
 import { Timestamp } from 'firebase/firestore';
+import { toastService } from '@/lib/utils/toast';
 
 interface ProjectTaskManagerProps {
   projectId: string;
@@ -37,6 +39,55 @@ interface ProjectTaskManagerProps {
   projectTeamMemberIds?: string[]; // Nur die dem Projekt zugewiesenen Team-Mitglieder
   projectTitle?: string;
 }
+
+// Task-Vorlagen für Standard-PR-Workflow
+const TASK_TEMPLATES = [
+  {
+    title: 'Strategie-Dokumente erstellen',
+    description: '- Unternehmensprofil & Senderanalyse\n- Situationsanalyse\n- Zielgruppenanalyse\n- Kernbotschaften & Kommunikationsziele',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Medien Assets zusammenstellen',
+    description: '- Bilder hochladen\n- Videos hochladen\n- Key Visual festlegen',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Pressemeldungsentwurf',
+    description: '- KI Assistent instruieren\n- Pressemeldung verfeinern',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Interne Freigabe',
+    description: '- Text entwurf im Chat diskutieren\n- Key Visual im Chat besprechen',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Kundenfreigabe einholen',
+    description: '- Korrekturphasen\n- Kundenfreigabe der Pressemeldung\n- Asset Auswahl Freigabe',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Verteilerliste zusammenstellen',
+    description: '- Journalisten importieren\n- Verteilerliste zusammenstellen\n- Monitoring Parameter festlegen (RSS Feeds)',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Anschreiben erstellen',
+    description: '- Begleitschreiben formulieren\n- Testversand',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Versand',
+    description: '- Termin festlegen\n- Versand planen\n- Versand überwachen',
+    priority: 'medium' as TaskPriority
+  },
+  {
+    title: 'Monitoring',
+    description: '- Email Performance überwachen\n- Veröffentlichungen überwachen\n- Veröffentlichungen manuell einpflegen',
+    priority: 'medium' as TaskPriority
+  }
+];
 
 export function ProjectTaskManager({
   projectId,
@@ -134,6 +185,48 @@ export function ProjectTaskManager({
       await loadTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
+    }
+  };
+
+  // Handle template tasks creation
+  const handleCreateTemplateTasks = async () => {
+    if (!user?.uid) {
+      toastService.error('Benutzer nicht gefunden');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Erstelle alle Vorlagen-Tasks nacheinander
+      for (const template of TASK_TEMPLATES) {
+        const taskData: Omit<ProjectTask, 'id' | 'createdAt' | 'updatedAt' | 'isOverdue' | 'daysUntilDue' | 'overdueBy'> = {
+          userId: user.uid,
+          organizationId,
+          projectId,
+          assignedUserId: user.uid,
+          title: template.title,
+          description: template.description,
+          status: 'pending',
+          priority: template.priority,
+          progress: 0,
+          isAllDay: true
+          // Kein dueDate - wie gewünscht
+        };
+
+        await taskService.create(taskData);
+      }
+
+      // Lade Tasks neu
+      await loadTasks();
+
+      // Erfolgs-Toast
+      toastService.success(`${TASK_TEMPLATES.length} Standard-Tasks erfolgreich erstellt`);
+    } catch (error) {
+      console.error('Error creating template tasks:', error);
+      toastService.error('Fehler beim Erstellen der Vorlagen-Tasks');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -440,10 +533,18 @@ export function ProjectTaskManager({
               : 'Erstelle die erste Task für dieses Projekt.'
             }
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex items-center justify-center gap-3">
             <Button onClick={() => setShowCreateModal(true)}>
               <PlusIcon className="w-4 h-4" />
               Task erstellen
+            </Button>
+            <Button
+              onClick={handleCreateTemplateTasks}
+              className="bg-white hover:bg-gray-50 text-gray-900 border-gray-300"
+              disabled={loading}
+            >
+              <DocumentDuplicateIcon className="w-4 h-4" />
+              Task Vorlage verwenden
             </Button>
           </div>
         </div>
