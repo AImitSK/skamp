@@ -227,6 +227,11 @@ export function ProjectTaskManager({
     });
   }, []);
 
+  // Aktive Filter zählen
+  const activeFiltersCount = useMemo(() => {
+    return selectedDueDateFilters.length + selectedStatusFilters.length + selectedAssigneeIds.length;
+  }, [selectedDueDateFilters.length, selectedStatusFilters.length, selectedAssigneeIds.length]);
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg border p-6">
@@ -241,11 +246,6 @@ export function ProjectTaskManager({
       </div>
     );
   }
-
-  // Aktive Filter zählen
-  const activeFiltersCount = useMemo(() => {
-    return selectedDueDateFilters.length + selectedStatusFilters.length + selectedAssigneeIds.length;
-  }, [selectedDueDateFilters.length, selectedStatusFilters.length, selectedAssigneeIds.length]);
 
   return (
     <div className="space-y-6">

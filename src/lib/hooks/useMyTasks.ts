@@ -47,7 +47,30 @@ export function useMyTasks(filter: MyTasksFilter = 'all') {
       } as ProjectTask));
 
       // Füge computed fields hinzu (isOverdue, daysUntilDue, etc.)
-      tasks = taskService.addComputedFields(tasks);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      tasks = tasks.map(task => {
+        const computedTask = { ...task };
+
+        if (task.dueDate) {
+          const dueDate = task.dueDate.toDate();
+          dueDate.setHours(0, 0, 0, 0);
+
+          const diffTime = dueDate.getTime() - now.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          computedTask.isOverdue = diffDays < 0 && task.status !== 'completed';
+          computedTask.daysUntilDue = diffDays >= 0 ? diffDays : 0;
+          computedTask.overdueBy = diffDays < 0 ? Math.abs(diffDays) : 0;
+        } else {
+          computedTask.isOverdue = false;
+          computedTask.daysUntilDue = 0;
+          computedTask.overdueBy = 0;
+        }
+
+        return computedTask;
+      });
 
       // Filter anwenden
       const today = new Date();

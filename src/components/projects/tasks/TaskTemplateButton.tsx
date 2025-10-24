@@ -125,7 +125,7 @@ export function TaskTemplateButton({
   return (
     <Button
       onClick={handleCreateTemplateTasks}
-      outline
+      color="secondary"
       disabled={disabled}
     >
       <DocumentDuplicateIcon className="w-4 h-4" />
