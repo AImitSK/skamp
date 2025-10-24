@@ -17,7 +17,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { ProjectTask } from '@/types/tasks';
 import { taskService } from '@/lib/firebase/task-service';
@@ -45,6 +45,29 @@ export function useMyTasks(filter: MyTasksFilter = 'all') {
         id: doc.id,
         ...doc.data()
       } as ProjectTask));
+
+      // Lade projectTitle für jede Task
+      const projectIds = Array.from(new Set(tasks.map(t => t.projectId).filter(Boolean)));
+      const projectTitles: Record<string, string> = {};
+
+      await Promise.all(
+        projectIds.map(async (projectId) => {
+          try {
+            const projectDoc = await getDoc(doc(db, 'projects', projectId));
+            if (projectDoc.exists()) {
+              projectTitles[projectId] = projectDoc.data().title || '';
+            }
+          } catch (error) {
+            console.error(`Error loading project ${projectId}:`, error);
+          }
+        })
+      );
+
+      // Füge projectTitle zu Tasks hinzu
+      tasks = tasks.map(task => ({
+        ...task,
+        projectTitle: task.projectId ? projectTitles[task.projectId] : undefined
+      }));
 
       // Füge computed fields hinzu (isOverdue, daysUntilDue, etc.)
       const now = new Date();
