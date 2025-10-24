@@ -36,5 +36,9 @@
     "deny": [],
     "ask": [],
     "defaultMode": "acceptEdits"
-  }
+  },
+  "enabledMcpjsonServers": [
+    "genkit"
+  ],
+  "enableAllProjectMcpServers": true
 }
