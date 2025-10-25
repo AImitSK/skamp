@@ -228,6 +228,7 @@ export default function ProjectFoldersView({
     handleAssetClick: handleAssetClickBase
   } = useFileActions({
     organizationId,
+    selectedFolderId,
     onSuccess: (msg) => toastService.success(msg),
     onError: (msg) => toastService.error(msg)
   });

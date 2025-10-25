@@ -4,6 +4,7 @@ import { documentContentService } from '@/lib/firebase/document-content-service'
 
 interface UseFileActionsProps {
   organizationId: string;
+  selectedFolderId?: string;
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
 }
@@ -15,6 +16,7 @@ interface UseFileActionsProps {
  */
 export function useFileActions({
   organizationId,
+  selectedFolderId,
   onSuccess,
   onError
 }: UseFileActionsProps) {
@@ -30,7 +32,7 @@ export function useFileActions({
       isOpen: true,
       title: 'Datei löschen',
       message: `Möchten Sie die Datei "${fileName}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-      onConfirm: () => confirmDeleteAsset(assetId, fileName)
+      onConfirm: () => confirmDeleteAsset(assetId, fileName, selectedFolderId)
     });
   };
 
