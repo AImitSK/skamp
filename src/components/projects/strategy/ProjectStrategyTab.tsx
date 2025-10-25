@@ -1,7 +1,7 @@
 // src/components/projects/strategy/ProjectStrategyTab.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { STRATEGY_TEMPLATES, type TemplateType } from '@/constants/strategy-templates';
 import StrategyTemplateGrid from './StrategyTemplateGrid';
@@ -30,7 +30,7 @@ interface ProjectStrategyTabProps {
   onDocumentSaved?: () => void;
 }
 
-export default function ProjectStrategyTab({
+const ProjectStrategyTab = React.memo(function ProjectStrategyTab({
   projectId,
   organizationId,
   project,
@@ -46,7 +46,7 @@ export default function ProjectStrategyTab({
   const [showSpreadsheetEditor, setShowSpreadsheetEditor] = useState(false);
 
   // Template auswählen - unterscheidet zwischen Document und Spreadsheet
-  const handleTemplateSelect = (templateType: TemplateType, content?: string) => {
+  const handleTemplateSelect = useCallback((templateType: TemplateType, content?: string) => {
     const template = STRATEGY_TEMPLATES[templateType];
 
     if (templateType === 'table') {
@@ -59,23 +59,23 @@ export default function ProjectStrategyTab({
       setTemplateInfo({ type: templateType, name: template.title });
       setShowEditor(true);
     }
-  };
+  }, []);
 
   // Dokument Editor schließen
-  const handleCloseEditor = () => {
+  const handleCloseEditor = useCallback(() => {
     setShowEditor(false);
     setTemplateContent(null);
     setTemplateInfo(null);
-  };
+  }, []);
 
   // Spreadsheet Editor schließen
-  const handleCloseSpreadsheetEditor = () => {
+  const handleCloseSpreadsheetEditor = useCallback(() => {
     setShowSpreadsheetEditor(false);
     setTemplateInfo(null);
-  };
+  }, []);
 
   // Dokument/Spreadsheet gespeichert
-  const handleDocumentSave = () => {
+  const handleDocumentSave = useCallback(() => {
     setShowEditor(false);
     setShowSpreadsheetEditor(false);
     setTemplateContent(null);
@@ -84,7 +84,7 @@ export default function ProjectStrategyTab({
     if (onDocumentSaved) {
       onDocumentSaved();
     }
-  };
+  }, [onDocumentSaved]);
 
   return (
     <>
@@ -102,8 +102,8 @@ export default function ProjectStrategyTab({
           organizationId={organizationId}
           projectId={projectId}
           useStrategyService={false} // Verwende Ordner-System
-          initialContent={templateContent}
-          templateInfo={templateInfo}
+          initialContent={templateContent || undefined}
+          templateInfo={templateInfo || undefined}
         />
       )}
 
@@ -117,9 +117,11 @@ export default function ProjectStrategyTab({
           folderId={dokumenteFolderId} // Speichert direkt im Dokumente-Ordner
           organizationId={organizationId}
           projectId={projectId}
-          templateInfo={templateInfo}
+          templateInfo={templateInfo || undefined}
         />
       )}
     </>
   );
-}
+});
+
+export default ProjectStrategyTab;
