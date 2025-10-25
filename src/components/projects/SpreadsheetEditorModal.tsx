@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogBody } from '@/components/ui/dialog';
+import { Dialog, DialogBody } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
@@ -145,10 +145,7 @@ export default function SpreadsheetEditorModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="5xl">
-      <DialogTitle>
-        {document ? 'Tabelle bearbeiten' : 'Neue Tabelle erstellen'}
-      </DialogTitle>
-      <DialogBody className="p-0 h-[600px]">
+      <DialogBody className="p-0 h-[700px]">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
