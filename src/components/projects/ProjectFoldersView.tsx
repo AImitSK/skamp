@@ -47,6 +47,7 @@ import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
 import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
+import SaveAsBoilerplateDialog from './folders/components/SaveAsBoilerplateDialog';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
@@ -64,12 +65,6 @@ const DocumentEditorModal = dynamic(
 // Lazy load Spreadsheet Editor Modal
 const SpreadsheetEditorModal = dynamic(
   () => import('./SpreadsheetEditorModal'),
-  { ssr: false }
-);
-
-// Lazy load Save as Boilerplate Dialog (nur dieser!)
-const SaveAsBoilerplateDialog = dynamic(
-  () => import('./folders/components/SaveAsBoilerplateDialog'),
   { ssr: false }
 );
 
