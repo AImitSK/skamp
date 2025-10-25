@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import {
   TableCellsIcon,
   ArrowsPointingOutIcon,
-  ArrowsPointingInIcon
+  ArrowsPointingInIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 // ========================================
@@ -103,30 +104,39 @@ export default function SpreadsheetEditor({
   };
 
   return (
-    <div className={`spreadsheet-editor flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
+    <div className={`spreadsheet-editor flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'} relative`}>
+      {/* Close und Fullscreen Buttons */}
+      <div className="absolute top-0 right-0 pt-4 pr-4 z-30 flex items-center space-x-2">
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+        >
+          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          {isFullscreen ? (
+            <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <ArrowsPointingOutIcon className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          <span className="sr-only">Schließen</span>
+          <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+        </button>
+      </div>
+
       {/* Header */}
       <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <TableCellsIcon className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-zinc-700">
-              {initialData ? 'Tabelle bearbeiten' : 'Neue Tabelle'}
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
-              title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
-            >
-              {isFullscreen ? (
-                <ArrowsPointingInIcon className="w-5 h-5 text-zinc-700" />
-              ) : (
-                <ArrowsPointingOutIcon className="w-5 h-5 text-zinc-700" />
-              )}
-            </button>
-          </div>
+        <div className="flex items-center space-x-2 mb-3">
+          <TableCellsIcon className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-zinc-700">
+            {initialData ? 'Tabelle bearbeiten' : `Neue Tabelle - ${new Date().toLocaleDateString('de-DE')}`}
+          </span>
         </div>
 
         <input
@@ -134,7 +144,7 @@ export default function SpreadsheetEditor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Tabellenname eingeben..."
-          className="text-xl font-semibold w-full border-none outline-none bg-transparent"
+          className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
         />
       </div>
 
@@ -184,7 +194,7 @@ export default function SpreadsheetEditor({
       </div>
 
       {/* Footer mit Aktionen */}
-      <div className="flex items-center justify-end space-x-3 p-4 border-t">
+      <div className="flex items-center justify-end space-x-3 p-4 border-t bg-gray-50">
         <button
           onClick={onCancel}
           className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6 rounded-lg transition-colors"
