@@ -354,8 +354,8 @@ export default function DocumentEditorModal({
           className="text-xl font-semibold w-full border-none outline-none bg-transparent"
         />
       </DialogTitle>
-      
-      <DialogBody className="p-0">
+
+      <DialogBody className={`p-0 ${isFullscreen ? 'fullscreen-body' : ''}`}>
         {/* Toolbar */}
         <div className="border-b px-4 py-2 flex items-center space-x-1 flex-wrap">
           {/* Text Formatierung */}
@@ -469,7 +469,7 @@ export default function DocumentEditorModal({
         </div>
         
         {/* Editor Content */}
-        <div className={`min-h-[500px] overflow-y-auto bg-white ${isFullscreen ? 'max-h-[calc(100vh-250px)]' : 'max-h-[600px]'}`}>
+        <div className={`overflow-y-auto bg-white ${isFullscreen ? 'flex-1' : 'min-h-[500px] max-h-[600px]'}`}>
           {loading ? (
             <div className="flex items-center justify-center h-96">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -547,6 +547,17 @@ export default function DocumentEditorModal({
                   height: 100vh !important;
                   margin: 0 !important;
                   border-radius: 0 !important;
+                  display: flex !important;
+                  flex-direction: column !important;
+                }
+                :global(.fullscreen-dialog > *) {
+                  flex-shrink: 0 !important;
+                }
+                :global(.fullscreen-dialog .fullscreen-body) {
+                  flex: 1 !important;
+                  overflow-y: auto !important;
+                  display: flex !important;
+                  flex-direction: column !important;
                 }
               `}</style>
             </div>
