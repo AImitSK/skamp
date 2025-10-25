@@ -50,9 +50,10 @@ export default function BoilerplateImportDialog({
   const loadBoilerplates = async () => {
     setLoading(true);
     try {
-      // Lade Boilerplates für dieses Projekt (als Client)
-      const data = await boilerplatesService.getForClient(organizationId, projectId);
-      setBoilerplates(data);
+      // Lade NUR projektspezifische Boilerplates (KEINE Globalen!)
+      const allBoilerplates = await boilerplatesService.getAll(organizationId);
+      const projectSpecific = allBoilerplates.filter(bp => bp.clientId === projectId);
+      setBoilerplates(projectSpecific);
     } catch (error) {
       console.error('Fehler beim Laden der Boilerplates:', error);
     } finally {
@@ -121,18 +122,16 @@ export default function BoilerplateImportDialog({
             </Select>
           </Field>
 
-          <Field>
+          <Field className="relative">
             <Label>Suche</Label>
-            <div className="relative h-full">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Name oder Beschreibung..."
-                className="pr-10"
-              />
-              <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            </div>
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Name oder Beschreibung..."
+              className="pr-10"
+            />
+            <MagnifyingGlassIcon className="absolute right-3 bottom-2.5 w-5 h-5 text-gray-400 pointer-events-none" />
           </Field>
         </div>
 
