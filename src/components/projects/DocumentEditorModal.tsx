@@ -339,10 +339,10 @@ export default function DocumentEditorModal({
       </div>
 
       <DialogTitle>
-        <div className="flex items-center space-x-3 mb-3">
-          <DocumentTextIcon className="w-5 h-5 text-primary" />
+        <div className="flex items-center space-x-2 mb-3">
+          <DocumentTextIcon className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-zinc-700">
-            {document ? 'Dokument bearbeiten' : 'Neues Dokument'}
+            {document ? 'Dokument bearbeiten' : `Neues Dokument - ${new Date().toLocaleDateString('de-DE')}`}
           </span>
         </div>
 
