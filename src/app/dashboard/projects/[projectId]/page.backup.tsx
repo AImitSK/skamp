@@ -1169,6 +1169,7 @@ export default function ProjectDetailPage() {
                   key={`strategy-folders-${dokumenteFolder.assets?.length || 0}`}
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
+                  customerId={project.customer?.id}
                   projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
@@ -1195,6 +1196,7 @@ export default function ProjectDetailPage() {
                 <ProjectFoldersView
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
+                  customerId={project.customer?.id}
                   projectFolders={projectFolders}
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}

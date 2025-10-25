@@ -93,6 +93,7 @@ const FolderSkeleton = React.memo(function FolderSkeleton() {
 export default function ProjectFoldersView({
   projectId,
   organizationId,
+  customerId,
   projectFolders,
   foldersLoading,
   onRefresh,
@@ -747,7 +748,7 @@ export default function ProjectFoldersView({
         isOpen={showBoilerplateImportModal}
         onClose={() => setShowBoilerplateImportModal(false)}
         organizationId={organizationId}
-        projectId={projectId}
+        customerId={customerId}
         onImport={handleBoilerplateImport}
       />
 

@@ -36,6 +36,7 @@ export function DatenTabContent({
         <ProjectFoldersView
           projectId={project.id!}
           organizationId={organizationId}
+          customerId={project.customer?.id}
           projectFolders={projectFolders}
           foldersLoading={foldersLoading}
           onRefresh={onRefresh}
