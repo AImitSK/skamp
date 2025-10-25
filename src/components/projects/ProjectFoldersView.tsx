@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-  FolderIcon, 
+import {
+  FolderIcon,
   CloudArrowUpIcon,
   DocumentTextIcon,
   PhotoIcon,
@@ -11,7 +11,8 @@ import {
   InformationCircleIcon,
   EllipsisVerticalIcon,
   DocumentPlusIcon,
-  TableCellsIcon
+  TableCellsIcon,
+  BookmarkIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
 import type { PipelineStage } from '@/types/project';
+import type { Boilerplate } from '@/types/crm-enhanced';
 // React Query Hooks
 import {
   useMediaFolders,
@@ -44,6 +46,7 @@ import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
 import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
+import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
@@ -139,6 +142,34 @@ export default function ProjectFoldersView({
     showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
   }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
 
+  // Boilerplate Import Handler
+  const handleBoilerplateImport = useCallback(async (boilerplate: Boilerplate) => {
+    if (!user?.uid || !selectedFolderId) return;
+
+    try {
+      // Erstelle .celero-doc aus Boilerplate content
+      await documentContentService.createDocument(
+        boilerplate.content, // HTML content
+        {
+          fileName: `${boilerplate.name}.celero-doc`,
+          folderId: selectedFolderId,
+          organizationId,
+          projectId,
+          userId: user.uid,
+          fileType: 'celero-doc',
+        }
+      );
+
+      // Refresh folder content
+      loadFolderContent(selectedFolderId);
+      showAlert('success', `"${boilerplate.name}" wurde erfolgreich importiert.`);
+    } catch (error) {
+      console.error('Fehler beim Importieren:', error);
+      showAlert('error', 'Fehler beim Importieren des Dokuments.');
+      throw error;
+    }
+  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent, showAlert]);
+
   const {
     confirmDialog,
     setConfirmDialog,
@@ -177,6 +208,7 @@ export default function ProjectFoldersView({
   // Local Component State (UI only)
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [showBoilerplateImportModal, setShowBoilerplateImportModal] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
@@ -407,6 +439,17 @@ export default function ProjectFoldersView({
             <CloudArrowUpIcon className="w-4 h-4 mr-2" />
             Hochladen
           </Button>
+
+          {/* Bibliothek Import Button - nur im Dokumente-Ordner */}
+          {selectedFolderId && filterByFolder === 'Dokumente' && (
+            <Button
+              onClick={() => setShowBoilerplateImportModal(true)}
+              disabled={loading}
+            >
+              <BookmarkIcon className="w-4 h-4 mr-2" />
+              Bibliothek
+            </Button>
+          )}
         </div>
       </div>
 
@@ -638,6 +681,15 @@ export default function ProjectFoldersView({
         currentFolderId={selectedFolderId}
         organizationId={organizationId}
         rootFolder={projectFolders?.assets ? projectFolders.mainFolder : undefined}
+      />
+
+      {/* Boilerplate Import Dialog */}
+      <BoilerplateImportDialog
+        isOpen={showBoilerplateImportModal}
+        onClose={() => setShowBoilerplateImportModal(false)}
+        organizationId={organizationId}
+        projectId={projectId}
+        onImport={handleBoilerplateImport}
       />
 
       {/* Document Editor Modal */}
