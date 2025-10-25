@@ -197,7 +197,7 @@ export default function ProjectFoldersView({
 
     setBoilerplateSaving(true);
     try {
-      const docContent = await documentContentService.loadDocument(assetToSaveAsBoilerplate.id);
+      const docContent = await documentContentService.loadDocument(assetToSaveAsBoilerplate.contentRef);
       if (!docContent) throw new Error('Dokument-Inhalt konnte nicht geladen werden');
 
       const { boilerplatesService } = await import('@/lib/firebase/boilerplate-service');
