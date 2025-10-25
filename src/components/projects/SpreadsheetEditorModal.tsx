@@ -144,7 +144,7 @@ export default function SpreadsheetEditorModal({
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} size="5xl">
+    <Dialog open={isOpen} onClose={onClose} size="5xl" hideCloseButton>
       <DialogBody className="p-0 h-[700px]">
         {loading && (
           <div className="flex items-center justify-center h-full">

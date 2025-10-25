@@ -13,9 +13,10 @@ interface DialogProps {
   children: ReactNode; // Hier stellen wir sicher, dass 'children' erwartet wird
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
   className?: string;
+  hideCloseButton?: boolean;
 }
 
-export function Dialog({ open, onClose, children, size = 'lg', className }: DialogProps) {
+export function Dialog({ open, onClose, children, size = 'lg', className, hideCloseButton = false }: DialogProps) {
   const sizeClasses = {
     xs: 'max-w-xs', sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg',
     xl: 'max-w-xl', '2xl': 'max-w-2xl', '3xl': 'max-w-3xl', '4xl': 'max-w-4xl', '5xl': 'max-w-5xl'
@@ -43,12 +44,14 @@ export function Dialog({ open, onClose, children, size = 'lg', className }: Dial
               <DialogPanel className={clsx("w-full transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all", sizeClasses[size], className)}>
                 {children}
                 {/* Optionaler Schließen-Button oben rechts */}
-                <div className="absolute top-0 right-0 pt-4 pr-4 z-30">
-                  <button type="button" className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" onClick={onClose}>
-                    <span className="sr-only">Schließen</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                  </button>
-                </div>
+                {!hideCloseButton && (
+                  <div className="absolute top-0 right-0 pt-4 pr-4 z-30">
+                    <button type="button" className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" onClick={onClose}>
+                      <span className="sr-only">Schließen</span>
+                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </DialogPanel>
             </TransitionChild>
           </div>
