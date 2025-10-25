@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-  FolderIcon, 
+import {
+  FolderIcon,
   CloudArrowUpIcon,
   DocumentTextIcon,
   PhotoIcon,
@@ -11,10 +11,12 @@ import {
   InformationCircleIcon,
   EllipsisVerticalIcon,
   DocumentPlusIcon,
-  TableCellsIcon
+  TableCellsIcon,
+  BookmarkIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +29,7 @@ import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
 import type { PipelineStage } from '@/types/project';
+import type { Boilerplate } from '@/types/crm-enhanced';
 // React Query Hooks
 import {
   useMediaFolders,
@@ -39,21 +42,29 @@ import {
   useUpdateMediaAsset,
 } from '@/lib/hooks/useMediaData';
 // Extrahierte Komponenten
-import Alert from './folders/components/Alert';
 import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
 import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
+import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
+import { toastService } from '@/lib/utils/toast';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
 import { useDocumentEditor } from './folders/hooks/useDocumentEditor';
+import { useSpreadsheetEditor } from './folders/hooks/useSpreadsheetEditor';
 // Types
 import type { ProjectFoldersViewProps } from './folders/types';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
   () => import('./DocumentEditorModal'),
+  { ssr: false }
+);
+
+// Lazy load Spreadsheet Editor Modal
+const SpreadsheetEditorModal = dynamic(
+  () => import('./SpreadsheetEditorModal'),
   { ssr: false }
 );
 
@@ -83,6 +94,8 @@ const FolderSkeleton = React.memo(function FolderSkeleton() {
 export default function ProjectFoldersView({
   projectId,
   organizationId,
+  customerId,
+  customerName,
   projectFolders,
   foldersLoading,
   onRefresh,
@@ -116,12 +129,6 @@ export default function ProjectFoldersView({
     onFolderChange
   });
 
-  // Alert handler (optimized with useCallback)
-  const showAlert = useCallback((type: 'info' | 'error' | 'success', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
-
   // Document save success callback (optimized with useCallback)
   const handleDocumentSaveSuccess = useCallback(() => {
     if (selectedFolderId) {
@@ -129,8 +136,89 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
-  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+    toastService.success('Dokument wurde erfolgreich gespeichert');
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
+
+  // Boilerplate Import Handler
+  const handleBoilerplateImport = useCallback(async (boilerplate: Boilerplate) => {
+    if (!user?.uid || !selectedFolderId) return;
+
+    try {
+      // Erstelle .celero-doc aus Boilerplate content
+      await documentContentService.createDocument(
+        boilerplate.content, // HTML content
+        {
+          fileName: `${boilerplate.name}.celero-doc`,
+          folderId: selectedFolderId,
+          organizationId,
+          projectId,
+          userId: user.uid,
+          fileType: 'celero-doc',
+        }
+      );
+
+      // Refresh folder content
+      loadFolderContent(selectedFolderId);
+      toastService.success(`"${boilerplate.name}" wurde erfolgreich importiert`);
+    } catch (error) {
+      console.error('Fehler beim Importieren:', error);
+      toastService.error('Dokument konnte nicht importiert werden');
+      throw error;
+    }
+  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent]);
+
+  // Save as Boilerplate State & Handlers (INLINE)
+  const [showSaveAsBoilerplateModal, setShowSaveAsBoilerplateModal] = useState(false);
+  const [assetToSaveAsBoilerplate, setAssetToSaveAsBoilerplate] = useState<any>(null);
+  const [boilerplateName, setBoilerplateName] = useState('');
+  const [boilerplateDescription, setBoilerplateDescription] = useState('');
+  const [boilerplateCategory, setBoilerplateCategory] = useState<'company' | 'contact' | 'legal' | 'product' | 'custom'>('custom');
+  const [boilerplateSaving, setBoilerplateSaving] = useState(false);
+
+  const handleSaveAsBoilerplate = useCallback((asset: any) => {
+    setAssetToSaveAsBoilerplate(asset);
+    setBoilerplateName(asset.fileName?.replace('.celero-doc', '') || '');
+    setBoilerplateDescription('');
+    setBoilerplateCategory('custom');
+    setShowSaveAsBoilerplateModal(true);
+  }, []);
+
+  const handleSaveBoilerplate = useCallback(async () => {
+    if (!user?.uid || !assetToSaveAsBoilerplate || !boilerplateName.trim()) {
+      toastService.error('Bitte geben Sie einen Namen ein');
+      return;
+    }
+
+    setBoilerplateSaving(true);
+    try {
+      const docContent = await documentContentService.loadDocument(assetToSaveAsBoilerplate.contentRef);
+      if (!docContent) throw new Error('Dokument-Inhalt konnte nicht geladen werden');
+
+      const { boilerplatesService } = await import('@/lib/firebase/boilerplate-service');
+
+      await boilerplatesService.create(
+        {
+          name: boilerplateName.trim(),
+          content: docContent.content,
+          category: boilerplateCategory,
+          description: boilerplateDescription.trim(),
+          isGlobal: false,
+          clientId: customerId,
+          clientName: customerName,
+        },
+        { organizationId, userId: user.uid }
+      );
+
+      toastService.success(`"${boilerplateName}" wurde als Boilerplate gespeichert`);
+      setShowSaveAsBoilerplateModal(false);
+      setAssetToSaveAsBoilerplate(null);
+    } catch (error) {
+      console.error('Fehler beim Speichern als Boilerplate:', error);
+      toastService.error('Boilerplate konnte nicht gespeichert werden');
+    } finally {
+      setBoilerplateSaving(false);
+    }
+  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId]);
 
   const {
     confirmDialog,
@@ -140,8 +228,8 @@ export default function ProjectFoldersView({
     handleAssetClick: handleAssetClickBase
   } = useFileActions({
     organizationId,
-    onSuccess: (msg) => showAlert('success', msg),
-    onError: (msg) => showAlert('error', msg)
+    onSuccess: (msg) => toastService.success(msg),
+    onError: (msg) => toastService.error(msg)
   });
 
   const {
@@ -155,10 +243,22 @@ export default function ProjectFoldersView({
     onSaveSuccess: handleDocumentSaveSuccess
   });
 
+  const {
+    showSpreadsheetEditor,
+    editingSpreadsheet,
+    initialSpreadsheetData,
+    handleCreateSpreadsheet,
+    handleEditSpreadsheet,
+    handleSpreadsheetSave,
+    handleCloseEditor: handleCloseSpreadsheetEditor
+  } = useSpreadsheetEditor({
+    onSaveSuccess: handleDocumentSaveSuccess // Reuse same success callback
+  });
+
   // Local Component State (UI only)
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
+  const [showBoilerplateImportModal, setShowBoilerplateImportModal] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
@@ -226,8 +326,8 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    showAlert('success', 'Ordner wurde erfolgreich erstellt.');
-  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+    toastService.success('Ordner wurde erfolgreich erstellt');
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
 
   const handleMoveAsset = useCallback((asset: any) => {
     setAssetToMove(asset);
@@ -245,12 +345,14 @@ export default function ProjectFoldersView({
       loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
 
-    showAlert('success', 'Datei wurde erfolgreich verschoben.');
-  }, [handleGoToRoot, onRefresh, loadAllFolders, showAlert]);
+    toastService.success('Datei wurde erfolgreich verschoben');
+  }, [handleGoToRoot, onRefresh, loadAllFolders]);
 
   // Use handleAssetClick from useFileActions (optimized with useCallback)
-  const handleAssetClick = useCallback((asset: any) => handleAssetClickBase(asset, handleEditDocument),
-    [handleAssetClickBase, handleEditDocument]);
+  const handleAssetClick = useCallback(
+    (asset: any) => handleAssetClickBase(asset, handleEditDocument, handleEditSpreadsheet),
+    [handleAssetClickBase, handleEditDocument, handleEditSpreadsheet]
+  );
 
   const confirmDeleteAsset = useCallback(async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
@@ -261,12 +363,12 @@ export default function ProjectFoldersView({
       const assetToDelete = assets.find(asset => asset.id === assetId);
 
       if (!assetToDelete) {
-        showAlert('error', 'Datei konnte nicht gefunden werden.');
+        toastService.error('Datei konnte nicht gefunden werden');
         return;
       }
 
       await deleteMediaAsset(assetToDelete);
-      showAlert('success', `Datei "${fileName}" wurde erfolgreich gelöscht.`);
+      toastService.success(`Datei "${fileName}" wurde erfolgreich gelöscht`);
 
       // Refresh current view
       if (selectedFolderId) {
@@ -276,9 +378,9 @@ export default function ProjectFoldersView({
       }
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
-      showAlert('error', 'Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
+      toastService.error('Datei konnte nicht gelöscht werden');
     }
-  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh]);
 
   // File statistics (optimized with useMemo)
   const fileStats = useMemo(() => {
@@ -304,6 +406,12 @@ export default function ProjectFoldersView({
   const getFileIcon = (asset: any) => {
     if (asset.fileType?.startsWith('image/')) {
       return <PhotoIcon className="w-5 h-5 text-blue-500" />;
+    }
+    if (asset.fileType === 'celero-sheet' || asset.fileName?.endsWith('.celero-sheet')) {
+      return <TableCellsIcon className="w-5 h-5 text-green-600" />;
+    }
+    if (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) {
+      return <DocumentTextIcon className="w-5 h-5 text-blue-600" />;
     }
     return <DocumentTextIcon className="w-5 h-5 text-gray-500" />;
   };
@@ -335,7 +443,8 @@ export default function ProjectFoldersView({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
-      <div className="flex items-center justify-end mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Strategiedokumente</h3>
         <div className="flex items-center space-x-2">
           {selectedFolderId && (
             <Button
@@ -362,7 +471,7 @@ export default function ProjectFoldersView({
               </Button>
               <Button
                 plain
-                onClick={() => {/* TODO: Tabellen-Editor */}}
+                onClick={() => handleCreateSpreadsheet()}
                 disabled={loading}
                 title="Tabelle erstellen"
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -379,15 +488,19 @@ export default function ProjectFoldersView({
             <CloudArrowUpIcon className="w-4 h-4 mr-2" />
             Hochladen
           </Button>
+
+          {/* Bibliothek Import Button - nur im Dokumente-Ordner */}
+          {selectedFolderId && filterByFolder === 'Dokumente' && (
+            <Button
+              onClick={() => setShowBoilerplateImportModal(true)}
+              disabled={loading}
+            >
+              <BookmarkIcon className="w-4 h-4 mr-2" />
+              Bibliothek
+            </Button>
+          )}
         </div>
       </div>
-
-      {/* Alert anzeigen */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} message={alert.message} />
-        </div>
-      )}
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 0 && (
@@ -548,9 +661,16 @@ export default function ProjectFoldersView({
                           <DropdownItem onClick={() => handleDownloadDocument(asset)}>
                             Download
                           </DropdownItem>
-                          <DropdownItem onClick={() => handleMoveAsset(asset)}>
-                            Verschieben
-                          </DropdownItem>
+                          {filterByFolder !== 'Dokumente' && (
+                            <DropdownItem onClick={() => handleMoveAsset(asset)}>
+                              Verschieben
+                            </DropdownItem>
+                          )}
+                          {filterByFolder === 'Dokumente' && (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) && (
+                            <DropdownItem onClick={() => handleSaveAsBoilerplate(asset)}>
+                              Als Boilerplate speichern
+                            </DropdownItem>
+                          )}
                           <DropdownDivider />
                           <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
                             <span className="text-red-600">Löschen</span>
@@ -612,6 +732,46 @@ export default function ProjectFoldersView({
         rootFolder={projectFolders?.assets ? projectFolders.mainFolder : undefined}
       />
 
+      {/* Boilerplate Import Dialog */}
+      <BoilerplateImportDialog
+        isOpen={showBoilerplateImportModal}
+        onClose={() => setShowBoilerplateImportModal(false)}
+        organizationId={organizationId}
+        customerId={customerId}
+        onImport={handleBoilerplateImport}
+      />
+
+      {/* Save as Boilerplate Dialog - INLINE */}
+      {assetToSaveAsBoilerplate && (
+        <Dialog open={showSaveAsBoilerplateModal} onClose={() => setShowSaveAsBoilerplateModal(false)} size="2xl">
+          <DialogTitle>Als Boilerplate speichern</DialogTitle>
+          <DialogBody className="space-y-4">
+            <Field>
+              <Label>Name *</Label>
+              <Input type="text" value={boilerplateName} onChange={(e) => setBoilerplateName(e.target.value)} placeholder="z.B. Unternehmensprofil Standard" required />
+            </Field>
+            <Field>
+              <Label>Beschreibung (optional)</Label>
+              <Input type="text" value={boilerplateDescription} onChange={(e) => setBoilerplateDescription(e.target.value)} placeholder="Kurze Beschreibung..." />
+            </Field>
+            <Field>
+              <Label>Kategorie *</Label>
+              <Select value={boilerplateCategory} onChange={(e) => setBoilerplateCategory(e.target.value as any)}>
+                <option value="company">Unternehmensbeschreibung</option>
+                <option value="contact">Kontaktinformationen</option>
+                <option value="legal">Rechtliche Hinweise</option>
+                <option value="product">Produktbeschreibung</option>
+                <option value="custom">Sonstige</option>
+              </Select>
+            </Field>
+          </DialogBody>
+          <DialogActions>
+            <Button variant="outline" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>Abbrechen</Button>
+            <Button onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? 'Speichert...' : 'Speichern'}</Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
       {/* Document Editor Modal */}
       {showDocumentEditor && (
         <DocumentEditorModal
@@ -624,7 +784,21 @@ export default function ProjectFoldersView({
           projectId={projectId}
         />
       )}
-      
+
+      {/* Spreadsheet Editor Modal */}
+      {showSpreadsheetEditor && (
+        <SpreadsheetEditorModal
+          isOpen={showSpreadsheetEditor}
+          onClose={handleCloseSpreadsheetEditor}
+          onSave={handleSpreadsheetSave}
+          document={editingSpreadsheet}
+          folderId={selectedFolderId || projectFolders?.id}
+          organizationId={organizationId}
+          projectId={projectId}
+          initialData={initialSpreadsheetData || undefined}
+        />
+      )}
+
       {/* Confirm Dialog */}
       {confirmDialog && (
         <DeleteConfirmDialog

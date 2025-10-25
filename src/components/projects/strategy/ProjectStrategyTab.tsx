@@ -12,6 +12,12 @@ const DocumentEditorModal = dynamic(
   { ssr: false }
 );
 
+// Lazy load Spreadsheet Editor Modal
+const SpreadsheetEditorModal = dynamic(
+  () => import('../SpreadsheetEditorModal'),
+  { ssr: false }
+);
+
 interface ProjectStrategyTabProps {
   projectId: string;
   organizationId: string;
@@ -31,16 +37,28 @@ export default function ProjectStrategyTab({
   dokumenteFolderId,
   onDocumentSaved
 }: ProjectStrategyTabProps) {
+  // Document Editor State
   const [showEditor, setShowEditor] = useState(false);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
   const [templateInfo, setTemplateInfo] = useState<{type: TemplateType, name: string} | null>(null);
 
-  // Template auswählen - direkt mit DocumentEditorModal verbinden
+  // Spreadsheet Editor State
+  const [showSpreadsheetEditor, setShowSpreadsheetEditor] = useState(false);
+
+  // Template auswählen - unterscheidet zwischen Document und Spreadsheet
   const handleTemplateSelect = (templateType: TemplateType, content?: string) => {
     const template = STRATEGY_TEMPLATES[templateType];
-    setTemplateContent(content || '');
-    setTemplateInfo({ type: templateType, name: template.title });
-    setShowEditor(true);
+
+    if (templateType === 'table') {
+      // Öffne Spreadsheet Editor
+      setTemplateInfo({ type: templateType, name: template.title });
+      setShowSpreadsheetEditor(true);
+    } else {
+      // Öffne Document Editor
+      setTemplateContent(content || '');
+      setTemplateInfo({ type: templateType, name: template.title });
+      setShowEditor(true);
+    }
   };
 
   // Dokument Editor schließen
@@ -50,9 +68,16 @@ export default function ProjectStrategyTab({
     setTemplateInfo(null);
   };
 
-  // Dokument gespeichert
+  // Spreadsheet Editor schließen
+  const handleCloseSpreadsheetEditor = () => {
+    setShowSpreadsheetEditor(false);
+    setTemplateInfo(null);
+  };
+
+  // Dokument/Spreadsheet gespeichert
   const handleDocumentSave = () => {
     setShowEditor(false);
+    setShowSpreadsheetEditor(false);
     setTemplateContent(null);
     setTemplateInfo(null);
     // Aktualisiere das Ordnermodul
@@ -78,6 +103,20 @@ export default function ProjectStrategyTab({
           projectId={projectId}
           useStrategyService={false} // Verwende Ordner-System
           initialContent={templateContent}
+          templateInfo={templateInfo}
+        />
+      )}
+
+      {/* Spreadsheet Editor Modal für Tabellen-Template */}
+      {showSpreadsheetEditor && dokumenteFolderId && (
+        <SpreadsheetEditorModal
+          isOpen={showSpreadsheetEditor}
+          onClose={handleCloseSpreadsheetEditor}
+          onSave={handleDocumentSave}
+          document={null} // Neue Tabelle
+          folderId={dokumenteFolderId} // Speichert direkt im Dokumente-Ordner
+          organizationId={organizationId}
+          projectId={projectId}
           templateInfo={templateInfo}
         />
       )}

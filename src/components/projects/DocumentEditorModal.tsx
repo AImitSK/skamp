@@ -12,10 +12,10 @@ import { debounce } from 'lodash';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { DocumentContent, InternalDocument } from '@/types/document-content';
+import { toastService } from '@/lib/utils/toast';
 
 import {
   BoldIcon,
@@ -28,8 +28,9 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   DocumentTextIcon,
-  CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
 
 interface DocumentEditorModalProps {
@@ -67,6 +68,7 @@ export default function DocumentEditorModal({
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [documentContent, setDocumentContent] = useState<DocumentContent | null>(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Tiptap Editor Setup
   const editor = useEditor({
@@ -87,7 +89,7 @@ export default function DocumentEditorModal({
         types: ['heading', 'paragraph']
       })
     ],
-    content: '<p>Beginnen Sie hier mit Ihrem Dokument...</p>',
+    content: '',
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 text-gray-900 leading-relaxed'
@@ -136,8 +138,8 @@ export default function DocumentEditorModal({
         editor.commands.setContent(initialContent);
       } else {
         // Leeres Dokument
-        setTitle('Neues Dokument');
-        editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+        setTitle('');
+        editor.commands.setContent('');
       }
     }
   }, [document, isOpen, editor, initialContent, templateInfo]);
@@ -188,7 +190,7 @@ export default function DocumentEditorModal({
         console.warn('Dokument Content nicht gefunden, erstelle neues Dokument für contentRef:', document.contentRef);
         // Setze Default-Content für existierende "Dateien" ohne Content
         setTitle(document.fileName.replace('.celero-doc', ''));
-        editor?.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+        editor?.commands.setContent('');
         setIsLocked(true); // Kann bearbeitet werden
       }
     } catch (error) {
@@ -196,7 +198,7 @@ export default function DocumentEditorModal({
       console.error('Versuchte contentRef:', document.contentRef);
       // Fallback: Leeres Dokument anzeigen
       setTitle(document.fileName.replace('.celero-doc', ''));
-      editor?.commands.setContent('<p>Fehler beim Laden. Beginnen Sie hier...</p>');
+      editor?.commands.setContent('');
       setIsLocked(true);
     } finally {
       setLoading(false);
@@ -269,7 +271,7 @@ export default function DocumentEditorModal({
       handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      alert('Fehler beim Speichern des Dokuments');
+      toastService.error('Dokument konnte nicht gespeichert werden');
     } finally {
       setSaving(false);
     }
@@ -299,7 +301,10 @@ export default function DocumentEditorModal({
   // Toolbar Button Component
   const ToolbarButton = ({ onClick, active = false, disabled = false, children, title }: any) => (
     <button
-      onClick={onClick}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       disabled={disabled}
       title={title}
       className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${
@@ -313,44 +318,45 @@ export default function DocumentEditorModal({
   if (!editor) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} size="5xl">
+    <Dialog open={isOpen} onClose={handleClose} size="5xl" className={isFullscreen ? 'fullscreen-dialog' : ''}>
+      {/* Fullscreen Button neben dem Close X */}
+      <div className="absolute top-0 right-0 pt-4 pr-14 z-20">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFullscreen(!isFullscreen);
+          }}
+          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+        >
+          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          {isFullscreen ? (
+            <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <ArrowsPointingOutIcon className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+
       <DialogTitle>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Dokumenttitel eingeben..."
-              className="text-xl font-semibold border-none outline-none bg-transparent"
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {/* Auto-Save Status */}
-            {document && (
-              <Badge color={
-                autoSaveStatus === 'saved' ? 'green' : 
-                autoSaveStatus === 'saving' ? 'yellow' : 'red'
-              }>
-                {autoSaveStatus === 'saved' && <CheckIcon className="w-3 h-3 mr-1" />}
-                {autoSaveStatus === 'saved' ? 'Gespeichert' : 
-                 autoSaveStatus === 'saving' ? 'Speichert...' : 'Fehler'}
-              </Badge>
-            )}
-            
-            {/* Version Info */}
-            {documentContent && (
-              <Badge color="gray">
-                Version {documentContent.version}
-              </Badge>
-            )}
-          </div>
+        <div className="flex items-center space-x-2 mb-3">
+          <DocumentTextIcon className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-zinc-700">
+            {document ? 'Dokument bearbeiten' : `Neues Dokument - ${new Date().toLocaleDateString('de-DE')}`}
+          </span>
         </div>
+
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Dokumenttitel eingeben..."
+          className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
+        />
       </DialogTitle>
-      
-      <DialogBody className="p-0">
+
+      <DialogBody className={`p-0 ${isFullscreen ? 'fullscreen-body' : ''}`}>
         {/* Toolbar */}
         <div className="border-b px-4 py-2 flex items-center space-x-1 flex-wrap">
           {/* Text Formatierung */}
@@ -464,7 +470,7 @@ export default function DocumentEditorModal({
         </div>
         
         {/* Editor Content */}
-        <div className="min-h-[500px] max-h-[600px] overflow-y-auto bg-white">
+        <div className={`overflow-y-auto bg-white ${isFullscreen ? 'flex-1' : 'min-h-[500px] max-h-[600px]'}`}>
           {loading ? (
             <div className="flex items-center justify-center h-96">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -509,10 +515,50 @@ export default function DocumentEditorModal({
                 .prose-custom :global(.ProseMirror ul),
                 .prose-custom :global(.ProseMirror ol) {
                   color: #111827 !important;
+                  padding-left: 1.5em !important;
+                  margin-top: 0.75em !important;
+                  margin-bottom: 0.75em !important;
+                }
+                .prose-custom :global(.ProseMirror ul) {
+                  list-style-type: disc !important;
+                  list-style-position: outside !important;
+                }
+                .prose-custom :global(.ProseMirror ol) {
+                  list-style-type: decimal !important;
+                  list-style-position: outside !important;
                 }
                 .prose-custom :global(.ProseMirror li) {
                   color: #111827 !important;
-                  margin-bottom: 0.5em !important;
+                  margin-bottom: 0.25em !important;
+                  padding-left: 0.25em !important;
+                }
+                .prose-custom :global(.ProseMirror ul ul),
+                .prose-custom :global(.ProseMirror ol ul) {
+                  list-style-type: circle !important;
+                  margin-top: 0.25em !important;
+                  margin-bottom: 0.25em !important;
+                }
+                .prose-custom :global(.ProseMirror ul ul ul),
+                .prose-custom :global(.ProseMirror ol ul ul) {
+                  list-style-type: square !important;
+                }
+                :global(.fullscreen-dialog) {
+                  max-width: 900px !important;
+                  width: 100% !important;
+                  height: calc(100vh - 4rem) !important;
+                  margin: 2rem auto !important;
+                  border-radius: 0.5rem !important;
+                  display: flex !important;
+                  flex-direction: column !important;
+                }
+                :global(.fullscreen-dialog > *) {
+                  flex-shrink: 0 !important;
+                }
+                :global(.fullscreen-dialog .fullscreen-body) {
+                  flex: 1 !important;
+                  overflow-y: auto !important;
+                  display: flex !important;
+                  flex-direction: column !important;
                 }
               `}</style>
             </div>

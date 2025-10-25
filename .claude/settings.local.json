@@ -31,14 +31,15 @@
       "Bash(genkit eval:flow generateHeadlines --input src/lib/ai/test-data/generate-headlines-dataset.json)",
       "mcp__genkit__get_trace",
       "mcp__genkit__list_flows",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": [],
     "defaultMode": "acceptEdits"
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "genkit"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
