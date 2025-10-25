@@ -12,7 +12,6 @@ import { debounce } from 'lodash';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { DocumentContent, InternalDocument } from '@/types/document-content';
@@ -28,7 +27,6 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   DocumentTextIcon,
-  CheckIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -315,38 +313,15 @@ export default function DocumentEditorModal({
   return (
     <Dialog open={isOpen} onClose={handleClose} size="5xl">
       <DialogTitle>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Dokumenttitel eingeben..."
-              className="text-xl font-semibold border-none outline-none bg-transparent"
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            {/* Auto-Save Status */}
-            {document && (
-              <Badge color={
-                autoSaveStatus === 'saved' ? 'green' : 
-                autoSaveStatus === 'saving' ? 'yellow' : 'red'
-              }>
-                {autoSaveStatus === 'saved' && <CheckIcon className="w-3 h-3 mr-1" />}
-                {autoSaveStatus === 'saved' ? 'Gespeichert' : 
-                 autoSaveStatus === 'saving' ? 'Speichert...' : 'Fehler'}
-              </Badge>
-            )}
-            
-            {/* Version Info */}
-            {documentContent && (
-              <Badge color="gray">
-                Version {documentContent.version}
-              </Badge>
-            )}
-          </div>
+        <div className="flex items-center space-x-3">
+          <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Dokumenttitel eingeben..."
+            className="text-xl font-semibold border-none outline-none bg-transparent"
+          />
         </div>
       </DialogTitle>
       
