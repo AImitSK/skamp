@@ -314,12 +314,15 @@ export default function DocumentEditorModal({
   if (!editor) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} size={isFullscreen ? "5xl" : "5xl"}>
+    <Dialog open={isOpen} onClose={handleClose} size="5xl" className={isFullscreen ? 'fullscreen-dialog' : ''}>
       {/* Fullscreen Button neben dem Close X */}
-      <div className="absolute top-0 right-0 pt-4 pr-14 z-10">
+      <div className="absolute top-0 right-0 pt-4 pr-14 z-20">
         <button
           type="button"
-          onClick={() => setIsFullscreen(!isFullscreen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFullscreen(!isFullscreen);
+          }}
           className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
         >
@@ -463,7 +466,7 @@ export default function DocumentEditorModal({
         </div>
         
         {/* Editor Content */}
-        <div className="min-h-[500px] max-h-[600px] overflow-y-auto bg-white">
+        <div className={`min-h-[500px] overflow-y-auto bg-white ${isFullscreen ? 'max-h-[calc(100vh-250px)]' : 'max-h-[600px]'}`}>
           {loading ? (
             <div className="flex items-center justify-center h-96">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -561,6 +564,17 @@ export default function DocumentEditorModal({
           {saving ? 'Speichert...' : (document ? 'Speichern' : 'Erstellen')}
         </Button>
       </DialogActions>
+
+      {/* Fullscreen Styles */}
+      <style jsx global>{`
+        .fullscreen-dialog {
+          max-width: 100vw !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+        }
+      `}</style>
     </Dialog>
   );
 }
