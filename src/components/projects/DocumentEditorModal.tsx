@@ -27,7 +27,9 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   DocumentTextIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
 
 interface DocumentEditorModalProps {
@@ -65,6 +67,7 @@ export default function DocumentEditorModal({
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [documentContent, setDocumentContent] = useState<DocumentContent | null>(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Tiptap Editor Setup
   const editor = useEditor({
@@ -311,18 +314,36 @@ export default function DocumentEditorModal({
   if (!editor) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} size="5xl">
+    <Dialog open={isOpen} onClose={handleClose} size={isFullscreen ? "5xl" : "5xl"}>
       <DialogTitle>
-        <div className="flex items-center space-x-3">
-          <DocumentTextIcon className="w-5 h-5 text-blue-600" />
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Dokumenttitel eingeben..."
-            className="text-xl font-semibold border-none outline-none bg-transparent"
-          />
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <DocumentTextIcon className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium text-zinc-700">
+              {document ? 'Dokument bearbeiten' : 'Neues Dokument'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
+            title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+          >
+            {isFullscreen ? (
+              <ArrowsPointingInIcon className="w-5 h-5 text-zinc-700" />
+            ) : (
+              <ArrowsPointingOutIcon className="w-5 h-5 text-zinc-700" />
+            )}
+          </button>
         </div>
+
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Dokumenttitel eingeben..."
+          className="text-xl font-semibold w-full border-none outline-none bg-transparent"
+        />
       </DialogTitle>
       
       <DialogBody className="p-0">

@@ -3,7 +3,11 @@
 import React, { useState, useCallback } from 'react';
 import Spreadsheet from 'react-spreadsheet';
 import { Button } from '@/components/ui/button';
-import { DocumentIcon } from '@heroicons/react/24/outline';
+import {
+  TableCellsIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
+} from '@heroicons/react/24/outline';
 
 // ========================================
 // TYPES
@@ -50,6 +54,7 @@ export default function SpreadsheetEditor({
 }: SpreadsheetEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [data, setData] = useState<Array<Array<{ value: string }>>>(
     initialData?.data || createEmptySpreadsheet().data
   );
@@ -98,52 +103,70 @@ export default function SpreadsheetEditor({
   };
 
   return (
-    <div className="spreadsheet-editor h-full flex flex-col bg-white">
-      {/* Header mit Titel und Aktionen */}
-      <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-        <div className="flex-1 mr-4">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Tabellenname eingeben..."
-            className="text-xl font-semibold w-full border-none outline-none bg-transparent"
-          />
+    <div className={`spreadsheet-editor flex flex-col bg-white ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
+      {/* Header */}
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <TableCellsIcon className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium text-zinc-700">
+              {initialData ? 'Tabelle bearbeiten' : 'Neue Tabelle'}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
+              title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+            >
+              {isFullscreen ? (
+                <ArrowsPointingInIcon className="w-5 h-5 text-zinc-700" />
+              ) : (
+                <ArrowsPointingOutIcon className="w-5 h-5 text-zinc-700" />
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !title.trim() || isLoading}
-            className="flex items-center space-x-2"
-          >
-            <DocumentIcon className="w-4 h-4" />
-            <span>{isSaving ? 'Speichern...' : 'Speichern'}</span>
-          </Button>
-
-          <Button onClick={onCancel} variant="outline">
-            Abbrechen
-          </Button>
-        </div>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Tabellenname eingeben..."
+          className="text-xl font-semibold w-full border-none outline-none bg-transparent"
+        />
       </div>
 
       {/* Toolbar für Zeilen/Spalten */}
-      <div className="flex items-center justify-between p-3 border-b bg-gray-50">
+      <div className="flex items-center justify-between p-3 border-b bg-zinc-50">
         <div className="flex items-center space-x-2">
-          <Button onClick={handleAddRow} variant="outline" className="text-sm">
+          <button
+            onClick={handleAddRow}
+            className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-4 rounded-lg transition-colors text-sm"
+          >
             + Zeile
-          </Button>
-          <Button onClick={handleAddColumn} variant="outline" className="text-sm">
+          </button>
+          <button
+            onClick={handleAddColumn}
+            className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-4 rounded-lg transition-colors text-sm"
+          >
             + Spalte
-          </Button>
-          <Button onClick={handleRemoveLastRow} variant="outline" className="text-sm text-red-600">
+          </button>
+          <button
+            onClick={handleRemoveLastRow}
+            className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-4 rounded-lg transition-colors text-sm"
+          >
             - Letzte Zeile
-          </Button>
-          <Button onClick={handleRemoveLastColumn} variant="outline" className="text-sm text-red-600">
+          </button>
+          <button
+            onClick={handleRemoveLastColumn}
+            className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-4 rounded-lg transition-colors text-sm"
+          >
             - Letzte Spalte
-          </Button>
+          </button>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-zinc-600">
           {data.length} Zeilen × {data[0]?.length || 0} Spalten
         </div>
       </div>
@@ -160,12 +183,21 @@ export default function SpreadsheetEditor({
         />
       </div>
 
-      {/* Status Bar */}
-      <div className="p-3 border-t bg-gray-50 text-xs text-gray-500">
-        <span>
-          {initialData ? 'Bearbeitung' : 'Neue Tabelle'} •
-          {data.length} Zeilen × {data[0]?.length || 0} Spalten
-        </span>
+      {/* Footer mit Aktionen */}
+      <div className="flex items-center justify-end space-x-3 p-4 border-t">
+        <button
+          onClick={onCancel}
+          className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6 rounded-lg transition-colors"
+        >
+          Abbrechen
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !title.trim() || isLoading}
+          className="bg-primary hover:bg-primary-hover text-white font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? 'Speichert...' : 'Speichern'}
+        </button>
       </div>
 
       <style jsx global>{`
