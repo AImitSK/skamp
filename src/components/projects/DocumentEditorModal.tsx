@@ -508,10 +508,32 @@ export default function DocumentEditorModal({
                 .prose-custom :global(.ProseMirror ul),
                 .prose-custom :global(.ProseMirror ol) {
                   color: #111827 !important;
+                  padding-left: 1.5em !important;
+                  margin-top: 0.75em !important;
+                  margin-bottom: 0.75em !important;
+                }
+                .prose-custom :global(.ProseMirror ul) {
+                  list-style-type: disc !important;
+                  list-style-position: outside !important;
+                }
+                .prose-custom :global(.ProseMirror ol) {
+                  list-style-type: decimal !important;
+                  list-style-position: outside !important;
                 }
                 .prose-custom :global(.ProseMirror li) {
                   color: #111827 !important;
-                  margin-bottom: 0.5em !important;
+                  margin-bottom: 0.25em !important;
+                  padding-left: 0.25em !important;
+                }
+                .prose-custom :global(.ProseMirror ul ul),
+                .prose-custom :global(.ProseMirror ol ul) {
+                  list-style-type: circle !important;
+                  margin-top: 0.25em !important;
+                  margin-bottom: 0.25em !important;
+                }
+                .prose-custom :global(.ProseMirror ul ul ul),
+                .prose-custom :global(.ProseMirror ol ul ul) {
+                  list-style-type: square !important;
                 }
               `}</style>
             </div>
