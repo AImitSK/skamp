@@ -1,8 +1,8 @@
 # Boilerplates-Modul
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Production-Ready
-**Letzte Aktualisierung:** 16. Oktober 2025
+**Letzte Aktualisierung:** 25. Oktober 2025
 
 ---
 
@@ -21,7 +21,13 @@ Boilerplates sind vorgefertigte Textbausteine, die häufig in der PR-Arbeit verw
 
 ### Hauptmerkmale
 
-- **Rich-Text-Editor:** Tiptap-basierter Editor mit Formatierungsoptionen
+- **Rich-Text-Editor:** Vollständiger Tiptap-Editor mit allen Formatierungsoptionen (identisch zu Strategiedokumenten)
+  - Überschriften (H1, H2, H3)
+  - Text-Formatierung (Fett, Kursiv, Unterstrichen, Durchgestrichen)
+  - Listen (Aufzählung, Nummerierung)
+  - Code-Blöcke
+  - Undo/Redo
+  - TextAlign Extension
 - **Multi-Language:** Unterstützung für 10 Sprachen (DE, EN, FR, ES, IT, PT, NL, PL, RU, JA)
 - **Kategorisierung:** 5 Kategorien (Unternehmen, Kontakt, Rechtlich, Produkt, Sonstige)
 - **Scope-Management:** Globale oder kundenspezifische Textbausteine
@@ -29,6 +35,7 @@ Boilerplates sind vorgefertigte Textbausteine, die häufig in der PR-Arbeit verw
 - **Erweiterte Filter:** Nach Kategorie, Sprache, Scope und Suchtext
 - **Performance-optimiert:** React Query, useCallback, useMemo, Debouncing
 - **Vollständig getestet:** 42 Tests, 94.11% Coverage
+- **Feature-Parität:** Identische Editor-Funktionalität wie Strategiedokumente (v1.1)
 
 ---
 
@@ -37,7 +44,13 @@ Boilerplates sind vorgefertigte Textbausteine, die häufig in der PR-Arbeit verw
 ### 1. CRUD-Operationen
 
 #### Erstellen
-- Rich-Text-Editor mit Formatierung (Fett, Kursiv, Unterstrichen, Listen)
+- **Vollständiger Rich-Text-Editor** (identisch zu Strategiedokumenten)
+  - **Überschriften:** H1, H2, H3 via Dropdown
+  - **Text-Formatierung:** Fett, Kursiv, Unterstrichen, Durchgestrichen
+  - **Listen:** Aufzählungen und nummerierte Listen
+  - **Code:** Code-Blöcke für technische Inhalte
+  - **Aktionen:** Undo/Redo-Funktionalität
+  - **Alignment:** TextAlign Extension (Links, Zentriert, Rechts)
 - Name und optionale Beschreibung
 - Kategorieauswahl
 - Sprachauswahl mit Flaggen-Icons
@@ -181,7 +194,9 @@ docs/boilerplates/
 
 ### Rich-Text-Editor
 - **Tiptap:** Headless WYSIWYG Editor
-- **Extensions:** StarterKit, Underline, Link
+- **Extensions:** StarterKit (mit Headings 1-3), Underline, Link, TextAlign
+- **Toolbar:** 10 Buttons (Bold, Italic, Underline, Strike, Heading-Dropdown, BulletList, OrderedList, CodeBlock, Undo, Redo)
+- **Custom CSS:** Identisches Styling wie Strategiedokumente (h1/h2/h3, Listen, Code)
 
 ### Testing
 - **Jest:** Test Runner
@@ -517,6 +532,20 @@ Siehe Commit-Historie für Details:
 ---
 
 ## 📝 Changelog
+
+### v1.1.0 (25. Oktober 2025)
+
+**Editor Feature-Parität mit Strategiedokumenten**
+- ✅ TextAlign Extension hinzugefügt
+- ✅ Heading-Dropdown (H1, H2, H3) in Toolbar
+- ✅ Strike-Button (Durchgestrichen) hinzugefügt
+- ✅ CodeBlock-Button hinzugefügt
+- ✅ Undo/Redo-Buttons hinzugefügt
+- ✅ Custom CSS für Heading-Rendering (h1/h2/h3, Listen, Code)
+- ✅ Editor-Größe erhöht (200px → 300px min-height)
+- ✅ Vollständige Dokumentation (ADR-002)
+
+**Details:** Siehe [ADR-002](./adr/002-editor-feature-parity-mit-strategiedokumenten.md)
 
 ### v1.0.0 (16. Oktober 2025)
 
