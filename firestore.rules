@@ -215,6 +215,40 @@ service cloud.firestore {
     }
 
     // ========================================
+    // MEDIA & DOCUMENTS (Strategie-Tab)
+    // ========================================
+
+    // Media Folders - Org-isoliert
+    match /media_folders/{folderId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Media Assets - Org-isoliert
+    match /media_assets/{assetId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Document Contents (Strategiedokumente & Tabellen) - Org-isoliert
+    match /documentContent/{docId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
