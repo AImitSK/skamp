@@ -88,7 +88,7 @@ export default function DocumentEditorModal({
         types: ['heading', 'paragraph']
       })
     ],
-    content: '<p>Beginnen Sie hier mit Ihrem Dokument...</p>',
+    content: '',
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 text-gray-900 leading-relaxed'
@@ -138,7 +138,7 @@ export default function DocumentEditorModal({
       } else {
         // Leeres Dokument
         setTitle('');
-        editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+        editor.commands.setContent('');
       }
     }
   }, [document, isOpen, editor, initialContent, templateInfo]);
@@ -189,7 +189,7 @@ export default function DocumentEditorModal({
         console.warn('Dokument Content nicht gefunden, erstelle neues Dokument für contentRef:', document.contentRef);
         // Setze Default-Content für existierende "Dateien" ohne Content
         setTitle(document.fileName.replace('.celero-doc', ''));
-        editor?.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+        editor?.commands.setContent('');
         setIsLocked(true); // Kann bearbeitet werden
       }
     } catch (error) {
@@ -197,7 +197,7 @@ export default function DocumentEditorModal({
       console.error('Versuchte contentRef:', document.contentRef);
       // Fallback: Leeres Dokument anzeigen
       setTitle(document.fileName.replace('.celero-doc', ''));
-      editor?.commands.setContent('<p>Fehler beim Laden. Beginnen Sie hier...</p>');
+      editor?.commands.setContent('');
       setIsLocked(true);
     } finally {
       setLoading(false);
