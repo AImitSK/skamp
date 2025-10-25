@@ -351,7 +351,7 @@ export default function DocumentEditorModal({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Dokumenttitel eingeben..."
-          className="text-xl font-semibold w-full border-none outline-none bg-transparent"
+          className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
         />
       </DialogTitle>
 
