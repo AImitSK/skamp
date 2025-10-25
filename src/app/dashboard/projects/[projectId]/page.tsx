@@ -59,6 +59,7 @@ import { TeamMember } from '@/types/international';
 import { ProjectTask } from '@/types/tasks';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
+import { useStrategyDocuments } from '@/lib/hooks/useStrategyDocuments';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { Tag } from '@/types/crm';
@@ -111,9 +112,14 @@ export default function ProjectDetailPage() {
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [dokumenteFolder, setDokumenteFolder] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
-  const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
-  const [documentsLoading, setDocumentsLoading] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [creatingDocument, setCreatingDocument] = useState(false);
+
+  // React Query Hook für Strategy Documents
+  const { data: strategyDocuments = [], isLoading: documentsLoading } = useStrategyDocuments(
+    project?.id,
+    currentOrganization?.id
+  );
   const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
@@ -169,13 +175,13 @@ export default function ProjectDetailPage() {
     loadProjectTags();
   }, [project?.tags]);
 
-  // Lade Projekt-Ordnerstruktur und Dokumente wenn Daten-Tab ODER Strategie-Tab aktiviert wird
+  // Lade Projekt-Ordnerstruktur wenn Daten-Tab ODER Strategie-Tab aktiviert wird
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // BEGRÜNDUNG: loadProjectFolders und loadStrategyDocuments sind stabile Funktionen. Infinite loop vermeiden.
+  // BEGRÜNDUNG: loadProjectFolders ist eine stabile Funktion. Infinite loop vermeiden.
+  // HINWEIS: strategyDocuments werden über React Query Hook geladen (automatisches Caching)
   useEffect(() => {
     if ((activeTab === 'daten' || activeTab === 'strategie') && project && currentOrganization?.id) {
       loadProjectFolders();
-      loadStrategyDocuments();
     }
   }, [activeTab, project, currentOrganization?.id]);
 
@@ -240,23 +246,6 @@ export default function ProjectDetailPage() {
       </div>
     );
   }
-
-  const loadStrategyDocuments = async () => {
-    if (!project?.id || !currentOrganization?.id) return;
-    
-    setDocumentsLoading(true);
-    try {
-      const documents = await strategyDocumentService.getByProjectId(project.id, {
-        organizationId: currentOrganization.id
-      });
-      setStrategyDocuments(documents);
-    } catch (error) {
-      console.error('Fehler beim Laden der Strategiedokumente:', error);
-    } finally {
-      setDocumentsLoading(false);
-    }
-  };
-
 
   const getDocumentStatusColor = (status: string) => {
     switch (status) {
@@ -582,7 +571,7 @@ export default function ProjectDetailPage() {
     if (!currentOrganization?.id || !user?.uid || !project?.id) return;
 
     try {
-      setDocumentsLoading(true);
+      setCreatingDocument(true);
 
       // Template content basierend auf Typ
       let content = '';
@@ -659,15 +648,15 @@ export default function ProjectDetailPage() {
         userId: user.uid
       });
 
-      // Liste aktualisieren und zur Editor-Seite navigieren
-      await loadStrategyDocuments();
+      // Zur Editor-Seite navigieren
+      // HINWEIS: React Query invalidiert automatisch den Cache bei Mutations
       toastService.success('Dokument erfolgreich erstellt');
       router.push(`/dashboard/strategy-documents/${documentId}`);
     } catch (error) {
       console.error('Fehler beim Erstellen des Strategiedokuments:', error);
       toastService.error('Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut.');
     } finally {
-      setDocumentsLoading(false);
+      setCreatingDocument(false);
     }
   }, [currentOrganization?.id, user?.uid, project?.id, router]);
 
