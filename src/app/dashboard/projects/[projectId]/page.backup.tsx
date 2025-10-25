@@ -1170,6 +1170,7 @@ export default function ProjectDetailPage() {
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
                   customerId={project.customer?.id}
+                  customerName={project.customer?.name}
                   projectFolders={dokumenteFolder}  // Dokumente-Ordner als einziger Hauptordner
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}
@@ -1197,6 +1198,7 @@ export default function ProjectDetailPage() {
                   projectId={project.id!}
                   organizationId={currentOrganization.id}
                   customerId={project.customer?.id}
+                  customerName={project.customer?.name}
                   projectFolders={projectFolders}
                   foldersLoading={foldersLoading}
                   onRefresh={loadProjectFolders}

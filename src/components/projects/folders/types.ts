@@ -17,6 +17,11 @@ export interface ProjectFoldersViewProps {
   customerId?: string;
 
   /**
+   * Customer Name (für Boilerplate-Speicherung)
+   */
+  customerName?: string;
+
+  /**
    * Project Folders Data (pre-loaded)
    */
   projectFolders: any;

@@ -40,6 +40,7 @@ export function StrategieTabContent({
           projectId={project.id!}
           organizationId={organizationId}
           customerId={project.customer?.id}
+          customerName={project.customer?.name}
           projectFolders={dokumenteFolder}
           foldersLoading={foldersLoading}
           onRefresh={onRefresh}

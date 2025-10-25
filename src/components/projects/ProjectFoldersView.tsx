@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
@@ -94,6 +95,7 @@ export default function ProjectFoldersView({
   projectId,
   organizationId,
   customerId,
+  customerName,
   projectFolders,
   foldersLoading,
   onRefresh,
@@ -207,7 +209,8 @@ export default function ProjectFoldersView({
           category: boilerplateCategory,
           description: boilerplateDescription.trim(),
           isGlobal: false,
-          clientId: projectId,
+          clientId: customerId,
+          clientName: customerName,
         },
         { organizationId, userId: user.uid }
       );
