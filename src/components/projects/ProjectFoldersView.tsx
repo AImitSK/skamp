@@ -170,6 +170,60 @@ export default function ProjectFoldersView({
     }
   }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent, showAlert]);
 
+  // Save as Boilerplate State & Handlers (INLINE)
+  const [showSaveAsBoilerplateModal, setShowSaveAsBoilerplateModal] = useState(false);
+  const [assetToSaveAsBoilerplate, setAssetToSaveAsBoilerplate] = useState<any>(null);
+  const [boilerplateName, setBoilerplateName] = useState('');
+  const [boilerplateDescription, setBoilerplateDescription] = useState('');
+  const [boilerplateCategory, setBoilerplateCategory] = useState<'company' | 'contact' | 'legal' | 'product' | 'custom'>('custom');
+  const [boilerplateIsGlobal, setBoilerplateIsGlobal] = useState(false);
+  const [boilerplateSaving, setBoilerplateSaving] = useState(false);
+
+  const handleSaveAsBoilerplate = useCallback((asset: any) => {
+    setAssetToSaveAsBoilerplate(asset);
+    setBoilerplateName(asset.fileName?.replace('.celero-doc', '') || '');
+    setBoilerplateDescription('');
+    setBoilerplateCategory('custom');
+    setBoilerplateIsGlobal(false);
+    setShowSaveAsBoilerplateModal(true);
+  }, []);
+
+  const handleSaveBoilerplate = useCallback(async () => {
+    if (!user?.uid || !assetToSaveAsBoilerplate || !boilerplateName.trim()) {
+      alert('Bitte geben Sie einen Namen ein');
+      return;
+    }
+
+    setBoilerplateSaving(true);
+    try {
+      const docContent = await documentContentService.loadDocument(assetToSaveAsBoilerplate.id);
+      if (!docContent) throw new Error('Dokument-Inhalt konnte nicht geladen werden');
+
+      const { boilerplatesService } = await import('@/lib/firebase/boilerplate-service');
+
+      await boilerplatesService.create(
+        {
+          name: boilerplateName.trim(),
+          content: docContent.content,
+          category: boilerplateCategory,
+          description: boilerplateDescription.trim(),
+          isGlobal: boilerplateIsGlobal,
+          clientId: boilerplateIsGlobal ? undefined : projectId,
+        },
+        { organizationId, userId: user.uid }
+      );
+
+      showAlert('success', `"${boilerplateName}" wurde als Boilerplate gespeichert.`);
+      setShowSaveAsBoilerplateModal(false);
+      setAssetToSaveAsBoilerplate(null);
+    } catch (error) {
+      console.error('Fehler beim Speichern als Boilerplate:', error);
+      showAlert('error', 'Fehler beim Speichern als Boilerplate.');
+    } finally {
+      setBoilerplateSaving(false);
+    }
+  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, boilerplateIsGlobal, organizationId, projectId, showAlert]);
+
   const {
     confirmDialog,
     setConfirmDialog,
@@ -619,9 +673,16 @@ export default function ProjectFoldersView({
                           <DropdownItem onClick={() => handleDownloadDocument(asset)}>
                             Download
                           </DropdownItem>
-                          <DropdownItem onClick={() => handleMoveAsset(asset)}>
-                            Verschieben
-                          </DropdownItem>
+                          {filterByFolder !== 'Dokumente' && (
+                            <DropdownItem onClick={() => handleMoveAsset(asset)}>
+                              Verschieben
+                            </DropdownItem>
+                          )}
+                          {filterByFolder === 'Dokumente' && (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) && (
+                            <DropdownItem onClick={() => handleSaveAsBoilerplate(asset)}>
+                              Als Boilerplate speichern
+                            </DropdownItem>
+                          )}
                           <DropdownDivider />
                           <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
                             <span className="text-red-600">Löschen</span>
@@ -691,6 +752,44 @@ export default function ProjectFoldersView({
         projectId={projectId}
         onImport={handleBoilerplateImport}
       />
+
+      {/* Save as Boilerplate Dialog - INLINE */}
+      {assetToSaveAsBoilerplate && (
+        <Dialog open={showSaveAsBoilerplateModal} onClose={() => setShowSaveAsBoilerplateModal(false)} size="2xl">
+          <DialogTitle>Als Boilerplate speichern</DialogTitle>
+          <DialogBody className="space-y-4">
+            <Field>
+              <Label>Name *</Label>
+              <Input type="text" value={boilerplateName} onChange={(e) => setBoilerplateName(e.target.value)} placeholder="z.B. Unternehmensprofil Standard" required />
+            </Field>
+            <Field>
+              <Label>Beschreibung (optional)</Label>
+              <Input type="text" value={boilerplateDescription} onChange={(e) => setBoilerplateDescription(e.target.value)} placeholder="Kurze Beschreibung..." />
+            </Field>
+            <Field>
+              <Label>Kategorie *</Label>
+              <Select value={boilerplateCategory} onChange={(e) => setBoilerplateCategory(e.target.value as any)}>
+                <option value="company">Unternehmensbeschreibung</option>
+                <option value="contact">Kontaktinformationen</option>
+                <option value="legal">Rechtliche Hinweise</option>
+                <option value="product">Produktbeschreibung</option>
+                <option value="custom">Sonstige</option>
+              </Select>
+            </Field>
+            <Field>
+              <Label>Verfügbarkeit</Label>
+              <Select value={boilerplateIsGlobal ? 'global' : 'project'} onChange={(e) => setBoilerplateIsGlobal(e.target.value === 'global')}>
+                <option value="project">Nur für dieses Projekt</option>
+                <option value="global">Für alle Projekte (Global)</option>
+              </Select>
+            </Field>
+          </DialogBody>
+          <DialogActions>
+            <Button variant="outline" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>Abbrechen</Button>
+            <Button onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? 'Speichert...' : 'Speichern'}</Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       {/* Document Editor Modal */}
       {showDocumentEditor && (
