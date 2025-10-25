@@ -128,18 +128,16 @@ export default function BoilerplateImportDialog({
             </Select>
           </Field>
 
-          <Field>
+          <Field className="relative">
             <Label>Suche</Label>
-            <div className="relative">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Name oder Beschreibung..."
-                className="pr-10"
-              />
-              <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            </div>
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Name oder Beschreibung..."
+              className="pr-10"
+            />
+            <MagnifyingGlassIcon className="absolute right-3 bottom-2.5 w-5 h-5 text-gray-400 pointer-events-none" />
           </Field>
         </div>
 
