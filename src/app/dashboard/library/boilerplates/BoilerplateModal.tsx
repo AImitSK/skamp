@@ -434,12 +434,19 @@ export default function BoilerplateModal({
                     margin-bottom: 0.5em !important;
                     line-height: 1.4 !important;
                   }
-                  :global(.ProseMirror ul),
+                  :global(.ProseMirror ul) {
+                    color: #111827 !important;
+                    padding-left: 1.5em !important;
+                    margin-top: 0.75em !important;
+                    margin-bottom: 0.75em !important;
+                    list-style-type: disc !important;
+                  }
                   :global(.ProseMirror ol) {
                     color: #111827 !important;
                     padding-left: 1.5em !important;
                     margin-top: 0.75em !important;
                     margin-bottom: 0.75em !important;
+                    list-style-type: decimal !important;
                   }
                   :global(.ProseMirror ul li),
                   :global(.ProseMirror ol li) {
