@@ -42,12 +42,12 @@ import {
   useUpdateMediaAsset,
 } from '@/lib/hooks/useMediaData';
 // Extrahierte Komponenten
-import Alert from './folders/components/Alert';
 import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
 import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
 import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
+import { toastService } from '@/lib/utils/toast';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
@@ -129,12 +129,6 @@ export default function ProjectFoldersView({
     onFolderChange
   });
 
-  // Alert handler (optimized with useCallback)
-  const showAlert = useCallback((type: 'info' | 'error' | 'success', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
-
   // Document save success callback (optimized with useCallback)
   const handleDocumentSaveSuccess = useCallback(() => {
     if (selectedFolderId) {
@@ -142,8 +136,8 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
-  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+    toastService.success('Dokument wurde erfolgreich gespeichert');
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
 
   // Boilerplate Import Handler
   const handleBoilerplateImport = useCallback(async (boilerplate: Boilerplate) => {
@@ -165,13 +159,13 @@ export default function ProjectFoldersView({
 
       // Refresh folder content
       loadFolderContent(selectedFolderId);
-      showAlert('success', `"${boilerplate.name}" wurde erfolgreich importiert.`);
+      toastService.success(`"${boilerplate.name}" wurde erfolgreich importiert`);
     } catch (error) {
       console.error('Fehler beim Importieren:', error);
-      showAlert('error', 'Fehler beim Importieren des Dokuments.');
+      toastService.error('Dokument konnte nicht importiert werden');
       throw error;
     }
-  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent, showAlert]);
+  }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent]);
 
   // Save as Boilerplate State & Handlers (INLINE)
   const [showSaveAsBoilerplateModal, setShowSaveAsBoilerplateModal] = useState(false);
@@ -191,7 +185,7 @@ export default function ProjectFoldersView({
 
   const handleSaveBoilerplate = useCallback(async () => {
     if (!user?.uid || !assetToSaveAsBoilerplate || !boilerplateName.trim()) {
-      alert('Bitte geben Sie einen Namen ein');
+      toastService.error('Bitte geben Sie einen Namen ein');
       return;
     }
 
@@ -215,16 +209,16 @@ export default function ProjectFoldersView({
         { organizationId, userId: user.uid }
       );
 
-      showAlert('success', `"${boilerplateName}" wurde als Boilerplate gespeichert.`);
+      toastService.success(`"${boilerplateName}" wurde als Boilerplate gespeichert`);
       setShowSaveAsBoilerplateModal(false);
       setAssetToSaveAsBoilerplate(null);
     } catch (error) {
       console.error('Fehler beim Speichern als Boilerplate:', error);
-      showAlert('error', 'Fehler beim Speichern als Boilerplate.');
+      toastService.error('Boilerplate konnte nicht gespeichert werden');
     } finally {
       setBoilerplateSaving(false);
     }
-  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId, showAlert]);
+  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId]);
 
   const {
     confirmDialog,
@@ -234,8 +228,8 @@ export default function ProjectFoldersView({
     handleAssetClick: handleAssetClickBase
   } = useFileActions({
     organizationId,
-    onSuccess: (msg) => showAlert('success', msg),
-    onError: (msg) => showAlert('error', msg)
+    onSuccess: (msg) => toastService.success(msg),
+    onError: (msg) => toastService.error(msg)
   });
 
   const {
@@ -265,7 +259,6 @@ export default function ProjectFoldersView({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [showBoilerplateImportModal, setShowBoilerplateImportModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
@@ -333,8 +326,8 @@ export default function ProjectFoldersView({
     } else {
       onRefresh();
     }
-    showAlert('success', 'Ordner wurde erfolgreich erstellt.');
-  }, [selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+    toastService.success('Ordner wurde erfolgreich erstellt');
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
 
   const handleMoveAsset = useCallback((asset: any) => {
     setAssetToMove(asset);
@@ -352,8 +345,8 @@ export default function ProjectFoldersView({
       loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
 
-    showAlert('success', 'Datei wurde erfolgreich verschoben.');
-  }, [handleGoToRoot, onRefresh, loadAllFolders, showAlert]);
+    toastService.success('Datei wurde erfolgreich verschoben');
+  }, [handleGoToRoot, onRefresh, loadAllFolders]);
 
   // Use handleAssetClick from useFileActions (optimized with useCallback)
   const handleAssetClick = useCallback(
@@ -370,12 +363,12 @@ export default function ProjectFoldersView({
       const assetToDelete = assets.find(asset => asset.id === assetId);
 
       if (!assetToDelete) {
-        showAlert('error', 'Datei konnte nicht gefunden werden.');
+        toastService.error('Datei konnte nicht gefunden werden');
         return;
       }
 
       await deleteMediaAsset(assetToDelete);
-      showAlert('success', `Datei "${fileName}" wurde erfolgreich gelöscht.`);
+      toastService.success(`Datei "${fileName}" wurde erfolgreich gelöscht`);
 
       // Refresh current view
       if (selectedFolderId) {
@@ -385,9 +378,9 @@ export default function ProjectFoldersView({
       }
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
-      showAlert('error', 'Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
+      toastService.error('Datei konnte nicht gelöscht werden');
     }
-  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh, showAlert]);
+  }, [organizationId, selectedFolderId, loadFolderContent, onRefresh]);
 
   // File statistics (optimized with useMemo)
   const fileStats = useMemo(() => {
@@ -508,13 +501,6 @@ export default function ProjectFoldersView({
           )}
         </div>
       </div>
-
-      {/* Alert anzeigen */}
-      {alert && (
-        <div className="mb-4">
-          <Alert type={alert.type} message={alert.message} />
-        </div>
-      )}
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 0 && (

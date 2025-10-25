@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
 import SpreadsheetEditor, { type SpreadsheetData } from '../strategy/SpreadsheetEditor';
+import { toastService } from '@/lib/utils/toast';
 import {
   TableCellsIcon,
   ArrowsPointingOutIcon,
@@ -132,7 +133,7 @@ export default function SpreadsheetEditorModal({
       handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern der Tabelle:', error);
-      alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+      toastService.error('Tabelle konnte nicht gespeichert werden');
     } finally {
       setSaving(false);
     }

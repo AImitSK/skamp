@@ -15,6 +15,7 @@ import { Text } from '@/components/ui/text';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { DocumentContent, InternalDocument } from '@/types/document-content';
+import { toastService } from '@/lib/utils/toast';
 
 import {
   BoldIcon,
@@ -270,7 +271,7 @@ export default function DocumentEditorModal({
       handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      alert('Fehler beim Speichern des Dokuments');
+      toastService.error('Dokument konnte nicht gespeichert werden');
     } finally {
       setSaving(false);
     }
