@@ -300,7 +300,10 @@ export default function DocumentEditorModal({
   // Toolbar Button Component
   const ToolbarButton = ({ onClick, active = false, disabled = false, children, title }: any) => (
     <button
-      onClick={onClick}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       disabled={disabled}
       title={title}
       className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${
