@@ -46,6 +46,7 @@ import DeleteConfirmDialog from './folders/components/DeleteConfirmDialog';
 import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
+import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
@@ -66,12 +67,7 @@ const SpreadsheetEditorModal = dynamic(
   { ssr: false }
 );
 
-// Lazy load Boilerplate Dialogs
-const BoilerplateImportDialog = dynamic(
-  () => import('./folders/components/BoilerplateImportDialog'),
-  { ssr: false }
-);
-
+// Lazy load Save as Boilerplate Dialog (nur dieser!)
 const SaveAsBoilerplateDialog = dynamic(
   () => import('./folders/components/SaveAsBoilerplateDialog'),
   { ssr: false }
