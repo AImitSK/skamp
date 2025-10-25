@@ -1,11 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog } from '@/components/ui/dialog';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { documentContentService } from '@/lib/firebase/document-content-service';
 import type { InternalDocument } from '@/types/document-content';
 import SpreadsheetEditor, { type SpreadsheetData } from '../strategy/SpreadsheetEditor';
+import {
+  TableCellsIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
+} from '@heroicons/react/24/outline';
 
 interface SpreadsheetEditorModalProps {
   isOpen: boolean;
@@ -35,8 +41,10 @@ export default function SpreadsheetEditorModal({
 }: SpreadsheetEditorModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState<SpreadsheetData | null>(null);
-  const [initialTitle, setInitialTitle] = useState('');
+  const [title, setTitle] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Lade existierendes Spreadsheet
   useEffect(() => {
@@ -46,12 +54,12 @@ export default function SpreadsheetEditorModal({
       // Neues Spreadsheet
       if (initialData && templateInfo) {
         // Template verwenden
-        const templateTitle = `${templateInfo.name} - ${new Date().toLocaleDateString()}`;
-        setInitialTitle(templateTitle);
+        const templateTitle = `${templateInfo.name} - ${new Date().toLocaleDateString('de-DE')}`;
+        setTitle(templateTitle);
         setSpreadsheetData(initialData);
       } else {
         // Leeres Spreadsheet
-        setInitialTitle('Neue Tabelle');
+        setTitle('');
         setSpreadsheetData(null);
       }
     }
@@ -62,12 +70,9 @@ export default function SpreadsheetEditorModal({
 
     setLoading(true);
     try {
-      console.log('Loading spreadsheet with contentRef:', document.contentRef);
       const docContent = await documentContentService.loadDocument(document.contentRef);
 
       if (docContent) {
-        console.log('Document loaded, parsing content...');
-
         // Bereinige Dateinamen (entferne Endungen)
         const cleanTitle = (document.fileName || 'Tabelle')
           .replace('.celero-sheet.celero-doc', '')
@@ -75,20 +80,16 @@ export default function SpreadsheetEditorModal({
           .replace('.celero-doc', '')
           .replace('.json', '');
 
-        setInitialTitle(cleanTitle);
+        setTitle(cleanTitle);
 
         // Parse JSON content
         try {
           const data = JSON.parse(docContent.content);
-          console.log('Spreadsheet data parsed:', data);
           setSpreadsheetData(data);
         } catch (error) {
           console.error('Fehler beim Parsen der Spreadsheet-Daten:', error);
-          console.error('Content was:', docContent.content);
           setSpreadsheetData(null);
         }
-      } else {
-        console.error('No document content returned');
       }
     } catch (error) {
       console.error('Fehler beim Laden der Tabelle:', error);
@@ -97,12 +98,12 @@ export default function SpreadsheetEditorModal({
     }
   };
 
-  const handleSave = async (data: SpreadsheetData, title: string) => {
-    if (!user?.uid) return;
+  const handleSave = async () => {
+    if (!user?.uid || !title.trim() || !spreadsheetData) return;
 
-    setLoading(true);
+    setSaving(true);
     try {
-      const jsonContent = JSON.stringify(data);
+      const jsonContent = JSON.stringify(spreadsheetData);
 
       if (document?.contentRef) {
         // Update existierendes Dokument
@@ -114,10 +115,10 @@ export default function SpreadsheetEditorModal({
         );
       } else {
         // Neues Dokument erstellen
-        const { documentId, assetId } = await documentContentService.createDocument(
+        await documentContentService.createDocument(
           jsonContent,
           {
-            fileName: `${title}.celero-sheet`,
+            fileName: `${title.trim()}.celero-sheet`,
             folderId,
             organizationId,
             projectId,
@@ -128,39 +129,109 @@ export default function SpreadsheetEditorModal({
       }
 
       onSave();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Fehler beim Speichern der Tabelle:', error);
       alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleClose = () => {
+    setTitle('');
+    setSpreadsheetData(null);
+    setIsFullscreen(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} size="5xl" hideCloseButton>
-      <div className="h-[700px]">
-        {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+    <Dialog open={isOpen} onClose={handleClose} size="5xl" className={isFullscreen ? 'fullscreen-dialog' : ''}>
+      {/* Fullscreen Button neben dem Close X */}
+      <div className="absolute top-0 right-0 pt-4 pr-14 z-20">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFullscreen(!isFullscreen);
+          }}
+          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+        >
+          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          {isFullscreen ? (
+            <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <ArrowsPointingOutIcon className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+
+      <DialogTitle>
+        <div className="flex items-center space-x-2 mb-3">
+          <TableCellsIcon className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium text-zinc-700">
+            {document ? 'Tabelle bearbeiten' : `Neue Tabelle - ${new Date().toLocaleDateString('de-DE')}`}
+          </span>
+        </div>
+
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Tabellenname eingeben..."
+          className="text-xl font-semibold w-full border-none outline-none bg-zinc-50 px-3 py-2 rounded-md focus:bg-zinc-100 transition-colors"
+        />
+      </DialogTitle>
+
+      <DialogBody className={`p-0 ${isFullscreen ? 'fullscreen-body' : ''}`}>
+        {loading ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className={`overflow-y-auto bg-white ${isFullscreen ? 'flex-1' : 'min-h-[500px] max-h-[600px]'}`}>
+            <SpreadsheetEditor
+              data={spreadsheetData}
+              onDataChange={setSpreadsheetData}
+            />
+            <style jsx global>{`
+              :global(.fullscreen-dialog) {
+                max-width: 900px !important;
+                width: 100% !important;
+                height: calc(100vh - 4rem) !important;
+                margin: 2rem auto !important;
+                border-radius: 0.5rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+              }
+              :global(.fullscreen-dialog > *) {
+                flex-shrink: 0 !important;
+              }
+              :global(.fullscreen-dialog .fullscreen-body) {
+                flex: 1 !important;
+                overflow-y: auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+              }
+            `}</style>
           </div>
         )}
-        {!loading && (
-          <SpreadsheetEditor
-            initialData={spreadsheetData || undefined}
-            title={initialTitle}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            isLoading={loading}
-          />
-        )}
-      </div>
+      </DialogBody>
+
+      <DialogActions>
+        <Button variant="outline" onClick={handleClose}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={saving || !title.trim() || !spreadsheetData}
+        >
+          {saving ? 'Speichert...' : 'Speichern'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
