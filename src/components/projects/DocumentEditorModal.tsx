@@ -541,6 +541,13 @@ export default function DocumentEditorModal({
                 .prose-custom :global(.ProseMirror ol ul ul) {
                   list-style-type: square !important;
                 }
+                :global(.fullscreen-dialog) {
+                  max-width: 100vw !important;
+                  width: 100vw !important;
+                  height: 100vh !important;
+                  margin: 0 !important;
+                  border-radius: 0 !important;
+                }
               `}</style>
             </div>
           )}
@@ -567,17 +574,6 @@ export default function DocumentEditorModal({
           {saving ? 'Speichert...' : (document ? 'Speichern' : 'Erstellen')}
         </Button>
       </DialogActions>
-
-      {/* Fullscreen Styles */}
-      <style jsx global>{`
-        .fullscreen-dialog {
-          max-width: 100vw !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          margin: 0 !important;
-          border-radius: 0 !important;
-        }
-      `}</style>
     </Dialog>
   );
 }
