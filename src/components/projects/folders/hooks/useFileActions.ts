@@ -7,6 +7,7 @@ interface UseFileActionsProps {
   selectedFolderId?: string;
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
 /**
@@ -18,7 +19,8 @@ export function useFileActions({
   organizationId,
   selectedFolderId,
   onSuccess,
-  onError
+  onError,
+  onRefresh
 }: UseFileActionsProps) {
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -50,6 +52,9 @@ export function useFileActions({
 
       await deleteMediaAsset(assetToDelete);
       onSuccess?.(`Datei "${fileName}" wurde erfolgreich gelöscht.`);
+
+      // Aktualisiere die UI nach erfolgreichem Löschen
+      await onRefresh?.();
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
       onError?.('Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');

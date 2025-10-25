@@ -220,6 +220,15 @@ export default function ProjectFoldersView({
     }
   }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId]);
 
+  const handleDeleteSuccess = useCallback(() => {
+    // Refresh current view after deletion
+    if (selectedFolderId) {
+      loadFolderContent(selectedFolderId);
+    }
+    // Always refresh parent data and folder counts
+    onRefresh();
+  }, [selectedFolderId, loadFolderContent, onRefresh]);
+
   const {
     confirmDialog,
     setConfirmDialog,
@@ -230,7 +239,8 @@ export default function ProjectFoldersView({
     organizationId,
     selectedFolderId,
     onSuccess: (msg) => toastService.success(msg),
-    onError: (msg) => toastService.error(msg)
+    onError: (msg) => toastService.error(msg),
+    onRefresh: handleDeleteSuccess
   });
 
   const {
