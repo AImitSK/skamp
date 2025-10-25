@@ -8,6 +8,7 @@ import { Project } from '@/types/project';
 interface StrategieTabContentProps {
   project: Project;
   organizationId: string;
+  userId?: string;
   dokumenteFolder: any;
   foldersLoading: boolean;
   onRefresh: () => Promise<void>;
@@ -16,6 +17,7 @@ interface StrategieTabContentProps {
 export function StrategieTabContent({
   project,
   organizationId,
+  userId,
   dokumenteFolder,
   foldersLoading,
   onRefresh
@@ -27,6 +29,7 @@ export function StrategieTabContent({
         <ProjectStrategyTab
           projectId={project.id!}
           organizationId={organizationId}
+          userId={userId}
           project={project}
           dokumenteFolderId={dokumenteFolder?.mainFolder?.id}
           onDocumentSaved={onRefresh}

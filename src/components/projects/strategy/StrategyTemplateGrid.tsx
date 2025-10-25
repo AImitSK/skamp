@@ -1,7 +1,7 @@
 // src/components/projects/strategy/StrategyTemplateGrid.tsx
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   DocumentTextIcon,
   TableCellsIcon,
@@ -24,7 +24,7 @@ interface StrategyTemplateGridProps {
   onTemplateSelect: (templateType: TemplateType, content?: string) => void;
 }
 
-function TemplateCard({ id, title, description, icon: Icon, onClick }: TemplateCardProps) {
+const TemplateCard = React.memo(function TemplateCard({ id, title, description, icon: Icon, onClick }: TemplateCardProps) {
   const isTemplate = id !== 'blank' && id !== 'table';
 
   return (
@@ -58,25 +58,25 @@ function TemplateCard({ id, title, description, icon: Icon, onClick }: TemplateC
       </div>
     </button>
   );
-}
+});
 
-export default function StrategyTemplateGrid({ onTemplateSelect }: StrategyTemplateGridProps) {
+const StrategyTemplateGrid = React.memo(function StrategyTemplateGrid({ onTemplateSelect }: StrategyTemplateGridProps) {
   const handleTemplateClick = (templateType: TemplateType) => {
     const template = STRATEGY_TEMPLATES[templateType];
     onTemplateSelect(templateType, template.content);
   };
 
-  const templateCards: Array<{
+  const templateCards = useMemo<Array<{
     id: TemplateType;
     icon: React.ComponentType<{ className?: string }>;
-  }> = [
+  }>>(() => [
     { id: 'blank', icon: DocumentTextIcon },
     { id: 'table', icon: TableCellsIcon },
     { id: 'company-profile', icon: BuildingOfficeIcon },
     { id: 'situation-analysis', icon: ChartBarIcon },
     { id: 'audience-analysis', icon: UsersIcon },
     { id: 'core-messages', icon: SpeakerWaveIcon },
-  ];
+  ], []);
 
   return (
     <div className="mb-8">
@@ -106,4 +106,6 @@ export default function StrategyTemplateGrid({ onTemplateSelect }: StrategyTempl
       </div>
     </div>
   );
-}
+});
+
+export default StrategyTemplateGrid;

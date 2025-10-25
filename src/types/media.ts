@@ -6,8 +6,9 @@ export interface MediaAsset {
   userId: string;
   fileName: string;
   fileType?: string; // z.B. 'image/jpeg', 'video/mp4'
-  storagePath: string; // Pfad in Firebase Storage
+  storagePath?: string; // Pfad in Firebase Storage (optional für Celero-Docs)
   downloadUrl: string; // Öffentliche URL der Datei
+  contentRef?: string; // Firestore-Referenz für Celero-Docs (document_contents)
   description?: string;
   tags?: string[];
   folderId?: string; // Ordner-Zuordnung

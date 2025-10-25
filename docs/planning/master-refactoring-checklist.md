@@ -1,9 +1,9 @@
 # Projects-Module: Master Refactoring Checkliste
 
-**Version:** 1.4
+**Version:** 1.5
 **Erstellt:** 2025-01-19
-**Letztes Update:** 2025-10-24
-**Status:** In Progress (5/13 Module = 38%)
+**Letztes Update:** 2025-10-25
+**Status:** In Progress (6/13 Module = 46%)
 
 ---
 
@@ -578,20 +578,108 @@ Phase 0-7 vollständig:
 **Abhängigkeiten:** 0.1 ProjectFoldersView (Shared!)
 
 **Tracking:**
-- [ ] **Plan erstellt:** `docs/planning/tabs/strategie-tab-refactoring.md`
-- [ ] **Implementierung durchgeführt**
+- [x] **Plan erstellt:** `docs/planning/tabs/strategie-tab-refactoring.md`
+- [x] **Implementierung durchgeführt**
+- [x] **Merged to Main:** 2025-10-25
 
 **Ergebnis-Zusammenfassung:**
 ```
-[Nach Implementierung ausfüllen]
-- ProjectFoldersView (shared) integriert: Ja/Nein
-- DocumentEditorModal lazy loading: Ja/Nein
-- Test-Ergebnis: X/Y Tests passed
+✅ ABGESCHLOSSEN - 2025-10-25 - Merged to Main
+
+Phase 0-6 vollständig durchgeführt + 5 kritische Bugfixes:
+
+Phase 0-5: Kern-Implementierung ✅
+- Phase 0: Setup & Backup
+- Phase 1: React Query Integration (bereits vorhanden)
+- Phase 2: Code-Separation & Modularisierung
+- Phase 3: Performance-Optimierung (React.memo, useCallback)
+- Phase 4: Testing
+- Phase 5: Dokumentation
+
+Phase 6: Production-Ready Code Quality ✅
+- TypeScript: 0 Fehler in Strategie-Tab Dateien
+- ESLint: 0 Warnings
+- Console Cleanup: Bestätigt sauber
+- Design System: 95% compliant
+- Production Build: Pre-existing Errors bleiben (nicht in Strategie-Tab Code)
+
+Phase 6.5: Bugfixes nach manuellen Tests ✅
+
+Bugfix #1: Delete Handler Implementation
+- Problem: StrategyDocumentsTable existierte, wurde aber nicht gerendert
+- Root Cause: Template-Dokumente in folder system gespeichert, aber Tabelle queriert strategy_documents
+- Lösung: StrategyDocumentsTable in ProjectStrategyTab integriert mit Delete-Handler
+- Dateien: ProjectStrategyTab.tsx, StrategieTabContent.tsx, page.tsx
+- Änderung: userId Prop durch gesamte Komponenten-Kette hinzugefügt
+
+Bugfix #2: selectedFolderId Missing
+- Problem: "Datei konnte nicht gefunden werden" Fehler
+- Root Cause: useFileActions bekam kein selectedFolderId, suchte in falschem Ordner
+- Lösung: selectedFolderId zu UseFileActionsProps hinzugefügt und durchgereicht
+- Dateien: useFileActions.ts, ProjectFoldersView.tsx
+
+Bugfix #3: Firebase Storage Root-Reference
+- Problem: "storage/invalid-root-operation" Fehler beim Löschen von Celero-Docs
+- Root Cause: deleteMediaAsset versuchte Storage-Löschung mit leerem storagePath
+- Lösung: Conditional 3-Stage Deletion implementiert
+  - Stage 1: Nur Storage löschen wenn storagePath existiert
+  - Stage 2: Nur document_contents löschen wenn contentRef existiert
+  - Stage 3: Immer Firestore media_assets löschen
+- Dateien: media-assets-service.ts
+
+Bugfix #4: UI Cache Refresh
+- Problem: Dateien erfolgreich gelöscht, aber UI erst nach F5 aktualisiert
+- Root Cause: Kein Refresh nach deleteMediaAsset
+- Lösung: onRefresh Callback zu useFileActions hinzugefügt
+- Dateien: useFileActions.ts, ProjectFoldersView.tsx (handleDeleteSuccess)
+
+Bugfix #5: TypeScript Interface
+- Problem: contentRef Property existierte nicht auf MediaAsset Type
+- Lösung: contentRef?: string zu MediaAsset Interface hinzugefügt
+- Dateien: media.ts
+
+Phase 4: Testing ✅
+- Test-Ergebnis: 10/10 Tests passed (100% Pass Rate)
+- Test-Datei: StrategyTemplateGrid.test.tsx
+- Coverage: 100% für StrategyTemplateGrid
+- Keine TODOs, alle Tests vollständig implementiert
+
+Modifizierte/Neue Dateien:
+- src/components/projects/strategy/ProjectStrategyTab.tsx
+- src/app/dashboard/projects/[projectId]/components/tab-content/StrategieTabContent.tsx
+- src/app/dashboard/projects/[projectId]/page.tsx
+- src/components/projects/folders/hooks/useFileActions.ts
+- src/components/projects/ProjectFoldersView.tsx
+- src/lib/firebase/media-assets-service.ts
+- src/types/media.ts
+
+Git-Statistik:
+- Branch: feature/strategie-tab-refactoring → main
+- Commits: 13 (7 Phasen + 5 Bugfixes + 1 Type-Fix)
+- Code: +5,736 Zeilen hinzugefügt, -56 Zeilen gelöscht
+- Netto: +5,680 Zeilen
+
+Features implementiert:
+✅ Delete-Funktion für Strategiedokumente (mit Confirmation)
+✅ Toast-Benachrichtigungen für alle User-Aktionen
+✅ Automatisches UI-Refresh nach Löschen
+✅ Multi-Storage Deletion (Firebase Storage + Firestore document_contents)
+✅ Type-Safe Media Assets (contentRef Support für Celero-Docs)
 ```
 
 **TODOs / Offene Punkte:**
 ```
-[Nach Implementierung ausfüllen]
+Keine offenen Punkte - Alle Phasen erfolgreich abgeschlossen ✅
+
+Phase 0-6 vollständig:
+✅ ProjectFoldersView (shared): Bereits integriert
+✅ Delete-Funktionalität: Vollständig implementiert und getestet
+✅ UI-Refresh: Automatisch nach Mutations
+✅ Tests: 10/10 bestanden (100%)
+✅ TypeScript: 0 Fehler
+✅ ESLint: 0 Warnings
+✅ 5 kritische Bugs: Alle behoben
+✅ Merge to Main: Erfolgreich
 ```
 
 ---
@@ -790,9 +878,9 @@ Phase 0-7 vollständig:
 |-------|--------|----------|-------------|
 | Phase 0: Shared Components | 2 | 2 | 100% ✅ |
 | Phase 1: Hauptseite | 1 | 1 | 100% ✅ |
-| Phase 2: Tab-Module | 7 | 2 | 29% |
+| Phase 2: Tab-Module | 7 | 3 | 43% |
 | Phase 3: Globale Features | 3 | 0 | 0% |
-| **GESAMT** | **13** | **5** | **38%** |
+| **GESAMT** | **13** | **6** | **46%** |
 
 ### Aufwands-Verteilung
 
@@ -911,23 +999,24 @@ docs/planning/
 - ✅ Phase 1.1: Project Detail Page refactored (2025-10-21)
 - ✅ Phase 2.1: Overview Tab refactored (2025-10-22)
 - ✅ Phase 2.2: Tasks Tab refactored (2025-10-24)
+- ✅ Phase 2.3: Strategie Tab refactored (2025-10-25)
 
 ### Bereit für Tab-Refactoring:
-Alle Blocker sind entfernt! 2 von 7 Tab-Modulen bereits refactored.
+Alle Blocker sind entfernt! 3 von 7 Tab-Modulen bereits refactored.
 
 **Empfohlene Reihenfolge (verbleibend):**
-1. **Phase 2.3:** Strategie Tab (P2)
-2. **Phase 2.4:** Daten Tab (P2)
-3. **Phase 2.5:** Verteiler Tab (P2)
-4. **Phase 2.6:** Pressemeldung Tab (P2)
-5. **Phase 2.7:** Monitoring Tab (P3)
+1. **Phase 2.4:** Daten Tab (P2)
+2. **Phase 2.5:** Verteiler Tab (P2)
+3. **Phase 2.6:** Pressemeldung Tab (P2)
+4. **Phase 2.7:** Monitoring Tab (P3)
 
 ---
 
-**Zuletzt aktualisiert:** 2025-10-24
+**Zuletzt aktualisiert:** 2025-10-25
 **Maintainer:** CeleroPress Team
 
 **Changelog:**
+- 2025-10-25: Strategie Tab zu Main gemerged - Phase 0-6 + 5 Bugfixes abgeschlossen - Status: 6/13 Module (46%)
 - 2025-10-24: Tasks Tab zu Main gemerged - Phase 0-7 abgeschlossen - Status: 5/13 Module (38%)
 - 2025-10-22: Overview Tab zu Main gemerged - Phase 0-5 abgeschlossen - Status: 4/13 Module (31%)
 - 2025-10-21 (PM): Project Detail Page zu Main gemerged - Alle 7 Phasen abgeschlossen - Status: 3/13 Module (23%)

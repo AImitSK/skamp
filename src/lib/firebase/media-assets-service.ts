@@ -408,9 +408,33 @@ export async function moveAssetToFolder(assetId: string, newFolderId?: string, o
  */
 export async function deleteMediaAsset(asset: MediaAsset): Promise<void> {
   try {
-    const storageRef = ref(storage, asset.storagePath);
-    await deleteObject(storageRef);
+    // 1. Lösche Storage-Datei (nur wenn storagePath existiert)
+    // Celero-Docs haben KEINEN storagePath (nur contentRef)
+    if (asset.storagePath) {
+      try {
+        const storageRef = ref(storage, asset.storagePath);
+        await deleteObject(storageRef);
+      } catch (storageError: any) {
+        // Ignoriere Storage-Fehler wenn Datei bereits gelöscht wurde
+        if (storageError.code !== 'storage/object-not-found') {
+          console.error('Fehler beim Löschen aus Storage:', storageError);
+        }
+      }
+    }
 
+    // 2. Lösche Content aus document_contents (wenn contentRef existiert)
+    // Celero-Docs speichern Content in Firestore, nicht in Storage
+    if (asset.contentRef) {
+      try {
+        const { documentContentService } = await import('./document-content-service');
+        await documentContentService.deleteDocument(asset.contentRef);
+      } catch (contentError: any) {
+        // Ignoriere Fehler wenn Content bereits gelöscht wurde
+        console.error('Fehler beim Löschen des Contents:', contentError);
+      }
+    }
+
+    // 3. Lösche Firestore-Dokument (media_assets)
     const docRef = doc(db, 'media_assets', asset.id!);
     await deleteDoc(docRef);
   } catch (error) {

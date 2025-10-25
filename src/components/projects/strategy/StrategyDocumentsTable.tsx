@@ -26,7 +26,7 @@ interface StrategyDocumentsTableProps {
   loading: boolean;
 }
 
-export default function StrategyDocumentsTable({
+const StrategyDocumentsTable = React.memo(function StrategyDocumentsTable({
   documents,
   onEdit,
   onDelete,
@@ -58,7 +58,7 @@ export default function StrategyDocumentsTable({
       case 'draft': return 'zinc';
       case 'review': return 'amber';
       case 'approved': return 'green';
-      case 'archived': return 'gray';
+      case 'archived': return 'zinc';
       default: return 'zinc';
     }
   };
@@ -159,7 +159,7 @@ export default function StrategyDocumentsTable({
                       </div>
                     )}
                     {document.source === 'folder' && (
-                      <Badge color="gray" className="text-xs">
+                      <Badge color="zinc" className="text-xs">
                         Ordner-System
                       </Badge>
                     )}
@@ -205,4 +205,6 @@ export default function StrategyDocumentsTable({
       </div>
     </div>
   );
-}
+});
+
+export default StrategyDocumentsTable;
