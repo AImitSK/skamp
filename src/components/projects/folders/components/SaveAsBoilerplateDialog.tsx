@@ -9,19 +9,20 @@ import { Select } from '@/components/ui/select';
 import { Field, Label } from '@/components/ui/fieldset';
 import { BookmarkIcon } from '@heroicons/react/24/outline';
 
+// Interface nur lokal - NICHT exportieren
+interface BoilerplateFormData {
+  name: string;
+  description: string;
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
+  isGlobal: boolean;
+}
+
 interface SaveAsBoilerplateDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: BoilerplateFormData) => Promise<void>;
   documentName: string;
   documentContent: string;
-}
-
-export interface BoilerplateFormData {
-  name: string;
-  description: string;
-  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
-  isGlobal: boolean;
 }
 
 const CATEGORY_OPTIONS = [
