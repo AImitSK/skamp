@@ -47,7 +47,6 @@ import FolderCreateDialog from './folders/components/FolderCreateDialog';
 import UploadZone from './folders/components/UploadZone';
 import MoveAssetModal from './folders/components/MoveAssetModal';
 import BoilerplateImportDialog from './folders/components/BoilerplateImportDialog';
-import SaveAsBoilerplateDialog from './folders/components/SaveAsBoilerplateDialog';
 // Custom Hooks
 import { useFolderNavigation } from './folders/hooks/useFolderNavigation';
 import { useFileActions } from './folders/hooks/useFileActions';
@@ -67,14 +66,6 @@ const SpreadsheetEditorModal = dynamic(
   () => import('./SpreadsheetEditorModal'),
   { ssr: false }
 );
-
-// Local type definition für Boilerplate Form Data
-interface BoilerplateFormData {
-  name: string;
-  description: string;
-  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
-  isGlobal: boolean;
-}
 
 // Skeleton Loader Component (optimized with React.memo)
 const FolderSkeleton = React.memo(function FolderSkeleton() {
@@ -179,52 +170,6 @@ export default function ProjectFoldersView({
     }
   }, [user?.uid, selectedFolderId, organizationId, projectId, loadFolderContent, showAlert]);
 
-  // Save as Boilerplate Handler
-  const handleSaveAsBoilerplate = useCallback((asset: any) => {
-    setAssetToSaveAsBoilerplate(asset);
-    setShowSaveAsBoilerplateModal(true);
-  }, []);
-
-  const handleSaveBoilerplate = useCallback(async (formData: BoilerplateFormData) => {
-    if (!user?.uid || !assetToSaveAsBoilerplate) return;
-
-    try {
-      // Lade Dokument-Content
-      const docContent = await documentContentService.loadDocument(assetToSaveAsBoilerplate.id);
-
-      if (!docContent) {
-        throw new Error('Dokument-Inhalt konnte nicht geladen werden');
-      }
-
-      // Importiere boilerplatesService
-      const { boilerplatesService } = await import('@/lib/firebase/boilerplate-service');
-
-      // Erstelle Boilerplate
-      await boilerplatesService.create(
-        {
-          name: formData.name,
-          content: docContent.content,
-          category: formData.category,
-          description: formData.description,
-          isGlobal: formData.isGlobal,
-          clientId: formData.isGlobal ? undefined : projectId,
-        },
-        {
-          organizationId,
-          userId: user.uid
-        }
-      );
-
-      showAlert('success', `"${formData.name}" wurde als Boilerplate gespeichert.`);
-      setShowSaveAsBoilerplateModal(false);
-      setAssetToSaveAsBoilerplate(null);
-    } catch (error) {
-      console.error('Fehler beim Speichern als Boilerplate:', error);
-      showAlert('error', 'Fehler beim Speichern als Boilerplate.');
-      throw error;
-    }
-  }, [user?.uid, assetToSaveAsBoilerplate, organizationId, projectId, showAlert]);
-
   const {
     confirmDialog,
     setConfirmDialog,
@@ -264,8 +209,6 @@ export default function ProjectFoldersView({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [showBoilerplateImportModal, setShowBoilerplateImportModal] = useState(false);
-  const [showSaveAsBoilerplateModal, setShowSaveAsBoilerplateModal] = useState(false);
-  const [assetToSaveAsBoilerplate, setAssetToSaveAsBoilerplate] = useState<any>(null);
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
@@ -676,18 +619,9 @@ export default function ProjectFoldersView({
                           <DropdownItem onClick={() => handleDownloadDocument(asset)}>
                             Download
                           </DropdownItem>
-                          {/* Verschieben nur außerhalb des Dokumente-Ordners anzeigen */}
-                          {filterByFolder !== 'Dokumente' && (
-                            <DropdownItem onClick={() => handleMoveAsset(asset)}>
-                              Verschieben
-                            </DropdownItem>
-                          )}
-                          {/* Als Boilerplate speichern nur für .celero-doc im Dokumente-Ordner */}
-                          {filterByFolder === 'Dokumente' && (asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc')) && (
-                            <DropdownItem onClick={() => handleSaveAsBoilerplate(asset)}>
-                              Als Boilerplate speichern
-                            </DropdownItem>
-                          )}
+                          <DropdownItem onClick={() => handleMoveAsset(asset)}>
+                            Verschieben
+                          </DropdownItem>
                           <DropdownDivider />
                           <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
                             <span className="text-red-600">Löschen</span>
@@ -757,20 +691,6 @@ export default function ProjectFoldersView({
         projectId={projectId}
         onImport={handleBoilerplateImport}
       />
-
-      {/* Save as Boilerplate Dialog */}
-      {assetToSaveAsBoilerplate && (
-        <SaveAsBoilerplateDialog
-          isOpen={showSaveAsBoilerplateModal}
-          onClose={() => {
-            setShowSaveAsBoilerplateModal(false);
-            setAssetToSaveAsBoilerplate(null);
-          }}
-          onSave={handleSaveBoilerplate}
-          documentName={assetToSaveAsBoilerplate.fileName || 'Dokument'}
-          documentContent=""
-        />
-      )}
 
       {/* Document Editor Modal */}
       {showDocumentEditor && (
