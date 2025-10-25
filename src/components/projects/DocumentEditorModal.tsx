@@ -137,7 +137,7 @@ export default function DocumentEditorModal({
         editor.commands.setContent(initialContent);
       } else {
         // Leeres Dokument
-        setTitle('Neues Dokument');
+        setTitle('');
         editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
       }
     }
@@ -315,26 +315,29 @@ export default function DocumentEditorModal({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} size={isFullscreen ? "5xl" : "5xl"}>
-      <DialogTitle>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <DocumentTextIcon className="w-5 h-5 text-primary" />
-            <span className="text-sm font-medium text-zinc-700">
-              {document ? 'Dokument bearbeiten' : 'Neues Dokument'}
-            </span>
-          </div>
+      {/* Fullscreen Button neben dem Close X */}
+      <div className="absolute top-0 right-0 pt-4 pr-14 z-10">
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+        >
+          <span className="sr-only">{isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}</span>
+          {isFullscreen ? (
+            <ArrowsPointingInIcon className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <ArrowsPointingOutIcon className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
+      </div>
 
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors"
-            title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
-          >
-            {isFullscreen ? (
-              <ArrowsPointingInIcon className="w-5 h-5 text-zinc-700" />
-            ) : (
-              <ArrowsPointingOutIcon className="w-5 h-5 text-zinc-700" />
-            )}
-          </button>
+      <DialogTitle>
+        <div className="flex items-center space-x-3 mb-3">
+          <DocumentTextIcon className="w-5 h-5 text-primary" />
+          <span className="text-sm font-medium text-zinc-700">
+            {document ? 'Dokument bearbeiten' : 'Neues Dokument'}
+          </span>
         </div>
 
         <input
