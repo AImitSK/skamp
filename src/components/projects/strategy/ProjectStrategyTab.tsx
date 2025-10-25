@@ -4,7 +4,10 @@
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { STRATEGY_TEMPLATES, type TemplateType } from '@/constants/strategy-templates';
+import { useStrategyDocuments, useArchiveStrategyDocument } from '@/lib/hooks/useStrategyDocuments';
+import { toastService } from '@/lib/utils/toast';
 import StrategyTemplateGrid from './StrategyTemplateGrid';
+import StrategyDocumentsTable from './StrategyDocumentsTable';
 
 // Lazy load Document Editor Modal
 const DocumentEditorModal = dynamic(
@@ -21,6 +24,7 @@ const SpreadsheetEditorModal = dynamic(
 interface ProjectStrategyTabProps {
   projectId: string;
   organizationId: string;
+  userId?: string;
   project?: {
     title: string;
     currentStage: any;
@@ -33,10 +37,18 @@ interface ProjectStrategyTabProps {
 const ProjectStrategyTab = React.memo(function ProjectStrategyTab({
   projectId,
   organizationId,
+  userId,
   project,
   dokumenteFolderId,
   onDocumentSaved
 }: ProjectStrategyTabProps) {
+  // React Query Hooks
+  const { data: strategyDocuments = [], isLoading: documentsLoading } = useStrategyDocuments(
+    projectId,
+    organizationId
+  );
+  const { mutate: archiveDocument, isPending: isArchiving } = useArchiveStrategyDocument();
+
   // Document Editor State
   const [showEditor, setShowEditor] = useState(false);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
@@ -86,10 +98,52 @@ const ProjectStrategyTab = React.memo(function ProjectStrategyTab({
     }
   }, [onDocumentSaved]);
 
+  // Dokument löschen (archivieren)
+  const handleDeleteDocument = useCallback((documentId: string) => {
+    if (!userId) {
+      toastService.error('Benutzer-ID fehlt');
+      return;
+    }
+
+    if (!confirm('Möchten Sie dieses Strategiedokument wirklich löschen?')) {
+      return;
+    }
+
+    archiveDocument(
+      {
+        id: documentId,
+        projectId,
+        organizationId,
+        userId
+      },
+      {
+        onSuccess: () => {
+          toastService.success('Strategiedokument erfolgreich gelöscht');
+        },
+        onError: (error) => {
+          toastService.error(`Fehler beim Löschen: ${error.message}`);
+        }
+      }
+    );
+  }, [userId, projectId, organizationId, archiveDocument]);
+
   return (
     <>
       {/* Template-Kacheln */}
       <StrategyTemplateGrid onTemplateSelect={handleTemplateSelect} />
+
+      {/* Dokumente-Tabelle */}
+      <div className="mt-8">
+        <StrategyDocumentsTable
+          documents={strategyDocuments}
+          onEdit={(id) => {
+            // TODO: Edit-Funktionalität implementieren
+            toastService.info('Bearbeiten-Funktion wird noch implementiert');
+          }}
+          onDelete={handleDeleteDocument}
+          loading={documentsLoading || isArchiving}
+        />
+      </div>
 
       {/* Document Editor Modal für Templates */}
       {showEditor && dokumenteFolderId && (

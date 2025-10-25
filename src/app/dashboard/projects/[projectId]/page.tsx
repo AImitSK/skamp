@@ -723,6 +723,7 @@ export default function ProjectDetailPage() {
             <StrategieTabContent
               project={project}
               organizationId={currentOrganization!.id}
+              userId={user?.uid}
               dokumenteFolder={dokumenteFolder}
               foldersLoading={foldersLoading}
               onRefresh={loadProjectFolders}
