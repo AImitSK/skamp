@@ -161,13 +161,10 @@ export default function SpreadsheetEditor({
       </div>
 
       {/* Status Bar */}
-      <div className="p-3 border-t bg-gray-50 text-xs text-gray-500 flex justify-between">
+      <div className="p-3 border-t bg-gray-50 text-xs text-gray-500">
         <span>
           {initialData ? 'Bearbeitung' : 'Neue Tabelle'} •
           {data.length} Zeilen × {data[0]?.length || 0} Spalten
-        </span>
-        <span className="text-gray-400">
-          Excel-ähnliche Bedienung • Copy/Paste unterstützt
         </span>
       </div>
 
