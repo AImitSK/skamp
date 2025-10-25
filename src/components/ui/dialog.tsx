@@ -43,7 +43,7 @@ export function Dialog({ open, onClose, children, size = 'lg', className }: Dial
               <DialogPanel className={clsx("w-full transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all", sizeClasses[size], className)}>
                 {children}
                 {/* Optionaler Schließen-Button oben rechts */}
-                <div className="absolute top-0 right-0 pt-4 pr-4">
+                <div className="absolute top-0 right-0 pt-4 pr-4 z-30">
                   <button type="button" className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" onClick={onClose}>
                     <span className="sr-only">Schließen</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />

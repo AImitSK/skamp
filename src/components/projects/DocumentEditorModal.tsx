@@ -542,11 +542,11 @@ export default function DocumentEditorModal({
                   list-style-type: square !important;
                 }
                 :global(.fullscreen-dialog) {
-                  max-width: 100vw !important;
-                  width: 100vw !important;
-                  height: 100vh !important;
-                  margin: 0 !important;
-                  border-radius: 0 !important;
+                  max-width: 900px !important;
+                  width: 100% !important;
+                  height: calc(100vh - 4rem) !important;
+                  margin: 2rem auto !important;
+                  border-radius: 0.5rem !important;
                   display: flex !important;
                   flex-direction: column !important;
                 }
