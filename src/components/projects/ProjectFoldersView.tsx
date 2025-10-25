@@ -176,7 +176,6 @@ export default function ProjectFoldersView({
   const [boilerplateName, setBoilerplateName] = useState('');
   const [boilerplateDescription, setBoilerplateDescription] = useState('');
   const [boilerplateCategory, setBoilerplateCategory] = useState<'company' | 'contact' | 'legal' | 'product' | 'custom'>('custom');
-  const [boilerplateIsGlobal, setBoilerplateIsGlobal] = useState(false);
   const [boilerplateSaving, setBoilerplateSaving] = useState(false);
 
   const handleSaveAsBoilerplate = useCallback((asset: any) => {
@@ -184,7 +183,6 @@ export default function ProjectFoldersView({
     setBoilerplateName(asset.fileName?.replace('.celero-doc', '') || '');
     setBoilerplateDescription('');
     setBoilerplateCategory('custom');
-    setBoilerplateIsGlobal(false);
     setShowSaveAsBoilerplateModal(true);
   }, []);
 
@@ -207,8 +205,8 @@ export default function ProjectFoldersView({
           content: docContent.content,
           category: boilerplateCategory,
           description: boilerplateDescription.trim(),
-          isGlobal: boilerplateIsGlobal,
-          clientId: boilerplateIsGlobal ? undefined : projectId,
+          isGlobal: false,
+          clientId: projectId,
         },
         { organizationId, userId: user.uid }
       );
@@ -222,7 +220,7 @@ export default function ProjectFoldersView({
     } finally {
       setBoilerplateSaving(false);
     }
-  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, boilerplateIsGlobal, organizationId, projectId, showAlert]);
+  }, [user?.uid, assetToSaveAsBoilerplate, boilerplateName, boilerplateDescription, boilerplateCategory, organizationId, projectId, showAlert]);
 
   const {
     confirmDialog,
@@ -774,13 +772,6 @@ export default function ProjectFoldersView({
                 <option value="legal">Rechtliche Hinweise</option>
                 <option value="product">Produktbeschreibung</option>
                 <option value="custom">Sonstige</option>
-              </Select>
-            </Field>
-            <Field>
-              <Label>Verfügbarkeit</Label>
-              <Select value={boilerplateIsGlobal ? 'global' : 'project'} onChange={(e) => setBoilerplateIsGlobal(e.target.value === 'global')}>
-                <option value="project">Nur für dieses Projekt</option>
-                <option value="global">Für alle Projekte (Global)</option>
               </Select>
             </Field>
           </DialogBody>
