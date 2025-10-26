@@ -34,10 +34,10 @@ describe('filter-helpers', () => {
 
   describe('renderFilterValue', () => {
     const mockTags: Tag[] = [
-      { id: 'tag1', name: 'VIP', color: 'red', organizationId: 'org1', createdAt: new Date(), updatedAt: new Date() },
-      { id: 'tag2', name: 'Journalist', color: 'blue', organizationId: 'org1', createdAt: new Date(), updatedAt: new Date() },
-      { id: 'tag3', name: 'Analyst', color: 'green', organizationId: 'org1', createdAt: new Date(), updatedAt: new Date() },
-      { id: 'tag4', name: 'Blogger', color: 'yellow', organizationId: 'org1', createdAt: new Date(), updatedAt: new Date() }
+      { id: 'tag1', name: 'VIP', color: 'red', userId: 'user1' },
+      { id: 'tag2', name: 'Journalist', color: 'blue', userId: 'user1' },
+      { id: 'tag3', name: 'Analyst', color: 'green', userId: 'user1' },
+      { id: 'tag4', name: 'Blogger', color: 'yellow', userId: 'user1' }
     ];
 
     it('should render tagIds with tag names', () => {

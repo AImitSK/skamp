@@ -40,6 +40,8 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
     }
 
     async function loadData() {
+      if (!list) return;
+
       setLoading(true);
       try {
         const isProjectList = (l: any): l is ProjectDistributionList => 'projectId' in l;

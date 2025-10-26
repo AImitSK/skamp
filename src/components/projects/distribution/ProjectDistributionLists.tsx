@@ -49,21 +49,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [editingList, setEditingList] = useState<ProjectDistributionList | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    if (projectId && organizationId) {
-      loadData();
-    }
-  }, [projectId, organizationId, loadData]);
-
-  // Debouncing für Search (300ms)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -91,6 +76,21 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       setLoading(false);
     }
   }, [projectId, organizationId]);
+
+  useEffect(() => {
+    if (projectId && organizationId) {
+      loadData();
+    }
+  }, [projectId, organizationId, loadData]);
+
+  // Debouncing für Search (300ms)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const handleLinkMasterList = useCallback(async (masterListId: string) => {
     if (!user) return;
@@ -267,8 +267,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       category: editingList.category || 'custom',
       filters: editingList.filters || {},
       contactIds: editingList.contactIds || [],
+      contactCount: editingList.cachedContactCount || 0,
+      userId: editingList.addedBy,
       organizationId: editingList.organizationId,
-      createdBy: editingList.addedBy,
       createdAt: editingList.addedAt,
       updatedAt: editingList.lastModified,
     } as DistributionList;
