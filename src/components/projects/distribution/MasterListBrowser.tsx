@@ -327,7 +327,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
 
                   {/* Aktion */}
                   <div className="ml-4">
-                    <Button
+                    <button
                       onClick={() => {
                         if (!list.id) return;
                         const isLinked = linkedListIds.includes(list.id);
@@ -337,17 +337,17 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                           onLink(list.id);
                         }
                       }}
-                      className={`text-xs p-1.5 flex items-center justify-center ${
+                      className={`p-1.5 rounded-md transition-colors ${
                         linkedListIds.includes(list.id!)
-                          ? 'bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30'
-                          : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
+                          ? 'bg-blue-500/15 hover:bg-blue-500/25'
+                          : 'hover:bg-gray-100'
                       }`}
                     >
                       <StarIcon
                         className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-gray-500'}`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
