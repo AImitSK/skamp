@@ -493,27 +493,14 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                           {listName}
                         </p>
                         <div className="mt-1">
-                          {list.type === 'linked' ? (
-                            <Badge
-                              className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                              style={{
-                                backgroundColor: 'rgba(222, 220, 0, 0.1)',
-                                color: '#000000',
-                                borderColor: 'rgba(222, 220, 0, 0.3)'
-                              }}
-                            >
-                              <StarIcon className="h-3 w-3 text-black" fill="currentColor" />
-                              Verknüpft
-                            </Badge>
-                          ) : (
-                            <Badge
-                              color="zinc"
-                              className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                            >
-                              {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
-                              {list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                            </Badge>
-                          )}
+                          <Badge
+                            color={list.type === 'linked' ? 'blue' : 'zinc'}
+                            className="text-xs whitespace-nowrap inline-flex items-center gap-1"
+                          >
+                            {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
+                            {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
+                            {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
+                          </Badge>
                         </div>
                       </div>
                     </div>
