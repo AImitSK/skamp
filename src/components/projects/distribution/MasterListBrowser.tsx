@@ -327,7 +327,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
 
                   {/* Aktion */}
                   <div className="ml-4">
-                    <button
+                    <Button
                       onClick={() => {
                         if (!list.id) return;
                         const isLinked = linkedListIds.includes(list.id);
@@ -337,17 +337,28 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                           onLink(list.id);
                         }
                       }}
-                      className={`p-1.5 rounded-md transition-colors ${
+                      className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
                         linkedListIds.includes(list.id!)
-                          ? 'bg-blue-500/15 hover:bg-blue-500/25'
-                          : 'hover:bg-gray-100'
+                          ? 'bg-zinc-100 border border-zinc-200 text-zinc-600 hover:bg-zinc-200'
+                          : 'bg-zinc-100 border border-zinc-200 text-zinc-600 hover:bg-zinc-200'
                       }`}
+                      style={linkedListIds.includes(list.id!) ? {
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        color: '#1d4ed8',
+                        borderColor: 'rgba(59, 130, 246, 0.3)'
+                      } : {
+                        backgroundColor: '#f3f4f6',
+                        color: '#4b5563',
+                        border: '1px solid #d1d5db'
+                      }}
                     >
                       <StarIcon
-                        className={`h-4 w-4 ${linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-gray-500'}`}
+                        className={`h-3 w-3 ${
+                          linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-zinc-500'
+                        }`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
