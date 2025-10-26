@@ -23,6 +23,7 @@ import {
   DocumentDuplicateIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
@@ -301,7 +302,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
             }`}
             aria-label="Filter"
           >
-            <FunnelIcon className="h-4 w-4" />
+            <FunnelIcon className="h-5 w-5 stroke-2" />
             {activeFiltersCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                 {activeFiltersCount}
@@ -450,6 +451,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                 Kategorie
               </div>
               <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Typ
+              </div>
+              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kontakte
               </div>
               <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -490,7 +494,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                             color="zinc"
                             className="text-xs whitespace-nowrap inline-flex items-center gap-1"
                           >
-                            {list.type === 'linked' && <LinkIcon className="h-3 w-3 text-gray-500" />}
+                            {list.type === 'linked' && <StarIcon className="h-3 w-3 text-gray-500" />}
                             {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
                             {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
                           </Badge>
@@ -507,8 +511,20 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                       )}
                     </div>
 
-                    {/* Kontakte */}
+                    {/* Typ */}
                     <div className="w-[15%]">
+                      {masterList && (
+                        <Badge
+                          color={masterList.type === 'dynamic' ? 'green' : 'blue'}
+                          className="text-xs whitespace-nowrap"
+                        >
+                          {masterList.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Kontakte */}
+                    <div className="w-[12%]">
                       <span className="text-sm font-medium text-gray-700">
                         {contactCount.toLocaleString()}
                       </span>
@@ -525,7 +541,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                     <div className="ml-4">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem onClick={() => handleExportList(list)}>
