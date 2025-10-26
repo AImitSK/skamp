@@ -277,7 +277,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Listen durchsuchen..."
+          placeholder="Suchen..."
           className="flex-1"
         />
 
@@ -396,19 +396,27 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         </Popover>
       </div>
 
-      {/* Bulk Actions */}
-      {selectedListIds.size > 0 && (
-        <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
-          <Text className="text-sm text-blue-700">
-            {selectedListIds.size} {selectedListIds.size === 1 ? 'Liste' : 'Listen'} ausgewählt
+      {/* Results Info */}
+      {filteredProjectLists.length > 0 && (
+        <div className="flex items-center justify-between">
+          <Text className="text-sm text-zinc-600">
+            {filteredProjectLists.length} von {projectLists.length} Listen
+            {selectedListIds.size > 0 && (
+              <span className="ml-2">
+                • {selectedListIds.size} ausgewählt
+              </span>
+            )}
           </Text>
-          <Button
-            onClick={handleBulkDelete}
-            className="bg-red-600 hover:bg-red-700 text-white text-sm"
-          >
-            <TrashIcon className="w-4 h-4 mr-1" />
-            Löschen
-          </Button>
+
+          {/* Bulk Delete Link */}
+          {selectedListIds.size > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="text-sm text-red-600 hover:text-red-700 underline"
+            >
+              {selectedListIds.size} Löschen
+            </button>
+          )}
         </div>
       )}
 
@@ -434,10 +442,10 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
               <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategorie
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kontakte
               </div>
-              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider text-right pr-14">
+              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Hinzugefügt
               </div>
             </div>
@@ -489,7 +497,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                     {/* Typ */}
                     <div className="w-[15%]">
                       <Badge
-                        color={list.type === 'linked' ? 'blue' : list.type === 'custom' ? 'green' : 'purple'}
+                        color="zinc"
                         className="text-xs whitespace-nowrap"
                       >
                         {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt-eigen' : 'Kombiniert'}
@@ -506,14 +514,14 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                     </div>
 
                     {/* Kontakte */}
-                    <div className="w-[10%] text-center">
+                    <div className="w-[10%]">
                       <span className="text-sm font-medium text-gray-700">
                         {contactCount.toLocaleString()}
                       </span>
                     </div>
 
                     {/* Datum */}
-                    <div className="flex-1 text-right pr-14">
+                    <div className="flex-1">
                       <span className="text-sm text-gray-600">
                         {formatDate(list.addedAt)}
                       </span>

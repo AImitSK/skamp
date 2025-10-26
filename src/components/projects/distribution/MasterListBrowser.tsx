@@ -96,7 +96,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Subheading>Verfügbare Master-Listen</Subheading>
+        <Subheading>Listen Bibliothek</Subheading>
         <Text className="text-sm text-gray-500">
           {filteredLists.length} {filteredLists.length === 1 ? 'Liste' : 'Listen'} verfügbar
         </Text>
@@ -107,7 +107,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Master-Listen durchsuchen..."
+          placeholder="Suchen..."
           className="flex-1"
         />
 
@@ -244,13 +244,13 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
               <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Typ
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kontakte
               </div>
               <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktualisiert
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktion
               </div>
             </div>
@@ -290,7 +290,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   {/* Typ */}
                   <div className="w-[10%]">
                     <Badge
-                      color={list.type === 'dynamic' ? 'green' : 'zinc'}
+                      color="zinc"
                       className="text-xs whitespace-nowrap"
                     >
                       {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
@@ -298,12 +298,10 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   </div>
 
                   {/* Kontakte */}
-                  <div className="w-[10%] text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-sm font-medium text-gray-700">
-                        {(list.contactCount || 0).toLocaleString()}
-                      </span>
-                    </div>
+                  <div className="w-[10%]">
+                    <span className="text-sm font-medium text-gray-700">
+                      {(list.contactCount || 0).toLocaleString()}
+                    </span>
                   </div>
 
                   {/* Aktualisiert */}
@@ -317,7 +315,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   </div>
 
                   {/* Aktion */}
-                  <div className="w-[10%] text-center">
+                  <div className="w-[10%]">
                     <Button
                       onClick={() => list.id && onLink(list.id)}
                       color="secondary"
