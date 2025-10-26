@@ -138,14 +138,10 @@ export const projectListsService = {
         // Für dynamische Listen: Kontakte basierend auf Filtern zählen
         const contacts = await this.getFilteredContacts(listData.filters, organizationId);
         contactCount = contacts.length;
-        console.log('[createProjectList] Dynamic list, contacts found:', contactCount);
       } else if (listType === 'static' && listData.contactIds) {
         // Für statische Listen: Direkte Anzahl
         contactCount = listData.contactIds.length;
-        console.log('[createProjectList] Static list, contactIds:', listData.contactIds.length);
       }
-
-      console.log('[createProjectList] Final contactCount to save:', contactCount, 'listType:', listType);
 
       const docRef = await addDoc(collection(db, 'project_distribution_lists'), {
         projectId,
