@@ -135,7 +135,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
             }`}
             aria-label="Filter"
           >
-            <FunnelIcon className="h-4 w-4" />
+            <FunnelIcon className="h-5 w-5 stroke-2" />
             {activeFiltersCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                 {activeFiltersCount}
