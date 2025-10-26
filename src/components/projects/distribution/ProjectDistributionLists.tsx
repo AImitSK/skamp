@@ -1,7 +1,7 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -188,36 +188,81 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   }, []);
 
   // Gefilterte Listen
-  const linkedListIds = projectLists
-    .filter(l => l.type === 'linked')
-    .map(l => l.masterListId)
-    .filter(Boolean) as string[];
+  const linkedListIds = useMemo(() => {
+    return projectLists
+      .filter(l => l.type === 'linked')
+      .map(l => l.masterListId)
+      .filter(Boolean) as string[];
+  }, [projectLists]);
 
   // Alle Master-Listen anzeigen (nicht mehr filtern nach verknüpft/nicht-verknüpft)
   const availableMasterLists = masterLists;
 
-  const filteredProjectLists = projectLists.filter(list => {
-    if (searchTerm) {
-      const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
-      if (!listName.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
+  const filteredProjectLists = useMemo(() => {
+    return projectLists.filter(list => {
+      if (searchTerm) {
+        const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
+        if (!listName.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return false;
+        }
       }
-    }
-    // Typ-Filter
-    if (selectedTypes.length > 0) {
-      if (!selectedTypes.includes(list.type)) return false;
-    }
+      // Typ-Filter
+      if (selectedTypes.length > 0) {
+        if (!selectedTypes.includes(list.type)) return false;
+      }
 
-    // Kategorie-Filter
-    if (selectedCategories.length > 0) {
-      const category = masterListDetails.get(list.masterListId || '')?.category || 'custom';
-      if (!selectedCategories.includes(category)) return false;
-    }
-    return true;
-  });
+      // Kategorie-Filter
+      if (selectedCategories.length > 0) {
+        const category = masterListDetails.get(list.masterListId || '')?.category || 'custom';
+        if (!selectedCategories.includes(category)) return false;
+      }
+      return true;
+    });
+  }, [projectLists, searchTerm, selectedTypes, selectedCategories, masterListDetails]);
 
   // Filter-Status berechnen
-  const activeFiltersCount = selectedCategories.length + selectedTypes.length;
+  const activeFiltersCount = useMemo(() => {
+    return selectedCategories.length + selectedTypes.length;
+  }, [selectedCategories.length, selectedTypes.length]);
+
+  // Listen-Zähler Text
+  const listCountText = useMemo(() => {
+    return `${projectLists.length} ${projectLists.length === 1 ? 'Liste' : 'Listen'} verknüpft`;
+  }, [projectLists.length]);
+
+  // Empty State Beschreibung
+  const emptyStateDescription = useMemo(() => {
+    return searchTerm
+      ? 'Versuchen Sie andere Suchbegriffe'
+      : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue';
+  }, [searchTerm]);
+
+  // Tabellen-Spalten Konfiguration
+  const tableColumns = useMemo(() => [
+    { label: 'Name', width: 'w-[35%]' },
+    { label: 'Kategorie', width: 'w-[15%]' },
+    { label: 'Typ', width: 'w-[15%]' },
+    { label: 'Kontakte', width: 'w-[12%]' },
+    { label: 'Hinzugefügt', width: 'flex-1' },
+  ], []);
+
+  // Modal-Daten für Liste bearbeiten
+  const editingListModalData = useMemo(() => {
+    if (!editingList) return null;
+    return {
+      id: editingList.id,
+      name: editingList.name || '',
+      description: editingList.description,
+      type: editingList.listType || 'static',
+      category: editingList.category || 'custom',
+      filters: editingList.filters || {},
+      contactIds: editingList.contactIds || [],
+      organizationId: editingList.organizationId,
+      createdBy: editingList.addedBy,
+      createdAt: editingList.addedAt,
+      updatedAt: editingList.lastModified,
+    } as DistributionList;
+  }, [editingList]);
 
   if (loading) {
     return <LoadingSpinner message="Lade Verteilerlisten..." />;
@@ -230,7 +275,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div>
           <Heading level={3}>Projekt-Verteiler</Heading>
           <Text className="text-gray-500 mt-1">
-            {projectLists.length} {projectLists.length === 1 ? 'Liste' : 'Listen'} verknüpft
+            {listCountText}
           </Text>
         </div>
         <div className="flex gap-2">
@@ -279,13 +324,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Header */}
           <ListTableHeader
-            columns={[
-              { label: 'Name', width: 'w-[35%]' },
-              { label: 'Kategorie', width: 'w-[15%]' },
-              { label: 'Typ', width: 'w-[15%]' },
-              { label: 'Kontakte', width: 'w-[12%]' },
-              { label: 'Hinzugefügt', width: 'flex-1' },
-            ]}
+            columns={tableColumns}
           />
 
           {/* Body */}
@@ -310,11 +349,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <EmptyListState
           icon={UsersIcon}
           title="Keine Listen gefunden"
-          description={
-            searchTerm
-              ? 'Versuchen Sie andere Suchbegriffe'
-              : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue'
-          }
+          description={emptyStateDescription}
         />
       )}
 
@@ -349,21 +384,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       )}
 
       {/* Modal für Liste bearbeiten */}
-      {showEditModal && user && editingList && (
+      {showEditModal && user && editingListModalData && (
         <ListModal
-          list={{
-            id: editingList.id,
-            name: editingList.name || '',
-            description: editingList.description,
-            type: editingList.listType || 'static',
-            category: editingList.category || 'custom',
-            filters: editingList.filters || {},
-            contactIds: editingList.contactIds || [],
-            organizationId: editingList.organizationId,
-            createdBy: editingList.addedBy,
-            createdAt: editingList.addedAt,
-            updatedAt: editingList.lastModified,
-          } as DistributionList}
+          list={editingListModalData}
           onClose={() => {
             setShowEditModal(false);
             setEditingList(null);
