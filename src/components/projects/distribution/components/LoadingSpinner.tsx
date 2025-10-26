@@ -1,13 +1,14 @@
 // src/components/projects/distribution/components/LoadingSpinner.tsx
 'use client';
 
+import { memo } from 'react';
 import { Text } from '@/components/ui/text';
 
 interface LoadingSpinnerProps {
   message?: string;
 }
 
-export default function LoadingSpinner({ message = 'Lade...' }: LoadingSpinnerProps) {
+const LoadingSpinner = memo(function LoadingSpinner({ message = 'Lade...' }: LoadingSpinnerProps) {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
@@ -16,4 +17,6 @@ export default function LoadingSpinner({ message = 'Lade...' }: LoadingSpinnerPr
       </div>
     </div>
   );
-}
+});
+
+export default LoadingSpinner;

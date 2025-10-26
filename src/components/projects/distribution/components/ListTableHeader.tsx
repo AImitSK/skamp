@@ -1,6 +1,8 @@
 // src/components/projects/distribution/components/ListTableHeader.tsx
 'use client';
 
+import { memo } from 'react';
+
 interface Column {
   label: string;
   width: string;
@@ -10,7 +12,7 @@ interface ListTableHeaderProps {
   columns: Column[];
 }
 
-export default function ListTableHeader({ columns }: ListTableHeaderProps) {
+const ListTableHeader = memo(function ListTableHeader({ columns }: ListTableHeaderProps) {
   return (
     <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
       <div className="flex items-center">
@@ -25,4 +27,6 @@ export default function ListTableHeader({ columns }: ListTableHeaderProps) {
       </div>
     </div>
   );
-}
+});
+
+export default ListTableHeader;

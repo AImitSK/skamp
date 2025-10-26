@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/ListPagination.tsx
 'use client';
 
+import { memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -10,7 +11,7 @@ interface ListPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export default function ListPagination({
+const ListPagination = memo(function ListPagination({
   currentPage,
   totalPages,
   onPageChange
@@ -92,4 +93,6 @@ export default function ListPagination({
       </Button>
     </div>
   );
-}
+});
+
+export default ListPagination;

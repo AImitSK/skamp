@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/EmptyListState.tsx
 'use client';
 
+import { memo } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ interface EmptyListStateProps {
   };
 }
 
-export default function EmptyListState({
+const EmptyListState = memo(function EmptyListState({
   icon: Icon,
   title,
   description,
@@ -38,4 +39,6 @@ export default function EmptyListState({
       )}
     </div>
   );
-}
+});
+
+export default EmptyListState;

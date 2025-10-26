@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/ProjectListRow.tsx
 'use client';
 
+import { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import {
@@ -23,7 +24,7 @@ interface ProjectListRowProps {
   onDelete: () => void;
 }
 
-export default function ProjectListRow({
+const ProjectListRow = memo(function ProjectListRow({
   list,
   masterListDetails,
   onViewDetails,
@@ -138,4 +139,6 @@ export default function ProjectListRow({
       </div>
     </div>
   );
-}
+});
+
+export default ProjectListRow;

@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/MasterListRow.tsx
 'use client';
 
+import { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowPathIcon, StarIcon } from '@heroicons/react/24/outline';
@@ -13,7 +14,7 @@ interface MasterListRowProps {
   onToggleLink: () => void;
 }
 
-export default function MasterListRow({
+const MasterListRow = memo(function MasterListRow({
   list,
   isLinked,
   onViewDetails,
@@ -121,4 +122,6 @@ export default function MasterListRow({
       </div>
     </div>
   );
-}
+});
+
+export default MasterListRow;

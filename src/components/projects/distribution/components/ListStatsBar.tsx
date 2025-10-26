@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/ListStatsBar.tsx
 'use client';
 
+import { memo } from 'react';
 import { Text } from '@/components/ui/text';
 
 interface ListStatsBarProps {
@@ -9,7 +10,7 @@ interface ListStatsBarProps {
   itemLabel?: string;
 }
 
-export default function ListStatsBar({
+const ListStatsBar = memo(function ListStatsBar({
   filteredCount,
   totalCount,
   itemLabel = 'Listen'
@@ -21,4 +22,6 @@ export default function ListStatsBar({
       </Text>
     </div>
   );
-}
+});
+
+export default ListStatsBar;

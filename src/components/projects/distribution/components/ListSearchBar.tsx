@@ -1,6 +1,7 @@
 // src/components/projects/distribution/components/ListSearchBar.tsx
 'use client';
 
+import { memo } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -10,7 +11,7 @@ interface ListSearchBarProps {
   placeholder?: string;
 }
 
-export default function ListSearchBar({
+const ListSearchBar = memo(function ListSearchBar({
   value,
   onChange,
   placeholder = 'Suchen...'
@@ -49,4 +50,6 @@ export default function ListSearchBar({
       )}
     </div>
   );
-}
+});
+
+export default ListSearchBar;

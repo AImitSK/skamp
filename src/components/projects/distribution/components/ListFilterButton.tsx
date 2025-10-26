@@ -1,7 +1,7 @@
 // src/components/projects/distribution/components/ListFilterButton.tsx
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, memo } from 'react';
 import { Popover, Transition } from '@headlessui/react';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 
@@ -20,7 +20,7 @@ interface ListFilterButtonProps {
   onReset: () => void;
 }
 
-export default function ListFilterButton({
+const ListFilterButton = memo(function ListFilterButton({
   categoryOptions,
   typeOptions,
   selectedCategories,
@@ -164,4 +164,6 @@ export default function ListFilterButton({
       </Transition>
     </Popover>
   );
-}
+});
+
+export default ListFilterButton;
