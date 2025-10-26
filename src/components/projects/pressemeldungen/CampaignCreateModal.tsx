@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { PRCampaign } from '@/types/pr';
 import { prService } from '@/lib/firebase/pr-service';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { toastService } from '@/lib/utils/toast';
 
 interface Props {
   projectId: string;
@@ -37,7 +38,7 @@ export default function CampaignCreateModal({
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      alert('Bitte geben Sie einen Titel ein.');
+      toastService.error('Bitte geben Sie einen Titel ein.');
       return;
     }
 
@@ -62,10 +63,11 @@ export default function CampaignCreateModal({
       // Link campaign to project
       await prService.linkCampaignToProject(campaignId, projectId);
 
+      toastService.success('Kampagne erfolgreich erstellt');
       onSuccess(campaignId);
     } catch (error) {
       console.error('Fehler beim Erstellen der Kampagne:', error);
-      alert('Fehler beim Erstellen der Kampagne. Bitte versuchen Sie es erneut.');
+      toastService.error('Fehler beim Erstellen der Kampagne. Bitte versuchen Sie es erneut.');
     } finally {
       setIsSubmitting(false);
     }

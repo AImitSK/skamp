@@ -19,6 +19,7 @@ import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import EmailSendModal from '@/components/pr/EmailSendModal';
+import { toastService } from '@/lib/utils/toast';
 
 interface Props {
   campaigns: PRCampaign[];
@@ -67,15 +68,16 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
   };
 
   const handleDelete = async () => {
-    if (!confirm('Möchten Sie diese Kampagne wirklich löschen?')) return;
+    if (!window.confirm('Möchten Sie diese Kampagne wirklich löschen?')) return;
 
     setIsDeleting(true);
     try {
       await prService.deleteCampaign(campaign.id!, campaign.organizationId);
+      toastService.success('Kampagne erfolgreich gelöscht');
       onRefresh();
     } catch (error) {
       console.error('Fehler beim Löschen der Kampagne:', error);
-      alert('Fehler beim Löschen der Kampagne');
+      toastService.error('Fehler beim Löschen der Kampagne');
     } finally {
       setIsDeleting(false);
     }
