@@ -41,6 +41,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedList, setSelectedList] = useState<ProjectDistributionList | null>(null);
@@ -53,6 +54,15 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       loadData();
     }
   }, [projectId, organizationId, loadData]);
+
+  // Debouncing für Search (300ms)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -200,9 +210,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   const filteredProjectLists = useMemo(() => {
     return projectLists.filter(list => {
-      if (searchTerm) {
+      if (debouncedSearchTerm) {
         const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
-        if (!listName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        if (!listName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
           return false;
         }
       }
@@ -218,7 +228,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       }
       return true;
     });
-  }, [projectLists, searchTerm, selectedTypes, selectedCategories, masterListDetails]);
+  }, [projectLists, debouncedSearchTerm, selectedTypes, selectedCategories, masterListDetails]);
 
   // Filter-Status berechnen
   const activeFiltersCount = useMemo(() => {
