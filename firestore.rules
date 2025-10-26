@@ -303,6 +303,56 @@ service cloud.firestore {
     }
 
     // ========================================
+    // PR CAMPAIGNS & APPROVALS (Pressemeldungen-Tab)
+    // ========================================
+
+    // PR Campaigns - Org-isoliert
+    match /pr_campaigns/{campaignId} {
+      // Lesen: Nur eigene Organisation
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+
+      // Erstellen: Nur für eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update & Löschen: Nur eigene Organisation
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Approvals - Org-isoliert
+    match /approvals/{approvalId} {
+      // Lesen: Nur eigene Organisation
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+
+      // Erstellen: Nur für eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update & Löschen: Nur eigene Organisation
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // PR Approval Shares - Öffentlich lesbar per shareId, schreiben nur Org-Member
+    match /pr_approval_shares/{shareId} {
+      // Lesen: Öffentlich (für Kunden-Freigabe-Seite)
+      allow read: if true;
+
+      // Erstellen & Update: Nur eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+
+      // Löschen: Nur eigene Organisation
+      allow delete: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
