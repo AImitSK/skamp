@@ -106,7 +106,7 @@ function ApprovalTableRow({ approval, onRefresh }: ApprovalTableRowProps) {
         </div>
 
         {/* Kunde & Kontakt */}
-        <div className="w-[20%] min-w-0">
+        <div className="w-[27%] min-w-0">
           <div className="text-sm text-gray-700">
             {approval.clientName || approval.recipients?.length > 0 || approval.clientEmail ? (
               <div>
@@ -187,7 +187,7 @@ export default function PressemeldungApprovalTable({
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[20%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[27%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kunde & Kontakt
           </div>
           <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
