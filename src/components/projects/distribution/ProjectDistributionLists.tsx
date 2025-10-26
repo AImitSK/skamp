@@ -1,39 +1,36 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Heading, Subheading } from '@/components/ui/heading';
+import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
-import { Popover, Transition } from '@headlessui/react';
-import {
-  LinkIcon,
-  PlusIcon,
-  UsersIcon,
-  TrashIcon,
-  ArrowDownTrayIcon,
-  EyeIcon,
-  EllipsisVerticalIcon,
-  FolderIcon,
-  PencilIcon,
-  DocumentDuplicateIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-  StarIcon,
-} from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
-import { listsService } from '@/lib/firebase/lists-service';
-import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
-import { ContactEnhanced } from '@/types/crm-enhanced';
+import { PlusIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ProjectDistributionList, projectListsService } from '@/lib/firebase/project-lists-service';
+import { DistributionList } from '@/types/lists';
 import MasterListBrowser from './MasterListBrowser';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
 import ListDetailsModal from './ListDetailsModal';
 import { toastService } from '@/lib/utils/toast';
 import Papa from 'papaparse';
+
+// React Query Hooks
+import { useProjectLists, useCreateProjectList, useUpdateProjectList, useDeleteProjectList } from '@/hooks/useProjectLists';
+import { useMasterLists } from '@/hooks/useMasterLists';
+import { useLinkMasterList } from '@/hooks/useListLinking';
+
+// Sub-Komponenten
+import ListSearchBar from './components/ListSearchBar';
+import ListFilterButton from './components/ListFilterButton';
+import ListTableHeader from './components/ListTableHeader';
+import ListStatsBar from './components/ListStatsBar';
+import EmptyListState from './components/EmptyListState';
+import ProjectListRow from './components/ProjectListRow';
+import LoadingSpinner from './components/LoadingSpinner';
+
+// Helper Functions
+import { categoryOptions, projectListTypeOptions } from './helpers/list-helpers';
 
 interface Props {
   projectId: string;
@@ -42,12 +39,19 @@ interface Props {
 
 export default function ProjectDistributionLists({ projectId, organizationId }: Props) {
   const { user } = useAuth();
-  const [projectLists, setProjectLists] = useState<ProjectDistributionList[]>([]);
-  const [masterLists, setMasterLists] = useState<DistributionList[]>([]);
-  const [masterListDetails, setMasterListDetails] = useState<Map<string, DistributionList>>(new Map());
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hooks
+  const { data: projectLists = [], isLoading: isLoadingProjects } = useProjectLists(projectId);
+  const { data: masterLists = [], isLoading: isLoadingMasters } = useMasterLists(organizationId);
+  const createProjectList = useCreateProjectList(projectId, organizationId);
+  const updateProjectList = useUpdateProjectList(projectId);
+  const deleteProjectList = useDeleteProjectList(projectId);
+  const linkMasterList = useLinkMasterList(projectId, organizationId);
+
+  // Local State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedList, setSelectedList] = useState<ProjectDistributionList | null>(null);
@@ -55,111 +59,63 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [editingList, setEditingList] = useState<ProjectDistributionList | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // Debouncing für Search (300ms)
   useEffect(() => {
-    if (projectId && organizationId) {
-      loadData();
-    }
-  }, [projectId, organizationId]);
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const pLists = await projectListsService.getProjectLists(projectId);
-      setProjectLists(pLists);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
-      const mLists = await listsService.getAll(organizationId);
-      setMasterLists(mLists);
-
-      const linkedMasterIds = pLists
-        .filter(l => l.type === 'linked' && l.masterListId)
-        .map(l => l.masterListId!);
-
-      if (linkedMasterIds.length > 0) {
-        const details = await projectListsService.getMasterListsWithDetails(linkedMasterIds);
-        const detailsMap = new Map<string, DistributionList>();
-        details.forEach(d => {
-          if (d.id) detailsMap.set(d.id, d);
-        });
-        setMasterListDetails(detailsMap);
-      }
-    } catch (error) {
-      toastService.error('Fehler beim Laden der Daten');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLinkMasterList = async (masterListId: string) => {
+  const handleLinkMasterList = useCallback(async (masterListId: string) => {
     if (!user) return;
-    try {
-      await projectListsService.linkMasterList(projectId, masterListId, user.uid, organizationId);
-      await loadData();
-      toastService.success('Liste erfolgreich verknüpft');
-    } catch (error) {
-      toastService.error('Fehler beim Verknüpfen der Liste');
-    }
-  };
+    await linkMasterList.mutateAsync({ masterListId, userId: user.uid, organizationId });
+  }, [user, organizationId, linkMasterList]);
 
-  const handleCreateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
-    try {
-      await projectListsService.createProjectList(
-        projectId,
-        {
-          name: listData.name,
-          description: listData.description,
-          category: listData.category,
-          type: listData.type,
-          filters: listData.filters,
-          contactIds: listData.contactIds,
-        },
-        user.uid,
-        organizationId
-      );
-      await loadData();
-      setShowCreateModal(false);
-      toastService.success('Liste erfolgreich erstellt');
-    } catch (error) {
-      toastService.error('Fehler beim Erstellen der Liste');
-    }
-  };
+    await createProjectList.mutateAsync({
+      listData: {
+        name: listData.name,
+        description: listData.description,
+        category: listData.category,
+        type: listData.type,
+        filters: listData.filters,
+        contactIds: listData.contactIds,
+      },
+      userId: user.uid,
+    });
+    setShowCreateModal(false);
+  }, [user, createProjectList]);
 
-  const handleUpdateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user || !editingList?.id) return;
-    try {
-      await projectListsService.updateProjectList(editingList.id, {
+    await updateProjectList.mutateAsync({
+      listId: editingList.id,
+      updates: {
         name: listData.name,
         description: listData.description,
         category: listData.category,
         listType: listData.type,
         filters: listData.filters,
         contactIds: listData.contactIds,
-      });
-      await loadData();
-      setShowEditModal(false);
-      setEditingList(null);
-      toastService.success('Liste erfolgreich aktualisiert');
-    } catch (error) {
-      toastService.error('Fehler beim Aktualisieren der Liste');
-    }
-  };
+      },
+    });
+    setShowEditModal(false);
+    setEditingList(null);
+  }, [user, editingList, updateProjectList]);
 
-  const handleEditList = (list: ProjectDistributionList) => {
+  const handleEditList = useCallback((list: ProjectDistributionList) => {
     setEditingList(list);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleUnlinkList = async (listId: string) => {
-    try {
-      await projectListsService.unlinkList(projectId, listId);
-      await loadData();
-      toastService.success('Verknüpfung erfolgreich entfernt');
-    } catch (error) {
-      toastService.error('Fehler beim Entfernen der Verknüpfung');
-    }
-  };
+  const handleUnlinkList = useCallback(async (listId: string) => {
+    await deleteProjectList.mutateAsync(listId);
+  }, [deleteProjectList]);
 
-  const handleExportList = async (projectList: ProjectDistributionList) => {
+  const handleExportList = useCallback(async (projectList: ProjectDistributionList) => {
     try {
       if (!projectList.id) return;
 
@@ -187,82 +143,107 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Exportieren der Liste');
     }
-  };
+  }, []);
+
+  const handleViewDetails = useCallback((list: ProjectDistributionList) => {
+    setSelectedList(list);
+    setDetailsModalOpen(true);
+  }, []);
 
   // Gefilterte Listen
-  const linkedListIds = projectLists
-    .filter(l => l.type === 'linked')
-    .map(l => l.masterListId)
-    .filter(Boolean) as string[];
+  const linkedListIds = useMemo(() => {
+    return projectLists
+      .filter(l => l.type === 'linked')
+      .map(l => l.masterListId)
+      .filter(Boolean) as string[];
+  }, [projectLists]);
+
+  // Master-Listen Details Map für schnellen Zugriff
+  const masterListDetails = useMemo(() => {
+    const map = new Map<string, DistributionList>();
+    masterLists.forEach(list => {
+      if (list.id) {
+        map.set(list.id, list);
+      }
+    });
+    return map;
+  }, [masterLists]);
 
   // Alle Master-Listen anzeigen (nicht mehr filtern nach verknüpft/nicht-verknüpft)
   const availableMasterLists = masterLists;
 
-  const filteredProjectLists = projectLists.filter(list => {
-    if (searchTerm) {
-      const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
-      if (!listName.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
+  const filteredProjectLists = useMemo(() => {
+    return projectLists.filter(list => {
+      if (debouncedSearchTerm) {
+        const listName = list.name || masterListDetails.get(list.masterListId || '')?.name || '';
+        if (!listName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) {
+          return false;
+        }
       }
-    }
-    // Typ-Filter
-    if (selectedTypes.length > 0) {
-      if (!selectedTypes.includes(list.type)) return false;
-    }
+      // Typ-Filter
+      if (selectedTypes.length > 0) {
+        if (!selectedTypes.includes(list.type)) return false;
+      }
 
-    // Kategorie-Filter
-    if (selectedCategories.length > 0) {
-      const category = masterListDetails.get(list.masterListId || '')?.category || 'custom';
-      if (!selectedCategories.includes(category)) return false;
-    }
-    return true;
-  });
-
-  const getCategoryColor = (category?: string): string => {
-    switch (category) {
-      case 'press': return 'purple';
-      case 'customers': return 'blue';
-      case 'partners': return 'green';
-      case 'leads': return 'amber';
-      default: return 'zinc';
-    }
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      // Kategorie-Filter
+      if (selectedCategories.length > 0) {
+        const category = masterListDetails.get(list.masterListId || '')?.category || 'custom';
+        if (!selectedCategories.includes(category)) return false;
+      }
+      return true;
     });
-  };
+  }, [projectLists, debouncedSearchTerm, selectedTypes, selectedCategories, masterListDetails]);
 
-  // Filter Options
-  const categoryOptions = [
-    { value: 'press', label: 'Presse' },
-    { value: 'customers', label: 'Kunden' },
-    { value: 'partners', label: 'Partner' },
-    { value: 'leads', label: 'Leads' },
-    { value: 'custom', label: 'Benutzerdefiniert' }
-  ];
+  // Filter-Status berechnen
+  const activeFiltersCount = useMemo(() => {
+    return selectedCategories.length + selectedTypes.length;
+  }, [selectedCategories.length, selectedTypes.length]);
 
-  const typeOptions = [
-    { value: 'linked', label: 'Verknüpft' },
-    { value: 'custom', label: 'Projekt' },
-    { value: 'combined', label: 'Kombiniert' }
-  ];
+  // Listen-Zähler Text
+  const listCountText = useMemo(() => {
+    return `${projectLists.length} ${projectLists.length === 1 ? 'Liste' : 'Listen'} verknüpft`;
+  }, [projectLists.length]);
 
-  const activeFiltersCount = selectedCategories.length + selectedTypes.length;
+  // Empty State Beschreibung
+  const emptyStateDescription = useMemo(() => {
+    return searchTerm
+      ? 'Versuchen Sie andere Suchbegriffe'
+      : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue';
+  }, [searchTerm]);
+
+  // Tabellen-Spalten Konfiguration
+  const tableColumns = useMemo(() => [
+    { label: 'Name', width: 'w-[35%]' },
+    { label: 'Kategorie', width: 'w-[15%]' },
+    { label: 'Typ', width: 'w-[15%]' },
+    { label: 'Kontakte', width: 'w-[12%]' },
+    { label: 'Hinzugefügt', width: 'flex-1' },
+  ], []);
+
+  // Modal-Daten für Liste bearbeiten
+  const editingListModalData = useMemo(() => {
+    if (!editingList) return null;
+    return {
+      id: editingList.id,
+      name: editingList.name || '',
+      description: editingList.description,
+      type: editingList.listType || 'static',
+      category: editingList.category || 'custom',
+      filters: editingList.filters || {},
+      contactIds: editingList.contactIds || [],
+      contactCount: editingList.cachedContactCount || 0,
+      userId: editingList.addedBy,
+      organizationId: editingList.organizationId,
+      createdAt: editingList.addedAt,
+      updatedAt: editingList.lastModified,
+    } as DistributionList;
+  }, [editingList]);
+
+  // Loading State
+  const loading = isLoadingProjects || isLoadingMasters;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Verteilerlisten...</Text>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Lade Verteilerlisten..." />;
   }
 
   return (
@@ -272,7 +253,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div>
           <Heading level={3}>Projekt-Verteiler</Heading>
           <Text className="text-gray-500 mt-1">
-            {projectLists.length} {projectLists.length === 1 ? 'Liste' : 'Listen'} verknüpft
+            {listCountText}
           </Text>
         </div>
         <div className="flex gap-2">
@@ -288,288 +269,66 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
       {/* Such- und Filterleiste */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700" aria-hidden="true" />
-          </div>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Suchen..."
-            className={clsx(
-              'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
-              'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-              'h-10'
-            )}
-          />
-        </div>
-
-        {/* Filter Button */}
-        <Popover className="relative">
-          <Popover.Button
-            className={`inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10 ${
-              activeFiltersCount > 0
-                ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            aria-label="Filter"
-          >
-            <FunnelIcon className="h-5 w-5 stroke-2" />
-            {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Popover.Button>
-
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-200"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-150"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
-                  {activeFiltersCount > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedCategories([]);
-                        setSelectedTypes([]);
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Zurücksetzen
-                    </button>
-                  )}
-                </div>
-
-                {/* Type Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Typ
-                  </label>
-                  <div className="space-y-2">
-                    {typeOptions.map((option) => {
-                      const isChecked = selectedTypes.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedTypes, option.value]
-                                : selectedTypes.filter(v => v !== option.value);
-                              setSelectedTypes(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kategorie
-                  </label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {categoryOptions.map((option) => {
-                      const isChecked = selectedCategories.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedCategories, option.value]
-                                : selectedCategories.filter(v => v !== option.value);
-                              setSelectedCategories(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </Popover.Panel>
-          </Transition>
-        </Popover>
+        <ListSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Suchen..."
+        />
+        <ListFilterButton
+          categoryOptions={categoryOptions}
+          typeOptions={projectListTypeOptions}
+          selectedCategories={selectedCategories}
+          selectedTypes={selectedTypes}
+          onCategoryChange={setSelectedCategories}
+          onTypeChange={setSelectedTypes}
+          onReset={() => {
+            setSelectedCategories([]);
+            setSelectedTypes([]);
+          }}
+        />
       </div>
 
       {/* Results Info */}
       {filteredProjectLists.length > 0 && (
-        <div className="flex items-center justify-between">
-          <Text className="text-sm text-zinc-600">
-            {filteredProjectLists.length} von {projectLists.length} Listen
-          </Text>
-        </div>
+        <ListStatsBar
+          filteredCount={filteredProjectLists.length}
+          totalCount={projectLists.length}
+          itemLabel="Listen"
+        />
       )}
 
       {/* Projekt-Listen Tabelle */}
       {filteredProjectLists.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center">
-              <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kategorie
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
-              </div>
-              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kontakte
-              </div>
-              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Hinzugefügt
-              </div>
-            </div>
-          </div>
+          <ListTableHeader
+            columns={tableColumns}
+          />
 
           {/* Body */}
           <div className="divide-y divide-gray-200">
             {filteredProjectLists.map((list) => {
               const masterList = list.masterListId ? masterListDetails.get(list.masterListId) : undefined;
-              const listName = list.name || masterList?.name || 'Unbenannte Liste';
-              const listDescription = list.description || masterList?.description;
-              const category = list.category || masterList?.category || 'custom';
-              const listType = list.listType || masterList?.type || 'static';
-              const contactCount = list.cachedContactCount || masterList?.contactCount || 0;
-
               return (
-                <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center">
-                    {/* Name */}
-                    <div className="w-[35%] min-w-0">
-                      <button
-                        onClick={() => {
-                          setSelectedList(list);
-                          setDetailsModalOpen(true);
-                        }}
-                        className="text-left w-full group"
-                      >
-                        <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
-                          {listName}
-                        </p>
-                      </button>
-                      <div className="mt-1">
-                        <Badge
-                          color={list.type === 'linked' ? 'blue' : 'zinc'}
-                          className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                        >
-                          {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
-                          {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
-                          {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Kategorie */}
-                    <div className="w-[15%]">
-                      {category && (
-                        <Badge color="zinc" className="text-xs whitespace-nowrap">
-                          {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Typ */}
-                    <div className="w-[15%]">
-                      <Badge
-                        color={listType === 'dynamic' ? 'green' : 'blue'}
-                        className="text-xs whitespace-nowrap"
-                      >
-                        {listType === 'dynamic' ? 'Dynamisch' : 'Statisch'}
-                      </Badge>
-                    </div>
-
-                    {/* Kontakte */}
-                    <div className="w-[12%]">
-                      <span className="text-sm font-medium text-gray-700">
-                        {contactCount.toLocaleString()}
-                      </span>
-                    </div>
-
-                    {/* Datum */}
-                    <div className="flex-1">
-                      <span className="text-sm text-gray-600">
-                        {formatDate(list.addedAt)}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="ml-4">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          {list.type === 'custom' && (
-                            <>
-                              <DropdownItem onClick={() => handleEditList(list)}>
-                                <PencilIcon className="h-4 w-4" />
-                                Bearbeiten
-                              </DropdownItem>
-                              <DropdownDivider />
-                            </>
-                          )}
-                          <DropdownItem onClick={() => handleExportList(list)}>
-                            <ArrowDownTrayIcon className="h-4 w-4" />
-                            Exportieren
-                          </DropdownItem>
-                          <DropdownDivider />
-                          <DropdownItem onClick={() => list.id && handleUnlinkList(list.id)}>
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">
-                              {list.type === 'linked' ? 'Verknüpfung entfernen' : 'Löschen'}
-                            </span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
-                  </div>
-                </div>
+                <ProjectListRow
+                  key={list.id}
+                  list={list}
+                  masterListDetails={masterList}
+                  onViewDetails={() => handleViewDetails(list)}
+                  onEdit={list.type === 'custom' ? () => handleEditList(list) : undefined}
+                  onExport={() => handleExportList(list)}
+                  onDelete={() => list.id && handleUnlinkList(list.id)}
+                />
               );
             })}
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-          <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <Heading level={3} className="mt-2">Keine Listen gefunden</Heading>
-          <Text className="mt-1 text-gray-500">
-            {searchTerm
-              ? 'Versuchen Sie andere Suchbegriffe'
-              : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue'}
-          </Text>
-        </div>
+        <EmptyListState
+          icon={UsersIcon}
+          title="Keine Listen gefunden"
+          description={emptyStateDescription}
+        />
       )}
 
       {/* Verfügbare Master-Listen */}
@@ -603,21 +362,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       )}
 
       {/* Modal für Liste bearbeiten */}
-      {showEditModal && user && editingList && (
+      {showEditModal && user && editingListModalData && (
         <ListModal
-          list={{
-            id: editingList.id,
-            name: editingList.name || '',
-            description: editingList.description,
-            type: editingList.listType || 'static',
-            category: editingList.category || 'custom',
-            filters: editingList.filters || {},
-            contactIds: editingList.contactIds || [],
-            organizationId: editingList.organizationId,
-            createdBy: editingList.addedBy,
-            createdAt: editingList.addedAt,
-            updatedAt: editingList.lastModified,
-          } as DistributionList}
+          list={editingListModalData}
           onClose={() => {
             setShowEditModal(false);
             setEditingList(null);
