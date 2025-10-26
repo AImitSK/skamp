@@ -8,16 +8,27 @@ import { Text } from '@/components/ui/text';
 import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
 import { ProjectDistributionList, projectListsService } from '@/lib/firebase/project-lists-service';
 import { listsService } from '@/lib/firebase/lists-service';
-import { ContactEnhanced } from '@/types/crm-enhanced';
+import { tagsService } from '@/lib/firebase/crm-service';
+import { publicationService } from '@/lib/firebase/library-service';
+import { ContactEnhanced, Tag, companyTypeLabels } from '@/types/crm-enhanced';
+import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from '@/types/library';
+import { COUNTRY_NAMES, LANGUAGE_NAMES } from '@/types/international';
 import {
   UsersIcon,
   EnvelopeIcon,
   PhoneIcon,
   NewspaperIcon,
   FunnelIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  BuildingOfficeIcon,
+  TagIcon,
+  GlobeAltIcon,
+  ClockIcon,
+  ChartBarIcon,
+  LanguageIcon,
+  CheckCircleIcon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
-import { LANGUAGE_NAMES } from '@/types/international';
 
 interface Props {
   open: boolean;
@@ -25,6 +36,18 @@ interface Props {
   list: DistributionList | ProjectDistributionList | null;
   type: 'master' | 'project';
 }
+
+// Extended company type labels
+const extendedCompanyTypeLabels: Record<string, string> = {
+  ...companyTypeLabels,
+  'customer': 'Kunde',
+  'partner': 'Partner',
+  'supplier': 'Lieferant',
+  'competitor': 'Wettbewerber',
+  'media': 'Medien',
+  'investor': 'Investor',
+  'other': 'Andere'
+};
 
 function formatContactName(contact: any): string {
   if ('name' in contact && typeof contact.name === 'object') {
@@ -42,42 +65,56 @@ function formatContactName(contact: any): string {
 
 export default function ListDetailsModal({ open, onClose, list, type }: Props) {
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open || !list) {
       setContacts([]);
+      setTags([]);
+      setPublications([]);
       return;
     }
 
-    async function loadContacts() {
+    async function loadData() {
       setLoading(true);
       try {
+        const isProjectList = (l: any): l is ProjectDistributionList => 'projectId' in l;
+        const isMasterList = (l: any): l is DistributionList => 'name' in l && !('projectId' in l);
+
+        const organizationId = isProjectList(list)
+          ? list.organizationId
+          : isMasterList(list)
+            ? (list.organizationId || list.userId)
+            : undefined;
+
+        // Load contacts
         if (type === 'project' && list.id) {
           const projectContacts = await projectListsService.getProjectListContacts(list.id);
           setContacts(projectContacts);
         } else if (type === 'master') {
-          console.log('Loading master list contacts:', {
-            listId: list.id,
-            listType: (list as any).type,
-            hasFilters: !!(list as any).filters,
-            filters: (list as any).filters,
-            organizationId: (list as any).organizationId,
-            userId: (list as any).userId,
-            contactCount: (list as any).contactCount
-          });
           const masterContacts = await listsService.getContacts(list as DistributionList);
-          console.log('Loaded contacts:', masterContacts.length);
           setContacts(masterContacts);
         }
+
+        // Load tags and publications if organizationId available
+        if (organizationId) {
+          const [loadedTags, loadedPublications] = await Promise.all([
+            tagsService.getAll(organizationId),
+            publicationService.searchPublications(organizationId, {})
+          ]);
+          setTags(loadedTags);
+          setPublications(loadedPublications);
+        }
       } catch (error) {
-        console.error('Fehler beim Laden der Kontakte:', error);
+        console.error('Fehler beim Laden der Daten:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadContacts();
+    loadData();
   }, [open, list, type]);
 
   if (!list) return null;
@@ -96,7 +133,192 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
   const filters = masterList?.filters || projectList?.filters;
 
   const hasActiveFilters = filters && Object.keys(filters).length > 0 &&
-    (filters.hasEmail || filters.hasPhone || (filters.tagIds && filters.tagIds.length > 0));
+    Object.entries(filters).some(([key, value]) => {
+      if (key === 'publications') {
+        return value && typeof value === 'object' && Object.values(value).some(v => v && (!Array.isArray(v) || v.length > 0));
+      }
+      return value && (!Array.isArray(value) || value.length > 0);
+    });
+
+  // Helper functions
+  const renderFilterValue = (key: string, value: any): string => {
+    if (key === 'tagIds' && Array.isArray(value)) {
+      const tagNames = value.map(tagId => {
+        const tag = tags.find(t => t.id === tagId);
+        return tag ? tag.name : tagId;
+      });
+      if (tagNames.length === 0) return '—';
+      if (tagNames.length <= 3) return tagNames.join(', ');
+      return `${tagNames.slice(0, 3).join(', ')} (+${tagNames.length - 3} weitere)`;
+    }
+
+    if (key === 'companyTypes' && Array.isArray(value)) {
+      const typeLabels = value.map(type => extendedCompanyTypeLabels[type] || type);
+      if (typeLabels.length === 0) return '—';
+      if (typeLabels.length <= 3) return typeLabels.join(', ');
+      return `${typeLabels.slice(0, 3).join(', ')} (+${typeLabels.length - 3} weitere)`;
+    }
+
+    if (key === 'countries' && Array.isArray(value)) {
+      const countryNames = value.map(code => COUNTRY_NAMES[code] || code);
+      if (countryNames.length === 0) return '—';
+      if (countryNames.length <= 3) return countryNames.join(', ');
+      return `${countryNames.slice(0, 3).join(', ')} (+${countryNames.length - 3} weitere)`;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '—';
+      if (value.length <= 3) return value.join(', ');
+      return `${value.slice(0, 3).join(', ')} (+${value.length - 3} weitere)`;
+    }
+
+    if (typeof value === 'boolean') return value ? 'Ja' : 'Nein';
+    return String(value || '—');
+  };
+
+  const renderPublicationFilterValue = (key: string, value: any): string => {
+    if (key === 'publicationIds' && Array.isArray(value)) {
+      const pubNames = value.map(pubId => {
+        const pub = publications.find(p => p.id === pubId);
+        return pub ? pub.title : pubId;
+      });
+      if (pubNames.length === 0) return '—';
+      if (pubNames.length <= 2) return pubNames.join(', ');
+      return `${pubNames.slice(0, 2).join(', ')} (+${pubNames.length - 2} weitere)`;
+    }
+
+    if (key === 'types' && Array.isArray(value)) {
+      const typeLabels = value.map(type => PUBLICATION_TYPE_LABELS[type as keyof typeof PUBLICATION_TYPE_LABELS] || type);
+      return typeLabels.join(', ');
+    }
+
+    if (key === 'frequencies' && Array.isArray(value)) {
+      const freqLabels = value.map(freq => PUBLICATION_FREQUENCY_LABELS[freq as keyof typeof PUBLICATION_FREQUENCY_LABELS] || freq);
+      return freqLabels.join(', ');
+    }
+
+    if (key === 'geographicScopes' && Array.isArray(value)) {
+      const scopeLabels: Record<string, string> = {
+        'local': 'Lokal',
+        'regional': 'Regional',
+        'national': 'National',
+        'international': 'International',
+      };
+      return value.map(s => scopeLabels[s] || s).join(', ');
+    }
+
+    if (key === 'countries' && Array.isArray(value)) {
+      const countryNames = value.map(code => COUNTRY_NAMES[code] || code);
+      if (countryNames.length === 0) return '—';
+      if (countryNames.length <= 3) return countryNames.join(', ');
+      return `${countryNames.slice(0, 3).join(', ')} (+${countryNames.length - 3})`;
+    }
+
+    if (key === 'languages' && Array.isArray(value)) {
+      const langNames = value.map(code => LANGUAGE_NAMES[code] || code);
+      return langNames.join(', ');
+    }
+
+    if (key === 'minPrintCirculation' || key === 'maxPrintCirculation' ||
+        key === 'minOnlineVisitors' || key === 'maxOnlineVisitors') {
+      return value.toLocaleString('de-DE');
+    }
+
+    if (key === 'status' && Array.isArray(value)) {
+      const statusLabels: Record<string, string> = {
+        'active': 'Aktiv',
+        'inactive': 'Inaktiv',
+        'discontinued': 'Eingestellt'
+      };
+      return value.map(s => statusLabels[s] || s).join(', ');
+    }
+
+    if (key === 'onlyVerified' && typeof value === 'boolean') {
+      return value ? 'Nur verifizierte' : 'Alle';
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '—';
+      if (value.length <= 3) return value.join(', ');
+      return `${value.slice(0, 3).join(', ')} (+${value.length - 3})`;
+    }
+
+    return String(value || '—');
+  };
+
+  const getFilterIcon = (key: string) => {
+    const iconMap: { [key: string]: any } = {
+      companyTypes: BuildingOfficeIcon,
+      industries: BuildingOfficeIcon,
+      countries: GlobeAltIcon,
+      tagIds: TagIcon,
+      positions: UsersIcon,
+      hasEmail: EnvelopeIcon,
+      hasPhone: PhoneIcon,
+      beats: NewspaperIcon,
+      publications: DocumentTextIcon
+    };
+    return iconMap[key] || FunnelIcon;
+  };
+
+  const getPublicationFilterIcon = (key: string) => {
+    const iconMap: { [key: string]: any } = {
+      publicationIds: DocumentTextIcon,
+      types: NewspaperIcon,
+      formats: DocumentTextIcon,
+      frequencies: ClockIcon,
+      countries: GlobeAltIcon,
+      geographicScopes: GlobeAltIcon,
+      languages: LanguageIcon,
+      focusAreas: TagIcon,
+      targetIndustries: BuildingOfficeIcon,
+      minPrintCirculation: ChartBarIcon,
+      maxPrintCirculation: ChartBarIcon,
+      minOnlineVisitors: ChartBarIcon,
+      maxOnlineVisitors: ChartBarIcon,
+      onlyVerified: CheckCircleIcon,
+      status: ListBulletIcon,
+      publisherIds: BuildingOfficeIcon
+    };
+    return iconMap[key] || DocumentTextIcon;
+  };
+
+  const getFilterLabel = (key: string) => {
+    const labelMap: { [key: string]: string } = {
+      companyTypes: 'Firmentypen',
+      industries: 'Branchen',
+      countries: 'Länder',
+      tagIds: 'Tags',
+      positions: 'Positionen',
+      hasEmail: 'Mit E-Mail',
+      hasPhone: 'Mit Telefon',
+      beats: 'Ressorts',
+      publications: 'Publikationen'
+    };
+    return labelMap[key] || key;
+  };
+
+  const getPublicationFilterLabel = (key: string) => {
+    const labelMap: { [key: string]: string } = {
+      publicationIds: 'Spezifische Publikationen',
+      types: 'Publikationstypen',
+      formats: 'Formate',
+      frequencies: 'Erscheinungsweise',
+      countries: 'Zielländer',
+      geographicScopes: 'Reichweite',
+      languages: 'Sprachen',
+      focusAreas: 'Themenschwerpunkte',
+      targetIndustries: 'Zielbranchen',
+      minPrintCirculation: 'Min. Druckauflage',
+      maxPrintCirculation: 'Max. Druckauflage',
+      minOnlineVisitors: 'Min. Online-Besucher',
+      maxOnlineVisitors: 'Max. Online-Besucher',
+      onlyVerified: 'Verifizierung',
+      status: 'Status',
+      publisherIds: 'Verlage'
+    };
+    return labelMap[key] || key;
+  };
 
   return (
     <Dialog open={open} onClose={onClose} size="4xl">
@@ -134,31 +356,72 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
         </div>
 
         {/* Filter-Anzeige */}
-        {hasActiveFilters && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <FunnelIcon className="h-4 w-4 text-gray-500" />
-              <Text className="text-sm font-medium text-gray-900">Aktive Filter</Text>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {filters.hasEmail && (
-                <Badge color="blue" className="text-xs inline-flex items-center gap-1">
-                  <EnvelopeIcon className="h-3 w-3" />
-                  Hat E-Mail
-                </Badge>
-              )}
-              {filters.hasPhone && (
-                <Badge color="blue" className="text-xs inline-flex items-center gap-1">
-                  <PhoneIcon className="h-3 w-3" />
-                  Hat Telefon
-                </Badge>
-              )}
-              {filters.tagIds && filters.tagIds.length > 0 && (
-                <Badge color="blue" className="text-xs">
-                  {filters.tagIds.length} Tag{filters.tagIds.length > 1 ? 's' : ''}
-                </Badge>
-              )}
-            </div>
+        {hasActiveFilters && listType === 'dynamic' && filters && (
+          <div className="mb-6 space-y-4">
+            {/* Basis-Filter */}
+            {Object.entries(filters).some(([key, value]) =>
+              key !== 'publications' && value && (!Array.isArray(value) || value.length > 0)
+            ) && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <FunnelIcon className="h-4 w-4 text-gray-500" />
+                  <Text className="text-sm font-medium text-gray-900">Basis-Filter</Text>
+                </div>
+                <ul className="space-y-2">
+                  {Object.entries(filters).map(([key, value]) => {
+                    if (key === 'publications') return null;
+                    if (!value || (Array.isArray(value) && value.length === 0)) return null;
+
+                    const Icon = getFilterIcon(key);
+                    return (
+                      <li key={key} className="flex items-start gap-3">
+                        <Icon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-gray-700">
+                            {getFilterLabel(key)}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-0.5">
+                            {renderFilterValue(key, value)}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* Publikations-Filter */}
+            {filters.publications && Object.entries(filters.publications).some(([_, value]) =>
+              value && (!Array.isArray(value) || value.length > 0)
+            ) && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <NewspaperIcon className="h-4 w-4 text-gray-500" />
+                  <Text className="text-sm font-medium text-gray-900">Publikations-Filter</Text>
+                </div>
+                <ul className="space-y-2">
+                  {Object.entries(filters.publications).map(([key, value]) => {
+                    if (!value || (Array.isArray(value) && value.length === 0)) return null;
+
+                    const Icon = getPublicationFilterIcon(key);
+                    return (
+                      <li key={key} className="flex items-start gap-3">
+                        <Icon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-gray-700">
+                            {getPublicationFilterLabel(key)}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-0.5">
+                            {renderPublicationFilterValue(key, value)}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
