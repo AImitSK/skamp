@@ -340,7 +340,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                           onLink(list.id);
                         }
                       }}
-                      className="text-xs px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
+                      className="text-xs px-3 py-1.5 flex items-center justify-center"
                       style={linkedListIds.includes(list.id!) ? {
                         backgroundColor: '#DEDC00',
                         color: '#000000',
@@ -352,12 +352,9 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                       }}
                     >
                       <StarIcon
-                        className={`h-3 w-3 flex-shrink-0 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
+                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
-                      <span className="flex-shrink-0">
-                        {linkedListIds.includes(list.id!) ? 'Verknüpft' : 'Verknüpfen'}
-                      </span>
                     </Button>
                   </div>
                 </div>
