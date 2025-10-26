@@ -1,36 +1,32 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
-import { Popover, Transition } from '@headlessui/react';
-import {
-  PlusIcon,
-  UsersIcon,
-  TrashIcon,
-  ArrowDownTrayIcon,
-  EllipsisVerticalIcon,
-  FolderIcon,
-  PencilIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-  StarIcon,
-} from '@heroicons/react/24/outline';
-import clsx from 'clsx';
+import { PlusIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { listsService } from '@/lib/firebase/lists-service';
-import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
-import { ContactEnhanced } from '@/types/crm-enhanced';
+import { DistributionList } from '@/types/lists';
 import MasterListBrowser from './MasterListBrowser';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
 import ListDetailsModal from './ListDetailsModal';
 import { toastService } from '@/lib/utils/toast';
 import Papa from 'papaparse';
+
+// Sub-Komponenten
+import ListSearchBar from './components/ListSearchBar';
+import ListFilterButton from './components/ListFilterButton';
+import ListTableHeader from './components/ListTableHeader';
+import ListStatsBar from './components/ListStatsBar';
+import EmptyListState from './components/EmptyListState';
+import ProjectListRow from './components/ProjectListRow';
+import LoadingSpinner from './components/LoadingSpinner';
+
+// Helper Functions
+import { categoryOptions, projectListTypeOptions } from './helpers/list-helpers';
 
 interface Props {
   projectId: string;
@@ -215,51 +211,11 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     return true;
   });
 
-  const getCategoryColor = (category?: string): string => {
-    switch (category) {
-      case 'press': return 'purple';
-      case 'customers': return 'blue';
-      case 'partners': return 'green';
-      case 'leads': return 'amber';
-      default: return 'zinc';
-    }
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  // Filter Options
-  const categoryOptions = [
-    { value: 'press', label: 'Presse' },
-    { value: 'customers', label: 'Kunden' },
-    { value: 'partners', label: 'Partner' },
-    { value: 'leads', label: 'Leads' },
-    { value: 'custom', label: 'Benutzerdefiniert' }
-  ];
-
-  const typeOptions = [
-    { value: 'linked', label: 'Verknüpft' },
-    { value: 'custom', label: 'Projekt' },
-    { value: 'combined', label: 'Kombiniert' }
-  ];
-
+  // Filter-Status berechnen
   const activeFiltersCount = selectedCategories.length + selectedTypes.length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Verteilerlisten...</Text>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Lade Verteilerlisten..." />;
   }
 
   return (
@@ -285,288 +241,79 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
       {/* Such- und Filterleiste */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700" aria-hidden="true" />
-          </div>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Suchen..."
-            className={clsx(
-              'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
-              'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-              'h-10'
-            )}
-          />
-        </div>
-
-        {/* Filter Button */}
-        <Popover className="relative">
-          <Popover.Button
-            className={`inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10 ${
-              activeFiltersCount > 0
-                ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            aria-label="Filter"
-          >
-            <FunnelIcon className="h-5 w-5 stroke-2" />
-            {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Popover.Button>
-
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-200"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-150"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
-                  {activeFiltersCount > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedCategories([]);
-                        setSelectedTypes([]);
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Zurücksetzen
-                    </button>
-                  )}
-                </div>
-
-                {/* Type Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Typ
-                  </label>
-                  <div className="space-y-2">
-                    {typeOptions.map((option) => {
-                      const isChecked = selectedTypes.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedTypes, option.value]
-                                : selectedTypes.filter(v => v !== option.value);
-                              setSelectedTypes(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kategorie
-                  </label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {categoryOptions.map((option) => {
-                      const isChecked = selectedCategories.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedCategories, option.value]
-                                : selectedCategories.filter(v => v !== option.value);
-                              setSelectedCategories(newValues);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </Popover.Panel>
-          </Transition>
-        </Popover>
+        <ListSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Suchen..."
+        />
+        <ListFilterButton
+          categoryOptions={categoryOptions}
+          typeOptions={projectListTypeOptions}
+          selectedCategories={selectedCategories}
+          selectedTypes={selectedTypes}
+          onCategoryChange={setSelectedCategories}
+          onTypeChange={setSelectedTypes}
+          onReset={() => {
+            setSelectedCategories([]);
+            setSelectedTypes([]);
+          }}
+        />
       </div>
 
       {/* Results Info */}
       {filteredProjectLists.length > 0 && (
-        <div className="flex items-center justify-between">
-          <Text className="text-sm text-zinc-600">
-            {filteredProjectLists.length} von {projectLists.length} Listen
-          </Text>
-        </div>
+        <ListStatsBar
+          filteredCount={filteredProjectLists.length}
+          totalCount={projectLists.length}
+          itemLabel="Listen"
+        />
       )}
 
       {/* Projekt-Listen Tabelle */}
       {filteredProjectLists.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center">
-              <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kategorie
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
-              </div>
-              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kontakte
-              </div>
-              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Hinzugefügt
-              </div>
-            </div>
-          </div>
+          <ListTableHeader
+            columns={[
+              { label: 'Name', width: 'w-[35%]' },
+              { label: 'Kategorie', width: 'w-[15%]' },
+              { label: 'Typ', width: 'w-[15%]' },
+              { label: 'Kontakte', width: 'w-[12%]' },
+              { label: 'Hinzugefügt', width: 'flex-1' },
+            ]}
+          />
 
           {/* Body */}
           <div className="divide-y divide-gray-200">
             {filteredProjectLists.map((list) => {
               const masterList = list.masterListId ? masterListDetails.get(list.masterListId) : undefined;
-              const listName = list.name || masterList?.name || 'Unbenannte Liste';
-              const listDescription = list.description || masterList?.description;
-              const category = list.category || masterList?.category || 'custom';
-              const listType = list.listType || masterList?.type || 'static';
-              const contactCount = list.cachedContactCount || masterList?.contactCount || 0;
-
               return (
-                <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center">
-                    {/* Name */}
-                    <div className="w-[35%] min-w-0">
-                      <button
-                        onClick={() => {
-                          setSelectedList(list);
-                          setDetailsModalOpen(true);
-                        }}
-                        className="text-left w-full group"
-                      >
-                        <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
-                          {listName}
-                        </p>
-                      </button>
-                      <div className="mt-1">
-                        <Badge
-                          color={list.type === 'linked' ? 'blue' : 'zinc'}
-                          className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                        >
-                          {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
-                          {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
-                          {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Kategorie */}
-                    <div className="w-[15%]">
-                      {category && (
-                        <Badge color="zinc" className="text-xs whitespace-nowrap">
-                          {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Typ */}
-                    <div className="w-[15%]">
-                      <Badge
-                        color={listType === 'dynamic' ? 'green' : 'blue'}
-                        className="text-xs whitespace-nowrap"
-                      >
-                        {listType === 'dynamic' ? 'Dynamisch' : 'Statisch'}
-                      </Badge>
-                    </div>
-
-                    {/* Kontakte */}
-                    <div className="w-[12%]">
-                      <span className="text-sm font-medium text-gray-700">
-                        {contactCount.toLocaleString()}
-                      </span>
-                    </div>
-
-                    {/* Datum */}
-                    <div className="flex-1">
-                      <span className="text-sm text-gray-600">
-                        {formatDate(list.addedAt)}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="ml-4">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          {list.type === 'custom' && (
-                            <>
-                              <DropdownItem onClick={() => handleEditList(list)}>
-                                <PencilIcon className="h-4 w-4" />
-                                Bearbeiten
-                              </DropdownItem>
-                              <DropdownDivider />
-                            </>
-                          )}
-                          <DropdownItem onClick={() => handleExportList(list)}>
-                            <ArrowDownTrayIcon className="h-4 w-4" />
-                            Exportieren
-                          </DropdownItem>
-                          <DropdownDivider />
-                          <DropdownItem onClick={() => list.id && handleUnlinkList(list.id)}>
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">
-                              {list.type === 'linked' ? 'Verknüpfung entfernen' : 'Löschen'}
-                            </span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
-                  </div>
-                </div>
+                <ProjectListRow
+                  key={list.id}
+                  list={list}
+                  masterListDetails={masterList}
+                  onViewDetails={() => {
+                    setSelectedList(list);
+                    setDetailsModalOpen(true);
+                  }}
+                  onEdit={list.type === 'custom' ? () => handleEditList(list) : undefined}
+                  onExport={() => handleExportList(list)}
+                  onDelete={() => list.id && handleUnlinkList(list.id)}
+                />
               );
             })}
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-          <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <Heading level={3} className="mt-2">Keine Listen gefunden</Heading>
-          <Text className="mt-1 text-gray-500">
-            {searchTerm
+        <EmptyListState
+          icon={UsersIcon}
+          title="Keine Listen gefunden"
+          description={
+            searchTerm
               ? 'Versuchen Sie andere Suchbegriffe'
-              : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue'}
-          </Text>
-        </div>
+              : 'Verknüpfen Sie eine Master-Liste oder erstellen Sie eine neue'
+          }
+        />
       )}
 
       {/* Verfügbare Master-Listen */}
