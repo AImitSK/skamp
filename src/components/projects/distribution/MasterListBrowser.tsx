@@ -255,17 +255,14 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
               <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategorie
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Typ
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kontakte
               </div>
               <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktualisiert
-              </div>
-              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Aktion
               </div>
             </div>
           </div>
@@ -302,7 +299,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                   </div>
 
                   {/* Typ */}
-                  <div className="w-[10%]">
+                  <div className="w-[15%]">
                     <Badge
                       color={list.type === 'dynamic' ? 'green' : 'blue'}
                       className="text-xs whitespace-nowrap"
@@ -312,7 +309,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                   </div>
 
                   {/* Kontakte */}
-                  <div className="w-[10%]">
+                  <div className="w-[12%]">
                     <span className="text-sm font-medium text-gray-700">
                       {(list.contactCount || 0).toLocaleString()}
                     </span>
@@ -329,7 +326,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                   </div>
 
                   {/* Aktion */}
-                  <div className="w-[12%]">
+                  <div className="ml-4">
                     <Button
                       onClick={() => {
                         if (!list.id) return;
@@ -340,7 +337,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                           onLink(list.id);
                         }
                       }}
-                      className="text-xs px-3 py-1.5 flex items-center justify-center"
+                      className="text-xs p-1.5 flex items-center justify-center"
                       style={linkedListIds.includes(list.id!) ? {
                         backgroundColor: '#DEDC00',
                         color: '#000000',
