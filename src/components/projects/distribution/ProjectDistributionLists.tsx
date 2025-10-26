@@ -497,9 +497,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                             <Badge
                               className="text-xs whitespace-nowrap inline-flex items-center gap-1"
                               style={{
-                                backgroundColor: '#DEDC00',
+                                backgroundColor: 'rgba(222, 220, 0, 0.1)',
                                 color: '#000000',
-                                borderColor: '#DEDC00'
+                                borderColor: 'rgba(222, 220, 0, 0.3)'
                               }}
                             >
                               <StarIcon className="h-3 w-3 text-black" fill="currentColor" />
