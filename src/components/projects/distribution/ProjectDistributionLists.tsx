@@ -7,7 +7,6 @@ import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -50,7 +49,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [selectedList, setSelectedList] = useState<ProjectDistributionList | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
@@ -156,28 +154,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       document.body.removeChild(link);
     } catch (error) {
       console.error('Fehler beim Exportieren:', error);
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedListIds(new Set(filteredProjectLists.map(l => l.id!)));
-    } else {
-      setSelectedListIds(new Set());
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedListIds.size === 0) return;
-
-    try {
-      await Promise.all(Array.from(selectedListIds).map(id =>
-        projectListsService.unlinkList(projectId, id)
-      ));
-      await loadData();
-      setSelectedListIds(new Set());
-    } catch (error) {
-      console.error('Fehler beim Löschen der Listen:', error);
     }
   };
 
@@ -417,22 +393,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div className="flex items-center justify-between">
           <Text className="text-sm text-zinc-600">
             {filteredProjectLists.length} von {projectLists.length} Listen
-            {selectedListIds.size > 0 && (
-              <span className="ml-2">
-                • {selectedListIds.size} ausgewählt
-              </span>
-            )}
           </Text>
-
-          {/* Bulk Delete Link */}
-          {selectedListIds.size > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="text-sm text-red-600 hover:text-red-700 underline"
-            >
-              {selectedListIds.size} Löschen
-            </button>
-          )}
         </div>
       )}
 
@@ -442,15 +403,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
           {/* Header */}
           <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center">
-              <div className="flex items-center w-[35%]">
-                <Checkbox
-                  checked={filteredProjectLists.length > 0 && selectedListIds.size === filteredProjectLists.length}
-                  indeterminate={selectedListIds.size > 0 && selectedListIds.size < filteredProjectLists.length}
-                  onChange={(checked: boolean) => handleSelectAll(checked)}
-                />
-                <span className="ml-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </span>
+              <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
               </div>
               <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategorie
@@ -481,38 +435,27 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                 <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center">
                     {/* Name */}
-                    <div className="flex items-center w-[35%]">
-                      <Checkbox
-                        checked={selectedListIds.has(list.id!)}
-                        onChange={(checked: boolean) => {
-                          const newIds = new Set(selectedListIds);
-                          if (checked) newIds.add(list.id!);
-                          else newIds.delete(list.id!);
-                          setSelectedListIds(newIds);
+                    <div className="w-[35%] min-w-0">
+                      <button
+                        onClick={() => {
+                          setSelectedList(list);
+                          setDetailsModalOpen(true);
                         }}
-                      />
-                      <div className="ml-4 min-w-0 flex-1">
-                        <button
-                          onClick={() => {
-                            setSelectedList(list);
-                            setDetailsModalOpen(true);
-                          }}
-                          className="text-left w-full group"
+                        className="text-left w-full group"
+                      >
+                        <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
+                          {listName}
+                        </p>
+                      </button>
+                      <div className="mt-1">
+                        <Badge
+                          color={list.type === 'linked' ? 'blue' : 'zinc'}
+                          className="text-xs whitespace-nowrap inline-flex items-center gap-1"
                         >
-                          <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
-                            {listName}
-                          </p>
-                        </button>
-                        <div className="mt-1">
-                          <Badge
-                            color={list.type === 'linked' ? 'blue' : 'zinc'}
-                            className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                          >
-                            {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
-                            {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
-                            {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                          </Badge>
-                        </div>
+                          {list.type === 'linked' && <StarIcon className="h-3 w-3" fill="currentColor" />}
+                          {list.type === 'custom' && <FolderIcon className="h-3 w-3" />}
+                          {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
+                        </Badge>
                       </div>
                     </div>
 
