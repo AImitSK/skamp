@@ -101,7 +101,8 @@ export default function ProjectFoldersView({
   onRefresh,
   filterByFolder = 'all',
   initialFolderId,
-  onFolderChange
+  onFolderChange,
+  title = 'Strategiedokumente'
 }: ProjectFoldersViewProps) {
   const { user } = useAuth();
 
@@ -455,7 +456,7 @@ export default function ProjectFoldersView({
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Strategiedokumente</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
         <div className="flex items-center space-x-2">
           {selectedFolderId && (
             <Button

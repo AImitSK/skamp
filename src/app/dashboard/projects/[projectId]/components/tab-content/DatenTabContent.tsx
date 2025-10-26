@@ -42,6 +42,7 @@ export const DatenTabContent = React.memo(function DatenTabContent({
           foldersLoading={foldersLoading}
           onRefresh={onRefresh}
           filterByFolder="all"
+          title="Projektdaten"
         />
       )}
     </div>

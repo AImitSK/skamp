@@ -52,6 +52,15 @@ export interface ProjectFoldersViewProps {
    * Callback bei Ordner-Wechsel (für Phase 3)
    */
   onFolderChange?: (folderId: string) => void;
+
+  /**
+   * Überschrift für die Folder View
+   * Default: 'Strategiedokumente'
+   * Verwendung:
+   * - Strategie Tab: Keine Angabe (nutzt Default)
+   * - Daten Tab: 'Projektdaten'
+   */
+  title?: string;
 }
 
 export interface FolderNavigationProps {
