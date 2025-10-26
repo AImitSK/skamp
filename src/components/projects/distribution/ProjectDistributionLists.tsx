@@ -1,7 +1,7 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -52,9 +52,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     if (projectId && organizationId) {
       loadData();
     }
-  }, [projectId, organizationId]);
+  }, [projectId, organizationId, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const pLists = await projectListsService.getProjectLists(projectId);
@@ -80,9 +80,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, organizationId]);
 
-  const handleLinkMasterList = async (masterListId: string) => {
+  const handleLinkMasterList = useCallback(async (masterListId: string) => {
     if (!user) return;
     try {
       await projectListsService.linkMasterList(projectId, masterListId, user.uid, organizationId);
@@ -91,9 +91,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Verknüpfen der Liste');
     }
-  };
+  }, [user, projectId, organizationId, loadData]);
 
-  const handleCreateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
     try {
       await projectListsService.createProjectList(
@@ -115,9 +115,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Erstellen der Liste');
     }
-  };
+  }, [user, projectId, organizationId, loadData]);
 
-  const handleUpdateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user || !editingList?.id) return;
     try {
       await projectListsService.updateProjectList(editingList.id, {
@@ -135,14 +135,14 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Aktualisieren der Liste');
     }
-  };
+  }, [user, editingList, loadData]);
 
-  const handleEditList = (list: ProjectDistributionList) => {
+  const handleEditList = useCallback((list: ProjectDistributionList) => {
     setEditingList(list);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleUnlinkList = async (listId: string) => {
+  const handleUnlinkList = useCallback(async (listId: string) => {
     try {
       await projectListsService.unlinkList(projectId, listId);
       await loadData();
@@ -150,9 +150,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Entfernen der Verknüpfung');
     }
-  };
+  }, [projectId, loadData]);
 
-  const handleExportList = async (projectList: ProjectDistributionList) => {
+  const handleExportList = useCallback(async (projectList: ProjectDistributionList) => {
     try {
       if (!projectList.id) return;
 
@@ -180,7 +180,12 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       toastService.error('Fehler beim Exportieren der Liste');
     }
-  };
+  }, []);
+
+  const handleViewDetails = useCallback((list: ProjectDistributionList) => {
+    setSelectedList(list);
+    setDetailsModalOpen(true);
+  }, []);
 
   // Gefilterte Listen
   const linkedListIds = projectLists
@@ -292,10 +297,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                   key={list.id}
                   list={list}
                   masterListDetails={masterList}
-                  onViewDetails={() => {
-                    setSelectedList(list);
-                    setDetailsModalOpen(true);
-                  }}
+                  onViewDetails={() => handleViewDetails(list)}
                   onEdit={list.type === 'custom' ? () => handleEditList(list) : undefined}
                   onExport={() => handleExportList(list)}
                   onDelete={() => list.id && handleUnlinkList(list.id)}
