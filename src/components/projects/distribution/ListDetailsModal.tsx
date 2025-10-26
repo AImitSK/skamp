@@ -57,7 +57,17 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
           const projectContacts = await projectListsService.getProjectListContacts(list.id);
           setContacts(projectContacts);
         } else if (type === 'master') {
+          console.log('Loading master list contacts:', {
+            listId: list.id,
+            listType: (list as any).type,
+            hasFilters: !!(list as any).filters,
+            filters: (list as any).filters,
+            organizationId: (list as any).organizationId,
+            userId: (list as any).userId,
+            contactCount: (list as any).contactCount
+          });
           const masterContacts = await listsService.getContacts(list as DistributionList);
+          console.log('Loaded contacts:', masterContacts.length);
           setContacts(masterContacts);
         }
       } catch (error) {
