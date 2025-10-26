@@ -337,19 +337,14 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                           onLink(list.id);
                         }
                       }}
-                      className="text-xs p-1.5 flex items-center justify-center"
-                      style={linkedListIds.includes(list.id!) ? {
-                        backgroundColor: '#DEDC00',
-                        color: '#000000',
-                        borderColor: '#DEDC00'
-                      } : {
-                        backgroundColor: '#f3f4f6',
-                        color: '#4b5563',
-                        border: '1px solid #d1d5db'
-                      }}
+                      className={`text-xs p-1.5 flex items-center justify-center ${
+                        linkedListIds.includes(list.id!)
+                          ? 'bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30'
+                          : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
+                      }`}
                     >
                       <StarIcon
-                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
+                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-gray-500'}`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
                     </Button>
