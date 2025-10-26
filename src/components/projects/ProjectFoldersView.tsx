@@ -554,31 +554,8 @@ export default function ProjectFoldersView({
         {currentFolders.map((folder: any, index: number) => {
           // Name-basierte Farb-Zuordnung (statt index-basiert)
           const getFolderColor = (folderName: string) => {
-            const name = folderName.toLowerCase();
-            if (name.includes('medien') || name.includes('media')) {
-              return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' };
-            }
-            if (name.includes('analyse') || name.includes('analysis')) {
-              return { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900', icon: 'text-orange-600' };
-            }
-            if (name.includes('dokument') || name.includes('document')) {
-              return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', icon: 'text-green-600' };
-            }
-            if (name.includes('bild') || name.includes('image') || name.includes('foto') || name.includes('photo')) {
-              return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-600' };
-            }
-            if (name.includes('video')) {
-              return { bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-900', icon: 'text-pink-600' };
-            }
-            if (name.includes('audio') || name.includes('sound')) {
-              return { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-900', icon: 'text-indigo-600' };
-            }
-            // Fallback: Verwende Index für unbekannte Ordner
-            const fallbackColors = [
-              { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-900', icon: 'text-gray-600' },
-              { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-900', icon: 'text-slate-600' },
-            ];
-            return fallbackColors[index % fallbackColors.length];
+            // Alle Ordner im blauen Medien-Look
+            return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' };
           };
           const color = getFolderColor(folder.name);
           const isDragOver = dragOverFolder === folder.id;
