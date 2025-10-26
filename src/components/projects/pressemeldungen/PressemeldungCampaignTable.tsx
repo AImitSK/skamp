@@ -111,7 +111,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[35%] min-w-0">
+        <div className="w-[35%] min-w-0 pr-12">
           <div className="flex items-center">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900 truncate">
