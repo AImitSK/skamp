@@ -32,6 +32,7 @@ import { ContactEnhanced } from '@/types/crm-enhanced';
 import MasterListBrowser from './MasterListBrowser';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
 import ListDetailsModal from './ListDetailsModal';
+import { toastService } from '@/lib/utils/toast';
 import Papa from 'papaparse';
 
 interface Props {
@@ -82,7 +83,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         setMasterListDetails(detailsMap);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      toastService.error('Fehler beim Laden der Daten');
     } finally {
       setLoading(false);
     }
@@ -93,8 +94,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     try {
       await projectListsService.linkMasterList(projectId, masterListId, user.uid, organizationId);
       await loadData();
+      toastService.success('Liste erfolgreich verknüpft');
     } catch (error) {
-      console.error('Fehler beim Verknüpfen der Liste:', error);
+      toastService.error('Fehler beim Verknüpfen der Liste');
     }
   };
 
@@ -116,8 +118,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       );
       await loadData();
       setShowCreateModal(false);
+      toastService.success('Liste erfolgreich erstellt');
     } catch (error) {
-      console.error('Fehler beim Erstellen der Projekt-Liste:', error);
+      toastService.error('Fehler beim Erstellen der Liste');
     }
   };
 
@@ -135,8 +138,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       await loadData();
       setShowEditModal(false);
       setEditingList(null);
+      toastService.success('Liste erfolgreich aktualisiert');
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Projekt-Liste:', error);
+      toastService.error('Fehler beim Aktualisieren der Liste');
     }
   };
 
@@ -149,8 +153,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     try {
       await projectListsService.unlinkList(projectId, listId);
       await loadData();
+      toastService.success('Verknüpfung erfolgreich entfernt');
     } catch (error) {
-      console.error('Fehler beim Entfernen der Verknüpfung:', error);
+      toastService.error('Fehler beim Entfernen der Verknüpfung');
     }
   };
 
@@ -178,8 +183,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      toastService.success('Liste erfolgreich exportiert');
     } catch (error) {
-      console.error('Fehler beim Exportieren:', error);
+      toastService.error('Fehler beim Exportieren der Liste');
     }
   };
 

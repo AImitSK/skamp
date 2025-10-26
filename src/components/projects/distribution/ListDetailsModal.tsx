@@ -29,6 +29,7 @@ import {
   CheckCircleIcon,
   ListBulletIcon
 } from '@heroicons/react/24/outline';
+import { toastService } from '@/lib/utils/toast';
 
 interface Props {
   open: boolean;
@@ -108,7 +109,7 @@ export default function ListDetailsModal({ open, onClose, list, type }: Props) {
           setPublications(loadedPublications);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Daten:', error);
+        toastService.error('Fehler beim Laden der Listen-Details');
       } finally {
         setLoading(false);
       }
