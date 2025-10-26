@@ -1,10 +1,11 @@
 // src/components/projects/pressemeldungen/ProjectPressemeldungenTab.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, EllipsisVerticalIcon, BookmarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { Popover, Transition } from '@headlessui/react';
 import { PRCampaign } from '@/types/pr';
 import { ApprovalEnhanced } from '@/types/approval';
 import { prService } from '@/lib/firebase/pr-service';
@@ -106,17 +107,55 @@ export default function ProjectPressemeldungenTab({
       {/* Header */}
       <div className="flex justify-between items-center">
         <Heading level={3}>Pressemeldung</Heading>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className={hasLinkedCampaign
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-[#005fab] hover:bg-[#004a8c] text-white"
-          }
-          disabled={hasLinkedCampaign}
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Meldung Erstellen
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className={hasLinkedCampaign
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-[#005fab] hover:bg-[#004a8c] text-white"
+            }
+            disabled={hasLinkedCampaign}
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Meldung Erstellen
+          </Button>
+
+          {/* Actions Menu */}
+          <Popover className="relative">
+            <Popover.Button className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white p-2.5 text-zinc-700 hover:bg-zinc-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 h-10 w-10">
+              <EllipsisVerticalIcon className="h-5 w-5 stroke-[2.5]" />
+            </Popover.Button>
+
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="py-1">
+                  <a
+                    href="/dashboard/library/boilerplates"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <BookmarkIcon className="h-4 w-4" />
+                    Boilerplate erstellen
+                  </a>
+                  <a
+                    href="/dashboard/settings/templates"
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <DocumentTextIcon className="h-4 w-4" />
+                    PDF Template erstellen
+                  </a>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </Popover>
+        </div>
       </div>
 
       {/* Kampagnen-Tabelle */}
@@ -146,22 +185,6 @@ export default function ProjectPressemeldungenTab({
           />
         </div>
       )}
-
-      {/* Footer-Aktionen */}
-      <div className="flex gap-4 pt-6 border-t border-gray-200">
-        <Button
-          color="secondary"
-          href="/dashboard/library/boilerplates"
-        >
-          Boilerplate erstellen
-        </Button>
-        <Button
-          color="secondary"
-          href="/dashboard/settings/templates"
-        >
-          PDF Template erstellen
-        </Button>
-      </div>
 
       {/* Create Modal */}
       {showCreateModal && (
