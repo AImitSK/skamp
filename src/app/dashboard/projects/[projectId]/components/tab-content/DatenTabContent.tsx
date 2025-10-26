@@ -14,7 +14,7 @@ interface DatenTabContentProps {
   onRefresh: () => Promise<void>;
 }
 
-export function DatenTabContent({
+export const DatenTabContent = React.memo(function DatenTabContent({
   project,
   organizationId,
   projectFolders,
@@ -46,4 +46,4 @@ export function DatenTabContent({
       )}
     </div>
   );
-}
+});
