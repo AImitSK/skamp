@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
+import ListDetailsModal from './ListDetailsModal';
 
 interface Props {
   lists: DistributionList[];
@@ -32,6 +33,8 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedList, setSelectedList] = useState<DistributionList | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const itemsPerPage = 10;
 
   // Filter Listen
@@ -276,14 +279,22 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                   <div className="w-[35%] min-w-0">
                     <div className="flex items-center">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {list.name}
-                        </p>
-                        {list.description && (
-                          <p className="text-xs text-gray-500 truncate mt-1">
-                            {list.description}
+                        <button
+                          onClick={() => {
+                            setSelectedList(list);
+                            setModalOpen(true);
+                          }}
+                          className="text-left w-full group"
+                        >
+                          <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
+                            {list.name}
                           </p>
-                        )}
+                          {list.description && (
+                            <p className="text-xs text-gray-500 truncate mt-1">
+                              {list.description}
+                            </p>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -428,6 +439,17 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
           </Button>
         </div>
       )}
+
+      {/* Listen-Details Modal */}
+      <ListDetailsModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedList(null);
+        }}
+        list={selectedList}
+        type="master"
+      />
     </div>
   );
 }

@@ -32,6 +32,7 @@ import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import MasterListBrowser from './MasterListBrowser';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
+import ListDetailsModal from './ListDetailsModal';
 import Papa from 'papaparse';
 
 interface Props {
@@ -50,6 +51,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
+  const [selectedList, setSelectedList] = useState<ProjectDistributionList | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     if (projectId && organizationId) {
@@ -489,9 +492,17 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                         }}
                       />
                       <div className="ml-4 min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {listName}
-                        </p>
+                        <button
+                          onClick={() => {
+                            setSelectedList(list);
+                            setDetailsModalOpen(true);
+                          }}
+                          className="text-left w-full group"
+                        >
+                          <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
+                            {listName}
+                          </p>
+                        </button>
                         <div className="mt-1">
                           <Badge
                             color={list.type === 'linked' ? 'blue' : 'zinc'}
@@ -606,6 +617,17 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
           organizationId={organizationId}
         />
       )}
+
+      {/* Listen-Details Modal */}
+      <ListDetailsModal
+        open={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedList(null);
+        }}
+        list={selectedList}
+        type="project"
+      />
     </div>
   );
 }
