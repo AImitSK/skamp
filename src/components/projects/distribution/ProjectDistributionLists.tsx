@@ -487,7 +487,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
                     {/* Kategorie */}
                     <div className="w-[15%]">
-                      {(category && category !== 'custom') && (
+                      {category && (
                         <Badge color="zinc" className="text-xs whitespace-nowrap">
                           {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
                         </Badge>
