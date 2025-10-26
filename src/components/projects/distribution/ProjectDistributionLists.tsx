@@ -51,6 +51,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedList, setSelectedList] = useState<ProjectDistributionList | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [editingList, setEditingList] = useState<ProjectDistributionList | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (projectId && organizationId) {
@@ -117,6 +119,30 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     } catch (error) {
       console.error('Fehler beim Erstellen der Projekt-Liste:', error);
     }
+  };
+
+  const handleUpdateProjectList = async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
+    if (!user || !editingList?.id) return;
+    try {
+      await projectListsService.updateProjectList(editingList.id, {
+        name: listData.name,
+        description: listData.description,
+        category: listData.category,
+        listType: listData.type,
+        filters: listData.filters,
+        contactIds: listData.contactIds,
+      });
+      await loadData();
+      setShowEditModal(false);
+      setEditingList(null);
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Projekt-Liste:', error);
+    }
+  };
+
+  const handleEditList = (list: ProjectDistributionList) => {
+    setEditingList(list);
+    setShowEditModal(true);
   };
 
   const handleUnlinkList = async (listId: string) => {
@@ -499,6 +525,15 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                           <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
+                          {list.type === 'custom' && (
+                            <>
+                              <DropdownItem onClick={() => handleEditList(list)}>
+                                <PencilIcon className="h-4 w-4" />
+                                Bearbeiten
+                              </DropdownItem>
+                              <DropdownDivider />
+                            </>
+                          )}
                           <DropdownItem onClick={() => handleExportList(list)}>
                             <ArrowDownTrayIcon className="h-4 w-4" />
                             Exportieren
@@ -556,6 +591,32 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <ListModal
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreateProjectList}
+          userId={user.uid}
+          organizationId={organizationId}
+        />
+      )}
+
+      {/* Modal für Liste bearbeiten */}
+      {showEditModal && user && editingList && (
+        <ListModal
+          list={{
+            id: editingList.id,
+            name: editingList.name || '',
+            description: editingList.description,
+            type: editingList.listType || 'static',
+            category: editingList.category || 'custom',
+            filters: editingList.filters || {},
+            contactIds: editingList.contactIds || [],
+            organizationId: editingList.organizationId,
+            createdBy: editingList.addedBy,
+            createdAt: editingList.addedAt,
+            updatedAt: editingList.lastModified,
+          } as DistributionList}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingList(null);
+          }}
+          onSave={handleUpdateProjectList}
           userId={user.uid}
           organizationId={organizationId}
         />
