@@ -490,14 +490,27 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                           {listName}
                         </p>
                         <div className="mt-1">
-                          <Badge
-                            color="zinc"
-                            className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                          >
-                            {list.type === 'linked' && <StarIcon className="h-3 w-3 text-gray-500" />}
-                            {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
-                            {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                          </Badge>
+                          {list.type === 'linked' ? (
+                            <Badge
+                              className="text-xs whitespace-nowrap inline-flex items-center gap-1"
+                              style={{
+                                backgroundColor: '#DEDC00',
+                                color: '#000000',
+                                borderColor: '#DEDC00'
+                              }}
+                            >
+                              <StarIcon className="h-3 w-3 text-black" fill="currentColor" />
+                              Verknüpft
+                            </Badge>
+                          ) : (
+                            <Badge
+                              color="zinc"
+                              className="text-xs whitespace-nowrap inline-flex items-center gap-1"
+                            >
+                              {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
+                              {list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
