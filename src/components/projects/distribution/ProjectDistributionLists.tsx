@@ -1,20 +1,24 @@
 // src/components/projects/distribution/ProjectDistributionLists.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, UsersIcon } from '@heroicons/react/24/outline';
-import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
-import { listsService } from '@/lib/firebase/lists-service';
+import { ProjectDistributionList, projectListsService } from '@/lib/firebase/project-lists-service';
 import { DistributionList } from '@/types/lists';
 import MasterListBrowser from './MasterListBrowser';
 import ListModal from '@/app/dashboard/contacts/lists/ListModal';
 import ListDetailsModal from './ListDetailsModal';
 import { toastService } from '@/lib/utils/toast';
 import Papa from 'papaparse';
+
+// React Query Hooks
+import { useProjectLists, useCreateProjectList, useUpdateProjectList, useDeleteProjectList } from '@/hooks/useProjectLists';
+import { useMasterLists } from '@/hooks/useMasterLists';
+import { useLinkMasterList, useUnlinkMasterList } from '@/hooks/useListLinking';
 
 // Sub-Komponenten
 import ListSearchBar from './components/ListSearchBar';
@@ -35,10 +39,17 @@ interface Props {
 
 export default function ProjectDistributionLists({ projectId, organizationId }: Props) {
   const { user } = useAuth();
-  const [projectLists, setProjectLists] = useState<ProjectDistributionList[]>([]);
-  const [masterLists, setMasterLists] = useState<DistributionList[]>([]);
-  const [masterListDetails, setMasterListDetails] = useState<Map<string, DistributionList>>(new Map());
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hooks
+  const { data: projectLists = [], isLoading: isLoadingProjects } = useProjectLists(projectId);
+  const { data: masterLists = [], isLoading: isLoadingMasters } = useMasterLists(organizationId);
+  const createProjectList = useCreateProjectList(projectId, organizationId);
+  const updateProjectList = useUpdateProjectList(projectId);
+  const deleteProjectList = useDeleteProjectList(projectId);
+  const linkMasterList = useLinkMasterList(projectId);
+  const unlinkMasterList = useUnlinkMasterList(projectId);
+
+  // Local State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -48,40 +59,6 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [editingList, setEditingList] = useState<ProjectDistributionList | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const pLists = await projectListsService.getProjectLists(projectId);
-      setProjectLists(pLists);
-
-      const mLists = await listsService.getAll(organizationId);
-      setMasterLists(mLists);
-
-      const linkedMasterIds = pLists
-        .filter(l => l.type === 'linked' && l.masterListId)
-        .map(l => l.masterListId!);
-
-      if (linkedMasterIds.length > 0) {
-        const details = await projectListsService.getMasterListsWithDetails(linkedMasterIds);
-        const detailsMap = new Map<string, DistributionList>();
-        details.forEach(d => {
-          if (d.id) detailsMap.set(d.id, d);
-        });
-        setMasterListDetails(detailsMap);
-      }
-    } catch (error) {
-      toastService.error('Fehler beim Laden der Daten');
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, organizationId]);
-
-  useEffect(() => {
-    if (projectId && organizationId) {
-      loadData();
-    }
-  }, [projectId, organizationId, loadData]);
 
   // Debouncing für Search (300ms)
   useEffect(() => {
@@ -94,58 +71,41 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   const handleLinkMasterList = useCallback(async (masterListId: string) => {
     if (!user) return;
-    try {
-      await projectListsService.linkMasterList(projectId, masterListId, user.uid, organizationId);
-      await loadData();
-      toastService.success('Liste erfolgreich verknüpft');
-    } catch (error) {
-      toastService.error('Fehler beim Verknüpfen der Liste');
-    }
-  }, [user, projectId, organizationId, loadData]);
+    await linkMasterList.mutateAsync({ masterListId, userId: user.uid, organizationId });
+  }, [user, organizationId, linkMasterList]);
 
   const handleCreateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
-    try {
-      await projectListsService.createProjectList(
-        projectId,
-        {
-          name: listData.name,
-          description: listData.description,
-          category: listData.category,
-          type: listData.type,
-          filters: listData.filters,
-          contactIds: listData.contactIds,
-        },
-        user.uid,
-        organizationId
-      );
-      await loadData();
-      setShowCreateModal(false);
-      toastService.success('Liste erfolgreich erstellt');
-    } catch (error) {
-      toastService.error('Fehler beim Erstellen der Liste');
-    }
-  }, [user, projectId, organizationId, loadData]);
+    await createProjectList.mutateAsync({
+      listData: {
+        name: listData.name,
+        description: listData.description,
+        category: listData.category,
+        type: listData.type,
+        filters: listData.filters,
+        contactIds: listData.contactIds,
+      },
+      userId: user.uid,
+    });
+    setShowCreateModal(false);
+  }, [user, createProjectList]);
 
   const handleUpdateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user || !editingList?.id) return;
-    try {
-      await projectListsService.updateProjectList(editingList.id, {
+    await updateProjectList.mutateAsync({
+      listId: editingList.id,
+      updates: {
         name: listData.name,
         description: listData.description,
         category: listData.category,
         listType: listData.type,
         filters: listData.filters,
         contactIds: listData.contactIds,
-      });
-      await loadData();
-      setShowEditModal(false);
-      setEditingList(null);
-      toastService.success('Liste erfolgreich aktualisiert');
-    } catch (error) {
-      toastService.error('Fehler beim Aktualisieren der Liste');
-    }
-  }, [user, editingList, loadData]);
+      },
+    });
+    setShowEditModal(false);
+    setEditingList(null);
+  }, [user, editingList, updateProjectList]);
 
   const handleEditList = useCallback((list: ProjectDistributionList) => {
     setEditingList(list);
@@ -153,14 +113,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   }, []);
 
   const handleUnlinkList = useCallback(async (listId: string) => {
-    try {
-      await projectListsService.unlinkList(projectId, listId);
-      await loadData();
-      toastService.success('Verknüpfung erfolgreich entfernt');
-    } catch (error) {
-      toastService.error('Fehler beim Entfernen der Verknüpfung');
-    }
-  }, [projectId, loadData]);
+    await deleteProjectList.mutateAsync(listId);
+  }, [deleteProjectList]);
 
   const handleExportList = useCallback(async (projectList: ProjectDistributionList) => {
     try {
@@ -204,6 +158,17 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       .map(l => l.masterListId)
       .filter(Boolean) as string[];
   }, [projectLists]);
+
+  // Master-Listen Details Map für schnellen Zugriff
+  const masterListDetails = useMemo(() => {
+    const map = new Map<string, DistributionList>();
+    masterLists.forEach(list => {
+      if (list.id) {
+        map.set(list.id, list);
+      }
+    });
+    return map;
+  }, [masterLists]);
 
   // Alle Master-Listen anzeigen (nicht mehr filtern nach verknüpft/nicht-verknüpft)
   const availableMasterLists = masterLists;
@@ -274,6 +239,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
       updatedAt: editingList.lastModified,
     } as DistributionList;
   }, [editingList]);
+
+  // Loading State
+  const loading = isLoadingProjects || isLoadingMasters;
 
   if (loading) {
     return <LoadingSpinner message="Lade Verteilerlisten..." />;
