@@ -344,7 +344,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
                       }`}
                     >
                       <StarIcon
-                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-gray-500'}`}
+                        className={`h-4 w-4 ${linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-gray-500'}`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
                     </button>
