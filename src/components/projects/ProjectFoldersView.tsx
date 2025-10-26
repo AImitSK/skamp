@@ -800,8 +800,8 @@ export default function ProjectFoldersView({
             </Field>
           </DialogBody>
           <DialogActions>
-            <Button variant="outline" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>Abbrechen</Button>
-            <Button onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? 'Speichert...' : 'Speichern'}</Button>
+            <Button color="secondary" onClick={() => setShowSaveAsBoilerplateModal(false)} disabled={boilerplateSaving}>Abbrechen</Button>
+            <Button color="primary" onClick={handleSaveBoilerplate} disabled={boilerplateSaving || !boilerplateName.trim()}>{boilerplateSaving ? 'Speichert...' : 'Speichern'}</Button>
           </DialogActions>
         </Dialog>
       )}

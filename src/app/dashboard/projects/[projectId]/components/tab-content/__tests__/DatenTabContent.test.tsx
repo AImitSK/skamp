@@ -14,13 +14,13 @@ const mockProjectFoldersView = ProjectFoldersView as jest.MockedFunction<typeof 
 describe('DatenTabContent Component', () => {
   const mockProject: Project = {
     id: 'project-123',
-    name: 'Test Projekt',
+    title: 'Test Projekt',
     customer: {
       id: 'customer-123',
       name: 'Test Kunde'
     },
     organizationId: 'org-123'
-  };
+  } as Project;
 
   const mockProjectFolders = {
     id: 'folder-root',
@@ -281,9 +281,9 @@ describe('DatenTabContent Component', () => {
     it('sollte undefined customerId übergeben wenn customer fehlt', () => {
       const projectWithoutCustomer: Project = {
         id: 'project-123',
-        name: 'Test Projekt',
+        title: 'Test Projekt',
         organizationId: 'org-123'
-      };
+      } as Project;
 
       render(
         <DatenTabContent
@@ -306,9 +306,9 @@ describe('DatenTabContent Component', () => {
     it('sollte undefined customerName übergeben wenn customer fehlt', () => {
       const projectWithoutCustomer: Project = {
         id: 'project-123',
-        name: 'Test Projekt',
+        title: 'Test Projekt',
         organizationId: 'org-123'
-      };
+      } as Project;
 
       render(
         <DatenTabContent
@@ -527,9 +527,9 @@ describe('DatenTabContent Component', () => {
   describe('Edge Cases Tests', () => {
     it('sollte mit Projekt ohne ID umgehen können', () => {
       const projectWithoutId: Project = {
-        name: 'Test Projekt',
+        title: 'Test Projekt',
         organizationId: 'org-123'
-      };
+      } as Project;
 
       render(
         <DatenTabContent
@@ -615,12 +615,12 @@ describe('DatenTabContent Component', () => {
     it('sollte mit customer ohne Namen umgehen', () => {
       const projectWithCustomerWithoutName: Project = {
         id: 'project-123',
-        name: 'Test Projekt',
+        title: 'Test Projekt',
         customer: {
           id: 'customer-123'
         } as any,
         organizationId: 'org-123'
-      };
+      } as Project;
 
       render(
         <DatenTabContent
