@@ -2,54 +2,54 @@
 // Tests für PRCampaign Interface Erweiterungen (Plan 4/9)
 
 // Mock Firebase First
-jest.mock('firebase/firestore', () => ({
-  Timestamp: {
-    now: () => ({ 
-      seconds: Date.now() / 1000, 
-      nanoseconds: 0,
-      toDate: () => new Date(),
-      toMillis: () => Date.now(),
-      isEqual: () => false,
-      toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
-    }),
-    fromDate: (date: Date) => ({ 
-      seconds: date.getTime() / 1000, 
-      nanoseconds: 0,
-      toDate: () => date,
-      toMillis: () => date.getTime(),
-      isEqual: () => false,
-      toJSON: () => ({ seconds: date.getTime() / 1000, nanoseconds: 0 })
-    })
-  }
-}));
+jest.mock('firebase/firestore', () => {
+  class MockTimestamp {
+    seconds: number;
+    nanoseconds: number;
 
-import { 
-  PRCampaign, 
+    constructor(seconds: number, nanoseconds: number) {
+      this.seconds = seconds;
+      this.nanoseconds = nanoseconds;
+    }
+
+    toDate() {
+      return new Date(this.seconds * 1000);
+    }
+
+    toMillis() {
+      return this.seconds * 1000;
+    }
+
+    isEqual() {
+      return false;
+    }
+
+    toJSON() {
+      return { seconds: this.seconds, nanoseconds: this.nanoseconds };
+    }
+
+    static now() {
+      return new MockTimestamp(Date.now() / 1000, 0);
+    }
+
+    static fromDate(date: Date) {
+      return new MockTimestamp(date.getTime() / 1000, 0);
+    }
+  }
+
+  return {
+    Timestamp: MockTimestamp
+  };
+});
+
+import {
+  PRCampaign,
   DistributionRecipient,
   SenderConfiguration,
   DistributionError,
-  createDefaultPRCampaign 
+  createDefaultPRCampaign
 } from '@/types/pr';
-
-// Use mocked Timestamp
-const Timestamp = {
-  now: () => ({ 
-    seconds: Date.now() / 1000, 
-    nanoseconds: 0,
-    toDate: () => new Date(),
-    toMillis: () => Date.now(),
-    isEqual: () => false,
-    toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
-  }),
-  fromDate: (date: Date) => ({ 
-    seconds: date.getTime() / 1000, 
-    nanoseconds: 0,
-    toDate: () => date,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    toJSON: () => ({ seconds: date.getTime() / 1000, nanoseconds: 0 })
-  })
-};
+import { Timestamp } from 'firebase/firestore';
 
 describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
   const mockUserId = 'test-user-123';

@@ -18,7 +18,7 @@ import Papa from 'papaparse';
 // React Query Hooks
 import { useProjectLists, useCreateProjectList, useUpdateProjectList, useDeleteProjectList } from '@/hooks/useProjectLists';
 import { useMasterLists } from '@/hooks/useMasterLists';
-import { useLinkMasterList, useUnlinkMasterList } from '@/hooks/useListLinking';
+import { useLinkMasterList } from '@/hooks/useListLinking';
 
 // Sub-Komponenten
 import ListSearchBar from './components/ListSearchBar';
@@ -46,8 +46,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   const createProjectList = useCreateProjectList(projectId, organizationId);
   const updateProjectList = useUpdateProjectList(projectId);
   const deleteProjectList = useDeleteProjectList(projectId);
-  const linkMasterList = useLinkMasterList(projectId);
-  const unlinkMasterList = useUnlinkMasterList(projectId);
+  const linkMasterList = useLinkMasterList(projectId, organizationId);
 
   // Local State
   const [showCreateModal, setShowCreateModal] = useState(false);
