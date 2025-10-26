@@ -908,38 +908,47 @@ Phase 0-7 vollständig:
 ### 2.6 Pressemeldung Tab (P2 - Komplex mit Sub-Modulen)
 
 **Entry Point:** `[projectId]/page.tsx` (pressemeldung case)
-**Komponenten:** 5 (Tab, CampaignTable, ApprovalTable, ToggleSection, CreateModal)
-**LOC:** ~400+
-**Aufwand:** L (Large - wegen Sub-Modulen)
+**Komponenten:** 4 (Tab, CampaignTable, ApprovalTable, ToggleSection)
+**LOC:** ~1.074 Zeilen (KORREKTUR: nicht ~400+!)
+**Aufwand:** L (Large) - UPDATE: M→L wegen höherer LOC
 
-**Sub-Module (optional getrennt refactorn):**
-- Pressemeldung > Erstellen (CampaignCreateModal)
-- Pressemeldung > Editor / KI Toolbar
-- Pressemeldung > KI Assistent
-- Pressemeldung > PDF Versionierung
-- Pressemeldung > Bearbeiten (CampaignEditModal)
-- Pressemeldung > Versenden (CampaignSendModal)
-- Pressemeldung > Email Templates (TemplateEditor)
-- Pressemeldung > Freigabe (ApprovalWorkflow)
-- Pressemeldung > Kundenfreigabeseite (`/freigabe/[shareId]/page.tsx`)
+**WICHTIG: CampaignCreateModal AUSGESCHLOSSEN:**
+- ❌ **CampaignCreateModal** - Zu komplex, separates Refactoring später
+- Nur Haupt-Tab & Tabellen werden refactored
+
+**Sub-Module (NICHT im Scope - zu komplex):**
+- ❌ Pressemeldung > Erstellen (CampaignCreateModal)
+- ❌ Pressemeldung > Editor / KI Toolbar
+- ❌ Pressemeldung > KI Assistent
+- ❌ Pressemeldung > PDF Versionierung
+- ❌ Pressemeldung > Bearbeiten (CampaignEditModal)
+- ❌ Pressemeldung > Versenden (CampaignSendModal)
+- ❌ Pressemeldung > Email Templates (TemplateEditor)
+- ❌ Pressemeldung > Freigabe (ApprovalWorkflow)
+- ❌ Pressemeldung > Kundenfreigabeseite (`/freigabe/[shareId]/page.tsx`)
+
+**Agent-Workflow:**
+- **Phase 4 (Testing):** → refactoring-test Agent
+- **Phase 5 (Dokumentation):** → refactoring-dokumentation Agent
+- **Phase 6.5 (Quality Gate):** → refactoring-quality-check Agent
 
 **Tracking:**
-- [ ] **Plan erstellt:** `docs/planning/tabs/pressemeldung-tab-refactoring.md`
+- [x] **Plan erstellt:** `docs/planning/tabs/pressemeldung-tab-refactoring.md`
 - [ ] **Implementierung durchgeführt**
 
 **Ergebnis-Zusammenfassung:**
 ```
 [Nach Implementierung ausfüllen]
-- Sub-Module identifiziert: X Module
-- Refactored: X/Y Sub-Module
-- Test-Ergebnis: X/Y Tests passed
+- Komponenten refactored: 4/4 (ohne CampaignCreateModal)
+- Test-Ergebnis: X/X Tests passed
+- Agent-basierte Phase 4, 5, 6.5
 ```
 
 **TODOs / Offene Punkte:**
 ```
 [Nach Implementierung ausfüllen]
-- [ ] Sub-Modul 1 noch offen
-- [ ] Sub-Modul 2 noch offen
+- [ ] CampaignCreateModal separates Refactoring planen
+- [ ] Weitere Sub-Module (Editor, KI, etc.) später
 ```
 
 ---
