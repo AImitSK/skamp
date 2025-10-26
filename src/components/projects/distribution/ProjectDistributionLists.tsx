@@ -180,9 +180,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
     .map(l => l.masterListId)
     .filter(Boolean) as string[];
 
-  const availableMasterLists = masterLists.filter(
-    list => list.id && !linkedListIds.includes(list.id)
-  );
+  // Alle Master-Listen anzeigen (nicht mehr filtern nach verknüpft/nicht-verknüpft)
+  const availableMasterLists = masterLists;
 
   const filteredProjectLists = projectLists.filter(list => {
     if (searchTerm) {
@@ -234,7 +233,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
   const typeOptions = [
     { value: 'linked', label: 'Verknüpft' },
-    { value: 'custom', label: 'Projekt-eigen' },
+    { value: 'custom', label: 'Projekt' },
     { value: 'combined', label: 'Kombiniert' }
   ];
 
@@ -475,17 +474,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                         }}
                       />
                       <div className="ml-4 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {list.type === 'linked' && (
-                            <LinkIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                          )}
-                          {list.type === 'custom' && (
-                            <FolderIcon className="h-4 w-4 text-green-500 flex-shrink-0" />
-                          )}
-                          <span className="text-sm font-semibold text-gray-900 truncate">
-                            {listName}
-                          </span>
-                        </div>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {listName}
+                        </p>
                         {listDescription && (
                           <p className="text-xs text-gray-500 truncate mt-1">
                             {listDescription}
@@ -498,16 +489,18 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                     <div className="w-[15%]">
                       <Badge
                         color="zinc"
-                        className="text-xs whitespace-nowrap"
+                        className="text-xs whitespace-nowrap inline-flex items-center gap-1"
                       >
-                        {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt-eigen' : 'Kombiniert'}
+                        {list.type === 'linked' && <LinkIcon className="h-3 w-3 text-gray-500" />}
+                        {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
+                        {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
                       </Badge>
                     </div>
 
                     {/* Kategorie */}
                     <div className="w-[15%]">
                       {masterList && (
-                        <Badge color={getCategoryColor(category) as any} className="text-xs whitespace-nowrap">
+                        <Badge color="zinc" className="text-xs whitespace-nowrap">
                           {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
                         </Badge>
                       )}
@@ -571,6 +564,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         <div className="mt-8 pt-8 border-t border-gray-200">
           <MasterListBrowser
             lists={availableMasterLists}
+            linkedListIds={linkedListIds}
             onLink={handleLinkMasterList}
           />
         </div>

@@ -15,15 +15,17 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
   FunnelIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
 
 interface Props {
   lists: DistributionList[];
+  linkedListIds?: string[];
   onLink: (listId: string) => void;
 }
 
-export default function MasterListBrowser({ lists, onLink }: Props) {
+export default function MasterListBrowser({ lists, linkedListIds = [], onLink }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -290,7 +292,7 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   {/* Typ */}
                   <div className="w-[10%]">
                     <Badge
-                      color="zinc"
+                      color={list.type === 'dynamic' ? 'green' : 'blue'}
                       className="text-xs whitespace-nowrap"
                     >
                       {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
@@ -318,11 +320,22 @@ export default function MasterListBrowser({ lists, onLink }: Props) {
                   <div className="w-[10%]">
                     <Button
                       onClick={() => list.id && onLink(list.id)}
-                      color="secondary"
-                      className="text-xs px-3 py-1"
+                      className="text-xs px-3 py-1.5 flex items-center gap-1"
+                      style={linkedListIds.includes(list.id!) ? {
+                        backgroundColor: '#DEDC00',
+                        color: '#000000',
+                        borderColor: '#DEDC00'
+                      } : {
+                        backgroundColor: '#f3f4f6',
+                        color: '#4b5563',
+                        border: '1px solid #d1d5db'
+                      }}
                     >
-                      <LinkIcon className="h-3 w-3 mr-1" />
-                      Verknüpfen
+                      <StarIcon
+                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
+                        fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
+                      />
+                      {linkedListIds.includes(list.id!) ? 'Verknüpft' : 'Verknüpfen'}
                     </Button>
                   </div>
                 </div>
