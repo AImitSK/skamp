@@ -111,7 +111,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[30%] min-w-0">
+        <div className="w-[35%] min-w-0">
           <div className="flex items-center">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900 truncate">
@@ -137,7 +137,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
         </div>
 
         {/* Admin */}
-        <div className="w-[15%]">
+        <div className="w-[12%]">
           <div className="flex items-center">
             {(() => {
               const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
@@ -165,7 +165,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
         </div>
 
         {/* Kampagne Versenden */}
-        <div className="w-[15%]">
+        <div className="flex-1">
           {campaign.status === 'sent' ? (
             <a
               href={`/dashboard/analytics/monitoring/${campaign.id}`}
@@ -186,10 +186,10 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
         </div>
 
         {/* Aktionen */}
-        <div className="w-[10%] text-center">
+        <div className="ml-4">
           <Dropdown>
             <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
-              <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+              <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
             </DropdownButton>
 
             <DropdownMenu anchor="bottom end">
@@ -257,23 +257,20 @@ export default function PressemeldungCampaignTable({
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center">
-          <div className="w-[30%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Kampagne
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Admin
           </div>
           <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Erstellt am
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
-          </div>
-          <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-            Aktionen
           </div>
         </div>
       </div>
