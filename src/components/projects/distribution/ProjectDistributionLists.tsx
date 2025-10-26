@@ -447,12 +447,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                 </span>
               </div>
               <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kategorie
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Kontakte
               </div>
               <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -488,24 +485,17 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {listName}
                         </p>
-                        {listDescription && (
-                          <p className="text-xs text-gray-500 truncate mt-1">
-                            {listDescription}
-                          </p>
-                        )}
+                        <div className="mt-1">
+                          <Badge
+                            color="zinc"
+                            className="text-xs whitespace-nowrap inline-flex items-center gap-1"
+                          >
+                            {list.type === 'linked' && <LinkIcon className="h-3 w-3 text-gray-500" />}
+                            {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
+                            {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Typ */}
-                    <div className="w-[15%]">
-                      <Badge
-                        color="zinc"
-                        className="text-xs whitespace-nowrap inline-flex items-center gap-1"
-                      >
-                        {list.type === 'linked' && <LinkIcon className="h-3 w-3 text-gray-500" />}
-                        {list.type === 'custom' && <FolderIcon className="h-3 w-3 text-gray-500" />}
-                        {list.type === 'linked' ? 'Verknüpft' : list.type === 'custom' ? 'Projekt' : 'Kombiniert'}
-                      </Badge>
                     </div>
 
                     {/* Kategorie */}
@@ -518,7 +508,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
                     </div>
 
                     {/* Kontakte */}
-                    <div className="w-[10%]">
+                    <div className="w-[15%]">
                       <span className="text-sm font-medium text-gray-700">
                         {contactCount.toLocaleString()}
                       </span>
