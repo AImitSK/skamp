@@ -117,7 +117,7 @@ function CommunicationToggleBoxComponent({
       subtitle={undefined}
       count={communications.length}
       icon={ChatBubbleLeftRightIcon}
-      iconColor="text-green-600"
+      iconColor="text-blue-600"
       isExpanded={isExpanded}
       onToggle={onToggle}
       organizationId={organizationId}
@@ -137,7 +137,7 @@ function CommunicationToggleBoxComponent({
         <div className="space-y-4">
           {/* Letzte Nachricht prominent */}
           {latestMessage && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
                 {/* Avatar statt Icon */}
                 <div className="flex-shrink-0">
@@ -153,20 +153,20 @@ function CommunicationToggleBoxComponent({
                 </div>
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="font-medium text-green-900">
+                    <span className="font-medium text-blue-900">
                       Neueste Nachricht
                     </span>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {getTypeLabel(latestMessage.type)}
                     </span>
-                    <span className="text-sm text-green-700">
+                    <span className="text-sm text-blue-700">
                       {formatTimeAgo(latestMessage.createdAt)}
                     </span>
                   </div>
-                  <div className="text-sm text-green-800 mb-2">
+                  <div className="text-sm text-blue-800 mb-2">
                     <strong>Von:</strong> {latestMessage.senderName || latestMessage.sender?.name}
                   </div>
-                  <div className="text-sm text-green-900 whitespace-pre-wrap">
+                  <div className="text-sm text-blue-900 whitespace-pre-wrap">
                     {latestMessage.message || latestMessage.content}
                   </div>
                 </div>
@@ -189,8 +189,8 @@ function CommunicationToggleBoxComponent({
                     key={communication.id}
                     className={`
                       border rounded-lg p-4 transition-colors duration-150
-                      ${isLatest 
-                        ? 'border-green-300 bg-green-50' 
+                      ${isLatest
+                        ? 'border-blue-300 bg-blue-50'
                         : 'border-gray-200 bg-white'
                       }
                     `}

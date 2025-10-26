@@ -125,7 +125,7 @@ function PDFHistoryToggleBoxComponent({
       subtitle={undefined}
       count={pdfVersions.length}
       icon={DocumentTextIcon}
-      iconColor="text-purple-600"
+      iconColor="text-blue-600"
       isExpanded={isExpanded}
       onToggle={onToggle}
       organizationId={organizationId}
@@ -141,13 +141,13 @@ function PDFHistoryToggleBoxComponent({
       ) : (
         <div className="space-y-4">
           {/* Info-Text */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex">
               <div className="ml-3">
-                <p className="text-sm text-purple-800">
+                <p className="text-sm text-blue-800">
                   <strong>Aktuelle Version:</strong> Version {currentVersion?.version} vom {currentVersion ? formatDate(currentVersion.createdAt) : ''}
                 </p>
-                <p className="text-sm text-purple-700 mt-1">
+                <p className="text-sm text-blue-700 mt-1">
                   Hier sehen Sie die komplette Versionshistorie dieser Pressemitteilung.
                 </p>
               </div>
@@ -166,8 +166,8 @@ function PDFHistoryToggleBoxComponent({
                   key={pdfVersion.id}
                   className={`
                     border rounded-lg p-4 transition-colors duration-150
-                    ${isLatest 
-                      ? 'border-purple-300 bg-purple-50' 
+                    ${isLatest
+                      ? 'border-blue-300 bg-blue-50'
                       : 'border-gray-200 bg-white hover:border-gray-300'
                     }
                   `}
@@ -187,7 +187,7 @@ function PDFHistoryToggleBoxComponent({
                             Version {pdfVersion.version}
                           </h4>
                           {isLatest && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               Aktuell
                             </span>
                           )}
@@ -213,7 +213,7 @@ function PDFHistoryToggleBoxComponent({
                     <div className="flex-shrink-0 ml-4">
                       <button
                         onClick={() => handleDownload(pdfVersion)}
-                        className="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors duration-150"
+                        className="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150"
                         data-testid={`pdf-download-${pdfVersion.id}`}
                       >
                         <ArrowDownTrayIcon className="h-4 w-4 mr-1.5" />

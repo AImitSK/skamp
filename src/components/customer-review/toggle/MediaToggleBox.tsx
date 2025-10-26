@@ -131,7 +131,7 @@ function MediaToggleBoxComponent({
                         </button>
                         <button
                           onClick={(e) => handleDownload(e, mediaItem)}
-                          className="p-2 bg-white rounded-full text-gray-700 hover:text-green-600 transition-colors"
+                          className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors"
                           title="Herunterladen"
                           aria-label={`${mediaItem.filename} herunterladen`}
                         >

@@ -73,7 +73,7 @@ function DecisionToggleBoxComponent({
       subtitle="Erteilen Sie die Freigabe oder fordern Sie Änderungen an"
       defaultOpen={true}
       icon={CheckCircleIcon}
-      iconColor="text-emerald-600"
+      iconColor="text-blue-600"
       isExpanded={isExpanded}
       onToggle={onToggle}
       organizationId={organizationId}
@@ -90,11 +90,11 @@ function DecisionToggleBoxComponent({
               onClick={handleApprove}
               disabled={disabled || isSubmitting}
               className={`
-                w-full flex items-center justify-center px-6 py-4 border border-transparent 
+                w-full flex items-center justify-center px-6 py-4 border border-transparent
                 text-lg font-semibold rounded-lg transition-colors duration-150
                 ${disabled || isSubmitting
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                 }
               `}
               data-testid="approve-button"
