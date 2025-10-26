@@ -1,24 +1,23 @@
 // src/components/projects/distribution/MasterListBrowser.tsx
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, useMemo } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Popover, Transition } from '@headlessui/react';
-import {
-  UsersIcon,
-  ArrowPathIcon,
-  ChevronRightIcon,
-  ChevronLeftIcon,
-  FunnelIcon,
-  StarIcon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
+import { UsersIcon } from '@heroicons/react/24/outline';
+import { DistributionList } from '@/types/lists';
 import ListDetailsModal from './ListDetailsModal';
+
+// Sub-Komponenten
+import ListSearchBar from './components/ListSearchBar';
+import ListFilterButton from './components/ListFilterButton';
+import ListTableHeader from './components/ListTableHeader';
+import ListPagination from './components/ListPagination';
+import EmptyListState from './components/EmptyListState';
+import MasterListRow from './components/MasterListRow';
+
+// Helper Functions
+import { categoryOptions, masterListTypeOptions } from './helpers/list-helpers';
 
 interface Props {
   lists: DistributionList[];
@@ -36,68 +35,40 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
   const [modalOpen, setModalOpen] = useState(false);
   const itemsPerPage = 10;
 
-  // Filter Listen
-  const filteredLists = lists.filter(list => {
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      if (!list.name.toLowerCase().includes(searchLower) &&
-          !(list.description?.toLowerCase().includes(searchLower))) {
-        return false;
+  // Filter Listen (memoized für Performance)
+  const filteredLists = useMemo(() => {
+    return lists.filter(list => {
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        if (!list.name.toLowerCase().includes(searchLower) &&
+            !(list.description?.toLowerCase().includes(searchLower))) {
+          return false;
+        }
       }
-    }
 
-    // Typ-Filter
-    if (selectedTypes.length > 0) {
-      if (!selectedTypes.includes(list.type)) return false;
-    }
+      // Typ-Filter
+      if (selectedTypes.length > 0) {
+        if (!selectedTypes.includes(list.type)) return false;
+      }
 
-    // Kategorie-Filter
-    if (selectedCategories.length > 0) {
-      if (!selectedCategories.includes(list.category || 'custom')) return false;
-    }
+      // Kategorie-Filter
+      if (selectedCategories.length > 0) {
+        if (!selectedCategories.includes(list.category || 'custom')) return false;
+      }
 
-    return true;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredLists.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedLists = filteredLists.slice(startIndex, startIndex + itemsPerPage);
-
-  // Filter Options
-  const categoryOptions = [
-    { value: 'press', label: 'Presse' },
-    { value: 'customers', label: 'Kunden' },
-    { value: 'partners', label: 'Partner' },
-    { value: 'leads', label: 'Leads' },
-    { value: 'custom', label: 'Benutzerdefiniert' }
-  ];
-
-  const typeOptions = [
-    { value: 'dynamic', label: 'Dynamisch' },
-    { value: 'static', label: 'Statisch' }
-  ];
-
-  const activeFiltersCount = selectedCategories.length + selectedTypes.length;
-
-  const getCategoryColor = (category?: string): string => {
-    switch (category) {
-      case 'press': return 'purple';
-      case 'customers': return 'blue';
-      case 'partners': return 'green';
-      case 'leads': return 'amber';
-      default: return 'zinc';
-    }
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      return true;
     });
-  };
+  }, [lists, searchTerm, selectedTypes, selectedCategories]);
+
+  // Pagination (memoized)
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredLists.length / itemsPerPage);
+  }, [filteredLists.length, itemsPerPage]);
+
+  const paginatedLists = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLists.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLists, currentPage, itemsPerPage]);
 
   return (
     <div className="space-y-4">
@@ -110,334 +81,88 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
 
       {/* Such- und Filterleiste */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700" aria-hidden="true" />
-          </div>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Suchen..."
-            className={clsx(
-              'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
-              'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-              'h-10'
-            )}
-          />
-        </div>
-
-        {/* Filter Button */}
-        <Popover className="relative">
-          <Popover.Button
-            className={`inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10 ${
-              activeFiltersCount > 0
-                ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            aria-label="Filter"
-          >
-            <FunnelIcon className="h-5 w-5 stroke-2" />
-            {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Popover.Button>
-
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-200"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-150"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">Filter</h3>
-                  {activeFiltersCount > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedCategories([]);
-                        setSelectedTypes([]);
-                        setCurrentPage(1);
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Zurücksetzen
-                    </button>
-                  )}
-                </div>
-
-                {/* Type Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Typ
-                  </label>
-                  <div className="space-y-2">
-                    {typeOptions.map((option) => {
-                      const isChecked = selectedTypes.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedTypes, option.value]
-                                : selectedTypes.filter(v => v !== option.value);
-                              setSelectedTypes(newValues);
-                              setCurrentPage(1);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kategorie
-                  </label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {categoryOptions.map((option) => {
-                      const isChecked = selectedCategories.includes(option.value);
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const newValues = e.target.checked
-                                ? [...selectedCategories, option.value]
-                                : selectedCategories.filter(v => v !== option.value);
-                              setSelectedCategories(newValues);
-                              setCurrentPage(1);
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {option.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </Popover.Panel>
-          </Transition>
-        </Popover>
+        <ListSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Suchen..."
+        />
+        <ListFilterButton
+          categoryOptions={categoryOptions}
+          typeOptions={masterListTypeOptions}
+          selectedCategories={selectedCategories}
+          selectedTypes={selectedTypes}
+          onCategoryChange={(values) => {
+            setSelectedCategories(values);
+            setCurrentPage(1);
+          }}
+          onTypeChange={(values) => {
+            setSelectedTypes(values);
+            setCurrentPage(1);
+          }}
+          onReset={() => {
+            setSelectedCategories([]);
+            setSelectedTypes([]);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
       {/* Master-Listen Tabelle */}
       {paginatedLists.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center">
-              <div className="w-[35%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kategorie
-              </div>
-              <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
-              </div>
-              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kontakte
-              </div>
-              <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Aktualisiert
-              </div>
-            </div>
-          </div>
+          <ListTableHeader
+            columns={[
+              { label: 'Name', width: 'w-[35%]' },
+              { label: 'Kategorie', width: 'w-[15%]' },
+              { label: 'Typ', width: 'w-[15%]' },
+              { label: 'Kontakte', width: 'w-[12%]' },
+              { label: 'Aktualisiert', width: 'flex-1' },
+            ]}
+          />
 
           {/* Body */}
           <div className="divide-y divide-gray-200">
             {paginatedLists.map((list) => (
-              <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center">
-                  {/* Name */}
-                  <div className="w-[35%] min-w-0">
-                    <div className="flex items-center">
-                      <div className="min-w-0 flex-1">
-                        <button
-                          onClick={() => {
-                            setSelectedList(list);
-                            setModalOpen(true);
-                          }}
-                          className="text-left w-full group"
-                        >
-                          <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
-                            {list.name}
-                          </p>
-                          {list.description && (
-                            <p className="text-xs text-gray-500 truncate mt-1">
-                              {list.description}
-                            </p>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Kategorie */}
-                  <div className="w-[15%]">
-                    <Badge
-                      color="zinc"
-                      className="text-xs whitespace-nowrap"
-                    >
-                      {LIST_CATEGORY_LABELS[list.category as keyof typeof LIST_CATEGORY_LABELS] || list.category}
-                    </Badge>
-                  </div>
-
-                  {/* Typ */}
-                  <div className="w-[15%]">
-                    <Badge
-                      color={list.type === 'dynamic' ? 'green' : 'blue'}
-                      className="text-xs whitespace-nowrap"
-                    >
-                      {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
-                    </Badge>
-                  </div>
-
-                  {/* Kontakte */}
-                  <div className="w-[12%]">
-                    <span className="text-sm font-medium text-gray-700">
-                      {(list.contactCount || 0).toLocaleString()}
-                    </span>
-                  </div>
-
-                  {/* Aktualisiert */}
-                  <div className="flex-1">
-                    <div className="flex items-center text-sm text-gray-600">
-                      {list.type === 'dynamic' && (
-                        <ArrowPathIcon className="h-3 w-3 mr-1 text-gray-400" />
-                      )}
-                      <span>{formatDate(list.lastUpdated || list.updatedAt)}</span>
-                    </div>
-                  </div>
-
-                  {/* Aktion */}
-                  <div className="ml-4">
-                    <Button
-                      onClick={() => {
-                        if (!list.id) return;
-                        const isLinked = linkedListIds.includes(list.id);
-                        if (isLinked && onUnlink) {
-                          onUnlink(list.id);
-                        } else {
-                          onLink(list.id);
-                        }
-                      }}
-                      className={`text-xs px-3 py-1.5 flex items-center gap-1 ${
-                        linkedListIds.includes(list.id!)
-                          ? 'bg-zinc-100 border border-zinc-200 text-zinc-600 hover:bg-zinc-200'
-                          : 'bg-zinc-100 border border-zinc-200 text-zinc-600 hover:bg-zinc-200'
-                      }`}
-                      style={linkedListIds.includes(list.id!) ? {
-                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                        color: '#1d4ed8',
-                        borderColor: 'rgba(59, 130, 246, 0.3)'
-                      } : {
-                        backgroundColor: '#f3f4f6',
-                        color: '#4b5563',
-                        border: '1px solid #d1d5db'
-                      }}
-                    >
-                      <StarIcon
-                        className={`h-3 w-3 ${
-                          linkedListIds.includes(list.id!) ? 'text-blue-700' : 'text-zinc-500'
-                        }`}
-                        fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
-                      />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <MasterListRow
+                key={list.id}
+                list={list}
+                isLinked={linkedListIds.includes(list.id!)}
+                onViewDetails={() => {
+                  setSelectedList(list);
+                  setModalOpen(true);
+                }}
+                onToggleLink={() => {
+                  if (!list.id) return;
+                  const isLinked = linkedListIds.includes(list.id);
+                  if (isLinked && onUnlink) {
+                    onUnlink(list.id);
+                  } else {
+                    onLink(list.id);
+                  }
+                }}
+              />
             ))}
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-          <UsersIcon className="mx-auto h-10 w-10 text-gray-400" />
-          <Text className="mt-2 text-gray-600">
-            {searchTerm || selectedCategories.length > 0 || selectedTypes.length > 0
+        <EmptyListState
+          icon={UsersIcon}
+          title={
+            searchTerm || selectedCategories.length > 0 || selectedTypes.length > 0
               ? 'Keine Listen gefunden'
-              : 'Keine weiteren Master-Listen verfügbar'}
-          </Text>
-        </div>
+              : 'Keine weiteren Master-Listen verfügbar'
+          }
+          description=""
+        />
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4">
-          <Button
-            plain
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="flex items-center text-sm"
-          >
-            <ChevronLeftIcon className="h-4 w-4 mr-1" />
-            Zurück
-          </Button>
-          <div className="flex items-center gap-2">
-            {[...Array(Math.min(totalPages, 7))].map((_, i) => {
-              let pageNum;
-              if (totalPages <= 7) {
-                pageNum = i + 1;
-              } else if (currentPage <= 4) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 3) {
-                pageNum = totalPages - 6 + i;
-              } else {
-                pageNum = currentPage - 3 + i;
-              }
-
-              return (
-                <Button
-                  key={pageNum}
-                  plain
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 text-sm ${
-                    currentPage === pageNum
-                      ? 'font-semibold text-primary bg-primary/10 rounded'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-          <Button
-            plain
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="flex items-center text-sm"
-          >
-            Weiter
-            <ChevronRightIcon className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-      )}
+      <ListPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Listen-Details Modal */}
       <ListDetailsModal
