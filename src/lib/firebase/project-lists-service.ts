@@ -306,9 +306,38 @@ export const projectListsService = {
     updates: Partial<ProjectDistributionList>
   ): Promise<void> {
     try {
+      // Hole die aktuelle Liste um organizationId zu bekommen
       const docRef = doc(db, 'project_distribution_lists', listId);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        throw new Error('Liste nicht gefunden');
+      }
+
+      const currentList = docSnap.data() as ProjectDistributionList;
+      const organizationId = currentList.organizationId;
+
+      // Kontaktzahl neu berechnen wenn listType, filters oder contactIds geändert werden
+      let cachedContactCount = currentList.cachedContactCount;
+
+      if (updates.listType !== undefined || updates.filters !== undefined || updates.contactIds !== undefined) {
+        const listType = updates.listType || currentList.listType || 'static';
+        const filters = updates.filters !== undefined ? updates.filters : currentList.filters;
+        const contactIds = updates.contactIds !== undefined ? updates.contactIds : currentList.contactIds;
+
+        if (listType === 'dynamic' && filters) {
+          const contacts = await this.getFilteredContacts(filters, organizationId);
+          cachedContactCount = contacts.length;
+        } else if (listType === 'static' && contactIds) {
+          cachedContactCount = contactIds.length;
+        } else {
+          cachedContactCount = 0;
+        }
+      }
+
       await updateDoc(docRef, {
         ...updates,
+        cachedContactCount,
         lastModified: serverTimestamp()
       });
     } catch (error) {
