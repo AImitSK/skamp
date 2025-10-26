@@ -568,7 +568,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
       {/* Verfügbare Master-Listen */}
       {availableMasterLists.length > 0 && (
-        <div className="mt-8 pt-8 border-t border-gray-200">
+        <div className="mt-8">
           <MasterListBrowser
             lists={availableMasterLists}
             linkedListIds={linkedListIds}

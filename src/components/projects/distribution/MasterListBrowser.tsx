@@ -103,7 +103,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink, o
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Subheading>Listen Bibliothek</Subheading>
+        <Heading>Listen Bibliothek</Heading>
         <Text className="text-sm text-gray-500">
           {filteredLists.length} {filteredLists.length === 1 ? 'Liste' : 'Listen'} verfügbar
         </Text>
