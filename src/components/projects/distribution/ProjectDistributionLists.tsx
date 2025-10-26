@@ -8,7 +8,6 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { SearchInput } from '@/components/ui/search-input';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -23,7 +22,9 @@ import {
   PencilIcon,
   DocumentDuplicateIcon,
   FunnelIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { listsService } from '@/lib/firebase/lists-service';
 import { DistributionList, LIST_CATEGORY_LABELS } from '@/types/lists';
@@ -273,12 +274,22 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
       {/* Such- und Filterleiste */}
       <div className="flex items-center gap-2">
-        <SearchInput
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Suchen..."
-          className="flex-1"
-        />
+        <div className="flex-1 relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <MagnifyingGlassIcon className="h-5 w-5 text-zinc-700" aria-hidden="true" />
+          </div>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Suchen..."
+            className={clsx(
+              'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
+              'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+              'h-10'
+            )}
+          />
+        </div>
 
         {/* Filter Button */}
         <Popover className="relative">
