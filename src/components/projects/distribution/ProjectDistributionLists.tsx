@@ -474,6 +474,17 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
               const listType = list.listType || masterList?.type || 'static';
               const contactCount = list.cachedContactCount || masterList?.contactCount || 0;
 
+              // Debug: Log contact count calculation
+              if (contactCount === 4) {
+                console.log('[TABLE DEBUG] List with count 4:', {
+                  listId: list.id,
+                  listName,
+                  cachedContactCount: list.cachedContactCount,
+                  masterListContactCount: masterList?.contactCount,
+                  finalContactCount: contactCount
+                });
+              }
+
               return (
                 <div key={list.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center">
