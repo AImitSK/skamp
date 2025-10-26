@@ -249,6 +249,60 @@ service cloud.firestore {
     }
 
     // ========================================
+    // DISTRIBUTION LISTS (Verteiler-Tab)
+    // ========================================
+
+    // Master Distribution Lists - Org-isoliert mit Legacy-Fallback
+    match /distribution_lists/{listId} {
+      // Lesen: Nur eigene Organisation oder Legacy userId
+      allow read: if isAuthenticated()
+                  && (resource.data.organizationId == request.auth.token.organizationId
+                      || resource.data.userId == request.auth.uid);
+
+      // Erstellen: Nur für eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update & Löschen: Nur eigene Organisation oder Legacy userId
+      allow update, delete: if isAuthenticated()
+                            && (resource.data.organizationId == request.auth.token.organizationId
+                                || resource.data.userId == request.auth.uid);
+    }
+
+    // Project Distribution Lists - Org-isoliert
+    match /project_distribution_lists/{listId} {
+      // Lesen: Nur eigene Organisation
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+
+      // Erstellen: Nur für eigene Organisation
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update & Löschen: Nur eigene Organisation
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // List Usage Tracking - Authentifizierte User können tracken
+    match /list_usage/{usageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+                            && resource.data.userId == request.auth.uid;
+    }
+
+    // List Metrics - Org-isoliert
+    match /list_metrics/{metricId} {
+      allow read: if isAuthenticated()
+                  && (resource.data.organizationId == request.auth.token.organizationId
+                      || resource.data.userId == request.auth.uid);
+      allow write: if isAuthenticated()
+                   && (request.resource.data.organizationId == request.auth.token.organizationId
+                       || request.resource.data.userId == request.auth.uid);
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
