@@ -2,13 +2,12 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import { Heading, Subheading } from '@/components/ui/heading';
+import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, Transition } from '@headlessui/react';
 import {
-  LinkIcon,
   UsersIcon,
   ArrowPathIcon,
   ChevronRightIcon,

@@ -3,23 +3,20 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Heading, Subheading } from '@/components/ui/heading';
+import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { Popover, Transition } from '@headlessui/react';
 import {
-  LinkIcon,
   PlusIcon,
   UsersIcon,
   TrashIcon,
   ArrowDownTrayIcon,
-  EyeIcon,
   EllipsisVerticalIcon,
   FolderIcon,
   PencilIcon,
-  DocumentDuplicateIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
   StarIcon,
