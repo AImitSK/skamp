@@ -67,14 +67,14 @@ function ToggleBoxComponent({
           <div className="flex items-center space-x-3">
             {/* Icon */}
             {icon && React.createElement(icon, {
-              className: `h-6 w-6 flex-shrink-0 ${iconColor}`,
+              className: `h-5 w-5 flex-shrink-0 ${iconColor}`,
               'aria-hidden': true
             })}
-            
+
             {/* Titel und Untertitel */}
             <div className="flex-grow min-w-0">
               <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                <h3 className="text-base font-medium text-gray-900 truncate">
                   {title}
                 </h3>
                 

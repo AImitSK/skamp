@@ -137,11 +137,14 @@ export default function ProjectPressemeldungenTab({
 
       {/* Toggle-Bereiche - nur anzeigen wenn Freigaben vorhanden sind */}
       {approvals.length > 0 && (
-        <PressemeldungToggleSection
-          projectId={projectId}
-          campaignId={campaigns[0]?.id}
-          organizationId={organizationId}
-        />
+        <div className="space-y-4">
+          <Heading level={3}>Freigabe-Details</Heading>
+          <PressemeldungToggleSection
+            projectId={projectId}
+            campaignId={campaigns[0]?.id}
+            organizationId={organizationId}
+          />
+        </div>
       )}
 
       {/* Footer-Aktionen */}
