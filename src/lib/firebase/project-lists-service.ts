@@ -33,6 +33,8 @@ export interface ProjectDistributionList {
   // Für projekt-eigene Listen
   name?: string;
   description?: string;
+  category?: string;  // Kategorie für custom-Listen
+  listType?: 'static' | 'dynamic';  // Typ der custom-Liste
   filters?: ListFilters;
   contactIds?: string[];
 
@@ -118,6 +120,8 @@ export const projectListsService = {
     listData: {
       name: string;
       description?: string;
+      category?: string;
+      type?: 'static' | 'dynamic';
       filters?: ListFilters;
       contactIds?: string[];
     },
@@ -125,13 +129,16 @@ export const projectListsService = {
     organizationId: string
   ): Promise<string> {
     try {
+      // Bestimme den Listentyp
+      const listType = listData.type || (listData.filters && Object.keys(listData.filters).length > 0 ? 'dynamic' : 'static');
+
       // Kontaktzahl berechnen
       let contactCount = 0;
-      if (listData.filters) {
+      if (listType === 'dynamic' && listData.filters) {
         // Für dynamische Listen: Kontakte basierend auf Filtern zählen
         const contacts = await this.getFilteredContacts(listData.filters, organizationId);
         contactCount = contacts.length;
-      } else if (listData.contactIds) {
+      } else if (listType === 'static' && listData.contactIds) {
         // Für statische Listen: Direkte Anzahl
         contactCount = listData.contactIds.length;
       }
@@ -142,6 +149,8 @@ export const projectListsService = {
         type: 'custom',
         name: listData.name,
         description: listData.description,
+        category: listData.category || 'custom',
+        listType: listType,
         filters: listData.filters || null,
         contactIds: listData.contactIds || [],
         addedBy: userId,

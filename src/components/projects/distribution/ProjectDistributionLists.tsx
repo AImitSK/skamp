@@ -103,6 +103,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
         {
           name: listData.name,
           description: listData.description,
+          category: listData.category,
+          type: listData.type,
           filters: listData.filters,
           contactIds: listData.contactIds,
         },
@@ -468,7 +470,8 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
               const masterList = list.masterListId ? masterListDetails.get(list.masterListId) : undefined;
               const listName = list.name || masterList?.name || 'Unbenannte Liste';
               const listDescription = list.description || masterList?.description;
-              const category = masterList?.category || 'custom';
+              const category = list.category || masterList?.category || 'custom';
+              const listType = list.listType || masterList?.type || 'static';
               const contactCount = list.cachedContactCount || masterList?.contactCount || 0;
 
               return (
@@ -517,7 +520,7 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
                     {/* Kategorie */}
                     <div className="w-[15%]">
-                      {masterList && (
+                      {(category && category !== 'custom') && (
                         <Badge color="zinc" className="text-xs whitespace-nowrap">
                           {LIST_CATEGORY_LABELS[category as keyof typeof LIST_CATEGORY_LABELS] || category}
                         </Badge>
@@ -526,14 +529,12 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
 
                     {/* Typ */}
                     <div className="w-[15%]">
-                      {masterList && (
-                        <Badge
-                          color={masterList.type === 'dynamic' ? 'green' : 'blue'}
-                          className="text-xs whitespace-nowrap"
-                        >
-                          {masterList.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
-                        </Badge>
-                      )}
+                      <Badge
+                        color={listType === 'dynamic' ? 'green' : 'blue'}
+                        className="text-xs whitespace-nowrap"
+                      >
+                        {listType === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                      </Badge>
                     </div>
 
                     {/* Kontakte */}
