@@ -577,6 +577,15 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
             lists={availableMasterLists}
             linkedListIds={linkedListIds}
             onLink={handleLinkMasterList}
+            onUnlink={async (masterListId: string) => {
+              // Finde die projektListId die mit dieser masterListId verknüpft ist
+              const linkedProjectList = projectLists.find(
+                pl => pl.masterListId === masterListId && pl.type === 'linked'
+              );
+              if (linkedProjectList?.id) {
+                await handleUnlinkList(linkedProjectList.id);
+              }
+            }}
           />
         </div>
       )}

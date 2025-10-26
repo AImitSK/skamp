@@ -24,9 +24,10 @@ interface Props {
   lists: DistributionList[];
   linkedListIds?: string[];
   onLink: (listId: string) => void;
+  onUnlink?: (listId: string) => void;
 }
 
-export default function MasterListBrowser({ lists, linkedListIds = [], onLink }: Props) {
+export default function MasterListBrowser({ lists, linkedListIds = [], onLink, onUnlink }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -263,7 +264,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink }:
               <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktualisiert
               </div>
-              <div className="w-[10%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aktion
               </div>
             </div>
@@ -293,7 +294,7 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink }:
                   {/* Kategorie */}
                   <div className="w-[15%]">
                     <Badge
-                      color={getCategoryColor(list.category) as any}
+                      color="zinc"
                       className="text-xs whitespace-nowrap"
                     >
                       {LIST_CATEGORY_LABELS[list.category as keyof typeof LIST_CATEGORY_LABELS] || list.category}
@@ -328,10 +329,18 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink }:
                   </div>
 
                   {/* Aktion */}
-                  <div className="w-[10%]">
+                  <div className="w-[12%]">
                     <Button
-                      onClick={() => list.id && onLink(list.id)}
-                      className="text-xs px-3 py-1.5 flex items-center gap-1"
+                      onClick={() => {
+                        if (!list.id) return;
+                        const isLinked = linkedListIds.includes(list.id);
+                        if (isLinked && onUnlink) {
+                          onUnlink(list.id);
+                        } else {
+                          onLink(list.id);
+                        }
+                      }}
+                      className="text-xs px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
                       style={linkedListIds.includes(list.id!) ? {
                         backgroundColor: '#DEDC00',
                         color: '#000000',
@@ -343,10 +352,12 @@ export default function MasterListBrowser({ lists, linkedListIds = [], onLink }:
                       }}
                     >
                       <StarIcon
-                        className={`h-3 w-3 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
+                        className={`h-3 w-3 flex-shrink-0 ${linkedListIds.includes(list.id!) ? 'text-black' : 'text-gray-500'}`}
                         fill={linkedListIds.includes(list.id!) ? 'currentColor' : 'none'}
                       />
-                      {linkedListIds.includes(list.id!) ? 'Verknüpft' : 'Verknüpfen'}
+                      <span className="flex-shrink-0">
+                        {linkedListIds.includes(list.id!) ? 'Verknüpft' : 'Verknüpfen'}
+                      </span>
                     </Button>
                   </div>
                 </div>
