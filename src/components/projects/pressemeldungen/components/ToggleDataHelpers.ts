@@ -11,7 +11,7 @@ export function transformMediaItems(mediaItems: CampaignAssetAttachment[]) {
     filename: item.metadata?.fileName || `Asset-${item.id}`,
     name: item.metadata?.fileName || `Asset-${item.id}`,
     mimeType: item.metadata?.fileType || (item.type === 'asset' ? 'image/jpeg' : 'application/octet-stream'),
-    size: item.metadata?.fileSize || 0,
+    size: 0,
     url: item.metadata?.thumbnailUrl || '',
     thumbnailUrl: item.metadata?.thumbnailUrl || '',
     uploadedAt: new Date(),
@@ -61,13 +61,16 @@ export function transformCommunicationItems(feedbackHistory: any[]) {
           id: 'unknown',
           name: senderName,
           email: '',
-          role: isCustomer ? 'customer' as const : 'agency' as const,
-          avatar: senderAvatar
+          role: isCustomer ? 'customer' as const : 'agency' as const
         },
-        timestamp: feedback.requestedAt
+        senderName: senderName,
+        senderAvatar: senderAvatar,
+        createdAt: feedback.requestedAt
           ? (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any))
           : new Date(),
-        isCustomer: isCustomer
+        isRead: true,
+        campaignId: '',
+        organizationId: ''
       };
     });
 }

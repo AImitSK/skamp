@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/PressemeldungCampaignTable.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
@@ -43,6 +43,17 @@ export default function PressemeldungCampaignTable({
 
     loadTeamMembers();
   }, [organizationId]);
+
+  // Callbacks mit useCallback für Performance
+  const handleCloseModal = useCallback(() => {
+    setShowSendModal(null);
+  }, []);
+
+  const handleSentSuccess = useCallback(() => {
+    setShowSendModal(null);
+    onRefresh();
+  }, [onRefresh]);
+
   if (campaigns.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -95,11 +106,8 @@ export default function PressemeldungCampaignTable({
       {showSendModal && (
         <EmailSendModal
           campaign={showSendModal}
-          onClose={() => setShowSendModal(null)}
-          onSent={() => {
-            setShowSendModal(null);
-            onRefresh();
-          }}
+          onClose={handleCloseModal}
+          onSent={handleSentSuccess}
           projectMode={true}
         />
       )}

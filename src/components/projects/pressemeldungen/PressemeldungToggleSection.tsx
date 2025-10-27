@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/PressemeldungToggleSection.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { pdfVersionsService } from '@/lib/firebase/pdf-versions-service';
@@ -57,12 +57,13 @@ export default function PressemeldungToggleSection({
   const [loading, setLoading] = useState(true);
   const [expandedToggles, setExpandedToggles] = useState<Record<string, boolean>>({});
 
-  const handleToggle = (id: string) => {
+  // Handler mit useCallback für Performance
+  const handleToggle = useCallback((id: string) => {
     setExpandedToggles(prev => ({
       ...prev,
       [id]: !prev[id]
     }));
-  };
+  }, []);
 
   useEffect(() => {
     if (campaignId) {
@@ -130,10 +131,10 @@ export default function PressemeldungToggleSection({
           email: ''
         },
         fileSize: v.fileSize || 0,
-        comment: v.changesSummary || undefined,
+        comment: undefined,
         isCurrent: false,
         campaignId: campaignId,
-        organizationId: '',
+        organizationId: organizationId,
         status: v.status as 'draft' | 'pending_customer' | 'approved' | 'rejected'
       }));
     } catch (error) {
@@ -188,6 +189,29 @@ export default function PressemeldungToggleSection({
     }
   };
 
+  // Callbacks für ToggleBoxes
+  const handleMediaSelect = useCallback((mediaId: string) => {
+    const media = mediaItems.find(item => item.id === mediaId);
+    if (media) {
+      const url = media.metadata?.thumbnailUrl;
+      if (url) {
+        window.open(url, '_blank');
+      }
+    }
+  }, [mediaItems]);
+
+  const handleVersionSelect = useCallback((version: string) => {
+    console.log('PDF-Version ausgewählt:', version);
+  }, []);
+
+  const handleNewMessage = useCallback(() => {
+    console.log('Neue Nachricht');
+    loadCommunicationData();
+  }, []);
+
+  // Memoized transformed data
+  const transformedMediaItems = useMemo(() => transformMediaItems(mediaItems), [mediaItems]);
+  const transformedCommunications = useMemo(() => transformCommunicationItems(feedbackHistory), [feedbackHistory]);
 
   if (!campaignId) {
     return (
@@ -221,19 +245,9 @@ export default function PressemeldungToggleSection({
           count={mediaItems.length}
           isExpanded={expandedToggles['media'] || false}
           onToggle={handleToggle}
-          mediaItems={transformMediaItems(mediaItems)}
-          onMediaSelect={(mediaId) => {
-            // Fullscreen-Viewer öffnen (wie in funktionierender Freigabe-Seite)
-            const media = mediaItems.find(item => item.id === mediaId);
-
-            if (media) {
-              const url = media.metadata?.thumbnailUrl || media.metadata?.downloadUrl;
-
-              if (url) {
-                window.open(url, '_blank');
-              }
-            }
-          }}
+          mediaItems={transformedMediaItems}
+          onMediaSelect={handleMediaSelect}
+          organizationId={organizationId}
         />
 
         {/* PDF-Historie */}
@@ -244,10 +258,9 @@ export default function PressemeldungToggleSection({
           isExpanded={expandedToggles['pdf-history'] || false}
           onToggle={handleToggle}
           pdfVersions={pdfVersions}
-          onVersionSelect={(version) => {
-            console.log('PDF-Version ausgewählt:', version);
-          }}
+          onVersionSelect={handleVersionSelect}
           showDownloadButtons={true}
+          organizationId={organizationId}
         />
 
         {/* Kommunikation */}
@@ -257,12 +270,10 @@ export default function PressemeldungToggleSection({
           count={communicationCount}
           isExpanded={expandedToggles['communication'] || false}
           onToggle={handleToggle}
-          communications={transformCommunicationItems(feedbackHistory)}
-          onNewMessage={() => {
-            console.log('Neue Nachricht');
-            loadCommunicationData(); // Reload communication data
-          }}
+          communications={transformedCommunications}
+          onNewMessage={handleNewMessage}
           allowNewMessages={true}
+          organizationId={organizationId}
         />
       </Suspense>
     </div>

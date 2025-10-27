@@ -1,7 +1,7 @@
 // src/components/projects/pressemeldungen/ProjectPressemeldungenTab.tsx
 'use client';
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, useCallback, Fragment } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, EllipsisVerticalIcon, BookmarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
@@ -32,6 +32,16 @@ export default function ProjectPressemeldungenTab({
   } = useProjectPressData(projectId, organizationId);
 
   const hasLinkedCampaign = useMemo(() => campaigns.length > 0, [campaigns.length]);
+
+  // Callbacks mit useCallback für Performance
+  const handleCloseModal = useCallback(() => {
+    setShowCreateModal(false);
+  }, []);
+
+  const handleSuccessModal = useCallback((campaignId: string) => {
+    setShowCreateModal(false);
+    refetch();
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -133,11 +143,8 @@ export default function ProjectPressemeldungenTab({
         <CampaignCreateModal
           projectId={projectId}
           organizationId={organizationId}
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={(campaignId) => {
-            setShowCreateModal(false);
-            refetch();
-          }}
+          onClose={handleCloseModal}
+          onSuccess={handleSuccessModal}
         />
       )}
     </div>
