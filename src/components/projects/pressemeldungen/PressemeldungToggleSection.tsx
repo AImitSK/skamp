@@ -203,11 +203,11 @@ export default function PressemeldungToggleSection({
   }, [mediaItems]);
 
   const handleVersionSelect = useCallback((version: string) => {
-    console.log('PDF-Version ausgewählt:', version);
+    // PDF-Version wurde ausgewählt - Handler für zukünftige Implementierung
   }, []);
 
   const handleNewMessage = useCallback(() => {
-    console.log('Neue Nachricht');
+    // Neue Nachricht - Kommunikationsdaten neu laden
     loadCommunicationData();
   }, []);
 

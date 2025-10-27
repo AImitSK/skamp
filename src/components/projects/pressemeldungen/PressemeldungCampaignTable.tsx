@@ -36,7 +36,7 @@ export default function PressemeldungCampaignTable({
         const members = await teamMemberService.getByOrganization(organizationId);
         setTeamMembers(members);
       } catch (error) {
-        console.log('Fehler beim Laden der TeamMembers:', error);
+        // Fehler beim Laden ignorieren - App funktioniert mit leeren TeamMembers
         setTeamMembers([]);
       } finally {
         setLoading(false);
