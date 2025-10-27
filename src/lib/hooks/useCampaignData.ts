@@ -57,7 +57,8 @@ export function useProjectCampaigns(
       return [];
     },
     enabled: !!projectId && !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 Minuten
+    staleTime: 0, // Immer als stale markieren, damit bei Rückkehr neu geladen wird
+    gcTime: 5 * 60 * 1000, // Garbage collection nach 5 Minuten
   });
 }
 

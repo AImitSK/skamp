@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -25,6 +26,7 @@ export default function CampaignCreateModal({
   onClose,
   onSuccess
 }: Props) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState('');
@@ -34,6 +36,11 @@ export default function CampaignCreateModal({
 
     if (!title.trim()) {
       toastService.error('Bitte geben Sie einen Titel ein.');
+      return;
+    }
+
+    if (!user?.uid) {
+      toastService.error('Sie müssen angemeldet sein, um eine Kampagne zu erstellen.');
       return;
     }
 
@@ -47,7 +54,7 @@ export default function CampaignCreateModal({
         status: 'draft',
         organizationId,
         projectId, // ProjectId wird direkt beim Erstellen gesetzt
-        userId: '', // Will be set by service
+        userId: user.uid, // WICHTIG: Korrekte userId vom Auth-Context
         distributionListId: '',
         distributionListName: '',
         recipientCount: 0,
@@ -58,9 +65,10 @@ export default function CampaignCreateModal({
 
       // KEIN linkCampaignToProject() nötig - projectId ist bereits gesetzt!
 
-      // Invalidiere React Query Cache, damit die Kampagne in der Liste erscheint
-      queryClient.invalidateQueries({
-        queryKey: ['project-campaigns', projectId, organizationId]
+      // Invalidiere React Query Cache und WARTE auf das Refetch
+      await queryClient.invalidateQueries({
+        queryKey: ['project-campaigns', projectId, organizationId],
+        refetchType: 'active' // Nur aktive Queries neu laden
       });
 
       toastService.success('Kampagne erfolgreich erstellt');
@@ -71,7 +79,7 @@ export default function CampaignCreateModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, organizationId, projectId, onSuccess, queryClient]);
+  }, [title, user, organizationId, projectId, onSuccess, queryClient]);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
