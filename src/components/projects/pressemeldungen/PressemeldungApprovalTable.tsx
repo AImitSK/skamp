@@ -3,6 +3,8 @@
 
 import { ApprovalEnhanced } from '@/types/approvals';
 import ApprovalTableRow from './components/ApprovalTableRow';
+import EmptyState from './components/EmptyState';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   approvals: ApprovalEnhanced[];
@@ -15,13 +17,11 @@ export default function PressemeldungApprovalTable({
 }: Props) {
   if (approvals.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-8 text-center">
-          <p className="text-sm text-gray-500">
-            Keine Freigaben für dieses Projekt gefunden
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={CheckCircleIcon}
+        title="Keine Freigaben"
+        description="Keine Freigaben für dieses Projekt gefunden"
+      />
     );
   }
 

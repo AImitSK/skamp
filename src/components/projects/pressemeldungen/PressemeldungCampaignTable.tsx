@@ -7,6 +7,8 @@ import { TeamMember } from '@/types/international';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import EmailSendModal from '@/components/pr/EmailSendModal';
 import CampaignTableRow from './components/CampaignTableRow';
+import EmptyState from './components/EmptyState';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   campaigns: PRCampaign[];
@@ -56,13 +58,11 @@ export default function PressemeldungCampaignTable({
 
   if (campaigns.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-8 text-center">
-          <p className="text-sm text-gray-500">
-            Noch keine Pressemeldungen mit diesem Projekt verknüpft
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={DocumentTextIcon}
+        title="Keine Pressemeldungen"
+        description="Noch keine Pressemeldungen mit diesem Projekt verknüpft"
+      />
     );
   }
 

@@ -12,6 +12,8 @@ import {
   transformCommunicationItems,
   formatLastMessageText as formatLastMessageHelper
 } from './components/ToggleDataHelpers';
+import EmptyState from './components/EmptyState';
+import { FolderIcon } from '@heroicons/react/24/outline';
 
 // Dynamische Imports mit Loading-States (wie in der funktionierenden Freigabe-Seite)
 const MediaToggleBox = dynamic(
@@ -215,13 +217,11 @@ export default function PressemeldungToggleSection({
 
   if (!campaignId) {
     return (
-      <div className="space-y-4">
-        <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-          <p className="text-sm text-gray-500">
-            Erstellen Sie eine Pressemeldung, um Medien, PDF-Historie und Kommunikation anzuzeigen
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={FolderIcon}
+        title="Keine Pressemeldung"
+        description="Erstellen Sie eine Pressemeldung, um Medien, PDF-Historie und Kommunikation anzuzeigen"
+      />
     );
   }
 
