@@ -1,13 +1,11 @@
 // src/components/projects/pressemeldungen/CampaignCreateModal.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
 import { PRCampaign } from '@/types/pr';
 import { prService } from '@/lib/firebase/pr-service';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -27,17 +25,12 @@ export default function CampaignCreateModal({
   onSuccess
 }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    type: 'press_release' as const,
-    priority: 'medium' as const
-  });
+  const [title, setTitle] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title.trim()) {
+    if (!title.trim()) {
       toastService.error('Bitte geben Sie einen Titel ein.');
       return;
     }
@@ -45,20 +38,21 @@ export default function CampaignCreateModal({
     setIsSubmitting(true);
 
     try {
-      // Create new campaign
-      const campaignData: Partial<PRCampaign> = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        type: formData.type,
-        priority: formData.priority,
+      // Create new campaign with minimal required fields
+      const campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'> = {
+        title: title.trim(),
+        contentHtml: '',
         status: 'draft',
         organizationId,
-        projectId, // Link to project
-        createdAt: new Date() as any,
-        updatedAt: new Date() as any
+        projectId,
+        userId: '', // Will be set by service
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
       };
 
-      const campaignId = await prService.createCampaign(campaignData, organizationId);
+      const campaignId = await prService.create(campaignData);
 
       // Link campaign to project
       await prService.linkCampaignToProject(campaignId, projectId);
@@ -71,14 +65,11 @@ export default function CampaignCreateModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [title, organizationId, projectId, onSuccess]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  }, []);
 
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
@@ -98,55 +89,14 @@ export default function CampaignCreateModal({
               <Label>Titel der Pressemeldung</Label>
               <Input
                 type="text"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                value={title}
+                onChange={handleTitleChange}
                 placeholder="z.B. Neue Produkteinführung bei..."
                 required
                 disabled={isSubmitting}
+                autoFocus
               />
             </Field>
-
-            <Field>
-              <Label>Beschreibung (optional)</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Kurze Beschreibung der Pressemeldung..."
-                rows={3}
-                disabled={isSubmitting}
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Field>
-                <Label>Typ</Label>
-                <Select
-                  value={formData.type}
-                  onChange={(value) => handleInputChange('type', value)}
-                  disabled={isSubmitting}
-                >
-                  <option value="press_release">Pressemitteilung</option>
-                  <option value="announcement">Ankündigung</option>
-                  <option value="product_launch">Produktlaunch</option>
-                  <option value="event">Veranstaltung</option>
-                  <option value="corporate">Unternehmensnews</option>
-                </Select>
-              </Field>
-
-              <Field>
-                <Label>Priorität</Label>
-                <Select
-                  value={formData.priority}
-                  onChange={(value) => handleInputChange('priority', value)}
-                  disabled={isSubmitting}
-                >
-                  <option value="low">Niedrig</option>
-                  <option value="medium">Mittel</option>
-                  <option value="high">Hoch</option>
-                  <option value="urgent">Dringend</option>
-                </Select>
-              </Field>
-            </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start">
@@ -181,7 +131,7 @@ export default function CampaignCreateModal({
             <Button
               type="submit"
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-              disabled={isSubmitting || !formData.title.trim()}
+              disabled={isSubmitting || !title.trim()}
             >
               {isSubmitting ? 'Wird erstellt...' : 'Kampagne erstellen'}
             </Button>
