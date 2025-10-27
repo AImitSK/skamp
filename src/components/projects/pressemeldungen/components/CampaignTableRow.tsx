@@ -117,9 +117,12 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
         <div className="w-[35%] min-w-0 pr-12">
           <div className="flex items-center">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <a
+                href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}
+                className="text-sm font-semibold text-gray-900 hover:text-[#005fab] truncate block cursor-pointer transition-colors"
+              >
                 {campaign.title}
-              </p>
+              </a>
               {campaign.projectTitle && (
                 <p className="text-xs text-gray-500 truncate mt-1">
                   Projekt: {campaign.projectTitle}
