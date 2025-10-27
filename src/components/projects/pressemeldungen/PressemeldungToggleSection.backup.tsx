@@ -1,19 +1,14 @@
 // src/components/projects/pressemeldungen/PressemeldungToggleSection.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
+import { mediaService } from '@/lib/firebase/media-service';
 import { pdfVersionsService } from '@/lib/firebase/pdf-versions-service';
+import { notificationsService } from '@/lib/firebase/notifications-service';
 import { CampaignAssetAttachment } from '@/types/pr';
 import { PDFVersion } from '@/types/customer-review';
-import {
-  transformMediaItems,
-  transformCommunicationItems,
-  formatLastMessageText as formatLastMessageHelper
-} from './components/ToggleDataHelpers';
-import EmptyState from './components/EmptyState';
-import { FolderIcon } from '@heroicons/react/24/outline';
 
 // Dynamische Imports mit Loading-States (wie in der funktionierenden Freigabe-Seite)
 const MediaToggleBox = dynamic(
@@ -59,13 +54,12 @@ export default function PressemeldungToggleSection({
   const [loading, setLoading] = useState(true);
   const [expandedToggles, setExpandedToggles] = useState<Record<string, boolean>>({});
 
-  // Handler mit useCallback für Performance
-  const handleToggle = useCallback((id: string) => {
+  const handleToggle = (id: string) => {
     setExpandedToggles(prev => ({
       ...prev,
       [id]: !prev[id]
     }));
-  }, []);
+  };
 
   useEffect(() => {
     if (campaignId) {
@@ -88,7 +82,7 @@ export default function PressemeldungToggleSection({
       setMediaItems(media || []);
       setPdfVersions(pdfs || []);
     } catch (error) {
-      // Fehler beim Laden ignorieren - App funktioniert mit leeren Arrays
+      console.error('Fehler beim Laden der Toggle-Daten:', error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +102,7 @@ export default function PressemeldungToggleSection({
 
       return [];
     } catch (error) {
-      // Fehler beim Laden ignorieren - leeres Array wird zurückgegeben
+      console.error('Fehler beim Laden der Medien:', error);
       return [];
     }
   };
@@ -133,14 +127,14 @@ export default function PressemeldungToggleSection({
           email: ''
         },
         fileSize: v.fileSize || 0,
-        comment: undefined,
+        comment: v.changesSummary || undefined,
         isCurrent: false,
         campaignId: campaignId,
-        organizationId: organizationId,
+        organizationId: '',
         status: v.status as 'draft' | 'pending_customer' | 'approved' | 'rejected'
       }));
     } catch (error) {
-      // Fehler beim Laden ignorieren - leeres Array wird zurückgegeben
+      console.error('Fehler beim Laden der PDF-Versionen:', error);
       return [];
     }
   };
@@ -185,43 +179,36 @@ export default function PressemeldungToggleSection({
         setLastMessageDate(null);
       }
     } catch (error) {
-      // Fehler beim Laden ignorieren - Defaults setzen
+      console.error('Fehler beim Laden der Kommunikationsdaten:', error);
       setCommunicationCount(0);
       setLastMessageDate(null);
     }
   };
 
-  // Callbacks für ToggleBoxes
-  const handleMediaSelect = useCallback((mediaId: string) => {
-    const media = mediaItems.find(item => item.id === mediaId);
-    if (media) {
-      const url = media.metadata?.thumbnailUrl;
-      if (url) {
-        window.open(url, '_blank');
-      }
+  const formatLastMessageText = () => {
+    if (!lastMessageDate) return 'Keine Nachrichten';
+
+    const now = new Date();
+    const diffInMs = now.getTime() - lastMessageDate.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) {
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      return diffInHours === 0 ? 'Letzte Nachricht: vor wenigen Minuten' : `Letzte Nachricht: vor ${diffInHours}h`;
     }
-  }, [mediaItems]);
 
-  const handleVersionSelect = useCallback((version: string) => {
-    // PDF-Version wurde ausgewählt - Handler für zukünftige Implementierung
-  }, []);
-
-  const handleNewMessage = useCallback(() => {
-    // Neue Nachricht - Kommunikationsdaten neu laden
-    loadCommunicationData();
-  }, []);
-
-  // Memoized transformed data
-  const transformedMediaItems = useMemo(() => transformMediaItems(mediaItems), [mediaItems]);
-  const transformedCommunications = useMemo(() => transformCommunicationItems(feedbackHistory), [feedbackHistory]);
+    return `Letzte Nachricht: vor ${diffInDays} Tag${diffInDays === 1 ? '' : 'en'}`;
+  };
 
   if (!campaignId) {
     return (
-      <EmptyState
-        icon={FolderIcon}
-        title="Keine Pressemeldung"
-        description="Erstellen Sie eine Pressemeldung, um Medien, PDF-Historie und Kommunikation anzuzeigen"
-      />
+      <div className="space-y-4">
+        <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-500">
+            Erstellen Sie eine Pressemeldung, um Medien, PDF-Historie und Kommunikation anzuzeigen
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -245,9 +232,31 @@ export default function PressemeldungToggleSection({
           count={mediaItems.length}
           isExpanded={expandedToggles['media'] || false}
           onToggle={handleToggle}
-          mediaItems={transformedMediaItems}
-          onMediaSelect={handleMediaSelect}
-          organizationId={organizationId}
+          mediaItems={mediaItems.map(item => ({
+            id: item.id,
+            filename: item.metadata?.fileName || `Asset-${item.id}`,
+            name: item.metadata?.fileName || `Asset-${item.id}`,
+            mimeType: item.metadata?.fileType || (item.type === 'asset' ? 'image/jpeg' : 'application/octet-stream'),
+            size: item.metadata?.fileSize || 0,
+            url: item.metadata?.thumbnailUrl || '',
+            thumbnailUrl: item.metadata?.thumbnailUrl || '',
+            uploadedAt: new Date(),
+            uploadedBy: { id: '', name: '', email: '' },
+            organizationId: '',
+            metadata: {}
+          }))}
+          onMediaSelect={(mediaId) => {
+            // Fullscreen-Viewer öffnen (wie in funktionierender Freigabe-Seite)
+            const media = mediaItems.find(item => item.id === mediaId);
+
+            if (media) {
+              const url = media.metadata?.thumbnailUrl || media.metadata?.downloadUrl;
+
+              if (url) {
+                window.open(url, '_blank');
+              }
+            }
+          }}
         />
 
         {/* PDF-Historie */}
@@ -258,9 +267,10 @@ export default function PressemeldungToggleSection({
           isExpanded={expandedToggles['pdf-history'] || false}
           onToggle={handleToggle}
           pdfVersions={pdfVersions}
-          onVersionSelect={handleVersionSelect}
+          onVersionSelect={(version) => {
+            console.log('PDF-Version ausgewählt:', version);
+          }}
           showDownloadButtons={true}
-          organizationId={organizationId}
         />
 
         {/* Kommunikation */}
@@ -270,10 +280,48 @@ export default function PressemeldungToggleSection({
           count={communicationCount}
           isExpanded={expandedToggles['communication'] || false}
           onToggle={handleToggle}
-          communications={transformedCommunications}
-          onNewMessage={handleNewMessage}
+          communications={feedbackHistory.sort((a, b) => {
+            // Sortiere nach timestamp - älteste zuerst (wie in der funktionierenden Freigabe-Seite)
+            const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+            const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
+            return aTime - bTime;
+          }).map((feedback, index) => {
+            // KORREKTE Erkennung basierend auf action-Feld
+            const isCustomer = (feedback as any).action === 'changes_requested';
+
+            // Namen und Avatar basierend auf isCustomer
+            let senderName, senderAvatar;
+            if (isCustomer) {
+              // KUNDE: Grüner Avatar
+              senderName = feedback.author || 'Kunde';
+              senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
+            } else {
+              // TEAM: Blauer Avatar
+              senderName = feedback.author || 'Teammitglied';
+              senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+            }
+
+            return {
+              id: `feedback-${index}`,
+              type: 'feedback' as const,
+              content: feedback.comment || '',
+              message: feedback.comment || '',
+              sender: {
+                id: 'unknown',
+                name: senderName,
+                email: '',
+                role: isCustomer ? 'customer' as const : 'agency' as const,
+                avatar: senderAvatar
+              },
+              timestamp: feedback.requestedAt ? (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)) : new Date(),
+              isCustomer: isCustomer
+            };
+          })}
+          onNewMessage={() => {
+            console.log('Neue Nachricht');
+            loadCommunicationData(); // Reload communication data
+          }}
           allowNewMessages={true}
-          organizationId={organizationId}
         />
       </Suspense>
     </div>

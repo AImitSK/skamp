@@ -1730,7 +1730,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    */
   async getCampaignsByProject(projectId: string, organizationId: string): Promise<PRCampaign[]> {
     try {
-      const campaignsRef = collection(db, 'campaigns');
+      const campaignsRef = collection(db, 'pr_campaigns'); // FIX: Korrekte Collection
       const q = query(
         campaignsRef,
         where('projectId', '==', projectId),

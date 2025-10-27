@@ -1,19 +1,20 @@
 // src/components/projects/pressemeldungen/ProjectPressemeldungenTab.tsx
 'use client';
 
-import { useState, useMemo, useCallback, Fragment } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { PlusIcon, EllipsisVerticalIcon, BookmarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { Popover, Transition } from '@headlessui/react';
-import { useProjectPressData } from '@/lib/hooks/useCampaignData';
+import { PRCampaign } from '@/types/pr';
+import { ApprovalEnhanced } from '@/types/approval';
+import { prService } from '@/lib/firebase/pr-service';
+import { approvalServiceExtended } from '@/lib/firebase/approval-service';
 import { projectService } from '@/lib/firebase/project-service';
-import { toastService } from '@/lib/utils/toast';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
 import PressemeldungApprovalTable from './PressemeldungApprovalTable';
 import PressemeldungToggleSection from './PressemeldungToggleSection';
+import CampaignCreateModal from './CampaignCreateModal';
 
 interface Props {
   projectId: string;
@@ -24,60 +25,73 @@ export default function ProjectPressemeldungenTab({
   projectId,
   organizationId
 }: Props) {
-  const router = useRouter();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [campaigns, setCampaigns] = useState<PRCampaign[]>([]);
+  const [approvals, setApprovals] = useState<ApprovalEnhanced[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // React Query Hook für Campaigns + Approvals
-  const {
-    campaigns,
-    approvals,
-    isLoading,
-    refetch,
-  } = useProjectPressData(projectId, organizationId);
-
-  const hasLinkedCampaign = useMemo(() => campaigns.length > 0, [campaigns.length]);
-
-  // Callbacks mit useCallback für Performance
-  const handleCreateCampaign = useCallback(async () => {
-    setIsCreating(true);
+  const loadProjectPressData = useCallback(async () => {
     try {
-      // Projekt laden um Titel zu bekommen
-      const project = await projectService.getById(projectId, { organizationId });
-      if (!project) {
-        throw new Error('Projekt nicht gefunden');
-      }
+      // Lade Projekt-Daten um linkedCampaigns zu erhalten
+      const projectData = await projectService.getById(projectId, { organizationId });
 
-      // Gleiche Funktion wie im Wizard verwenden
-      const result = await projectService.initializeProjectResources(
-        projectId,
-        {
-          createCampaign: true,
-          campaignTitle: `${project.title} - PR-Kampagne`,
-          attachAssets: [],
-          linkDistributionLists: [],
-          createTasks: false,
-          notifyTeam: false
-        },
-        organizationId
-      );
+      let allCampaigns: PRCampaign[] = [];
 
-      if (result.campaignCreated && result.campaignId) {
-        toastService.success('Pressemeldung erfolgreich erstellt');
-        setShowConfirmDialog(false);
-        // Weiterleitung zur Edit-Seite
-        router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${result.campaignId}`);
+      if (projectData) {
+        // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
+        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+          const linkedCampaignData = await Promise.all(
+            projectData.linkedCampaigns.map(async (campaignId) => {
+              try {
+                const campaign = await prService.getById(campaignId, organizationId);
+                return campaign;
+              } catch (error) {
+                console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
+                return null;
+              }
+            })
+          );
+          allCampaigns.push(...linkedCampaignData.filter(Boolean) as PRCampaign[]);
+        }
+
+        // 2. Lade Kampagnen über projectId (neuer Ansatz)
+        const projectCampaigns = await prService.getCampaignsByProject(projectId, organizationId);
+        allCampaigns.push(...projectCampaigns);
+
+        // Duplikate entfernen
+        const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
+          index === self.findIndex(c => c.id === campaign.id)
+        );
+
+        setCampaigns(uniqueCampaigns);
+
+        // Lade Freigaben für gefundene Kampagnen
+        if (uniqueCampaigns.length > 0) {
+          const approvalData = await approvalServiceExtended.getApprovalsByProject(projectId, organizationId);
+          setApprovals(approvalData);
+        } else {
+          setApprovals([]);
+        }
       } else {
-        throw new Error('Kampagne konnte nicht erstellt werden');
+        setCampaigns([]);
+        setApprovals([]);
       }
     } catch (error) {
-      toastService.error('Fehler beim Erstellen der Pressemeldung');
+      console.error('Fehler beim Laden der Pressemeldungen:', error);
+      setCampaigns([]);
+      setApprovals([]);
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
-  }, [projectId, organizationId, router]);
+  }, [projectId, organizationId]);
 
-  if (isLoading) {
+  useEffect(() => {
+    loadProjectPressData();
+  }, [loadProjectPressData]);
+
+  const hasLinkedCampaign = campaigns.length > 0;
+
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
@@ -95,7 +109,7 @@ export default function ProjectPressemeldungenTab({
         <Heading level={3}>Pressemeldung</Heading>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setShowConfirmDialog(true)}
+            onClick={() => setShowCreateModal(true)}
             className={hasLinkedCampaign
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-[#005fab] hover:bg-[#004a8c] text-white"
@@ -148,7 +162,7 @@ export default function ProjectPressemeldungenTab({
       <PressemeldungCampaignTable
         campaigns={campaigns}
         organizationId={organizationId}
-        onRefresh={refetch}
+        onRefresh={loadProjectPressData}
       />
 
       {/* Freigabe-Tabelle */}
@@ -156,7 +170,7 @@ export default function ProjectPressemeldungenTab({
         <Heading level={3}>Freigabe</Heading>
         <PressemeldungApprovalTable
           approvals={approvals}
-          onRefresh={refetch}
+          onRefresh={loadProjectPressData}
         />
       </div>
 
@@ -172,34 +186,18 @@ export default function ProjectPressemeldungenTab({
         </div>
       )}
 
-      {/* Bestätigungs-Dialog */}
-      <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} size="sm">
-        <DialogTitle>Neue Pressemeldung erstellen</DialogTitle>
-        <DialogBody>
-          <p className="text-gray-700">
-            Wollen Sie wirklich eine neue Pressemeldung erstellen?
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            Sie werden anschließend zur Bearbeitung der Pressemeldung weitergeleitet.
-          </p>
-        </DialogBody>
-        <DialogActions>
-          <Button
-            color="secondary"
-            onClick={() => setShowConfirmDialog(false)}
-            disabled={isCreating}
-          >
-            Abbrechen
-          </Button>
-          <Button
-            onClick={handleCreateCampaign}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-            disabled={isCreating}
-          >
-            {isCreating ? 'Wird erstellt...' : 'Ja, erstellen'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Create Modal */}
+      {showCreateModal && (
+        <CampaignCreateModal
+          projectId={projectId}
+          organizationId={organizationId}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={(campaignId) => {
+            setShowCreateModal(false);
+            loadProjectPressData();
+          }}
+        />
+      )}
     </div>
   );
 }
