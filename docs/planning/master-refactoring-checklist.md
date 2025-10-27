@@ -1,9 +1,9 @@
 # Projects-Module: Master Refactoring Checkliste
 
-**Version:** 1.8
+**Version:** 1.9
 **Erstellt:** 2025-01-19
 **Letztes Update:** 2025-10-27
-**Status:** In Progress (10/13 Module = 77%)
+**Status:** In Progress (11/13 Module = 85%)
 
 ---
 
@@ -1185,22 +1185,41 @@ Phase 0-7 vollständig:
 
 ### 3.1 Team Management
 
-**Komponenten:** TeamManagementModal, TeamMemberSelector
-**LOC:** ~200+
-**Aufwand:** M (Medium)
+**Status:** ❌ ENTFERNT - Redundant
+**Grund:** Team Management ist bereits im Edit Modal integriert
+
+**Komponenten:** ~~TeamManagementModal~~, TeamMemberSelector (verwendet in Creation Wizard)
+**LOC:** ~200+ (entfernt)
+**Aufwand:** N/A
 
 **Tracking:**
-- [ ] **Plan erstellt:** `docs/planning/global/team-management-refactoring.md`
-- [ ] **Implementierung durchgeführt**
+- [x] **Entfernt:** 2025-10-27
+- [x] **TeamManagementModal.tsx gelöscht**
+- [x] **"Team verwalten" Menüpunkt aus ProjectHeader entfernt**
 
 **Ergebnis-Zusammenfassung:**
 ```
-[Nach Implementierung ausfüllen]
+❌ ENTFERNT - 2025-10-27
+
+Begründung:
+- Team Management bereits im Edit Modal vorhanden
+- Duplikate Funktionalität vermeiden
+- Code-Reduktion: -200+ Zeilen
+
+Entfernte Komponenten:
+- src/components/projects/TeamManagementModal.tsx (gelöscht)
+- "Team verwalten" Menüpunkt aus ProjectHeader.tsx
+- onTeamManageClick Handler aus page.tsx
+- Tests angepasst (ProjectHeader.test.tsx)
+
+Alternative:
+✅ Team Management über Edit Modal (bereits implementiert)
+✅ Einfachere User Experience (eine zentrale Stelle)
 ```
 
 **TODOs / Offene Punkte:**
 ```
-[Nach Implementierung ausfüllen]
+Keine - Modul entfernt, Edit Modal reicht aus ✅
 ```
 
 ---
@@ -1260,8 +1279,8 @@ Phase 0-7 vollständig:
 | Phase 0: Shared Components | 2 | 2 | 100% ✅ |
 | Phase 1: Hauptseite | 1 | 1 | 100% ✅ |
 | Phase 2: Tab-Module | 7 | 7 | 100% ✅ |
-| Phase 3: Globale Features | 3 | 0 | 0% |
-| **GESAMT** | **13** | **10** | **77%** |
+| Phase 3: Globale Features | 3 | 1 | 33% (1 entfernt) |
+| **GESAMT** | **13** | **11** | **85%** |
 
 ### Aufwands-Verteilung
 
@@ -1400,6 +1419,7 @@ Alle 7 Tab-Module wurden erfolgreich refactored (100% Complete)
 **Maintainer:** CeleroPress Team
 
 **Changelog:**
+- 2025-10-27 (Abend): Team Management Modal entfernt - Redundant mit Edit Modal - Code-Reduktion: -200+ Zeilen - Status: 11/13 Module (85%)
 - 2025-10-27 (PM): Monitoring Tab zu Main gemerged - Phase 0-7 abgeschlossen (8/8 Test-Suites, 6.812 Zeilen Docs) - Status: 10/13 Module (77%) - PHASE 2 COMPLETE! 🎉
 - 2025-10-27 (AM): Pressemeldung Tab zu Main gemerged - Phase 0-7 abgeschlossen (147/147 Tests, 5.560+ Zeilen Docs) - Status: 9/13 Module (69%)
 - 2025-10-26 (PM): Verteiler Tab zu Main gemerged - Phase 0-7 abgeschlossen (inkl. React Query Fix + Test-Fix) - Status: 8/13 Module (62%)

@@ -1,0 +1,92 @@
+
+> skamp@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 80s
+
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+Module not found: Can't resolve 'country-flag-icons/react/3x2' in 'C:\Users\skuehne\Desktop\Projekt\skamp\src\app\dashboard\contacts\crm\components\shared'
+
+Import trace for requested module:
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+./src/app/dashboard/contacts/crm/components/shared/index.ts
+./src/app/dashboard/contacts/crm/contacts/page.tsx
+
+./src/lib/firebase/media-service.ts
+Attempted import error: 'updateFolderClientInheritance' is not exported from './media-folders-service' (imported as 'foldersService').
+
+Import trace for requested module:
+./src/lib/firebase/media-service.ts
+./src/app/freigabe/[shareId]/page.tsx
+
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+Module not found: Can't resolve 'country-flag-icons/react/3x2' in 'C:\Users\skuehne\Desktop\Projekt\skamp\src\app\dashboard\contacts\crm\components\shared'
+
+Import trace for requested module:
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+./src/app/dashboard/contacts/crm/components/shared/index.ts
+./src/app/dashboard/contacts/crm/companies/page.tsx
+
+./src/lib/firebase/media-service.ts
+Attempted import error: 'updateFolderClientInheritance' is not exported from './media-folders-service' (imported as 'foldersService').
+
+Import trace for requested module:
+./src/lib/firebase/media-service.ts
+./src/app/freigabe/[shareId]/page.tsx
+
+./src/lib/firebase/media-service.ts
+Attempted import error: 'updateFolderClientInheritance' is not exported from './media-folders-service' (imported as 'foldersService').
+
+Import trace for requested module:
+./src/lib/firebase/media-service.ts
+./src/app/api/migrate-campaign-assets-v2/route.ts
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: { hasServiceAccount: true, hasProjectId: true, appsLength: 0 }
+❌ Failed to initialize Firebase Admin SDK: SyntaxError: Bad control character in string literal in JSON at position 170
+    at JSON.parse (<anonymous>)
+    at 75374 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:12948)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:7122)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 59134 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:7078)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:616)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 21593 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:552)
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: { hasServiceAccount: true, hasProjectId: true, appsLength: 0 }
+❌ Failed to initialize Firebase Admin SDK: SyntaxError: Bad control character in string literal in JSON at position 170
+    at JSON.parse (<anonymous>)
+    at 75374 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:12948)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:10426)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 72548 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:10382)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:627)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 21593 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:552)
+SyntaxError: Bad control character in string literal in JSON at position 170
+    at JSON.parse (<anonymous>)
+    at 75374 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:12948)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:7122)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 59134 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:7078)
+    at c (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:616)
+    at c.a (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\webpack-runtime.js:1:721)
+    at 21593 (C:\Users\skuehne\Desktop\Projekt\skamp\.next\server\app\api\admin\monitoring-stats\route.js:1:552)
+
+> Build error occurred
+[Error: Failed to collect page data for /api/admin/monitoring-stats] {
+  type: 'Error'
+}

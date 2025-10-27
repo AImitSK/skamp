@@ -69,7 +69,6 @@ jest.mock('next/link', () => {
 
 describe('ProjectHeader', () => {
   const mockOnEditClick = jest.fn();
-  const mockOnTeamManageClick = jest.fn();
   const mockOnDeleteClick = jest.fn();
 
   beforeEach(() => {
@@ -86,7 +85,6 @@ describe('ProjectHeader', () => {
         <ProjectHeader
           teamMembers={mockTeamMembers}
           onEditClick={mockOnEditClick}
-          onTeamManageClick={mockOnTeamManageClick}
           onDeleteClick={mockOnDeleteClick}
         />
       </ProjectProvider>
@@ -130,13 +128,11 @@ describe('ProjectHeader', () => {
     expect(moreButton?.tagName).toBe('BUTTON');
   });
 
-  it('should have delete and team manage handlers wired correctly', () => {
+  it('should have delete handler wired correctly', () => {
     const { container } = renderWithProvider(mockProject);
 
     expect(mockOnDeleteClick).toBeDefined();
-    expect(mockOnTeamManageClick).toBeDefined();
     expect(typeof mockOnDeleteClick).toBe('function');
-    expect(typeof mockOnTeamManageClick).toBe('function');
   });
 
   it('should render team member avatars correctly', () => {

@@ -10,7 +10,6 @@ import {
   ArrowLeftIcon,
   PencilSquareIcon,
   EllipsisVerticalIcon,
-  UserGroupIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -23,7 +22,6 @@ import { TeamMember } from '@/types/international';
 interface ProjectHeaderProps {
   teamMembers: TeamMember[];
   onEditClick: () => void;
-  onTeamManageClick: () => void;
   onDeleteClick: () => void;
 }
 
@@ -136,12 +134,11 @@ const formatProjectDate = (date: any): string => {
  * - Erstellt-Datum
  * - Team-Avatare
  * - Bearbeiten-Button
- * - Mehr-Optionen Dropdown (Team verwalten, Löschen)
+ * - Mehr-Optionen Dropdown (Löschen)
  */
 export const ProjectHeader = React.memo(function ProjectHeader({
   teamMembers,
   onEditClick,
-  onTeamManageClick,
   onDeleteClick,
 }: ProjectHeaderProps) {
   const { project } = useProject();
@@ -236,10 +233,6 @@ export const ProjectHeader = React.memo(function ProjectHeader({
                 <EllipsisVerticalIcon className="w-5 h-5" />
               </DropdownButton>
               <DropdownMenu anchor="bottom end">
-                <DropdownItem onClick={onTeamManageClick}>
-                  <UserGroupIcon className="w-4 h-4 mr-2" />
-                  Team verwalten
-                </DropdownItem>
                 <DropdownItem onClick={onDeleteClick} className="text-red-600">
                   <TrashIcon className="w-4 h-4 mr-2" />
                   Projekt löschen

@@ -69,7 +69,6 @@ import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-serv
 import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModal';
 import { ApprovalEnhanced } from '@/types/approvals';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
-import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
 import ProjectDistributionLists from '@/components/projects/distribution/ProjectDistributionLists';
 import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
 import Link from 'next/link';
@@ -129,7 +128,6 @@ export default function ProjectDetailPage() {
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
-  const [showTeamModal, setShowTeamModal] = useState(false);
   const [todayTasks, setTodayTasks] = useState<ProjectTask[]>([]);
   const [loadingTodayTasks, setLoadingTodayTasks] = useState(false);
   const [completedGuideSteps, setCompletedGuideSteps] = useState<string[]>([]);
@@ -683,7 +681,6 @@ export default function ProjectDetailPage() {
         <ProjectHeader
           teamMembers={teamMembers}
           onEditClick={() => setShowEditWizard(true)}
-          onTeamManageClick={() => setShowTeamModal(true)}
           onDeleteClick={handleDeleteProject}
         />
         <ProjectInfoBar projectTags={projectTags} />
@@ -818,21 +815,6 @@ export default function ProjectDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Team Management Modal */}
-      {project && currentOrganization && (
-        <TeamManagementModal
-          isOpen={showTeamModal}
-          onClose={() => setShowTeamModal(false)}
-          project={project}
-          organizationId={currentOrganization.id}
-          onSuccess={(updatedProject) => {
-            setProject(updatedProject);
-            // Reload team members to refresh display
-            loadTeamMembers();
-          }}
-        />
-      )}
 
       {/* Floating Chat - nur anzeigen wenn Projekt geladen und User eingeloggt */}
       {project && currentOrganization && user && (
