@@ -1,23 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { toastService } from '@/lib/utils/toast';
+import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion } from '@/lib/hooks/useMonitoringData';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
-import { Badge } from '@/components/ui/badge';
-import { ChartBarIcon, EyeIcon, ExclamationCircleIcon, EnvelopeIcon, NewspaperIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
-import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
-import { prService } from '@/lib/firebase/pr-service';
-import { clippingService } from '@/lib/firebase/clipping-service';
-import { projectService } from '@/lib/firebase/project-service';
-import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
-import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
-import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
 import { ProjectMonitoringOverview } from '@/components/projects/monitoring/ProjectMonitoringOverview';
-import { MonitoringSuggestion } from '@/types/monitoring';
+import EmptyState from '@/components/projects/monitoring/EmptyState';
+import LoadingState from '@/components/projects/monitoring/LoadingState';
 
 interface ProjectMonitoringTabProps {
   projectId: string;
@@ -25,147 +20,95 @@ interface ProjectMonitoringTabProps {
 
 export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const { currentOrganization } = useOrganization();
+  const { user } = useAuth();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(true);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [allSends, setAllSends] = useState<any[]>([]);
-  const [allClippings, setAllClippings] = useState<any[]>([]);
-  const [allSuggestions, setAllSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [activeView, setActiveView] = useState<'overview' | 'recipients' | 'clippings'>('overview');
 
-  useEffect(() => {
-    loadData();
-  }, [projectId, currentOrganization?.id]);
+  // React Query Hooks
+  const { data, isLoading, error, refetch } = useProjectMonitoringData(
+    projectId,
+    currentOrganization?.id
+  );
+  const confirmSuggestion = useConfirmSuggestion();
+  const rejectSuggestion = useRejectSuggestion();
 
-  const loadData = async () => {
-    if (!currentOrganization?.id) return;
+  // Daten aus Query extrahieren
+  const campaigns = data?.campaigns || [];
+  const allSends = data?.allSends || [];
+  const allClippings = data?.allClippings || [];
+  const allSuggestions = data?.allSuggestions || [];
+
+  // Computed Values (useMemo für Performance)
+  const totalSends = useMemo(() => allSends.length, [allSends.length]);
+  const totalClippings = useMemo(() => allClippings.length, [allClippings.length]);
+  const totalReach = useMemo(() =>
+    allClippings.reduce((sum, c) => sum + (c.reach || 0), 0),
+    [allClippings]
+  );
+
+  const handleSendUpdated = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handleConfirmSuggestion = useCallback(async (suggestionId: string) => {
+    if (!user || !currentOrganization) {
+      toastService.error('Authentifizierung erforderlich');
+      return;
+    }
 
     try {
-      setLoading(true);
-
-      // Lade Projekt-Daten um linkedCampaigns zu erhalten
-      const projectData = await projectService.getById(projectId, { organizationId: currentOrganization.id });
-
-      let allCampaigns: any[] = [];
-
-      if (projectData) {
-        // 1. Lade Kampagnen über linkedCampaigns Array (alter Ansatz)
-        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
-          const linkedCampaignData = await Promise.all(
-            projectData.linkedCampaigns.map(async (campaignId: string) => {
-              try {
-                const campaign = await prService.getById(campaignId);
-                return campaign;
-              } catch (error) {
-                console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
-                return null;
-              }
-            })
-          );
-          allCampaigns.push(...linkedCampaignData.filter(Boolean));
-        }
-
-        // 2. Lade Kampagnen über projectId (neuer Ansatz)
-        const projectCampaigns = await prService.getCampaignsByProject(projectId, currentOrganization.id);
-        allCampaigns.push(...projectCampaigns);
-
-        // Duplikate entfernen
-        const uniqueCampaigns = allCampaigns.filter((campaign, index, self) =>
-          index === self.findIndex(c => c.id === campaign.id)
-        );
-
-        allCampaigns = uniqueCampaigns;
-      }
-
-      const projectCampaigns = allCampaigns;
-
-      const campaignsWithData = await Promise.all(
-        projectCampaigns.map(async (campaign: any) => {
-          const [sends, clippings, suggestions] = await Promise.all([
-            emailCampaignService.getSends(campaign.id!, {
-              organizationId: currentOrganization.id
-            }),
-            clippingService.getByCampaignId(campaign.id!, {
-              organizationId: currentOrganization.id
-            }),
-            monitoringSuggestionService.getByCampaignId(campaign.id!, currentOrganization.id)
-          ]);
-          return { campaign, sends, clippings, suggestions };
-        })
-      );
-
-      // Zeige Kampagnen die ENTWEDER Sends ODER Clippings ODER Suggestions haben
-      const activeCampaigns = campaignsWithData.filter(
-        ({ sends, clippings, suggestions }) =>
-          sends.length > 0 || clippings.length > 0 || suggestions.length > 0
-      );
-
-      const allSendsArr = activeCampaigns.flatMap(({ sends }) => sends);
-      const allClippingsArr = activeCampaigns.flatMap(({ clippings }) => clippings);
-      const allSuggestionsArr = activeCampaigns.flatMap(({ suggestions }) => suggestions);
-
-      setCampaigns(activeCampaigns.map(({ campaign, sends, clippings }) => ({
-        ...campaign,
-        stats: {
-          total: sends.length,
-          delivered: sends.filter((s: any) => s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length,
-          opened: sends.filter((s: any) => s.status === 'opened' || s.status === 'clicked').length,
-          clicked: sends.filter((s: any) => s.status === 'clicked').length,
-          bounced: sends.filter((s: any) => s.status === 'bounced').length,
-          clippings: clippings.length
-        }
-      })));
-
-      setAllSends(allSendsArr);
-      setAllClippings(allClippingsArr);
-      setAllSuggestions(allSuggestionsArr);
+      await confirmSuggestion.mutateAsync({
+        suggestionId,
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
+      toastService.success('Vorschlag bestätigt und Clipping erstellt');
     } catch (error) {
-      console.error('Fehler beim Laden der Monitoring-Daten:', error);
-    } finally {
-      setLoading(false);
+      console.error('Fehler beim Bestätigen des Vorschlags:', error);
+      toastService.error('Fehler beim Bestätigen des Vorschlags');
     }
-  };
+  }, [confirmSuggestion, user, currentOrganization]);
 
-  const handleSendUpdated = () => {
-    loadData();
-  };
+  const handleRejectSuggestion = useCallback(async (suggestionId: string) => {
+    if (!user || !currentOrganization) {
+      toastService.error('Authentifizierung erforderlich');
+      return;
+    }
 
-  const totalSends = allSends.length;
-  const totalClippings = allClippings.length;
-  const totalReach = allClippings.reduce((sum, c) => sum + (c.reach || 0), 0);
+    try {
+      await rejectSuggestion.mutateAsync({
+        suggestionId,
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
+      toastService.success('Vorschlag abgelehnt');
+    } catch (error) {
+      console.error('Fehler beim Ablehnen des Vorschlags:', error);
+      toastService.error('Fehler beim Ablehnen des Vorschlags');
+    }
+  }, [rejectSuggestion, user, currentOrganization]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Lade Monitoring-Daten...</Text>
-      </div>
-    );
+  const handleViewAllClippings = useCallback(() => {
+    setActiveView('clippings');
+  }, []);
+
+  const handleViewAllRecipients = useCallback(() => {
+    setActiveView('recipients');
+  }, []);
+
+  if (isLoading) {
+    return <LoadingState message="Lade Monitoring-Daten..." />;
   }
 
   if (campaigns.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <Subheading>Noch keine Monitoring-Aktivitäten</Subheading>
-        <Text className="text-gray-500">Versende eine Kampagne oder erfasse eine Veröffentlichung</Text>
-      </div>
+      <EmptyState
+        title="Noch keine Monitoring-Aktivitäten"
+        description="Versende eine Kampagne oder erfasse eine Veröffentlichung"
+      />
     );
   }
-
-  const handleConfirmSuggestion = async (suggestionId: string) => {
-    // TODO: Implement suggestion confirmation
-    console.log('Confirm suggestion:', suggestionId);
-    loadData();
-  };
-
-  const handleRejectSuggestion = async (suggestionId: string) => {
-    // TODO: Implement suggestion rejection
-    console.log('Reject suggestion:', suggestionId);
-    loadData();
-  };
-
 
   return (
     <div className="space-y-6">
@@ -176,8 +119,8 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           suggestions={allSuggestions}
           sends={allSends}
           campaigns={campaigns}
-          onViewAllClippings={() => setActiveView('clippings')}
-          onViewAllRecipients={() => setActiveView('recipients')}
+          onViewAllClippings={handleViewAllClippings}
+          onViewAllRecipients={handleViewAllRecipients}
           onViewSuggestion={(suggestion) => {
             // Navigate to campaign monitoring detail
             const campaign = campaigns.find(c => c.id === suggestion.campaignId);
