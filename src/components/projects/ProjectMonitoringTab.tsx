@@ -7,11 +7,12 @@ import { toastService } from '@/lib/utils/toast';
 import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion } from '@/lib/hooks/useMonitoringData';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
 import { ProjectMonitoringOverview } from '@/components/projects/monitoring/ProjectMonitoringOverview';
+import EmptyState from '@/components/projects/monitoring/EmptyState';
+import LoadingState from '@/components/projects/monitoring/LoadingState';
 
 interface ProjectMonitoringTabProps {
   projectId: string;
@@ -43,21 +44,15 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Lade Monitoring-Daten...</Text>
-      </div>
-    );
+    return <LoadingState message="Lade Monitoring-Daten..." />;
   }
 
   if (campaigns.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-        <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <Subheading>Noch keine Monitoring-Aktivitäten</Subheading>
-        <Text className="text-gray-500">Versende eine Kampagne oder erfasse eine Veröffentlichung</Text>
-      </div>
+      <EmptyState
+        title="Noch keine Monitoring-Aktivitäten"
+        description="Versende eine Kampagne oder erfasse eine Veröffentlichung"
+      />
     );
   }
 
