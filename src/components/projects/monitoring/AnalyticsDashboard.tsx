@@ -31,7 +31,7 @@ interface KPICardProps {
 }
 
 const KPICard: React.FC<KPICardProps> = ({ title, value, subtitle, icon: Icon, trend }) => (
-  <div className="bg-white rounded-lg border border-gray-200 p-6">
+  <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
     <div className="flex items-center justify-between">
       <div className="flex-1">
         <div className="flex items-center">
@@ -40,8 +40,8 @@ const KPICard: React.FC<KPICardProps> = ({ title, value, subtitle, icon: Icon, t
         </div>
         <div className="mt-2">
           <p className="text-2xl font-semibold text-gray-900">
-            {typeof value === 'number' && value > 999 
-              ? `${(value / 1000).toFixed(1)}K` 
+            {typeof value === 'number' && value > 999
+              ? `${(value / 1000).toFixed(1)}K`
               : value}
           </p>
           {subtitle && (
@@ -100,15 +100,15 @@ const TimelineChart: React.FC<TimelineChartProps> = ({ data, className }) => {
           return (
             <div key={index} className="flex items-center space-x-3">
               <div className="w-16 text-xs text-gray-500">
-                {date.toLocaleDateString('de-DE', { 
-                  month: 'numeric', 
-                  day: 'numeric' 
+                {date.toLocaleDateString('de-DE', {
+                  month: 'numeric',
+                  day: 'numeric'
                 })}
               </div>
-              <div className="flex-1 bg-gray-100 rounded-full h-4 relative">
+              <div className="flex-1 bg-gray-100 rounded-full h-8 relative">
                 <div
-                  className="bg-blue-500 h-4 rounded-full transition-all duration-300"
-                  style={{ width: `${percentage}%` }}
+                  className="h-8 rounded-full transition-all duration-300"
+                  style={{ width: `${percentage}%`, backgroundColor: '#005fab' }}
                 />
               </div>
               <div className="w-16 text-xs font-medium text-gray-900 text-right">
@@ -233,18 +233,15 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
       
       <div className="space-y-4">
         {/* Sentiment-Balken */}
-        <div className="flex rounded-lg overflow-hidden h-4">
-          <div 
-            className="bg-green-500" 
-            style={{ width: `${distribution.positive}%` }}
+        <div className="flex rounded-lg overflow-hidden h-8">
+          <div
+            style={{ width: `${distribution.positive}%`, backgroundColor: '#10b981' }}
           />
-          <div 
-            className="bg-gray-400" 
-            style={{ width: `${distribution.neutral}%` }}
+          <div
+            style={{ width: `${distribution.neutral}%`, backgroundColor: '#add8f0' }}
           />
-          <div 
-            className="bg-red-500" 
-            style={{ width: `${distribution.negative}%` }}
+          <div
+            style={{ width: `${distribution.negative}%`, backgroundColor: '#ef4444' }}
           />
         </div>
 
@@ -252,7 +249,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
               <span className="text-sm font-medium text-gray-900">Positiv</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
@@ -261,7 +258,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
           </div>
           <div>
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-3 h-3 bg-gray-400 rounded-full" />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#add8f0' }} />
               <span className="text-sm font-medium text-gray-900">Neutral</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
@@ -270,7 +267,7 @@ const SentimentDistribution: React.FC<SentimentDistributionProps> = ({ analytics
           </div>
           <div>
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full" />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }} />
               <span className="text-sm font-medium text-gray-900">Negativ</span>
             </div>
             <p className="text-lg font-semibold text-gray-900 mt-1">
@@ -415,13 +412,13 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             Report-Export
           </h3>
           <div className="space-y-3">
-            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
               PDF-Report generieren
             </button>
-            <button className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+            <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
               Excel-Export
             </button>
-            <button className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+            <button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 rounded-lg transition-colors font-medium">
               PowerPoint-Präsentation
             </button>
           </div>

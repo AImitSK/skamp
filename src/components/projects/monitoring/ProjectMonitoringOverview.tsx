@@ -66,8 +66,8 @@ export function ProjectMonitoringOverview({
     const pending = pendingSuggestions.length;
 
     return [
-      { name: 'Auto-Bestätigt', value: autoConfirmed, color: '#10b981' },
-      { name: 'Manuell', value: manual, color: '#3b82f6' },
+      { name: 'Manuell', value: manual, color: '#005fab' },
+      { name: 'Auto-Bestätigt', value: autoConfirmed, color: '#3397d7' },
       { name: 'Prüfen', value: pending, color: '#f59e0b' }
     ].filter(item => item.value > 0);
   }, [clippings, pendingSuggestions]);
@@ -192,7 +192,7 @@ export function ProjectMonitoringOverview({
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <Text className="text-sm text-gray-600">Veröffentlichungen</Text>
@@ -204,7 +204,7 @@ export function ProjectMonitoringOverview({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <Text className="text-sm text-gray-600">Zu prüfen</Text>
@@ -216,7 +216,7 @@ export function ProjectMonitoringOverview({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <Text className="text-sm text-gray-600">Ø Reichweite</Text>
@@ -228,7 +228,7 @@ export function ProjectMonitoringOverview({
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <Text className="text-sm text-gray-600">Öffnungsrate</Text>
@@ -423,39 +423,59 @@ export function ProjectMonitoringOverview({
         </div>
 
         {recentClippings.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {recentClippings.map((clipping) => {
               // Finde Campaign für dieses Clipping
               const campaign = campaigns.find(c => c.id === clipping.campaignId);
+
+              // Outlet-Avatar Initialen
+              const outletInitial = clipping.outletName?.charAt(0).toUpperCase() || 'N';
 
               return (
                 <a
                   key={clipping.id}
                   href={campaign ? `/dashboard/analytics/monitoring/${campaign.id}` : '#'}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 block"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 hover:shadow-sm rounded-lg transition-all border border-gray-200 group"
                 >
+                  {/* Outlet Avatar */}
+                  <div
+                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                    style={{ backgroundColor: '#005fab' }}
+                  >
+                    {outletInitial}
+                  </div>
+
+                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Text className="font-medium text-gray-900">
-                        {clipping.outletName}
-                      </Text>
-                      {clipping.detectionMethod === 'automated' && (
-                        <Badge color="green" className="text-xs">Auto</Badge>
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-semibold text-gray-900 truncate text-sm group-hover:text-[#005fab] transition-colors">
+                        {clipping.title}
+                      </h4>
+                      {clipping.reach && (
+                        <span className="flex-shrink-0 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                          {formatNumber(clipping.reach)}
+                        </span>
                       )}
                     </div>
-                    <Text className="text-sm text-gray-600 truncate">
-                      {clipping.title}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      {clipping.publishedAt &&
-                        formatDistanceToNow(clipping.publishedAt.toDate(), {
-                          addSuffix: true,
-                          locale: de
-                        })}
-                      {clipping.reach && ` • Reichweite: ${formatNumber(clipping.reach)}`}
-                    </Text>
+
+                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                      <span className="font-medium">{clipping.outletName}</span>
+                      <span>•</span>
+                      <span>
+                        {clipping.publishedAt &&
+                          formatDistanceToNow(clipping.publishedAt.toDate(), {
+                            addSuffix: true,
+                            locale: de
+                          })}
+                      </span>
+                      {clipping.detectionMethod === 'automated' && (
+                        <>
+                          <span>•</span>
+                          <Badge color="green" className="text-xs !py-0">🤖 Auto</Badge>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <ArrowRightIcon className="h-5 w-5 text-gray-400 ml-2 flex-shrink-0" />
                 </a>
               );
             })}
@@ -496,10 +516,10 @@ export function ProjectMonitoringOverview({
               <Text className="text-sm text-gray-600">Öffnungsrate</Text>
               <Text className="text-sm font-semibold text-gray-900">{emailStats.openRate}%</Text>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3">
+            <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
               <div
-                className="h-3 rounded-full bg-blue-600 transition-all"
-                style={{ width: `${emailStats.openRate}%` }}
+                className="h-8 rounded-full transition-all"
+                style={{ width: `${emailStats.openRate}%`, backgroundColor: '#3397d7' }}
               />
             </div>
           </div>
@@ -510,10 +530,10 @@ export function ProjectMonitoringOverview({
               <Text className="text-sm text-gray-600">Klickrate</Text>
               <Text className="text-sm font-semibold text-gray-900">{emailStats.clickRate}%</Text>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3">
+            <div className="w-full bg-gray-100 rounded-full h-8 flex items-center relative">
               <div
-                className="h-3 rounded-full bg-green-600 transition-all"
-                style={{ width: `${emailStats.clickRate}%` }}
+                className="h-8 rounded-full transition-all"
+                style={{ width: `${emailStats.clickRate}%`, backgroundColor: '#005fab' }}
               />
             </div>
           </div>
