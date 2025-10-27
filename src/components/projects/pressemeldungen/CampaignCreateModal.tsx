@@ -38,13 +38,13 @@ export default function CampaignCreateModal({
     setIsSubmitting(true);
 
     try {
-      // Create new campaign with minimal required fields
+      // Create new campaign with projectId already set
       const campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'> = {
         title: title.trim(),
         contentHtml: '',
         status: 'draft',
         organizationId,
-        projectId,
+        projectId, // ProjectId wird direkt beim Erstellen gesetzt
         userId: '', // Will be set by service
         distributionListId: '',
         distributionListName: '',
@@ -54,8 +54,7 @@ export default function CampaignCreateModal({
 
       const campaignId = await prService.create(campaignData);
 
-      // Link campaign to project
-      await prService.linkCampaignToProject(campaignId, projectId);
+      // KEIN linkCampaignToProject() nötig - projectId ist bereits gesetzt!
 
       toastService.success('Kampagne erfolgreich erstellt');
       onSuccess(campaignId);
