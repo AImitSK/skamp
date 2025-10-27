@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import {
   EllipsisVerticalIcon,
   PencilIcon,
@@ -30,6 +31,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
   const router = useRouter();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -59,9 +61,12 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
     router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`);
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Möchten Sie diese Kampagne wirklich löschen?')) return;
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    setShowDeleteDialog(false);
     setIsDeleting(true);
     try {
       await prService.delete(campaign.id!);
@@ -73,6 +78,10 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
   };
 
   const handleSend = () => {
@@ -191,7 +200,7 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
                 <PencilIcon className="h-4 w-4" />
                 Bearbeiten
               </DropdownItem>
-              <DropdownItem onClick={handleDelete} disabled={isDeleting}>
+              <DropdownItem onClick={handleDeleteClick} disabled={isDeleting}>
                 <TrashIcon className="h-4 w-4" />
                 <span className="text-red-600">
                   {isDeleting ? 'Wird gelöscht...' : 'Löschen'}
@@ -201,6 +210,23 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
           </Dropdown>
         </div>
       </div>
+
+      {/* Lösch-Bestätigungs-Dialog */}
+      <Dialog open={showDeleteDialog} onClose={handleDeleteCancel} size="sm">
+        <DialogTitle>Kampagne löschen</DialogTitle>
+        <DialogBody>
+          <p>Möchten Sie die Kampagne <strong>&quot;{campaign.title}&quot;</strong> wirklich löschen?</p>
+          <p className="mt-2 text-red-600">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        </DialogBody>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="secondary">
+            Abbrechen
+          </Button>
+          <Button onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700 text-white">
+            Löschen
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
