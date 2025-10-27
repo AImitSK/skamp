@@ -63,11 +63,8 @@ import { useStrategyDocuments } from '@/lib/hooks/useStrategyDocuments';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { Tag } from '@/types/crm';
-import { approvalService } from '@/lib/firebase/approval-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
-import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModal';
-import { ApprovalEnhanced } from '@/types/approvals';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import ProjectDistributionLists from '@/components/projects/distribution/ProjectDistributionLists';
 import { ProjectMonitoringTab } from '@/components/projects/ProjectMonitoringTab';
@@ -126,8 +123,6 @@ export default function ProjectDetailPage() {
   const [projectTags, setProjectTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(true);
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
   const [todayTasks, setTodayTasks] = useState<ProjectTask[]>([]);
   const [loadingTodayTasks, setLoadingTodayTasks] = useState(false);
   const [completedGuideSteps, setCompletedGuideSteps] = useState<string[]>([]);
@@ -476,33 +471,6 @@ export default function ProjectDetailPage() {
     }
   }, [currentPdfVersion]);
 
-  const handleViewFeedback = useCallback(async () => {
-    if (!linkedCampaigns.length || !currentOrganization?.id) return;
-
-    try {
-      // Lade alle Approvals und filtere nach campaignId
-      const allApprovals = await approvalService.getAll(currentOrganization.id);
-
-      // Finde die Freigabe für diese spezifische Kampagne
-      const campaignApproval = allApprovals.find(a => a.campaignId === linkedCampaigns[0].id);
-
-      if (campaignApproval && campaignApproval.id) {
-        const fullApproval = await approvalService.getById(campaignApproval.id, currentOrganization.id);
-        if (fullApproval) {
-          setSelectedApproval(fullApproval);
-          setShowFeedbackModal(true);
-        } else {
-          toastService.warning('Keine Freigabe-Daten für diese Kampagne vorhanden.');
-        }
-      } else {
-        toastService.warning('Keine Freigabe-Daten für diese Kampagne vorhanden.');
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Feedback-Historie:', error);
-      toastService.error('Fehler beim Laden der Feedback-Historie.');
-    }
-  }, [linkedCampaigns, currentOrganization]);
-
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
       case 'ideas_planning': return 'Ideen & Planung';
@@ -772,19 +740,6 @@ export default function ProjectDetailPage() {
           onSuccess={handleEditSuccess}
           project={project}
           organizationId={currentOrganization?.id || ''}
-        />
-      )}
-
-
-      {/* Feedback History Modal */}
-      {showFeedbackModal && selectedApproval && (
-        <ApprovalHistoryModal
-          approval={selectedApproval}
-          isOpen={showFeedbackModal}
-          onClose={() => {
-            setShowFeedbackModal(false);
-            setSelectedApproval(null);
-          }}
         />
       )}
 
