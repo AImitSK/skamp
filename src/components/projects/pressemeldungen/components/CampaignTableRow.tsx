@@ -73,7 +73,6 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
       toastService.success('Kampagne erfolgreich gelöscht');
       onRefresh();
     } catch (error) {
-      console.error('Fehler beim Löschen der Kampagne:', error);
       toastService.error('Fehler beim Löschen der Kampagne');
     } finally {
       setIsDeleting(false);

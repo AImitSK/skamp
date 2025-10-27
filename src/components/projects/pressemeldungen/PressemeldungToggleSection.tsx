@@ -88,7 +88,7 @@ export default function PressemeldungToggleSection({
       setMediaItems(media || []);
       setPdfVersions(pdfs || []);
     } catch (error) {
-      console.error('Fehler beim Laden der Toggle-Daten:', error);
+      // Fehler beim Laden ignorieren - App funktioniert mit leeren Arrays
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ export default function PressemeldungToggleSection({
 
       return [];
     } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
+      // Fehler beim Laden ignorieren - leeres Array wird zurückgegeben
       return [];
     }
   };
@@ -140,7 +140,7 @@ export default function PressemeldungToggleSection({
         status: v.status as 'draft' | 'pending_customer' | 'approved' | 'rejected'
       }));
     } catch (error) {
-      console.error('Fehler beim Laden der PDF-Versionen:', error);
+      // Fehler beim Laden ignorieren - leeres Array wird zurückgegeben
       return [];
     }
   };
@@ -185,7 +185,7 @@ export default function PressemeldungToggleSection({
         setLastMessageDate(null);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Kommunikationsdaten:', error);
+      // Fehler beim Laden ignorieren - Defaults setzen
       setCommunicationCount(0);
       setLastMessageDate(null);
     }

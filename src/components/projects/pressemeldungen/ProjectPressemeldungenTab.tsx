@@ -71,7 +71,6 @@ export default function ProjectPressemeldungenTab({
         throw new Error('Kampagne konnte nicht erstellt werden');
       }
     } catch (error) {
-      console.error('Fehler beim Erstellen der Pressemeldung:', error);
       toastService.error('Fehler beim Erstellen der Pressemeldung');
     } finally {
       setIsCreating(false);

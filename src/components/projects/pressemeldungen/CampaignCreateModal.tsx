@@ -74,7 +74,6 @@ export default function CampaignCreateModal({
       toastService.success('Kampagne erfolgreich erstellt');
       onSuccess(campaignId);
     } catch (error) {
-      console.error('Fehler beim Erstellen der Kampagne:', error);
       toastService.error('Fehler beim Erstellen der Kampagne. Bitte versuchen Sie es erneut.');
     } finally {
       setIsSubmitting(false);
