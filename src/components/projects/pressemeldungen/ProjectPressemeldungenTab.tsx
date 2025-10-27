@@ -5,13 +5,15 @@ import { useState, useMemo, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { PlusIcon, EllipsisVerticalIcon, BookmarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { Popover, Transition } from '@headlessui/react';
 import { useProjectPressData } from '@/lib/hooks/useCampaignData';
+import { projectService } from '@/lib/firebase/project-service';
+import { toastService } from '@/lib/utils/toast';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
 import PressemeldungApprovalTable from './PressemeldungApprovalTable';
 import PressemeldungToggleSection from './PressemeldungToggleSection';
-import CampaignCreateModal from './CampaignCreateModal';
 
 interface Props {
   projectId: string;
@@ -23,7 +25,8 @@ export default function ProjectPressemeldungenTab({
   organizationId
 }: Props) {
   const router = useRouter();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // React Query Hook für Campaigns + Approvals
   const {
@@ -36,15 +39,44 @@ export default function ProjectPressemeldungenTab({
   const hasLinkedCampaign = useMemo(() => campaigns.length > 0, [campaigns.length]);
 
   // Callbacks mit useCallback für Performance
-  const handleCloseModal = useCallback(() => {
-    setShowCreateModal(false);
-  }, []);
+  const handleCreateCampaign = useCallback(async () => {
+    setIsCreating(true);
+    try {
+      // Projekt laden um Titel zu bekommen
+      const project = await projectService.getById(projectId, { organizationId });
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
 
-  const handleSuccessModal = useCallback((campaignId: string) => {
-    setShowCreateModal(false);
-    // Weiterleitung zur Edit-Seite wie im Dialog versprochen
-    router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${campaignId}`);
-  }, [router]);
+      // Gleiche Funktion wie im Wizard verwenden
+      const result = await projectService.initializeProjectResources(
+        projectId,
+        {
+          createCampaign: true,
+          campaignTitle: `${project.title} - PR-Kampagne`,
+          attachAssets: [],
+          linkDistributionLists: [],
+          createTasks: false,
+          notifyTeam: false
+        },
+        organizationId
+      );
+
+      if (result.campaignCreated && result.campaignId) {
+        toastService.success('Pressemeldung erfolgreich erstellt');
+        setShowConfirmDialog(false);
+        // Weiterleitung zur Edit-Seite
+        router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${result.campaignId}`);
+      } else {
+        throw new Error('Kampagne konnte nicht erstellt werden');
+      }
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Pressemeldung:', error);
+      toastService.error('Fehler beim Erstellen der Pressemeldung');
+    } finally {
+      setIsCreating(false);
+    }
+  }, [projectId, organizationId, router]);
 
   if (isLoading) {
     return (
@@ -64,7 +96,7 @@ export default function ProjectPressemeldungenTab({
         <Heading level={3}>Pressemeldung</Heading>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => setShowConfirmDialog(true)}
             className={hasLinkedCampaign
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-[#005fab] hover:bg-[#004a8c] text-white"
@@ -141,15 +173,34 @@ export default function ProjectPressemeldungenTab({
         </div>
       )}
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <CampaignCreateModal
-          projectId={projectId}
-          organizationId={organizationId}
-          onClose={handleCloseModal}
-          onSuccess={handleSuccessModal}
-        />
-      )}
+      {/* Bestätigungs-Dialog */}
+      <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} size="sm">
+        <DialogTitle>Neue Pressemeldung erstellen</DialogTitle>
+        <DialogBody>
+          <p className="text-gray-700">
+            Wollen Sie wirklich eine neue Pressemeldung erstellen?
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            Sie werden anschließend zur Bearbeitung der Pressemeldung weitergeleitet.
+          </p>
+        </DialogBody>
+        <DialogActions>
+          <Button
+            color="secondary"
+            onClick={() => setShowConfirmDialog(false)}
+            disabled={isCreating}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleCreateCampaign}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            disabled={isCreating}
+          >
+            {isCreating ? 'Wird erstellt...' : 'Ja, erstellen'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
