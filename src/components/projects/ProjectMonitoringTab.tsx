@@ -51,19 +51,6 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     refetch();
   }, [refetch]);
 
-  if (isLoading) {
-    return <LoadingState message="Lade Monitoring-Daten..." />;
-  }
-
-  if (campaigns.length === 0) {
-    return (
-      <EmptyState
-        title="Noch keine Monitoring-Aktivitäten"
-        description="Versende eine Kampagne oder erfasse eine Veröffentlichung"
-      />
-    );
-  }
-
   const handleConfirmSuggestion = useCallback(async (suggestionId: string) => {
     if (!user || !currentOrganization) {
       toastService.error('Authentifizierung erforderlich');
@@ -109,6 +96,19 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const handleViewAllRecipients = useCallback(() => {
     setActiveView('recipients');
   }, []);
+
+  if (isLoading) {
+    return <LoadingState message="Lade Monitoring-Daten..." />;
+  }
+
+  if (campaigns.length === 0) {
+    return (
+      <EmptyState
+        title="Noch keine Monitoring-Aktivitäten"
+        description="Versende eine Kampagne oder erfasse eine Veröffentlichung"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

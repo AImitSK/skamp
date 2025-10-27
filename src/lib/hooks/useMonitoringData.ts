@@ -31,9 +31,9 @@ export function useProjectMonitoringData(
       // Lade Kampagnen (beide Ansätze: linkedCampaigns + projectId-basiert)
       let allCampaigns: any[] = [];
 
-      if (projectData.linkedCampaigns?.length > 0) {
+      if (projectData.linkedCampaigns?.length && projectData.linkedCampaigns.length > 0) {
         const linkedCampaignData = await Promise.all(
-          projectData.linkedCampaigns.map(async (campaignId: string) => {
+          (projectData.linkedCampaigns || []).map(async (campaignId: string) => {
             try {
               return await prService.getById(campaignId);
             } catch (error) {
