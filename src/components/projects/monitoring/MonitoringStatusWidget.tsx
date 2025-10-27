@@ -29,7 +29,7 @@ interface MonitoringStatusWidgetProps {
   className?: string;
 }
 
-const MonitoringStatusWidget: React.FC<MonitoringStatusWidgetProps> = ({
+const MonitoringStatusWidget = React.memo<MonitoringStatusWidgetProps>(({
   projectId,
   currentStage,
   isEnabled,
@@ -188,6 +188,6 @@ const MonitoringStatusWidget: React.FC<MonitoringStatusWidgetProps> = ({
       </div>
     </div>
   );
-};
+}));
 
 export default MonitoringStatusWidget;

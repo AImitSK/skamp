@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MonitoringConfig } from './types';
 
 interface GeneralSettingsTabProps {
@@ -14,7 +14,13 @@ interface GeneralSettingsTabProps {
  * - Automatischer Übergang nach Monitoring-Ende
  * - Berichts-Zeitplan (täglich, wöchentlich, monatlich)
  */
-export default function GeneralSettingsTab({ config, onChange }: GeneralSettingsTabProps) {
+const GeneralSettingsTab = React.memo(function GeneralSettingsTab({ config, onChange }: GeneralSettingsTabProps) {
+  const periodOptions = useMemo(() => [
+    { value: 30, label: '30 Tage' },
+    { value: 90, label: '90 Tage' },
+    { value: 365, label: '1 Jahr' }
+  ], []);
+
   return (
     <div className="space-y-6">
       {/* Monitoring Period */}
@@ -23,11 +29,7 @@ export default function GeneralSettingsTab({ config, onChange }: GeneralSettings
           Überwachungszeitraum
         </label>
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { value: 30, label: '30 Tage' },
-            { value: 90, label: '90 Tage' },
-            { value: 365, label: '1 Jahr' }
-          ].map(period => (
+          {periodOptions.map(period => (
             <button
               key={period.value}
               onClick={() => onChange({ ...config, monitoringPeriod: period.value as 30 | 90 | 365 })}
@@ -84,4 +86,6 @@ export default function GeneralSettingsTab({ config, onChange }: GeneralSettings
       </div>
     </div>
   );
-}
+});
+
+export default GeneralSettingsTab;

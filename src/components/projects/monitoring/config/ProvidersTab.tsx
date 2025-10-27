@@ -14,7 +14,7 @@ interface ProvidersTabProps {
  * - API-Endpoint anzeigen
  * - Unterstützte Metriken anzeigen
  */
-export default function ProvidersTab({ config, onChange }: ProvidersTabProps) {
+const ProvidersTab = React.memo(function ProvidersTab({ config, onChange }: ProvidersTabProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600 mb-4">
@@ -52,4 +52,6 @@ export default function ProvidersTab({ config, onChange }: ProvidersTabProps) {
       ))}
     </div>
   );
-}
+});
+
+export default ProvidersTab;

@@ -1,7 +1,7 @@
 // src/components/projects/monitoring/MonitoringConfigPanel.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CogIcon, PlayIcon } from '@heroicons/react/24/outline';
 import GeneralSettingsTab from './config/GeneralSettingsTab';
 import ProvidersTab from './config/ProvidersTab';
@@ -19,7 +19,7 @@ interface MonitoringConfigPanelProps {
   className?: string;
 }
 
-const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
+const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
   projectId,
   organizationId,
   config: initialConfig,
@@ -34,6 +34,12 @@ const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
   );
 
   const [activeTab, setActiveTab] = useState<'general' | 'providers' | 'alerts'>('general');
+
+  const tabOptions = useMemo(() => [
+    { key: 'general', label: 'Allgemein' },
+    { key: 'providers', label: 'Anbieter' },
+    { key: 'alerts', label: 'Benachrichtigungen' }
+  ], []);
 
   const handleSave = () => {
     if (onSave) onSave(config);
@@ -77,11 +83,7 @@ const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
       {/* Tabs */}
       <div className="px-6">
         <div className="flex space-x-6 border-b border-gray-200">
-          {[
-            { key: 'general', label: 'Allgemein' },
-            { key: 'providers', label: 'Anbieter' },
-            { key: 'alerts', label: 'Benachrichtigungen' }
-          ].map(tab => (
+          {tabOptions.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
@@ -111,6 +113,6 @@ const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
       </div>
     </div>
   );
-};
+}));
 
 export default MonitoringConfigPanel;

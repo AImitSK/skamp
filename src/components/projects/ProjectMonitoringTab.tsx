@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
@@ -39,9 +39,17 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const allClippings = data?.allClippings || [];
   const allSuggestions = data?.allSuggestions || [];
 
-  const handleSendUpdated = () => {
+  // Computed Values (useMemo für Performance)
+  const totalSends = useMemo(() => allSends.length, [allSends.length]);
+  const totalClippings = useMemo(() => allClippings.length, [allClippings.length]);
+  const totalReach = useMemo(() =>
+    allClippings.reduce((sum, c) => sum + (c.reach || 0), 0),
+    [allClippings]
+  );
+
+  const handleSendUpdated = useCallback(() => {
     refetch();
-  };
+  }, [refetch]);
 
   if (isLoading) {
     return <LoadingState message="Lade Monitoring-Daten..." />;
@@ -56,7 +64,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     );
   }
 
-  const handleConfirmSuggestion = async (suggestionId: string) => {
+  const handleConfirmSuggestion = useCallback(async (suggestionId: string) => {
     if (!user || !currentOrganization) {
       toastService.error('Authentifizierung erforderlich');
       return;
@@ -73,9 +81,9 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       console.error('Fehler beim Bestätigen des Vorschlags:', error);
       toastService.error('Fehler beim Bestätigen des Vorschlags');
     }
-  };
+  }, [confirmSuggestion, user, currentOrganization]);
 
-  const handleRejectSuggestion = async (suggestionId: string) => {
+  const handleRejectSuggestion = useCallback(async (suggestionId: string) => {
     if (!user || !currentOrganization) {
       toastService.error('Authentifizierung erforderlich');
       return;
@@ -92,8 +100,15 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       console.error('Fehler beim Ablehnen des Vorschlags:', error);
       toastService.error('Fehler beim Ablehnen des Vorschlags');
     }
-  };
+  }, [rejectSuggestion, user, currentOrganization]);
 
+  const handleViewAllClippings = useCallback(() => {
+    setActiveView('clippings');
+  }, []);
+
+  const handleViewAllRecipients = useCallback(() => {
+    setActiveView('recipients');
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -104,8 +119,8 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           suggestions={allSuggestions}
           sends={allSends}
           campaigns={campaigns}
-          onViewAllClippings={() => setActiveView('clippings')}
-          onViewAllRecipients={() => setActiveView('recipients')}
+          onViewAllClippings={handleViewAllClippings}
+          onViewAllRecipients={handleViewAllRecipients}
           onViewSuggestion={(suggestion) => {
             // Navigate to campaign monitoring detail
             const campaign = campaigns.find(c => c.id === suggestion.campaignId);

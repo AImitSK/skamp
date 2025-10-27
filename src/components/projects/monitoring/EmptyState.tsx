@@ -24,7 +24,7 @@ interface EmptyStateProps {
  * />
  * ```
  */
-export default function EmptyState({
+const EmptyState = React.memo(function EmptyState({
   title,
   description,
   icon: Icon = ChartBarIcon,
@@ -37,4 +37,6 @@ export default function EmptyState({
       <Text className="text-gray-500">{description}</Text>
     </div>
   );
-}
+});
+
+export default EmptyState;

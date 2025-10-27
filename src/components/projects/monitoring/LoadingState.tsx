@@ -16,7 +16,7 @@ interface LoadingStateProps {
  * <LoadingState message="Lade Monitoring-Daten..." />
  * ```
  */
-export default function LoadingState({
+const LoadingState = React.memo(function LoadingState({
   message = 'Lädt...',
   className = ''
 }: LoadingStateProps) {
@@ -26,4 +26,6 @@ export default function LoadingState({
       <Text className="ml-3">{message}</Text>
     </div>
   );
-}
+});
+
+export default LoadingState;

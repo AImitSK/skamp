@@ -15,7 +15,7 @@ interface AlertsTabProps {
  * - Sentiment-Warnschwelle
  * - Wettbewerber-Erwähnungen
  */
-export default function AlertsTab({ config, onChange }: AlertsTabProps) {
+const AlertsTab = React.memo(function AlertsTab({ config, onChange }: AlertsTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2 mb-4">
@@ -98,4 +98,6 @@ export default function AlertsTab({ config, onChange }: AlertsTabProps) {
       </div>
     </div>
   );
-}
+});
+
+export default AlertsTab;
