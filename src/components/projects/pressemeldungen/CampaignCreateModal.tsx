@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -24,6 +25,7 @@ export default function CampaignCreateModal({
   onClose,
   onSuccess
 }: Props) {
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState('');
 
@@ -56,6 +58,11 @@ export default function CampaignCreateModal({
 
       // KEIN linkCampaignToProject() nötig - projectId ist bereits gesetzt!
 
+      // Invalidiere React Query Cache, damit die Kampagne in der Liste erscheint
+      queryClient.invalidateQueries({
+        queryKey: ['project-campaigns', projectId, organizationId]
+      });
+
       toastService.success('Kampagne erfolgreich erstellt');
       onSuccess(campaignId);
     } catch (error) {
@@ -64,7 +71,7 @@ export default function CampaignCreateModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, organizationId, projectId, onSuccess]);
+  }, [title, organizationId, projectId, onSuccess, queryClient]);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);

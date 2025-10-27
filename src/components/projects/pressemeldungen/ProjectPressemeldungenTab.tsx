@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, Fragment } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, EllipsisVerticalIcon, BookmarkIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
@@ -21,6 +22,7 @@ export default function ProjectPressemeldungenTab({
   projectId,
   organizationId
 }: Props) {
+  const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // React Query Hook für Campaigns + Approvals
@@ -40,8 +42,9 @@ export default function ProjectPressemeldungenTab({
 
   const handleSuccessModal = useCallback((campaignId: string) => {
     setShowCreateModal(false);
-    refetch();
-  }, [refetch]);
+    // Weiterleitung zur Edit-Seite wie im Dialog versprochen
+    router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${campaignId}`);
+  }, [router]);
 
   if (isLoading) {
     return (
