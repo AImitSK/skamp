@@ -27,16 +27,16 @@ jest.mock('next/navigation', () => ({
   })
 }));
 
-const mockCampaign: PRCampaign = {
+const mockCampaign = {
   id: 'campaign-1',
   title: 'Test Campaign',
   status: 'draft',
   userId: 'user-123',
   organizationId: 'org-123',
-  createdAt: Timestamp.fromDate(new Date('2025-01-15')) as any
-};
+  createdAt: Timestamp.fromDate(new Date('2025-01-15'))
+} as PRCampaign;
 
-const mockTeamMembers: TeamMember[] = [
+const mockTeamMembers = [
   {
     id: 'member-1',
     userId: 'user-123',
@@ -44,10 +44,9 @@ const mockTeamMembers: TeamMember[] = [
     email: 'john@example.com',
     role: 'admin',
     photoUrl: 'https://example.com/john.jpg',
-    organizationId: 'org-123',
-    createdAt: new Date()
+    organizationId: 'org-123'
   }
-];
+] as TeamMember[];
 
 describe('CampaignTableRow Component', () => {
   const defaultProps = {

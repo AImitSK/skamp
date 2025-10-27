@@ -16,17 +16,21 @@ const createMockApproval = (overrides: Partial<ApprovalEnhanced> = {}): Approval
   clientEmail: 'client@example.com',
   shareId: 'share-123',
   organizationId: 'org-123',
-  createdAt: Timestamp.fromDate(new Date('2025-01-01')) as any,
-  updatedAt: Timestamp.fromDate(new Date('2025-01-15')) as any,
+  createdAt: Timestamp.fromDate(new Date('2025-01-01')),
+  updatedAt: Timestamp.fromDate(new Date('2025-01-15')),
   recipients: [
     {
       email: 'contact@example.com',
       name: 'Contact Person',
-      id: 'contact-1'
-    }
+      id: 'contact-1',
+      role: 'primary',
+      status: 'pending',
+      isRequired: true,
+      notificationsSent: 0
+    } as any
   ],
   ...overrides
-});
+} as ApprovalEnhanced);
 
 describe('ApprovalTableRow Component', () => {
   const defaultProps = {

@@ -31,25 +31,25 @@ jest.mock('@/components/pr/EmailSendModal', () => ({
   )
 }));
 
-const mockCampaign1: PRCampaign = {
+const mockCampaign1 = {
   id: 'campaign-1',
   title: 'Campaign 1',
   status: 'draft',
   userId: 'user-123',
   organizationId: 'org-123',
   createdAt: new Date()
-};
+} as PRCampaign;
 
-const mockCampaign2: PRCampaign = {
+const mockCampaign2 = {
   id: 'campaign-2',
   title: 'Campaign 2',
   status: 'sent',
   userId: 'user-456',
   organizationId: 'org-123',
   createdAt: new Date()
-};
+} as PRCampaign;
 
-const mockTeamMembers: TeamMember[] = [
+const mockTeamMembers = [
   {
     id: 'member-1',
     userId: 'user-123',
@@ -57,8 +57,7 @@ const mockTeamMembers: TeamMember[] = [
     email: 'john@example.com',
     role: 'admin',
     photoUrl: 'https://example.com/john.jpg',
-    organizationId: 'org-123',
-    createdAt: new Date()
+    organizationId: 'org-123'
   },
   {
     id: 'member-2',
@@ -67,10 +66,9 @@ const mockTeamMembers: TeamMember[] = [
     email: 'jane@example.com',
     role: 'member',
     photoUrl: 'https://example.com/jane.jpg',
-    organizationId: 'org-123',
-    createdAt: new Date()
+    organizationId: 'org-123'
   }
-];
+] as TeamMember[];
 
 describe('PressemeldungCampaignTable Component', () => {
   const defaultProps = {

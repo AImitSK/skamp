@@ -27,11 +27,11 @@ const createMockApproval = (overrides: Partial<ApprovalEnhanced> = {}): Approval
   clientName: 'Test Client',
   clientEmail: 'client@example.com',
   organizationId: 'org-123',
-  createdAt: Timestamp.fromDate(new Date()) as any,
-  updatedAt: Timestamp.fromDate(new Date()) as any,
+  createdAt: Timestamp.fromDate(new Date()),
+  updatedAt: Timestamp.fromDate(new Date()),
   recipients: [],
   ...overrides
-});
+} as ApprovalEnhanced);
 
 describe('PressemeldungApprovalTable Component', () => {
   const defaultProps = {

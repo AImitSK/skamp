@@ -42,25 +42,25 @@ const mockProject = {
   organizationId: 'org-123'
 };
 
-const mockCampaign1: PRCampaign = {
+const mockCampaign1 = {
   id: 'campaign-1',
   title: 'Campaign 1',
   status: 'draft',
   userId: 'user-123',
   organizationId: 'org-123',
   createdAt: new Date()
-};
+} as PRCampaign;
 
-const mockCampaign2: PRCampaign = {
+const mockCampaign2 = {
   id: 'campaign-2',
   title: 'Campaign 2',
   status: 'sent',
   userId: 'user-123',
   organizationId: 'org-123',
   createdAt: new Date()
-};
+} as PRCampaign;
 
-const mockCampaign3: PRCampaign = {
+const mockCampaign3 = {
   id: 'campaign-3',
   title: 'Campaign 3',
   status: 'approved',
@@ -68,9 +68,9 @@ const mockCampaign3: PRCampaign = {
   organizationId: 'org-123',
   projectId: 'project-123',
   createdAt: new Date()
-};
+} as PRCampaign;
 
-const mockApproval1: ApprovalEnhanced = {
+const mockApproval1 = {
   id: 'approval-1',
   campaignId: 'campaign-1',
   campaignTitle: 'Campaign 1',
@@ -81,9 +81,9 @@ const mockApproval1: ApprovalEnhanced = {
   createdAt: new Date(),
   updatedAt: new Date(),
   recipients: []
-};
+} as ApprovalEnhanced;
 
-const mockApproval2: ApprovalEnhanced = {
+const mockApproval2 = {
   id: 'approval-2',
   campaignId: 'campaign-2',
   campaignTitle: 'Campaign 2',
@@ -94,7 +94,7 @@ const mockApproval2: ApprovalEnhanced = {
   createdAt: new Date(),
   updatedAt: new Date(),
   recipients: []
-};
+} as ApprovalEnhanced;
 
 describe('useProjectCampaigns Hook', () => {
   beforeEach(() => {
