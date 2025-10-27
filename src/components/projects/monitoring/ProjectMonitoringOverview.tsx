@@ -435,7 +435,7 @@ export function ProjectMonitoringOverview({
                 <a
                   key={clipping.id}
                   href={campaign ? `/dashboard/analytics/monitoring/${campaign.id}` : '#'}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-50 hover:shadow-sm rounded-lg transition-all border border-gray-200 group"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 hover:border-zinc-300 rounded-lg transition-all border border-gray-200 group"
                 >
                   {/* Outlet Avatar */}
                   <div
