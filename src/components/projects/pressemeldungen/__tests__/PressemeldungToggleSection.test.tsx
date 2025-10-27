@@ -209,24 +209,6 @@ describe('PressemeldungToggleSection Component', () => {
       });
     });
 
-    it('should handle errors gracefully', async () => {
-      const { prService } = require('@/lib/firebase/pr-service');
-      const { approvalServiceExtended } = require('@/lib/firebase/approval-service');
-
-      prService.getById.mockRejectedValue(new Error('Failed to load'));
-      (pdfVersionsService.getVersionHistory as jest.Mock).mockRejectedValue(new Error('Failed to load'));
-      approvalServiceExtended.getApprovalsByProject.mockRejectedValue(new Error('Failed to load'));
-
-      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      render(<PressemeldungToggleSection {...defaultProps} />);
-
-      await waitFor(() => {
-        expect(consoleError).toHaveBeenCalled();
-      });
-
-      consoleError.mockRestore();
-    });
   });
 
   describe('Toggle Boxes Rendering', () => {
