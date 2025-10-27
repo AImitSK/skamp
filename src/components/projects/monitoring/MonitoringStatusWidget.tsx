@@ -15,9 +15,7 @@ interface MonitoringStatusWidgetProps {
   projectId: string;
   currentStage?: string;
   isEnabled?: boolean;
-  // Unterstütze beide Varianten für Kompatibilität
   status?: 'not_started' | 'active' | 'completed' | 'paused';
-  monitoringStatus?: 'not_started' | 'active' | 'completed' | 'paused';
   stats?: {
     totalClippings: number;
     totalReach: number;
@@ -25,12 +23,6 @@ interface MonitoringStatusWidgetProps {
     trending: string;
     lastUpdated: Date;
   };
-  analytics?: {
-    totalReach: number;
-    clippingCount: number;
-    sentimentScore: number;
-  };
-  // Callback-Funktionen für interaktive Funktionalität
   onStart?: () => void;
   onPause?: () => void;
   onStop?: () => void;
@@ -41,17 +33,14 @@ const MonitoringStatusWidget: React.FC<MonitoringStatusWidgetProps> = ({
   projectId,
   currentStage,
   isEnabled,
-  status,
-  monitoringStatus = 'not_started',
+  status = 'not_started',
   stats,
-  analytics,
   onStart,
   onPause,
   onStop,
   className = ''
 }) => {
-  // Verwende status falls vorhanden, sonst monitoringStatus
-  const currentStatus = status || monitoringStatus;
+  const currentStatus = status;
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'active':
@@ -102,49 +91,29 @@ const MonitoringStatusWidget: React.FC<MonitoringStatusWidgetProps> = ({
       </div>
 
       {/* Metrics */}
-      {(stats || analytics) && currentStatus !== 'not_started' ? (
+      {stats && currentStatus !== 'not_started' ? (
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-900">
-              {stats ? (
-                stats.totalReach > 999 
-                  ? `${(stats.totalReach / 1000).toFixed(1)}K`
-                  : stats.totalReach
-              ) : analytics ? (
-                analytics.totalReach > 999 
-                  ? `${(analytics.totalReach / 1000).toFixed(1)}K`
-                  : analytics.totalReach
-              ) : 0}
+              {stats.totalReach > 999
+                ? `${(stats.totalReach / 1000).toFixed(1)}K`
+                : stats.totalReach}
             </div>
             <div className="text-xs text-gray-500">Reichweite</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-900">
-              {stats ? stats.totalClippings : analytics ? analytics.clippingCount : 0}
+              {stats.totalClippings}
             </div>
             <div className="text-xs text-gray-500">Clippings</div>
           </div>
           <div className="text-center">
             <div className={`text-lg font-semibold ${
-              stats ? (
-                stats.averageSentiment > 0.1 ? 'text-green-600' :
-                stats.averageSentiment < -0.1 ? 'text-red-600' : 'text-gray-600'
-              ) : analytics ? (
-                analytics.sentimentScore > 0.1 ? 'text-green-600' :
-                analytics.sentimentScore < -0.1 ? 'text-red-600' : 'text-gray-600'
-              ) : 'text-gray-600'
+              stats.averageSentiment > 0.1 ? 'text-green-600' :
+              stats.averageSentiment < -0.1 ? 'text-red-600' : 'text-gray-600'
             }`}>
-              {stats ? (
-                stats.averageSentiment > 0 ? '+' : ''
-              ) : analytics ? (
-                analytics.sentimentScore > 0 ? '+' : ''
-              ) : ''}
-              {stats ? 
-                stats.averageSentiment.toFixed(1) : 
-                analytics ? 
-                  analytics.sentimentScore.toFixed(1) : 
-                  '0.0'
-              }
+              {stats.averageSentiment > 0 ? '+' : ''}
+              {stats.averageSentiment.toFixed(1)}
             </div>
             <div className="text-xs text-gray-500">Sentiment</div>
           </div>

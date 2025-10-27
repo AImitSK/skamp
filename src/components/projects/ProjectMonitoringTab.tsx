@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useAuth } from '@/context/AuthContext';
+import { toastService } from '@/lib/utils/toast';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +27,7 @@ interface ProjectMonitoringTabProps {
 
 export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   const { currentOrganization } = useOrganization();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -155,15 +158,41 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
   }
 
   const handleConfirmSuggestion = async (suggestionId: string) => {
-    // TODO: Implement suggestion confirmation
-    console.log('Confirm suggestion:', suggestionId);
-    loadData();
+    if (!user || !currentOrganization) {
+      toastService.error('Authentifizierung erforderlich');
+      return;
+    }
+
+    try {
+      await monitoringSuggestionService.confirmSuggestion(suggestionId, {
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
+      toastService.success('Vorschlag bestätigt und Clipping erstellt');
+      loadData();
+    } catch (error) {
+      console.error('Fehler beim Bestätigen des Vorschlags:', error);
+      toastService.error('Fehler beim Bestätigen des Vorschlags');
+    }
   };
 
   const handleRejectSuggestion = async (suggestionId: string) => {
-    // TODO: Implement suggestion rejection
-    console.log('Reject suggestion:', suggestionId);
-    loadData();
+    if (!user || !currentOrganization) {
+      toastService.error('Authentifizierung erforderlich');
+      return;
+    }
+
+    try {
+      await monitoringSuggestionService.markAsSpam(suggestionId, {
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      });
+      toastService.success('Vorschlag abgelehnt');
+      loadData();
+    } catch (error) {
+      console.error('Fehler beim Ablehnen des Vorschlags:', error);
+      toastService.error('Fehler beim Ablehnen des Vorschlags');
+    }
   };
 
 
