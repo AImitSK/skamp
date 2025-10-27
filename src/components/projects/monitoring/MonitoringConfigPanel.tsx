@@ -113,6 +113,8 @@ const MonitoringConfigPanel = React.memo<MonitoringConfigPanelProps>(({
       </div>
     </div>
   );
-}));
+});
+
+MonitoringConfigPanel.displayName = 'MonitoringConfigPanel';
 
 export default MonitoringConfigPanel;

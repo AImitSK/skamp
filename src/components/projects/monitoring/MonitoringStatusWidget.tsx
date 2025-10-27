@@ -188,6 +188,8 @@ const MonitoringStatusWidget = React.memo<MonitoringStatusWidgetProps>(({
       </div>
     </div>
   );
-}));
+});
+
+MonitoringStatusWidget.displayName = 'MonitoringStatusWidget';
 
 export default MonitoringStatusWidget;
