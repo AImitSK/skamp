@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { SUBSCRIPTION_LIMITS, getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
 import { Organization, OrganizationUsage } from '@/types/organization';
-import { CheckIcon, ArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -110,7 +110,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
             onClick={onUpgrade}
             className="px-4 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-all flex items-center gap-2"
           >
-            <ArrowUpIcon className="w-5 h-5" />
+            <PencilSquareIcon className="w-5 h-5" />
             Plan ändern
           </button>
         </div>
