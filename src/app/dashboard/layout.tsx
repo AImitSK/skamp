@@ -251,12 +251,6 @@ export default function DashboardLayout({
 
   const userMenuItems = [
       {
-        name: "Profil",
-        href: "/dashboard/admin/profile",
-        icon: UserIcon,
-        description: "Persönliche Einstellungen bearbeiten"
-      },
-      {
         name: "API-Verwaltung",
         href: "/dashboard/admin/api",
         icon: CodeBracketIcon,
