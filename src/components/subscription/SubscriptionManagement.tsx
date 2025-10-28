@@ -249,7 +249,7 @@ function UsageMeter({
           <span className="text-sm font-semibold text-[#005fab]">Unlimited ∞</span>
         ) : (
           <span className="text-sm text-zinc-600">
-            {formatValue(current)} / {formatValue(limit)} {unit} ({percentage}%)
+            {formatValue(current)} / {formatValue(limit)} {unit}
           </span>
         )}
       </div>
