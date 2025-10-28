@@ -124,22 +124,17 @@ export async function updateContactsUsage(
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // 1. Get ALL contacts and filter manually (debugging)
+    // 1. Count regular contacts (non-deleted)
     const allContactsSnapshot = await adminDb
       .collection('contacts_enhanced')
       .where('organizationId', '==', organizationId)
       .get();
 
-    const allContactsData = allContactsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      displayName: doc.data().displayName || 'Unknown',
-      deletedAt: doc.data().deletedAt,
-      isDeleted: !!doc.data().deletedAt
-    }));
+    const regularContacts = allContactsSnapshot.docs.filter(
+      doc => !doc.data().deletedAt
+    );
 
-    const regularContacts = allContactsData.filter(c => !c.isDeleted);
-
-    // 2. Get journalist references
+    // 2. Get journalist references and VALIDATE like CRM page does
     const referencesSnapshot = await adminDb
       .collection('organizations')
       .doc(organizationId)
@@ -147,27 +142,35 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       .where('isActive', '==', true)
       .get();
 
-    const referencesData = referencesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      globalJournalistId: doc.data().globalJournalistId,
-      isActive: doc.data().isActive
-    }));
+    // Validate each reference: must have BOTH globalJournalist AND companyRef
+    const validReferences = [];
+    for (const refDoc of referencesSnapshot.docs) {
+      const ref = refDoc.data();
 
-    // 3. Total = Regular (non-deleted) + References (active)
-    const totalContacts = regularContacts.length + referencesData.length;
+      // Check if globalJournalist exists
+      const globalJournalistDoc = await adminDb
+        .collection('contacts_enhanced')
+        .doc(ref.globalJournalistId)
+        .get();
 
-    // 4. DETAILED LOGGING
-    console.log(`[Usage] Synced contacts for org ${organizationId}:`, {
-      total: totalContacts,
-      regular: regularContacts.length,
-      references: referencesData.length,
-      allContactsInDb: allContactsData.length,
-      deletedContactsInDb: allContactsData.filter(c => c.isDeleted).length,
-      regularContactIds: regularContacts.map(c => c.id),
-      referenceIds: referencesData.map(r => r.id)
-    });
+      // Check if companyRef exists
+      const companyRefDoc = await adminDb
+        .collection('organizations')
+        .doc(organizationId)
+        .collection('company_references')
+        .doc(ref.companyReferenceId)
+        .get();
 
-    // 5. Update usage
+      // Only count if BOTH exist (like CRM page does)
+      if (globalJournalistDoc.exists && companyRefDoc.exists) {
+        validReferences.push(refDoc.id);
+      }
+    }
+
+    // 3. Total = Regular (non-deleted) + VALID References only
+    const totalContacts = regularContacts.length + validReferences.length;
+
+    // 4. Update usage
     const usageRef = adminDb
       .collection('organizations')
       .doc(organizationId)
@@ -181,6 +184,8 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       },
       { merge: true }
     );
+
+    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts} total (${regularContacts.length} regular + ${validReferences.length} valid references)`);
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
     throw error;
