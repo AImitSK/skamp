@@ -114,23 +114,42 @@ export async function updateContactsUsage(
 
 /**
  * Synchronize contacts count from Firestore
- * Uses the SAME logic as the CRM contacts page to ensure consistency
+ * Uses the SAME logic as CRM page (but with Admin SDK)
+ *
+ * Counts:
+ * 1. Regular contacts (contacts_enhanced where deletedAt == null)
+ * 2. Journalist references (journalist_references where isActive == true)
  *
  * @param organizationId - The organization ID
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // Use the same service that CRM page uses - this ensures we count exactly what CRM shows!
-    const { contactsEnhancedService } = await import('@/lib/firebase/crm-service-enhanced');
+    // 1. Count regular contacts (non-deleted)
+    // This matches: BaseService.getAll() with includeDeleted=false filter
+    const regularContactsQuery = adminDb
+      .collection('contacts_enhanced')
+      .where('organizationId', '==', organizationId);
 
-    // This automatically includes:
-    // - Regular contacts (non-deleted)
-    // - Journalist references (active)
-    const allContacts = await contactsEnhancedService.getAll(organizationId);
+    const regularContactsSnapshot = await regularContactsQuery.get();
+    const regularContacts = regularContactsSnapshot.docs.filter(
+      doc => !doc.data().deletedAt
+    ).length;
 
-    const totalContacts = allContacts.length;
+    // 2. Load journalist references (active only)
+    // This matches: multiEntityService.getAllContactReferences() logic
+    const referencesQuery = adminDb
+      .collection('organizations')
+      .doc(organizationId)
+      .collection('journalist_references')
+      .where('isActive', '==', true);
 
-    // Update usage with absolute value
+    const referencesSnapshot = await referencesQuery.get();
+    const journalistReferences = referencesSnapshot.size;
+
+    // 3. Total = Regular (non-deleted) + References (active)
+    const totalContacts = regularContacts + journalistReferences;
+
+    // 4. Update usage
     const usageRef = adminDb
       .collection('organizations')
       .doc(organizationId)
@@ -145,7 +164,7 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       { merge: true }
     );
 
-    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts} contacts (using CRM service)`);
+    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts} total (${regularContacts} regular + ${journalistReferences} references)`);
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
     throw error;
