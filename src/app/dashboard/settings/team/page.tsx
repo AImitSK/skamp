@@ -18,6 +18,7 @@ import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { orgService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
 import { Timestamp } from 'firebase/firestore';
+import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
 import { 
   UserPlusIcon,
   UserGroupIcon,
@@ -445,6 +446,12 @@ export default function TeamSettingsPage() {
   const activeMembers = teamMembers.filter(m => m.status !== 'inactive');
   const pendingMembers = activeMembers.filter(m => m.status === 'invited');
   const activeMembersOnly = activeMembers.filter(m => m.status === 'active');
+
+  // Team Member Limit aus Subscription Tier
+  const teamLimit = currentOrganization?.tier
+    ? SUBSCRIPTION_LIMITS[currentOrganization.tier]?.users || -1
+    : -1;
+  const isLimitReached = teamLimit !== -1 && activeMembers.length >= teamLimit;
   
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
@@ -462,9 +469,22 @@ export default function TeamSettingsPage() {
             <Text className="mt-2 text-zinc-500">
               Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein
             </Text>
+            {/* Team Member Limit Anzeige */}
+            <div className="mt-3 flex items-center gap-2">
+              <UserGroupIcon className="w-5 h-5 text-zinc-400" />
+              <Text className="text-sm font-medium text-zinc-700">
+                {teamLimit === -1 ? (
+                  <span>Team-Mitglieder: {activeMembers.length} <span className="text-[#005fab]">(Unlimited)</span></span>
+                ) : (
+                  <span>
+                    Team-Mitglieder: <span className={isLimitReached ? 'text-red-600 font-semibold' : 'text-zinc-900'}>{activeMembers.length}</span> / {teamLimit}
+                  </span>
+                )}
+              </Text>
+            </div>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
-            <Button 
+            <Button
               plain
               onClick={handleRefresh}
               disabled={refreshing}
@@ -474,9 +494,11 @@ export default function TeamSettingsPage() {
                 refreshing && "animate-spin"
               )} />
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowInviteModal(true)}
-              className="bg-primary hover:bg-primary-hover text-white"
+              disabled={isLimitReached}
+              className="bg-primary hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isLimitReached ? `Limit erreicht: Ihr Plan erlaubt max. ${teamLimit} Mitglieder` : 'Neues Mitglied einladen'}
             >
               <UserPlusIcon className="h-4 w-4 mr-2" />
               <span className="whitespace-nowrap">Mitglied einladen</span>

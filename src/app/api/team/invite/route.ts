@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/api/auth-middleware';
 import { Timestamp, collection, query, where, getDocs, doc, setDoc, serverTimestamp, addDoc } from 'firebase/firestore';
 import { serverDb } from '@/lib/firebase/server-init';
+import { adminDb } from '@/lib/firebase/admin-init';
 import { UserRole, TeamMember } from '@/types/international';
 import { getTeamInvitationEmailTemplate } from '@/lib/email/team-invitation-templates';
+import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
 
 // Helper: Einladungstoken generieren
 function generateInvitationToken(): string {
@@ -108,7 +110,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Prüfe ob E-Mail bereits existiert (inkl. inaktive)
+    // 5. Team Member Limit prüfen
+    try {
+      const orgDoc = await adminDb.collection('organizations').doc(organizationId).get();
+
+      if (orgDoc.exists) {
+        const orgData = orgDoc.data();
+        const tier = orgData?.tier || 'STARTER';
+        const teamLimit = SUBSCRIPTION_LIMITS[tier as keyof typeof SUBSCRIPTION_LIMITS]?.users || 1;
+
+        // Zähle aktive + eingeladene Members (außer inactive)
+        const membersSnapshot = await adminDb
+          .collection('team_members')
+          .where('organizationId', '==', organizationId)
+          .where('status', 'in', ['active', 'invited'])
+          .get();
+
+        const currentMemberCount = membersSnapshot.size;
+
+        // Prüfe Limit (-1 = unlimited)
+        if (teamLimit !== -1 && currentMemberCount >= teamLimit) {
+          return NextResponse.json(
+            {
+              error: `Team-Limit erreicht. Ihr ${SUBSCRIPTION_LIMITS[tier as keyof typeof SUBSCRIPTION_LIMITS]?.name || tier} Plan erlaubt maximal ${teamLimit} Team-Mitglieder.`,
+              currentCount: currentMemberCount,
+              limit: teamLimit
+            },
+            { status: 403 }
+          );
+        }
+
+        console.log(`✅ Team Limit Check: ${currentMemberCount}/${teamLimit === -1 ? '∞' : teamLimit}`);
+      }
+    } catch (limitError) {
+      console.error('Error checking team limit:', limitError);
+      // Don't block invite if limit check fails
+    }
+
+    // 6. Prüfe ob E-Mail bereits existiert (inkl. inaktive)
     const existingQuery = query(
       collection(serverDb, 'team_members'),
       where('email', '==', email),
@@ -139,7 +178,7 @@ export async function POST(request: NextRequest) {
       console.log('Could not check existing members:', e);
     }
 
-    // 6. Stelle sicher, dass Owner existiert
+    // 7. Stelle sicher, dass Owner existiert
     const ownerId = `${userId}_${organizationId}`;
     const ownerRef = doc(serverDb, 'team_members', ownerId);
     
@@ -176,7 +215,7 @@ export async function POST(request: NextRequest) {
       console.log('Could not check/create owner:', e);
     }
 
-    // 7. Erstelle oder aktualisiere Team-Mitglied
+    // 8. Erstelle oder aktualisiere Team-Mitglied
     const invitationToken = generateInvitationToken();
     const tokenExpiry = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 Tage
     
@@ -272,7 +311,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 8. Hole Inviter-Name für E-Mail
+    // 9. Hole Inviter-Name für E-Mail
     let inviterName = 'Das Team';
     let organizationName = 'CeleroPress';
     
@@ -292,7 +331,7 @@ export async function POST(request: NextRequest) {
       console.log('Could not get inviter info:', e);
     }
 
-    // 9. Sende Einladungs-E-Mail DIREKT (nur wenn direkt erstellt)
+    // 10. Sende Einladungs-E-Mail DIREKT (nur wenn direkt erstellt)
     if (createdDirectly) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
       const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
@@ -329,7 +368,7 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Invitation email sent successfully to:', email);
 
-      // 10. Erfolg
+      // 11. Erfolg
       return NextResponse.json({
         success: true,
         memberId,
