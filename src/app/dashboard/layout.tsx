@@ -275,12 +275,6 @@ export default function DashboardLayout({
         description: "Rechnungen und Zahlungsmethoden"
       },
       {
-        name: "Vertragsdetails",
-        href: "/dashboard/admin/contract",
-        icon: DocumentCheckIcon,
-        description: "Vertragsdetails und Konditionen"
-      },
-      {
         name: "Integrationen",
         href: "/dashboard/admin/integrations",
         icon: PuzzlePieceIcon,
