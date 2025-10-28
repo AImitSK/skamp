@@ -1,6 +1,12 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
 /**
+ * Flexible Timestamp Type - kann Firestore Timestamp, Date oder String sein
+ * Je nachdem ob Client oder Server-Side
+ */
+export type FlexibleTimestamp = Timestamp | Date | string;
+
+/**
  * Account Type für Organizations
  * - regular: Normale zahlende Kunden (mit Stripe)
  * - promo: Promo-Code Accounts (zeitlich begrenzt oder unbegrenzt)
@@ -20,8 +26,8 @@ export type SubscriptionTier = 'STARTER' | 'BUSINESS' | 'AGENTUR';
 export interface PromoDetails {
   code: string;
   grantedBy: string; // User ID des Admins, der den Promo-Code vergab
-  grantedAt: Timestamp;
-  expiresAt: Timestamp | null; // null = nie
+  grantedAt: FlexibleTimestamp;
+  expiresAt: FlexibleTimestamp | null; // null = nie
   reason: string; // "Launch Promo", "Beta Tester", etc.
   originalTier: SubscriptionTier; // Welches Tier sie bekommen
 }
@@ -55,7 +61,7 @@ export interface OrganizationUsage {
   tier: SubscriptionTier;
 
   // Last Updated
-  lastUpdated: Timestamp;
+  lastUpdated: FlexibleTimestamp;
 }
 
 /**
@@ -80,8 +86,8 @@ export interface Organization {
   stripeSubscriptionId?: string;
 
   // Timestamps
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: FlexibleTimestamp;
+  updatedAt: FlexibleTimestamp;
 
   // Usage Metriken (optional, wird in Phase 2 vollständig implementiert)
   usage?: OrganizationUsage;

@@ -17,6 +17,18 @@ interface Props {
   onUpdate: () => void;
 }
 
+/**
+ * Helper: Convert Timestamp/Date/String to Date
+ */
+function toDate(timestamp: any): Date {
+  if (!timestamp) return new Date();
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'string') return new Date(timestamp);
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  return new Date();
+}
+
 export default function OrganizationDetailModal({ organization, onClose, onUpdate }: Props) {
   const [supportNote, setSupportNote] = useState('');
   const [loading, setLoading] = useState(false);
@@ -154,7 +166,7 @@ export default function OrganizationDetailModal({ organization, onClose, onUpdat
               <div className="flex justify-between">
                 <span className="text-zinc-600">Created:</span>
                 <span className="font-medium">
-                  {organization.createdAt?.toDate().toLocaleDateString('de-DE')}
+                  {toDate(organization.createdAt).toLocaleDateString('de-DE')}
                 </span>
               </div>
               <div className="flex justify-between">

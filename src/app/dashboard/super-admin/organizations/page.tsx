@@ -18,6 +18,18 @@ import SearchAndFilter, { FilterState } from '@/components/super-admin/SearchAnd
 import { Organization } from '@/types/organization';
 import toast from 'react-hot-toast';
 
+/**
+ * Helper: Convert Timestamp/Date/String to Date
+ */
+function toDate(timestamp: any): Date {
+  if (!timestamp) return new Date();
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'string') return new Date(timestamp);
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  return new Date();
+}
+
 export default function SuperAdminOrganizationsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -114,7 +126,7 @@ export default function SuperAdminOrganizationsPage() {
             return false;
           }
           const daysUntilExpiry = Math.ceil(
-            (org.promoDetails.expiresAt.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+            (toDate(org.promoDetails.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
           );
           return daysUntilExpiry <= 7 && daysUntilExpiry > 0;
         });
@@ -239,7 +251,7 @@ function generateCSV(organizations: Organization[]): string {
     org.usage?.emailsLimit === -1 ? 'Unlimited' : org.usage?.emailsLimit?.toString() || '0',
     org.usage ? (org.usage.storageUsed / (1024 ** 3)).toFixed(2) : '0',
     org.usage?.storageLimit === -1 ? 'Unlimited' : org.usage ? (org.usage.storageLimit / (1024 ** 3)).toFixed(0) : '0',
-    org.createdAt.toDate().toLocaleDateString('de-DE'),
+    toDate(org.createdAt).toLocaleDateString('de-DE'),
   ]);
 
   return [headers, ...rows].map((row) => row.join(',')).join('\n');

@@ -14,6 +14,18 @@ interface Props {
   onViewDetails: (org: Organization) => void;
 }
 
+/**
+ * Helper: Convert Timestamp/Date/String to Date
+ */
+function toDate(timestamp: any): Date {
+  if (!timestamp) return new Date();
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'string') return new Date(timestamp);
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  return new Date();
+}
+
 export default function OrganizationTable({ organizations, onViewDetails }: Props) {
   const getUsageEmoji = (percentage: number) => {
     if (percentage < 80) return '🟢';
@@ -46,7 +58,7 @@ export default function OrganizationTable({ organizations, onViewDetails }: Prop
     }
 
     const daysUntilExpiry = Math.ceil(
-      (org.promoDetails.expiresAt.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      (toDate(org.promoDetails.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
     );
 
     if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {

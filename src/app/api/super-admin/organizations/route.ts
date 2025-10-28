@@ -34,7 +34,7 @@ function generateMockUsage(tier: string, accountType: string): OrganizationUsage
       teamMembersActive: Math.floor(Math.random() * 5) + 1,
       teamMembersLimit: -1, // Unlimited
       tier: tier as any,
-      lastUpdated: new Date() as any,
+      lastUpdated: new Date(),
     };
   }
 
@@ -56,7 +56,7 @@ function generateMockUsage(tier: string, accountType: string): OrganizationUsage
     teamMembersActive: Math.floor(Math.random() * limits.users) + 1,
     teamMembersLimit: limits.users,
     tier: tier as any,
-    lastUpdated: new Date() as any,
+    lastUpdated: new Date(),
   };
 }
 
@@ -84,17 +84,24 @@ export async function GET(request: NextRequest) {
         // TODO: In Phase 2 - Load real usage from usage collection
         const mockUsage = generateMockUsage(data.tier || 'STARTER', data.accountType || 'regular');
 
+        // Serialize promoDetails if present
+        const promoDetails = data.promoDetails ? {
+          ...data.promoDetails,
+          grantedAt: data.promoDetails.grantedAt?.toDate?.() || data.promoDetails.grantedAt,
+          expiresAt: data.promoDetails.expiresAt?.toDate?.() || data.promoDetails.expiresAt,
+        } : undefined;
+
         organizations.push({
           id: doc.id,
           name: data.name || 'Unbekannt',
           adminEmail: data.adminEmail || '',
           accountType: data.accountType || 'regular',
           tier: data.tier || 'STARTER',
-          promoDetails: data.promoDetails || undefined,
+          promoDetails,
           stripeCustomerId: data.stripeCustomerId,
           stripeSubscriptionId: data.stripeSubscriptionId,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
+          createdAt: data.createdAt?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt || new Date(),
           usage: mockUsage,
         });
       }
