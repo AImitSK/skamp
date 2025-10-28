@@ -95,131 +95,161 @@ export default function PromoCodeManager() {
 
   return (
     <div className="space-y-6">
-      {/* Create Form */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <TicketIcon className="w-6 h-6 text-indigo-600" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            Promo-Code erstellen
-          </h2>
+      {/* Create Form - InfoCard Pattern */}
+      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+        {/* Card Header */}
+        <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+          <div className="flex items-center gap-3">
+            <TicketIcon className="h-5 w-5 text-zinc-700" />
+            <h3 className="text-base font-semibold text-zinc-900">
+              Promo-Code erstellen
+            </h3>
+          </div>
         </div>
 
-        <form onSubmit={handleCreatePromoCode} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Code
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="LAUNCH2025"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg uppercase"
-              required
-            />
-          </div>
+        {/* Card Body */}
+        <div className="p-6">
+          <form onSubmit={handleCreatePromoCode} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                Code
+              </label>
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="LAUNCH2025"
+                className="block w-full rounded-lg border border-zinc-300 bg-white
+                           px-3 py-2 text-sm uppercase
+                           placeholder:text-zinc-300
+                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+                           h-10"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tier
-            </label>
-            <select
-              value={tier}
-              onChange={(e) => setTier(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                Tier
+              </label>
+              <select
+                value={tier}
+                onChange={(e) => setTier(e.target.value as any)}
+                className="block w-full rounded-lg border border-zinc-300 bg-white
+                           px-3 py-2 text-sm h-10
+                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="BUSINESS">BUSINESS (€149/Monat)</option>
+                <option value="AGENTUR">AGENTUR (€399/Monat)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                Max. Nutzungen
+              </label>
+              <input
+                type="number"
+                value={maxUses}
+                onChange={(e) => setMaxUses(parseInt(e.target.value))}
+                className="block w-full rounded-lg border border-zinc-300 bg-white
+                           px-3 py-2 text-sm h-10
+                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                min="1"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                -1 für unbegrenzte Nutzungen
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 mb-1">
+                Gültigkeit (Monate)
+              </label>
+              <input
+                type="number"
+                value={validityMonths || ''}
+                onChange={(e) =>
+                  setValidityMonths(e.target.value ? parseInt(e.target.value) : null)
+                }
+                placeholder="Leer lassen für unbegrenzt"
+                className="block w-full rounded-lg border border-zinc-300 bg-white
+                           px-3 py-2 text-sm h-10
+                           placeholder:text-zinc-300
+                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                min="1"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                Leer lassen für unbegrenzte Gültigkeit
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white
+                         font-medium whitespace-nowrap
+                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]
+                         h-10 px-6 rounded-lg transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="BUSINESS">BUSINESS (€149/Monat)</option>
-              <option value="AGENTUR">AGENTUR (€399/Monat)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Max. Nutzungen
-            </label>
-            <input
-              type="number"
-              value={maxUses}
-              onChange={(e) => setMaxUses(parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              min="1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              -1 für unbegrenzte Nutzungen
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Gültigkeit (Monate)
-            </label>
-            <input
-              type="number"
-              value={validityMonths || ''}
-              onChange={(e) =>
-                setValidityMonths(e.target.value ? parseInt(e.target.value) : null)
-              }
-              placeholder="null für unbegrenzt"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              min="1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Leer lassen für unbegrenzte Gültigkeit
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition disabled:opacity-50"
-          >
-            {loading ? 'Erstelle...' : 'Promo-Code erstellen'}
-          </button>
-        </form>
+              {loading ? 'Erstelle...' : 'Promo-Code erstellen'}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* Existing Promo Codes List */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Bestehende Promo-Codes ({promoCodes.length})
-        </h3>
+      {/* Existing Promo Codes List - InfoCard Pattern */}
+      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+        {/* Card Header */}
+        <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
+          <div className="flex items-center gap-3">
+            <TicketIcon className="h-5 w-5 text-zinc-700" />
+            <h3 className="text-base font-semibold text-zinc-900">
+              Bestehende Promo-Codes ({promoCodes.length})
+            </h3>
+          </div>
+        </div>
 
-        {loadingList ? (
-          <p className="text-gray-500">Lade Promo-Codes...</p>
-        ) : promoCodes.length === 0 ? (
-          <p className="text-gray-500">Keine Promo-Codes vorhanden</p>
-        ) : (
-          <div className="space-y-2">
-            {promoCodes.map((promo) => (
-              <div
-                key={promo.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-gray-900">
-                      {promo.code}
-                    </span>
-                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded">
-                      {promo.tier}
-                    </span>
-                    {promo.active ? (
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <XCircleIcon className="w-4 h-4 text-red-600" />
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {promo.currentUses} / {promo.maxUses === -1 ? '∞' : promo.maxUses} genutzt
-                    {promo.validityMonths && (
-                      <span className="ml-2">• {promo.validityMonths} Monate Gültigkeit</span>
-                    )}
+        {/* Card Body */}
+        <div className="p-6">
+          {loadingList ? (
+            <p className="text-zinc-500">Lade Promo-Codes...</p>
+          ) : promoCodes.length === 0 ? (
+            <p className="text-zinc-500">Keine Promo-Codes vorhanden</p>
+          ) : (
+            <div className="space-y-2">
+              {promoCodes.map((promo) => (
+                <div
+                  key={promo.id}
+                  className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg border border-zinc-100"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-semibold text-zinc-900">
+                        {promo.code}
+                      </span>
+                      <span className="px-2 py-0.5 bg-[#005fab]/10 text-[#005fab] text-xs font-medium rounded">
+                        {promo.tier}
+                      </span>
+                      {promo.active ? (
+                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <XCircleIcon className="w-4 h-4 text-red-600" />
+                      )}
+                    </div>
+                    <div className="text-xs text-zinc-600 mt-1">
+                      {promo.currentUses} / {promo.maxUses === -1 ? '∞' : promo.maxUses} genutzt
+                      {promo.validityMonths && (
+                        <span className="ml-2">• {promo.validityMonths} Monate Gültigkeit</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

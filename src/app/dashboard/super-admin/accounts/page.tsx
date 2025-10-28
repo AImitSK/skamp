@@ -69,8 +69,8 @@ export default function SuperAdminAccountsPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Account Management</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-zinc-900">Account Management</h1>
+        <p className="mt-2 text-zinc-600">
           Verwalten Sie Special Accounts und Promo-Codes
         </p>
       </div>
