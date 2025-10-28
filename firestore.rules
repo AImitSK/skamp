@@ -12,11 +12,20 @@ service cloud.firestore {
     }
 
     // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
+    // SuperAdmin = Mitglied der Super-Admin Organization (info@sk-online-marketing.de)
     function isSuperAdmin() {
-      return request.auth != null
-             && (request.auth.token.role == 'super-admin'
-                 || request.auth.token.organizationId == "superadmin-org"
-                 || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == "superadmin-org");
+      if (request.auth == null) {
+        return false;
+      }
+
+      // 1. Check Custom Claim (backward compatible)
+      if (request.auth.token.role == 'super-admin') {
+        return true;
+      }
+
+      // 2. Check if user's organizationId matches Super-Admin Organization
+      let superAdminOrgId = get(/databases/$(database)/documents/system_settings/super_admin).data.organizationId;
+      return request.auth.token.organizationId == superAdminOrgId;
     }
 
     // Prüft ob User zur Organisation gehört
