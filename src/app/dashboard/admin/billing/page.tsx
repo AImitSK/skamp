@@ -125,7 +125,9 @@ export default function BillingPage() {
           organization={organization}
           onUpgrade={() => {
             // TODO: Implement pricing/upgrade flow
-            toast.info('Upgrade Flow wird demnächst implementiert');
+            toast('Upgrade Flow wird demnächst implementiert', {
+              icon: 'ℹ️',
+            });
           }}
         />
       ) : (
