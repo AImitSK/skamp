@@ -6,12 +6,16 @@ import Link from 'next/link';
 // Die Navigationspunkte für den Admin-Bereich
 const adminItems = [
   {
-    name: "API-Verwaltung",
-    href: "/dashboard/admin/api",
+    name: "Profil",
+    href: "/dashboard/admin/profile",
   },
   {
     name: "Abrechnung",
     href: "/dashboard/admin/billing",
+  },
+  {
+    name: "API-Verwaltung",
+    href: "/dashboard/admin/api",
   },
   {
     name: "Integrationen",

@@ -11,6 +11,7 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { Organization, OrganizationUsage } from '@/types/organization';
 import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
+import { getUsage } from '@/lib/usage/usage-tracker';
 
 export async function GET(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
@@ -30,9 +31,13 @@ export async function GET(request: NextRequest) {
 
       const orgData = orgDoc.data() as Organization;
 
-      // Generate mock usage data if not present
-      // TODO: In Phase 3 (Usage Tracking) this will be fetched from usage collection
-      const usage = orgData.usage || generateMockUsage(orgData.tier, orgData.accountType);
+      // Fetch real usage data from usage subcollection
+      let usage = await getUsage(auth.organizationId);
+
+      // Fallback to mock data if no usage tracking exists yet
+      if (!usage) {
+        usage = generateMockUsage(orgData.tier, orgData.accountType);
+      }
 
       // Serialize timestamps for client
       const organization: Organization = {

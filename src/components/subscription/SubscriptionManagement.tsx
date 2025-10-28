@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { SUBSCRIPTION_LIMITS, getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
 import { Organization, OrganizationUsage } from '@/types/organization';
-import { CheckIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, PencilSquareIcon, XMarkIcon, EnvelopeIcon, UserGroupIcon, SparklesIcon, UserIcon, CloudIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -22,6 +22,15 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
 
   const currentTierLimits = SUBSCRIPTION_LIMITS[organization.tier];
   const usage = organization.usage;
+
+  // Format Plan Features für bessere Darstellung
+  const features = [
+    { label: `${currentTierLimits.emails_per_month.toLocaleString('de-DE')} Emails pro Monat`, icon: EnvelopeIcon },
+    { label: `${currentTierLimits.contacts.toLocaleString('de-DE')} Kontakte`, icon: UserGroupIcon },
+    { label: currentTierLimits.ai_words_per_month === -1 ? 'Unlimited AI-Wörter' : `${currentTierLimits.ai_words_per_month.toLocaleString('de-DE')} AI-Wörter`, icon: SparklesIcon },
+    { label: `${currentTierLimits.users} Team-Mitglied${currentTierLimits.users > 1 ? 'er' : ''}`, icon: UserIcon },
+    { label: `${(currentTierLimits.storage_bytes / (1024 ** 3)).toFixed(0)} GB Cloud-Speicher`, icon: CloudIcon },
+  ];
 
   const handleOpenCustomerPortal = async () => {
     setPortalLoading(true);
@@ -88,39 +97,68 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
   };
 
   return (
-    <div className="space-y-8">
-      {/* Current Plan Header */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-zinc-900">
-              {currentTierLimits.name} Plan
-            </h2>
-            <p className="mt-1 text-zinc-600">
-              {organization.accountType === 'regular' ? (
-                <>€{currentTierLimits.price_monthly_eur}/Monat</>
-              ) : (
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
-                  {organization.accountType.toUpperCase()}
-                </span>
-              )}
-            </p>
+    <div className="space-y-6">
+      {/* Plan & Features - Combined Box */}
+      <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-zinc-900">
+                {currentTierLimits.name} Plan
+              </h3>
+              <p className="mt-1 text-zinc-600">
+                {organization.accountType === 'regular' ? (
+                  <span className="text-lg font-medium">€{currentTierLimits.price_monthly_eur}/Monat</span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-md">
+                    {organization.accountType.toUpperCase()}
+                  </span>
+                )}
+              </p>
+            </div>
+            <button
+              onClick={onUpgrade}
+              className="px-4 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-colors flex items-center gap-2 h-10"
+            >
+              <PencilSquareIcon className="w-5 h-5" />
+              Plan ändern
+            </button>
           </div>
-          <button
-            onClick={onUpgrade}
-            className="px-4 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-all flex items-center gap-2"
-          >
-            <PencilSquareIcon className="w-5 h-5" />
-            Plan ändern
-          </button>
+        </div>
+
+        {/* Features Grid */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <div key={idx} className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+                  <Icon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-zinc-700">{feature.label}</span>
+                </div>
+              );
+            })}
+            {currentTierLimits.journalist_db_access && (
+              <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+                <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-zinc-700">Journalisten-Datenbank Zugriff</span>
+              </div>
+            )}
+            <div className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+              <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-zinc-700">{currentTierLimits.support.join(', ')} Support</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Usage Meters */}
+      {/* Usage Section */}
       {usage && (
-        <div className="bg-white rounded-xl border border-zinc-200 p-6">
-          <h3 className="text-lg font-semibold text-zinc-900 mb-4">Nutzung</h3>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+            <h3 className="text-base font-semibold text-zinc-900">Aktuelle Nutzung</h3>
+          </div>
+          <div className="p-6 space-y-6">
             <UsageMeter
               label="Emails"
               current={usage.emailsSent}
@@ -156,36 +194,24 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
         </div>
       )}
 
-      {/* Plan Features */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-6">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">Enthaltene Features</h3>
-        <ul className="space-y-3">
-          <FeatureItem text={`${currentTierLimits.emails_per_month.toLocaleString('de-DE')} Emails pro Monat`} />
-          <FeatureItem text={`${currentTierLimits.contacts.toLocaleString('de-DE')} Kontakte`} />
-          <FeatureItem text={currentTierLimits.ai_words_per_month === -1 ? 'Unlimited AI-Wörter' : `${currentTierLimits.ai_words_per_month.toLocaleString('de-DE')} AI-Wörter`} />
-          <FeatureItem text={`${currentTierLimits.users} Team-Mitglied${currentTierLimits.users > 1 ? 'er' : ''}`} />
-          <FeatureItem text={`${(currentTierLimits.storage_bytes / (1024 ** 3)).toFixed(0)} GB Cloud-Speicher`} />
-          {currentTierLimits.journalist_db_access && <FeatureItem text="Journalisten-Datenbank Zugriff" />}
-          <FeatureItem text={`${currentTierLimits.support.join(', ')} Support`} />
-        </ul>
-      </div>
-
-      {/* Actions */}
+      {/* Verwaltung */}
       {organization.accountType === 'regular' && organization.stripeCustomerId && (
-        <div className="bg-white rounded-xl border border-zinc-200 p-6">
-          <h3 className="text-lg font-semibold text-zinc-900 mb-4">Verwaltung</h3>
-          <div className="space-y-3">
+        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+            <h3 className="text-base font-semibold text-zinc-900">Zahlungsverwaltung</h3>
+          </div>
+          <div className="p-6 space-y-3">
             <button
               onClick={handleOpenCustomerPortal}
               disabled={portalLoading}
-              className="w-full px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-colors disabled:opacity-50 h-11"
             >
               {portalLoading ? 'Öffne Portal...' : 'Zahlungsmethode & Rechnungen verwalten'}
             </button>
             <button
               onClick={handleCancelSubscription}
               disabled={cancelLoading}
-              className="w-full px-4 py-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 border border-red-300 bg-white hover:bg-red-50 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2 h-11"
             >
               <XMarkIcon className="w-5 h-5" />
               {cancelLoading ? 'Kündige...' : 'Subscription kündigen'}
@@ -227,30 +253,32 @@ function UsageMeter({
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-zinc-700">{label}</span>
         {unlimited ? (
-          <span className="text-sm font-bold text-[#005fab]">Unlimited ∞</span>
+          <span className="text-sm font-semibold text-[#005fab]">Unlimited ∞</span>
         ) : (
           <span className="text-sm text-zinc-600">
-            {formatValue(current)} / {formatValue(limit)} {unit} ({percentage}%)
+            {formatValue(current)} / {formatValue(limit)} {unit}
           </span>
         )}
       </div>
       {!unlimited && (
-        <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
+        <div className="h-8 bg-zinc-100 rounded-lg overflow-hidden relative">
           <div
-            className={`h-full ${colorClasses[color]} transition-all duration-300`}
+            className={`h-full ${colorClasses[color]} transition-all duration-300 flex items-center justify-center`}
             style={{ width: `${Math.min(percentage, 100)}%` }}
-          />
+          >
+            {percentage > 15 && (
+              <span className="text-xs font-semibold text-white">
+                {percentage}%
+              </span>
+            )}
+          </div>
+          {percentage <= 15 && (
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-600">
+              {percentage}%
+            </span>
+          )}
         </div>
       )}
     </div>
-  );
-}
-
-function FeatureItem({ text }: { text: string }) {
-  return (
-    <li className="flex items-start gap-3">
-      <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
-      <span className="text-sm text-zinc-700">{text}</span>
-    </li>
   );
 }

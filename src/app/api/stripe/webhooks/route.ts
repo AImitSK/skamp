@@ -16,6 +16,7 @@ import { adminDb } from '@/lib/firebase/admin-init';
 import { FieldValue } from 'firebase-admin/firestore';
 import { OrganizationSubscription, SubscriptionStatus } from '@/types/subscription';
 import { SubscriptionTier } from '@/config/subscription-limits';
+import { initializeUsageTracking, updateUsageLimits } from '@/lib/usage/usage-tracker';
 
 // Disable body parsing, need raw body for signature verification
 export const runtime = 'nodejs';
@@ -142,6 +143,14 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+  // Initialize usage tracking for new subscription
+  try {
+    await initializeUsageTracking(organizationId, tier);
+    console.log(`[Stripe Webhook] Initialized usage tracking for ${organizationId}`);
+  } catch (error) {
+    console.error(`[Stripe Webhook] Failed to initialize usage tracking:`, error);
+  }
+
   console.log(`[Stripe Webhook] Created subscription for organization ${organizationId}`);
 }
 
@@ -179,6 +188,14 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       tier,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+  // Update usage limits if tier changed
+  try {
+    await updateUsageLimits(organizationId, tier);
+    console.log(`[Stripe Webhook] Updated usage limits for ${organizationId}`);
+  } catch (error) {
+    console.error(`[Stripe Webhook] Failed to update usage limits:`, error);
+  }
 
   console.log(`[Stripe Webhook] Updated subscription for organization ${organizationId}`);
 }
