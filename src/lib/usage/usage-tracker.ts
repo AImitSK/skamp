@@ -114,21 +114,35 @@ export async function updateContactsUsage(
 
 /**
  * Synchronize contacts count from Firestore
- * Counts all contacts in contacts_enhanced collection and updates usage
+ * Counts all contacts in contacts_enhanced collection AND journalist references
+ * from the premium database, then updates usage
  * This is more reliable than increment-based tracking as it self-heals
  *
  * @param organizationId - The organization ID
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // Count contacts in Firestore
+    // Count regular contacts in Firestore
     const contactsSnapshot = await adminDb
       .collection('contacts_enhanced')
       .where('organizationId', '==', organizationId)
       .count()
       .get();
 
-    const totalContacts = contactsSnapshot.data().count;
+    const regularContacts = contactsSnapshot.data().count;
+
+    // Count journalist references (Premium-Datenbank Verweise)
+    const referencesSnapshot = await adminDb
+      .collection('organizations')
+      .doc(organizationId)
+      .collection('journalist_references')
+      .count()
+      .get();
+
+    const journalistReferences = referencesSnapshot.data().count;
+
+    // Total = Regular Contacts + Journalist References
+    const totalContacts = regularContacts + journalistReferences;
 
     // Update usage with absolute value
     const usageRef = adminDb
@@ -145,7 +159,9 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       { merge: true }
     );
 
-    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts}`);
+    console.log(
+      `[Usage] Synced contacts for org ${organizationId}: ${totalContacts} total (${regularContacts} regular + ${journalistReferences} references)`
+    );
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
     throw error;

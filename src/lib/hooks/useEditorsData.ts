@@ -58,10 +58,27 @@ export function useCreateJournalistReference() {
         data.notes || `Importiert als Verweis am ${new Date().toLocaleDateString('de-DE')}`
       );
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['editors', 'imported', variables.organizationId]
       });
+
+      // Auto-Sync usage after journalist reference import
+      try {
+        const { auth } = await import('@/lib/firebase/client-init');
+        const user = auth.currentUser;
+        if (user) {
+          const token = await user.getIdToken();
+          await fetch('/api/admin/sync-usage', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log('✅ Usage synced after journalist reference import');
+        }
+      } catch (syncError) {
+        console.error('Failed to sync usage after import:', syncError);
+        // Don't block the success - sync will happen on next page load
+      }
     },
   });
 }
@@ -80,10 +97,27 @@ export function useRemoveJournalistReference() {
         data.organizationId
       );
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['editors', 'imported', variables.organizationId]
       });
+
+      // Auto-Sync usage after journalist reference removal
+      try {
+        const { auth } = await import('@/lib/firebase/client-init');
+        const user = auth.currentUser;
+        if (user) {
+          const token = await user.getIdToken();
+          await fetch('/api/admin/sync-usage', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log('✅ Usage synced after journalist reference removal');
+        }
+      } catch (syncError) {
+        console.error('Failed to sync usage after removal:', syncError);
+        // Don't block the success - sync will happen on next page load
+      }
     },
   });
 }
