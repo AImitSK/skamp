@@ -14,9 +14,9 @@ export default function SubscriptionSuccessPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to dashboard after 5 seconds
+    // Redirect to subscription page after 5 seconds
     const timeout = setTimeout(() => {
-      router.push('/dashboard');
+      router.push('/dashboard/subscription');
     }, 5000);
 
     return () => clearTimeout(timeout);

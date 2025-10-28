@@ -1,6 +1,6 @@
 /**
- * Subscription & Pricing Page
- * Zeigt aktuelle Subscription und ermöglicht Upgrade/Downgrade
+ * Subscription Page V2
+ * Shows Management Dashboard if subscribed, otherwise Pricing Page
  */
 
 'use client';
@@ -9,42 +9,55 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from '@/config/subscription-limits';
+import { Organization } from '@/types/organization';
 import { CheckIcon } from '@heroicons/react/24/outline';
+import SubscriptionManagement from '@/components/subscription/SubscriptionManagement';
 import toast from 'react-hot-toast';
 
 type BillingInterval = 'monthly' | 'yearly';
+type ViewMode = 'management' | 'pricing';
 
 export default function SubscriptionPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [currentTier, setCurrentTier] = useState<SubscriptionTier>('STARTER');
+  const [loading, setLoading] = useState(true);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('pricing');
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchCurrentSubscription();
+      fetchOrganization();
     }
   }, [user]);
 
-  const fetchCurrentSubscription = async () => {
+  const fetchOrganization = async () => {
     try {
       const { auth } = await import('@/lib/firebase/client-init');
       const currentUser = auth.currentUser;
       if (!currentUser) return;
 
       const token = await currentUser.getIdToken();
-      const response = await fetch('/api/subscription/current', {
+      const response = await fetch('/api/subscription/organization', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setCurrentTier(data.tier || 'STARTER');
+        setOrganization(data.organization);
+
+        // Show management if has active subscription
+        if (data.organization.stripeSubscriptionId) {
+          setViewMode('management');
+        } else {
+          setViewMode('pricing');
+        }
       }
     } catch (error) {
-      console.error('Error fetching subscription:', error);
+      console.error('Error fetching organization:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,7 +96,6 @@ export default function SubscriptionPage() {
 
       const data = await response.json();
 
-      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -95,6 +107,46 @@ export default function SubscriptionPage() {
       setCheckoutLoading(null);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 text-center">
+          <p className="text-zinc-600">Bitte melde dich an, um Subscriptions zu sehen.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 text-center">
+          <p className="text-zinc-600">Lädt...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show Management Dashboard if user has subscription
+  if (viewMode === 'management' && organization) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-zinc-900">Subscription</h1>
+          <p className="mt-2 text-zinc-600">Verwalte deine Subscription und Nutzung</p>
+        </div>
+
+        <SubscriptionManagement
+          organization={organization}
+          onUpgrade={() => setViewMode('pricing')}
+        />
+      </div>
+    );
+  }
+
+  // Show Pricing Page
+  const tiers: SubscriptionTier[] = ['STARTER', 'BUSINESS', 'AGENTUR'];
 
   const formatPrice = (tier: SubscriptionTier, interval: BillingInterval) => {
     const limits = SUBSCRIPTION_LIMITS[tier];
@@ -108,28 +160,26 @@ export default function SubscriptionPage() {
     };
   };
 
-  const tiers: SubscriptionTier[] = ['STARTER', 'BUSINESS', 'AGENTUR'];
-
-  if (!user) {
-    return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-8 text-center">
-          <p className="text-zinc-600">Bitte melde dich an, um Subscriptions zu sehen.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-zinc-900">
-          Wähle deinen Plan
+          {viewMode === 'pricing' && organization?.stripeSubscriptionId ? 'Plan ändern' : 'Wähle deinen Plan'}
         </h1>
         <p className="mt-4 text-lg text-zinc-600">
-          Starte noch heute und wachse mit CeleroPress
+          {viewMode === 'pricing' && organization?.stripeSubscriptionId
+            ? 'Upgrade oder downgrade deinen aktuellen Plan'
+            : 'Starte noch heute und wachse mit CeleroPress'}
         </p>
+        {viewMode === 'pricing' && organization?.stripeSubscriptionId && (
+          <button
+            onClick={() => setViewMode('management')}
+            className="mt-4 text-sm text-[#005fab] hover:text-[#004a8c] font-medium"
+          >
+            ← Zurück zur Übersicht
+          </button>
+        )}
       </div>
 
       {/* Billing Toggle */}
@@ -162,7 +212,7 @@ export default function SubscriptionPage() {
         {tiers.map((tier) => {
           const limits = SUBSCRIPTION_LIMITS[tier];
           const price = formatPrice(tier, billingInterval);
-          const isCurrentTier = tier === currentTier;
+          const isCurrentTier = organization?.tier === tier;
           const isPopular = tier === 'BUSINESS';
 
           return (
@@ -179,30 +229,24 @@ export default function SubscriptionPage() {
               )}
 
               <div className="p-8">
-                {/* Tier Name */}
                 <h3 className="text-2xl font-bold text-zinc-900">{limits.name}</h3>
 
-                {/* Current Badge */}
                 {isCurrentTier && (
                   <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                     Aktueller Plan
                   </span>
                 )}
 
-                {/* Price */}
                 <div className="mt-6">
                   <div className="flex items-baseline">
                     <span className="text-5xl font-bold text-zinc-900">€{price.perMonth}</span>
                     <span className="ml-2 text-zinc-600">/Monat</span>
                   </div>
                   {billingInterval === 'yearly' && (
-                    <p className="mt-2 text-sm text-zinc-500">
-                      €{price.total} pro Jahr
-                    </p>
+                    <p className="mt-2 text-sm text-zinc-500">€{price.total} pro Jahr</p>
                   )}
                 </div>
 
-                {/* Features */}
                 <ul className="mt-8 space-y-4">
                   <li className="flex items-start gap-3">
                     <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
@@ -219,7 +263,10 @@ export default function SubscriptionPage() {
                   <li className="flex items-start gap-3">
                     <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-zinc-700">
-                      {limits.ai_words_per_month === -1 ? 'Unlimited' : limits.ai_words_per_month.toLocaleString('de-DE')} AI-Wörter
+                      {limits.ai_words_per_month === -1
+                        ? 'Unlimited'
+                        : limits.ai_words_per_month.toLocaleString('de-DE')}{' '}
+                      AI-Wörter
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
@@ -231,7 +278,7 @@ export default function SubscriptionPage() {
                   <li className="flex items-start gap-3">
                     <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-zinc-700">
-                      {(limits.storage_bytes / (1024 ** 3)).toFixed(0)} GB Cloud-Speicher
+                      {(limits.storage_bytes / 1024 ** 3).toFixed(0)} GB Cloud-Speicher
                     </span>
                   </li>
                   {limits.journalist_db_access && (
@@ -242,9 +289,7 @@ export default function SubscriptionPage() {
                   )}
                   <li className="flex items-start gap-3">
                     <CheckIcon className="w-5 h-5 text-[#005fab] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-zinc-700">
-                      {limits.support.join(', ')} Support
-                    </span>
+                    <span className="text-sm text-zinc-700">{limits.support.join(', ')} Support</span>
                   </li>
                   {limits.additional_user_cost_eur && (
                     <li className="flex items-start gap-3">
@@ -256,7 +301,6 @@ export default function SubscriptionPage() {
                   )}
                 </ul>
 
-                {/* CTA Button */}
                 <button
                   onClick={() => handleSubscribe(tier)}
                   disabled={isCurrentTier || checkoutLoading !== null}
@@ -268,13 +312,11 @@ export default function SubscriptionPage() {
                       : 'bg-zinc-900 hover:bg-zinc-800 text-white'
                   } ${checkoutLoading === tier ? 'opacity-50' : ''}`}
                 >
-                  {checkoutLoading === tier ? (
-                    'Weiterleitung...'
-                  ) : isCurrentTier ? (
-                    'Aktueller Plan'
-                  ) : (
-                    `${tier} wählen`
-                  )}
+                  {checkoutLoading === tier
+                    ? 'Weiterleitung...'
+                    : isCurrentTier
+                    ? 'Aktueller Plan'
+                    : `${tier} wählen`}
                 </button>
               </div>
             </div>
@@ -282,7 +324,6 @@ export default function SubscriptionPage() {
         })}
       </div>
 
-      {/* FAQ or Additional Info */}
       <div className="mt-12 text-center text-sm text-zinc-500">
         <p>Alle Pläne beinhalten eine 14-tägige Geld-zurück-Garantie</p>
         <p className="mt-2">Fragen? Kontaktiere uns unter support@celeropress.com</p>
