@@ -69,7 +69,8 @@ import {
   ChartBarIcon,
   GlobeAltIcon,
   UsersIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  TicketIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -198,45 +199,51 @@ export default function DashboardLayout({
 ];
 
   const settingsItems = [
-    { 
-      name: "Benachrichtigungen", 
-      href: "/dashboard/settings/notifications", 
+    {
+      name: "Subscription",
+      href: "/dashboard/subscription",
+      icon: CreditCardIcon,
+      description: "Plan verwalten und upgraden"
+    },
+    {
+      name: "Benachrichtigungen",
+      href: "/dashboard/settings/notifications",
       icon: BellAlertIcon,
       description: "E-Mail und Push-Benachrichtigungen verwalten"
     },
-    { 
-      name: "Branding", 
-      href: "/dashboard/settings/branding", 
+    {
+      name: "Branding",
+      href: "/dashboard/settings/branding",
       icon: PaintBrushIcon,
       description: "Personalisiere CeleroPress mit eigenem Logo"
     },
-    { 
-      name: "Templates", 
-      href: "/dashboard/settings/templates", 
+    {
+      name: "Templates",
+      href: "/dashboard/settings/templates",
       icon: DocumentTextIcon,
       description: "PDF-Layout-Vorlagen verwalten"
     },
-    { 
-      name: "Domains", 
-      href: "/dashboard/settings/domain", 
+    {
+      name: "Domains",
+      href: "/dashboard/settings/domain",
       icon: EnvelopeIcon,
       description: "Eigene E-Mail-Domain einrichten"
     },
-        { 
-      name: "E-Mail", 
-      href: "/dashboard/settings/email", 
+        {
+      name: "E-Mail",
+      href: "/dashboard/settings/email",
       icon: EnvelopeIcon,
       description: "E-Mail Konfiguration"
     },
-    { 
-      name: "Import / Export", 
-      href: "/dashboard/settings/import-export", 
+    {
+      name: "Import / Export",
+      href: "/dashboard/settings/import-export",
       icon: ArrowDownTrayIcon,
       description: "Daten importieren oder exportieren"
     },
-    { 
-      name: "Team", 
-      href: "/dashboard/settings/team", 
+    {
+      name: "Team",
+      href: "/dashboard/settings/team",
       icon: UserGroupIcon,
       description: "Team-Mitglieder verwalten"
     },
@@ -500,6 +507,20 @@ export default function DashboardLayout({
                       <ChevronDownIcon className="size-4" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="min-w-60">
+                      <DropdownItem
+                        href="/dashboard/super-admin/accounts"
+                        icon={TicketIcon}
+                        description="Promo-Codes und Special Accounts"
+                      >
+                        Account Management
+                      </DropdownItem>
+                      <DropdownItem
+                        href="/dashboard/super-admin/organizations"
+                        icon={BuildingOfficeIcon}
+                        description="Organizations Overview & Support"
+                      >
+                        Organizations
+                      </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/matching/candidates"
                         icon={AdjustmentsHorizontalIcon}

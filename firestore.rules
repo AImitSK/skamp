@@ -12,10 +12,20 @@ service cloud.firestore {
     }
 
     // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
+    // SuperAdmin = Mitglied der Super-Admin Organization (info@sk-online-marketing.de)
     function isSuperAdmin() {
-      return request.auth != null
-             && (request.auth.token.organizationId == "superadmin-org"
-                 || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == "superadmin-org");
+      if (request.auth == null) {
+        return false;
+      }
+
+      // 1. Check Custom Claim (backward compatible)
+      if (request.auth.token.role == 'super-admin') {
+        return true;
+      }
+
+      // 2. Check if user's organizationId matches Super-Admin Organization
+      let superAdminOrgId = get(/databases/$(database)/documents/system_settings/super_admin).data.organizationId;
+      return request.auth.token.organizationId == superAdminOrgId;
     }
 
     // Prüft ob User zur Organisation gehört
@@ -350,6 +360,34 @@ service cloud.firestore {
       // Löschen: Nur eigene Organisation
       allow delete: if isAuthenticated()
                     && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
+    // PROMO CODES (Phase 0: Special Accounts)
+    // ========================================
+
+    // Promo Codes Collection - Lesen: alle authenticated, Schreiben: nur Super-Admin
+    match /promoCodes/{codeId} {
+      // Lesen: Alle authentifizierten User (für Promo-Code Check)
+      allow read: if isAuthenticated();
+
+      // Schreiben: Nur Super-Admins
+      allow write: if isSuperAdmin();
+    }
+
+    // ========================================
+    // SUBSCRIPTIONS (Phase 1: Stripe Integration)
+    // ========================================
+
+    // Subscriptions Collection - Lesen: Org-Member, Schreiben: nur Super-Admin (oder Admin SDK via Webhooks)
+    match /subscriptions/{organizationId} {
+      // Lesen: Nur Mitglieder der eigenen Organisation oder Super-Admin
+      allow read: if isAuthenticated()
+                  && (request.auth.token.organizationId == organizationId
+                      || isSuperAdmin());
+
+      // Schreiben: Nur Super-Admin (normale Writes passieren via Admin SDK in Webhooks)
+      allow write: if isSuperAdmin();
     }
 
     // ========================================
