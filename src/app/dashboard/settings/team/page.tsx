@@ -536,7 +536,7 @@ export default function TeamSettingsPage() {
                 <UserGroupIcon className="h-5 w-5 text-gray-600" />
                 <Text className="text-sm text-gray-600">Aktive Mitglieder</Text>
               </div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-2xl font-semibold text-gray-900 whitespace-nowrap">
                 {teamLimit === -1 ? (
                   <span>{activeMembersOnly.length} <span className="text-base font-normal text-[#005fab]">(Unlimited)</span></span>
                 ) : (
@@ -590,9 +590,7 @@ export default function TeamSettingsPage() {
               <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Zuletzt aktiv
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
-                Aktionen
-              </div>
+              <div className="w-[15%]"></div>
             </div>
           </div>
 
@@ -661,12 +659,10 @@ export default function TeamSettingsPage() {
                         )}
                       </div>
                       <div className="w-[15%] flex justify-end">
-                        {member.role === 'owner' ? (
-                          <span className="text-xs text-gray-400">-</span>
-                        ) : (
+                        {member.role !== 'owner' && (
                           <Dropdown>
-                            <DropdownButton plain>
-                              <EllipsisVerticalIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                            <DropdownButton plain className="p-1.5 hover:bg-zinc-200 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                              <EllipsisVerticalIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-400 stroke-[2.5]" />
                             </DropdownButton>
                             <DropdownMenu anchor="bottom end">
                               {member.status === 'invited' && (
