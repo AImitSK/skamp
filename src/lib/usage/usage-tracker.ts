@@ -94,6 +94,7 @@ export async function incrementEmailUsage(
 /**
  * Increment or set contacts total
  * Called from CRM create/import/delete operations
+ * @deprecated Use syncContactsUsage instead for more reliable counting
  */
 export async function updateContactsUsage(
   organizationId: string,
@@ -109,6 +110,97 @@ export async function updateContactsUsage(
     contactsTotal: FieldValue.increment(delta),
     lastUpdated: FieldValue.serverTimestamp(),
   });
+}
+
+/**
+ * Synchronize contacts count from Firestore
+ * Counts all contacts in contacts_enhanced collection and updates usage
+ * This is more reliable than increment-based tracking as it self-heals
+ *
+ * @param organizationId - The organization ID
+ */
+export async function syncContactsUsage(organizationId: string): Promise<void> {
+  try {
+    // Count contacts in Firestore
+    const contactsSnapshot = await adminDb
+      .collection('contacts_enhanced')
+      .where('organizationId', '==', organizationId)
+      .count()
+      .get();
+
+    const totalContacts = contactsSnapshot.data().count;
+
+    // Update usage with absolute value
+    const usageRef = adminDb
+      .collection('organizations')
+      .doc(organizationId)
+      .collection('usage')
+      .doc('current');
+
+    await usageRef.set(
+      {
+        contactsTotal: totalContacts,
+        lastUpdated: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts}`);
+  } catch (error) {
+    console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Check if adding N contacts would exceed limit
+ *
+ * @param organizationId - The organization ID
+ * @param additionalContacts - Number of contacts to add (default: 1)
+ * @returns Object with allowed flag, current count, limit, and remaining capacity
+ */
+export async function checkContactsLimit(
+  organizationId: string,
+  additionalContacts: number = 1
+): Promise<{
+  allowed: boolean;
+  current: number;
+  limit: number;
+  remaining: number;
+  wouldExceed: number; // How many over limit if added
+}> {
+  const usage = await getUsage(organizationId);
+
+  if (!usage) {
+    throw new Error('Usage data not found for organization');
+  }
+
+  const current = usage.contactsTotal;
+  const limit = usage.contactsLimit;
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      current,
+      limit,
+      remaining: -1,
+      wouldExceed: 0,
+    };
+  }
+
+  const newTotal = current + additionalContacts;
+  const allowed = newTotal <= limit;
+  const remaining = Math.max(0, limit - current);
+  const wouldExceed = Math.max(0, newTotal - limit);
+
+  return {
+    allowed,
+    current,
+    limit,
+    remaining,
+    wouldExceed,
+  };
 }
 
 /**

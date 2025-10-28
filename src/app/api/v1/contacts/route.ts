@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { APIMiddleware, RequestParser } from '@/lib/api/api-middleware';
 import { contactsAPIService } from '@/lib/api/contacts-api-service';
 import { ContactCreateRequest, ContactListParams, BulkContactCreateRequest } from '@/types/api-crm';
+import { checkContactsLimit, syncContactsUsage } from '@/lib/usage/usage-tracker';
 
 /**
  * GET /api/v1/contacts
@@ -33,43 +34,74 @@ export const GET = APIMiddleware.withAuth(
  */
 export const POST = APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
-    
+
     const contentType = request.headers.get('content-type');
-    
+
     // Check if it's a bulk operation
     if (contentType?.includes('application/json')) {
       const body = await RequestParser.parseJSON<any>(request);
-      
+
       // Bulk create if array of contacts
       if (Array.isArray(body) || (body.contacts && Array.isArray(body.contacts))) {
-        const bulkRequest: BulkContactCreateRequest = Array.isArray(body) 
+        const bulkRequest: BulkContactCreateRequest = Array.isArray(body)
           ? { contacts: body, continueOnError: true }
           : body;
-        
+
         RequestParser.validateRequired(bulkRequest, ['contacts']);
-        
+
+        // Check limit for bulk import
+        const contactsToCreate = bulkRequest.contacts.length;
+        const limitCheck = await checkContactsLimit(context.organizationId, contactsToCreate);
+
+        if (!limitCheck.allowed) {
+          return APIMiddleware.handleError({
+            name: 'APIError',
+            statusCode: 429,
+            errorCode: 'CONTACTS_LIMIT_EXCEEDED',
+            message: `Kontakte-Limit erreicht. Sie versuchen ${contactsToCreate} Kontakte zu importieren, aber Sie haben nur noch ${limitCheck.remaining} von ${limitCheck.limit} verfügbar.`,
+          });
+        }
+
         const result = await contactsAPIService.createContactsBulk(
           bulkRequest,
           context.organizationId,
           context.userId
         );
-        
+
+        // Sync contacts count after bulk import
+        await syncContactsUsage(context.organizationId);
+
         return APIMiddleware.successResponse(result, 201);
       }
-      
+
       // Single contact create
       const createRequest = body as ContactCreateRequest;
       RequestParser.validateRequired(createRequest, ['firstName', 'lastName']);
-      
+
+      // Check limit before creating
+      const limitCheck = await checkContactsLimit(context.organizationId, 1);
+
+      if (!limitCheck.allowed) {
+        return APIMiddleware.handleError({
+          name: 'APIError',
+          statusCode: 429,
+          errorCode: 'CONTACTS_LIMIT_EXCEEDED',
+          message: `Kontakte-Limit erreicht (${limitCheck.current} / ${limitCheck.limit}). Bitte upgraden Sie Ihren Plan.`,
+        });
+      }
+
       const contact = await contactsAPIService.createContact(
         createRequest,
         context.organizationId,
         context.userId
       );
-      
+
+      // Sync contacts count after create
+      await syncContactsUsage(context.organizationId);
+
       return APIMiddleware.successResponse(contact, 201);
     }
-    
+
     // Unsupported content type
     return APIMiddleware.handleError({
       name: 'APIError',
@@ -77,7 +109,7 @@ export const POST = APIMiddleware.withAuth(
       errorCode: 'INVALID_REQUEST_FORMAT',
       message: 'Content-Type must be application/json'
     });
-    
+
   },
   ['contacts:write']
 );

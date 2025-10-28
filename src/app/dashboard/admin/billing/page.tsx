@@ -16,6 +16,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [fixLoading, setFixLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -73,6 +74,34 @@ export default function BillingPage() {
     }
   };
 
+  const handleSyncUsage = async () => {
+    setSyncLoading(true);
+    try {
+      const { auth } = await import('@/lib/firebase/client-init');
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('Not authenticated');
+
+      const token = await currentUser.getIdToken();
+      const response = await fetch('/api/admin/sync-usage', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`Usage synchronisiert: ${data.usage.contacts} Kontakte, ${data.usage.teamMembers} Team-Mitglieder`);
+        fetchOrganization(); // Reload
+      } else {
+        toast.error(data.error || 'Fehler beim Synchronisieren');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Synchronisieren');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div>
@@ -112,11 +141,16 @@ export default function BillingPage() {
             Verwalte deine Subscription, Zahlungsmethoden und Nutzung
           </Text>
         </div>
-        {!hasSubscription && !isSpecialAccount && (
-          <Button color="amber" onClick={handleFixOrganization} disabled={fixLoading}>
-            {fixLoading ? 'Aktualisiere...' : '🔧 Subscription Sync'}
+        <div className="flex gap-2">
+          {!hasSubscription && !isSpecialAccount && (
+            <Button color="amber" onClick={handleFixOrganization} disabled={fixLoading}>
+              {fixLoading ? 'Aktualisiere...' : '🔧 Subscription Sync'}
+            </Button>
+          )}
+          <Button color="blue" onClick={handleSyncUsage} disabled={syncLoading}>
+            {syncLoading ? 'Synchronisiere...' : '🔄 Usage Sync'}
           </Button>
-        )}
+        </div>
       </div>
 
       <Divider className="my-8" />
