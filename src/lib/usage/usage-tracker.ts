@@ -114,7 +114,7 @@ export async function updateContactsUsage(
 
 /**
  * Synchronize contacts count from Firestore
- * Counts all contacts in contacts_enhanced collection AND journalist references
+ * Counts all NON-DELETED contacts in contacts_enhanced collection AND active journalist references
  * from the premium database, then updates usage
  * This is more reliable than increment-based tracking as it self-heals
  *
@@ -122,26 +122,28 @@ export async function updateContactsUsage(
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // Count regular contacts in Firestore
+    // Count regular contacts in Firestore (only non-deleted)
     const contactsSnapshot = await adminDb
       .collection('contacts_enhanced')
       .where('organizationId', '==', organizationId)
+      .where('deletedAt', '==', null)
       .count()
       .get();
 
     const regularContacts = contactsSnapshot.data().count;
 
-    // Count journalist references (Premium-Datenbank Verweise)
+    // Count journalist references (Premium-Datenbank Verweise, only active)
     const referencesSnapshot = await adminDb
       .collection('organizations')
       .doc(organizationId)
       .collection('journalist_references')
+      .where('isActive', '==', true)
       .count()
       .get();
 
     const journalistReferences = referencesSnapshot.data().count;
 
-    // Total = Regular Contacts + Journalist References
+    // Total = Regular Contacts (non-deleted) + Journalist References (active)
     const totalContacts = regularContacts + journalistReferences;
 
     // Update usage with absolute value
