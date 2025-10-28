@@ -5,10 +5,11 @@
 
 'use client';
 
+import { Suspense } from 'react';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
-export default function SubscriptionCancelPage() {
+function CancelContent() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-orange-50 to-zinc-50">
       <div className="max-w-md w-full">
@@ -74,5 +75,19 @@ export default function SubscriptionCancelPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SubscriptionCancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-orange-50 to-zinc-50">
+        <div className="text-center">
+          <p className="text-zinc-600">Lädt...</p>
+        </div>
+      </div>
+    }>
+      <CancelContent />
+    </Suspense>
   );
 }
