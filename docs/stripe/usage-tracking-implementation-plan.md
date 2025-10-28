@@ -1,8 +1,238 @@
 # Real Usage Tracking Implementation Plan
 
-**Status:** In Planung
+**Status:** ⚡ IN PROGRESS - Phase 2 teilweise abgeschlossen
 **Erstellt:** 2025-01-28
+**Letztes Update:** 2025-10-28
 **Ziel:** Mock-Daten durch echte Usage-Tracking-Daten ersetzen
+
+---
+
+## 🚀 STATUS UPDATE - 2025-10-28
+
+### ✅ HEUTE IMPLEMENTIERT (Phase 2)
+
+#### 1. **Contacts Usage Tracking** ✅ KOMPLETT
+**Implementierung:**
+- `syncContactsUsage()` in `usage-tracker.ts` (Zeile 125-193)
+- Zählt Regular Contacts + Valid Journalist References
+- Validiert References wie CRM-Page (beide Docs müssen existieren)
+- Auto-Sync bei Billing Page Load (non-blocking)
+- Manueller Sync über `/api/admin/sync-usage`
+
+**Limit-Checks implementiert:**
+- ✅ Einzelner Kontakt (`/api/v1/contacts` POST) - Zeile 82
+- ✅ Bulk-Import (`/api/v1/contacts` POST Array) - Zeile 54
+- ✅ Journalist Reference Import (`useEditorsData.ts`) - Zeile 54-74
+
+**Verified:**
+```
+[Usage] Synced contacts for org abc123: 5 total (3 regular + 2 valid references)
+```
+
+#### 2. **Storage Usage Tracking** ✅ KOMPLETT
+**Implementierung:**
+- `syncStorageUsage()` in `usage-tracker.ts` (Zeile 296-332)
+- Listet Files direkt aus Firebase Storage Bucket
+- Path: `organizations/{organizationId}/`
+- Source of Truth - was wirklich in Storage existiert
+- Auto-Sync bei Billing Page Load (non-blocking)
+
+**Admin Storage SDK:**
+- `adminStorage` Export in `admin-init.ts` hinzugefügt
+- `storageBucket` Parameter in Initialisierung
+
+**Verified:**
+```
+[Usage] Synced storage for org abc123: 73064954 bytes (86 files)
+→ 0.07 GB korrekt angezeigt auf Billing-Page ✅
+```
+
+**Vorteile dieser Methode:**
+- ✅ Self-Healing (gelöschte Files zählen nicht)
+- ✅ 100% akkurat (kein out-of-sync)
+- ✅ Einfach (ein API-Call)
+- ✅ Kein manuelles Tracking bei Upload/Delete nötig
+
+#### 3. **Team Members Tracking** ✅ BEREITS VORHANDEN
+- Bereits implementiert in vorheriger Session
+- Auto-Sync bei Billing Page Load
+- Zählt active team_members
+
+**Auto-Sync beim Page-Load:**
+```typescript
+// /api/subscription/organization/route.ts (Zeile 44-52)
+syncContactsUsage(auth.organizationId).catch(err => {
+  console.error('Background contacts sync error:', err);
+});
+
+syncStorageUsage(auth.organizationId).catch(err => {
+  console.error('Background storage sync error:', err);
+});
+```
+
+### ⏳ NOCH NICHT IMPLEMENTIERT
+
+#### Storage Limit-Checks beim Upload ❌
+**Problem:** Storage wird getrackt, aber keine Limits beim Upload geprüft
+
+**Upload-Stellen identifiziert (ca. 6-8 Stellen):**
+1. Media Library Uploads (`media-assets-service.ts`)
+2. PDF Template Uploads (`pdf-template-service.ts`)
+3. Campaign Key Visual Uploads (`KeyVisualSection.tsx`)
+4. Profile Picture Uploads (`profile-image-service.ts`)
+5. Campaign Media Service (`campaign-media-service.ts`)
+6. Weitere Upload-Komponenten
+
+**Nötig:**
+- Vor jedem Upload: Limit-Check gegen `usage.storageUsed + file.size > usage.storageLimit`
+- Error Message: "Speicher-Limit erreicht (X GB / Y GB)"
+- Client-seitige Pre-Checks (bessere UX)
+
+#### Emails Tracking ❌
+**Was fehlt:**
+- `incrementEmailUsage()` Aufrufe in Email-Send-APIs
+- Zählung von Empfängern (to, cc, bcc)
+- Limit-Checks vor dem Senden
+
+**APIs zu instrumentieren:**
+- `/api/email/send/route.ts` (benötigt Auth)
+- `/api/sendgrid/send-pr-campaign/route.ts` (hat Auth)
+- `/api/email/send-approval/route.ts` (hat Auth)
+
+#### AI Words Tracking ❌
+**Was fehlt:**
+- `incrementAIWordsUsage()` Aufrufe in Genkit-APIs
+- Word-Counting nach Generation
+- Limit-Checks vor der Generierung
+
+**9 AI APIs zu instrumentieren:**
+- `/api/ai/generate/route.ts` (benötigt Auth)
+- `/api/ai/generate-structured/route.ts` (benötigt Auth)
+- `/api/ai/generate-headlines/route.ts` (benötigt Auth)
+- `/api/ai/email-response/route.ts` (benötigt Auth)
+- `/api/ai/email-insights/route.ts` (benötigt Auth)
+- `/api/ai/text-transform/route.ts` (benötigt Auth)
+- `/api/ai/merge-variants/route.ts` (benötigt Auth)
+- `/api/ai/analyze-keyword-seo/route.ts` (benötigt Auth)
+- `/api/ai/custom-instruction/route.ts` (benötigt Auth)
+
+---
+
+## 📁 IMPLEMENTIERTE DATEIEN
+
+### Core Services
+- `src/lib/firebase/admin-init.ts` - adminStorage Export
+- `src/lib/usage/usage-tracker.ts` - syncContactsUsage, syncStorageUsage
+
+### API Routes
+- `src/app/api/subscription/organization/route.ts` - Auto-Sync Background
+- `src/app/api/admin/sync-usage/route.ts` - Manueller Sync Button
+- `src/app/api/usage/check-contacts-limit/route.ts` - Client-seitiger Limit-Check
+- `src/app/api/v1/contacts/route.ts` - Limit-Checks vor Create
+
+### Hooks
+- `src/lib/hooks/useEditorsData.ts` - Journalist Reference Limit-Check
+
+### Debug Tools
+- `scripts/check-storage-usage.ts` - Storage Usage Analyse-Script
+
+---
+
+## 🎯 NÄCHSTE SCHRITTE (FÜR MORGEN)
+
+### Priority 1: Storage Limit-Checks (2-3h)
+1. Alle Upload-Stellen finden (Grep nach `uploadBytes`, `uploadBytesResumable`)
+2. Pre-Upload Limit-Check implementieren:
+   ```typescript
+   // Check storage limit
+   const usage = await getUsage(organizationId);
+   const newTotal = usage.storageUsed + file.size;
+
+   if (usage.storageLimit !== -1 && newTotal > usage.storageLimit) {
+     throw new Error('Storage limit exceeded');
+   }
+   ```
+3. Client-seitige Pre-Checks (verhindert Upload-Start)
+4. Error Messages + Upgrade-CTA
+
+**Geschätzte Upload-Stellen:**
+- `useUploadMediaAsset` Hook (Media Library)
+- `uploadCampaignHeroImage` (Campaign Media)
+- `uploadTemplate` (PDF Templates)
+- `uploadProfileImage` (Profile Pictures)
+- Direct `uploadBytes` calls in Components
+
+### Priority 2: Emails Tracking (3-4h)
+1. Email-Send-APIs mit Auth ausstatten
+2. `incrementEmailUsage(orgId, recipientCount)` aufrufen
+3. Limit-Checks vor dem Senden
+4. Frontend: Token mitschicken
+
+### Priority 3: AI Words Tracking (4-5h)
+1. Word-Counter Utility erstellen
+2. Alle 9 AI-APIs mit Auth ausstatten
+3. `incrementAIWordsUsage(orgId, wordCount)` aufrufen
+4. Limit-Checks vor der Generierung
+5. Frontend: Token mitschicken
+
+---
+
+## 📊 METRIKEN STATUS
+
+| Metrik | Tracking | Limit-Check | Auto-Sync | Status |
+|--------|----------|-------------|-----------|--------|
+| **Contacts** | ✅ | ✅ (3 Stellen) | ✅ | FERTIG |
+| **Storage** | ✅ | ❌ (0 Stellen) | ✅ | HALB FERTIG |
+| **Team Members** | ✅ | ✅ | ✅ | FERTIG |
+| **Emails** | ⏳ | ❌ | - | OFFEN |
+| **AI Words** | ⏳ | ❌ | - | OFFEN |
+
+---
+
+## 🔍 VERIFIKATION
+
+### Storage Usage Check
+```bash
+# Script ausführen für detaillierte Analyse
+npx tsx scripts/check-storage-usage.ts YOUR_ORG_ID
+
+# Output zeigt:
+# - Files nach Ordner gruppiert
+# - Top 5 größte Files
+# - Total: Bytes, KB, MB, GB
+# - Vergleich: Storage vs Firestore
+```
+
+### Vercel Logs Check
+```
+1. Billing-Page öffnen
+2. "Usage aktualisieren" klicken (3-Punkte-Menü)
+3. Vercel Logs öffnen
+4. Suche nach:
+   - [Usage] Synced contacts
+   - [Usage] Synced storage
+   - Team members sync
+```
+
+**Beispiel Logs von heute:**
+```
+[Usage] Synced contacts for org kqU...: 5 total (3 regular + 2 valid references)
+[Usage] Synced storage for org kqU...: 73064954 bytes (86 files)
+```
+
+---
+
+## ⚠️ OFFENE FRAGEN (für morgen klären)
+
+1. **Storage Uploads:** Welche Upload-Methode wird bevorzugt?
+   - Option A: Zentrale Upload-API (empfohlen, ermöglicht Limit-Check)
+   - Option B: Client SDK + Post-Upload Sync (komplexer)
+
+2. **Grace Period:** Sofort blocken bei Limit oder 24h Grace Period?
+
+3. **Promo/Beta Accounts:** Sollen diese getrackt werden? (Aktuell: unlimited)
+
+4. **Overage:** Über Limit hinaus gegen Extra-Kosten erlauben?
 
 ---
 
