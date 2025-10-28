@@ -40,46 +40,52 @@ export const organizationService = {
     ownerId: string;
     ownerEmail: string;
     ownerName: string;
-    plan?: Organization['plan'];
+    accountType?: 'regular' | 'promo' | 'beta' | 'internal';
+    tier?: 'STARTER' | 'BUSINESS' | 'AGENTUR';
+    photoUrl?: string;
   }): Promise<string> {
     try {
-      // 1. Organisation erstellen
-      const slug = this.generateSlug(data.name);
-      
-      const orgData: Omit<Organization, 'id'> = {
+      // 1. Organisation erstellen mit neuem Schema
+      const orgData: any = {
         name: data.name,
-        slug,
-        plan: data.plan || 'free',
-        planValidUntil: this.getPlanValidUntil(data.plan || 'free'),
-        limits: this.getDefaultLimits(data.plan || 'free'),
-        settings: {
-          defaultLanguage: 'de',
-          defaultCurrency: 'EUR',
-          defaultCountry: 'DE',
-          timezone: 'Europe/Berlin'
-        },
-        createdAt: serverTimestamp() as Timestamp,
-        updatedAt: serverTimestamp() as Timestamp
+        adminEmail: data.ownerEmail,
+        accountType: data.accountType || 'beta', // Default: beta für neue Registrierungen
+        tier: data.tier || 'STARTER', // Default Tier
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
       const orgRef = await addDoc(collection(db, 'organizations'), orgData);
       const organizationId = orgRef.id;
 
-      // 2. Owner als erstes Team-Mitglied hinzufügen
-      const ownerMember: Omit<TeamMember, 'id'> = {
+      console.log(`✅ Created organization ${organizationId} (${data.accountType || 'beta'})`);
+
+      // 2. Owner als erstes Team-Mitglied hinzufügen mit fester ID
+      const ownerId = `${data.ownerId}_${organizationId}`;
+      const ownerData: any = {
+        id: ownerId,
         userId: data.ownerId,
         organizationId,
         email: data.ownerEmail,
         displayName: data.ownerName,
         role: 'owner',
         status: 'active',
-        invitedAt: serverTimestamp() as Timestamp,
+        invitedAt: serverTimestamp(),
         invitedBy: data.ownerId,
-        joinedAt: serverTimestamp() as Timestamp,
-        lastActiveAt: serverTimestamp() as Timestamp
+        joinedAt: serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
 
-      await addDoc(collection(db, 'team_members'), ownerMember);
+      // Füge photoUrl nur hinzu, wenn vorhanden
+      if (data.photoUrl) {
+        ownerData.photoUrl = data.photoUrl;
+      }
+
+      await setDoc(doc(db, 'team_members', ownerId), ownerData);
+
+      console.log(`✅ Created owner ${ownerId} for organization ${organizationId}`);
 
       return organizationId;
     } catch (error) {

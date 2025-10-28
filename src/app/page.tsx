@@ -146,13 +146,15 @@ export default function HomePage() {
         provider: 'google'
       }, { merge: true });
 
-      // Erstelle Owner-Organisation wenn neu
-      const { teamMemberService } = await import('@/lib/firebase/team-service-enhanced');
-      await teamMemberService.createOwner({
-        userId: googleUser.uid,
-        organizationId: googleUser.uid,
-        email: googleUser.email || '',
-        displayName: googleUser.displayName || googleUser.email || '',
+      // Erstelle Beta-Organisation (voller Zugang ohne Payment)
+      const { organizationService } = await import('@/lib/firebase/organization-service');
+      await organizationService.create({
+        name: `${googleUser.displayName || googleUser.email?.split('@')[0]}'s Organization`,
+        ownerId: googleUser.uid,
+        ownerEmail: googleUser.email || '',
+        ownerName: googleUser.displayName || googleUser.email || '',
+        accountType: 'beta', // Beta-Account für Testphase
+        tier: 'STARTER',
         photoUrl: googleUser.photoURL || undefined
       });
 
@@ -228,13 +230,15 @@ export default function HomePage() {
         linkedProviders: ['password']
       });
 
-      // Erstelle Owner-Organisation
-      const { teamMemberService } = await import('@/lib/firebase/team-service-enhanced');
-      await teamMemberService.createOwner({
-        userId: newUser.uid,
-        organizationId: newUser.uid,
-        email: newUser.email || '',
-        displayName: newUser.displayName || newUser.email || '',
+      // Erstelle Beta-Organisation (voller Zugang ohne Payment)
+      const { organizationService } = await import('@/lib/firebase/organization-service');
+      await organizationService.create({
+        name: `${newUser.email?.split('@')[0]}'s Organization`,
+        ownerId: newUser.uid,
+        ownerEmail: newUser.email || '',
+        ownerName: newUser.displayName || newUser.email || '',
+        accountType: 'beta', // Beta-Account für Testphase
+        tier: 'STARTER',
         photoUrl: newUser.photoURL || undefined
       });
 
