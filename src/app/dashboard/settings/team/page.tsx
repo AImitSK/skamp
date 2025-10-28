@@ -581,7 +581,7 @@ export default function TeamSettingsPage() {
           {/* Table Header */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Mitglied
               </div>
               <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -590,7 +590,7 @@ export default function TeamSettingsPage() {
               <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Zuletzt aktiv
               </div>
-              <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
                 Aktionen
               </div>
             </div>
@@ -615,18 +615,18 @@ export default function TeamSettingsPage() {
                 return (
                   <div key={member.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
-                      <div className="w-[35%] min-w-0">
-                        <div className="text-sm font-medium text-gray-900">
-                          {member.displayName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {member.email}
-                        </div>
-                        <div className="mt-1">
+                      <div className="w-[40%] min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900">
+                            {member.displayName}
+                          </span>
                           <Badge color={status.color as any} className="whitespace-nowrap">
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {status.label}
                           </Badge>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {member.email}
                         </div>
                       </div>
                       <div className="w-[20%]">
@@ -638,7 +638,7 @@ export default function TeamSettingsPage() {
                           <Select
                             value={member.role}
                             onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
-                            className="text-sm"
+                            className="text-sm max-w-[160px]"
                           >
                             {Object.entries(roleConfig)
                               .filter(([roleKey]) => roleKey !== 'owner')
@@ -660,7 +660,7 @@ export default function TeamSettingsPage() {
                           formatLastActive(member.lastActiveAt)
                         )}
                       </div>
-                      <div className="flex-1 flex justify-end">
+                      <div className="w-[15%] flex justify-end">
                         {member.role === 'owner' ? (
                           <span className="text-xs text-gray-400">-</span>
                         ) : (
@@ -675,7 +675,7 @@ export default function TeamSettingsPage() {
                                   Einladung erneut senden
                                 </DropdownItem>
                               )}
-                              <DropdownItem 
+                              <DropdownItem
                                 onClick={() => handleRemoveMember(member)}
                                 className="text-red-600"
                               >
