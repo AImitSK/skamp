@@ -88,22 +88,24 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
   const organizationId = session.client_reference_id || session.metadata?.organizationId;
   const customerId = session.customer as string;
+  const subscriptionId = session.subscription as string;
 
   if (!organizationId) {
     console.error('[Stripe Webhook] No organizationId in checkout session');
     return;
   }
 
-  // Update Organization with Stripe Customer ID
+  // Update Organization with Stripe Customer ID AND Subscription ID
   await adminDb
     .collection('organizations')
     .doc(organizationId)
     .update({
       stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-  console.log(`[Stripe Webhook] Updated organization ${organizationId} with customer ${customerId}`);
+  console.log(`[Stripe Webhook] Updated organization ${organizationId} with customer ${customerId} and subscription ${subscriptionId}`);
 }
 
 /**
