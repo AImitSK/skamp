@@ -9,6 +9,7 @@ console.log('🔧 Initializing Firebase Admin SDK...');
 console.log('🔍 Environment check:', {
   hasServiceAccount: !!process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT,
   hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  hasStorageBucket: !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   appsLength: admin.apps.length
 });
 
@@ -28,6 +29,7 @@ if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountJSON),
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
 
     console.log('✅ Firebase Admin SDK initialized successfully');
