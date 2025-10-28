@@ -51,6 +51,28 @@ export function useCreateJournalistReference() {
       userId: string;
       notes?: string;
     }) => {
+      // Check contacts limit before importing journalist reference
+      const { auth } = await import('@/lib/firebase/client-init');
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+
+      const token = await user.getIdToken();
+      const limitCheckResponse = await fetch('/api/usage/check-contacts-limit?count=1', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!limitCheckResponse.ok) {
+        throw new Error('Limit-Check fehlgeschlagen');
+      }
+
+      const limitCheck = await limitCheckResponse.json();
+
+      if (!limitCheck.allowed) {
+        throw new Error(
+          `Kontakte-Limit erreicht (${limitCheck.current} / ${limitCheck.limit}). Bitte upgraden Sie Ihren Plan, um weitere Journalist-Verweise zu importieren.`
+        );
+      }
+
       return multiEntityService.createJournalistReference(
         data.journalistId,
         data.organizationId,
