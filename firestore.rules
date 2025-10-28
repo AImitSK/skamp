@@ -14,7 +14,8 @@ service cloud.firestore {
     // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
     function isSuperAdmin() {
       return request.auth != null
-             && (request.auth.token.organizationId == "superadmin-org"
+             && (request.auth.token.role == 'super-admin'
+                 || request.auth.token.organizationId == "superadmin-org"
                  || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == "superadmin-org");
     }
 
@@ -350,6 +351,19 @@ service cloud.firestore {
       // Löschen: Nur eigene Organisation
       allow delete: if isAuthenticated()
                     && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
+    // PROMO CODES (Phase 0: Special Accounts)
+    // ========================================
+
+    // Promo Codes Collection - Lesen: alle authenticated, Schreiben: nur Super-Admin
+    match /promoCodes/{codeId} {
+      // Lesen: Alle authentifizierten User (für Promo-Code Check)
+      allow read: if isAuthenticated();
+
+      // Schreiben: Nur Super-Admins
+      allow write: if isSuperAdmin();
     }
 
     // ========================================
