@@ -61,6 +61,10 @@ export default function TeamSettingsPage() {
   // Confirmation dialog state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+
+  // Owner transfer dialog state
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [memberToTransfer, setMemberToTransfer] = useState<TeamMember | null>(null);
   
   // Load team members on mount
   useEffect(() => {
@@ -239,29 +243,47 @@ export default function TeamSettingsPage() {
   };
   
   const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
-    if (member.role === 'owner') {
-      toastService.error('Die Rolle des Owners kann nicht geändert werden');
+    // 1. Prüfe ob aktueller User Owner ist
+    const currentMember = teamMembers.find(m => m.userId === user?.uid);
+    if (currentMember?.role !== 'owner') {
+      toastService.error('Nur der Owner kann Rollen ändern');
       return;
     }
-    
+
+    // 2. Owner-Transfer (Member → Owner)
+    if (newRole === 'owner') {
+      setMemberToTransfer(member);
+      setShowTransferModal(true);
+      return;
+    }
+
+    // 3. Normale Rollenänderung (sollte nicht vorkommen, da nur member wählbar)
     try {
       const context = { organizationId, userId: user?.uid || '' };
       await teamMemberService.update(member.id!, { role: newRole }, context);
       await loadTeamMembers();
       toastService.success(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
     } catch (error) {
-      
+
       toastService.error('Fehler beim Ändern der Rolle');
     }
   };
   
   const handleRemoveMember = async (member: TeamMember) => {
+    // 1. Prüfe ob aktueller User Owner ist
+    const currentMember = teamMembers.find(m => m.userId === user?.uid);
+    if (currentMember?.role !== 'owner') {
+      toastService.error('Nur der Owner kann Mitglieder entfernen');
+      return;
+    }
+
+    // 2. Owner kann nicht entfernt werden
     if (member.role === 'owner') {
       toastService.error('Der Owner kann nicht entfernt werden');
       return;
     }
 
-    // Zeige Confirmation Dialog statt Browser-confirm
+    // 3. Zeige Confirmation Dialog
     setMemberToRemove(member);
     setShowConfirmModal(true);
   };
@@ -282,6 +304,37 @@ export default function TeamSettingsPage() {
     }
   };
   
+  const confirmOwnerTransfer = async () => {
+    if (!memberToTransfer || !user) return;
+
+    try {
+      const context = { organizationId, userId: user.uid };
+
+      // 1. Finde aktuellen Owner
+      const currentOwner = teamMembers.find(m => m.role === 'owner');
+      if (!currentOwner || currentOwner.userId !== user.uid) {
+        toastService.error('Nur der Owner kann die Rolle übertragen');
+        return;
+      }
+
+      // 2. Mache neues Mitglied zum Owner
+      await teamMemberService.update(memberToTransfer.id!, { role: 'owner' }, context);
+
+      // 3. Mache aktuellen Owner zum Member
+      await teamMemberService.update(currentOwner.id!, { role: 'member' }, context);
+
+      // 4. Reload und Erfolg
+      await loadTeamMembers();
+      toastService.success(`${memberToTransfer.displayName} ist jetzt der neue Owner`);
+
+      setShowTransferModal(false);
+      setMemberToTransfer(null);
+    } catch (error) {
+      console.error('Error transferring ownership:', error);
+      toastService.error('Fehler beim Übertragen der Owner-Rolle');
+    }
+  };
+
   const handleResendInvite = async (member: TeamMember) => {
     if (!user) return;
     
@@ -340,7 +393,7 @@ export default function TeamSettingsPage() {
     }
   };
   
-  // Role configuration
+  // Role configuration (nur Owner + Member)
   const roleConfig: Record<UserRole, {
     label: string;
     icon: any;
@@ -351,31 +404,32 @@ export default function TeamSettingsPage() {
       label: 'Owner',
       icon: ShieldCheckIcon,
       color: 'purple',
-      description: 'Vollzugriff auf alle Funktionen'
-    },
-    admin: {
-      label: 'Admin',
-      icon: UserGroupIcon,
-      color: 'blue',
-      description: 'Kann Team und Einstellungen verwalten'
+      description: 'Vollzugriff auf alle Funktionen und Team-Verwaltung'
     },
     member: {
       label: 'Mitglied',
       icon: UserIcon,
       color: 'green',
-      description: 'Kann PR-Kampagnen erstellen und versenden'
+      description: 'Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)'
+    },
+    // Legacy-Rollen für bestehende Daten (nicht mehr verwendbar)
+    admin: {
+      label: 'Admin (Legacy)',
+      icon: UserGroupIcon,
+      color: 'blue',
+      description: 'Alte Rolle - wird zu Member konvertiert'
     },
     client: {
-      label: 'Kunde',
+      label: 'Kunde (Legacy)',
       icon: BuildingOfficeIcon,
       color: 'gray',
-      description: 'Nur Lesezugriff auf eigene Kampagnen'
+      description: 'Alte Rolle - wird zu Member konvertiert'
     },
     guest: {
-      label: 'Gast',
+      label: 'Gast (Legacy)',
       icon: UserIcon,
       color: 'gray',
-      description: 'Eingeschränkter Lesezugriff'
+      description: 'Alte Rolle - wird zu Member konvertiert'
     }
   };
   
@@ -622,20 +676,23 @@ export default function TeamSettingsPage() {
                           <Badge color={role.color as any} className="whitespace-nowrap">
                             {role.label}
                           </Badge>
-                        ) : (
+                        ) : activeMembersOnly.find(m => m.userId === user?.uid)?.role === 'owner' ? (
                           <Select
                             value={member.role}
                             onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
                             className="text-sm max-w-[160px]"
                           >
-                            {Object.entries(roleConfig)
-                              .filter(([roleKey]) => roleKey !== 'owner')
-                              .map(([value, config]) => (
-                                <option key={value} value={value}>
-                                  {config.label}
-                                </option>
-                              ))}
+                            <option value="member">
+                              {roleConfig.member.label}
+                            </option>
+                            <option value="owner">
+                              → Zum Owner machen
+                            </option>
                           </Select>
+                        ) : (
+                          <Badge color={role.color as any} className="whitespace-nowrap">
+                            {role.label}
+                          </Badge>
                         )}
                       </div>
                       <div className="w-[25%] text-sm text-gray-500">
@@ -709,18 +766,20 @@ export default function TeamSettingsPage() {
               
               <Field>
                 <Label>Rolle</Label>
-                <Select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                >
-                  {Object.entries(roleConfig)
-                    .filter(([role]) => role !== 'owner')
-                    .map(([value, config]) => (
-                      <option key={value} value={value}>
-                        {config.label} - {config.description}
-                      </option>
-                    ))}
-                </Select>
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-5 w-5 text-gray-600" />
+                    <div>
+                      <Text className="font-medium text-gray-900">Mitglied</Text>
+                      <Text className="text-sm text-gray-600">
+                        Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)
+                      </Text>
+                    </div>
+                  </div>
+                </div>
+                <Text className="text-xs text-gray-500 mt-2">
+                  Alle neuen Mitglieder werden als "Mitglied" eingeladen. Der Owner kann später die Rolle übertragen.
+                </Text>
               </Field>
             </div>
           </DialogBody>
@@ -774,6 +833,63 @@ export default function TeamSettingsPage() {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {memberToRemove?.status === 'invited' ? 'Einladung löschen' : 'Mitglied entfernen'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Owner Transfer Dialog */}
+        <Dialog
+          open={showTransferModal}
+          onClose={() => setShowTransferModal(false)}
+          className="sm:max-w-lg"
+        >
+          <DialogTitle className="px-6 py-4">
+            ⚠️ Owner-Rolle übertragen
+          </DialogTitle>
+
+          <DialogBody className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex-shrink-0">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">
+                    Möchtest du <strong>{memberToTransfer?.displayName}</strong> zum neuen Owner machen?
+                  </p>
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <p>• Du wirst automatisch zum <strong>Mitglied</strong></p>
+                    <p>• Du verlierst alle Admin-Rechte (Team-Verwaltung, Abrechnung)</p>
+                    <p>• Diese Aktion kann nur der neue Owner rückgängig machen</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <Text className="text-sm font-medium text-gray-900 mb-2">Was ändert sich?</Text>
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheckIcon className="h-4 w-4 text-purple-600" />
+                    <span><strong>{memberToTransfer?.displayName}</strong> wird Owner</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4 text-green-600" />
+                    <span><strong>Du</strong> wirst Mitglied</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogActions className="px-6 py-4">
+            <Button plain onClick={() => setShowTransferModal(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={confirmOwnerTransfer}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              Ja, Owner-Rolle übertragen
             </Button>
           </DialogActions>
         </Dialog>
