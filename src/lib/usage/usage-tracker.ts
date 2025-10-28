@@ -124,32 +124,50 @@ export async function updateContactsUsage(
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // 1. Count regular contacts (non-deleted)
-    // This matches: BaseService.getAll() with includeDeleted=false filter
-    const regularContactsQuery = adminDb
+    // 1. Get ALL contacts and filter manually (debugging)
+    const allContactsSnapshot = await adminDb
       .collection('contacts_enhanced')
-      .where('organizationId', '==', organizationId);
+      .where('organizationId', '==', organizationId)
+      .get();
 
-    const regularContactsSnapshot = await regularContactsQuery.get();
-    const regularContacts = regularContactsSnapshot.docs.filter(
-      doc => !doc.data().deletedAt
-    ).length;
+    const allContactsData = allContactsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      displayName: doc.data().displayName || 'Unknown',
+      deletedAt: doc.data().deletedAt,
+      isDeleted: !!doc.data().deletedAt
+    }));
 
-    // 2. Load journalist references (active only)
-    // This matches: multiEntityService.getAllContactReferences() logic
-    const referencesQuery = adminDb
+    const regularContacts = allContactsData.filter(c => !c.isDeleted);
+
+    // 2. Get journalist references
+    const referencesSnapshot = await adminDb
       .collection('organizations')
       .doc(organizationId)
       .collection('journalist_references')
-      .where('isActive', '==', true);
+      .where('isActive', '==', true)
+      .get();
 
-    const referencesSnapshot = await referencesQuery.get();
-    const journalistReferences = referencesSnapshot.size;
+    const referencesData = referencesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      globalJournalistId: doc.data().globalJournalistId,
+      isActive: doc.data().isActive
+    }));
 
     // 3. Total = Regular (non-deleted) + References (active)
-    const totalContacts = regularContacts + journalistReferences;
+    const totalContacts = regularContacts.length + referencesData.length;
 
-    // 4. Update usage
+    // 4. DETAILED LOGGING
+    console.log(`[Usage] Synced contacts for org ${organizationId}:`, {
+      total: totalContacts,
+      regular: regularContacts.length,
+      references: referencesData.length,
+      allContactsInDb: allContactsData.length,
+      deletedContactsInDb: allContactsData.filter(c => c.isDeleted).length,
+      regularContactIds: regularContacts.map(c => c.id),
+      referenceIds: referencesData.map(r => r.id)
+    });
+
+    // 5. Update usage
     const usageRef = adminDb
       .collection('organizations')
       .doc(organizationId)
@@ -163,8 +181,6 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       },
       { merge: true }
     );
-
-    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts} total (${regularContacts} regular + ${journalistReferences} references)`);
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
     throw error;
