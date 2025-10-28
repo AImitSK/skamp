@@ -199,45 +199,51 @@ export default function DashboardLayout({
 ];
 
   const settingsItems = [
-    { 
-      name: "Benachrichtigungen", 
-      href: "/dashboard/settings/notifications", 
+    {
+      name: "Subscription",
+      href: "/dashboard/subscription",
+      icon: CreditCardIcon,
+      description: "Plan verwalten und upgraden"
+    },
+    {
+      name: "Benachrichtigungen",
+      href: "/dashboard/settings/notifications",
       icon: BellAlertIcon,
       description: "E-Mail und Push-Benachrichtigungen verwalten"
     },
-    { 
-      name: "Branding", 
-      href: "/dashboard/settings/branding", 
+    {
+      name: "Branding",
+      href: "/dashboard/settings/branding",
       icon: PaintBrushIcon,
       description: "Personalisiere CeleroPress mit eigenem Logo"
     },
-    { 
-      name: "Templates", 
-      href: "/dashboard/settings/templates", 
+    {
+      name: "Templates",
+      href: "/dashboard/settings/templates",
       icon: DocumentTextIcon,
       description: "PDF-Layout-Vorlagen verwalten"
     },
-    { 
-      name: "Domains", 
-      href: "/dashboard/settings/domain", 
+    {
+      name: "Domains",
+      href: "/dashboard/settings/domain",
       icon: EnvelopeIcon,
       description: "Eigene E-Mail-Domain einrichten"
     },
-        { 
-      name: "E-Mail", 
-      href: "/dashboard/settings/email", 
+        {
+      name: "E-Mail",
+      href: "/dashboard/settings/email",
       icon: EnvelopeIcon,
       description: "E-Mail Konfiguration"
     },
-    { 
-      name: "Import / Export", 
-      href: "/dashboard/settings/import-export", 
+    {
+      name: "Import / Export",
+      href: "/dashboard/settings/import-export",
       icon: ArrowDownTrayIcon,
       description: "Daten importieren oder exportieren"
     },
-    { 
-      name: "Team", 
-      href: "/dashboard/settings/team", 
+    {
+      name: "Team",
+      href: "/dashboard/settings/team",
       icon: UserGroupIcon,
       description: "Team-Mitglieder verwalten"
     },
