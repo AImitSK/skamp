@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       // Create return URL (dynamic for Preview deployments)
       const host = request.headers.get('host') || 'localhost:3000';
       const protocol = host.includes('localhost') ? 'http' : 'https';
-      const returnUrl = `${protocol}://${host}/dashboard/subscription`;
+      const returnUrl = `${protocol}://${host}/dashboard/admin/billing`;
 
       // Create Customer Portal Session
       const session = await createCustomerPortalSession(

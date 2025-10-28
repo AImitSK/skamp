@@ -14,9 +14,9 @@ export default function SubscriptionSuccessPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to subscription page after 5 seconds
+    // Redirect to billing page after 5 seconds
     const timeout = setTimeout(() => {
-      router.push('/dashboard/subscription');
+      router.push('/dashboard/admin/billing');
     }, 5000);
 
     return () => clearTimeout(timeout);
@@ -55,7 +55,7 @@ export default function SubscriptionSuccessPage() {
               Zum Dashboard
             </Link>
             <Link
-              href="/dashboard/subscription"
+              href="/dashboard/admin/billing"
               className="block w-full px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg font-medium transition-all"
             >
               Subscription verwalten

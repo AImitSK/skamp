@@ -124,7 +124,8 @@ export default function BillingPage() {
         <SubscriptionManagement
           organization={organization}
           onUpgrade={() => {
-            window.location.href = '/dashboard/subscription';
+            // TODO: Implement pricing/upgrade flow
+            toast.info('Upgrade Flow wird demnächst implementiert');
           }}
         />
       ) : (
@@ -136,14 +137,9 @@ export default function BillingPage() {
               Du hast derzeit keine aktive Stripe-Subscription. Falls du bereits eine Zahlung getätigt hast,
               klicke auf "Subscription Sync" oben rechts.
             </Text>
-            <div className="mt-4 flex gap-3">
-              <Button
-                color="indigo"
-                onClick={() => (window.location.href = '/dashboard/subscription')}
-              >
-                Plan auswählen
-              </Button>
-            </div>
+            <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
+              Kontaktiere support@celeropress.com für eine neue Subscription.
+            </Text>
           </div>
 
           {/* Debug Info */}

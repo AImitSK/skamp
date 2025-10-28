@@ -201,7 +201,7 @@ export default function DashboardLayout({
   const settingsItems = [
     {
       name: "Subscription",
-      href: "/dashboard/subscription",
+      href: "/dashboard/admin/billing",
       icon: CreditCardIcon,
       description: "Plan verwalten und upgraden"
     },

@@ -48,7 +48,7 @@ export default function SubscriptionCancelPage() {
           {/* Actions */}
           <div className="space-y-3">
             <Link
-              href="/dashboard/subscription"
+              href="/dashboard/admin/billing"
               className="block w-full px-6 py-3 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
             >
               Zurück zur Preisübersicht

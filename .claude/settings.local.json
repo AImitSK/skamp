@@ -38,7 +38,9 @@
       "Bash(Measure-Object -Line)",
       "Bash(Select-Object -ExpandProperty Lines)",
       "Bash(Get-Content \"C:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\docs\\projects\\monitoring\\components\\README.md\")",
-      "Bash(Get-Content \"C:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\docs\\projects\\monitoring\\adr\\README.md\")"
+      "Bash(Get-Content \"C:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\docs\\projects\\monitoring\\adr\\README.md\")",
+      "Bash(git push:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": [],
