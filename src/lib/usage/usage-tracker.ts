@@ -266,6 +266,7 @@ export async function incrementAIWordsUsage(
 /**
  * Update storage usage
  * Called from Firebase Storage upload/delete operations
+ * @deprecated Use syncStorageUsage() instead for accurate counting
  */
 export async function updateStorageUsage(
   organizationId: string,
@@ -284,6 +285,50 @@ export async function updateStorageUsage(
     },
     { merge: true }
   );
+}
+
+/**
+ * Synchronize storage usage from Firebase Storage
+ * Calculates actual storage used by listing all files in organization folder
+ *
+ * @param organizationId - The organization ID
+ */
+export async function syncStorageUsage(organizationId: string): Promise<void> {
+  try {
+    const { adminStorage } = await import('@/lib/firebase/admin-init');
+    const bucket = adminStorage.bucket();
+
+    // Liste alle Files im Organization-Ordner
+    const [files] = await bucket.getFiles({
+      prefix: `organizations/${organizationId}/`,
+    });
+
+    // Summiere alle File-Größen
+    const totalBytes = files.reduce((sum, file) => {
+      const size = parseInt(file.metadata.size || '0', 10);
+      return sum + size;
+    }, 0);
+
+    // Update usage document
+    const usageRef = adminDb
+      .collection('organizations')
+      .doc(organizationId)
+      .collection('usage')
+      .doc('current');
+
+    await usageRef.set(
+      {
+        storageUsed: totalBytes,
+        lastUpdated: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    console.log(`[Usage] Synced storage for org ${organizationId}: ${totalBytes} bytes (${files.length} files)`);
+  } catch (error) {
+    console.error(`[Usage] Failed to sync storage for org ${organizationId}:`, error);
+    throw error;
+  }
 }
 
 /**

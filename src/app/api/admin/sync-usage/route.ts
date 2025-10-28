@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { adminDb } from '@/lib/firebase/admin-init';
-import { initializeUsageTracking, syncContactsUsage, updateTeamMembersUsage } from '@/lib/usage/usage-tracker';
+import { initializeUsageTracking, syncContactsUsage, updateTeamMembersUsage, syncStorageUsage } from '@/lib/usage/usage-tracker';
 import { SubscriptionTier } from '@/types/organization';
 
 export async function POST(request: NextRequest) {
@@ -73,6 +73,10 @@ export async function POST(request: NextRequest) {
 
       const activeCount = activeMembersSnapshot.size;
       await updateTeamMembersUsage(auth.organizationId, activeCount);
+
+      // Sync storage usage
+      console.log(`[Sync] Syncing storage for org ${auth.organizationId}`);
+      await syncStorageUsage(auth.organizationId);
 
       // Fetch final usage data to return
       const finalUsageDoc = await adminDb

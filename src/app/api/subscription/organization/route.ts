@@ -41,9 +41,14 @@ export async function GET(request: NextRequest) {
 
       // Auto-sync contacts in background (non-blocking)
       // Page renders immediately with current data, sync updates in background
-      const { syncContactsUsage } = await import('@/lib/usage/usage-tracker');
+      const { syncContactsUsage, syncStorageUsage } = await import('@/lib/usage/usage-tracker');
       syncContactsUsage(auth.organizationId).catch(err => {
-        console.error('Background sync error:', err);
+        console.error('Background contacts sync error:', err);
+      });
+
+      // Auto-sync storage usage in background (non-blocking)
+      syncStorageUsage(auth.organizationId).catch(err => {
+        console.error('Background storage sync error:', err);
       });
 
       // Sync team members count with actual active members
