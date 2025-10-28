@@ -22,7 +22,7 @@ import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
 import Link from 'next/link';
 import { Popover, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { 
+import {
   UserPlusIcon,
   UserGroupIcon,
   TrashIcon,
@@ -39,17 +39,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-
-// Toast notification helper - UI-Komponenten statt Browser-Dialoge
-const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-  // TODO: Hier sollte eine echte Toast-Komponente verwendet werden
-  // Vorläufig als console.log statt störende Browser-Dialoge
-  if (type === 'error') {
-    console.error('Error:', message);
-  } else {
-    console.log('Success:', message);
-  }
-};
+import { toastService } from '@/lib/utils/toast';
 
 export default function TeamSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -224,14 +214,14 @@ export default function TeamSettingsPage() {
         });
         
         if (response.ok) {
-          showToast('Einladung wurde erfolgreich versendet!');
+          toastService.success('Einladung wurde erfolgreich versendet!');
         } else {
           
-          showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
+          toastService.error('Einladung erstellt, aber E-Mail konnte nicht versendet werden');
         }
       } catch (emailError) {
         
-        showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
+        toastService.error('Einladung erstellt, aber E-Mail konnte nicht versendet werden');
       }
       
       // Modal schließen und Liste neu laden
@@ -250,7 +240,7 @@ export default function TeamSettingsPage() {
   
   const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
     if (member.role === 'owner') {
-      showToast('Die Rolle des Owners kann nicht geändert werden', 'error');
+      toastService.error('Die Rolle des Owners kann nicht geändert werden');
       return;
     }
     
@@ -258,16 +248,16 @@ export default function TeamSettingsPage() {
       const context = { organizationId, userId: user?.uid || '' };
       await teamMemberService.update(member.id!, { role: newRole }, context);
       await loadTeamMembers();
-      showToast(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
+      toastService.success(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
     } catch (error) {
       
-      showToast('Fehler beim Ändern der Rolle', 'error');
+      toastService.error('Fehler beim Ändern der Rolle');
     }
   };
   
   const handleRemoveMember = async (member: TeamMember) => {
     if (member.role === 'owner') {
-      showToast('Der Owner kann nicht entfernt werden', 'error');
+      toastService.error('Der Owner kann nicht entfernt werden');
       return;
     }
 
@@ -283,9 +273,9 @@ export default function TeamSettingsPage() {
       const context = { organizationId, userId: user?.uid || '' };
       await teamMemberService.remove(memberToRemove.id!, context);
       await loadTeamMembers();
-      showToast('Mitglied wurde entfernt');
+      toastService.success('Mitglied wurde entfernt');
     } catch (error) {
-      showToast('Fehler beim Entfernen des Mitglieds', 'error');
+      toastService.error('Fehler beim Entfernen des Mitglieds');
     } finally {
       setShowConfirmModal(false);
       setMemberToRemove(null);
@@ -340,13 +330,13 @@ export default function TeamSettingsPage() {
       });
       
       if (response.ok) {
-        showToast('Einladung wurde erneut versendet');
+        toastService.success('Einladung wurde erneut versendet');
       } else {
         throw new Error('E-Mail-Versand fehlgeschlagen');
       }
     } catch (error) {
       
-      showToast('Fehler beim erneuten Versenden der Einladung', 'error');
+      toastService.error('Fehler beim erneuten Versenden der Einladung');
     }
   };
   
