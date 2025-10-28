@@ -10,16 +10,30 @@ import Stripe from 'stripe';
 import { SubscriptionTier } from '@/config/subscription-limits';
 import { CheckoutSessionRequest, CustomerPortalRequest } from '@/types/subscription';
 
-// Initialize Stripe
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+// Lazy Stripe initialization (only when actually used)
+let stripeInstance: Stripe | null = null;
 
-if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY ist nicht in den Environment Variables definiert');
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY ist nicht in den Environment Variables definiert');
+    }
+
+    stripeInstance = new Stripe(stripeSecretKey, {
+      apiVersion: '2024-12-18.acacia',
+      typescript: true,
+    });
+  }
+
+  return stripeInstance;
 }
 
-export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2024-12-18.acacia',
-  typescript: true,
+export const stripe = new Proxy({} as Stripe, {
+  get: (target, prop) => {
+    return (getStripe() as any)[prop];
+  },
 });
 
 /**
