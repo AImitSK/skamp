@@ -376,6 +376,21 @@ service cloud.firestore {
     }
 
     // ========================================
+    // SUBSCRIPTIONS (Phase 1: Stripe Integration)
+    // ========================================
+
+    // Subscriptions Collection - Lesen: Org-Member, Schreiben: nur Super-Admin (oder Admin SDK via Webhooks)
+    match /subscriptions/{organizationId} {
+      // Lesen: Nur Mitglieder der eigenen Organisation oder Super-Admin
+      allow read: if isAuthenticated()
+                  && (request.auth.token.organizationId == organizationId
+                      || isSuperAdmin());
+
+      // Schreiben: Nur Super-Admin (normale Writes passieren via Admin SDK in Webhooks)
+      allow write: if isSuperAdmin();
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
