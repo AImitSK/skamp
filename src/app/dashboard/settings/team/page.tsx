@@ -19,6 +19,7 @@ import { orgService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
 import { Timestamp } from 'firebase/firestore';
 import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
+import Link from 'next/link';
 import { 
   UserPlusIcon,
   UserGroupIcon,
@@ -469,19 +470,6 @@ export default function TeamSettingsPage() {
             <Text className="mt-2 text-zinc-500">
               Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein
             </Text>
-            {/* Team Member Limit Anzeige */}
-            <div className="mt-3 flex items-center gap-2">
-              <UserGroupIcon className="w-5 h-5 text-zinc-400" />
-              <Text className="text-sm font-medium text-zinc-700">
-                {teamLimit === -1 ? (
-                  <span>Team-Mitglieder: {activeMembers.length} <span className="text-[#005fab]">(Unlimited)</span></span>
-                ) : (
-                  <span>
-                    Team-Mitglieder: <span className={isLimitReached ? 'text-red-600 font-semibold' : 'text-zinc-900'}>{activeMembers.length}</span> / {teamLimit}
-                  </span>
-                )}
-              </Text>
-            </div>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
             <Button
@@ -517,7 +505,55 @@ export default function TeamSettingsPage() {
             </div>
           </div>
         )}
-        
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Link href="/dashboard/admin/billing" className="block">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#005fab] transition-colors cursor-pointer">
+              <div className="flex items-center gap-2 mb-2">
+                <UserGroupIcon className="h-5 w-5 text-gray-600" />
+                <Text className="text-sm text-gray-600">Aktive Mitglieder</Text>
+              </div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {teamLimit === -1 ? (
+                  <span>{activeMembersOnly.length} <span className="text-base font-normal text-[#005fab]">(Unlimited)</span></span>
+                ) : (
+                  <span className={isLimitReached ? 'text-red-600' : ''}>{activeMembersOnly.length} / {teamLimit}</span>
+                )}
+              </div>
+            </div>
+          </Link>
+
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-2">
+              <ClockIcon className="h-5 w-5 text-gray-600" />
+              <Text className="text-sm text-gray-600">Ausstehende Einladungen</Text>
+            </div>
+            <div className="text-2xl font-semibold text-gray-900">
+              {pendingMembers.length}
+            </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheckIcon className="h-5 w-5 text-gray-600" />
+              <Text className="text-sm text-gray-600">Rollen-Verteilung</Text>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap mt-2">
+              {Object.entries(roleConfig).map(([role, config]) => {
+                const count = activeMembers.filter(m => m.role === role).length;
+                if (count === 0) return null;
+
+                return (
+                  <Badge key={role} color={config.color as any} className="whitespace-nowrap">
+                    {count} {config.label}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Team Members Table */}
         <div className="bg-white rounded-lg overflow-hidden">
           {/* Table Header */}
@@ -635,65 +671,7 @@ export default function TeamSettingsPage() {
             )}
           </div>
         </div>
-        
-        {/* Stats */}
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <UserGroupIcon className="h-5 w-5 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                  {activeMembersOnly.length}
-                </div>
-                <div className="text-sm text-gray-500 truncate">
-                  Aktive Mitglieder
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <ClockIcon className="h-5 w-5 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                  {pendingMembers.length}
-                </div>
-                <div className="text-sm text-gray-500 truncate">
-                  Ausstehende Einladungen
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0">
-                <ShieldCheckIcon className="h-5 w-5 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-500 truncate">
-                  Rollen-Verteilung
-                </div>
-                <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  {Object.entries(roleConfig).map(([role, config]) => {
-                    const count = activeMembers.filter(m => m.role === role).length;
-                    if (count === 0) return null;
-                    
-                    return (
-                      <Badge key={role} color={config.color as any} className="whitespace-nowrap">
-                        {count} {config.label}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
+
         {/* Invite Modal */}
         <Dialog
           open={showInviteModal}
