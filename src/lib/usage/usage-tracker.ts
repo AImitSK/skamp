@@ -162,7 +162,13 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
     );
 
     console.log(
-      `[Usage] Synced contacts for org ${organizationId}: ${totalContacts} total (${regularContacts} regular + ${journalistReferences} references)`
+      `[Usage] Synced contacts for org ${organizationId}:`,
+      {
+        total: totalContacts,
+        regular: regularContacts,
+        references: journalistReferences,
+        breakdown: `${regularContacts} regular + ${journalistReferences} references = ${totalContacts} total`
+      }
     );
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
