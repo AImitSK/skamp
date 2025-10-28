@@ -114,37 +114,21 @@ export async function updateContactsUsage(
 
 /**
  * Synchronize contacts count from Firestore
- * Counts all NON-DELETED contacts in contacts_enhanced collection AND active journalist references
- * from the premium database, then updates usage
- * This is more reliable than increment-based tracking as it self-heals
+ * Uses the SAME logic as the CRM contacts page to ensure consistency
  *
  * @param organizationId - The organization ID
  */
 export async function syncContactsUsage(organizationId: string): Promise<void> {
   try {
-    // Count regular contacts in Firestore (only non-deleted)
-    const contactsSnapshot = await adminDb
-      .collection('contacts_enhanced')
-      .where('organizationId', '==', organizationId)
-      .where('deletedAt', '==', null)
-      .count()
-      .get();
+    // Use the same service that CRM page uses - this ensures we count exactly what CRM shows!
+    const { contactsEnhancedService } = await import('@/lib/firebase/crm-service-enhanced');
 
-    const regularContacts = contactsSnapshot.data().count;
+    // This automatically includes:
+    // - Regular contacts (non-deleted)
+    // - Journalist references (active)
+    const allContacts = await contactsEnhancedService.getAll(organizationId);
 
-    // Count journalist references (Premium-Datenbank Verweise, only active)
-    const referencesSnapshot = await adminDb
-      .collection('organizations')
-      .doc(organizationId)
-      .collection('journalist_references')
-      .where('isActive', '==', true)
-      .count()
-      .get();
-
-    const journalistReferences = referencesSnapshot.data().count;
-
-    // Total = Regular Contacts (non-deleted) + Journalist References (active)
-    const totalContacts = regularContacts + journalistReferences;
+    const totalContacts = allContacts.length;
 
     // Update usage with absolute value
     const usageRef = adminDb
@@ -161,15 +145,7 @@ export async function syncContactsUsage(organizationId: string): Promise<void> {
       { merge: true }
     );
 
-    console.log(
-      `[Usage] Synced contacts for org ${organizationId}:`,
-      {
-        total: totalContacts,
-        regular: regularContacts,
-        references: journalistReferences,
-        breakdown: `${regularContacts} regular + ${journalistReferences} references = ${totalContacts} total`
-      }
-    );
+    console.log(`[Usage] Synced contacts for org ${organizationId}: ${totalContacts} contacts (using CRM service)`);
   } catch (error) {
     console.error(`[Usage] Failed to sync contacts for org ${organizationId}:`, error);
     throw error;

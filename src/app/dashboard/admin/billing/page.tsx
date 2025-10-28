@@ -90,9 +90,11 @@ export default function BillingPage() {
       const data = await response.json();
 
       if (data.success) {
+        console.log('[Billing] Usage Sync erfolgreich:', data.usage);
         toast.success(`Usage synchronisiert: ${data.usage.contacts} Kontakte, ${data.usage.teamMembers} Team-Mitglieder`);
         fetchOrganization(); // Reload
       } else {
+        console.error('[Billing] Usage Sync fehlgeschlagen:', data.error);
         toast.error(data.error || 'Fehler beim Synchronisieren');
       }
     } catch (error: any) {
