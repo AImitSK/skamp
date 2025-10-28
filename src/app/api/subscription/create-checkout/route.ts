@@ -17,8 +17,12 @@ interface CreateCheckoutRequest {
 export async function POST(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
+      console.log('[Checkout API] Creating checkout session for org:', auth.organizationId);
+
       const body: CreateCheckoutRequest = await req.json();
       const { tier, billingInterval } = body;
+
+      console.log('[Checkout API] Tier:', tier, 'Interval:', billingInterval);
 
       if (!tier || !billingInterval) {
         return NextResponse.json(
@@ -37,14 +41,30 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Ungültiges Billing Interval' }, { status: 400 });
       }
 
-      // Get organization
-      const orgDoc = await adminDb.collection('organizations').doc(auth.organizationId).get();
+      // Get organization - create if doesn't exist
+      const orgRef = adminDb.collection('organizations').doc(auth.organizationId);
+      const orgDoc = await orgRef.get();
+
+      let orgData: any;
 
       if (!orgDoc.exists) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+        console.log('[Checkout API] Organization not found, creating...');
+        // Create basic organization
+        orgData = {
+          id: auth.organizationId,
+          name: auth.email?.split('@')[0] || 'My Organization',
+          adminEmail: auth.email || '',
+          tier: 'STARTER',
+          accountType: 'regular',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        await orgRef.set(orgData);
+        console.log('[Checkout API] Organization created');
+      } else {
+        orgData = orgDoc.data();
       }
 
-      const orgData = orgDoc.data();
       let stripeCustomerId = orgData?.stripeCustomerId;
 
       // Create Stripe Customer if doesn't exist
