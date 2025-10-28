@@ -1,9 +1,11 @@
 // src/app/api/team/accept-invitation/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/api/auth-middleware';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { serverDb } from '@/lib/firebase/server-init';
 import { getTeamInvitationAcceptedEmailTemplate } from '@/lib/email/team-invitation-templates';
+import { adminDb } from '@/lib/firebase/admin-init';
+import { updateTeamMembersUsage } from '@/lib/usage/usage-tracker';
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,6 +89,25 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`✅ Invitation accepted by ${userEmail} for organization ${memberData.organizationId}`);
+
+    // 5.5. Update Team Members Usage
+    try {
+      // Count active members
+      const activeMembersSnapshot = await adminDb
+        .collection('team_members')
+        .where('organizationId', '==', memberData.organizationId)
+        .where('status', '==', 'active')
+        .get();
+
+      const activeCount = activeMembersSnapshot.size;
+
+      await updateTeamMembersUsage(memberData.organizationId, activeCount);
+
+      console.log(`📊 Updated team members usage: ${activeCount} active members`);
+    } catch (usageError) {
+      console.error('Error updating team members usage:', usageError);
+      // Don't block the acceptance if usage tracking fails
+    }
 
     // 6. Sende Benachrichtigung an Inviter
     try {
