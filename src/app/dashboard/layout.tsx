@@ -69,7 +69,8 @@ import {
   ChartBarIcon,
   GlobeAltIcon,
   UsersIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  TicketIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -500,6 +501,20 @@ export default function DashboardLayout({
                       <ChevronDownIcon className="size-4" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="min-w-60">
+                      <DropdownItem
+                        href="/dashboard/super-admin/accounts"
+                        icon={TicketIcon}
+                        description="Promo-Codes und Special Accounts"
+                      >
+                        Account Management
+                      </DropdownItem>
+                      <DropdownItem
+                        href="/dashboard/super-admin/organizations"
+                        icon={BuildingOfficeIcon}
+                        description="Organizations Overview & Support"
+                      >
+                        Organizations
+                      </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/matching/candidates"
                         icon={AdjustmentsHorizontalIcon}

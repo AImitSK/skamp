@@ -27,6 +27,38 @@ export interface PromoDetails {
 }
 
 /**
+ * Usage Metriken für eine Organization
+ * Wird in Phase 2 (Usage Tracking) vollständig implementiert
+ */
+export interface OrganizationUsage {
+  // Email Usage
+  emailsSent: number;
+  emailsLimit: number;
+
+  // Kontakte (CRM)
+  contactsTotal: number;
+  contactsLimit: number;
+
+  // AI Words
+  aiWordsUsed: number;
+  aiWordsLimit: number; // -1 = Unlimited
+
+  // Storage (in Bytes)
+  storageUsed: number;
+  storageLimit: number;
+
+  // Team Members
+  teamMembersActive: number;
+  teamMembersLimit: number;
+
+  // Current Tier
+  tier: SubscriptionTier;
+
+  // Last Updated
+  lastUpdated: Timestamp;
+}
+
+/**
  * Organization Schema mit Account Type Support
  */
 export interface Organization {
@@ -50,4 +82,7 @@ export interface Organization {
   // Timestamps
   createdAt: Timestamp;
   updatedAt: Timestamp;
+
+  // Usage Metriken (optional, wird in Phase 2 vollständig implementiert)
+  usage?: OrganizationUsage;
 }
