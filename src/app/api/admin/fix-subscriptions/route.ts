@@ -12,25 +12,32 @@ import { adminDb } from '@/lib/firebase/admin-init';
 import { stripe } from '@/lib/stripe/stripe-service';
 
 export async function POST(request: NextRequest) {
-  return withAuth(request, async (req, auth: AuthContext) => {
-    // Check if Super-Admin
-    const userMembershipsQuery = await adminDb
-      .collection('users')
-      .doc(auth.uid)
-      .collection('memberships')
-      .where('organizationId', '==', 'super-admin')
-      .where('role', '==', 'super-admin')
-      .limit(1)
-      .get();
+  try {
+    return await withAuth(request, async (req, auth: AuthContext) => {
+      console.log('[Fix Subscriptions] Starting fix process');
 
-    if (userMembershipsQuery.empty) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Super-Admin required' },
-        { status: 403 }
-      );
-    }
+      // Check if Super-Admin
+      console.log('[Fix Subscriptions] Checking super-admin status for:', auth.uid);
+      const userMembershipsQuery = await adminDb
+        .collection('users')
+        .doc(auth.uid)
+        .collection('memberships')
+        .where('organizationId', '==', 'super-admin')
+        .where('role', '==', 'super-admin')
+        .limit(1)
+        .get();
 
-    try {
+      if (userMembershipsQuery.empty) {
+        console.log('[Fix Subscriptions] User is not super-admin');
+        return NextResponse.json(
+          { error: 'Unauthorized - Super-Admin required' },
+          { status: 403 }
+        );
+      }
+
+      console.log('[Fix Subscriptions] User is super-admin, proceeding...');
+
+      try {
       const results = {
         total: 0,
         fixed: 0,
@@ -113,16 +120,25 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      console.log('[Fix Subscriptions] Completed:', results);
+
       return NextResponse.json({
         success: true,
         results,
       });
     } catch (error: any) {
-      console.error('[Fix Subscriptions] Error:', error);
+      console.error('[Fix Subscriptions] Inner error:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, stack: error.stack },
         { status: 500 }
       );
     }
-  });
+    });
+  } catch (error: any) {
+    console.error('[Fix Subscriptions] Outer error:', error);
+    return NextResponse.json(
+      { error: error.message, stack: error.stack },
+      { status: 500 }
+    );
+  }
 }
