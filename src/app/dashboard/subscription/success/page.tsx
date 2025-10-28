@@ -1,31 +1,26 @@
 /**
- * Subscription Success Page
+ * Subscription Success Page (Simple Version ohne useSearchParams)
  * Shown after successful Stripe Checkout
  */
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
-function SuccessContent() {
-  const searchParams = useSearchParams();
+export default function SubscriptionSuccessPage() {
   const router = useRouter();
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = searchParams.get('session_id');
-    setSessionId(id);
-
     // Redirect to dashboard after 5 seconds
     const timeout = setTimeout(() => {
       router.push('/dashboard');
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [searchParams, router]);
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-green-50 to-zinc-50">
@@ -51,14 +46,6 @@ function SuccessContent() {
             </p>
           </div>
 
-          {/* Session Info */}
-          {sessionId && (
-            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
-              <p className="text-xs text-zinc-500 mb-1">Session ID:</p>
-              <p className="text-xs text-zinc-700 font-mono break-all">{sessionId}</p>
-            </div>
-          )}
-
           {/* Next Steps */}
           <div className="space-y-3">
             <Link
@@ -82,19 +69,5 @@ function SuccessContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SubscriptionSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-green-50 to-zinc-50">
-        <div className="text-center">
-          <p className="text-zinc-600">Lädt...</p>
-        </div>
-      </div>
-    }>
-      <SuccessContent />
-    </Suspense>
   );
 }

@@ -88,7 +88,12 @@ export async function POST(request: NextRequest) {
       }
 
       // Create Checkout Session
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      // Use current host (supports Preview Deployments)
+      const host = request.headers.get('host') || 'localhost:3000';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const baseUrl = `${protocol}://${host}`;
+
+      console.log('[Checkout API] Using baseUrl:', baseUrl);
 
       const session = await createCheckoutSession({
         organizationId: auth.organizationId,

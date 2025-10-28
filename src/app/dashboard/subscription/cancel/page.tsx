@@ -1,15 +1,14 @@
 /**
- * Subscription Cancel Page
+ * Subscription Cancel Page (Simple Version)
  * Shown when user cancels Stripe Checkout
  */
 
 'use client';
 
-import { Suspense } from 'react';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
-function CancelContent() {
+export default function SubscriptionCancelPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-orange-50 to-zinc-50">
       <div className="max-w-md w-full">
@@ -75,19 +74,5 @@ function CancelContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SubscriptionCancelPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-orange-50 to-zinc-50">
-        <div className="text-center">
-          <p className="text-zinc-600">Lädt...</p>
-        </div>
-      </div>
-    }>
-      <CancelContent />
-    </Suspense>
   );
 }
