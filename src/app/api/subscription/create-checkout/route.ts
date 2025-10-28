@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthContext } from '@/lib/firebase/auth-middleware';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { createStripeCustomer, createCheckoutSession } from '@/lib/stripe/stripe-service';
 import { SubscriptionTier } from '@/config/subscription-limits';
