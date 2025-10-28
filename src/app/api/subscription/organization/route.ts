@@ -39,20 +39,12 @@ export async function GET(request: NextRequest) {
         usage = generateMockUsage(orgData.tier, orgData.accountType);
       }
 
-      // Auto-sync contacts on every page load to ensure accuracy
-      try {
-        const { syncContactsUsage } = await import('@/lib/usage/usage-tracker');
-        await syncContactsUsage(auth.organizationId);
-
-        // Re-fetch usage after sync
-        const updatedUsage = await getUsage(auth.organizationId);
-        if (updatedUsage) {
-          usage = updatedUsage;
-        }
-      } catch (syncError) {
-        console.error('Error auto-syncing contacts:', syncError);
-        // Don't block the response if sync fails
-      }
+      // Auto-sync contacts in background (non-blocking)
+      // Page renders immediately with current data, sync updates in background
+      const { syncContactsUsage } = await import('@/lib/usage/usage-tracker');
+      syncContactsUsage(auth.organizationId).catch(err => {
+        console.error('Background sync error:', err);
+      });
 
       // Sync team members count with actual active members
       try {
