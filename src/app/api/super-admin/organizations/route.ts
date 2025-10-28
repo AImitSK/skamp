@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { isSuperAdmin } from '@/lib/api/super-admin-check';
-import { withAuth, AuthContext } from '@/lib/api/with-auth';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { Organization } from '@/types/organization';
 
 /**
