@@ -158,7 +158,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
           <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
             <h3 className="text-base font-semibold text-zinc-900">Aktuelle Nutzung</h3>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-4">
             <UsageMeter
               label="Emails"
               current={usage.emailsSent}
@@ -238,15 +238,8 @@ function UsageMeter({
 }) {
   const percentage = getUsagePercentage(current, limit);
   const unlimited = isUnlimited(limit);
-  const color = getUsageColor(percentage);
 
   const formatValue = formatter || ((val: number) => val.toLocaleString('de-DE'));
-
-  const colorClasses = {
-    green: 'bg-green-500',
-    yellow: 'bg-yellow-500',
-    red: 'bg-red-500',
-  };
 
   return (
     <div>
@@ -256,26 +249,26 @@ function UsageMeter({
           <span className="text-sm font-semibold text-[#005fab]">Unlimited ∞</span>
         ) : (
           <span className="text-sm text-zinc-600">
-            {formatValue(current)} / {formatValue(limit)} {unit}
+            {formatValue(current)} / {formatValue(limit)} {unit} ({percentage}%)
           </span>
         )}
       </div>
       {!unlimited && (
-        <div className="h-8 bg-zinc-100 rounded-lg overflow-hidden relative">
+        <div className="h-2 bg-zinc-200 rounded-full overflow-hidden relative">
+          {/* Blauer Bereich (0-90%) */}
           <div
-            className={`h-full ${colorClasses[color]} transition-all duration-300 flex items-center justify-center`}
-            style={{ width: `${Math.min(percentage, 100)}%` }}
-          >
-            {percentage > 15 && (
-              <span className="text-xs font-semibold text-white">
-                {percentage}%
-              </span>
-            )}
-          </div>
-          {percentage <= 15 && (
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-600">
-              {percentage}%
-            </span>
+            className="h-full bg-[#005fab] transition-all duration-300 absolute left-0"
+            style={{ width: `${Math.min(percentage, 90)}%` }}
+          />
+          {/* Gelber Bereich (90-100%) - nur wenn über 90% */}
+          {percentage > 90 && (
+            <div
+              className="h-full bg-[#dedc00] transition-all duration-300 absolute"
+              style={{
+                left: '90%',
+                width: `${Math.min(percentage - 90, 10)}%`
+              }}
+            />
           )}
         </div>
       )}
