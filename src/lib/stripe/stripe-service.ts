@@ -207,7 +207,9 @@ export async function updateSubscriptionTier(
  *    usw.
  */
 function getPriceIdForTier(tier: SubscriptionTier, interval: 'month' | 'year'): string {
-  const envKey = `STRIPE_PRICE_${tier}_${interval.toUpperCase()}`;
+  // Convert 'month' → 'MONTHLY', 'year' → 'YEARLY'
+  const intervalKey = interval === 'month' ? 'MONTHLY' : 'YEARLY';
+  const envKey = `STRIPE_PRICE_${tier}_${intervalKey}`;
   const priceId = process.env[envKey];
 
   if (!priceId) {
