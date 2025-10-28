@@ -11,7 +11,7 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { Organization, OrganizationUsage } from '@/types/organization';
 import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
-import { getUsage } from '@/lib/usage/usage-tracker';
+import { getUsage, updateTeamMembersUsage } from '@/lib/usage/usage-tracker';
 
 export async function GET(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
@@ -37,6 +37,27 @@ export async function GET(request: NextRequest) {
       // Fallback to mock data if no usage tracking exists yet
       if (!usage) {
         usage = generateMockUsage(orgData.tier, orgData.accountType);
+      }
+
+      // Sync team members count with actual active members
+      try {
+        const activeMembersSnapshot = await adminDb
+          .collection('team_members')
+          .where('organizationId', '==', auth.organizationId)
+          .where('status', '==', 'active')
+          .get();
+
+        const actualActiveCount = activeMembersSnapshot.size;
+
+        // Update if count doesn't match
+        if (usage.teamMembersActive !== actualActiveCount) {
+          console.log(`📊 Syncing team members: ${usage.teamMembersActive} → ${actualActiveCount}`);
+          await updateTeamMembersUsage(auth.organizationId, actualActiveCount);
+          usage.teamMembersActive = actualActiveCount;
+        }
+      } catch (syncError) {
+        console.error('Error syncing team members count:', syncError);
+        // Don't block the response if sync fails
       }
 
       // Serialize timestamps for client
