@@ -26,7 +26,17 @@ export default function FixSubscriptionsPage() {
         },
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      console.log('Response status:', response.status);
+      console.log('Response text:', text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { error: 'Invalid JSON', status: response.status, response: text };
+      }
+
       setResult(data);
     } catch (error: any) {
       setResult({ error: error.message });
