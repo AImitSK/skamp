@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { updateSubscriptionTier } from '@/lib/stripe/stripe-service';
+import { updateUsageLimits } from '@/lib/usage/usage-tracker';
 import { SubscriptionTier } from '@/config/subscription-limits';
 
 interface ChangePlanRequest {
@@ -84,6 +85,11 @@ export async function POST(request: NextRequest) {
       });
 
       console.log('[Change Plan API] Organization updated in Firestore');
+
+      // Update usage limits based on new tier
+      await updateUsageLimits(auth.organizationId, newTier);
+
+      console.log('[Change Plan API] Usage limits updated for new tier');
 
       return NextResponse.json({
         success: true,
