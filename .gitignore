@@ -56,3 +56,4 @@ service-account.json
 # Genkit
 .genkit/
 .cache/
+docs/salient-ts/
