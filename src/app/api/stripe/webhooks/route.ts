@@ -117,7 +117,35 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         subscriptionId
       );
 
-      // 3. Markiere pending_signup als completed
+      // 3. Erstelle subscriptions document
+      try {
+        const { getSubscription } = await import('@/lib/stripe/stripe-service');
+        const stripeSubscription = await getSubscription(subscriptionId);
+
+        if (stripeSubscription) {
+          const subscriptionData = mapStripeSubscriptionToFirestore(
+            stripeSubscription,
+            organizationId,
+            pendingSignup.tier
+          );
+
+          await adminDb
+            .collection('subscriptions')
+            .doc(organizationId)
+            .set({
+              ...subscriptionData,
+              createdAt: FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+
+          console.log(`[Stripe Webhook] Created subscriptions document for ${organizationId}`);
+        }
+      } catch (error) {
+        console.error('[Stripe Webhook] Failed to create subscriptions document:', error);
+        // Nicht kritisch - weitermachen
+      }
+
+      // 4. Markiere pending_signup als completed
       await adminDb
         .collection('pending_signups')
         .doc(pendingSignupToken)
