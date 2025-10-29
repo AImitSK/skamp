@@ -18,11 +18,92 @@ export async function GET(request: NextRequest) {
         .doc(auth.organizationId)
         .get();
 
+      // FALLBACK: If subscriptions doc doesn't exist, try to create it from Stripe
       if (!subDoc.exists) {
-        return NextResponse.json(
-          { error: 'Subscription not found' },
-          { status: 404 }
-        );
+        console.log('[Subscription Details] No subscriptions doc found, trying to create from Stripe');
+
+        // Get organization to find stripeSubscriptionId
+        const orgDoc = await adminDb
+          .collection('organizations')
+          .doc(auth.organizationId)
+          .get();
+
+        if (!orgDoc.exists) {
+          return NextResponse.json(
+            { error: 'Organization not found' },
+            { status: 404 }
+          );
+        }
+
+        const orgData = orgDoc.data();
+        const stripeSubscriptionId = orgData?.stripeSubscriptionId;
+        const tier = orgData?.tier;
+
+        if (!stripeSubscriptionId || !tier) {
+          return NextResponse.json(
+            { error: 'No subscription found' },
+            { status: 404 }
+          );
+        }
+
+        // Fetch from Stripe and create subscriptions document
+        try {
+          const { getSubscription } = await import('@/lib/stripe/stripe-service');
+          const stripeSubscription = await getSubscription(stripeSubscriptionId);
+
+          if (!stripeSubscription) {
+            return NextResponse.json(
+              { error: 'Subscription not found in Stripe' },
+              { status: 404 }
+            );
+          }
+
+          // Import mapper function
+          const { FieldValue } = await import('firebase-admin/firestore');
+          const webhookModule = await import('@/app/api/stripe/webhooks/route');
+          // Note: We can't directly import the mapper, so we'll reconstruct the data manually
+
+          const subscriptionData = {
+            organizationId: auth.organizationId,
+            stripeCustomerId: stripeSubscription.customer as string,
+            stripeSubscriptionId: stripeSubscription.id,
+            stripePriceId: stripeSubscription.items.data[0].price.id,
+            tier: tier,
+            status: stripeSubscription.status,
+            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+            cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+            pricePerMonth: (stripeSubscription.items.data[0].price.unit_amount || 0) / 100,
+            billingInterval: stripeSubscription.items.data[0].price.recurring?.interval,
+            trialStart: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : undefined,
+            trialEnd: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : undefined,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+
+          await adminDb
+            .collection('subscriptions')
+            .doc(auth.organizationId)
+            .set(subscriptionData);
+
+          console.log('[Subscription Details] Created missing subscriptions document from Stripe');
+
+          // Return the newly created data
+          const subscription = {
+            currentPeriodEnd: subscriptionData.currentPeriodEnd,
+            currentPeriodStart: subscriptionData.currentPeriodStart,
+            cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+            status: subscriptionData.status,
+          };
+
+          return NextResponse.json({ subscription });
+        } catch (error: any) {
+          console.error('[Subscription Details] Failed to create subscriptions doc:', error);
+          return NextResponse.json(
+            { error: 'Failed to fetch subscription from Stripe' },
+            { status: 500 }
+          );
+        }
       }
 
       const subData = subDoc.data();
