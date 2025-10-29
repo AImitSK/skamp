@@ -87,12 +87,63 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('[Stripe Webhook] Checkout session completed:', session.id);
 
-  const organizationId = session.client_reference_id || session.metadata?.organizationId;
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;
+  const pendingSignupToken = session.metadata?.pendingSignupToken || session.client_reference_id;
+
+  // NEUER FLOW: Pending Signup → User + Org erstellen
+  if (pendingSignupToken && session.metadata?.provider) {
+    console.log('[Stripe Webhook] Processing pending signup:', pendingSignupToken);
+
+    try {
+      // 1. Lade pending_signup
+      const pendingSignupDoc = await adminDb
+        .collection('pending_signups')
+        .doc(pendingSignupToken)
+        .get();
+
+      if (!pendingSignupDoc.exists) {
+        console.error('[Stripe Webhook] Pending signup not found:', pendingSignupToken);
+        return;
+      }
+
+      const pendingSignup = pendingSignupDoc.data() as any;
+
+      // 2. Erstelle User + Organization
+      const { createUserAndOrgFromPendingSignup } = await import('@/lib/auth/create-user-from-pending');
+      const { userId, organizationId } = await createUserAndOrgFromPendingSignup(
+        pendingSignup,
+        customerId,
+        subscriptionId
+      );
+
+      // 3. Markiere pending_signup als completed
+      await adminDb
+        .collection('pending_signups')
+        .doc(pendingSignupToken)
+        .update({
+          status: 'completed',
+          completedAt: FieldValue.serverTimestamp(),
+          userId: userId,
+          organizationId: organizationId
+        });
+
+      console.log(`[Stripe Webhook] Completed pending signup: ${pendingSignupToken}`);
+      console.log(`[Stripe Webhook] Created user: ${userId}, org: ${organizationId}`);
+
+      return;
+
+    } catch (error) {
+      console.error('[Stripe Webhook] Error processing pending signup:', error);
+      throw error;
+    }
+  }
+
+  // ALTER FLOW: Organization existiert bereits (Upgrades, Downgrades, etc.)
+  const organizationId = session.client_reference_id || session.metadata?.organizationId;
 
   if (!organizationId) {
-    console.error('[Stripe Webhook] No organizationId in checkout session');
+    console.error('[Stripe Webhook] No organizationId or pendingSignupToken in checkout session');
     return;
   }
 
