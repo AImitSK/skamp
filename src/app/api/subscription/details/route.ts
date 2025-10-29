@@ -58,28 +58,42 @@ export async function GET(request: NextRequest) {
             );
           }
 
-          // Import mapper function
           const { FieldValue } = await import('firebase-admin/firestore');
-          const webhookModule = await import('@/app/api/stripe/webhooks/route');
-          // Note: We can't directly import the mapper, so we'll reconstruct the data manually
 
-          const subscriptionData = {
+          const priceItem = stripeSubscription.items.data[0];
+          const price = priceItem?.price;
+
+          if (!price) {
+            console.error('[Subscription Details] No price found in Stripe subscription');
+            return NextResponse.json(
+              { error: 'Invalid subscription data' },
+              { status: 500 }
+            );
+          }
+
+          const subscriptionData: any = {
             organizationId: auth.organizationId,
             stripeCustomerId: stripeSubscription.customer as string,
             stripeSubscriptionId: stripeSubscription.id,
-            stripePriceId: stripeSubscription.items.data[0].price.id,
+            stripePriceId: price.id,
             tier: tier,
             status: stripeSubscription.status,
             currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
             currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
             cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-            pricePerMonth: (stripeSubscription.items.data[0].price.unit_amount || 0) / 100,
-            billingInterval: stripeSubscription.items.data[0].price.recurring?.interval,
-            trialStart: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : undefined,
-            trialEnd: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : undefined,
+            pricePerMonth: (price.unit_amount || 0) / 100,
+            billingInterval: price.recurring?.interval || 'month',
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
           };
+
+          // Optional fields
+          if (stripeSubscription.trial_start) {
+            subscriptionData.trialStart = new Date(stripeSubscription.trial_start * 1000);
+          }
+          if (stripeSubscription.trial_end) {
+            subscriptionData.trialEnd = new Date(stripeSubscription.trial_end * 1000);
+          }
 
           await adminDb
             .collection('subscriptions')
