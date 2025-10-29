@@ -1,7 +1,10 @@
 // src/app/api/ai/generate/route.ts
 // API Route für PR-Assistent - Jetzt powered by Genkit!
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { generatePressReleaseFlow } from '@/lib/ai/flows/generate-press-release';
+import { checkAILimit } from '@/lib/usage/usage-tracker';
+import { estimateAIWords, trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
 
 interface GenerateRequest {
   prompt: string;
@@ -15,46 +18,75 @@ interface GenerateRequest {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // Request Body parsen
-    const data: GenerateRequest = await request.json();
-    const { prompt, existingContent, context } = data;
+  return withAuth(request, async (req, auth: AuthContext) => {
+    try {
+      const data: GenerateRequest = await req.json();
+      const { prompt, existingContent, context } = data;
+      const mode = data.mode || 'generate';
 
-    // Mode mit Default-Wert (für Abwärtskompatibilität)
-    const mode = data.mode || 'generate';
+      if (!prompt || prompt.trim() === '') {
+        return NextResponse.json(
+          { error: 'Prompt ist erforderlich' },
+          { status: 400 }
+        );
+      }
 
-    // Validierung
-    if (!prompt || prompt.trim() === '') {
-      return NextResponse.json(
-        { error: 'Prompt ist erforderlich' },
-        { status: 400 }
-      );
-    }
+      console.log('🚀 Generating press release with Genkit Flow', {
+        mode,
+        promptLength: prompt.length,
+        hasContext: !!context,
+        organizationId: auth.organizationId
+      });
 
-    console.log('🚀 Generating press release with Genkit Flow', {
-      mode,
-      promptLength: prompt.length,
-      hasContext: !!context
-    });
+      const estimatedWords = estimateAIWords(prompt + (existingContent || ''), 800);
 
-    // ══════════════════════════════════════════════════════════════
-    // GENKIT FLOW AUFRUF - Ersetzt die komplette Gemini-Logik!
-    // ══════════════════════════════════════════════════════════════
+      try {
+        const limitCheck = await checkAILimit(auth.organizationId, estimatedWords);
 
-    const result = await generatePressReleaseFlow({
+        if (!limitCheck.allowed) {
+          return NextResponse.json(
+            {
+              error: `AI-Limit erreicht! Du hast bereits ${limitCheck.current} von ${limitCheck.limit} AI-Wörtern verwendet. Noch verfügbar: ${limitCheck.remaining} Wörter.`,
+              limitInfo: {
+                current: limitCheck.current,
+                limit: limitCheck.limit,
+                remaining: limitCheck.remaining,
+                wouldExceed: limitCheck.wouldExceed,
+                requestedAmount: estimatedWords
+              }
+            },
+            { status: 429 }
+          );
+        }
+      } catch (limitError) {
+        console.error('❌ Error checking AI limit:', limitError);
+        return NextResponse.json(
+          { error: 'Fehler beim Prüfen des AI-Limits. Bitte kontaktiere den Support.' },
+          { status: 500 }
+        );
+      }
+
+      const result = await generatePressReleaseFlow({
       prompt,
       mode,
       existingContent: existingContent || null,
       context: context || null
     });
 
-    console.log('✅ Press release generated successfully with Genkit', {
-      outputLength: result.generatedText.length,
-      mode: result.mode,
-      postProcessed: result.postProcessed
-    });
+      console.log('✅ Press release generated successfully with Genkit', {
+        outputLength: result.generatedText.length,
+        mode: result.mode,
+        postProcessed: result.postProcessed
+      });
 
-    return NextResponse.json({
+      try {
+        const inputText = prompt + (existingContent || '');
+        await trackAIUsage(auth.organizationId, inputText, result.generatedText);
+      } catch (trackingError) {
+        console.error('⚠️ Failed to track AI usage:', trackingError);
+      }
+
+      return NextResponse.json({
       success: true,
       generatedText: result.generatedText,
       mode: result.mode,
@@ -63,17 +95,17 @@ export async function POST(request: NextRequest) {
       postProcessed: result.postProcessed
     });
 
-  } catch (error: any) {
-    console.error('❌ Error generating press release with Genkit:', error);
+    } catch (error: any) {
+      console.error('❌ Error generating press release with Genkit:', error);
 
-    // Genkit-spezifische Fehlerbehandlung
-    const errorMessage = error.message || 'Unbekannter Fehler bei der KI-Generierung';
+      const errorMessage = error.message || 'Unbekannter Fehler bei der KI-Generierung';
 
-    return NextResponse.json(
-      { error: `Fehler bei der KI-Generierung: ${errorMessage}` },
-      { status: 500 }
-    );
-  }
+      return NextResponse.json(
+        { error: `Fehler bei der KI-Generierung: ${errorMessage}` },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 // OPTIONS für CORS (wird automatisch von Next.js gehandhabt für same-origin)
