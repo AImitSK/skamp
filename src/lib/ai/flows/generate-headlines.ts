@@ -202,10 +202,27 @@ Erstelle JETZT 3 verschiedene Headlines mit den 3 Stilen (Faktisch-Direkt, Nutze
       }
     });
 
+    // DEBUG: Was gibt Gemini zurück?
+    console.log('🔍 DEBUG result structure:', {
+      hasMessage: !!result.message,
+      hasContent: !!result.message?.content,
+      contentLength: result.message?.content?.length,
+      firstContentType: result.message?.content?.[0] ? typeof result.message.content[0] : 'undefined',
+      hasText: !!result.text,
+      resultKeys: Object.keys(result)
+    });
+
     // Text extrahieren (gleiche Methode wie generatePressRelease)
     const generatedText = result.message?.content?.[0]?.text || result.text;
 
+    console.log('🔍 DEBUG generatedText:', {
+      type: typeof generatedText,
+      length: generatedText?.length,
+      preview: generatedText?.substring(0, 100)
+    });
+
     if (!generatedText || generatedText.trim() === '') {
+      console.error('❌ Keine Antwort von Gemini. Result:', JSON.stringify(result, null, 2));
       throw new Error('Keine Antwort von Gemini erhalten');
     }
 
