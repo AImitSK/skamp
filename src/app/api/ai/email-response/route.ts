@@ -1,7 +1,10 @@
 // src/app/api/ai/email-response/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { 
+import { checkAILimit } from '@/lib/usage/usage-tracker';
+import { estimateAIWords, trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
+import {
   EmailResponseRequest,
   EmailResponseSuggestionResponse,
   EmailResponseSuggestion
@@ -15,19 +18,20 @@ if (!GEMINI_API_KEY) {
 }
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
+  return withAuth(request, async (req, auth: AuthContext) => {
+    const startTime = Date.now();
 
-  try {
-    // API Key Check
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'KI-Service ist nicht konfiguriert' },
-        { status: 500 }
-      );
-    }
+    try {
+      // API Key Check
+      if (!GEMINI_API_KEY) {
+        return NextResponse.json(
+          { error: 'KI-Service ist nicht konfiguriert' },
+          { status: 500 }
+        );
+      }
 
-    // Request Body parsen
-    const data: EmailResponseRequest = await request.json();
+      // Request Body parsen
+      const data: EmailResponseRequest = await req.json();
     const { originalEmail, responseType, context, tone = 'professional', language = 'de' } = data;
 
     // Validierung
@@ -38,12 +42,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Generating email response with Gemini', { 
+    console.log('Generating email response with Gemini', {
       responseType,
       language,
       tone,
-      hasContext: !!context 
+      hasContext: !!context,
+      organizationId: auth.organizationId
     });
+
+    // AI Limit Check
+    const estimatedWords = estimateAIWords(originalEmail.content, 150);
+
+    try {
+      const limitCheck = await checkAILimit(auth.organizationId, estimatedWords);
+
+      if (!limitCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: `AI-Limit erreicht! Du hast bereits ${limitCheck.current} von ${limitCheck.limit} AI-Wörtern verwendet. Noch verfügbar: ${limitCheck.remaining} Wörter.`,
+            limitInfo: {
+              current: limitCheck.current,
+              limit: limitCheck.limit,
+              remaining: limitCheck.remaining,
+              wouldExceed: limitCheck.wouldExceed,
+              requestedAmount: estimatedWords
+            }
+          },
+          { status: 429 }
+        );
+      }
+    } catch (limitError) {
+      console.error('❌ Error checking AI limit:', limitError);
+      return NextResponse.json(
+        { error: 'Fehler beim Prüfen des AI-Limits. Bitte kontaktiere den Support.' },
+        { status: 500 }
+      );
+    }
 
     // Gemini initialisieren
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -222,7 +256,7 @@ Erstelle 3 verschiedene Antwort-Varianten und antworte ausschließlich als JSON:
       );
     }
 
-    console.log('Email response suggestions generated successfully', { 
+    console.log('Email response suggestions generated successfully', {
       responseType,
       tone,
       language,
@@ -230,6 +264,14 @@ Erstelle 3 verschiedene Antwort-Varianten und antworte ausschließlich als JSON:
       processingTime,
       model: "gemini-1.5-flash"
     });
+
+    // Usage Tracking
+    try {
+      const outputText = parsedResponse.suggestions.map((s: any) => s.responseText).join(' ');
+      await trackAIUsage(auth.organizationId, originalEmail.content, outputText);
+    } catch (trackingError) {
+      console.error('⚠️ Failed to track AI usage:', trackingError);
+    }
 
     const responseData: EmailResponseSuggestionResponse = {
       success: true,
@@ -241,32 +283,33 @@ Erstelle 3 verschiedene Antwort-Varianten und antworte ausschließlich als JSON:
 
     return NextResponse.json(responseData);
 
-  } catch (error: any) {
-    console.error('Error generating email response with Gemini:', error);
+    } catch (error: any) {
+      console.error('Error generating email response with Gemini:', error);
 
-    // Gemini-spezifische Fehlerbehandlung
-    if (error.message?.includes('API_KEY_INVALID')) {
-      return NextResponse.json(
-        { error: 'Ungültiger Gemini API Key' },
-        { status: 401 }
-      );
-    } else if (error.message?.includes('QUOTA_EXCEEDED')) {
-      return NextResponse.json(
-        { error: 'Gemini Quota erreicht. Bitte versuche es später erneut.' },
-        { status: 429 }
-      );
-    } else if (error.message?.includes('SAFETY')) {
-      return NextResponse.json(
-        { error: 'E-Mail-Inhalt wurde von Gemini Safety-Filtern blockiert.' },
-        { status: 400 }
-      );
-    } else {
-      return NextResponse.json(
-        { error: `Fehler bei der Response-Generierung: ${error.message}` },
-        { status: 500 }
-      );
+      // Gemini-spezifische Fehlerbehandlung
+      if (error.message?.includes('API_KEY_INVALID')) {
+        return NextResponse.json(
+          { error: 'Ungültiger Gemini API Key' },
+          { status: 401 }
+        );
+      } else if (error.message?.includes('QUOTA_EXCEEDED')) {
+        return NextResponse.json(
+          { error: 'Gemini Quota erreicht. Bitte versuche es später erneut.' },
+          { status: 429 }
+        );
+      } else if (error.message?.includes('SAFETY')) {
+        return NextResponse.json(
+          { error: 'E-Mail-Inhalt wurde von Gemini Safety-Filtern blockiert.' },
+          { status: 400 }
+        );
+      } else {
+        return NextResponse.json(
+          { error: `Fehler bei der Response-Generierung: ${error.message}` },
+          { status: 500 }
+        );
+      }
     }
-  }
+  });
 }
 
 export async function OPTIONS() {

@@ -3,7 +3,10 @@
 // Ersetzt /api/ai/email-analysis mit strukturierten Genkit Flows
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { emailInsightsFlow } from '@/lib/ai/flows/email-insights';
+import { checkAILimit } from '@/lib/usage/usage-tracker';
+import { estimateAIWords, trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
 import type {
   EmailInsightsInput,
   SentimentAnalysis,
@@ -180,11 +183,14 @@ function formatFullAnalysisResponse(result: FullEmailAnalysis) {
 // ══════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  console.log('📧 Email Insights API aufgerufen');
+  return withAuth(request, async (req, auth: AuthContext) => {
+    console.log('📧 Email Insights API aufgerufen', {
+      organizationId: auth.organizationId
+    });
 
-  try {
-    // Request Body parsen
-    const body: EmailInsightsRequestBody = await request.json();
+    try {
+      // Request Body parsen
+      const body: EmailInsightsRequestBody = await req.json();
 
     // Validierung
     const validation = validateRequest(body);
@@ -214,12 +220,48 @@ export async function POST(request: NextRequest) {
       contentLength: flowInput.emailContent.length
     });
 
+    // AI Limit Check
+    const estimatedWords = estimateAIWords(flowInput.emailContent, 200);
+
+    try {
+      const limitCheck = await checkAILimit(auth.organizationId, estimatedWords);
+
+      if (!limitCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: `AI-Limit erreicht! Du hast bereits ${limitCheck.current} von ${limitCheck.limit} AI-Wörtern verwendet. Noch verfügbar: ${limitCheck.remaining} Wörter.`,
+            limitInfo: {
+              current: limitCheck.current,
+              limit: limitCheck.limit,
+              remaining: limitCheck.remaining,
+              wouldExceed: limitCheck.wouldExceed,
+              requestedAmount: estimatedWords
+            }
+          },
+          { status: 429 }
+        );
+      }
+    } catch (limitError) {
+      console.error('❌ Error checking AI limit:', limitError);
+      return NextResponse.json(
+        { error: 'Fehler beim Prüfen des AI-Limits. Bitte kontaktiere den Support.' },
+        { status: 500 }
+      );
+    }
+
     // Genkit Flow ausführen
     const result = await emailInsightsFlow(flowInput);
 
     console.log('✅ Genkit Flow erfolgreich:', {
       analysisType: result.analysisType
     });
+
+    // Usage Tracking
+    try {
+      await trackAIUsage(auth.organizationId, flowInput.emailContent, JSON.stringify(result.result));
+    } catch (trackingError) {
+      console.error('⚠️ Failed to track AI usage:', trackingError);
+    }
 
     // Response basierend auf Analyse-Typ formatieren
     let formattedResult: any;
@@ -256,18 +298,19 @@ export async function POST(request: NextRequest) {
       modelVersion: 'genkit-gemini-2.5-flash'
     });
 
-  } catch (error: any) {
-    console.error('❌ Email Insights API Fehler:', error);
+    } catch (error: any) {
+      console.error('❌ Email Insights API Fehler:', error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      },
-      { status: 500 }
-    );
-  }
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message || 'Internal server error',
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
