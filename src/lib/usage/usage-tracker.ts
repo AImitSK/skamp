@@ -215,8 +215,18 @@ export async function checkContactsLimit(
     throw new Error('Usage data not found for organization');
   }
 
-  const current = usage.contactsTotal;
-  const limit = usage.contactsLimit;
+  // Defensive: Falls Felder undefined sind, nutze Defaults
+  const current = usage.contactsTotal ?? 0;
+  const limit = usage.contactsLimit ?? 1000; // STARTER default
+
+  // Warn if undefined values found
+  if (usage.contactsTotal === undefined || usage.contactsLimit === undefined) {
+    console.warn(`[Usage] ⚠️ Undefined usage fields for org ${organizationId}:`, {
+      contactsTotal: usage.contactsTotal,
+      contactsLimit: usage.contactsLimit,
+      usedDefaults: { current, limit }
+    });
+  }
 
   // -1 means unlimited
   if (limit === -1) {
@@ -266,8 +276,18 @@ export async function checkEmailLimit(
     throw new Error('Usage data not found for organization');
   }
 
-  const current = usage.emailsSent;
-  const limit = usage.emailsLimit;
+  // Defensive: Falls Felder undefined sind, nutze Defaults
+  const current = usage.emailsSent ?? 0;
+  const limit = usage.emailsLimit ?? 1000; // STARTER default
+
+  // Warn if undefined values found
+  if (usage.emailsSent === undefined || usage.emailsLimit === undefined) {
+    console.warn(`[Usage] ⚠️ Undefined usage fields for org ${organizationId}:`, {
+      emailsSent: usage.emailsSent,
+      emailsLimit: usage.emailsLimit,
+      usedDefaults: { current, limit }
+    });
+  }
 
   // -1 means unlimited
   if (limit === -1) {
@@ -317,8 +337,18 @@ export async function checkAILimit(
     throw new Error('Usage data not found for organization');
   }
 
-  const current = usage.aiWordsUsed;
-  const limit = usage.aiWordsLimit;
+  // Defensive: Falls Felder undefined sind, nutze Defaults
+  const current = usage.aiWordsUsed ?? 0;
+  const limit = usage.aiWordsLimit ?? 50000; // STARTER default
+
+  // Warn if undefined values found
+  if (usage.aiWordsUsed === undefined || usage.aiWordsLimit === undefined) {
+    console.warn(`[Usage] ⚠️ Undefined usage fields for org ${organizationId}:`, {
+      aiWordsUsed: usage.aiWordsUsed,
+      aiWordsLimit: usage.aiWordsLimit,
+      usedDefaults: { current, limit }
+    });
+  }
 
   // -1 means unlimited
   if (limit === -1) {
