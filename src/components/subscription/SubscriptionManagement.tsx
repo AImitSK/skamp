@@ -176,7 +176,14 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
           </p>
         </div>
       )}
-      {usage && (
+      {usage && !usage.emailsLimit && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm text-amber-800">
+            ⚠️ Nutzungsdaten unvollständig. Klicke auf das 3-Punkte-Menü oben rechts und wähle "Usage aktualisieren".
+          </p>
+        </div>
+      )}
+      {usage && usage.emailsLimit && (
         <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
             <h3 className="text-base font-semibold text-zinc-900">Aktuelle Nutzung</h3>
@@ -259,10 +266,14 @@ function UsageMeter({
   unit: string;
   formatter?: (val: number) => string;
 }) {
-  const percentage = getUsagePercentage(current, limit);
-  const unlimited = isUnlimited(limit);
+  // Defensive: Falls current oder limit undefined, nutze 0
+  const safeCurrent = current ?? 0;
+  const safeLimit = limit ?? 0;
 
-  const formatValue = formatter || ((val: number) => val.toLocaleString('de-DE'));
+  const percentage = getUsagePercentage(safeCurrent, safeLimit);
+  const unlimited = isUnlimited(safeLimit);
+
+  const formatValue = formatter || ((val: number) => (val ?? 0).toLocaleString('de-DE'));
 
   return (
     <div>
@@ -272,7 +283,7 @@ function UsageMeter({
           <span className="text-sm font-semibold text-[#005fab]">Unlimited ∞</span>
         ) : (
           <span className="text-sm text-zinc-600">
-            {formatValue(current)} / {formatValue(limit)} {unit}
+            {formatValue(safeCurrent)} / {formatValue(safeLimit)} {unit}
           </span>
         )}
       </div>
