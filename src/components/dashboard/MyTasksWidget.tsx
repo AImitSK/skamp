@@ -161,9 +161,6 @@ export function MyTasksWidget() {
                   {filter === 'overdue' && 'Keine überfälligen Tasks'}
                   {filter === 'all' && 'Keine offenen Tasks'}
                 </Text>
-                <Text className="text-zinc-500 text-sm mt-1">
-                  Gut gemacht! 🎉
-                </Text>
               </div>
             </div>
             {/* Pagination Placeholder */}
