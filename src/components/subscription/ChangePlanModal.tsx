@@ -22,6 +22,7 @@ interface Props {
 export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSubscriptionId }: Props) {
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(currentTier);
   const [loading, setLoading] = useState(false);
+  const [violations, setViolations] = useState<string[]>([]);
 
   const tiers: SubscriptionTier[] = ['STARTER', 'BUSINESS', 'AGENTUR'];
 
@@ -30,6 +31,9 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
       toast.error('Bitte wähle einen anderen Plan aus');
       return;
     }
+
+    // Reset violations
+    setViolations([]);
 
     setLoading(true);
     try {
@@ -51,6 +55,15 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Check if it's a downgrade violation error
+        if (errorData.violations) {
+          setViolations(errorData.violations);
+          toast.error('Downgrade nicht möglich - siehe Details unten');
+          setLoading(false);
+          return;
+        }
+
         throw new Error(errorData.error || 'Fehler beim Plan-Wechsel');
       }
 
@@ -64,7 +77,6 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
     } catch (error: any) {
       console.error('Error changing plan:', error);
       toast.error(error.message || 'Fehler beim Plan-Wechsel');
-    } finally {
       setLoading(false);
     }
   };
@@ -201,6 +213,28 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
                 );
               })}
             </div>
+
+            {/* Violations Box (Downgrade Errors) */}
+            {violations.length > 0 && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-300 rounded-lg">
+                <div className="flex items-start gap-3 mb-2">
+                  <XMarkIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-red-900 mb-2">
+                      Downgrade nicht möglich - Bitte reduziere zuerst folgende Metriken:
+                    </p>
+                    <ul className="space-y-1">
+                      {violations.map((violation, idx) => (
+                        <li key={idx} className="text-sm text-red-800 flex items-start gap-2">
+                          <span className="text-red-600 font-bold">•</span>
+                          <span>{violation}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Info Box */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
