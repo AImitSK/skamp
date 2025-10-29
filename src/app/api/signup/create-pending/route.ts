@@ -37,25 +37,33 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    // Erstelle pending_signup
-    const pendingSignup: Omit<PendingSignup, 'id'> = {
+    // Erstelle pending_signup (nur definierte Felder)
+    const pendingSignupData: any = {
       email: body.email.toLowerCase(),
-      password: body.password,
       companyName: body.companyName,
       tier: body.tier,
       billingInterval: body.billingInterval,
       provider: body.provider,
-      googleIdToken: body.googleIdToken,
-      googleUserInfo: body.googleUserInfo,
-      createdAt: FieldValue.serverTimestamp() as any,
+      createdAt: FieldValue.serverTimestamp(),
       expiresAt: expiresAt,
       status: 'pending'
     };
 
+    // Nur definierte optionale Felder hinzufügen
+    if (body.password) {
+      pendingSignupData.password = body.password;
+    }
+    if (body.googleIdToken) {
+      pendingSignupData.googleIdToken = body.googleIdToken;
+    }
+    if (body.googleUserInfo) {
+      pendingSignupData.googleUserInfo = body.googleUserInfo;
+    }
+
     await adminDb
       .collection('pending_signups')
       .doc(token)
-      .set(pendingSignup);
+      .set(pendingSignupData);
 
     console.log(`[Pending Signup] Created pending signup with token: ${token}`);
 
