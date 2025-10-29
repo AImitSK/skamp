@@ -9,6 +9,7 @@ import { Divider } from '@/components/ui/divider';
 import { Organization } from '@/types/organization';
 import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
 import SubscriptionManagement from '@/components/subscription/SubscriptionManagement';
+import ChangePlanModal from '@/components/subscription/ChangePlanModal';
 import toast from 'react-hot-toast';
 import { Popover, Transition } from '@headlessui/react';
 import { EllipsisVerticalIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -20,6 +21,7 @@ export default function BillingPage() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [fixLoading, setFixLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [changePlanModalOpen, setChangePlanModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -188,15 +190,19 @@ export default function BillingPage() {
       <Divider className="my-8" />
 
       {hasSubscription ? (
-        <SubscriptionManagement
-          organization={organization}
-          onUpgrade={() => {
-            // TODO: Implement pricing/upgrade flow
-            toast('Upgrade Flow wird demnächst implementiert', {
-              icon: 'ℹ️',
-            });
-          }}
-        />
+        <>
+          <SubscriptionManagement
+            organization={organization}
+            onUpgrade={() => setChangePlanModalOpen(true)}
+          />
+
+          <ChangePlanModal
+            isOpen={changePlanModalOpen}
+            onClose={() => setChangePlanModalOpen(false)}
+            currentTier={organization.tier}
+            stripeSubscriptionId={organization.stripeSubscriptionId || ''}
+          />
+        </>
       ) : isSpecialAccount ? (
         <div className="space-y-6">
           {/* Beta/Special Account Info */}

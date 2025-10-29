@@ -1,0 +1,234 @@
+/**
+ * Change Plan Modal
+ * Allows users to upgrade/downgrade their subscription tier
+ */
+
+'use client';
+
+import { useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { SUBSCRIPTION_LIMITS, SubscriptionTier } from '@/config/subscription-limits';
+import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  currentTier: SubscriptionTier;
+  stripeSubscriptionId: string;
+}
+
+export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSubscriptionId }: Props) {
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(currentTier);
+  const [loading, setLoading] = useState(false);
+
+  const tiers: SubscriptionTier[] = ['STARTER', 'BUSINESS', 'AGENTUR'];
+
+  const handleChangePlan = async () => {
+    if (selectedTier === currentTier) {
+      toast.error('Bitte wähle einen anderen Plan aus');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { auth } = await import('@/lib/firebase/client-init');
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+
+      const token = await user.getIdToken();
+      const response = await fetch('/api/subscription/change-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          newTier: selectedTier,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Fehler beim Plan-Wechsel');
+      }
+
+      const data = await response.json();
+      toast.success(`Plan erfolgreich zu ${selectedTier} geändert!`);
+
+      // Reload page to show updated subscription
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error changing plan:', error);
+      toast.error(error.message || 'Fehler beim Plan-Wechsel');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isUpgrade = (tier: SubscriptionTier): boolean => {
+    const tierOrder = { STARTER: 0, BUSINESS: 1, AGENTUR: 2 };
+    return tierOrder[tier] > tierOrder[currentTier];
+  };
+
+  const isDowngrade = (tier: SubscriptionTier): boolean => {
+    const tierOrder = { STARTER: 0, BUSINESS: 1, AGENTUR: 2 };
+    return tierOrder[tier] < tierOrder[currentTier];
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel className="w-full max-w-4xl bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-zinc-200">
+            <div>
+              <DialogTitle className="text-2xl font-bold text-zinc-900">
+                Plan ändern
+              </DialogTitle>
+              <p className="mt-1 text-sm text-zinc-600">
+                Aktueller Plan: <span className="font-semibold">{currentTier}</span>
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-zinc-400 hover:text-zinc-600 rounded-lg hover:bg-zinc-100 transition"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Plan Cards */}
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {tiers.map((tier) => {
+                const limits = SUBSCRIPTION_LIMITS[tier];
+                const isCurrent = tier === currentTier;
+                const isSelected = tier === selectedTier;
+
+                return (
+                  <button
+                    key={tier}
+                    onClick={() => setSelectedTier(tier)}
+                    disabled={isCurrent}
+                    className={`
+                      relative p-6 rounded-lg border-2 text-left transition-all
+                      ${isCurrent ? 'border-zinc-300 bg-zinc-50 cursor-not-allowed' : ''}
+                      ${isSelected && !isCurrent ? 'border-[#005fab] bg-blue-50' : ''}
+                      ${!isSelected && !isCurrent ? 'border-zinc-200 hover:border-[#005fab] hover:bg-blue-50/50' : ''}
+                    `}
+                  >
+                    {/* Current Badge */}
+                    {isCurrent && (
+                      <div className="absolute top-4 right-4">
+                        <span className="inline-flex items-center px-2.5 py-1 bg-[#005fab] text-white text-xs font-semibold rounded-md">
+                          Aktuell
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Selected Badge */}
+                    {isSelected && !isCurrent && (
+                      <div className="absolute top-4 right-4">
+                        <div className="w-6 h-6 rounded-full bg-[#005fab] flex items-center justify-center">
+                          <CheckIcon className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tier Name */}
+                    <h3 className="text-xl font-bold text-zinc-900 mb-2">
+                      {limits.name}
+                    </h3>
+
+                    {/* Price */}
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-zinc-900">
+                        €{limits.price_monthly_eur}
+                      </span>
+                      <span className="text-zinc-600">/Monat</span>
+                    </div>
+
+                    {/* Features */}
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>{limits.contacts.toLocaleString('de-DE')} Kontakte</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>{limits.emails_per_month.toLocaleString('de-DE')} Emails/Monat</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>
+                          {limits.ai_words_per_month === -1
+                            ? 'Unlimited AI'
+                            : `${limits.ai_words_per_month.toLocaleString('de-DE')} AI-Wörter`}
+                        </span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>{limits.users} Team-Mitglied{limits.users > 1 ? 'er' : ''}</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span>{(limits.storage_bytes / (1024 ** 3)).toFixed(0)} GB Storage</span>
+                      </li>
+                    </ul>
+
+                    {/* Upgrade/Downgrade Label */}
+                    {!isCurrent && (
+                      <div className="mt-4 pt-4 border-t border-zinc-200">
+                        {isUpgrade(tier) && (
+                          <span className="text-xs font-semibold text-green-600">
+                            ⬆ Upgrade
+                          </span>
+                        )}
+                        {isDowngrade(tier) && (
+                          <span className="text-xs font-semibold text-orange-600">
+                            ⬇ Downgrade
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Info Box */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Hinweis:</strong> Bei einem Upgrade wird die Differenz sofort berechnet.
+                Bei einem Downgrade erhältst du eine Gutschrift für die verbleibende Zeit.
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-zinc-200 bg-zinc-50">
+            <Button
+              onClick={onClose}
+              className="px-6 py-2 border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 rounded-lg font-medium transition"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleChangePlan}
+              disabled={loading || selectedTier === currentTier}
+              className="px-6 py-2 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Wird geändert...' : 'Plan ändern'}
+            </Button>
+          </div>
+        </DialogPanel>
+      </div>
+    </Dialog>
+  );
+}
