@@ -43,14 +43,19 @@ export const stripe = new Proxy({} as Stripe, {
 export async function createStripeCustomer(params: {
   email: string;
   name: string;
-  organizationId: string;
+  organizationId?: string;
+  metadata?: Record<string, string>;
 }): Promise<Stripe.Customer> {
+  const metadata = params.metadata || {};
+
+  if (params.organizationId) {
+    metadata.organizationId = params.organizationId;
+  }
+
   const customer = await stripe.customers.create({
     email: params.email,
     name: params.name,
-    metadata: {
-      organizationId: params.organizationId,
-    },
+    metadata,
   });
 
   return customer;
@@ -104,6 +109,42 @@ export async function createCheckoutSession(
         organizationId: request.organizationId,
         tier: request.tier,
       },
+    },
+  });
+
+  return session;
+}
+
+/**
+ * Create Checkout Session for Pending Signup
+ * Spezielle Version für pending signups - verwendet Customer ID statt Organization ID
+ */
+export async function createCheckoutSessionForPendingSignup(params: {
+  customerId: string;
+  tier: SubscriptionTier;
+  billingInterval: 'month' | 'year';
+  successUrl: string;
+  cancelUrl: string;
+  metadata: Record<string, string>;
+}): Promise<Stripe.Checkout.Session> {
+  const priceId = getPriceIdForTier(params.tier, params.billingInterval);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer: params.customerId,
+    payment_method_types: ['card', 'sepa_debit'],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    client_reference_id: params.metadata.pendingSignupToken,
+    metadata: params.metadata,
+    subscription_data: {
+      metadata: params.metadata,
     },
   });
 
