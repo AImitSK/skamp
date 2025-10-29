@@ -295,6 +295,57 @@ export async function checkEmailLimit(
 }
 
 /**
+ * Check if using N AI words would exceed limit
+ *
+ * @param organizationId - The organization ID
+ * @param wordsToUse - Number of AI words to use (default: 1)
+ * @returns Object with allowed flag, current count, limit, and remaining capacity
+ */
+export async function checkAILimit(
+  organizationId: string,
+  wordsToUse: number = 1
+): Promise<{
+  allowed: boolean;
+  current: number;
+  limit: number;
+  remaining: number;
+  wouldExceed: number; // How many over limit if used
+}> {
+  const usage = await getUsage(organizationId);
+
+  if (!usage) {
+    throw new Error('Usage data not found for organization');
+  }
+
+  const current = usage.aiWordsUsed;
+  const limit = usage.aiWordsLimit;
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      current,
+      limit,
+      remaining: -1,
+      wouldExceed: 0,
+    };
+  }
+
+  const newTotal = current + wordsToUse;
+  const allowed = newTotal <= limit;
+  const remaining = Math.max(0, limit - current);
+  const wouldExceed = Math.max(0, newTotal - limit);
+
+  return {
+    allowed,
+    current,
+    limit,
+    remaining,
+    wouldExceed,
+  };
+}
+
+/**
  * Increment AI Words usage
  * Called from Genkit flows (generate, generateHeadlines, etc.)
  */

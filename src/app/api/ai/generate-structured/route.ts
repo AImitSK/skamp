@@ -1,7 +1,10 @@
 // src/app/api/ai/generate-structured/route.ts
 // API Route für strukturierte PR-Generierung - Jetzt powered by Genkit!
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { generatePressReleaseStructuredFlow } from '@/lib/ai/flows/generate-press-release-structured';
+import { checkAILimit } from '@/lib/usage/usage-tracker';
+import { estimateAIWords, trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
 
 interface StructuredGenerateRequest {
   prompt: string;
@@ -21,9 +24,10 @@ interface StructuredGenerateRequest {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // Request Body parsen
-    const data: StructuredGenerateRequest = await request.json();
+  return withAuth(request, async (req, auth: AuthContext) => {
+    try {
+      // Request Body parsen
+      const data: StructuredGenerateRequest = await req.json();
     const { prompt, context, documentContext } = data;
 
     // Validierung
@@ -61,8 +65,49 @@ export async function POST(request: NextRequest) {
       promptLength: prompt.length,
       hasContext: !!context,
       hasDocuments: !!documentContext?.documents?.length,
-      documentCount: documentContext?.documents?.length || 0
+      documentCount: documentContext?.documents?.length || 0,
+      organizationId: auth.organizationId
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // AI USAGE LIMIT CHECK
+    // ══════════════════════════════════════════════════════════════
+
+    const docText = documentContext?.documents?.map(d => d.plainText).join(' ') || '';
+    const estimatedWords = estimateAIWords(prompt + docText, 800);
+
+    try {
+      const limitCheck = await checkAILimit(auth.organizationId, estimatedWords);
+
+      if (!limitCheck.allowed) {
+        return NextResponse.json(
+          {
+            error: `AI-Limit erreicht! Du hast bereits ${limitCheck.current} von ${limitCheck.limit} AI-Wörtern verwendet. Noch verfügbar: ${limitCheck.remaining} Wörter.`,
+            limitInfo: {
+              current: limitCheck.current,
+              limit: limitCheck.limit,
+              remaining: limitCheck.remaining,
+              wouldExceed: limitCheck.wouldExceed,
+              requestedAmount: estimatedWords
+            }
+          },
+          { status: 429 }
+        );
+      }
+
+      console.log('✅ AI limit check passed:', {
+        current: limitCheck.current,
+        limit: limitCheck.limit,
+        remaining: limitCheck.remaining,
+        estimated: estimatedWords
+      });
+    } catch (limitError) {
+      console.error('❌ Error checking AI limit:', limitError);
+      return NextResponse.json(
+        { error: 'Fehler beim Prüfen des AI-Limits. Bitte kontaktiere den Support.' },
+        { status: 500 }
+      );
+    }
 
     // ══════════════════════════════════════════════════════════════
     // GENKIT FLOW AUFRUF - Ersetzt die komplette Prompt Library!
@@ -80,6 +125,18 @@ export async function POST(request: NextRequest) {
       hashtags: result.hashtags.length,
       socialOptimized: result.socialOptimized
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // AI USAGE TRACKING
+    // ══════════════════════════════════════════════════════════════
+
+    try {
+      const inputText = prompt + docText;
+      const outputText = result.headline + result.leadParagraph + result.bodyParagraphs.join(' ');
+      await trackAIUsage(auth.organizationId, inputText, outputText);
+    } catch (trackingError) {
+      console.error('⚠️ Failed to track AI usage:', trackingError);
+    }
 
     // Response im Format, das der Frontend erwartet
     return NextResponse.json({
@@ -102,16 +159,17 @@ export async function POST(request: NextRequest) {
       documentNames: documentContext?.documents?.map(d => d.fileName) || []
     });
 
-  } catch (error: any) {
-    console.error('❌ Error generating structured PR with Genkit:', error);
+    } catch (error: any) {
+      console.error('❌ Error generating structured PR with Genkit:', error);
 
-    const errorMessage = error.message || 'Unbekannter Fehler bei der strukturierten KI-Generierung';
+      const errorMessage = error.message || 'Unbekannter Fehler bei der strukturierten KI-Generierung';
 
-    return NextResponse.json(
-      { error: `Fehler bei der strukturierten KI-Generierung: ${errorMessage}` },
-      { status: 500 }
-    );
-  }
+      return NextResponse.json(
+        { error: `Fehler bei der strukturierten KI-Generierung: ${errorMessage}` },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 export async function OPTIONS() {
