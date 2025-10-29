@@ -127,14 +127,14 @@ export default function LoginPage() {
           <Logo className="h-10 w-auto" />
         </Link>
       </div>
-      <h2 className="mt-20 text-lg font-semibold text-gray-900">
+      <h2 className="mt-20 text-lg font-semibold text-zinc-900">
         Bei CeleroPress anmelden
       </h2>
-      <p className="mt-2 text-sm text-gray-700">
+      <p className="mt-2 text-sm text-zinc-700">
         Noch kein Account?{' '}
         <Link
           href="/signup"
-          className="font-medium text-blue-600 hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           Jetzt registrieren
         </Link>{' '}
@@ -168,10 +168,10 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="relative mt-8">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-zinc-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-4 text-gray-500">Oder weiter mit E-Mail</span>
+          <span className="bg-white px-4 text-zinc-500">Oder weiter mit E-Mail</span>
         </div>
       </div>
 

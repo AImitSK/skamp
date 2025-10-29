@@ -192,28 +192,28 @@ function SignupForm() {
           <Logo className="h-10 w-auto" />
         </Link>
       </div>
-      <h2 className="mt-20 text-lg font-semibold text-gray-900">
+      <h2 className="mt-20 text-lg font-semibold text-zinc-900">
         Jetzt mit {planDetails.name} starten
       </h2>
-      <p className="mt-2 text-sm text-gray-700">
+      <p className="mt-2 text-sm text-zinc-700">
         Bereits registriert?{' '}
-        <Link href="/login" className="font-medium text-blue-600 hover:underline">
+        <Link href="/login" className="font-medium text-primary hover:underline">
           Hier anmelden
         </Link>
       </p>
 
       {/* Plan Info Box */}
-      <div className="mt-6 rounded-lg bg-blue-50 p-4">
+      <div className="mt-6 rounded-lg bg-primary-50 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-900">{planDetails.name}</p>
-            <p className="text-xs text-gray-600">
+            <p className="text-sm font-medium text-zinc-900">{planDetails.name}</p>
+            <p className="text-xs text-zinc-600">
               €{planDetails.price_monthly_eur}/Monat • {planDetails.contacts.toLocaleString('de-DE')} Kontakte • {planDetails.emails_per_month.toLocaleString('de-DE')} Emails
             </p>
           </div>
           <Link
             href="/pricing"
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-primary hover:underline"
           >
             Ändern
           </Link>
@@ -247,10 +247,10 @@ function SignupForm() {
       {/* Divider */}
       <div className="relative mt-8">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-zinc-300"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-4 text-gray-500">Oder weiter mit E-Mail</span>
+          <span className="bg-white px-4 text-zinc-500">Oder weiter mit E-Mail</span>
         </div>
       </div>
 
@@ -298,7 +298,7 @@ function SignupForm() {
             </span>
           </Button>
         </div>
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-zinc-500 text-center">
           Mit der Registrierung akzeptierst du unsere AGB und Datenschutzerklärung.
           14 Tage Geld-zurück-Garantie.
         </p>
@@ -316,7 +316,7 @@ export default function SignupPage() {
             <Logo className="h-10 w-auto" />
           </Link>
         </div>
-        <h2 className="mt-20 text-lg font-semibold text-gray-900">
+        <h2 className="mt-20 text-lg font-semibold text-zinc-900">
           Laden...
         </h2>
       </SlimLayout>
