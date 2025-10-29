@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -10,7 +10,7 @@ import { Logo } from '@/components/marketing/Logo';
 import { SlimLayout } from '@/components/marketing/SlimLayout';
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from '@/config/subscription-limits';
 
-export default function SignupPage() {
+function SignupForm() {
   const { user, register: registerUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -186,5 +186,24 @@ export default function SignupPage() {
         </p>
       </form>
     </SlimLayout>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <SlimLayout>
+        <div className="flex">
+          <Link href="/" aria-label="Home">
+            <Logo className="h-10 w-auto" />
+          </Link>
+        </div>
+        <h2 className="mt-20 text-lg font-semibold text-gray-900">
+          Laden...
+        </h2>
+      </SlimLayout>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
