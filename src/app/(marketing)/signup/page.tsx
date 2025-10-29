@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/marketing/Button';
 import { TextField } from '@/components/marketing/Fields';
 import { Logo } from '@/components/marketing/Logo';
@@ -15,11 +14,8 @@ import {
   signInWithRedirect
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
-import { db } from '@/lib/firebase/client-init';
-import { doc, setDoc } from 'firebase/firestore';
 
 function SignupForm() {
-  const { user, register: registerUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -33,73 +29,55 @@ function SignupForm() {
   const selectedPlan = (searchParams?.get('plan') || 'STARTER') as SubscriptionTier;
   const planDetails = SUBSCRIPTION_LIMITS[selectedPlan];
 
-  // Redirect wenn bereits eingeloggt
-  useEffect(() => {
-    if (user) {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // 1. Firebase Registrierung
-      await registerUser(email.toLowerCase(), password);
-
-      // 2. Organization erstellen mit gewähltem Plan
-      const { organizationService } = await import('@/lib/firebase/organization-service');
-      const { auth } = await import('@/lib/firebase/client-init');
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        throw new Error('User not authenticated after registration');
-      }
-
-      const orgId = await organizationService.create({
-        name: companyName || `${email.split('@')[0]}'s Organization`,
-        ownerId: currentUser.uid,
-        ownerEmail: email,
-        ownerName: companyName || email,
-        accountType: 'regular', // Regular account (nicht beta)
-        tier: selectedPlan,
-        subscriptionStatus: 'incomplete', // Zahlung noch nicht abgeschlossen
-      });
-
-      // 3. Zu Stripe Checkout weiterleiten
-      const token = await currentUser.getIdToken();
-      const response = await fetch('/api/subscription/create-checkout', {
+      // 1. Erstelle pending_signup (KEIN Firebase User)
+      const pendingResponse = await fetch('/api/signup/create-pending', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          email: email.toLowerCase(),
+          password: password,
+          companyName: companyName || `${email.split('@')[0]}'s Organization`,
           tier: selectedPlan,
           billingInterval: 'monthly',
+          provider: 'email'
         }),
       });
 
-      if (!response.ok) {
+      if (!pendingResponse.ok) {
+        const errorData = await pendingResponse.json();
+        throw new Error(errorData.error || 'Fehler beim Erstellen der Registrierung');
+      }
+
+      const { token } = await pendingResponse.json();
+
+      // 2. Erstelle Stripe Checkout Session
+      const checkoutResponse = await fetch('/api/signup/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!checkoutResponse.ok) {
         throw new Error('Fehler beim Erstellen der Checkout-Session');
       }
 
-      const { url } = await response.json();
-      window.location.href = url; // Zu Stripe Checkout
+      const { url } = await checkoutResponse.json();
+
+      // 3. Zu Stripe Checkout weiterleiten
+      window.location.href = url;
     } catch (err: any) {
       console.error('Registrierung Fehler:', err);
-
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Diese E-Mail-Adresse wird bereits verwendet.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Das Passwort ist zu schwach. Mindestens 6 Zeichen erforderlich.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Ungültige E-Mail-Adresse.');
-      } else {
-        setError(err.message || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-      }
+      setError(err.message || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
       setLoading(false);
     }
   };
@@ -126,50 +104,55 @@ function SignupForm() {
       }
 
       const googleUser = result.user;
+      const idToken = await googleUser.getIdToken();
 
-      // User-Dokument erstellen
-      await setDoc(doc(db, "users", googleUser.uid), {
-        userId: googleUser.uid,
-        email: googleUser.email,
-        displayName: googleUser.displayName,
-        photoURL: googleUser.photoURL,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
-        provider: 'google'
-      }, { merge: true });
+      // Logout sofort - User wird erst nach Zahlung erstellt
+      await auth.signOut();
 
-      // Regular-Organisation erstellen mit gewähltem Plan
-      const { organizationService } = await import('@/lib/firebase/organization-service');
-      await organizationService.create({
-        name: `${googleUser.displayName || googleUser.email?.split('@')[0]}'s Organization`,
-        ownerId: googleUser.uid,
-        ownerEmail: googleUser.email || '',
-        ownerName: googleUser.displayName || googleUser.email || '',
-        accountType: 'regular',
-        tier: selectedPlan,
-        subscriptionStatus: 'incomplete', // Zahlung noch nicht abgeschlossen
-        photoUrl: googleUser.photoURL || undefined
-      });
-
-      // Zu Stripe Checkout weiterleiten
-      const token = await googleUser.getIdToken();
-      const response = await fetch('/api/subscription/create-checkout', {
+      // 1. Erstelle pending_signup mit Google-Daten (KEIN Firebase User persistence)
+      const pendingResponse = await fetch('/api/signup/create-pending', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          email: googleUser.email?.toLowerCase() || '',
+          companyName: `${googleUser.displayName || googleUser.email?.split('@')[0]}'s Organization`,
           tier: selectedPlan,
           billingInterval: 'monthly',
+          provider: 'google',
+          googleIdToken: idToken,
+          googleUserInfo: {
+            uid: googleUser.uid,
+            displayName: googleUser.displayName,
+            photoURL: googleUser.photoURL
+          }
         }),
       });
 
-      if (!response.ok) {
+      if (!pendingResponse.ok) {
+        const errorData = await pendingResponse.json();
+        throw new Error(errorData.error || 'Fehler beim Erstellen der Registrierung');
+      }
+
+      const { token } = await pendingResponse.json();
+
+      // 2. Erstelle Stripe Checkout Session
+      const checkoutResponse = await fetch('/api/signup/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!checkoutResponse.ok) {
         throw new Error('Fehler beim Erstellen der Checkout-Session');
       }
 
-      const { url } = await response.json();
+      const { url } = await checkoutResponse.json();
+
+      // 3. Zu Stripe Checkout weiterleiten
       window.location.href = url;
     } catch (err: any) {
       console.error("Google Sign-In Fehler:", err);
