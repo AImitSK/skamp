@@ -341,12 +341,24 @@ export async function POST(request: NextRequest) {
         userAgent
       }, token);
 
-      console.log('✅ Campaign send completed:', { 
-        successCount, 
-        failCount, 
-        fromEmail, 
-        replyTo: replyToAddress 
+      console.log('✅ Campaign send completed:', {
+        successCount,
+        failCount,
+        fromEmail,
+        replyTo: replyToAddress
       });
+
+      // ✨ Email Usage Tracking
+      if (successCount > 0) {
+        try {
+          const { incrementEmailUsage } = await import('@/lib/usage/usage-tracker');
+          await incrementEmailUsage(auth.organizationId, successCount);
+          console.log('📊 Email usage tracked:', successCount, 'emails for org:', auth.organizationId);
+        } catch (usageError) {
+          console.error('⚠️ Failed to track email usage:', usageError);
+          // Nicht werfen - Email-Versand war erfolgreich, nur Tracking hat gefehlt
+        }
+      }
 
       return NextResponse.json({
         success: true,
