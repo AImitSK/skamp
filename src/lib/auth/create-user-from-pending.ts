@@ -125,7 +125,17 @@ export async function createUserAndOrgFromPendingSignup(
 
   console.log(`[Pending Signup] Created team member: ${ownerId}`);
 
-  // 4. Update Stripe Subscription Metadata mit organizationId
+  // 4. Initialize Usage Tracking
+  try {
+    const { initializeUsageTracking } = await import('@/lib/usage/usage-tracker');
+    await initializeUsageTracking(organizationId, pendingSignup.tier);
+    console.log(`[Pending Signup] Initialized usage tracking for ${organizationId}`);
+  } catch (error) {
+    console.error('[Pending Signup] Failed to initialize usage tracking:', error);
+    // Nicht kritisch, weitermachen
+  }
+
+  // 5. Update Stripe Subscription Metadata mit organizationId
   // (für zukünftige webhook events)
   try {
     const stripe = await import('@/lib/stripe/stripe-service');

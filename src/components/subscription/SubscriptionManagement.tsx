@@ -21,7 +21,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
   const [portalLoading, setPortalLoading] = useState(false);
 
   const currentTierLimits = SUBSCRIPTION_LIMITS[organization.tier];
-  const usage = organization.usage;
+  const usage = organization.usage || null;
 
   // Format Plan Features für bessere Darstellung
   const features = [
@@ -153,6 +153,13 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
       </div>
 
       {/* Usage Section */}
+      {!usage && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm text-amber-800">
+            ⚠️ Nutzungsdaten nicht verfügbar. Klicke auf das 3-Punkte-Menü oben rechts und wähle "Usage aktualisieren".
+          </p>
+        </div>
+      )}
       {usage && (
         <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
