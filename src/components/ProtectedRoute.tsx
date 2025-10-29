@@ -62,16 +62,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
       const org = orgSnapshot.docs[0].data();
 
-      // Prüfe subscriptionStatus für regular accounts
-      if (org.accountType === 'regular' && org.subscriptionStatus === 'incomplete') {
-        // User hat noch nicht bezahlt - redirect zu payment pending page
-        // Aber nicht wenn wir schon auf der payment-pending oder subscription Seite sind
-        if (!pathname.startsWith('/dashboard/subscription/')) {
-          console.log('[ProtectedRoute] Payment incomplete, redirecting...');
-          router.push('/dashboard/subscription/payment-pending');
-          return;
-        }
-      }
+      // PAYMENT-BEFORE-ACCESS FLOW:
+      // User + Organization werden erst NACH erfolgreicher Zahlung erstellt
+      // subscriptionStatus ist IMMER 'active' bei Erstellung
+      // Keine subscriptionStatus-Prüfung mehr nötig
 
       setCheckingSubscription(false);
     } catch (error) {
