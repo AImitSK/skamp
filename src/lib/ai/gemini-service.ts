@@ -75,22 +75,10 @@ export const geminiService = {
   ): Promise<StructuredPressReleaseOutput> {
     try {
       console.log('🤖 Generating structured press release with Gemini AI:', input);
-      
-      const response = await fetch('/api/ai/generate-structured', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(input),
-      });
 
-      if (!response.ok) {
-        throw new Error(`AI generation failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await apiClient.post<StructuredPressReleaseOutput>('/api/ai/generate-structured', input);
       console.log('✅ AI generation successful');
-      
+
       return result;
     } catch (error) {
       console.error('❌ Error generating structured press release:', error);
@@ -103,8 +91,8 @@ export const geminiService = {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch('/api/ai/health');
-      return response.ok;
+      await apiClient.get('/api/ai/health');
+      return true;
     } catch (error) {
       console.error('AI health check failed:', error);
       return false;
@@ -164,22 +152,10 @@ export const geminiService = {
       WICHTIG: Nur Projekte aus der Liste verwenden. Bei Unsicherheit confidence < 0.6 setzen.
       `;
       
-      const response = await fetch('/api/ai/analyze-email-project', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt,
-          organizationId: data.organizationId
-        }),
+      const result = await apiClient.post<any>('/api/ai/analyze-email-project', {
+        prompt,
+        organizationId: data.organizationId
       });
-
-      if (!response.ok) {
-        throw new Error(`AI project analysis failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
       
       // Validiere dass die Antwort gültiges JSON ist
       if (!result || typeof result !== 'object') {
@@ -259,19 +235,7 @@ export const geminiService = {
       ]
       `;
       
-      const response = await fetch('/api/ai/suggest-email-actions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`AI action suggestions failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await apiClient.post<any>('/api/ai/suggest-email-actions', { prompt });
       
       // Validiere dass die Antwort ein Array ist
       if (!Array.isArray(result)) {

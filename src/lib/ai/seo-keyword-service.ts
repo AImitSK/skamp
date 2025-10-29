@@ -1,6 +1,8 @@
 // src/lib/ai/seo-keyword-service.ts
 // Auto-Keyword-Detection Service für SEO-Features
 
+import { apiClient } from '@/lib/api/api-client';
+
 interface KeywordDetectionOptions {
   maxKeywords?: number;
   minWordLength?: number;
@@ -114,25 +116,14 @@ class SEOKeywordService {
       // Removed verbose logging for better performance
       
       // API-Call zur bestehenden KI-Integration
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt,
-          mode: 'generate', // Required by API route
-          context: {
-            tone: 'professional'
-          }
-        }),
+      const data = await apiClient.post<any>('/api/ai/generate', {
+        prompt,
+        mode: 'generate', // Required by API route
+        context: {
+          tone: 'professional'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`KI-API Fehler: ${response.status}`);
-      }
-
-      const data = await response.json();
       const rawKeywords = data.generatedText || data.content || data.text || '';
       
       
@@ -470,17 +461,12 @@ BEGRIFFE: [Begriff1, Begriff2, Begriff3]
 
 Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
 
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          mode: 'generate'
-        })
+      const data = await apiClient.post<any>('/api/ai/generate', {
+        prompt,
+        mode: 'generate'
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data) {
         const result = data.generatedText || '';
         
         // Parse KI-Antwort
