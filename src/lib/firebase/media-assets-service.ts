@@ -78,9 +78,22 @@ export async function uploadMedia(
   folderId?: string,
   onProgress?: (progress: number) => void,
   retryCount = 3,
-  context?: { userId: string; clientId?: string }
+  context?: { userId: string; clientId?: string },
+  skipLimitCheck = false
 ): Promise<MediaAsset> {
   try {
+    // ✨ NEU: Storage Limit Check (wenn nicht übersprungen)
+    if (!skipLimitCheck) {
+      const { checkStorageLimit, generateLimitErrorMessage, StorageLimitError } = await import('@/lib/usage/storage-limit-checker');
+
+      const limitCheck = await checkStorageLimit(organizationId, file.size);
+
+      if (!limitCheck.allowed) {
+        const errorMessage = generateLimitErrorMessage(limitCheck);
+        throw new StorageLimitError(errorMessage, limitCheck);
+      }
+    }
+
     // Cleaner Dateiname für Firebase Storage
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const timestamp = Date.now();
@@ -112,7 +125,7 @@ export async function uploadMedia(
             error.message?.includes('network')
           )) {
             setTimeout(() => {
-              uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context)
+              uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context, skipLimitCheck)
                 .then(resolve)
                 .catch(reject);
             }, 1000);
@@ -181,12 +194,13 @@ export async function uploadClientMedia(
   clientId: string,
   folderId?: string,
   onProgress?: (progress: number) => void,
-  context?: { userId: string; description?: string; originalAssetId?: string }
+  context?: { userId: string; description?: string; originalAssetId?: string },
+  skipLimitCheck = false
 ): Promise<MediaAsset> {
   return uploadMedia(file, organizationId, folderId, onProgress, 3, {
     userId: context?.userId || organizationId,
     clientId
-  });
+  }, skipLimitCheck);
 }
 
 /**

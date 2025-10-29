@@ -806,13 +806,15 @@ class PDFVersionsService {
 
               if (pressemeldungenFolder && campaignData.clientId) {
                 // DIREKTER UPLOAD in Pressemeldungen-Ordner
+                // ✨ skipLimitCheck=true: PDF-Versionierung darf nicht durch Storage-Limits blockiert werden
                 const uploadedAsset = await mediaService.uploadClientMedia(
                   pdfFile,
                   organizationId,
                   campaignData.clientId,
                   pressemeldungenFolder.id, // Upload direkt in Pressemeldungen-Ordner
                   undefined, // Kein Progress-Callback
-                  { userId, description: `PDF für Campaign ${campaignData.title}` }
+                  { userId, description: `PDF für Campaign ${campaignData.title}` },
+                  true // skipLimitCheck - keine Storage-Limits für PDF-Versionierung
                 );
 
                 uploadResult = { asset: uploadedAsset };
@@ -825,6 +827,7 @@ class PDFVersionsService {
             }
           } else {
             // Fallback für Campaigns ohne Projekt - verwende mediaService direkt
+            // ✨ skipLimitCheck=true: PDF-Versionierung darf nicht durch Storage-Limits blockiert werden
             const uploadedAsset = await mediaService.uploadMedia(
               pdfFile,
               organizationId,
@@ -834,7 +837,8 @@ class PDFVersionsService {
               {
                 userId: userId,
                 clientId: undefined
-              }
+              },
+              true // skipLimitCheck - keine Storage-Limits für PDF-Versionierung
             );
 
             uploadResult = {

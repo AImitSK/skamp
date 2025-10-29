@@ -604,13 +604,15 @@ class MonitoringReportService {
             const targetFolderId = targetFolder?.id || projectFolder.id;
 
             if (targetFolderId) {
+              // ✨ skipLimitCheck=true: PDF-Reporting darf nicht durch Storage-Limits blockiert werden
               const asset = await mediaService.uploadClientMedia(
                 pdfFile,
                 organizationId,
                 campaignData.clientId,
                 targetFolderId,
                 undefined,
-                { userId }
+                { userId },
+                true // skipLimitCheck - keine Storage-Limits für PDF-Reporting
               );
 
               return {
@@ -624,13 +626,15 @@ class MonitoringReportService {
             throw new Error('Projekt-Ordner nicht gefunden');
           }
         } else {
+          // ✨ skipLimitCheck=true: PDF-Reporting darf nicht durch Storage-Limits blockiert werden
           const asset = await mediaService.uploadMedia(
             pdfFile,
             organizationId,
             undefined,
             undefined,
             3,
-            { userId }
+            { userId },
+            true // skipLimitCheck - keine Storage-Limits für PDF-Reporting
           );
 
           return {
