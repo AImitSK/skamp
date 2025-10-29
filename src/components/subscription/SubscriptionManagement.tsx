@@ -47,8 +47,6 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
 
         if (response.ok) {
           const data = await response.json();
-          console.log('[Billing] Subscription Data Loaded:', data.subscription);
-          console.log('[Billing] cancelAtPeriodEnd:', data.subscription?.cancelAtPeriodEnd);
           setSubscriptionData(data.subscription);
         }
       } catch (error) {
@@ -151,10 +149,6 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
   };
 
   const daysRemaining = getDaysRemaining(subscriptionData?.currentPeriodEnd);
-
-  // Debug: Log subscription state
-  console.log('[Billing] Render - subscriptionData:', subscriptionData);
-  console.log('[Billing] Render - Will show Info Box?', subscriptionData?.cancelAtPeriodEnd === true);
 
   return (
     <div className="space-y-6">
