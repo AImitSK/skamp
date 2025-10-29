@@ -20,7 +20,11 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
   const [cancelLoading, setCancelLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const currentTierLimits = SUBSCRIPTION_LIMITS[organization.tier];
+  // Defensive: Falls tier fehlt oder ungültig, nutze STARTER als Fallback
+  const currentTierLimits = organization.tier && SUBSCRIPTION_LIMITS[organization.tier]
+    ? SUBSCRIPTION_LIMITS[organization.tier]
+    : SUBSCRIPTION_LIMITS['STARTER'];
+
   const usage = organization.usage || null;
 
   // Format Plan Features für bessere Darstellung
@@ -98,6 +102,18 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
 
   return (
     <div className="space-y-6">
+      {/* Tier Warning */}
+      {(!organization.tier || !SUBSCRIPTION_LIMITS[organization.tier]) && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800 font-semibold">
+            ⚠️ Organization Tier fehlt oder ist ungültig!
+          </p>
+          <p className="text-sm text-red-700 mt-1">
+            Dein Account wurde möglicherweise nicht korrekt erstellt. Bitte kontaktiere support@celeropress.com
+          </p>
+        </div>
+      )}
+
       {/* Plan & Features - Combined Box */}
       <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-zinc-200 bg-zinc-50">
