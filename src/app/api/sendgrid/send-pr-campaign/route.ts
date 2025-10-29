@@ -223,6 +223,66 @@ export async function POST(request: NextRequest) {
 
       console.log(`📧 Validated ${validRecipients.length} of ${data.recipients.length} recipients`);
 
+      // ✨ USAGE LIMIT: Prüfe Email-Limit (monatliches Kontingent)
+      try {
+        const { checkEmailLimit } = await import('@/lib/usage/usage-tracker');
+        const emailLimitCheck = await checkEmailLimit(auth.organizationId, validRecipients.length);
+
+        if (!emailLimitCheck.allowed) {
+          console.warn('⚠️ Email limit exceeded:', {
+            current: emailLimitCheck.current,
+            limit: emailLimitCheck.limit,
+            remaining: emailLimitCheck.remaining,
+            wouldExceed: emailLimitCheck.wouldExceed
+          });
+
+          await rateLimitServiceAPI.logEmailActivity({
+            userId: auth.userId,
+            organizationId: auth.organizationId,
+            type: 'campaign',
+            campaignId: data.campaignId,
+            campaignTitle: data.campaignTitle,
+            recipientCount: validRecipients.length,
+            status: 'limit_exceeded',
+            errorMessage: 'Monthly email limit exceeded',
+            ip,
+            userAgent
+          }, token);
+
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Email-Limit erreicht! Du hast bereits ${emailLimitCheck.current} von ${emailLimitCheck.limit} Emails versendet. Noch verfügbar: ${emailLimitCheck.remaining} Emails.`,
+              limitInfo: {
+                current: emailLimitCheck.current,
+                limit: emailLimitCheck.limit,
+                remaining: emailLimitCheck.remaining,
+                wouldExceed: emailLimitCheck.wouldExceed,
+                requestedAmount: validRecipients.length
+              }
+            },
+            { status: 429 }
+          );
+        }
+
+        console.log('✅ Email limit check passed:', {
+          current: emailLimitCheck.current,
+          limit: emailLimitCheck.limit,
+          remaining: emailLimitCheck.remaining,
+          sending: validRecipients.length
+        });
+      } catch (limitError) {
+        console.error('❌ Error checking email limit:', limitError);
+        // Bei Fehler im Limit-Check: Email-Versand BLOCKIEREN (fail-closed)
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Fehler beim Prüfen des Email-Limits. Bitte kontaktiere den Support.'
+          },
+          { status: 500 }
+        );
+      }
+
       // Absender-Konfiguration nutzt jetzt die E-Mail-Adresse
       const fromEmail = emailAddress.email;
       const fromName = emailAddress.displayName || data.senderInfo.company;
