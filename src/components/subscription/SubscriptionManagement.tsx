@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { SUBSCRIPTION_LIMITS, getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
 import { Organization, OrganizationUsage } from '@/types/organization';
-import { CheckIcon, PencilSquareIcon, XMarkIcon, EnvelopeIcon, UserGroupIcon, SparklesIcon, UserIcon, CloudIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, PencilSquareIcon, XMarkIcon, EnvelopeIcon, UserGroupIcon, SparklesIcon, UserIcon, CloudIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import CancelSubscriptionModal from './CancelSubscriptionModal';
 
@@ -20,7 +20,8 @@ interface Props {
 export default function SubscriptionManagement({ organization, onUpgrade }: Props) {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [subscriptionData, setSubscriptionData] = useState<{ currentPeriodEnd?: Date } | null>(null);
+  const [reactivateLoading, setReactivateLoading] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<{ currentPeriodEnd?: Date; cancelAtPeriodEnd?: boolean } | null>(null);
 
   // Defensive: Falls tier fehlt oder ungültig, nutze STARTER als Fallback
   const currentTierLimits = organization.tier && SUBSCRIPTION_LIMITS[organization.tier]
@@ -99,6 +100,55 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
     setCancelModalOpen(false);
     window.location.reload();
   };
+
+  const handleReactivateSubscription = async () => {
+    setReactivateLoading(true);
+    try {
+      const { auth } = await import('@/lib/firebase/client-init');
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+
+      const token = await user.getIdToken();
+      const response = await fetch('/api/subscription/reactivate', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Fehler beim Reaktivieren');
+      }
+
+      toast.success('Subscription erfolgreich reaktiviert');
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error reactivating subscription:', error);
+      toast.error(error.message || 'Fehler beim Reaktivieren');
+      setReactivateLoading(false);
+    }
+  };
+
+  const getDaysRemaining = (date?: Date) => {
+    if (!date) return null;
+    const now = new Date();
+    const end = new Date(date);
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const formatEndDate = (date?: Date) => {
+    if (!date) return 'Ende der Billing Period';
+    return new Date(date).toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  const daysRemaining = getDaysRemaining(subscriptionData?.currentPeriodEnd);
 
   return (
     <div className="space-y-6">
@@ -238,13 +288,43 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
             >
               {portalLoading ? 'Öffne Portal...' : 'Zahlungsmethode & Rechnungen verwalten'}
             </button>
-            <button
-              onClick={() => setCancelModalOpen(true)}
-              className="w-full px-4 py-3 border border-red-300 bg-white hover:bg-red-50 text-red-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 h-11"
-            >
-              <XMarkIcon className="w-5 h-5" />
-              Subscription kündigen
-            </button>
+
+            {/* Show cancellation info if subscription is canceled, otherwise show cancel button */}
+            {subscriptionData?.cancelAtPeriodEnd ? (
+              <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <ExclamationTriangleIcon className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-900">
+                      Subscription läuft aus
+                    </p>
+                    <p className="text-sm text-amber-800 mt-1">
+                      Dein Zugriff bleibt bis zum <span className="font-semibold">{formatEndDate(subscriptionData?.currentPeriodEnd)}</span> aktiv
+                      {daysRemaining !== null && (
+                        <span className="block mt-0.5">
+                          ({daysRemaining} {daysRemaining === 1 ? 'Tag' : 'Tage'} verbleibend)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleReactivateSubscription}
+                  disabled={reactivateLoading}
+                  className="w-full px-4 py-3 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-medium transition-colors disabled:opacity-50 h-11"
+                >
+                  {reactivateLoading ? 'Wird reaktiviert...' : 'Subscription reaktivieren'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCancelModalOpen(true)}
+                className="w-full px-4 py-3 border border-red-300 bg-white hover:bg-red-50 text-red-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 h-11"
+              >
+                <XMarkIcon className="w-5 h-5" />
+                Subscription kündigen
+              </button>
+            )}
           </div>
         </div>
       )}
