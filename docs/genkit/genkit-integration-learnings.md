@@ -367,7 +367,7 @@ npx genkit start -- npm run dev
 # Local Starten mit:
 
 $env:GENKIT_ENV = "dev"; npm run dev
-npx genkit start
+
 
 
 

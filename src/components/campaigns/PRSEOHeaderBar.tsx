@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { seoKeywordService } from '@/lib/ai/seo-keyword-service';
 import { HashtagDetector } from '@/lib/hashtag-detector';
+import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
 interface KeywordMetrics {
@@ -694,30 +695,20 @@ export function PRSEOHeaderBar({
       // ══════════════════════════════════════════════════════════════
       // GENKIT FLOW AUFRUF über API Route
       // ══════════════════════════════════════════════════════════════
-      const response = await fetch('/api/ai/analyze-keyword-seo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keyword,
-          text
-        })
+      const data = await apiClient.post<any>('/api/ai/analyze-keyword-seo', {
+        keyword,
+        text
       });
 
-      if (response.ok) {
-        const data = await response.json();
-
-        // Neue strukturierte Response (bereits geparst!)
-        if (data && data.success) {
-          return {
-            semanticRelevance: Math.min(100, Math.max(0, data.semanticRelevance || 50)),
-            contextQuality: Math.min(100, Math.max(0, data.contextQuality || 50)),
-            targetAudience: data.targetAudience || 'Unbekannt',
-            tonality: data.tonality || 'Neutral',
-            relatedTerms: Array.isArray(data.relatedTerms) ? data.relatedTerms.slice(0, 3) : []
-          };
-        }
-      } else {
-        console.error('❌ SEO-Analyse API Fehler:', response.statusText);
+      // Neue strukturierte Response (bereits geparst!)
+      if (data && data.success) {
+        return {
+          semanticRelevance: Math.min(100, Math.max(0, data.semanticRelevance || 50)),
+          contextQuality: Math.min(100, Math.max(0, data.contextQuality || 50)),
+          targetAudience: data.targetAudience || 'Unbekannt',
+          tonality: data.tonality || 'Neutral',
+          relatedTerms: Array.isArray(data.relatedTerms) ? data.relatedTerms.slice(0, 3) : []
+        };
       }
     } catch (error) {
       console.error('❌ SEO-Analyse Fehler:', error);

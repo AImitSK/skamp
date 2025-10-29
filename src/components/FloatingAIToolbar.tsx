@@ -13,6 +13,7 @@ import {
   DocumentTextIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
+import { apiClient } from '@/lib/api/api-client';
 
 // KI-QUALITY TEST RUNNER
 async function testAIFeatures() {
@@ -28,17 +29,11 @@ async function testAIFeatures() {
     try {
       const originalWords = text.split(' ').length;
       const originalParagraphs = text.split('\n\n').length;
-      
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT! EXAKT ${originalWords} Wörter (±5 max!): EXAKT ${originalParagraphs} Absatz(e): ${text}`,
-          mode: 'generate'
-        })
+
+      const data = await apiClient.post<any>('/api/ai/generate', {
+        prompt: `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT! EXAKT ${originalWords} Wörter (±5 max!): EXAKT ${originalParagraphs} Absatz(e): ${text}`,
+        mode: 'generate'
       });
-      
-      const data = await response.json();
       const result = parseTextFromAIOutput(data.generatedText || text);
       
       const resultWords = result.split(' ').length;
@@ -470,22 +465,11 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
       // ══════════════════════════════════════════════════════════════
       // 🆕 GENKIT MIGRATION: Nutze text-transform Flow statt custom-instruction
       // ══════════════════════════════════════════════════════════════
-      const response = await fetch('/api/ai/text-transform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text,
-          action: action,
-          fullDocument: hasFullContext ? fullDocument : null
-        })
+      const data = await apiClient.post<any>('/api/ai/text-transform', {
+        text: text,
+        action: action,
+        fullDocument: hasFullContext ? fullDocument : null
       });
-
-      if (!response.ok) {
-        console.error('KI-API Error:', response.status, response.statusText);
-        throw new Error('KI-Anfrage fehlgeschlagen');
-      }
-      
-      const data = await response.json();
       let result = data.generatedText || text;
       
       console.log('🔧 RAW KI-Antwort:', result.substring(0, 200) + '...');
@@ -619,23 +603,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
       // ══════════════════════════════════════════════════════════════
       // 🆕 GENKIT MIGRATION: Nutze text-transform Flow für change-tone
       // ══════════════════════════════════════════════════════════════
-      const response = await fetch('/api/ai/text-transform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: selectedText,
-          action: 'change-tone',
-          tone: tone,
-          fullDocument: hasFullContext ? fullDocument : null
-        })
+      const data = await apiClient.post<any>('/api/ai/text-transform', {
+        text: selectedText,
+        action: 'change-tone',
+        tone: tone,
+        fullDocument: hasFullContext ? fullDocument : null
       });
-
-      if (!response.ok) {
-        console.error('Ton-Änderung API Error:', response.status, response.statusText);
-        throw new Error('KI-Anfrage fehlgeschlagen');
-      }
-      
-      const data = await response.json();
       let newText = data.generatedText || selectedText;
       
       // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
@@ -953,18 +926,12 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       // ══════════════════════════════════════════════════════════════
       // 🆕 GENKIT MIGRATION: Nutze text-transform Flow für custom instructions
       // ══════════════════════════════════════════════════════════════
-      const response = await fetch('/api/ai/text-transform', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: selectedText,
-          action: 'custom',
-          instruction: customInstruction,
-          fullDocument: fullDocument || null
-        })
+      const data = await apiClient.post<any>('/api/ai/text-transform', {
+        text: selectedText,
+        action: 'custom',
+        instruction: customInstruction,
+        fullDocument: fullDocument || null
       });
-
-      const data = await response.json();
       const newText = parseTextFromAIOutput(data.generatedText || selectedText);
 
       // Debug-Logs

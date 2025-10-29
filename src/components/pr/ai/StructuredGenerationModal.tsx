@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
+import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 import {
   StructuredPressRelease,
@@ -293,9 +294,8 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const response = await fetch('/api/ai/templates');
-        const data = await response.json();
-        
+        const data = await apiClient.get<any>('/api/ai/templates');
+
         if (data.success && data.templates) {
           const apiTemplates: AITemplate[] = data.templates.map((t: any, index: number) => ({
             id: `template-${index}`,
@@ -441,20 +441,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
         };
       }
 
-      const response = await fetch('/api/ai/generate-structured', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Generierung fehlgeschlagen');
-      }
-
-      const result: StructuredGenerateResponse = await response.json();
+      const result: StructuredGenerateResponse = await apiClient.post<StructuredGenerateResponse>('/api/ai/generate-structured', requestBody);
 
       if (!result.success || !result.structured) {
         throw new Error('Unvollständige Antwort vom Server');

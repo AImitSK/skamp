@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SparklesIcon, CheckIcon } from '@heroicons/react/20/solid';
+import { apiClient } from '@/lib/api/api-client';
 
 interface HeadlineGeneratorProps {
   currentTitle: string;
@@ -48,23 +49,11 @@ export function HeadlineGenerator({
       // GENKIT FLOW - Strukturierte Headlines mit Metadaten
       // ══════════════════════════════════════════════════════════════
 
-      const response = await fetch('/api/ai/generate-headlines', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: contentToAnalyze,
-          currentHeadline: currentTitle || null,
-          context: null // Kann später erweitert werden (industry, tone, audience)
-        }),
+      const data = await apiClient.post<any>('/api/ai/generate-headlines', {
+        content: contentToAnalyze,
+        currentHeadline: currentTitle || null,
+        context: null // Kann später erweitert werden (industry, tone, audience)
       });
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Generieren der Headlines');
-      }
-
-      const data = await response.json();
 
       // Strukturierte Antwort vom Genkit Flow
       if (data.success && data.headlines && data.headlines.length > 0) {

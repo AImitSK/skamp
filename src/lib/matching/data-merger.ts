@@ -6,6 +6,7 @@
  */
 
 import { MatchingCandidateVariant } from '@/types/matching';
+import { apiClient } from '@/lib/api/api-client';
 
 export interface MergedContactData {
   name: {
@@ -42,19 +43,9 @@ export async function mergeVariantsWithAI(
 
   try {
     // ✅ Ruft dedizierte API Route auf (nicht direkt GoogleGenerativeAI!)
-    const response = await fetch('/api/ai/merge-variants', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ variants })
+    const result = await apiClient.post<any>('/api/ai/merge-variants', {
+      variants
     });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-
-    const result = await response.json();
 
     if (!result.success) {
       throw new Error(result.error || 'KI-Merge fehlgeschlagen');

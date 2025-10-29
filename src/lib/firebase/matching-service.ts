@@ -28,6 +28,7 @@ import { db } from './config';
 import { contactsEnhancedService } from './crm-service-enhanced';
 import { referenceService } from './reference-service';
 import { ContactEnhanced } from '@/types/crm-enhanced';
+import { apiClient } from '@/lib/api/api-client';
 import {
   MatchingCandidate,
   MatchingCandidateVariant,
@@ -126,19 +127,9 @@ export async function importCandidateWithAutoMatching(params: {
 
       try {
         // ✅ API Route verwenden (server-side, läuft in Edge/Vercel Function)
-        const response = await fetch('/api/ai/merge-variants', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ variants: candidate.variants })
+        const result = await apiClient.post<any>('/api/ai/merge-variants', {
+          variants: candidate.variants
         });
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.statusText}`);
-        }
-
-        const result = await response.json();
 
         if (!result.success) {
           throw new Error(result.error || 'KI-Merge fehlgeschlagen');
