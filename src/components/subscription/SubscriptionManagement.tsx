@@ -5,11 +5,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SUBSCRIPTION_LIMITS, getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
 import { Organization, OrganizationUsage } from '@/types/organization';
 import { CheckIcon, PencilSquareIcon, XMarkIcon, EnvelopeIcon, UserGroupIcon, SparklesIcon, UserIcon, CloudIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import CancelSubscriptionModal from './CancelSubscriptionModal';
 
 interface Props {
   organization: Organization;
@@ -17,8 +18,9 @@ interface Props {
 }
 
 export default function SubscriptionManagement({ organization, onUpgrade }: Props) {
-  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<{ currentPeriodEnd?: Date } | null>(null);
 
   // Defensive: Falls tier fehlt oder ungültig, nutze STARTER als Fallback
   const currentTierLimits = organization.tier && SUBSCRIPTION_LIMITS[organization.tier]
@@ -26,6 +28,33 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
     : SUBSCRIPTION_LIMITS['STARTER'];
 
   const usage = organization.usage || null;
+
+  // Load subscription data for cancel modal
+  useEffect(() => {
+    const loadSubscriptionData = async () => {
+      if (!organization.stripeSubscriptionId) return;
+
+      try {
+        const { auth } = await import('@/lib/firebase/client-init');
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch('/api/subscription/details', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptionData(data.subscription);
+        }
+      } catch (error) {
+        console.error('Error loading subscription data:', error);
+      }
+    };
+
+    loadSubscriptionData();
+  }, [organization.stripeSubscriptionId]);
 
   // Format Plan Features für bessere Darstellung
   const features = [
@@ -66,38 +95,9 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!confirm('Möchtest du deine Subscription wirklich kündigen? Sie bleibt bis zum Ende der aktuellen Billing Period aktiv.')) {
-      return;
-    }
-
-    setCancelLoading(true);
-    try {
-      const { auth } = await import('@/lib/firebase/client-init');
-      const user = auth.currentUser;
-      if (!user) throw new Error('Not authenticated');
-
-      const token = await user.getIdToken();
-      const response = await fetch('/api/subscription/cancel', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Fehler beim Kündigen');
-      }
-
-      toast.success('Subscription erfolgreich gekündigt');
-      window.location.reload();
-    } catch (error: any) {
-      console.error('Error canceling subscription:', error);
-      toast.error(error.message || 'Fehler beim Kündigen');
-    } finally {
-      setCancelLoading(false);
-    }
+  const handleCancelSuccess = () => {
+    setCancelModalOpen(false);
+    window.location.reload();
   };
 
   return (
@@ -239,16 +239,24 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
               {portalLoading ? 'Öffne Portal...' : 'Zahlungsmethode & Rechnungen verwalten'}
             </button>
             <button
-              onClick={handleCancelSubscription}
-              disabled={cancelLoading}
-              className="w-full px-4 py-3 border border-red-300 bg-white hover:bg-red-50 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2 h-11"
+              onClick={() => setCancelModalOpen(true)}
+              className="w-full px-4 py-3 border border-red-300 bg-white hover:bg-red-50 text-red-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 h-11"
             >
               <XMarkIcon className="w-5 h-5" />
-              {cancelLoading ? 'Kündige...' : 'Subscription kündigen'}
+              Subscription kündigen
             </button>
           </div>
         </div>
       )}
+
+      {/* Cancel Subscription Modal */}
+      <CancelSubscriptionModal
+        isOpen={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        onSuccess={handleCancelSuccess}
+        currentPeriodEnd={subscriptionData?.currentPeriodEnd}
+        planName={currentTierLimits.name}
+      />
     </div>
   );
 }
