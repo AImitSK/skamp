@@ -42,6 +42,7 @@ export const organizationService = {
     ownerName: string;
     accountType?: 'regular' | 'promo' | 'beta' | 'internal';
     tier?: 'STARTER' | 'BUSINESS' | 'AGENTUR';
+    subscriptionStatus?: 'incomplete' | 'active' | 'past_due' | 'canceled' | 'trialing';
     photoUrl?: string;
   }): Promise<string> {
     try {
@@ -54,6 +55,11 @@ export const organizationService = {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
+
+      // Füge subscriptionStatus hinzu, wenn vorhanden (nur für regular accounts)
+      if (data.subscriptionStatus) {
+        orgData.subscriptionStatus = data.subscriptionStatus;
+      }
 
       const orgRef = await addDoc(collection(db, 'organizations'), orgData);
       const organizationId = orgRef.id;

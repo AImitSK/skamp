@@ -16,6 +16,16 @@ export type FlexibleTimestamp = Timestamp | Date | string;
 export type AccountType = 'regular' | 'promo' | 'beta' | 'internal';
 
 /**
+ * Subscription Status für regular Accounts
+ * - incomplete: User registriert, aber Zahlung noch nicht abgeschlossen
+ * - active: Zahlung erfolgreich, voller Zugriff
+ * - past_due: Zahlung fehlgeschlagen, aber noch Zugriff (Grace Period)
+ * - canceled: Abo gekündigt, kein Zugriff mehr
+ * - trialing: Trial-Phase aktiv
+ */
+export type SubscriptionStatus = 'incomplete' | 'active' | 'past_due' | 'canceled' | 'trialing';
+
+/**
  * Subscription Tier
  */
 export type SubscriptionTier = 'STARTER' | 'BUSINESS' | 'AGENTUR';
@@ -80,6 +90,12 @@ export interface Organization {
 
   // Subscription Info
   tier: SubscriptionTier;
+
+  // Subscription Status (nur für regular accounts)
+  // - undefined/nicht vorhanden = Legacy-Account (voller Zugriff)
+  // - 'incomplete' = Zahlung ausstehend (kein Zugriff)
+  // - 'active' = Bezahlt (voller Zugriff)
+  subscriptionStatus?: SubscriptionStatus;
 
   // Stripe Info (nur wenn accountType = 'regular')
   stripeCustomerId?: string;

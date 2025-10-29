@@ -65,6 +65,7 @@ function SignupForm() {
         ownerName: companyName || email,
         accountType: 'regular', // Regular account (nicht beta)
         tier: selectedPlan,
+        subscriptionStatus: 'incomplete', // Zahlung noch nicht abgeschlossen
       });
 
       // 3. Zu Stripe Checkout weiterleiten
@@ -146,6 +147,7 @@ function SignupForm() {
         ownerName: googleUser.displayName || googleUser.email || '',
         accountType: 'regular',
         tier: selectedPlan,
+        subscriptionStatus: 'incomplete', // Zahlung noch nicht abgeschlossen
         photoUrl: googleUser.photoURL || undefined
       });
 

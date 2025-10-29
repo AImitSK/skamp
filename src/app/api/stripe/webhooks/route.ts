@@ -132,7 +132,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     .doc(organizationId)
     .set(subscriptionData);
 
-  // Update Organization
+  // Update Organization - setze subscriptionStatus auf 'active'
   await adminDb
     .collection('organizations')
     .doc(organizationId)
@@ -140,6 +140,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       tier,
       stripeSubscriptionId: subscription.id,
       accountType: 'regular',
+      subscriptionStatus: 'active', // Zahlung erfolgreich - voller Zugriff
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -180,12 +181,23 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-  // Update Organization if tier changed
+  // Update Organization if tier changed, und subscriptionStatus basierend auf Stripe Status
+  const stripeStatusToOurStatus: Record<string, string> = {
+    'active': 'active',
+    'trialing': 'trialing',
+    'past_due': 'past_due',
+    'canceled': 'canceled',
+    'unpaid': 'past_due',
+    'incomplete': 'incomplete',
+    'incomplete_expired': 'canceled',
+  };
+
   await adminDb
     .collection('organizations')
     .doc(organizationId)
     .update({
       tier,
+      subscriptionStatus: stripeStatusToOurStatus[subscription.status] || 'active',
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -220,6 +232,15 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .doc(organizationId)
     .update({
       status: 'canceled' as SubscriptionStatus,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+  // Update Organization: Setze subscriptionStatus auf 'canceled' (kein Zugriff mehr)
+  await adminDb
+    .collection('organizations')
+    .doc(organizationId)
+    .update({
+      subscriptionStatus: 'canceled',
       updatedAt: FieldValue.serverTimestamp(),
     });
 

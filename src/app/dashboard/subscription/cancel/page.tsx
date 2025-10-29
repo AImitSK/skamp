@@ -48,16 +48,16 @@ export default function SubscriptionCancelPage() {
           {/* Actions */}
           <div className="space-y-3">
             <Link
-              href="/dashboard/admin/billing"
+              href="/dashboard/subscription/payment-pending"
               className="block w-full px-6 py-3 bg-[#005fab] hover:bg-[#004a8c] text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
             >
-              Zurück zur Preisübersicht
+              Zahlung erneut versuchen
             </Link>
             <Link
-              href="/dashboard"
+              href="/"
               className="block w-full px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg font-medium transition-all"
             >
-              Zurück zum Dashboard
+              Zur Startseite
             </Link>
           </div>
 
