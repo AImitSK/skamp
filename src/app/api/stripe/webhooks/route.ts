@@ -344,8 +344,30 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     return; // Keine Subscription-Invoice
   }
 
-  // TODO Phase 2: Usage-Metriken zurücksetzen für neuen Billing Cycle
-  // TODO Phase 2: Email-Benachrichtigung an Admin
+  // Find organization by subscriptionId
+  const orgsSnapshot = await adminDb
+    .collection('organizations')
+    .where('stripeSubscriptionId', '==', subscriptionId)
+    .limit(1)
+    .get();
+
+  if (orgsSnapshot.empty) {
+    console.error(`[Stripe Webhook] No organization found for subscription ${subscriptionId}`);
+    return;
+  }
+
+  const orgDoc = orgsSnapshot.docs[0];
+  const organizationId = orgDoc.id;
+
+  // Reset monthly usage counters (emails & AI words)
+  try {
+    const { resetMonthlyUsage } = await import('@/lib/usage/usage-tracker');
+    await resetMonthlyUsage(organizationId);
+    console.log(`[Stripe Webhook] ✅ Reset monthly usage for org ${organizationId} (new billing cycle)`);
+  } catch (error) {
+    console.error(`[Stripe Webhook] ❌ Failed to reset monthly usage for org ${organizationId}:`, error);
+    // Nicht kritisch - weitermachen
+  }
 
   console.log(`[Stripe Webhook] Invoice paid for subscription ${subscriptionId}`);
 }
