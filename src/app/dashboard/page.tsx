@@ -474,9 +474,6 @@ export default function DashboardHomePage() {
                       <Text className="text-zinc-600 font-medium">
                         Keine Benachrichtigungen
                       </Text>
-                      <Text className="text-zinc-500 text-sm mt-1">
-                        Alles erledigt! 🎉
-                      </Text>
                     </div>
                   </div>
                   {/* Pagination */}
@@ -650,9 +647,6 @@ export default function DashboardHomePage() {
                 <EnvelopeIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                 <Text className="text-zinc-600 font-medium">
                   Keine versendeten Kampagnen
-                </Text>
-                <Text className="text-zinc-500 text-sm mt-1">
-                  Versende deine erste Kampagne, um Performance-Daten zu sehen
                 </Text>
               </div>
             ) : !selectedCampaignId ? (
@@ -1018,9 +1012,6 @@ export default function DashboardHomePage() {
                 <div className="text-center">
                   <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                   <Text className="text-zinc-600 font-medium">Coming Soon</Text>
-                  <Text className="text-zinc-500 text-sm mt-1">
-                    Hier erscheinen bald News und Updates
-                  </Text>
                 </div>
               </div>
             </div>
