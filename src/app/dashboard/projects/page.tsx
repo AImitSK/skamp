@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Text } from '@/components/ui/text';
@@ -70,6 +70,7 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
+  const pathname = usePathname();
 
   // React Query Hook für Projekte
   const { data: allProjects = [], isLoading } = useProjects(currentOrganization?.id);
@@ -100,10 +101,22 @@ export default function ProjectsPage() {
 
   const loading = isLoading;
 
+  // Team Members & Tags beim Mount und bei Organization-Wechsel laden
   useEffect(() => {
-    loadTeamMembers();
-    loadTags();
+    if (currentOrganization?.id) {
+      loadTeamMembers();
+      loadTags();
+    }
   }, [currentOrganization?.id]);
+
+  // BUGFIX: Team Members bei Zurücknavigation neu laden
+  // Wenn pathname zu /dashboard/projects wechselt, Daten refreshen
+  useEffect(() => {
+    if (pathname === '/dashboard/projects' && currentOrganization?.id) {
+      loadTeamMembers();
+      loadTags();
+    }
+  }, [pathname, currentOrganization?.id]);
 
   // Close filter dropdown on click outside
   useEffect(() => {
