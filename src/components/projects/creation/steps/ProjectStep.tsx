@@ -48,20 +48,6 @@ export default function ProjectStep({
         />
       </Field>
 
-      {/* Priorität */}
-      <Field>
-        <Label>Priorität</Label>
-        <Select
-          value={formData.priority}
-          onChange={(e) => onUpdate({ priority: e.target.value as any })}
-        >
-          <option value="low">Niedrig</option>
-          <option value="medium">Mittel</option>
-          <option value="high">Hoch</option>
-          <option value="urgent">Dringend</option>
-        </Select>
-      </Field>
-
       {/* Tags */}
       <Field>
         <Label>Tags</Label>

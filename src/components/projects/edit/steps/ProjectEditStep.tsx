@@ -40,34 +40,19 @@ export default function ProjectEditStep({
         />
       </Field>
 
-      {/* Status und Priorität */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field>
-          <Label>Status</Label>
-          <Select
-            value={formData.status}
-            onChange={(e) => onUpdate({ status: e.target.value })}
-          >
-            <option value="active">Aktiv</option>
-            <option value="on_hold">Pausiert</option>
-            <option value="completed">Abgeschlossen</option>
-            <option value="cancelled">Abgebrochen</option>
-          </Select>
-        </Field>
-
-        <Field>
-          <Label>Priorität</Label>
-          <Select
-            value={formData.priority}
-            onChange={(e) => onUpdate({ priority: e.target.value as any })}
-          >
-            <option value="low">Niedrig</option>
-            <option value="medium">Mittel</option>
-            <option value="high">Hoch</option>
-            <option value="urgent">Dringend</option>
-          </Select>
-        </Field>
-      </div>
+      {/* Status */}
+      <Field>
+        <Label>Status</Label>
+        <Select
+          value={formData.status}
+          onChange={(e) => onUpdate({ status: e.target.value })}
+        >
+          <option value="active">Aktiv</option>
+          <option value="on_hold">Pausiert</option>
+          <option value="completed">Abgeschlossen</option>
+          <option value="cancelled">Abgebrochen</option>
+        </Select>
+      </Field>
 
       {/* Pipeline-Phase */}
       <Field>

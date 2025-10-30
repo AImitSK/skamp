@@ -40,7 +40,6 @@ const getStageLabel = (stage: string) => {
  * Zeigt kompakte Info-Zeile mit:
  * - Phase (ohne Icon)
  * - Kunde (mit Link, ohne Icon)
- * - Priorität (mit Badge, ohne Icon)
  * - Deadline (ohne Icon)
  * - Tags (mit Badges, ohne Icon)
  *
@@ -79,17 +78,6 @@ export const ProjectInfoBar = React.memo(function ProjectInfoBar({ projectTags }
             </button>
           </div>
         )}
-
-        {/* Priorität */}
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium">Priorität:</span>
-          <Badge
-            color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'zinc'}
-            className="!py-0.5 !text-xs"
-          >
-            {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-          </Badge>
-        </div>
 
         {/* Deadline wenn vorhanden */}
         {project.deadline && (
