@@ -100,9 +100,6 @@ export default function ProjectTable({
           <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Team
           </div>
-          <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Priorität
-          </div>
           <div className="w-32 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Aktualisiert
           </div>
@@ -113,8 +110,6 @@ export default function ProjectTable({
       {/* Table Body */}
       <div className="divide-y divide-zinc-200">
         {projects.map((project) => {
-          const projectPriority = (project as any).priority as string;
-
           return (
             <div key={project.id} className="px-8 py-5 hover:bg-zinc-50 transition-colors">
               <div className="flex items-center">
@@ -226,26 +221,6 @@ export default function ProjectTable({
                     </div>
                   ) : (
                     <span className="text-xs text-zinc-500">Kein Team</span>
-                  )}
-                </div>
-
-                {/* Priorität */}
-                <div className="w-24 px-4">
-                  {projectPriority ? (
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                      projectPriority === 'urgent' ? 'bg-red-50 text-red-700 ring-red-600/20' :
-                      projectPriority === 'high' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
-                      projectPriority === 'medium' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
-                      projectPriority === 'low' ? 'bg-green-50 text-green-700 ring-green-600/20' :
-                      'bg-zinc-50 text-zinc-700 ring-zinc-600/20'
-                    }`}>
-                      {projectPriority === 'urgent' ? 'Dringend' :
-                       projectPriority === 'high' ? 'Hoch' :
-                       projectPriority === 'medium' ? 'Mittel' :
-                       projectPriority === 'low' ? 'Niedrig' : '-'}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-zinc-500">-</span>
                   )}
                 </div>
 
