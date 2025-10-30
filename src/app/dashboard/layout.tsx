@@ -251,34 +251,30 @@ export default function DashboardLayout({
 
   const userMenuItems = [
       {
-        name: "API-Verwaltung",
-        href: "/dashboard/admin/api",
-        icon: CodeBracketIcon,
-        description: "API-Schlüssel und Dokumentation"
-      },
-      {
-        name: "Developer Portal",
-        href: "/dashboard/developer",
-        icon: CodeBracketIcon,
-        description: "API-Dokumentation, Testing-Tools und Integration-Beispiele"
-      },
-      {
         name: "Abrechnung",
         href: "/dashboard/admin/billing",
         icon: CreditCardIcon,
-        description: "Rechnungen und Zahlungsmethoden"
+      },
+      {
+        name: "API-Verwaltung",
+        href: "/dashboard/admin/api",
+        icon: CodeBracketIcon,
       },
       {
         name: "Integrationen",
         href: "/dashboard/admin/integrations",
         icon: PuzzlePieceIcon,
-        description: "Verbinde CeleroPress mit anderen Tools"
+        dividerAfter: true, // Trennlinie nach diesem Item
+      },
+      {
+        name: "Developer Portal",
+        href: "/dashboard/developer",
+        icon: CodeBracketIcon,
       },
       {
         name: "Dokumentation",
         href: "/dashboard/academy/documentation",
         icon: BookOpenIcon,
-        description: "Detaillierte Anleitungen und Hilfe"
       },
   ];
 
@@ -554,33 +550,33 @@ export default function DashboardLayout({
                     />
                   </DropdownButton>
                   <DropdownMenu anchor="bottom end" className="avatar-dropdown-menu">
-                    <DropdownItem href="/dashboard/admin/profile">
-                      <div className="flex items-center gap-x-3">
-                        <UserIcon className="size-4 flex-shrink-0" />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{user?.displayName || user?.email?.split("@")[0]}</span>
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</span>
-                        </div>
+                    <DropdownItem href="/dashboard/admin/profile" compact>
+                      <UserIcon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-zinc-900 dark:text-white">{user?.displayName || user?.email?.split("@")[0]}</span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</span>
                       </div>
                     </DropdownItem>
                     <DropdownDivider />
-                    {userMenuItems.map(item => (
-                      <DropdownItem 
-                        href={item.href} 
-                        key={item.name}
-                        icon={item.icon}
-                        description={item.description}
-                      >
-                        {item.name}
-                      </DropdownItem>
+                    {userMenuItems.map((item, index) => (
+                      <React.Fragment key={item.name}>
+                        <DropdownItem
+                          href={item.href}
+                          compact
+                        >
+                          <item.icon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                          <span className="text-sm text-zinc-900 dark:text-white">{item.name}</span>
+                        </DropdownItem>
+                        {item.dividerAfter && <DropdownDivider />}
+                      </React.Fragment>
                     ))}
                     <DropdownDivider />
-                    <DropdownItem 
+                    <DropdownItem
                       onClick={handleLogout}
-                      icon={ArrowRightOnRectangleIcon}
-                      description="Von CeleroPress abmelden"
+                      compact
                     >
-                      Abmelden
+                      <ArrowRightOnRectangleIcon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                      <span className="text-sm text-zinc-900 dark:text-white">Abmelden</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>

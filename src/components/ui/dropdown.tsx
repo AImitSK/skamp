@@ -98,12 +98,14 @@ export function DropdownItem({
   className,
   description,
   icon: Icon,
+  compact = false,
   children,
   ...props
-}: { 
-  className?: string; 
+}: {
+  className?: string;
   description?: string;
   icon?: React.ComponentType<{ className?: string }>;
+  compact?: boolean;
   children?: React.ReactNode;
 } & (
   | Omit<Headless.MenuItemProps<'button'>, 'as' | 'className' | 'children'>
@@ -111,8 +113,8 @@ export function DropdownItem({
 )) {
   let classes = clsx(
     className,
-    // Base styles - größere Padding für mehr Raum
-    'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden w-full',
+    // Base styles - kompakte Padding im compact mode
+    compact ? 'group relative flex gap-x-2.5 rounded-lg px-3 py-2 focus:outline-hidden w-full' : 'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden w-full',
     // Hover state
     'hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
     // Focus state
@@ -123,7 +125,13 @@ export function DropdownItem({
     'forced-color-adjust-none forced-colors:data-focus:bg-[Highlight] forced-colors:data-focus:text-[HighlightText]'
   )
 
-  const content = (
+  const content = compact ? (
+    // Compact mode: kleinere Icons ohne Hintergrund
+    <div className="flex items-center gap-x-2.5 w-full">
+      {children}
+    </div>
+  ) : (
+    // Normal mode: Icons mit Hintergrund und Description
     <>
       {/* Icon container mit Hintergrund */}
       {Icon && (
