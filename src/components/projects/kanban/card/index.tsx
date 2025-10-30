@@ -258,12 +258,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                       src={member.photoUrl}
                       initials={member.photoUrl ? undefined : getInitials(member.displayName)}
                       alt={member.displayName}
-                      className="h-10 w-10 rounded-full border-2 border-white"
+                      className="h-8 w-8 rounded-full border-2 border-white"
                     />
                   ))}
                   {assignedMembers.length > 3 && (
-                    <div className="h-10 w-10 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
-                      <span className="text-sm font-medium text-zinc-600">
+                    <div className="h-8 w-8 rounded-full border-2 border-white bg-zinc-300 flex items-center justify-center">
+                      <span className="text-xs font-medium text-zinc-600">
                         +{assignedMembers.length - 3}
                       </span>
                     </div>
