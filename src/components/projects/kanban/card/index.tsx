@@ -284,14 +284,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Priority Badge */}
-            {projectPriority && (
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getPriorityColor(projectPriority)}`}>
-                {getPriorityIcon(projectPriority)}
-                <span className="ml-1">{getPriorityLabel(projectPriority)}</span>
-              </span>
-            )}
-
             {/* Status Badge */}
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
               {getStatusLabel(project.status)}
