@@ -27,16 +27,16 @@ async function sendInvitationEmail(data: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/sendgrid/send`, {
+    const response = await fetch(`${baseUrl}/api/email/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        to: data.to,
+        to: [{ email: data.to }],
         subject: data.subject,
-        html: data.html,
-        text: data.text,
+        htmlContent: data.html,
+        textContent: data.text,
         from: {
           email: process.env.SENDGRID_FROM_EMAIL || 'noreply@celeropress.com',
           name: 'CeleroPress Team'
