@@ -9,6 +9,7 @@ import { Field, Label, Description } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 import { 
@@ -42,13 +43,14 @@ const providerOptions: { value: DomainProvider; name: string; popular?: boolean 
   { value: 'other', name: 'Andere' }
 ];
 
-export function AddDomainModal({ 
-  open, 
-  onClose, 
+export function AddDomainModal({
+  open,
+  onClose,
   onSuccess,
-  existingDomain 
+  existingDomain
 }: AddDomainModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [step, setStep] = useState<Step>(existingDomain ? 'dns' : 'provider');
   const [selectedProvider, setSelectedProvider] = useState<DomainProvider>('other');
   const [domain, setDomain] = useState('');
@@ -102,15 +104,15 @@ export function AddDomainModal({
     try {
       setLoading(true);
       setError(null);
-      
+
       const context = {
-        organizationId: user!.uid, // TODO: Use proper organizationId
+        organizationId: currentOrganization?.id || user!.uid,
         userId: user!.uid
       };
-      
+
       // Check if domain already exists
       const existingDomain = await domainServiceEnhanced.getByDomain(
-        domain, 
+        domain,
         context.organizationId
       );
       
@@ -167,8 +169,8 @@ export function AddDomainModal({
 
       // Get current domain data
       const currentDomain = await domainServiceEnhanced.getById(
-        domainId, 
-        user!.uid // TODO: Use proper organizationId
+        domainId,
+        currentOrganization?.id || user!.uid
       );
 
       if (!currentDomain?.sendgridDomainId) {
@@ -189,7 +191,7 @@ export function AddDomainModal({
 
       if (response.success) {
         const context = {
-          organizationId: user!.uid,
+          organizationId: currentOrganization?.id || user!.uid,
           userId: user!.uid
         };
 
