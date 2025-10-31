@@ -38,7 +38,7 @@ async function sendInvitationEmail(data: {
         htmlContent: data.html,
         textContent: data.text,
         from: {
-          email: process.env.SENDGRID_FROM_EMAIL || 'noreply@celeropress.com',
+          email: 'noreply@celeropress.com',
           name: 'CeleroPress Team'
         }
       })

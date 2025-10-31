@@ -198,7 +198,7 @@ export default function TeamSettingsPage() {
               name: inviteEmail.split('@')[0]
             }],
             from: {
-              email: user.email || 'noreply@celeropress.com',
+              email: 'noreply@celeropress.com',
               name: user.displayName || 'CeleroPress Team'
             },
             subject: `Einladung zum Team von ${user.displayName || 'CeleroPress'}`,
