@@ -185,14 +185,23 @@ export default function BrandingPage() {
         description: 'Firmenlogo für Branding'
       });
 
-      // 5. Update Formular
+      // 5. Speichere Logo direkt in Firestore (nicht nur im lokalen State)
+      await brandingService.updateBrandingSettings(
+        {
+          logoUrl: asset.downloadUrl,
+          logoAssetId: asset.id
+        },
+        { organizationId, userId: user.uid }
+      );
+
+      // 6. Update lokalen State
       setFormData(prev => ({
         ...prev,
         logoUrl: asset.downloadUrl,
         logoAssetId: asset.id
       }));
 
-      showAlert('success', 'Logo erfolgreich hochgeladen');
+      showAlert('success', 'Logo erfolgreich hochgeladen und gespeichert');
     } catch (error) {
       showAlert('error', 'Fehler beim Hochladen des Logos');
     } finally {
@@ -208,7 +217,7 @@ export default function BrandingPage() {
     }
 
     try {
-      // Verwende den Service zum Entfernen
+      // Entferne Logo (löscht Asset + Updated Firestore)
       await brandingService.removeLogo({ organizationId, userId: user.uid });
 
       // Update lokalen State
@@ -218,7 +227,7 @@ export default function BrandingPage() {
         logoAssetId: undefined
       }));
 
-      showAlert('success', 'Logo erfolgreich entfernt');
+      showAlert('success', 'Logo erfolgreich entfernt und gespeichert');
     } catch (error) {
       showAlert('error', 'Fehler beim Entfernen des Logos');
     }
