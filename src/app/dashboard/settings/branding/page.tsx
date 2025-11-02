@@ -150,23 +150,42 @@ export default function BrandingPage() {
     try {
       setUploadingLogo(true);
 
-      // Upload Logo ohne es im Mediacenter sichtbar zu machen
-      // Wir verwenden einen speziellen Ordner für Branding
+      // 1. Lösche altes Logo falls vorhanden (verhindert Datenmüll)
+      if (formData.logoAssetId) {
+        try {
+          await brandingService.removeLogo({
+            organizationId,
+            userId: user.uid
+          });
+        } catch (deleteError) {
+          console.warn('Altes Logo konnte nicht gelöscht werden:', deleteError);
+          // Fahre trotzdem fort mit dem Upload
+        }
+      }
+
+      // 2. Stelle sicher dass "Branding" Ordner existiert
+      const brandingFolderId = await brandingService.ensureBrandingFolder(
+        organizationId,
+        user.uid
+      );
+
+      // 3. Upload Logo in den Branding-Ordner
       const asset = await mediaService.uploadMedia(
         file,
-        organizationId, // Verwende organizationId statt userId
-        undefined, // Kein Ordner = Root, aber wir markieren es speziell
+        organizationId,
+        brandingFolderId, // Logo im Branding-Ordner speichern
         (progress) => {
+          // Optional: Progress-Tracking
         }
       );
 
-      // Update das Asset mit einer speziellen Markierung
+      // 4. Update das Asset mit einer speziellen Markierung
       await mediaService.updateAsset(asset.id!, {
-        tags: ['__branding__'], // Spezieller Tag um es im Mediacenter zu verstecken
+        tags: ['__branding__'], // Spezieller Tag für zusätzliche Filterung
         description: 'Firmenlogo für Branding'
       });
 
-      // Update Formular
+      // 5. Update Formular
       setFormData(prev => ({
         ...prev,
         logoUrl: asset.downloadUrl,

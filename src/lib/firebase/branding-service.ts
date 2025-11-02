@@ -147,7 +147,43 @@ export const brandingService = {
   },
 
   /**
-   * Lösche Logo Asset ID (wenn Logo gelöscht wird)
+   * Stellt sicher, dass der "Branding" Ordner existiert
+   * Gibt die Folder-ID zurück
+   */
+  async ensureBrandingFolder(
+    organizationId: string,
+    userId: string
+  ): Promise<string> {
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+
+      // Prüfe ob "Branding" Ordner bereits existiert
+      const rootFolders = await mediaService.getFolders(organizationId, undefined);
+      const brandingFolder = rootFolders.find(f => f.name === 'Branding');
+
+      if (brandingFolder?.id) {
+        return brandingFolder.id;
+      }
+
+      // Erstelle "Branding" Ordner wenn er nicht existiert
+      const folderId = await mediaService.createFolder({
+        userId,
+        name: 'Branding',
+        parentFolderId: undefined, // Root-Ordner
+        description: 'Firmenlogos und Branding-Materialien',
+        color: '#005fab' // Corporate Blue
+      }, { organizationId, userId });
+
+      return folderId;
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Branding-Ordners:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lösche Logo Asset (inkl. Storage-Datei)
    */
   async removeLogo(context: { organizationId: string; userId: string }): Promise<void> {
     try {
@@ -155,6 +191,26 @@ export const brandingService = {
         throw new Error('removeLogo: organizationId is required');
       }
 
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+
+      // Lade aktuelle Branding-Einstellungen um logoAssetId zu bekommen
+      const settings = await this.getBrandingSettings(context.organizationId);
+
+      // Lösche das tatsächliche Asset aus Storage und Firestore
+      if (settings?.logoAssetId) {
+        try {
+          const asset = await mediaService.getAsset(settings.logoAssetId);
+          if (asset) {
+            await mediaService.deleteMediaAsset(asset);
+          }
+        } catch (assetError) {
+          console.warn('Asset konnte nicht gelöscht werden:', assetError);
+          // Fahre fort, auch wenn Asset-Löschung fehlschlägt
+        }
+      }
+
+      // Update Firestore-Referenzen
       const docRef = doc(db, 'branding_settings', context.organizationId);
       await updateDoc(docRef, {
         logoUrl: null,
