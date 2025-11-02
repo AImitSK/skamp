@@ -200,12 +200,15 @@ export const brandingService = {
       // Lösche das tatsächliche Asset aus Storage und Firestore
       if (settings?.logoAssetId) {
         try {
-          const asset = await mediaService.getAsset(settings.logoAssetId);
+          const asset = await mediaService.getMediaAssetById(settings.logoAssetId);
           if (asset) {
             await mediaService.deleteMediaAsset(asset);
+            console.log('Logo-Asset erfolgreich gelöscht:', settings.logoAssetId);
+          } else {
+            console.warn('Logo-Asset nicht gefunden:', settings.logoAssetId);
           }
         } catch (assetError) {
-          console.warn('Asset konnte nicht gelöscht werden:', assetError);
+          console.error('Asset konnte nicht gelöscht werden:', assetError);
           // Fahre fort, auch wenn Asset-Löschung fehlschlägt
         }
       }
