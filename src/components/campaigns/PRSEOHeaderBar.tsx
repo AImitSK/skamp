@@ -126,14 +126,11 @@ function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
     );
   }
   
-  // Trend-Indikator für Relevanz (später implementierbar)
-  const relevanceTrend = ""; // Später: "↑" oder "↓" basierend auf vorherigem Wert
-  
   return (
     <div className={boxClasses}>
       <SparklesIcon className="h-3 w-3" />
       <span className="font-semibold">Relevanz:</span>
-      <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
+      <span>{metrics.semanticRelevance || 0}%</span>
     </div>
   );
 }
@@ -1036,76 +1033,6 @@ export function PRSEOHeaderBar({
               </div>
             </div>
           </div>
-          
-          {/* Keyword-Score-Status Anzeige - AUSGEBLENDET (zu technisch für User) */}
-          {false && keywordScoreData && (
-            <div className="bg-blue-50 rounded-md p-3 mb-3">
-              <div className="flex items-center gap-2 text-xs text-blue-700">
-                <CpuChipIcon className="h-4 w-4" />
-                <div className="flex items-center gap-4">
-                  <span>
-                    <strong>Keyword-Score:</strong> {keywordScoreData?.totalScore}/100
-                  </span>
-                  {keywordScoreData?.hasAIAnalysis ? (
-                    <span>
-                      <strong>KI-Bonus:</strong> {keywordScoreData?.aiBonus}/40
-                    </span>
-                  ) : (
-                    <span>
-                      <strong>Fallback-Bonus:</strong> {keywordScoreData?.aiBonus}/40
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Social-Score Details - AUSGEBLENDET (zu kompliziert für User) */}
-          {false && (() => {
-            const detectedHashtags = HashtagDetector.detectHashtags(content);
-            const hashtagQuality = detectedHashtags.length > 0 ? HashtagDetector.assessHashtagQuality(detectedHashtags, keywords) : null;
-            
-            if (detectedHashtags.length > 0 || documentTitle.length > 0) {
-              return (
-                <div className="bg-blue-50 rounded-md p-3 mb-3">
-                  <div className="flex items-center gap-2 text-xs text-blue-700">
-                    <HashtagIcon className="h-4 w-4" />
-                    <div className="flex items-center gap-4">
-                      <span>
-                        <strong>Headline-Länge:</strong> {documentTitle.length} Zeichen
-                        {documentTitle.length <= 280 ? ' ✓' : ' (zu lang für Twitter)'}
-                      </span>
-                      {detectedHashtags.length > 0 && (
-                        <>
-                          <span>
-                            <strong>Hashtags:</strong> {detectedHashtags.length} gefunden
-                          </span>
-                          {hashtagQuality && (
-                            <span>
-                              <strong>Qualität:</strong> {hashtagQuality?.averageScore.toFixed(1)}/100
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {detectedHashtags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {detectedHashtags.slice(0, 5).map((tag, index) => (
-                        <span key={index} className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded">
-                          #{tag}
-                        </span>
-                      ))}
-                      {detectedHashtags.length > 5 && (
-                        <span className="text-xs text-blue-600">+{detectedHashtags.length - 5} weitere</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-            return null;
-          })()}
 
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
