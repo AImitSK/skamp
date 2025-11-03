@@ -28,7 +28,8 @@ import {
   CurrencyDollarIcon,
   BuildingOfficeIcon,
   CalendarIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -78,19 +79,7 @@ function TemplateDropdown({
   selectedTemplate?: AITemplate | null;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Filtered templates
-  const filteredTemplates = useMemo(() => {
-    if (!searchTerm) return templates;
-    const search = searchTerm.toLowerCase();
-    return templates.filter(template => 
-      template.title.toLowerCase().includes(search) ||
-      template.description?.toLowerCase().includes(search) ||
-      template.prompt.toLowerCase().includes(search)
-    );
-  }, [templates, searchTerm]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,7 +95,6 @@ function TemplateDropdown({
   const handleSelect = (template: AITemplate) => {
     onSelect(template);
     setIsOpen(false);
-    setSearchTerm('');
   };
 
   const categoryIcons: Record<string, any> = {
@@ -125,9 +113,9 @@ function TemplateDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
           "w-full px-4 py-3 text-left bg-white border rounded-lg shadow-sm transition-all",
-          "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+          "focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-[#005fab]",
           "hover:border-gray-400 cursor-pointer",
-          isOpen ? "border-indigo-500 ring-2 ring-indigo-500" : "border-gray-300"
+          isOpen ? "border-[#005fab] ring-2 ring-[#005fab]" : "border-gray-300"
         )}
       >
         <div className="flex items-center justify-between">
@@ -166,36 +154,21 @@ function TemplateDropdown({
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           
           <div className="absolute z-20 mt-2 w-full bg-white rounded-lg shadow-xl border border-gray-200 max-h-[500px] overflow-hidden animate-fade-in-down">
-            {/* Search */}
-            <div className="p-3 border-b bg-gray-50">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Template suchen..."
-                  className="pl-9 pr-3 py-2 text-sm"
-                  autoFocus
-                />
-              </div>
-            </div>
-
             {/* Templates List */}
             <div className="max-h-[400px] overflow-y-auto">
               {loading ? (
                 <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto mb-2"></div>
                   <p className="text-sm text-gray-500">Templates werden geladen...</p>
                 </div>
-              ) : filteredTemplates.length === 0 ? (
+              ) : templates.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <BookOpenIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                   <p className="text-sm">Keine Templates gefunden</p>
                 </div>
               ) : (
                 <div className="py-2">
-                  {filteredTemplates.map((template) => (
+                  {templates.map((template) => (
                     <button
                       key={template.id}
                       onClick={() => handleSelect(template)}
@@ -209,7 +182,7 @@ function TemplateDropdown({
                           })()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                          <h4 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                             {template.title}
                           </h4>
                           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -234,7 +207,7 @@ function TemplateDropdown({
             {/* Footer */}
             <div className="p-3 border-t bg-gray-50 text-center">
               <p className="text-xs text-gray-500">
-                {filteredTemplates.length} von {templates.length} Templates verfügbar
+                {templates.length} Templates verfügbar
               </p>
             </div>
           </div>
@@ -435,20 +408,20 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
   async function handleGenerate() {
     // VALIDIERUNG basierend auf Modus
-    if (!prompt.trim()) {
-      setError('Bitte beschreibe das Thema der Pressemitteilung.');
-      return;
-    }
 
-    // Standard-Modus: Mindestens Tone + Audience erforderlich
+    // Standard-Modus: Prompt + Tone + Audience erforderlich
     if (generationMode === 'standard') {
+      if (!prompt.trim()) {
+        setError('Bitte beschreibe das Thema der Pressemitteilung.');
+        return;
+      }
       if (!context.tone || !context.audience) {
         setError('Bitte wähle Tonalität und Zielgruppe aus.');
         return;
       }
     }
 
-    // Experten-Modus: Mindestens 1 Dokument erforderlich
+    // Experten-Modus: Mindestens 1 Dokument erforderlich (Prompt optional)
     if (generationMode === 'expert') {
       if (selectedDocuments.length === 0) {
         setError('Bitte füge mindestens 1 Planungsdokument hinzu.');
@@ -461,12 +434,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
     setError(null);
 
     try {
-      const requestBody: any = {
-        prompt: prompt.trim(),
-      };
+      const requestBody: any = {};
 
-      // STANDARD-MODUS: Context immer senden
+      // STANDARD-MODUS: Prompt + Context senden
       if (generationMode === 'standard') {
+        requestBody.prompt = prompt.trim();
         requestBody.context = {
           industry: context.industry,
           tone: context.tone,
@@ -475,8 +447,16 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
         };
       }
 
-      // EXPERTEN-MODUS: Dokumente senden
-      if (generationMode === 'expert' && selectedDocuments.length > 0) {
+      // EXPERTEN-MODUS: Dokumente + optionaler Prompt
+      if (generationMode === 'expert') {
+        // Prompt nur senden wenn vorhanden
+        if (prompt.trim()) {
+          requestBody.prompt = prompt.trim();
+        } else {
+          // Default-Prompt für Experten-Modus ohne spezifische Anweisungen
+          requestBody.prompt = 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.';
+        }
+
         requestBody.documentContext = {
           documents: selectedDocuments
         };
@@ -658,6 +638,8 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 // NEU: Dokumenten-Props
                 selectedDocuments={selectedDocuments}
                 onOpenDocumentPicker={() => setShowDocumentPicker(true)}
+                onClearDocuments={() => setSelectedDocuments([])}
+                onRemoveDocument={(docId) => setSelectedDocuments(prev => prev.filter(d => d.id !== docId))}
                 // NEU: Modus-Props
                 generationMode={generationMode}
                 setGenerationMode={setGenerationMode}
@@ -673,6 +655,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 context={context}
                 loadingTemplates={loadingTemplates}
                 selectedTemplate={selectedTemplate}
+                generationMode={generationMode}
                 hasDocuments={selectedDocuments.length > 0}
                 documentCount={selectedDocuments.length}
               />
@@ -712,15 +695,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
               </Button>
             </div>
 
-            {/* Keyboard shortcut hint */}
-            {currentStep === 'content' && (
-              <div className="text-xs text-gray-500">
-                <kbd className="px-2 py-1 bg-gray-200 rounded">⌘</kbd> + 
-                <kbd className="px-2 py-1 bg-gray-200 rounded ml-1">Enter</kbd>
-                <span className="ml-2">zum Generieren</span>
-              </div>
-            )}
-            
             <div className="flex gap-2">
               {currentStep === 'context' && (
                 <Button 
@@ -734,7 +708,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
               {currentStep === 'content' && (
                 <Button
                   onClick={handleGenerate}
-                  disabled={(!prompt.trim() && selectedDocuments.length === 0) || isGenerating}
+                  disabled={(
+                    (generationMode === 'standard' && !prompt.trim()) ||
+                    (generationMode === 'expert' && selectedDocuments.length === 0) ||
+                    isGenerating
+                  )}
                   className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                 >
                   <SparklesIcon className="h-4 w-4 mr-2" />
@@ -812,7 +790,9 @@ function ContextSetupStep({
   selectedDocuments,
   onOpenDocumentPicker,
   generationMode,
-  setGenerationMode
+  setGenerationMode,
+  onClearDocuments,
+  onRemoveDocument
 }: {
   context: GenerationContext;
   onChange: (context: GenerationContext) => void;
@@ -820,6 +800,8 @@ function ContextSetupStep({
   onOpenDocumentPicker?: () => void;
   generationMode: 'standard' | 'expert';
   setGenerationMode: (mode: 'standard' | 'expert') => void;
+  onClearDocuments?: () => void;
+  onRemoveDocument?: (docId: string) => void;
 }) {
   const industries = [
     'Technologie & Software',
@@ -844,7 +826,7 @@ function ContextSetupStep({
   ];
 
   const audiences = [
-    { id: 'b2b', label: 'B2B/Fachpresse', desc: 'Unternehmen und Experten', icon: BriefcaseIcon },
+    { id: 'b2b', label: 'B2B', desc: 'Unternehmen und Experten', icon: BriefcaseIcon },
     { id: 'consumer', label: 'Verbraucher', desc: 'Endkunden und Publikum', icon: ShoppingBagIcon },
     { id: 'media', label: 'Medien', desc: 'Journalisten und Redaktionen', icon: NewspaperIcon }
   ];
@@ -852,169 +834,160 @@ function ContextSetupStep({
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
       {/* MODUS-AUSWAHL */}
-      <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Wähle deinen Generierungsmodus:</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="mb-8">
+        <Field>
+          <Label className="text-base font-semibold">KI-Modus *</Label>
+          <div className="grid grid-cols-2 gap-6 mt-3">
           <button
             type="button"
-            onClick={() => setGenerationMode('standard')}
-            className={`p-6 rounded-lg border-2 transition-all ${
+            onClick={() => {
+              setGenerationMode('standard');
+              if (onClearDocuments) onClearDocuments();
+            }}
+            className={`w-full text-left border rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 ${
               generationMode === 'standard'
-                ? 'border-[#005fab] bg-white shadow-md'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+                : 'bg-white border-gray-200'
             }`}
           >
-            <div className="flex items-center gap-3 mb-3">
-              <RocketLaunchIcon className="h-8 w-8 text-green-600 flex-shrink-0" />
-              <div className="text-left">
-                <h4 className="font-semibold text-lg text-gray-900">Standard</h4>
-                <p className="text-sm text-gray-600">Schnell & Direkt</p>
-              </div>
+            <div className="flex items-center gap-3">
+              {generationMode === 'standard' ? (
+                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0"></div>
+              )}
+              <h3 className={`text-lg font-semibold ${generationMode === 'standard' ? 'text-green-900' : 'text-gray-900'}`}>
+                Standard
+              </h3>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1 text-left">
-              <li>• Schnelle PM-Entwürfe</li>
-              <li>• Ideal für Einsteiger</li>
-              <li>• Direkte Eingabe</li>
-            </ul>
           </button>
 
           <button
             type="button"
             onClick={() => setGenerationMode('expert')}
-            className={`p-6 rounded-lg border-2 transition-all ${
+            className={`w-full text-left border rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 ${
               generationMode === 'expert'
-                ? 'border-[#005fab] bg-white shadow-md'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+                : 'bg-white border-gray-200'
             }`}
           >
-            <div className="flex items-center gap-3 mb-3">
-              <AcademicCapIcon className="h-8 w-8 text-amber-600 flex-shrink-0" />
-              <div className="text-left">
-                <h4 className="font-semibold text-lg text-gray-900">Experte</h4>
-                <p className="text-sm text-gray-600">Strategisch & Präzise</p>
-              </div>
+            <div className="flex items-center gap-3">
+              {generationMode === 'expert' ? (
+                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0"></div>
+              )}
+              <h3 className={`text-lg font-semibold ${generationMode === 'expert' ? 'text-green-900' : 'text-gray-900'}`}>
+                Experte
+              </h3>
             </div>
-            <ul className="text-sm text-gray-600 space-y-1 text-left">
-              <li>• PR-Profis & Agenturen</li>
-              <li>• Dokumenten-basiert</li>
-              <li>• Strategische Planung</li>
-            </ul>
           </button>
-        </div>
+          </div>
+        </Field>
       </div>
 
       {/* STANDARD-MODUS FELDER */}
       {generationMode === 'standard' && (
         <>
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Kontext definieren</h3>
-            <p className="text-gray-600">
-              Hilf der KI, den perfekten Ton für deine Pressemitteilung zu finden.
-            </p>
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <Field>
+              <Label className="text-base font-semibold">Branche *</Label>
+              <Select
+                value={context.industry || ''}
+                onChange={(e) => onChange({ ...context, industry: e.target.value })}
+                className="mt-2"
+              >
+                <option value="">Branche auswählen...</option>
+                {industries.map(industry => (
+                  <option key={industry} value={industry}>{industry}</option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field>
+              <Label className="text-base font-semibold">Unternehmensname *</Label>
+              <Input
+                value={context.companyName || ''}
+                onChange={(e) => onChange({ ...context, companyName: e.target.value })}
+                placeholder="Ihre Firma GmbH"
+                className="mt-2"
+              />
+            </Field>
           </div>
 
-          <Field>
-            <Label className="text-base font-semibold">Branche *</Label>
-            <Select
-              value={context.industry || ''}
-              onChange={(e) => onChange({ ...context, industry: e.target.value })}
-              className="mt-2"
-            >
-              <option value="">Branche auswählen...</option>
-              {industries.map(industry => (
-                <option key={industry} value={industry}>{industry}</option>
-              ))}
-            </Select>
-          </Field>
-
-      <Field>
-        <Label className="text-base font-semibold mb-3">Tonalität *</Label>
-        <div className="grid grid-cols-2 gap-3">
-          {tones.map(tone => (
-            <label key={tone.id} className={clsx(
-              "relative border-2 rounded-lg p-4 cursor-pointer transition-all",
-              "hover:border-gray-300",
-              context.tone === tone.id 
-                ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-opacity-50" 
-                : "border-gray-200"
-            )}>
-              <input
-                type="radio"
-                name="tone"
-                value={tone.id}
-                checked={context.tone === tone.id}
-                onChange={(e) => onChange({ ...context, tone: e.target.value as any })}
-                className="sr-only"
-              />
-              <div className="flex items-start gap-3">
-                <tone.icon className="h-6 w-6 text-gray-700 flex-shrink-0" />
-                <div>
-                  <div className="font-semibold text-gray-900">{tone.label}</div>
-                  <div className="text-sm text-gray-600 mt-1">{tone.desc}</div>
+      <div className="mb-8">
+        <Field>
+          <Label className="text-base font-semibold">Tonalität *</Label>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {tones.map(tone => (
+              <button
+                key={tone.id}
+                type="button"
+                onClick={() => onChange({ ...context, tone: tone.id as any })}
+                className={`w-full text-left border rounded-lg p-4 transition-all duration-150 hover:border-gray-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 ${
+                  context.tone === tone.id
+                    ? 'bg-gradient-to-br from-blue-50 to-white border-gray-200'
+                    : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <tone.icon className="h-5 w-5 text-[#005fab] flex-shrink-0" />
+                  <h3 className="text-lg font-semibold text-gray-900">{tone.label}</h3>
+                  {context.tone === tone.id && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded ml-auto">
+                      Aktiv
+                    </span>
+                  )}
                 </div>
-              </div>
-              {context.tone === tone.id && (
-                <CheckCircleIcon className="absolute top-3 right-3 h-5 w-5 text-indigo-600" />
-              )}
-            </label>
-          ))}
-        </div>
-      </Field>
+              </button>
+            ))}
+          </div>
+        </Field>
+      </div>
 
-      <Field>
-        <Label className="text-base font-semibold mb-3">Zielgruppe *</Label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {audiences.map(audience => (
-            <label key={audience.id} className={clsx(
-              "relative border-2 rounded-lg p-4 cursor-pointer transition-all",
-              "hover:border-gray-300",
-              context.audience === audience.id 
-                ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-opacity-50" 
-                : "border-gray-200"
-            )}>
-              <input
-                type="radio"
-                name="audience"
-                value={audience.id}
-                checked={context.audience === audience.id}
-                onChange={(e) => onChange({ ...context, audience: e.target.value as any })}
-                className="sr-only"
-              />
-              <div className="text-center">
-                <audience.icon className="h-6 w-6 text-gray-700 mx-auto" />
-                <div className="font-semibold text-gray-900 mt-2">{audience.label}</div>
-                <div className="text-xs text-gray-600 mt-1">{audience.desc}</div>
-              </div>
-              {context.audience === audience.id && (
-                <CheckCircleIcon className="absolute top-2 right-2 h-4 w-4 text-indigo-600" />
-              )}
-            </label>
-          ))}
-        </div>
-      </Field>
-
-          <Field>
-            <Label className="text-base font-semibold">Unternehmensname (optional)</Label>
-            <Input
-              value={context.companyName || ''}
-              onChange={(e) => onChange({ ...context, companyName: e.target.value })}
-              placeholder="Ihre Firma GmbH"
-              className="mt-2"
-            />
-          </Field>
+      <div className="mb-8">
+        <Field>
+          <Label className="text-base font-semibold">Zielgruppe *</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            {audiences.map(audience => (
+              <button
+                key={audience.id}
+                type="button"
+                onClick={() => onChange({ ...context, audience: audience.id as any })}
+                className={`w-full text-left border rounded-lg p-4 transition-all duration-150 hover:border-gray-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 ${
+                  context.audience === audience.id
+                    ? 'bg-gradient-to-br from-blue-50 to-white border-gray-200'
+                    : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <audience.icon className="h-5 w-5 text-[#005fab] flex-shrink-0" />
+                  <h3 className="text-lg font-semibold text-gray-900">{audience.label}</h3>
+                  {context.audience === audience.id && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded ml-auto">
+                      Aktiv
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </Field>
+      </div>
         </>
       )}
 
       {/* EXPERTEN-MODUS FELDER */}
       {generationMode === 'expert' && onOpenDocumentPicker && (
         <>
-          <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Strategische PR-Generierung</h3>
-            <p className="text-gray-600">
-              Die KI analysiert Ihre Planungsdokumente und erstellt eine perfekt abgestimmte Pressemitteilung.
-            </p>
-          </div>
-
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <div className="flex items-center gap-2 mb-3">
               <DocumentTextIcon className="h-5 w-5 text-blue-600" />
@@ -1028,18 +1001,18 @@ function ContextSetupStep({
           <Field>
 
           {selectedDocuments && selectedDocuments.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-900">
-                    {selectedDocuments.length} Dokumente ausgewählt
+                  <CheckCircleIcon className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">
+                    {selectedDocuments.length} Dokument{selectedDocuments.length !== 1 ? 'e' : ''} ausgewählt
                   </span>
                 </div>
                 <Button
                   plain
                   onClick={onOpenDocumentPicker}
-                  className="text-sm text-green-700"
+                  className="text-sm text-blue-700 hover:text-blue-800"
                 >
                   Ändern
                 </Button>
@@ -1047,9 +1020,21 @@ function ContextSetupStep({
 
               <div className="grid grid-cols-1 gap-2">
                 {selectedDocuments.map(doc => (
-                  <div key={doc.id} className="p-2 bg-gray-50 rounded text-sm">
-                    <p className="font-medium">{doc.fileName.replace('.celero-doc', '')}</p>
-                    <p className="text-xs text-gray-600">{doc.wordCount} Wörter</p>
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-blue-100 rounded-lg hover:border-blue-200 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-blue-900 truncate">{doc.fileName.replace('.celero-doc', '')}</p>
+                      <p className="text-xs text-blue-600">{doc.wordCount} Wörter</p>
+                    </div>
+                    {onRemoveDocument && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveDocument(doc.id)}
+                        className="ml-3 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Dokument entfernen"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1064,11 +1049,6 @@ function ContextSetupStep({
               Planungsdokumente auswählen
             </Button>
           )}
-
-            <p className="text-xs text-blue-600 mt-3 flex items-start gap-1.5">
-              <LightBulbIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>Tipp: Verwenden Sie Strategiedokumente aus dem Projekt-Ordner für beste Ergebnisse. Max. 3 Dokumente, 15.000 Zeichen gesamt.</span>
-            </p>
           </Field>
           </div>
         </>
@@ -1085,6 +1065,7 @@ function ContentInputStep({
   context,
   loadingTemplates,
   selectedTemplate,
+  generationMode,
   hasDocuments,
   documentCount
 }: {
@@ -1095,6 +1076,7 @@ function ContentInputStep({
   context: GenerationContext;
   loadingTemplates: boolean;
   selectedTemplate?: AITemplate | null;
+  generationMode: 'standard' | 'expert';
   hasDocuments?: boolean;
   documentCount?: number;
 }) {
@@ -1109,26 +1091,31 @@ function ContentInputStep({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Context Pills */}
-      {(context.industry || context.tone || context.audience || hasDocuments) && (
+      {(context.companyName || context.industry || context.tone || context.audience || hasDocuments) && (
         <div className="mb-6 flex flex-wrap gap-2 justify-center">
+          {context.companyName && (
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+              {context.companyName}
+            </span>
+          )}
           {context.industry && (
-            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
               {context.industry}
             </span>
           )}
           {context.tone && (
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium capitalize">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium capitalize">
               {context.tone}
             </span>
           )}
           {context.audience && (
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
               {context.audience === 'b2b' ? 'B2B' :
                context.audience === 'consumer' ? 'Verbraucher' : 'Medien'}
             </span>
           )}
           {hasDocuments && (
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
               <DocumentTextIcon className="h-4 w-4" />
               {documentCount} Planungsdokument{documentCount !== 1 ? 'e' : ''} angehängt
             </span>
@@ -1138,7 +1125,7 @@ function ContentInputStep({
 
       <div className="space-y-6">
         {/* NEU: Dokumenten-Modus Hinweis */}
-        {hasDocuments ? (
+        {generationMode === 'expert' && hasDocuments ? (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
@@ -1153,21 +1140,21 @@ function ContentInputStep({
               </div>
             </div>
           </div>
-        ) : (
-          /* Template Dropdown nur ohne Dokumente */
+        ) : generationMode === 'standard' ? (
+          /* Template Dropdown nur im Standard-Modus */
           <TemplateDropdown
             templates={templates}
             onSelect={onTemplateSelect}
             loading={loadingTemplates}
             selectedTemplate={selectedTemplate}
           />
-        )}
+        ) : null}
 
         {/* Main Input */}
         <Field>
           <div className="flex items-center justify-between mb-2">
             <Label className="text-base font-semibold">
-              {hasDocuments
+              {generationMode === 'expert'
                 ? 'Weitere Anweisungen oder spezifische Schwerpunkte (optional)'
                 : 'Beschreibe deine Pressemitteilung *'
               }
@@ -1185,8 +1172,8 @@ function ContentInputStep({
           <Textarea
             value={prompt}
             onChange={(e) => onChange(e.target.value)}
-            rows={hasDocuments ? 8 : 12}
-            placeholder={hasDocuments
+            rows={generationMode === 'expert' ? 8 : 12}
+            placeholder={generationMode === 'expert'
               ? `Optionale Anweisungen für die KI...
 
 Beispiele:
@@ -1221,21 +1208,6 @@ Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unte
             </div>
           </div>
         </div>
-
-        {/* Selected Template Info */}
-        {selectedTemplate && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ClipboardDocumentIcon className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                Template verwendet: {selectedTemplate.title}
-              </span>
-            </div>
-            <p className="text-xs text-gray-600">
-              Du kannst den Text noch anpassen und ergänzen.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

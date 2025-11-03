@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
       const data: StructuredGenerateRequest = await req.json();
     const { prompt, context, documentContext } = data;
 
-    // Validierung
-    if (!prompt || prompt.trim() === '') {
+    // Validierung: Prompt ODER Dokumente erforderlich
+    if ((!prompt || prompt.trim() === '') && !documentContext?.documents?.length) {
       return NextResponse.json(
-        { error: 'Prompt ist erforderlich' },
+        { error: 'Prompt oder Dokumente erforderlich' },
         { status: 400 }
       );
     }

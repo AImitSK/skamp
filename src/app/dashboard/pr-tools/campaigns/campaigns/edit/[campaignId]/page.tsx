@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, use } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
@@ -105,12 +105,12 @@ function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; mess
 }
 
 
-export default function EditPRCampaignPage({ params }: { params: { campaignId: string } }) {
+export default function EditPRCampaignPage({ params }: { params: Promise<{ campaignId: string }> }) {
+  const { campaignId } = use(params);
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const campaignId = params.campaignId;
   const [existingCampaign, setExistingCampaign] = useState<PRCampaign | null>(null);
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(true);
 
