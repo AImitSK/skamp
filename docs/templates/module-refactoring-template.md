@@ -1,23 +1,26 @@
 # Modul-Refactoring Template
 
-**Version:** 1.1
-**Basiert auf:** Listen-Modul & Editors-Modul Refactoring (Oktober 2025)
+**Version:** 2.0
+**Basiert auf:** Projects-Module Refactoring (Oktober 2025)
 **Projekt:** CeleroPress
 
 ---
 
 ## 📋 Übersicht
 
-Dieses Template bietet eine bewährte 7-Phasen-Struktur für die Refaktorierung von React-Modulen mit:
-- Pre-Refactoring Cleanup (toter Code) ⭐ NEU
+Dieses Template bietet eine bewährte 8-Phasen-Struktur für die Refaktorierung von React-Modulen mit:
+- Pre-Refactoring Cleanup (toter Code)
 - React Query Integration
 - Komponenten-Modularisierung
 - Performance-Optimierung
-- Comprehensive Testing
-- Vollständige Dokumentation
+- **Automated Testing** (via refactoring-test Agent) ⭐ NEU
+- **Automated Documentation** (via refactoring-dokumentation Agent) ⭐ NEU
 - Production-Ready Code Quality
+- **Quality Gate Check** (via refactoring-quality-check Agent) ⭐ NEU
 
 **Geschätzter Aufwand:** 2-4 Tage (je nach Modulgröße)
+
+**Agent-Workflow:** Phases 4, 5 und 6.5 verwenden spezialisierte Agents!
 
 ---
 
@@ -81,7 +84,21 @@ docs/[module]/
 
 ---
 
-## 🚀 Die 7 Phasen
+## 🚀 Die 8 Phasen
+
+**Phasen-Übersicht:**
+- **Phase 0:** Vorbereitung & Setup
+- **Phase 0.5:** Pre-Refactoring Cleanup
+- **Phase 1:** React Query Integration
+- **Phase 2:** Code-Separation & Modularisierung
+- **Phase 3:** Performance-Optimierung
+- **Phase 4:** Testing ⭐ AGENT-WORKFLOW (refactoring-test)
+- **Phase 5:** Dokumentation ⭐ AGENT-WORKFLOW (refactoring-dokumentation)
+- **Phase 6:** Production-Ready Code Quality
+- **Phase 6.5:** Quality Gate Check ⭐ AGENT-WORKFLOW (refactoring-quality-check)
+- **Phase 7:** Merge zu Main
+
+---
 
 ### Phase 0: Vorbereitung & Setup
 
@@ -715,7 +732,9 @@ import Alert from './components/shared/Alert';
 
 **Alternative: Zentraler Toast-Service (Empfohlen) ⭐**
 
-**WICHTIG:** Anstatt inline Alert-Komponenten zu verwenden, sollte der zentrale Toast-Service genutzt werden!
+**WICHTIG:** Anstatt inline Alert-Komponenten zu verwenden, sollte der **zentrale Toast-Service** genutzt werden!
+
+### Warum Toast-Service?
 
 **Vorteile:**
 - ✅ **Weniger Code**: Kein lokaler Alert-State mehr nötig (~35 Zeilen pro Page gespart)
@@ -723,18 +742,22 @@ import Alert from './components/shared/Alert';
 - ✅ **Konsistentes Design**: Einheitliche Benachrichtigungen im gesamten Modul
 - ✅ **Automatisches Schließen**: Zeitbasiert nach 3-5 Sekunden
 - ✅ **Zentrale Wartung**: Ein Service für alle Module
+- ✅ **Production-Ready**: Bereits in allen CRM-Seiten implementiert
 
 **Service-Location:** `src/lib/utils/toast.ts`
 
-**Verwendung in page.tsx:**
+**Basiert auf:** `react-hot-toast` - Moderne, leichte Toast-Library
+
+### Verwendung in page.tsx
+
+**Import:**
 ```typescript
 import { toastService } from '@/lib/utils/toast';
+```
 
-// Kein Alert-State mehr nötig!
-// const [alert, setAlert] = useState(null);
-// const showAlert = useCallback((type, title, message) => { ... }, []);
-
-// Direkt Toast aufrufen
+**Basic Usage (CRUD Operations):**
+```typescript
+// CREATE
 const handleCreate = async (data: any) => {
   try {
     await create[Module].mutateAsync({ organizationId, [module]Data: data });
@@ -744,6 +767,7 @@ const handleCreate = async (data: any) => {
   }
 };
 
+// UPDATE
 const handleUpdate = async (id: string, data: any) => {
   try {
     await update[Module].mutateAsync({ id, organizationId, [module]Data: data });
@@ -753,33 +777,46 @@ const handleUpdate = async (id: string, data: any) => {
   }
 };
 
-const handleDelete = async (id: string) => {
+// DELETE
+const handleDelete = async (id: string, name: string) => {
   try {
     await delete[Module].mutateAsync({ id, organizationId });
-    toastService.success('Erfolgreich gelöscht');
+    toastService.success(`${name} erfolgreich gelöscht`);
+  } catch (error) {
+    toastService.error('Fehler beim Löschen');
+  }
+};
+
+// BULK DELETE
+const handleBulkDelete = async () => {
+  try {
+    await bulkDelete.mutateAsync({ ids: selectedIds, organizationId });
+    toastService.success(`${selectedIds.length} Einträge erfolgreich gelöscht`);
+    setSelectedIds([]);
   } catch (error) {
     toastService.error('Fehler beim Löschen');
   }
 };
 ```
 
-**Alle Toast-Typen:**
+### Alle Toast-Typen
+
 ```typescript
-// Success (3s Dauer)
+// Success (3s Dauer, grün)
 toastService.success('Erfolgreich gespeichert');
 
-// Error (5s Dauer)
+// Error (5s Dauer, rot)
 toastService.error('Fehler beim Speichern');
 
-// Info (4s Dauer)
-toastService.info('Hinweis: Daten werden aktualisiert');
-
-// Warning (4s Dauer)
+// Warning (4s Dauer, gelb)
 toastService.warning('Achtung: Felder unvollständig');
 
-// Loading Toast (bis dismissed)
+// Info (4s Dauer, blau)
+toastService.info('Hinweis: Daten werden aktualisiert');
+
+// Loading Toast (unbegrenzt bis dismissed)
 const loadingToast = toastService.loading('Daten werden geladen...');
-// Später:
+// Später manuell schließen:
 toastService.dismiss(loadingToast);
 
 // Promise-basiert (automatisch Loading → Success/Error)
@@ -793,18 +830,71 @@ await toastService.promise(
 );
 ```
 
-**Nicht mehr verwenden:**
+### Beispiele aus CRM (Production)
+
+**Companies Page:**
+```typescript
+// src/app/dashboard/contacts/crm/companies/page.tsx
+
+// Single Delete mit Name
+await companiesService.delete(id);
+toastService.success(`${name} erfolgreich gelöscht`);
+
+// Bulk Delete mit Anzahl
+await Promise.all(ids.map(id => companiesService.delete(id)));
+toastService.success(`${ids.length} Firmen erfolgreich gelöscht`);
+
+// Export mit Feedback
+if (exportData.length === 0) {
+  toastService.warning('Keine Daten zum Exportieren');
+  return;
+}
+// ... export logic
+toastService.success('Export erfolgreich: firmen-export.csv');
+```
+
+**Contact Detail Page:**
+```typescript
+// src/app/dashboard/contacts/crm/contacts/[contactId]/page.tsx
+
+// Notiz speichern
+await contactsService.saveNote(contactId, noteText);
+toastService.success('Notiz gespeichert');
+
+// Fehler-Handling
+catch (error) {
+  toastService.error('Fehler beim Speichern der Notiz');
+}
+```
+
+### Was NICHT mehr verwenden
+
+**Entfernen:**
 - ❌ Inline `showAlert` Funktionen
 - ❌ Lokaler Alert-State (`useState<Alert | null>`)
 - ❌ Custom `useAlert` Hook
-- ❌ Alert-Component JSX im Return
+- ❌ Alert-Component JSX im Return (`{alert && <Alert ... />}`)
+- ❌ Alert-Komponenten-Datei (`Alert.tsx`)
 
-**Code-Reduktion:**
+**Code-Reduktion pro Page:**
 - Alert-State: ~5 Zeilen gespart
 - showAlert-Funktion: ~15 Zeilen gespart
 - Alert-JSX: ~10 Zeilen gespart
 - Unused Imports: ~3 Zeilen gespart
 - **Gesamt: ~33 Zeilen pro Page**
+
+### Migration-Checkliste
+
+- [ ] `import { toastService } from '@/lib/utils/toast'` hinzugefügt
+- [ ] Alert-State entfernt (`useState<Alert | null>`)
+- [ ] showAlert-Funktion entfernt
+- [ ] Alert-JSX aus Return entfernt
+- [ ] Alle CRUD-Handler mit toastService.success/error aktualisiert
+- [ ] Bulk-Operations mit Anzahl-Feedback
+- [ ] Export-Operations mit Feedback
+- [ ] Spezielle Cases (Loading, Warning, Info) implementiert
+- [ ] Alert-Component-Import entfernt
+- [ ] Manueller Test durchgeführt
 
 ---
 
@@ -1131,9 +1221,70 @@ git commit -m "feat: Phase 3 - Performance-Optimierung abgeschlossen"
 
 ---
 
-### Phase 4: Testing
+### Phase 4: Testing ⭐ AGENT-WORKFLOW
 
 **Ziel:** Comprehensive Test Suite mit >80% Coverage
+
+**🤖 WICHTIG:** Diese Phase wird vom **refactoring-test Agent** durchgeführt!
+
+**Warum Agent?**
+- ✅ **100% Completion Guarantee** - Keine TODOs, keine "analog" Kommentare
+- ✅ **Comprehensive Coverage** - Alle Edge Cases abgedeckt
+- ✅ **Konsistente Qualität** - Einheitlicher Test-Standard
+- ✅ **Zeitersparnis** - Agent erstellt vollständige Test Suite autonom
+
+#### Agent aufrufen
+
+**Schritt 1: Agent starten**
+```bash
+# Via Claude Code (empfohlen)
+Prompt: "Starte refactoring-test Agent für [Module]-Refactoring"
+```
+
+**Schritt 2: Agent-Prompt**
+```markdown
+Erstelle comprehensive Test Suite für [Module]-Refactoring nach Phase 3.
+
+Context:
+- Modul: [Module]
+- Hooks: src/lib/hooks/use[Module]Data.ts
+- Pages: src/app/dashboard/[module]/page.tsx, [id]/page.tsx
+- Components: src/app/dashboard/[module]/components/
+
+Requirements:
+- Hook Tests (>80% Coverage)
+- Integration Tests (CRUD Flow)
+- Component Tests (Shared Components)
+- Cleanup alter Tests
+- Alle Tests müssen bestehen
+
+Deliverable:
+- Test-Suite vollständig implementiert
+- Coverage Report (npm run test:coverage)
+- Test-Dokumentation
+```
+
+**Der Agent wird:**
+1. Alle Hook-Tests schreiben (getAll, getById, create, update, delete, bulkDelete)
+2. Integration Tests schreiben (CRUD Flow End-to-End)
+3. Component Tests schreiben (Alert, ConfirmDialog, EmptyState, etc.)
+4. Alte/Redundante Tests identifizieren und entfernen
+5. Failing Tests fixen
+6. Coverage Report erstellen
+7. Test-Dokumentation generieren
+
+**Output:**
+- `src/lib/hooks/__tests__/use[Module]Data.test.tsx` (vollständig)
+- `src/app/dashboard/[module]/__tests__/integration/[module]-crud-flow.test.tsx`
+- `src/app/dashboard/[module]/components/shared/__tests__/*.test.tsx`
+- Coverage Report (>80%)
+- Test-Dokumentation (README in __tests__)
+
+---
+
+#### Manuelle Tests (falls Agent nicht verfügbar)
+
+**NUR wenn Agent nicht genutzt werden kann!**
 
 #### 4.1 Hook Tests
 
@@ -1355,6 +1506,15 @@ npm test -- [module]
 
 #### Checkliste Phase 4
 
+**Wenn Agent verwendet:**
+- [ ] refactoring-test Agent aufgerufen
+- [ ] Agent hat Test-Suite vollständig erstellt (KEINE TODOs!)
+- [ ] Alle Tests bestehen (npm test)
+- [ ] Coverage >80% (npm run test:coverage)
+- [ ] Test-Dokumentation vorhanden
+- [ ] Agent-Output reviewed
+
+**Wenn manuell durchgeführt:**
 - [ ] Hook-Tests erstellt (8 Tests)
 - [ ] Integration-Tests erstellt (2+ Tests)
 - [ ] Component-Tests für Shared Components (19 Tests)
@@ -1369,34 +1529,110 @@ npm test -- [module]
 ```markdown
 ## Phase 4: Testing ✅
 
+**🤖 Agent-Workflow verwendet:** [Ja/Nein]
+
 ### Test Suite
-- Hook-Tests: 8/8 bestanden
-- Integration-Tests: 2/2 bestanden
-- Component-Tests: 19/19 bestanden
+- Hook-Tests: 8/8 bestanden ✅
+- Integration-Tests: 2/2 bestanden ✅
+- Component-Tests: 19/19 bestanden ✅
 - **Gesamt: 29/29 Tests bestanden**
 
 ### Coverage
-- Statements: [X]%
-- Branches: [X]%
-- Functions: [X]%
-- Lines: [X]%
+- Statements: [X]% ✅
+- Branches: [X]% ✅
+- Functions: [X]% ✅
+- Lines: [X]% ✅
 
 ### Cleanup
 - [X] alte Tests entfernt
 - [X] redundante Tests gelöscht
 
+### Agent-Output (falls verwendet)
+- ✅ Alle Tests vollständig implementiert (KEINE TODOs)
+- ✅ Test-Dokumentation generiert
+- ✅ Coverage Report erstellt
+
 ### Commit
 ```bash
 git add .
-git commit -m "test: Phase 4 - Comprehensive Test Suite erstellt"
+git commit -m "test: Phase 4 - Comprehensive Test Suite erstellt (via refactoring-test Agent)"
+# oder bei manueller Durchführung:
+# git commit -m "test: Phase 4 - Comprehensive Test Suite erstellt"
 ```
 ```
 
 ---
 
-### Phase 5: Dokumentation
+### Phase 5: Dokumentation ⭐ AGENT-WORKFLOW
 
 **Ziel:** Vollständige, wartbare Dokumentation
+
+**🤖 WICHTIG:** Diese Phase wird vom **refactoring-dokumentation Agent** durchgeführt!
+
+**Warum Agent?**
+- ✅ **Comprehensive Documentation** - Alle Bereiche vollständig dokumentiert
+- ✅ **Konsistenter Standard** - Einheitliche Dokumentationsqualität
+- ✅ **Code-Beispiele** - Funktionierende, getestete Beispiele
+- ✅ **Automatische Struktur** - README, API, Components, ADR in korrekter Struktur
+- ✅ **Zeitersparnis** - Agent erstellt 2.500+ Zeilen Dokumentation autonom
+
+#### Agent aufrufen
+
+**Schritt 1: Agent starten**
+```bash
+# Via Claude Code (empfohlen)
+Prompt: "Starte refactoring-dokumentation Agent für [Module]-Refactoring"
+```
+
+**Schritt 2: Agent-Prompt**
+```markdown
+Erstelle umfassende Dokumentation für [Module]-Refactoring nach Phase 4.
+
+Context:
+- Modul: [Module]
+- Hooks: src/lib/hooks/use[Module]Data.ts
+- Service: src/lib/firebase/[module]-service.ts
+- Pages: src/app/dashboard/[module]/page.tsx, [id]/page.tsx
+- Components: src/app/dashboard/[module]/components/
+- Tests: Comprehensive Test Suite mit >80% Coverage
+
+Requirements:
+- README.md (Hauptdokumentation 400+ Zeilen)
+- API-Dokumentation (Service-Methoden 800+ Zeilen)
+- Komponenten-Dokumentation (Props, Usage 650+ Zeilen)
+- ADR-Dokumentation (Entscheidungen 350+ Zeilen)
+- Code-Beispiele (funktionierend, getestet)
+- Troubleshooting-Guides
+
+Deliverable:
+- Vollständige Dokumentation (2.500+ Zeilen)
+- Funktionierende Code-Beispiele
+- Screenshots/Diagramme (optional)
+```
+
+**Der Agent wird:**
+1. docs/[module]/ Ordner-Struktur anlegen
+2. README.md erstellen (Hauptdokumentation)
+3. api/README.md + api/[module]-service.md erstellen (API-Referenz)
+4. components/README.md erstellen (Komponenten-Doku)
+5. adr/README.md erstellen (Architecture Decision Records)
+6. Code-Beispiele einbauen (aus echtem Code)
+7. Troubleshooting-Guides schreiben
+8. Performance-Metriken dokumentieren
+
+**Output:**
+- `docs/[module]/README.md` (400+ Zeilen)
+- `docs/[module]/api/README.md` (300+ Zeilen)
+- `docs/[module]/api/[module]-service.md` (800+ Zeilen)
+- `docs/[module]/components/README.md` (650+ Zeilen)
+- `docs/[module]/adr/README.md` (350+ Zeilen)
+- **Gesamt: 2.500+ Zeilen Dokumentation**
+
+---
+
+#### Manuelle Dokumentation (falls Agent nicht verfügbar)
+
+**NUR wenn Agent nicht genutzt werden kann!**
 
 #### 5.1 Struktur anlegen
 
@@ -1632,6 +1868,15 @@ Wir haben uns für **React Query** entschieden.
 
 #### Checkliste Phase 5
 
+**Wenn Agent verwendet:**
+- [ ] refactoring-dokumentation Agent aufgerufen
+- [ ] Agent hat vollständige Dokumentation erstellt (2.500+ Zeilen)
+- [ ] Alle Dateien vorhanden (README, API, Components, ADR)
+- [ ] Code-Beispiele funktionieren
+- [ ] Alle Links funktionieren
+- [ ] Agent-Output reviewed
+
+**Wenn manuell durchgeführt:**
 - [ ] docs/[module]/README.md erstellt (400+ Zeilen)
 - [ ] docs/[module]/api/README.md erstellt (300+ Zeilen)
 - [ ] docs/[module]/api/[module]-service.md erstellt (800+ Zeilen)
@@ -1646,12 +1891,14 @@ Wir haben uns für **React Query** entschieden.
 ```markdown
 ## Phase 5: Dokumentation ✅
 
+**🤖 Agent-Workflow verwendet:** [Ja/Nein]
+
 ### Erstellt
-- README.md (400+ Zeilen) - Hauptdokumentation
-- api/README.md (300+ Zeilen) - API-Übersicht
-- api/[module]-service.md (800+ Zeilen) - Detaillierte API-Referenz
-- components/README.md (650+ Zeilen) - Komponenten-Dokumentation
-- adr/README.md (350+ Zeilen) - Architecture Decision Records
+- README.md (400+ Zeilen) - Hauptdokumentation ✅
+- api/README.md (300+ Zeilen) - API-Übersicht ✅
+- api/[module]-service.md (800+ Zeilen) - Detaillierte API-Referenz ✅
+- components/README.md (650+ Zeilen) - Komponenten-Dokumentation ✅
+- adr/README.md (350+ Zeilen) - Architecture Decision Records ✅
 
 ### Gesamt
 - **2.500+ Zeilen Dokumentation**
@@ -1659,10 +1906,17 @@ Wir haben uns für **React Query** entschieden.
 - Troubleshooting-Guides
 - Performance-Messungen
 
+### Agent-Output (falls verwendet)
+- ✅ Alle Dokumente vollständig (keine Platzhalter)
+- ✅ Code-Beispiele funktionieren
+- ✅ Konsistente Struktur
+
 ### Commit
 ```bash
 git add .
-git commit -m "docs: Phase 5 - Vollständige Dokumentation erstellt"
+git commit -m "docs: Phase 5 - Vollständige Dokumentation erstellt (via refactoring-dokumentation Agent)"
+# oder bei manueller Durchführung:
+# git commit -m "docs: Phase 5 - Vollständige Dokumentation erstellt"
 ```
 ```
 
@@ -1821,16 +2075,156 @@ git commit -m "chore: Phase 6 - Production-Ready Code Quality sichergestellt"
 
 ---
 
-## 🔄 Merge zu Main
+### Phase 6.5: Quality Gate Check ⭐ AGENT-WORKFLOW
+
+**Ziel:** FINALE Überprüfung ALLER Phasen vor Merge zu Main
+
+**🤖 WICHTIG:** Diese Phase wird vom **refactoring-quality-check Agent** durchgeführt!
+
+**PROAKTIV:** Agent wird AUTOMATISCH vor Phase 7 (Merge) aufgerufen!
+
+**Warum Agent?**
+- ✅ **Comprehensive Check** - Überprüft ALLE Phasen 0-6
+- ✅ **Implementation Verification** - Files erstellt UND integriert?
+- ✅ **Test Verification** - Tests bestehen UND Coverage >80%?
+- ✅ **Code Quality** - TypeScript, ESLint, Build erfolgreich?
+- ✅ **Documentation Verification** - Vollständig oder Platzhalter?
+- ✅ **Safety Gate** - Verhindert unvollständige Merges
+
+#### Warum Quality Gate?
+
+**Problem ohne Quality Gate:**
+- ✅ Dateien erstellt → ❌ ABER nicht integriert
+- ✅ Tests geschrieben → ❌ ABER nicht alle bestehen
+- ✅ Docs geschrieben → ❌ ABER voller TODOs
+
+**Lösung mit Quality Gate:**
+- ✅ **FULL Implementation** - Dateien erstellt UND verwendet
+- ✅ **FULL Integration** - Alter Code entfernt, neuer Code integriert
+- ✅ **FULL Testing** - Tests bestehen UND Coverage erreicht
+- ✅ **FULL Documentation** - Docs vollständig UND korrekt verlinkt
+
+#### Agent aufrufen
+
+**Schritt 1: Agent wird automatisch aufgerufen**
+```markdown
+PROAKTIV vor Merge zu Main (Phase 7)
+```
+
+**Schritt 2: Agent-Workflow**
+
+Der Agent überprüft:
+
+**Phase 0/0.5 Checks:**
+- [ ] Feature-Branch existiert
+- [ ] Backup-Dateien vorhanden
+- [ ] Toter Code entfernt (TODOs, Console-Logs, etc.)
+
+**Phase 1 Checks:**
+- [ ] use[Module]Data.ts existiert
+- [ ] 6 Hooks implementiert (getAll, getById, create, update, delete, bulkDelete)
+- [ ] page.tsx verwendet Hooks (KEINE alten loadData/useEffect!)
+- [ ] [id]/page.tsx verwendet Hooks
+
+**Phase 2 Checks:**
+- [ ] Shared Components existieren
+- [ ] Große Komponenten aufgeteilt (< 500 Zeilen)
+- [ ] Alte Inline-Komponenten entfernt
+- [ ] Backward Compatibility sichergestellt
+
+**Phase 3 Checks:**
+- [ ] useCallback für Handler
+- [ ] useMemo für Computed Values
+- [ ] Debouncing implementiert (falls nötig)
+- [ ] React.memo für Komponenten
+
+**Phase 4 Checks:**
+- [ ] Tests existieren (__tests__ Ordner)
+- [ ] Alle Tests bestehen (npm test)
+- [ ] Coverage >80% (npm run test:coverage)
+- [ ] KEINE TODOs in Tests
+- [ ] KEINE "analog" Kommentare
+
+**Phase 5 Checks:**
+- [ ] docs/[module]/ Ordner existiert
+- [ ] README.md vollständig (>400 Zeilen)
+- [ ] API-Docs vollständig (>800 Zeilen)
+- [ ] Component-Docs vollständig (>650 Zeilen)
+- [ ] ADR-Docs vollständig (>350 Zeilen)
+- [ ] KEINE Platzhalter ([TODO], [BESCHREIBUNG], etc.)
+
+**Phase 6 Checks:**
+- [ ] TypeScript: 0 Fehler (npx tsc --noEmit)
+- [ ] ESLint: 0 Warnings (npx eslint)
+- [ ] Console-Cleanup: Nur production-relevante Logs
+- [ ] Design System Compliance
+- [ ] Build erfolgreich (npm run build)
+
+**Integration Checks (KRITISCH!):**
+- [ ] Alte Dateien gelöscht (nicht nur auskommentiert)
+- [ ] Imports aktualisiert (überall)
+- [ ] Keine unused Imports
+- [ ] Keine unused Variables
+- [ ] Backward Compatibility funktioniert
+
+**Output:**
+- Comprehensive Quality Report
+- Liste von Problemen (falls vorhanden)
+- GO/NO-GO Empfehlung für Merge
+
+#### Checkliste Phase 6.5
+
+- [ ] refactoring-quality-check Agent aufgerufen
+- [ ] Quality Report erhalten
+- [ ] ALLE Checks bestanden (GO)
+- [ ] Falls NO-GO: Probleme behoben und Agent erneut aufgerufen
+
+#### Phase-Bericht Template
+
+```markdown
+## Phase 6.5: Quality Gate Check ✅
+
+**🤖 Agent verwendet:** Ja
+
+### Quality Report
+- Phase 0/0.5: ✅ Bestanden
+- Phase 1 (React Query): ✅ Bestanden
+- Phase 2 (Modularisierung): ✅ Bestanden
+- Phase 3 (Performance): ✅ Bestanden
+- Phase 4 (Testing): ✅ Bestanden (>80% Coverage)
+- Phase 5 (Dokumentation): ✅ Bestanden (2.500+ Zeilen)
+- Phase 6 (Code Quality): ✅ Bestanden
+- Integration Checks: ✅ Bestanden
+
+### Result
+**GO für Merge zu Main** ✅
+
+### Keine Probleme gefunden
+
+### Commit
+```bash
+git add .
+git commit -m "chore: Phase 6.5 - Quality Gate Check bestanden"
+```
+```
+
+---
+
+## 🔄 Phase 7: Merge zu Main
 
 **Letzte Phase:** Code zu Main mergen
+
+**⚠️ WICHTIG:** Nur nach erfolgreichem Phase 6.5 Quality Gate Check!
 
 ### Workflow
 
 ```bash
-# 1. Finaler Commit (Test-Cleanup, etc.)
+# 0. VORHER: Phase 6.5 Quality Gate Check erfolgreich?
+# → Agent muss "GO" gegeben haben!
+
+# 1. Finaler Commit (falls noch Änderungen)
 git add .
-git commit -m "test: Finaler Test-Cleanup"
+git commit -m "chore: Finaler Cleanup vor Merge"
 
 # 2. Push Feature-Branch
 git push origin feature/[module]-refactoring-production
@@ -1848,7 +2242,8 @@ npm test -- [module]
 
 ### Checkliste Merge
 
-- [ ] Alle 7 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup)
+- [ ] ⭐ Phase 6.5 Quality Gate Check bestanden (GO)
+- [ ] Alle 8 Phasen abgeschlossen (inkl. Phase 0.5 Cleanup)
 - [ ] Alle Tests bestehen
 - [ ] Dokumentation vollständig
 - [ ] Feature-Branch gepushed
@@ -1863,10 +2258,12 @@ npm test -- [module]
 ## ✅ [Module]-Refactoring erfolgreich abgeschlossen!
 
 ### Status
-- **Alle 7 Phasen:** Abgeschlossen (inkl. Pre-Refactoring Cleanup)
-- **Tests:** [X]/[X] bestanden
-- **Coverage:** [X]%
-- **Dokumentation:** [Y] Zeilen
+- **Alle 8 Phasen:** Abgeschlossen (0, 0.5, 1, 2, 3, 4, 5, 6, 6.5)
+- **Agent-Workflow:** Phase 4 (Testing), Phase 5 (Doku), Phase 6.5 (Quality Check)
+- **Tests:** [X]/[X] bestanden ✅
+- **Coverage:** [X]% (>80%) ✅
+- **Dokumentation:** [Y]+ Zeilen (2.500+) ✅
+- **Quality Gate:** GO für Production ✅
 
 ### Änderungen
 - +[X] Zeilen hinzugefügt
@@ -1877,8 +2274,14 @@ npm test -- [module]
 - React Query Integration mit 6 Custom Hooks
 - [Component] von [X] Zeilen → [Y] modulare Dateien
 - Performance-Optimierungen (useCallback, useMemo, Debouncing)
-- Comprehensive Test Suite ([X] Tests)
-- [Y]+ Zeilen Dokumentation
+- Comprehensive Test Suite ([X] Tests, via refactoring-test Agent)
+- [Y]+ Zeilen Dokumentation (via refactoring-dokumentation Agent)
+- Quality Gate Check bestanden (via refactoring-quality-check Agent)
+
+### Agent-Workflow
+- 🤖 **Phase 4:** refactoring-test Agent → 100% Test Coverage
+- 🤖 **Phase 5:** refactoring-dokumentation Agent → 2.500+ Zeilen Docs
+- 🤖 **Phase 6.5:** refactoring-quality-check Agent → GO für Merge
 
 ### Nächste Schritte
 - [ ] Production-Deployment vorbereiten
@@ -2259,7 +2662,7 @@ function MyComponent({
 - [ ] Ist-Zustand dokumentiert
 - [ ] Dependencies geprüft
 
-### Phase 0.5: Pre-Refactoring Cleanup ⭐ NEU
+### Phase 0.5: Pre-Refactoring Cleanup
 
 - [ ] TODO-Kommentare entfernt oder umgesetzt
 - [ ] Debug-Console-Logs entfernt
@@ -2281,12 +2684,13 @@ function MyComponent({
 
 ### Phase 2: Modularisierung
 
-- [ ] 3 Shared Components erstellt
+- [ ] 3 Shared Components erstellt (oder toastService verwendet)
 - [ ] Inline-Komponenten entfernt
 - [ ] Große Komponenten aufgeteilt
 - [ ] Section-Struktur erstellt
 - [ ] types.ts angelegt
 - [ ] Backward Compatibility sichergestellt
+- [ ] toastService für Feedback-Messages verwendet
 
 ### Phase 3: Performance
 
@@ -2295,22 +2699,25 @@ function MyComponent({
 - [ ] Debouncing implementiert
 - [ ] React.memo für Komponenten
 
-### Phase 4: Testing
+### Phase 4: Testing ⭐ AGENT-WORKFLOW
 
-- [ ] Hook-Tests (8 Tests)
-- [ ] Integration-Tests (2+ Tests)
-- [ ] Component-Tests (19 Tests)
+- [ ] refactoring-test Agent aufgerufen
+- [ ] Hook-Tests (8 Tests, 100% implementiert)
+- [ ] Integration-Tests (2+ Tests, vollständig)
+- [ ] Component-Tests (19 Tests, KEINE TODOs)
 - [ ] Alte Tests entfernt
 - [ ] Alle Tests bestehen
 - [ ] Coverage >80%
 
-### Phase 5: Dokumentation
+### Phase 5: Dokumentation ⭐ AGENT-WORKFLOW
 
-- [ ] README.md (400+ Zeilen)
-- [ ] API-Docs (300+ Zeilen)
-- [ ] Service-Docs (800+ Zeilen)
-- [ ] Component-Docs (650+ Zeilen)
-- [ ] ADR-Docs (350+ Zeilen)
+- [ ] refactoring-dokumentation Agent aufgerufen
+- [ ] README.md (400+ Zeilen, vollständig)
+- [ ] API-Docs (300+ Zeilen, vollständig)
+- [ ] Service-Docs (800+ Zeilen, vollständig)
+- [ ] Component-Docs (650+ Zeilen, vollständig)
+- [ ] ADR-Docs (350+ Zeilen, vollständig)
+- [ ] Keine Platzhalter ([TODO], [BESCHREIBUNG], etc.)
 
 ### Phase 6: Code Quality
 
@@ -2321,8 +2728,17 @@ function MyComponent({
 - [ ] Build erfolgreich
 - [ ] Production-Test bestanden
 
-### Merge
+### Phase 6.5: Quality Gate Check ⭐ AGENT-WORKFLOW
 
+- [ ] refactoring-quality-check Agent aufgerufen
+- [ ] ALLE Phasen überprüft
+- [ ] Integration Checks bestanden
+- [ ] GO-Empfehlung erhalten
+- [ ] Keine kritischen Probleme
+
+### Phase 7: Merge
+
+- [ ] Phase 6.5 Quality Gate bestanden (GO)
 - [ ] Feature-Branch gepushed
 - [ ] Main gemerged
 - [ ] Main gepushed
@@ -2427,15 +2843,36 @@ function useWhyDidYouUpdate(name: string, props: any) {
 
 ---
 
-**Version:** 1.1
-**Basiert auf:** Listen-Modul & Editors-Modul Refactoring (Oktober 2025)
+**Version:** 2.0
+**Basiert auf:** Projects-Module Refactoring (Oktober 2025)
 **Template erstellt:** Oktober 2025
-**Letzte Aktualisierung:** Oktober 2025 (Phase 0.5 hinzugefügt)
+**Letzte Aktualisierung:** November 2025 (Agent-Workflow Integration)
 
 **Changelog:**
-- **v1.1:** Phase 0.5 "Pre-Refactoring Cleanup" hinzugefügt (aus Editors-Refactoring gelernt)
-- **v1.0:** Initial Template basierend auf Listen-Modul Refactoring
+
+- **v2.0 (November 2025):** Agent-Workflow Integration 🤖
+  - **Phase 4:** refactoring-test Agent für automated testing
+  - **Phase 5:** refactoring-dokumentation Agent für automated documentation
+  - **Phase 6.5 NEU:** refactoring-quality-check Agent als Quality Gate vor Merge
+  - Toast-Service Richtlinien erweitert (CRM-Beispiele)
+  - 8-Phasen-Struktur (statt 7): Phase 6.5 Quality Gate hinzugefügt
+  - Agent-Prompts und Workflows dokumentiert
+  - Manuelle Fallback-Optionen beibehalten
+
+- **v1.1 (Oktober 2025):** Phase 0.5 "Pre-Refactoring Cleanup" hinzugefügt
+  - Toter Code Cleanup BEVOR Refactoring
+  - TODO/Console-Log/Deprecated-Functions Entfernung
+  - Aus Editors-Refactoring gelernt
+
+- **v1.0 (Oktober 2025):** Initial Template
+  - 7-Phasen-Struktur
+  - Basierend auf Listen-Modul Refactoring
 
 ---
 
 *Dieses Template ist ein lebendes Dokument. Feedback und Verbesserungen sind willkommen!*
+
+**Wichtige Hinweise:**
+- ⭐ **Agent-Workflow ist EMPFOHLEN** für Phase 4, 5 und 6.5
+- ⭐ **Phase 6.5 ist OBLIGATORISCH** vor Merge zu Main
+- ⭐ **toastService ist STANDARD** für Feedback-Messages (statt Alert-Component)
