@@ -1,6 +1,7 @@
 // src/components/campaigns/pr-seo/components/KIAnalysisBox.tsx
 "use client";
 
+import React from 'react';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 import type { KIAnalysisBoxProps } from '../types';
 
@@ -8,7 +9,7 @@ import type { KIAnalysisBoxProps } from '../types';
  * KI-Analysis-Box Komponente
  * Zeigt KI-Analyse-Status und Relevanz-Score an
  */
-export function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
+export const KIAnalysisBox = React.memo(function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
   const boxClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs bg-purple-50 text-purple-700 border border-purple-300";
 
   if (isLoading) {
@@ -36,4 +37,4 @@ export function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
       <span>{metrics.semanticRelevance || 0}%</span>
     </div>
   );
-}
+});

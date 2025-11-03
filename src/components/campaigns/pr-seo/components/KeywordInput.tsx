@@ -1,7 +1,7 @@
 // src/components/campaigns/pr-seo/components/KeywordInput.tsx
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { KeywordInputProps } from '../types';
@@ -10,7 +10,7 @@ import type { KeywordInputProps } from '../types';
  * Keyword-Eingabe-Komponente
  * Erlaubt das Hinzufügen neuer Keywords (max 2)
  */
-export function KeywordInput({ keywords, onAddKeyword, maxKeywords = 2 }: KeywordInputProps) {
+export const KeywordInput = React.memo(function KeywordInput({ keywords, onAddKeyword, maxKeywords = 2 }: KeywordInputProps) {
   const [newKeyword, setNewKeyword] = useState('');
 
   const handleAdd = () => {
@@ -48,4 +48,4 @@ export function KeywordInput({ keywords, onAddKeyword, maxKeywords = 2 }: Keywor
       </Button>
     </div>
   );
-}
+});

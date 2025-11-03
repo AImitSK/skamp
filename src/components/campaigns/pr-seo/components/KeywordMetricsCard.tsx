@@ -1,6 +1,7 @@
 // src/components/campaigns/pr-seo/components/KeywordMetricsCard.tsx
 "use client";
 
+import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { KIAnalysisBox } from './KIAnalysisBox';
 import type { KeywordMetricsCardProps } from '../types';
@@ -10,7 +11,7 @@ import clsx from 'clsx';
  * Keyword-Metriken-Card Komponente
  * Zeigt Keyword-Metriken in einer One-Line-Layout-Karte an
  */
-export function KeywordMetricsCard({ metrics, isAnalyzing, onRemove }: KeywordMetricsCardProps) {
+export const KeywordMetricsCard = React.memo(function KeywordMetricsCard({ metrics, isAnalyzing, onRemove }: KeywordMetricsCardProps) {
   return (
     <div className="flex items-center bg-white rounded-md p-3 gap-4">
       {/* Links: Keyword + Basis-Metriken */}
@@ -57,4 +58,4 @@ export function KeywordMetricsCard({ metrics, isAnalyzing, onRemove }: KeywordMe
       </div>
     </div>
   );
-}
+});

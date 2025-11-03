@@ -1,7 +1,7 @@
 // src/components/campaigns/pr-seo/components/RecommendationsList.tsx
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { RecommendationsListProps } from '../types';
@@ -10,7 +10,7 @@ import type { RecommendationsListProps } from '../types';
  * Empfehlungen-Liste Komponente
  * Zeigt SEO-Empfehlungen mit Expand/Collapse an
  */
-export function RecommendationsList({ recommendations }: RecommendationsListProps) {
+export const RecommendationsList = React.memo(function RecommendationsList({ recommendations }: RecommendationsListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (recommendations.length === 0) {
@@ -65,4 +65,4 @@ export function RecommendationsList({ recommendations }: RecommendationsListProp
       </div>
     </div>
   );
-}
+});
