@@ -3,9 +3,9 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { 
-  XMarkIcon, 
-  SparklesIcon, 
+import {
+  XMarkIcon,
+  SparklesIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
@@ -17,7 +17,18 @@ import {
   MagnifyingGlassIcon,
   BookOpenIcon,
   LightBulbIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  AcademicCapIcon,
+  BeakerIcon,
+  RocketLaunchIcon,
+  BriefcaseIcon,
+  ShoppingBagIcon,
+  NewspaperIcon,
+  HandRaisedIcon,
+  CurrencyDollarIcon,
+  BuildingOfficeIcon,
+  CalendarIcon,
+  CheckBadgeIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -99,12 +110,12 @@ function TemplateDropdown({
   };
 
   const categoryIcons: Record<string, any> = {
-    product: '🚀',
-    partnership: '🤝',
-    finance: '💰',
-    corporate: '🏢',
-    event: '📅',
-    research: '🔬'
+    product: RocketLaunchIcon,
+    partnership: HandRaisedIcon,
+    finance: CurrencyDollarIcon,
+    corporate: BuildingOfficeIcon,
+    event: CalendarIcon,
+    research: BeakerIcon
   };
 
   return (
@@ -125,8 +136,12 @@ function TemplateDropdown({
             <div>
               {selectedTemplate ? (
                 <>
-                  <div className="font-medium text-gray-900">
-                    {categoryIcons[selectedTemplate.category] || '📄'} {selectedTemplate.title}
+                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                    {(() => {
+                      const Icon = categoryIcons[selectedTemplate.category] || DocumentTextIcon;
+                      return <Icon className="h-4 w-4 inline-block" />;
+                    })()}
+                    {selectedTemplate.title}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">Template ausgewählt</div>
                 </>
@@ -187,9 +202,12 @@ function TemplateDropdown({
                       className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors group"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl mt-1">
-                          {categoryIcons[template.category] || '📄'}
-                        </span>
+                        <div className="mt-1">
+                          {(() => {
+                            const Icon = categoryIcons[template.category] || DocumentTextIcon;
+                            return <Icon className="h-6 w-6 text-gray-700" />;
+                          })()}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
                             {template.title}
@@ -789,16 +807,16 @@ function ContextSetupStep({
   ];
 
   const tones = [
-    { id: 'formal', label: 'Formal', desc: 'Seriös, traditionell, konservativ', icon: '🎩' },
-    { id: 'modern', label: 'Modern', desc: 'Zeitgemäß, innovativ, zugänglich', icon: '✨' },
-    { id: 'technical', label: 'Technisch', desc: 'Fachspezifisch, präzise, detailliert', icon: '🔬' },
-    { id: 'startup', label: 'Startup', desc: 'Dynamisch, visionär, disruptiv', icon: '🚀' }
+    { id: 'formal', label: 'Formal', desc: 'Seriös, traditionell, konservativ', icon: AcademicCapIcon },
+    { id: 'modern', label: 'Modern', desc: 'Zeitgemäß, innovativ, zugänglich', icon: SparklesIcon },
+    { id: 'technical', label: 'Technisch', desc: 'Fachspezifisch, präzise, detailliert', icon: BeakerIcon },
+    { id: 'startup', label: 'Startup', desc: 'Dynamisch, visionär, disruptiv', icon: RocketLaunchIcon }
   ];
 
   const audiences = [
-    { id: 'b2b', label: 'B2B/Fachpresse', desc: 'Unternehmen und Experten', icon: '💼' },
-    { id: 'consumer', label: 'Verbraucher', desc: 'Endkunden und Publikum', icon: '🛍️' },
-    { id: 'media', label: 'Medien', desc: 'Journalisten und Redaktionen', icon: '📰' }
+    { id: 'b2b', label: 'B2B/Fachpresse', desc: 'Unternehmen und Experten', icon: BriefcaseIcon },
+    { id: 'consumer', label: 'Verbraucher', desc: 'Endkunden und Publikum', icon: ShoppingBagIcon },
+    { id: 'media', label: 'Medien', desc: 'Journalisten und Redaktionen', icon: NewspaperIcon }
   ];
 
   return (
@@ -844,7 +862,7 @@ function ContextSetupStep({
                 className="sr-only"
               />
               <div className="flex items-start gap-3">
-                <span className="text-2xl">{tone.icon}</span>
+                <tone.icon className="h-6 w-6 text-gray-700 flex-shrink-0" />
                 <div>
                   <div className="font-semibold text-gray-900">{tone.label}</div>
                   <div className="text-sm text-gray-600 mt-1">{tone.desc}</div>
@@ -878,7 +896,7 @@ function ContextSetupStep({
                 className="sr-only"
               />
               <div className="text-center">
-                <span className="text-2xl">{audience.icon}</span>
+                <audience.icon className="h-6 w-6 text-gray-700 mx-auto" />
                 <div className="font-semibold text-gray-900 mt-2">{audience.label}</div>
                 <div className="text-xs text-gray-600 mt-1">{audience.desc}</div>
               </div>
@@ -1001,8 +1019,9 @@ function ContentInputStep({
             </span>
           )}
           {hasDocuments && (
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-              📄 {documentCount} Planungsdokument{documentCount !== 1 ? 'e' : ''} angehängt
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+              <DocumentTextIcon className="h-4 w-4" />
+              {documentCount} Planungsdokument{documentCount !== 1 ? 'e' : ''} angehängt
             </span>
           )}
         </div>
@@ -1338,8 +1357,9 @@ function ReviewStep({
                   <p className="font-bold text-indigo-900">
                     {result.structured.cta || result.structured.boilerplate}
                   </p>
-                  <p className="text-xs text-indigo-600 mt-2">
-                    💡 Wird als CTA-Element für bessere SEO-Scores formatiert
+                  <p className="text-xs text-indigo-600 mt-2 flex items-center gap-1.5">
+                    <LightBulbIcon className="h-4 w-4" />
+                    Wird als CTA-Element für bessere SEO-Scores formatiert
                   </p>
                 </div>
               </div>
@@ -1361,8 +1381,9 @@ function ReviewStep({
                       </span>
                     ))}
                   </div>
-                  <p className="text-xs text-blue-600">
-                    🎯 {result.structured.socialOptimized ? 'Optimiert für Twitter/LinkedIn Sharing' : 'Geeignet für Social Media'}
+                  <p className="text-xs text-blue-600 flex items-center gap-1.5">
+                    <CheckBadgeIcon className="h-4 w-4" />
+                    {result.structured.socialOptimized ? 'Optimiert für Twitter/LinkedIn Sharing' : 'Geeignet für Social Media'}
                   </p>
                 </div>
               </div>
