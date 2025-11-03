@@ -282,6 +282,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Generation Mode State - NEU
+  const [generationMode, setGenerationMode] = useState<'standard' | 'expert'>('standard');
+
   // Generation Data
   const [context, setContext] = useState<GenerationContext>({});
   const [prompt, setPrompt] = useState('');
@@ -431,10 +434,26 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   };
 
   async function handleGenerate() {
-    // Validierung: Prompt ist nur erforderlich wenn KEINE Dokumente ausgewählt wurden
-    if (!prompt.trim() && selectedDocuments.length === 0) {
-      setError('Bitte gib eine Beschreibung ein oder wähle Planungsdokumente aus.');
+    // VALIDIERUNG basierend auf Modus
+    if (!prompt.trim()) {
+      setError('Bitte beschreibe das Thema der Pressemitteilung.');
       return;
+    }
+
+    // Standard-Modus: Mindestens Tone + Audience erforderlich
+    if (generationMode === 'standard') {
+      if (!context.tone || !context.audience) {
+        setError('Bitte wähle Tonalität und Zielgruppe aus.');
+        return;
+      }
+    }
+
+    // Experten-Modus: Mindestens 1 Dokument erforderlich
+    if (generationMode === 'expert') {
+      if (selectedDocuments.length === 0) {
+        setError('Bitte füge mindestens 1 Planungsdokument hinzu.');
+        return;
+      }
     }
 
     setIsGenerating(true);
@@ -442,18 +461,22 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
     setError(null);
 
     try {
-      // NEU: Wenn Dokumente vorhanden aber kein Prompt, nutze Standard-Prompt
-      const finalPrompt = prompt.trim() || (selectedDocuments.length > 0
-        ? 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Planungsdokumenten.'
-        : '');
-
       const requestBody: any = {
-        prompt: finalPrompt,
-        context: enrichedContext || context
+        prompt: prompt.trim(),
       };
 
-      // NEU: Dokumenten-Kontext hinzufügen
-      if (selectedDocuments.length > 0) {
+      // STANDARD-MODUS: Context immer senden
+      if (generationMode === 'standard') {
+        requestBody.context = {
+          industry: context.industry,
+          tone: context.tone,
+          audience: context.audience,
+          companyName: context.companyName,
+        };
+      }
+
+      // EXPERTEN-MODUS: Dokumente senden
+      if (generationMode === 'expert' && selectedDocuments.length > 0) {
         requestBody.documentContext = {
           documents: selectedDocuments
         };
@@ -635,6 +658,9 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 // NEU: Dokumenten-Props
                 selectedDocuments={selectedDocuments}
                 onOpenDocumentPicker={() => setShowDocumentPicker(true)}
+                // NEU: Modus-Props
+                generationMode={generationMode}
+                setGenerationMode={setGenerationMode}
               />
             )}
 
@@ -784,12 +810,16 @@ function ContextSetupStep({
   context,
   onChange,
   selectedDocuments,
-  onOpenDocumentPicker
+  onOpenDocumentPicker,
+  generationMode,
+  setGenerationMode
 }: {
   context: GenerationContext;
   onChange: (context: GenerationContext) => void;
   selectedDocuments?: DocumentContext[];
   onOpenDocumentPicker?: () => void;
+  generationMode: 'standard' | 'expert';
+  setGenerationMode: (mode: 'standard' | 'expert') => void;
 }) {
   const industries = [
     'Technologie & Software',
@@ -821,26 +851,81 @@ function ContextSetupStep({
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <div className="text-center">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Kontext definieren</h3>
-        <p className="text-gray-600">
-          Hilf der KI, den perfekten Ton für deine Pressemitteilung zu finden.
-        </p>
+      {/* MODUS-AUSWAHL */}
+      <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Wähle deinen Generierungsmodus:</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            type="button"
+            onClick={() => setGenerationMode('standard')}
+            className={`p-6 rounded-lg border-2 transition-all ${
+              generationMode === 'standard'
+                ? 'border-[#005fab] bg-white shadow-md'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <RocketLaunchIcon className="h-8 w-8 text-green-600 flex-shrink-0" />
+              <div className="text-left">
+                <h4 className="font-semibold text-lg text-gray-900">Standard</h4>
+                <p className="text-sm text-gray-600">Schnell & Direkt</p>
+              </div>
+            </div>
+            <ul className="text-sm text-gray-600 space-y-1 text-left">
+              <li>• Schnelle PM-Entwürfe</li>
+              <li>• Ideal für Einsteiger</li>
+              <li>• Direkte Eingabe</li>
+            </ul>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setGenerationMode('expert')}
+            className={`p-6 rounded-lg border-2 transition-all ${
+              generationMode === 'expert'
+                ? 'border-[#005fab] bg-white shadow-md'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <AcademicCapIcon className="h-8 w-8 text-amber-600 flex-shrink-0" />
+              <div className="text-left">
+                <h4 className="font-semibold text-lg text-gray-900">Experte</h4>
+                <p className="text-sm text-gray-600">Strategisch & Präzise</p>
+              </div>
+            </div>
+            <ul className="text-sm text-gray-600 space-y-1 text-left">
+              <li>• PR-Profis & Agenturen</li>
+              <li>• Dokumenten-basiert</li>
+              <li>• Strategische Planung</li>
+            </ul>
+          </button>
+        </div>
       </div>
 
-      <Field>
-        <Label className="text-base font-semibold">Branche *</Label>
-        <Select 
-          value={context.industry || ''} 
-          onChange={(e) => onChange({ ...context, industry: e.target.value })}
-          className="mt-2"
-        >
-          <option value="">Branche auswählen...</option>
-          {industries.map(industry => (
-            <option key={industry} value={industry}>{industry}</option>
-          ))}
-        </Select>
-      </Field>
+      {/* STANDARD-MODUS FELDER */}
+      {generationMode === 'standard' && (
+        <>
+          <div className="text-center">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Kontext definieren</h3>
+            <p className="text-gray-600">
+              Hilf der KI, den perfekten Ton für deine Pressemitteilung zu finden.
+            </p>
+          </div>
+
+          <Field>
+            <Label className="text-base font-semibold">Branche *</Label>
+            <Select
+              value={context.industry || ''}
+              onChange={(e) => onChange({ ...context, industry: e.target.value })}
+              className="mt-2"
+            >
+              <option value="">Branche auswählen...</option>
+              {industries.map(industry => (
+                <option key={industry} value={industry}>{industry}</option>
+              ))}
+            </Select>
+          </Field>
 
       <Field>
         <Label className="text-base font-semibold mb-3">Tonalität *</Label>
@@ -908,22 +993,39 @@ function ContextSetupStep({
         </div>
       </Field>
 
-      <Field>
-        <Label className="text-base font-semibold">Unternehmensname (optional)</Label>
-        <Input
-          value={context.companyName || ''}
-          onChange={(e) => onChange({ ...context, companyName: e.target.value })}
-          placeholder="Ihre Firma GmbH"
-          className="mt-2"
-        />
-      </Field>
+          <Field>
+            <Label className="text-base font-semibold">Unternehmensname (optional)</Label>
+            <Input
+              value={context.companyName || ''}
+              onChange={(e) => onChange({ ...context, companyName: e.target.value })}
+              placeholder="Ihre Firma GmbH"
+              className="mt-2"
+            />
+          </Field>
+        </>
+      )}
 
-      {/* NEU: Planungsdokumente Sektion */}
-      {onOpenDocumentPicker && (
-        <Field>
-          <Label className="text-base font-semibold mb-3">
-            Planungsdokumente (optional)
-          </Label>
+      {/* EXPERTEN-MODUS FELDER */}
+      {generationMode === 'expert' && onOpenDocumentPicker && (
+        <>
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Strategische PR-Generierung</h3>
+            <p className="text-gray-600">
+              Die KI analysiert Ihre Planungsdokumente und erstellt eine perfekt abgestimmte Pressemitteilung.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <DocumentTextIcon className="h-5 w-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-900">Planungsdokumente</h4>
+            </div>
+
+            <p className="text-sm text-blue-700 mb-4">
+              Fügen Sie Ihre Strategiedokumente hinzu (Kernbotschaft, Zielgruppenanalyse, Unternehmensprofil, etc.)
+            </p>
+
+          <Field>
 
           {selectedDocuments && selectedDocuments.length > 0 ? (
             <div className="space-y-2">
@@ -962,7 +1064,14 @@ function ContextSetupStep({
               Planungsdokumente auswählen
             </Button>
           )}
-        </Field>
+
+            <p className="text-xs text-blue-600 mt-3 flex items-start gap-1.5">
+              <LightBulbIcon className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span>Tipp: Verwenden Sie Strategiedokumente aus dem Projekt-Ordner für beste Ergebnisse. Max. 3 Dokumente, 15.000 Zeichen gesamt.</span>
+            </p>
+          </Field>
+          </div>
+        </>
       )}
     </div>
   );
