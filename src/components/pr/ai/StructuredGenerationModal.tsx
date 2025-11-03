@@ -271,11 +271,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   // NEU: Planungsdokumente State
   const [selectedDocuments, setSelectedDocuments] = useState<DocumentContext[]>([]);
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
-  const [enrichedContext, setEnrichedContext] = useState<EnrichedGenerationContext | null>(null);
-
-  // DEBUG
-  useEffect(() => {
-  }, []);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -335,75 +330,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   // NEU: Handler für Dokument-Auswahl
   const handleDocumentsSelected = (documents: DocumentContext[]) => {
     setSelectedDocuments(documents);
-
-    // Auto-Extract Basic Context
-    const extractedContext = extractBasicContext(documents);
-    setEnrichedContext(extractedContext);
-
     setShowDocumentPicker(false);
-  };
-
-  // NEU: Context-Extraktion
-  const extractBasicContext = (documents: DocumentContext[]): EnrichedGenerationContext => {
-    const combinedText = documents.map(d => d.plainText).join('\n\n');
-
-    // Basis-Extraktion (einfache Keyword-Suche)
-    const keyMessages = extractKeyMessages(combinedText);
-    const targetGroups = extractTargetGroups(combinedText);
-    const usp = extractUSP(combinedText);
-
-    return {
-      ...context,
-      keyMessages,
-      targetGroups,
-      usp,
-      documentContext: {
-        documents,
-        documentSummary: `${documents.length} Dokumente: ${documents.map(d => d.fileName).join(', ')}`
-      }
-    };
-  };
-
-  // NEU: Hilfsfunktionen für Extraktion
-  const extractKeyMessages = (text: string): string[] => {
-    const keywords = ['key message', 'kernbotschaft', 'hauptbotschaft', 'wichtig'];
-    const messages: string[] = [];
-
-    const paragraphs = text.split('\n').filter(p => p.trim());
-    paragraphs.forEach((para, i) => {
-      if (keywords.some(kw => para.toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
-        messages.push(paragraphs[i + 1]);
-      }
-    });
-
-    return messages.slice(0, 3);
-  };
-
-  const extractTargetGroups = (text: string): string[] => {
-    const keywords = ['zielgruppe', 'target', 'persona', 'audience'];
-    const groups: string[] = [];
-
-    const paragraphs = text.split('\n').filter(p => p.trim());
-    paragraphs.forEach((para, i) => {
-      if (keywords.some(kw => para.toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
-        groups.push(paragraphs[i + 1]);
-      }
-    });
-
-    return groups.slice(0, 3);
-  };
-
-  const extractUSP = (text: string): string => {
-    const keywords = ['usp', 'alleinstellungsmerkmal', 'einzigartig', 'unique'];
-
-    const paragraphs = text.split('\n').filter(p => p.trim());
-    for (let i = 0; i < paragraphs.length; i++) {
-      if (keywords.some(kw => paragraphs[i].toLowerCase().includes(kw)) && i + 1 < paragraphs.length) {
-        return paragraphs[i + 1];
-      }
-    }
-
-    return '';
   };
 
   async function handleGenerate() {
