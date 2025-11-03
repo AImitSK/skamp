@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -135,6 +136,7 @@ export default function ContactModalEnhanced({
 }: Props) {
   const { user } = useAuth();
   const { autoGlobalMode } = useAutoGlobal();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ContactTabId>('general');
 
   // Defensive: Stelle sicher, dass companies nie undefined ist
@@ -435,7 +437,7 @@ export default function ContactModalEnhanced({
       if (contact?.id) {
         // Update existing contact
         await contactsEnhancedService.update(
-          contact.id, 
+          contact.id,
           dataToSave,
           context
         );
@@ -446,7 +448,12 @@ export default function ContactModalEnhanced({
           context
         );
       }
-      
+
+      // Invalidate contacts query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['contacts', organizationId] });
+      // Also invalidate companies since contacts reference companies
+      await queryClient.invalidateQueries({ queryKey: ['companies', organizationId] });
+
       onSave();
       onClose();
     } catch (error) {
