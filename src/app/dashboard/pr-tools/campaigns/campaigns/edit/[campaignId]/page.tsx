@@ -1246,12 +1246,71 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <Heading>PR-Kampagne bearbeiten</Heading>
+      <div className="mb-6">
         {existingCampaign && (
-          <Text className="mt-2 text-gray-600">
-            Bearbeite: {existingCampaign.title}
-          </Text>
+          <>
+            {/* Titel-Zeile */}
+            <div className="mb-2">
+              <Heading className="!text-2xl">{existingCampaign.title}</Heading>
+            </div>
+
+            {/* Metadaten-Zeile */}
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              {selectedCompanyName && selectedCompanyId && (
+                <span>
+                  Kunde:{' '}
+                  <Link
+                    href={`/dashboard/customers/${selectedCompanyId}`}
+                    className="hover:text-[#005fab] transition-colors"
+                  >
+                    {selectedCompanyName}
+                  </Link>
+                </span>
+              )}
+              <span>
+                Erstellt: {existingCampaign.createdAt ? (() => {
+                  let date: Date;
+                  if (existingCampaign.createdAt.toDate) {
+                    date = existingCampaign.createdAt.toDate();
+                  } else if ((existingCampaign.createdAt as any).seconds) {
+                    date = new Date((existingCampaign.createdAt as any).seconds * 1000);
+                  } else if (existingCampaign.createdAt instanceof Date) {
+                    date = existingCampaign.createdAt;
+                  } else {
+                    return 'Unbekannt';
+                  }
+                  return date.toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  });
+                })() : 'Unbekannt'}
+              </span>
+              <Badge color={(() => {
+                switch (existingCampaign.status) {
+                  case 'draft': return 'zinc';
+                  case 'in_review': return 'amber';
+                  case 'approved': return 'green';
+                  case 'sent': return 'blue';
+                  case 'rejected': return 'red';
+                  case 'changes_requested': return 'orange';
+                  default: return 'zinc';
+                }
+              })() as any}>
+                {(() => {
+                  switch (existingCampaign.status) {
+                    case 'draft': return 'Entwurf';
+                    case 'in_review': return 'In Prüfung';
+                    case 'approved': return 'Freigegeben';
+                    case 'sent': return 'Versendet';
+                    case 'rejected': return 'Abgelehnt';
+                    case 'changes_requested': return 'Änderungen Angefordert';
+                    default: return existingCampaign.status;
+                  }
+                })()}
+              </Badge>
+            </div>
+          </>
         )}
       </div>
 
@@ -1345,18 +1404,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
           showDetails={true}
         />
       )}
-      
-      {/* ✅ PROJECT-LINK BANNER */}
-      {!loading && existingCampaign && (
-        <ProjectLinkBanner 
-          campaign={existingCampaign} 
-          onProjectUpdate={() => {
-            // Optional: Projekt-Status refresh wenn nötig
-            window.location.reload();
-          }} 
-        />
-      )}
-      
+
       {/* ✅ PIPELINE-APPROVAL BANNER (Plan 3/9) */}
       {!loading && existingCampaign?.projectId && existingCampaign.pipelineStage === 'customer_approval' && (
         <div className="mb-6 border border-orange-200 rounded-lg bg-orange-50">
@@ -1523,185 +1571,36 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             })()}
             
             <FieldGroup>
-              {/* Absender & Projekt */}
-              <div className="mb-8">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender & Projekt</h3>
-
-                  {/* Kunde */}
-                  <div className="mb-4">
-                    <ModernCustomerSelector
-                      value={selectedCompanyId}
-                      onChange={(companyId, companyName) => {
-                        setSelectedCompanyId(companyId);
-                        setSelectedCompanyName(companyName);
-                        // Projekt zurücksetzen wenn Kunde geändert wird
-                        setSelectedProjectId('');
-                        setSelectedProject(null);
-                      }}
-                      required
-                    />
-                  </div>
-
-                  {/* Projekt - nur anzeigen wenn Kunde ausgewählt */}
-                  {selectedCompanyId && (
-                    <div className="pt-3 border-t border-gray-200">
-                      <ProjectSelector
-                        selectedProjectId={selectedProjectId}
-                        onProjectSelect={async (projectId, project) => {
-                          // Prüfe ob Projekt wechselt und Campaign Assets hat
-                          if (existingCampaign && projectId && projectId !== existingCampaign.projectId) {
-                            try {
-                              console.log('🔍 [PROJECT-CHANGE] Prüfe Asset-Migration für Campaign:', existingCampaign.id);
-
-                              // Schnelle Asset-Zählung basierend auf Campaign-Daten
-                              let assetCount = 0;
-                              if (existingCampaign.keyVisual?.assetId) assetCount++;
-                              if (existingCampaign.attachedAssets?.length) assetCount += existingCampaign.attachedAssets.length;
-
-                              // PDF-Versionen zählen (vereinfacht)
-                              try {
-                                const { collection, query, where, getDocs } = await import('firebase/firestore');
-                                const { db } = await import('@/lib/firebase/config');
-                                const pdfQuery = query(
-                                  collection(db, 'pdf_versions'),
-                                  where('campaignId', '==', existingCampaign.id)
-                                );
-                                const pdfSnapshot = await getDocs(pdfQuery);
-                                assetCount += pdfSnapshot.size;
-                              } catch (pdfError) {
-                                console.warn('⚠️ Konnte PDFs nicht zählen:', pdfError);
-                              }
-
-                              console.log(`📊 [ASSET-COUNT] Gefundene Assets: ${assetCount}`);
-
-                              if (assetCount > 0) {
-                                // Zeige Migration-Dialog
-                                setMigrationAssetCount(assetCount);
-                                setPendingProjectId(projectId);
-                                setPendingProject(project);
-                                setShowMigrationDialog(true);
-                                console.log('💬 [MIGRATION-DIALOG] Dialog wird angezeigt');
-                              } else {
-                                // Keine Assets - direkt in Firestore updaten
-                                console.log('✅ [NO-ASSETS] Keine Assets, direktes Update');
-                                const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
-                                const { db } = await import('@/lib/firebase/config');
-
-                                await updateDoc(doc(db, 'pr_campaigns', campaignId), {
-                                  projectId: projectId,
-                                  updatedAt: serverTimestamp()
-                                });
-
-                                setSelectedProjectId(projectId);
-                                setSelectedProject(project);
-
-                                // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
-                                if (project?.customer?.id && project?.customer?.name) {
-                                  console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt:', project.customer.name);
-                                  setSelectedCompanyId(project.customer.id);
-                                  setSelectedCompanyName(project.customer.name);
-                                }
-
-                                toast.success('Projekt erfolgreich zugewiesen');
-                              }
-                            } catch (error) {
-                              console.error('❌ [PROJECT-CHANGE] Fehler beim Prüfen der Assets:', error);
-                              // Bei Fehler: Projekt trotzdem setzen
-                              setSelectedProjectId(projectId);
-                              setSelectedProject(project);
-
-                              // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
-                              if (project?.customer?.id && project?.customer?.name) {
-                                console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt (Fehlerfall):', project.customer.name);
-                                setSelectedCompanyId(project.customer.id);
-                                setSelectedCompanyName(project.customer.name);
-                              }
-                            }
-                          } else {
-                            // Erste Zuweisung oder keine Änderung - speichere in Firestore
-                            if (projectId && projectId !== existingCampaign?.projectId) {
-                              console.log('🔄 [NORMAL-ASSIGNMENT] Weise Campaign zu Projekt zu (ohne Assets)...');
-                              const { doc, updateDoc, serverTimestamp, getDoc } = await import('firebase/firestore');
-                              const { db } = await import('@/lib/firebase/config');
-
-                              // 1. Campaign updaten
-                              await updateDoc(doc(db, 'pr_campaigns', campaignId), {
-                                projectId: projectId,
-                                updatedAt: serverTimestamp()
-                              });
-
-                              // 2. WICHTIG: Projekt-Collection mit Campaign-Referenz aktualisieren
-                              try {
-                                const projectRef = doc(db, 'projects', projectId);
-                                const projectDoc = await getDoc(projectRef);
-
-                                if (projectDoc.exists()) {
-                                  const projectData = projectDoc.data();
-                                  const currentLinkedCampaigns = projectData.linkedCampaigns || [];
-
-                                  if (!currentLinkedCampaigns.includes(campaignId)) {
-                                    currentLinkedCampaigns.push(campaignId);
-
-                                    await updateDoc(projectRef, {
-                                      linkedCampaigns: currentLinkedCampaigns,
-                                      updatedAt: serverTimestamp()
-                                    });
-
-                                    console.log('✅ [NORMAL-ASSIGNMENT] Campaign zu Projekt linkedCampaigns hinzugefügt');
-                                  }
-                                }
-                              } catch (projectUpdateError) {
-                                console.warn('⚠️ [NORMAL-ASSIGNMENT] Projekt-Update Fehler:', projectUpdateError);
-                              }
-
-                              toast.success('Projekt erfolgreich zugewiesen');
-                            }
-
-                            setSelectedProjectId(projectId);
-                            setSelectedProject(project);
-
-                            // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
-                            if (project?.customer?.id && project?.customer?.name) {
-                              console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt:', project.customer.name);
-                              setSelectedCompanyId(project.customer.id);
-                              setSelectedCompanyName(project.customer.name);
-                            }
-                          }
-                        }}
-                        organizationId={currentOrganization!.id}
-                        clientId={selectedCompanyId}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
-                    <Button
-                      type="button"
-                      onClick={() => setShowAiModal(true)}
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                    >
-                      <SparklesIcon className="h-4 w-4" />
-                      KI-Assistent
-                    </Button>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Pressemeldung</h3>
 
-                {/* Info-Box für KI-Nutzung */}
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-700">
-                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
-                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
+                {/* KI-Assistent CTA */}
+                <button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="w-full mb-6 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0">
+                        <SparklesIcon className="h-8 w-8 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-lg font-bold text-white mb-1">
+                          Schnellstart mit dem KI-Assistenten
+                        </p>
+                        <p className="text-sm text-indigo-100">
+                          Erstelle einen kompletten Rohentwurf mit Titel, Lead-Absatz, Haupttext und Zitat in Sekunden
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <ArrowRightIcon className="h-6 w-6 text-white group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                </div>
+                </button>
 
                 {/* Content Composer mit SEO-Features */}
                 <CampaignContentComposer

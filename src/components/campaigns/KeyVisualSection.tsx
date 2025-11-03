@@ -285,46 +285,6 @@ export function KeyVisualSection({
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
       </div>
-      
-      {/* Campaign Smart Router Info Panel */}
-      {enableSmartRouter && uiEnhancements.showContextPreview && campaignId && (
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex items-start gap-3">
-            <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Text className="font-medium text-blue-900">Smart Upload Router</Text>
-                {uiEnhancements.showUploadMethodBadges && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Hero Image Upload
-                  </span>
-                )}
-              </div>
-              
-              <div className="space-y-1 text-sm text-blue-700">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Kampagne:</span>
-                  <span>{campaignName || campaignId}</span>
-                </div>
-                
-                {selectedProjectId && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Projekt:</span>
-                    <span>{selectedProjectName || selectedProjectId}</span>
-                  </div>
-                )}
-                
-                {uiEnhancements.showStorageType && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Storage-Typ:</span>
-                    <span>{selectedProjectId ? 'Organisiert' : 'Unzugeordnet'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {!value ? (
         // Platzhalter wenn kein Key Visual - kompakte Höhe wie Medien-Platzhalter
