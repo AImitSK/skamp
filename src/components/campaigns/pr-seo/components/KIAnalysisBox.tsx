@@ -21,7 +21,12 @@ export const KIAnalysisBox = React.memo(function KIAnalysisBox({ metrics, isLoad
     );
   }
 
-  if (!metrics.semanticRelevance && !metrics.targetAudience && !metrics.tonality) {
+  const hasAIData =
+    metrics.semanticRelevance !== undefined ||
+    metrics.targetAudience !== undefined ||
+    metrics.tonality !== undefined;
+
+  if (!hasAIData) {
     return (
       <div className={boxClasses}>
         <SparklesIcon className="h-3 w-3" />

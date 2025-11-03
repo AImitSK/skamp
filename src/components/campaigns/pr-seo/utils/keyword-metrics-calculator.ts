@@ -19,7 +19,12 @@ export class KeywordMetricsCalculator {
     text: string,
     documentTitle: string
   ): Omit<KeywordMetrics, 'semanticRelevance' | 'contextQuality' | 'relatedTerms' | 'targetAudience' | 'tonality'> {
-    const cleanText = text.replace(/<[^>]*>/g, '').toLowerCase();
+    // Ersten Paragraph extrahieren (vor HTML-Stripping)
+    const firstParagraphMatch = text.match(/<p[^>]*>(.*?)<\/p>/i);
+    const firstParagraphRaw = firstParagraphMatch ? firstParagraphMatch[1] : text;
+    const firstParagraphText = firstParagraphRaw.replace(/<[^>]*>/g, ' ').toLowerCase();
+
+    const cleanText = text.replace(/<[^>]*>/g, ' ').toLowerCase();
     const totalWords = cleanText.split(/\s+/).filter(word => word.length > 0).length;
 
     // Keyword-Vorkommen zählen
@@ -28,13 +33,13 @@ export class KeywordMetricsCalculator {
     const occurrences = matches.length;
     const density = totalWords > 0 ? (occurrences / totalWords) * 100 : 0;
 
-    // Position-Checks
-    const firstParagraphText = cleanText.split('\n')[0] || '';
-    const inFirstParagraph = regex.test(firstParagraphText);
-    const inHeadline = regex.test(documentTitle.toLowerCase());
+    // Position-Checks (regex ohne 'g' flag für .test())
+    const testRegex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'i');
+    const inFirstParagraph = testRegex.test(firstParagraphText);
+    const inHeadline = testRegex.test(documentTitle.toLowerCase());
 
-    // Verteilung analysieren
-    const distribution = this.calculateDistribution(cleanText, regex);
+    // Verteilung analysieren (regex ohne 'g' flag für .test() in map)
+    const distribution = this.calculateDistribution(cleanText, new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'i'));
 
     return {
       keyword,
