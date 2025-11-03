@@ -1,22 +1,17 @@
 // src/components/pr/ai/StructuredGenerationModal.tsx - VERBESSERT
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { useState } from 'react';
+import { Dialog, DialogPanel } from '@headlessui/react';
 import {
-  XMarkIcon,
   SparklesIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
-  ArrowRightIcon,
   EyeIcon,
-  CogIcon,
-  CheckCircleIcon
+  CogIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { apiClient } from '@/lib/api/api-client';
-import clsx from 'clsx';
 import {
   StructuredPressRelease,
   GenerationContext,
@@ -40,6 +35,10 @@ import {
   AUDIENCES
 } from './structured-generation/types';
 import TemplateDropdown from './structured-generation/components/TemplateDropdown';
+import StepProgressBar from './structured-generation/components/StepProgressBar';
+import ErrorBanner from './structured-generation/components/ErrorBanner';
+import ModalHeader from './structured-generation/components/ModalHeader';
+import ModalFooter from './structured-generation/components/ModalFooter';
 import { useTemplates } from './structured-generation/hooks/useTemplates';
 import { useStructuredGeneration } from './structured-generation/hooks/useStructuredGeneration';
 import { useKeyboardShortcuts } from './structured-generation/hooks/useKeyboardShortcuts';
@@ -53,24 +52,24 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
   // Workflow State
   const [currentStep, setCurrentStep] = useState<GenerationStep>('context');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Generation Mode State - NEU
+  // Generation Mode State
   const [generationMode, setGenerationMode] = useState<'standard' | 'expert'>('standard');
 
   // Generation Data
   const [context, setContext] = useState<GenerationContext>({});
   const [prompt, setPrompt] = useState('');
-  const [generatedResult, setGeneratedResult] = useState<StructuredGenerateResponse | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<AITemplate | null>(null);
 
-  // NEU: Planungsdokumente State
+  // Planungsdokumente State
   const [selectedDocuments, setSelectedDocuments] = useState<DocumentContext[]>([]);
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
 
   // Templates laden mit Hook
   const { templates, loading: loadingTemplates } = useTemplates(currentStep === 'content');
+
+  // Structured Generation Hook (übernimmt isGenerating, error, result)
+  const { generate, isGenerating, error, result: generatedResult } = useStructuredGeneration();
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -86,75 +85,23 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   };
 
   async function handleGenerate() {
-    // VALIDIERUNG basierend auf Modus
-
-    // Standard-Modus: Prompt + Tone + Audience erforderlich
-    if (generationMode === 'standard') {
-      if (!prompt.trim()) {
-        setError('Bitte beschreibe das Thema der Pressemitteilung.');
-        return;
-      }
-      if (!context.tone || !context.audience) {
-        setError('Bitte wähle Tonalität und Zielgruppe aus.');
-        return;
-      }
-    }
-
-    // Experten-Modus: Mindestens 1 Dokument erforderlich (Prompt optional)
-    if (generationMode === 'expert') {
-      if (selectedDocuments.length === 0) {
-        setError('Bitte füge mindestens 1 Planungsdokument hinzu.');
-        return;
-      }
-    }
-
-    setIsGenerating(true);
+    // Schritt zu "generating" wechseln
     setCurrentStep('generating');
-    setError(null);
 
-    try {
-      const requestBody: any = {};
+    // Hook nutzen für API-Call und Validierung
+    const result = await generate({
+      mode: generationMode,
+      prompt,
+      context,
+      selectedDocuments
+    });
 
-      // STANDARD-MODUS: Prompt + Context senden
-      if (generationMode === 'standard') {
-        requestBody.prompt = prompt.trim();
-        requestBody.context = {
-          industry: context.industry,
-          tone: context.tone,
-          audience: context.audience,
-          companyName: context.companyName,
-        };
-      }
-
-      // EXPERTEN-MODUS: Dokumente + optionaler Prompt
-      if (generationMode === 'expert') {
-        // Prompt nur senden wenn vorhanden
-        if (prompt.trim()) {
-          requestBody.prompt = prompt.trim();
-        } else {
-          // Default-Prompt für Experten-Modus ohne spezifische Anweisungen
-          requestBody.prompt = 'Erstelle eine professionelle Pressemitteilung basierend auf den bereitgestellten Strategiedokumenten.';
-        }
-
-        requestBody.documentContext = {
-          documents: selectedDocuments
-        };
-      }
-
-      const result: StructuredGenerateResponse = await apiClient.post<StructuredGenerateResponse>('/api/ai/generate-structured', requestBody);
-
-      if (!result.success || !result.structured) {
-        throw new Error('Unvollständige Antwort vom Server');
-      }
-
-      setGeneratedResult(result);
+    // Wenn erfolgreich, zu Review wechseln
+    if (result) {
       setCurrentStep('review');
-
-    } catch (error: any) {
-      setError(error.message || 'Generierung fehlgeschlagen');
+    } else {
+      // Bei Fehler zurück zu Content (error wird vom Hook gesetzt)
       setCurrentStep('content');
-    } finally {
-      setIsGenerating(false);
     }
   }
 
@@ -186,7 +133,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   const handleTemplateSelect = (template: AITemplate) => {
     setPrompt(template.prompt);
     setSelectedTemplate(template);
-    setError(null);
+    // Error wird automatisch vom Hook beim nächsten generate() zurückgesetzt
   };
 
   const steps = [
@@ -229,85 +176,14 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
         <DialogPanel className="mx-auto max-w-5xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
           
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <SparklesIcon className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-semibold">
-                  KI-Pressemitteilung erstellen
-                </DialogTitle>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  Strukturierte Generierung mit Google Gemini
-                </p>
-              </div>
-            </div>
-            <button 
-              onClick={onClose} 
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <ModalHeader onClose={onClose} />
 
-          {/* Minimalist Progress */}
-          <div className="px-6 py-3 border-b bg-gray-50">
-            <div className="flex items-center justify-center gap-8">
-              {steps.map((step, index) => {
-                const Icon = step.icon;
-                const isActive = step.id === currentStep;
-                const isCompleted = index < currentStepIndex;
-                
-                return (
-                  <div key={step.id} className="flex items-center">
-                    <div className={clsx(
-                      "flex items-center gap-2 transition-all",
-                      isActive && "scale-110"
-                    )}>
-                      <div className={clsx(
-                        "rounded-full p-2 transition-all",
-                        isActive && "bg-indigo-600 text-white shadow-lg",
-                        isCompleted && "bg-green-500 text-white",
-                        !isActive && !isCompleted && "bg-gray-200 text-gray-400"
-                      )}>
-                        {isCompleted ? (
-                          <CheckCircleIcon className="h-4 w-4" />
-                        ) : (
-                          <Icon className="h-4 w-4" />
-                        )}
-                      </div>
-                      <span className={clsx(
-                        "text-sm font-medium hidden sm:block",
-                        isActive && "text-indigo-600",
-                        isCompleted && "text-green-600",
-                        !isActive && !isCompleted && "text-gray-400"
-                      )}>
-                        {step.name}
-                      </span>
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div className={clsx(
-                        "w-12 h-0.5 mx-2 transition-colors",
-                        isCompleted ? "bg-green-500" : "bg-gray-200"
-                      )} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {/* Progress Bar */}
+          <StepProgressBar currentStep={currentStep} steps={steps} />
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-shake">
-                <div className="flex items-start">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mt-0.5 mr-2" />
-                  <p className="text-red-600">{error}</p>
-                </div>
-              </div>
-            )}
+            <ErrorBanner error={error} />
 
             {/* Step Content */}
             {currentStep === 'context' && (
@@ -356,67 +232,25 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
           </div>
 
           {/* Footer */}
-          <div className="border-t p-6 flex justify-between items-center bg-gray-50">
-            <div>
-              <Button 
-                plain 
-                onClick={() => {
-                  if (currentStep === 'context') {
-                    onClose();
-                  } else if (currentStep === 'content') {
-                    setCurrentStep('context');
-                  } else if (currentStep === 'review') {
-                    setCurrentStep('content');
-                  }
-                }}
-              >
-                {currentStep === 'context' ? 'Abbrechen' : 'Zurück'}
-              </Button>
-            </div>
-
-            <div className="flex gap-2">
-              {currentStep === 'context' && (
-                <Button 
-                  onClick={() => setCurrentStep('content')}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                >
-                  Weiter <ArrowRightIcon className="h-4 w-4 ml-1" />
-                </Button>
-              )}
-              
-              {currentStep === 'content' && (
-                <Button
-                  onClick={handleGenerate}
-                  disabled={(
-                    (generationMode === 'standard' && !prompt.trim()) ||
-                    (generationMode === 'expert' && selectedDocuments.length === 0) ||
-                    isGenerating
-                  )}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                >
-                  <SparklesIcon className="h-4 w-4 mr-2" />
-                  Mit KI generieren
-                </Button>
-              )}
-              
-              {currentStep === 'review' && (
-                <>
-                  <Button plain onClick={() => setCurrentStep('content')}>
-                    Neu generieren
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      handleUseResult();
-                    }}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                  >
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Text übernehmen
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+          <ModalFooter
+            currentStep={currentStep}
+            onClose={onClose}
+            onBack={() => {
+              if (currentStep === 'content') {
+                setCurrentStep('context');
+              } else if (currentStep === 'review') {
+                setCurrentStep('content');
+              }
+            }}
+            onNext={() => setCurrentStep('content')}
+            onGenerate={handleGenerate}
+            onUseResult={handleUseResult}
+            canGenerate={
+              (generationMode === 'standard' && prompt.trim() !== '') ||
+              (generationMode === 'expert' && selectedDocuments.length > 0)
+            }
+            isGenerating={isGenerating}
+          />
         </DialogPanel>
       </div>
 
