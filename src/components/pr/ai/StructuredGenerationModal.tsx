@@ -50,21 +50,18 @@ import {
   EnrichedGenerationContext
 } from '@/types/ai';
 import DocumentPickerModal from './DocumentPickerModal';
-
-// Lokale Types
-type GenerationStep = 'context' | 'content' | 'generating' | 'review';
-
-interface Props {
-  onClose: () => void;
-  onGenerate: (result: GenerationResult) => void;
-  existingContent?: {
-    title?: string;
-    content?: string;
-  };
-  // NEU: Für Dokumenten-Kontext
-  organizationId?: string;
-  dokumenteFolderId?: string;
-}
+import {
+  type GenerationStep,
+  type StructuredGenerationModalProps,
+  type ContextSetupStepProps,
+  type ContentInputStepProps,
+  type GenerationStepProps,
+  type ReviewStepProps,
+  type TemplateDropdownProps,
+  INDUSTRIES,
+  TONES,
+  AUDIENCES
+} from './structured-generation/types';
 
 // Template Dropdown Component
 function TemplateDropdown({
@@ -72,12 +69,7 @@ function TemplateDropdown({
   onSelect,
   loading,
   selectedTemplate
-}: {
-  templates: AITemplate[];
-  onSelect: (template: AITemplate) => void;
-  loading: boolean;
-  selectedTemplate?: AITemplate | null;
-}) {
+}: TemplateDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -247,7 +239,7 @@ function useKeyboardShortcuts({
   }, [onGenerate, onClose, currentStep]);
 }
 
-export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: Props) {
+export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: StructuredGenerationModalProps) {
   const { user } = useAuth();
 
   // Workflow State
@@ -720,43 +712,27 @@ function ContextSetupStep({
   setGenerationMode,
   onClearDocuments,
   onRemoveDocument
-}: {
-  context: GenerationContext;
-  onChange: (context: GenerationContext) => void;
-  selectedDocuments?: DocumentContext[];
-  onOpenDocumentPicker?: () => void;
-  generationMode: 'standard' | 'expert';
-  setGenerationMode: (mode: 'standard' | 'expert') => void;
-  onClearDocuments?: () => void;
-  onRemoveDocument?: (docId: string) => void;
-}) {
-  const industries = [
-    'Technologie & Software',
-    'Finanzdienstleistungen',
-    'Gesundheitswesen',
-    'Automobil',
-    'Handel & E-Commerce',
-    'Medien & Entertainment',
-    'Energie & Umwelt',
-    'Bildung',
-    'Non-Profit',
-    'Immobilien',
-    'Tourismus & Gastgewerbe',
-    'Sonstiges'
-  ];
+}: ContextSetupStepProps) {
+  // Icon mapping für TONES und AUDIENCES
+  const iconMap: Record<string, any> = {
+    AcademicCapIcon,
+    SparklesIcon,
+    BeakerIcon,
+    RocketLaunchIcon,
+    BriefcaseIcon,
+    ShoppingBagIcon,
+    NewspaperIcon
+  };
 
-  const tones = [
-    { id: 'formal', label: 'Formal', desc: 'Seriös, traditionell, konservativ', icon: AcademicCapIcon },
-    { id: 'modern', label: 'Modern', desc: 'Zeitgemäß, innovativ, zugänglich', icon: SparklesIcon },
-    { id: 'technical', label: 'Technisch', desc: 'Fachspezifisch, präzise, detailliert', icon: BeakerIcon },
-    { id: 'startup', label: 'Startup', desc: 'Dynamisch, visionär, disruptiv', icon: RocketLaunchIcon }
-  ];
+  const tones = TONES.map(tone => ({
+    ...tone,
+    icon: iconMap[tone.icon]
+  }));
 
-  const audiences = [
-    { id: 'b2b', label: 'B2B', desc: 'Unternehmen und Experten', icon: BriefcaseIcon },
-    { id: 'consumer', label: 'Verbraucher', desc: 'Endkunden und Publikum', icon: ShoppingBagIcon },
-    { id: 'media', label: 'Medien', desc: 'Journalisten und Redaktionen', icon: NewspaperIcon }
-  ];
+  const audiences = AUDIENCES.map(audience => ({
+    ...audience,
+    icon: iconMap[audience.icon]
+  }));
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -833,7 +809,7 @@ function ContextSetupStep({
                 className="mt-2"
               >
                 <option value="">Branche auswählen...</option>
-                {industries.map(industry => (
+                {INDUSTRIES.map(industry => (
                   <option key={industry} value={industry}>{industry}</option>
                 ))}
               </Select>
@@ -995,18 +971,7 @@ function ContentInputStep({
   generationMode,
   hasDocuments,
   documentCount
-}: {
-  prompt: string;
-  onChange: (prompt: string) => void;
-  templates: AITemplate[];
-  onTemplateSelect: (template: AITemplate) => void;
-  context: GenerationContext;
-  loadingTemplates: boolean;
-  selectedTemplate?: AITemplate | null;
-  generationMode: 'standard' | 'expert';
-  hasDocuments?: boolean;
-  documentCount?: number;
-}) {
+}: ContentInputStepProps) {
   const tipExamples = [
     "Nenne konkrete Zahlen und Fakten (z.B. 50% Wachstum, 10.000 Nutzer)",
     "Beschreibe das Alleinstellungsmerkmal klar und deutlich",
@@ -1140,7 +1105,7 @@ Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unte
   );
 }
 
-function GenerationStep({ isGenerating }: { isGenerating: boolean }) {
+function GenerationStep({ isGenerating }: GenerationStepProps) {
   const steps = [
     { text: "Kontext und Anforderungen analysieren", delay: "0ms" },
     { text: "Journalistische Struktur erstellen", delay: "100ms" },
@@ -1229,13 +1194,10 @@ function GenerationStep({ isGenerating }: { isGenerating: boolean }) {
   );
 }
 
-function ReviewStep({ 
+function ReviewStep({
   result,
-  onRegenerate 
-}: {
-  result: StructuredGenerateResponse;
-  onRegenerate: () => void;
-}) {
+  onRegenerate
+}: ReviewStepProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'structured'>('preview');
 
   const metrics = [
