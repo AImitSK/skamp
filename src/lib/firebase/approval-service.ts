@@ -1719,18 +1719,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 // Fallback zu CeleroPress - kein kritischer Fehler
               }
 
-              // ========== ERWEITERTE DEBUG LOGS ==========
-                type: approvalType,
-                to: recipient.email,
-                from: organizationEmailAddress?.email || 'NO_ORG_EMAIL',
-                replyTo: replyToAddress || 'NO_REPLY_TO',
-                subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}`,
-                hasOrgEmail: !!organizationEmailAddress,
-                brandingLoaded: !!brandingSettings,
-                agencyName,
-                hasLogo: !!agencyLogoUrl
-              });
-
               // Generiere Template-Content mit geladenen Branding-Daten
               const templateContent = getEmailTemplateContent(approvalType, {
                 campaignTitle: approval.campaignTitle || approval.title,
@@ -1894,12 +1882,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const lastEntry = approval.history?.[approval.history.length - 1];
         const approverName = lastEntry?.actorName || 'Kunde';
 
-        // ========== DEBUG: Admin notification attempt ==========
-          status: newStatus,
-          organizationId: approval.organizationId,
-          approvalId: approval.id
-        });
-
         try {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
@@ -1965,12 +1947,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const reviewerName = lastEntry?.actorName || 'Kunde';
         const feedback = lastEntry?.details?.comment || 'Keine spezifischen Kommentare';
         const inlineComments = lastEntry?.inlineComments || [];
-
-        // ========== DEBUG: Admin notification attempt ==========
-          status: newStatus,
-          organizationId: approval.organizationId,
-          approvalId: approval.id
-        });
 
         try {
           // Inbox-Integration für interne Updates
