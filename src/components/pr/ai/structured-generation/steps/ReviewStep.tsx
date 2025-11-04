@@ -56,7 +56,7 @@ import { type ReviewStepProps } from '../types';
  * />
  * ```
  */
-export default function ReviewStep({
+function ReviewStep({
   result,
   onRegenerate
 }: ReviewStepProps) {
@@ -226,3 +226,5 @@ export default function ReviewStep({
     </div>
   );
 }
+
+export default React.memo(ReviewStep);

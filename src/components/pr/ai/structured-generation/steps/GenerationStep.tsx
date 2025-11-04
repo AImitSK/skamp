@@ -31,7 +31,7 @@ import { type GenerationStepProps } from '../types';
  * <GenerationStep isGenerating={true} />
  * ```
  */
-export default function GenerationStep({ isGenerating }: GenerationStepProps) {
+function GenerationStep({ isGenerating }: GenerationStepProps) {
   const steps = [
     { text: "Kontext und Anforderungen analysieren", delay: "0ms" },
     { text: "Journalistische Struktur erstellen", delay: "100ms" },
@@ -119,3 +119,5 @@ export default function GenerationStep({ isGenerating }: GenerationStepProps) {
     </div>
   );
 }
+
+export default React.memo(GenerationStep);

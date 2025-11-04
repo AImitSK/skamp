@@ -57,7 +57,7 @@ import { type ContextSetupStepProps, INDUSTRIES, TONES, AUDIENCES } from '../typ
  * />
  * ```
  */
-export default function ContextSetupStep({
+function ContextSetupStep({
   context,
   onChange,
   selectedDocuments,
@@ -313,3 +313,5 @@ export default function ContextSetupStep({
     </div>
   );
 }
+
+export default React.memo(ContextSetupStep);

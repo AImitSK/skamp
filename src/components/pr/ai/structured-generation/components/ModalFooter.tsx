@@ -66,7 +66,7 @@ export interface ModalFooterProps {
  * />
  * ```
  */
-export default function ModalFooter({
+function ModalFooter({
   currentStep,
   onClose,
   onBack,
@@ -128,3 +128,5 @@ export default function ModalFooter({
     </div>
   );
 }
+
+export default React.memo(ModalFooter);

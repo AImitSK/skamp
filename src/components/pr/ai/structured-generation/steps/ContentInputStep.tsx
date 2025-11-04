@@ -52,7 +52,7 @@ import TemplateDropdown from '../components/TemplateDropdown';
  * />
  * ```
  */
-export default function ContentInputStep({
+function ContentInputStep({
   prompt,
   onChange,
   templates,
@@ -196,3 +196,5 @@ Beispiel: Unser Startup DataCorp hat eine neue KI-Plattform entwickelt, die Unte
     </div>
   );
 }
+
+export default React.memo(ContentInputStep);

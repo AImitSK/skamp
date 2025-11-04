@@ -40,7 +40,7 @@ export interface ModalHeaderProps {
  * <ModalHeader onClose={() => setIsOpen(false)} />
  * ```
  */
-export default function ModalHeader({ onClose }: ModalHeaderProps) {
+function ModalHeader({ onClose }: ModalHeaderProps) {
   return (
     <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
       <div className="flex items-center gap-3">
@@ -65,3 +65,5 @@ export default function ModalHeader({ onClose }: ModalHeaderProps) {
     </div>
   );
 }
+
+export default React.memo(ModalHeader);

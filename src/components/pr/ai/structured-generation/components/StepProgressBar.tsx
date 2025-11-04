@@ -55,7 +55,7 @@ export interface StepProgressBarProps {
  * <StepProgressBar currentStep="content" steps={steps} />
  * ```
  */
-export default function StepProgressBar({ currentStep, steps }: StepProgressBarProps) {
+function StepProgressBar({ currentStep, steps }: StepProgressBarProps) {
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
 
   return (
@@ -106,3 +106,5 @@ export default function StepProgressBar({ currentStep, steps }: StepProgressBarP
     </div>
   );
 }
+
+export default React.memo(StepProgressBar);

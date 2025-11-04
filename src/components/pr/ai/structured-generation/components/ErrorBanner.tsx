@@ -35,7 +35,7 @@ export interface ErrorBannerProps {
  * <ErrorBanner error="Bitte wähle Tonalität und Zielgruppe aus." />
  * ```
  */
-export default function ErrorBanner({ error }: ErrorBannerProps) {
+function ErrorBanner({ error }: ErrorBannerProps) {
   if (!error) return null;
 
   return (
@@ -47,3 +47,5 @@ export default function ErrorBanner({ error }: ErrorBannerProps) {
     </div>
   );
 }
+
+export default React.memo(ErrorBanner);
