@@ -25,9 +25,6 @@ import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
 import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
 import { toastService } from '@/lib/utils/toast';
 
-// PDF-Generation jetzt über Puppeteer API Route (html2pdf entfernt)
-// const loadHtml2Pdf = () => import('html2pdf.js');
-
 interface CampaignContentComposerProps {
   organizationId: string;
   clientId?: string;
@@ -85,7 +82,7 @@ function FolderSelectorDialog({
         : foldersData;
       
       setFolders(filteredFolders);
-      
+
       // Update breadcrumbs
       if (currentFolderId) {
         const crumbs = await mediaService.getBreadcrumbs(currentFolderId);
@@ -97,6 +94,7 @@ function FolderSelectorDialog({
         setBreadcrumbs([{ name: 'Mediathek' }]);
       }
     } catch (error) {
+      console.error('Fehler beim Laden der Ordner:', error);
     } finally {
       setLoading(false);
     }
