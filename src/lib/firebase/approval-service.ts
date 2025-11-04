@@ -1886,12 +1886,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
-          
-            hasInboxThread: !!thread,
-            threadId: thread?.id,
-            approvalId: approval.id
-          });
-          
+
           if (thread) {
             await inboxService.addMessage({
               threadId: thread.id,
@@ -1911,12 +1906,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            
-              to: replyToAddress,
-              from: organizationEmailAddress.email,
-              replyTo: replyToAddress,
-              subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`
-            });
 
             await apiClient.post('/api/email/send', {
               to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
@@ -1952,12 +1941,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
-          
-            hasInboxThread: !!thread,
-            threadId: thread?.id,
-            approvalId: approval.id
-          });
-          
+
           if (thread) {
             await inboxService.addMessage({
               threadId: thread.id,
@@ -1977,12 +1961,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            
-              to: replyToAddress,
-              from: organizationEmailAddress.email,
-              replyTo: replyToAddress,
-              subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`
-            });
 
             await apiClient.post('/api/email/send', {
               to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
