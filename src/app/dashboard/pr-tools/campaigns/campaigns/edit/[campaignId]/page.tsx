@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
+import { CampaignProvider, useCampaign } from "./context/CampaignContext";
 import { TeamMember } from "@/types/international";
 import { teamMemberEnhancedService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
@@ -85,12 +86,50 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
 
 export default function EditPRCampaignPage({ params }: { params: Promise<{ campaignId: string }> }) {
   const { campaignId } = use(params);
+  const { currentOrganization } = useOrganization();
+
+  if (!currentOrganization) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-sm text-gray-600">Organisation wird geladen...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CampaignProvider campaignId={campaignId} organizationId={currentOrganization.id}>
+      <CampaignEditPageContent campaignId={campaignId} />
+    </CampaignProvider>
+  );
+}
+
+function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [existingCampaign, setExistingCampaign] = useState<PRCampaign | null>(null);
-  const [isLoadingCampaign, setIsLoadingCampaign] = useState(true);
+
+  // Campaign Context
+  const {
+    campaign: existingCampaign,
+    loading,
+    activeTab: currentStep,
+    setActiveTab: setCurrentStep,
+    setCampaign: setExistingCampaign,
+    reloadCampaign,
+    editLockStatus,
+    loadingEditLock,
+    approvalLoading
+  } = useCampaign();
+
+  // Local loading/saving/pdf states für zusätzliche Operationen
+  const [isLoadingCampaign, setIsLoadingCampaign] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
 
   // Form State
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
@@ -266,14 +305,12 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   };
 
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
-  
+
   // Finales Content HTML für Vorschau (wird bei Step-Wechsel generiert)
   const [finalContentHtml, setFinalContentHtml] = useState<string>('');
   const [campaignAdmin, setCampaignAdmin] = useState<TeamMember | null>(null);
-  
+
   // UI State
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [realPrScore, setRealPrScore] = useState<{
@@ -340,18 +377,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     const timeoutId = setTimeout(calculatePrScore, 500); // Debounce
     return () => clearTimeout(timeoutId);
   }, [campaignTitle, editorContent, keywords]);
-  
-  // 4-Step Navigation State
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
-  // 🆕 ENHANCED PDF & EDIT-LOCK STATE
-  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [editLockStatus, setEditLockStatus] = useState<EditLockData>({
-    isLocked: false,
-    canRequestUnlock: false
-  });
-  const [loadingEditLock, setLoadingEditLock] = useState(true);
-  
+
   // PDF-Workflow Preview State
   const [pdfWorkflowPreview, setPdfWorkflowPreview] = useState<{
     enabled: boolean;
@@ -371,7 +397,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   
   // ✅ PIPELINE-APPROVAL STATE (Plan 3/9)
   const [projectApproval, setProjectApproval] = useState<any | null>(null);
-  const [approvalLoading, setApprovalLoading] = useState(false);
   const [pipelineApprovalStatus, setPipelineApprovalStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
 
 
@@ -424,41 +449,27 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
   const loadDataNow = async () => {
     if (!user || !currentOrganization || !campaignId) return;
-    setLoading(true);
     setIsLoadingCampaign(true);
     try {
       await loadData();
     } catch (error) {
       toastService.error('Daten konnten nicht geladen werden');
     } finally {
-      setLoading(false);
       setIsLoadingCampaign(false);
     }
   };
 
   // 🆕 ENHANCED: Lade Edit-Lock Status
+  // HINWEIS: Edit-Lock wird jetzt im Context geladen
   const loadEditLockStatus = async (campaignId: string) => {
-    if (!campaignId) {
-      setLoadingEditLock(false);
-      return;
-    }
-    
-    try {
-      setLoadingEditLock(true);
-      const status = await pdfVersionsService.getEditLockStatus(campaignId);
-      setEditLockStatus(status);
-    } catch (error) {
-    } finally {
-      setLoadingEditLock(false);
-    }
+    // Diese Funktion wird nicht mehr benötigt - Context übernimmt das
   };
 
   // ✅ PIPELINE-APPROVAL FUNKTIONEN (Plan 3/9)
   
   const loadProjectApproval = async () => {
     if (!existingCampaign?.projectId || !currentOrganization || !user) return;
-    
-    setApprovalLoading(true);
+
     try {
       const { approvalService } = await import('@/lib/firebase/approval-service');
       
@@ -485,15 +496,12 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       }
     } catch (error) {
       setPipelineApprovalStatus('none');
-    } finally {
-      setApprovalLoading(false);
     }
   };
 
   const handleCreateProjectApproval = async () => {
     if (!existingCampaign?.projectId || !currentOrganization || !user) return;
-    
-    setApprovalLoading(true);
+
     try {
       const { approvalService } = await import('@/lib/firebase/approval-service');
       
@@ -571,8 +579,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
     } catch (error) {
       // Error handling without logging
-    } finally {
-      setApprovalLoading(false);
     }
   };
 
@@ -590,7 +596,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
   const loadData = useCallback(async () => {
     if (!user || !currentOrganization || !campaignId) return;
-    setLoading(true);
     setIsLoadingCampaign(true);
     try {
       // Lade Verteiler-Listen
@@ -728,7 +733,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     } catch (error) {
       toastService.error('Kampagne konnte nicht geladen werden');
     } finally {
-      setLoading(false);
       setIsLoadingCampaign(false);
     }
   }, [user, currentOrganization, campaignId]);
