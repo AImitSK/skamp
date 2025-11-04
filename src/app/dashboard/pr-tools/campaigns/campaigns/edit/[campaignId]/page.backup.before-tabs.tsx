@@ -1282,88 +1282,486 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         return false;
       }}>
         {/* Step Content */}
-        {/* Step 1: Pressemeldung */}
         {currentStep === 1 && (
-          <ContentTab
-            organizationId={currentOrganization!.id}
-            userId={user!.uid}
-            selectedCompanyId={selectedCompanyId}
-            selectedCompanyName={selectedCompanyName}
-            campaignId={campaignId}
-            campaignTitle={campaignTitle}
-            onTitleChange={setCampaignTitle}
-            editorContent={editorContent}
-            onEditorContentChange={setEditorContent}
-            pressReleaseContent={pressReleaseContent}
-            onPressReleaseContentChange={setPressReleaseContent}
-            boilerplateSections={boilerplateSections}
-            onBoilerplateSectionsChange={setBoilerplateSections}
-            keywords={keywords}
-            onKeywordsChange={setKeywords}
-            onSeoScoreChange={(scoreData: any) => {
-              // Handle SEO score updates
-            }}
-            keyVisual={keyVisual}
-            onKeyVisualChange={setKeyVisual}
-            selectedProjectId={selectedProjectId}
-            selectedProjectName={selectedProject?.title}
-            previousFeedback={previousFeedback}
-            onOpenAiModal={() => setShowAiModal(true)}
-          />
+          <div className="bg-white rounded-lg border p-6">
+            {/* Letzte Änderungsanforderung anzeigen */}
+            {previousFeedback && previousFeedback.length > 0 && (() => {
+              const lastCustomerFeedback = [...previousFeedback]
+                .reverse()
+                .find(f => f.author === 'Kunde');
+              
+              if (lastCustomerFeedback) {
+                return (
+                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-yellow-900 mb-2">
+                          Letzte Änderungsanforderung vom Kunden
+                        </h4>
+                        <p className="text-sm text-yellow-800">
+                          {lastCustomerFeedback.comment}
+                        </p>
+                        <p className="text-xs text-yellow-600 mt-1">
+                          {lastCustomerFeedback.requestedAt?.toDate ? 
+                            new Date(lastCustomerFeedback.requestedAt.toDate()).toLocaleString('de-DE', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) :
+                            ''
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            
+            <FieldGroup>
+              {/* Pressemeldung */}
+              <div className="mb-8 mt-8">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Pressemeldung</h3>
+
+                {/* KI-Assistent CTA */}
+                <button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="w-full mb-6 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0">
+                        <SparklesIcon className="h-8 w-8 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-lg font-bold text-white mb-1">
+                          Schnellstart mit dem KI-Assistenten
+                        </p>
+                        <p className="text-sm text-indigo-100">
+                          Erstelle einen kompletten Rohentwurf mit Titel, Lead-Absatz, Haupttext und Zitat in Sekunden
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <ArrowRightIcon className="h-6 w-6 text-white group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </button>
+
+                {/* Content Composer mit SEO-Features */}
+                <CampaignContentComposer
+                  key={`composer-${boilerplateSections.length}`}
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  title={campaignTitle}
+                  onTitleChange={setCampaignTitle}
+                  mainContent={editorContent}
+                  onMainContentChange={setEditorContent}
+                  onFullContentChange={setPressReleaseContent}
+                  onBoilerplateSectionsChange={setBoilerplateSections}
+                  initialBoilerplateSections={boilerplateSections}
+                  hideMainContentField={false}
+                  hidePreview={true}
+                  hideBoilerplates={true}
+                  keywords={keywords}
+                  onKeywordsChange={setKeywords}
+                  onSeoScoreChange={(scoreData: any) => {
+                    // Stelle sicher, dass social Property vorhanden ist
+                    if (scoreData && scoreData.breakdown) {
+                      setRealPrScore({
+                        ...scoreData,
+                        breakdown: {
+                          ...scoreData.breakdown,
+                          social: scoreData.breakdown.social || 0
+                        }
+                      });
+                    } else {
+                      setRealPrScore(scoreData);
+                    }
+                  }}
+                />
+                </div>
+              </div>
+
+              {/* Key Visual */}
+              <div className="mt-8">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <KeyVisualSection
+                    value={keyVisual}
+                    onChange={handleKeyVisualChange}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    organizationId={currentOrganization!.id}
+                    userId={user!.uid}
+
+                    // Campaign Smart Router Props für strukturierte Uploads
+                    campaignId={campaignId}
+                    campaignName={campaignTitle}
+                    selectedProjectId={selectedProjectId}
+                    selectedProjectName={selectedProject?.title}
+                    enableSmartRouter={true}
+                  />
+                </div>
+
+              </div>
+            </FieldGroup>
+          </div>
         )}
 
         {/* Step 2: Anhänge */}
         {currentStep === 2 && (
-          <AttachmentsTab
-            organizationId={currentOrganization!.id}
-            clientId={selectedCompanyId}
-            clientName={selectedCompanyName}
-            boilerplateSections={boilerplateSections}
-            onBoilerplateSectionsChange={setBoilerplateSections}
-            attachedAssets={attachedAssets}
-            onRemoveAsset={handleRemoveAsset}
-            onOpenAssetSelector={() => setShowAssetSelector(true)}
-          />
+          <div className="bg-white rounded-lg border p-6">
+            <FieldGroup>
+              {/* Textbausteine */}
+              <div className="mb-6">
+                <SimpleBoilerplateLoader
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  onSectionsChange={setBoilerplateSections}
+                  initialSections={boilerplateSections}
+                />
+              </div>
+
+              {/* Medien */}
+              <div className="mt-8">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+                    {selectedCompanyId && (
+                      <Button
+                        type="button"
+                        onClick={() => setShowAssetSelector(true)}
+                        color="secondary"
+                        className="text-sm px-3 py-1.5"
+                      >
+                        <PlusIcon className="h-4 w-4 mr-1" />
+                        Medien hinzufügen
+                      </Button>
+                    )}
+                  </div>
+                
+                {attachedAssets.length > 0 ? (
+                  <div className="space-y-2">
+                    {attachedAssets.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          {attachment.type === 'folder' ? (
+                            <FolderIcon className="h-5 w-5 text-gray-400" />
+                          ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                            <img
+                              src={attachment.metadata.thumbnailUrl}
+                              alt={attachment.metadata.fileName}
+                              className="h-8 w-8 object-cover rounded"
+                            />
+                          ) : (
+                            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {attachment.metadata.fileName || attachment.metadata.folderName}
+                            </p>
+                            {attachment.type === 'folder' && (
+                              <Badge color="blue" className="text-xs">Ordner</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                          className="text-red-600 hover:text-red-500"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
+                    onClick={() => {
+                      if (selectedCompanyId) {
+                        setShowAssetSelector(true);
+                      } else {
+                        // Zeige Fehlermeldung wenn kein Kunde ausgewählt
+                        toastService.error('Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen');
+                      }
+                    }}
+                  >
+                    <div className="flex flex-col items-center justify-center">
+                      <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
+                      <p className="text-gray-600 group-hover:text-[#005fab] font-medium">
+                        {selectedCompanyId ? 'Medien hinzufügen' : 'Zuerst Kunden auswählen'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {selectedCompanyId ? 'Klicken zum Auswählen' : 'Wählen Sie einen Kunden aus'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                </div>
+              </div>
+            </FieldGroup>
+          </div>
         )}
 
         {/* Step 3: Freigaben */}
         {currentStep === 3 && (
-          <ApprovalTab
-            organizationId={currentOrganization!.id}
-            clientId={selectedCompanyId}
-            clientName={selectedCompanyName}
-            approvalData={approvalData}
-            onApprovalDataChange={setApprovalData}
-            previousFeedback={previousFeedback}
-            pdfWorkflowPreview={pdfWorkflowPreview}
-          />
+          <div className="bg-white rounded-lg border p-6">
+            <FieldGroup>
+              {/* Freigabe-Einstellungen */}
+              <div className="mb-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.
+                  </p>
+                </div>
+                <ApprovalSettings
+                  value={approvalData}
+                  onChange={setApprovalData}
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  previousFeedback={previousFeedback}
+                />
+              </div>
+              
+              {/* PDF-WORKFLOW STATUS PREVIEW */}
+              {pdfWorkflowPreview.enabled && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-green-900 mb-2">
+                        ✅ PDF-Workflow bereit
+                      </h4>
+                      <Text className="text-sm text-green-700 mb-3">
+                        Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:
+                      </Text>
+                      
+                      <div className="space-y-2">
+                        {pdfWorkflowPreview.estimatedSteps.map((step, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm text-green-700">
+                            <ArrowRightIcon className="h-4 w-4" />
+                            <span>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-green-300">
+                        <Text className="text-xs text-green-600">
+                          💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen 
+                          Status in Step 4 &ldquo;Vorschau&rdquo;.
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </FieldGroup>
+          </div>
         )}
 
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
-          <PreviewTab
-            organizationId={currentOrganization!.id}
-            campaignId={campaignId}
-            campaign={existingCampaign}
-            campaignTitle={campaignTitle}
-            finalContentHtml={finalContentHtml}
-            editorContent={editorContent}
-            keyVisual={keyVisual}
-            keywords={keywords}
-            boilerplateSections={boilerplateSections}
-            attachedAssets={attachedAssets}
-            realPrScore={realPrScore}
-            selectedCompanyName={selectedCompanyName}
-            campaignAdminName={campaignAdmin?.displayName || campaignAdmin?.email || 'Unbekannt'}
-            approvalData={approvalData}
-            approvalWorkflowResult={approvalWorkflowResult}
-            selectedTemplateId={selectedTemplateId}
-            onTemplateSelect={handleTemplateSelect}
-            currentPdfVersion={currentPdfVersion}
-            generatingPdf={generatingPdf}
-            onGeneratePdf={() => handleGeneratePdf(false)}
-            editLockStatus={editLockStatus}
-          />
+          <div className="bg-white rounded-lg border p-6">
+            
+            
+            {/* PDF-WORKFLOW STATUS BANNER */}
+            {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
+              <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-start">
+                  <ClockIcon className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-green-800 mb-2">
+                      Freigabe-Workflow aktiv
+                    </h4>
+                    <Text className="text-sm text-green-700 mb-3">
+                      Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet.
+                    </Text>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {approvalWorkflowResult.shareableLinks?.team && (
+                        <Button
+                          plain
+                          onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
+                          className="text-xs text-green-700 hover:text-green-800"
+                        >
+                          <UserGroupIcon className="h-3 w-3 mr-1" />
+                          Team-Link öffnen
+                        </Button>
+                      )}
+                      
+                      {approvalWorkflowResult.shareableLinks?.customer && (
+                        <Button
+                          plain
+                          onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
+                          className="text-xs text-green-700 hover:text-green-800"
+                        >
+                          <BuildingOfficeIcon className="h-3 w-3 mr-1" />
+                          Kunden-Link öffnen
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Live Vorschau - Mit CampaignPreviewStep Komponente */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
+              
+              <CampaignPreviewStep
+                campaignTitle={campaignTitle}
+                finalContentHtml={finalContentHtml}
+                keyVisual={keyVisual}
+                selectedCompanyName={selectedCompanyName}
+                campaignAdminName={campaignAdmin?.displayName || campaignAdmin?.email || 'Unbekannt'}
+                realPrScore={realPrScore}
+                keywords={keywords}
+                boilerplateSections={boilerplateSections}
+                attachedAssets={attachedAssets}
+                editorContent={editorContent}
+                approvalData={approvalData}
+                organizationId={currentOrganization?.id}
+                selectedTemplateId={selectedTemplateId}
+                onTemplateSelect={handleTemplateSelect}
+                showTemplateSelector={true}
+              />
+            </div>
+            
+            {/* PDF-Vorschau und Versionen-Historie */}
+            <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau und Versionen</h3>
+                
+                {/* WORKFLOW-STATUS INDICATOR */}
+                {approvalWorkflowResult?.pdfVersionId ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircleIcon className="h-4 w-4" />
+                    <span>PDF für Freigabe erstellt</span>
+                  </div>
+                ) : !editLockStatus.isLocked ? (
+                  <Button
+                    type="button"
+                    onClick={() => handleGeneratePdf(false)}
+                    disabled={generatingPdf}
+                    color="secondary"
+                  >
+                    {generatingPdf ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        PDF wird erstellt...
+                      </>
+                    ) : (
+                      <>
+                        <DocumentTextIcon className="h-4 w-4 mr-2" />
+                        PDF generieren
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <LockClosedIcon className="h-4 w-4" />
+                    PDF-Erstellung gesperrt - {editLockStatus.reason ? EDIT_LOCK_CONFIG[editLockStatus.reason]?.label : 'Bearbeitung nicht möglich'}
+                  </div>
+                )}
+              </div>
+              
+              {/* Aktuelle PDF-Version */}
+              {currentPdfVersion && (
+                <div className="border border-blue-300 rounded-lg p-3 bg-blue-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">Vorschau PDF</span>
+                          <Badge color="blue" className="text-xs">
+                            {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
+                          </Badge>
+                        </div>
+                        {approvalWorkflowResult?.workflowId && (
+                          <div className="text-sm text-blue-700">
+                            Workflow aktiv
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Badge 
+                        color={currentPdfVersion.status === 'draft' ? 'zinc' : 
+                              currentPdfVersion.status === 'approved' ? 'green' : 'amber'} 
+                        className="text-xs"
+                      >
+                        {currentPdfVersion.status === 'draft' ? 'Entwurf' :
+                         currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
+                      </Badge>
+                      
+                      <Button
+                        type="button"
+                        plain
+                        onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
+                        className="!text-gray-600 hover:!text-gray-900 text-sm"
+                      >
+                        <DocumentArrowDownIcon className="h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* PDF-Hinweis */}
+              {!currentPdfVersion && (
+                <div className="text-center py-6 text-gray-500">
+                  <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p>Noch keine PDF-Version erstellt</p>
+                  <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
+                </div>
+              )}
+              
+              {/* PDF-Versionen Historie - innerhalb derselben Box */}
+              {campaignId && currentOrganization && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h4 className="text-base font-semibold mb-4 text-gray-900">
+                    PDF-Versionen Historie
+                  </h4>
+                  <PDFVersionHistory
+                    campaignId={campaignId}
+                    organizationId={currentOrganization.id}
+                    showActions={true}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* ✅ Plan 2/9: Pipeline-PDF-Viewer für Projekt-verknüpfte Kampagnen */}
+            {existingCampaign?.projectId && currentOrganization && (
+              <div className="mt-8">
+                <PipelinePDFViewer
+                  campaign={existingCampaign}
+                  organizationId={currentOrganization.id}
+                  onPDFGenerated={(pdfUrl) => {
+                    // PDF generated successfully
+                  }}
+                />
+              </div>
+            )}
+            
+          </div>
         )}
 
         {/* Navigation Buttons */}
