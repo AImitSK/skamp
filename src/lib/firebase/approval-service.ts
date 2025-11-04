@@ -1645,17 +1645,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested' | 're-request'
   ): Promise<void> {
     try {
-      // ========== DEBUG LOGGING ==========
-        type,
-        approvalId: approval.id,
-        campaignTitle: approval.campaignTitle,
-        recipients: approval.recipients?.map(r => ({
-          email: r.email,
-          status: r.status
-        })),
-        currentStatus: approval.status
-      });
-
       // ✅ KORRIGIERT: Nur echte Status-Changes blockieren, nicht initiale Requests
       if (type === 'status_change' && approval.status !== 'pending') {
         return;
