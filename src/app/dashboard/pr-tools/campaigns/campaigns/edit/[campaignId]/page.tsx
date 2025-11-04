@@ -1123,7 +1123,11 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     }
 
     setGeneratingPdf(true);
-    
+
+    console.log('📄 [PDF-DEBUG] selectedProjectId:', selectedProjectId);
+    console.log('📄 [PDF-DEBUG] selectedCompanyId:', selectedCompanyId);
+    console.log('📄 [PDF-DEBUG] selectedCompanyName:', selectedCompanyName);
+
     try {
       // 1. Temporäre Kampagne mit generating_preview Status erstellen
       const tempCampaignData = {
