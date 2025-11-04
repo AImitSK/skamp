@@ -1260,7 +1260,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
                 <span>
                   Kunde:{' '}
                   <Link
-                    href={`/dashboard/customers/${selectedCompanyId}`}
+                    href={`/dashboard/contacts/crm/companies/${selectedCompanyId}`}
                     className="hover:text-[#005fab] transition-colors"
                   >
                     {selectedCompanyName}
