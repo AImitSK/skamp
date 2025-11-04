@@ -14,6 +14,7 @@ import {
   StructuredGenerateResponse
 } from '@/types/ai';
 import { validateInput } from '../utils/validation';
+import { toastService } from '@/lib/utils/toast';
 
 /**
  * Parameter für die generate() Funktion
@@ -123,11 +124,13 @@ export function useStructuredGeneration() {
       }
 
       setResult(apiResult);
+      toastService.success('Pressemitteilung erfolgreich generiert');
       return apiResult;
 
     } catch (err: any) {
       const errorMessage = err.message || 'Generierung fehlgeschlagen';
       setError(errorMessage);
+      toastService.error(errorMessage);
       return null;
     } finally {
       setIsGenerating(false);

@@ -1,7 +1,7 @@
 // src/components/pr/ai/StructuredGenerationModal.tsx - VERBESSERT
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
   SparklesIcon,
@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { toastService } from '@/lib/utils/toast';
 import {
   StructuredPressRelease,
   GenerationContext,
@@ -71,20 +72,14 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   // Structured Generation Hook (übernimmt isGenerating, error, result)
   const { generate, isGenerating, error, result: generatedResult } = useStructuredGeneration();
 
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    onGenerate: handleGenerate,
-    onClose,
-    currentStep
-  });
-
-  // NEU: Handler für Dokument-Auswahl
-  const handleDocumentsSelected = (documents: DocumentContext[]) => {
+  // Handler für Dokument-Auswahl
+  const handleDocumentsSelected = useCallback((documents: DocumentContext[]) => {
     setSelectedDocuments(documents);
     setShowDocumentPicker(false);
-  };
+  }, []);
 
-  async function handleGenerate() {
+  // Handler für Generation
+  const handleGenerate = useCallback(async () => {
     // Schritt zu "generating" wechseln
     setCurrentStep('generating');
 
@@ -103,10 +98,10 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       // Bei Fehler zurück zu Content (error wird vom Hook gesetzt)
       setCurrentStep('content');
     }
-  }
+  }, [generate, generationMode, prompt, context, selectedDocuments]);
 
-  const handleUseResult = () => {
-    
+  // Handler für Result-Verwendung
+  const handleUseResult = useCallback(() => {
     if (!generatedResult) {
       return;
     }
@@ -122,26 +117,36 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       }
     };
 
-    
     try {
       onGenerate(result);
+      toastService.success('Text erfolgreich übernommen');
       // Modal wird automatisch durch parent component geschlossen
     } catch (error) {
+      toastService.error('Fehler beim Übernehmen des Textes');
     }
-  };
+  }, [generatedResult, context, onGenerate]);
 
-  const handleTemplateSelect = (template: AITemplate) => {
+  // Handler für Template-Auswahl
+  const handleTemplateSelect = useCallback((template: AITemplate) => {
     setPrompt(template.prompt);
     setSelectedTemplate(template);
     // Error wird automatisch vom Hook beim nächsten generate() zurückgesetzt
-  };
+  }, []);
 
-  const steps = [
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onGenerate: handleGenerate,
+    onClose,
+    currentStep
+  });
+
+  // Steps-Array mit useMemo
+  const steps = useMemo(() => [
     { id: 'context', name: 'Kontext', icon: CogIcon },
     { id: 'content', name: 'Inhalt', icon: DocumentTextIcon },
     { id: 'generating', name: 'KI', icon: SparklesIcon },
     { id: 'review', name: 'Review', icon: EyeIcon }
-  ];
+  ], []);
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
 
