@@ -12,36 +12,31 @@ import {
 import { FieldGroup } from '@/components/ui/fieldset';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import SimpleBoilerplateLoader, { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
+import SimpleBoilerplateLoader from '@/components/pr/campaign/SimpleBoilerplateLoader';
 import { toastService } from '@/lib/utils/toast';
-import { CampaignAssetAttachment } from '@/types/pr';
+import { useCampaign } from '../context/CampaignContext';
 
 interface AttachmentsTabProps {
-  // Organization & Client
+  // Organization & Client (Infrastructure)
   organizationId: string;
-  clientId: string;
-  clientName: string;
 
-  // Boilerplates
-  boilerplateSections: BoilerplateSection[];
-  onBoilerplateSectionsChange: (sections: BoilerplateSection[]) => void;
-
-  // Attached Assets
-  attachedAssets: CampaignAssetAttachment[];
-  onRemoveAsset: (assetId: string) => void;
+  // UI Callbacks
   onOpenAssetSelector: () => void;
 }
 
 export default React.memo(function AttachmentsTab({
   organizationId,
-  clientId,
-  clientName,
-  boilerplateSections,
-  onBoilerplateSectionsChange,
-  attachedAssets,
-  onRemoveAsset,
   onOpenAssetSelector
 }: AttachmentsTabProps) {
+  // Phase 3: Get all state from Context
+  const {
+    selectedCompanyId: clientId,
+    selectedCompanyName: clientName,
+    boilerplateSections,
+    updateBoilerplateSections,
+    attachedAssets,
+    removeAsset
+  } = useCampaign();
   return (
     <div className="bg-white rounded-lg border p-6">
       <FieldGroup>
@@ -51,7 +46,7 @@ export default React.memo(function AttachmentsTab({
             organizationId={organizationId}
             clientId={clientId}
             clientName={clientName}
-            onSectionsChange={onBoilerplateSectionsChange}
+            onSectionsChange={updateBoilerplateSections}
             initialSections={boilerplateSections}
           />
         </div>
@@ -104,7 +99,7 @@ export default React.memo(function AttachmentsTab({
                     </div>
                     <button
                       type="button"
-                      onClick={() => onRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                      onClick={() => removeAsset(attachment.assetId || attachment.folderId || '')}
                       className="text-red-600 hover:text-red-500"
                     >
                       <XMarkIcon className="h-4 w-4" />

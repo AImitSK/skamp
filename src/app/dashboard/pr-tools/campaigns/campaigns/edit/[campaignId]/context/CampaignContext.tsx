@@ -2,20 +2,25 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { PRCampaign, EditLockData } from '@/types/pr';
+import { PRCampaign, EditLockData, KeyVisualData, CampaignAssetAttachment } from '@/types/pr';
 import { prService } from '@/lib/firebase/pr-service';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
 import { toastService } from '@/lib/utils/toast';
+import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
 
 /**
  * Campaign Context für zentrales State Management der Campaign Edit Page
  *
+ * Phase 3: Erweitert mit Content, SEO, Attachments, Approval States
+ *
  * Verwaltet:
- * - Campaign Daten
+ * - Campaign Daten & Content
  * - Loading/Saving States
- * - Active Tab
- * - PDF Generation
+ * - Active Tab Navigation
+ * - PDF Generation & Versioning
  * - Approval Workflow
+ * - SEO & Keywords
+ * - Assets & Boilerplates
  */
 
 interface CampaignContextValue {
@@ -33,6 +38,50 @@ interface CampaignContextValue {
   updateField: (field: keyof PRCampaign, value: any) => void;
   saveCampaign: () => Promise<void>;
   reloadCampaign: () => Promise<void>;
+
+  // Content States
+  campaignTitle: string;
+  editorContent: string;
+  pressReleaseContent: string;
+  updateTitle: (title: string) => void;
+  updateEditorContent: (content: string) => void;
+  updatePressReleaseContent: (content: string) => void;
+
+  // SEO States
+  keywords: string[];
+  updateKeywords: (keywords: string[]) => void;
+  seoScore: any;
+  updateSeoScore: (scoreData: any) => void;
+
+  // Visual States
+  keyVisual: KeyVisualData | undefined;
+  updateKeyVisual: (visual: KeyVisualData | undefined) => void;
+
+  // Boilerplates States
+  boilerplateSections: BoilerplateSection[];
+  updateBoilerplateSections: (sections: BoilerplateSection[]) => void;
+
+  // Assets States
+  attachedAssets: CampaignAssetAttachment[];
+  updateAttachedAssets: (assets: CampaignAssetAttachment[]) => void;
+  removeAsset: (assetId: string) => void;
+
+  // Company & Project States
+  selectedCompanyId: string;
+  selectedCompanyName: string;
+  selectedProjectId: string;
+  selectedProjectName: string | undefined;
+  updateCompany: (companyId: string, companyName: string) => void;
+  updateProject: (projectId: string, projectName?: string) => void;
+
+  // Approval States
+  approvalData: any;
+  updateApprovalData: (data: any) => void;
+  previousFeedback: any[];
+
+  // Template States
+  selectedTemplateId: string | undefined;
+  updateSelectedTemplate: (templateId: string, templateName?: string) => void;
 
   // PDF Generation
   generatingPdf: boolean;
@@ -84,6 +133,41 @@ export function CampaignProvider({
 
   // Approval
   const [approvalLoading, setApprovalLoading] = useState(false);
+
+  // Phase 3: Content States
+  const [campaignTitle, setCampaignTitle] = useState('');
+  const [editorContent, setEditorContent] = useState('');
+  const [pressReleaseContent, setPressReleaseContent] = useState('');
+
+  // Phase 3: SEO States
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [seoScore, setSeoScore] = useState<any>(null);
+
+  // Phase 3: Visual States
+  const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
+
+  // Phase 3: Boilerplates States
+  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
+
+  // Phase 3: Assets States
+  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
+
+  // Phase 3: Company & Project States
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
+
+  // Phase 3: Approval States
+  const [approvalData, setApprovalData] = useState<any>({
+    customerApprovalRequired: false,
+    customerContact: undefined,
+    customerApprovalMessage: ''
+  });
+  const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
+
+  // Phase 3: Template States
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
   // Load Campaign Data
   const loadCampaign = useCallback(async () => {
@@ -156,6 +240,70 @@ export function CampaignProvider({
     // Wird in Task 9 implementiert
   };
 
+  // Phase 3: Content Actions
+  const updateTitle = useCallback((title: string) => {
+    setCampaignTitle(title);
+  }, []);
+
+  const updateEditorContent = useCallback((content: string) => {
+    setEditorContent(content);
+  }, []);
+
+  const updatePressReleaseContent = useCallback((content: string) => {
+    setPressReleaseContent(content);
+  }, []);
+
+  // Phase 3: SEO Actions
+  const updateKeywords = useCallback((newKeywords: string[]) => {
+    setKeywords(newKeywords);
+  }, []);
+
+  const updateSeoScore = useCallback((scoreData: any) => {
+    setSeoScore(scoreData);
+  }, []);
+
+  // Phase 3: Visual Actions
+  const updateKeyVisual = useCallback((visual: KeyVisualData | undefined) => {
+    setKeyVisual(visual);
+  }, []);
+
+  // Phase 3: Boilerplates Actions
+  const updateBoilerplateSections = useCallback((sections: BoilerplateSection[]) => {
+    setBoilerplateSections(sections);
+  }, []);
+
+  // Phase 3: Assets Actions
+  const updateAttachedAssets = useCallback((assets: CampaignAssetAttachment[]) => {
+    setAttachedAssets(assets);
+  }, []);
+
+  const removeAsset = useCallback((assetId: string) => {
+    setAttachedAssets(prev => prev.filter(asset =>
+      (asset.assetId || asset.folderId) !== assetId
+    ));
+  }, []);
+
+  // Phase 3: Company & Project Actions
+  const updateCompany = useCallback((companyId: string, companyName: string) => {
+    setSelectedCompanyId(companyId);
+    setSelectedCompanyName(companyName);
+  }, []);
+
+  const updateProject = useCallback((projectId: string, projectName?: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedProjectName(projectName);
+  }, []);
+
+  // Phase 3: Approval Actions
+  const updateApprovalData = useCallback((data: any) => {
+    setApprovalData(data);
+  }, []);
+
+  // Phase 3: Template Actions
+  const updateSelectedTemplate = useCallback((templateId: string, templateName?: string) => {
+    setSelectedTemplateId(templateId);
+  }, []);
+
   const value: CampaignContextValue = {
     // Core State
     campaign,
@@ -171,6 +319,50 @@ export function CampaignProvider({
     updateField,
     saveCampaign,
     reloadCampaign,
+
+    // Content States
+    campaignTitle,
+    editorContent,
+    pressReleaseContent,
+    updateTitle,
+    updateEditorContent,
+    updatePressReleaseContent,
+
+    // SEO States
+    keywords,
+    updateKeywords,
+    seoScore,
+    updateSeoScore,
+
+    // Visual States
+    keyVisual,
+    updateKeyVisual,
+
+    // Boilerplates States
+    boilerplateSections,
+    updateBoilerplateSections,
+
+    // Assets States
+    attachedAssets,
+    updateAttachedAssets,
+    removeAsset,
+
+    // Company & Project States
+    selectedCompanyId,
+    selectedCompanyName,
+    selectedProjectId,
+    selectedProjectName,
+    updateCompany,
+    updateProject,
+
+    // Approval States
+    approvalData,
+    updateApprovalData,
+    previousFeedback,
+
+    // Template States
+    selectedTemplateId,
+    updateSelectedTemplate,
 
     // PDF
     generatingPdf,

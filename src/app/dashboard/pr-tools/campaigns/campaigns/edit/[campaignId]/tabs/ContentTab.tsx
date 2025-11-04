@@ -6,77 +6,46 @@ import { ExclamationTriangleIcon, SparklesIcon, ArrowRightIcon } from '@heroicon
 import { FieldGroup } from '@/components/ui/fieldset';
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { KeyVisualSection } from '@/components/campaigns/KeyVisualSection';
-import { KeyVisualData } from '@/types/pr';
-import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
+import { useCampaign } from '../context/CampaignContext';
 
 interface ContentTabProps {
-  // Organization & User
+  // Organization & User (Infrastructure)
   organizationId: string;
   userId: string;
-
-  // Client
-  selectedCompanyId: string;
-  selectedCompanyName: string;
-
-  // Campaign
   campaignId: string;
-  campaignTitle: string;
-  onTitleChange: (title: string) => void;
 
-  // Content
-  editorContent: string;
-  onEditorContentChange: (content: string) => void;
-  pressReleaseContent: string;
-  onPressReleaseContentChange: (content: string) => void;
-
-  // Boilerplates
-  boilerplateSections: BoilerplateSection[];
-  onBoilerplateSectionsChange: (sections: BoilerplateSection[]) => void;
-
-  // SEO
-  keywords: string[];
-  onKeywordsChange: (keywords: string[]) => void;
-  onSeoScoreChange: (scoreData: any) => void;
-
-  // Key Visual
-  keyVisual: KeyVisualData | undefined;
-  onKeyVisualChange: (keyVisual: KeyVisualData | undefined) => void;
-
-  // Project (Smart Router)
-  selectedProjectId: string;
-  selectedProjectName?: string;
-
-  // Feedback
-  previousFeedback?: any[];
-
-  // UI
+  // UI Callbacks
   onOpenAiModal: () => void;
+  onSeoScoreChange: (scoreData: any) => void;
 }
 
 export default React.memo(function ContentTab({
   organizationId,
   userId,
-  selectedCompanyId,
-  selectedCompanyName,
   campaignId,
-  campaignTitle,
-  onTitleChange,
-  editorContent,
-  onEditorContentChange,
-  pressReleaseContent,
-  onPressReleaseContentChange,
-  boilerplateSections,
-  onBoilerplateSectionsChange,
-  keywords,
-  onKeywordsChange,
-  onSeoScoreChange,
-  keyVisual,
-  onKeyVisualChange,
-  selectedProjectId,
-  selectedProjectName,
-  previousFeedback,
-  onOpenAiModal
+  onOpenAiModal,
+  onSeoScoreChange
 }: ContentTabProps) {
+  // Phase 3: Get all state from Context
+  const {
+    campaignTitle,
+    updateTitle,
+    editorContent,
+    updateEditorContent,
+    pressReleaseContent,
+    updatePressReleaseContent,
+    boilerplateSections,
+    updateBoilerplateSections,
+    keywords,
+    updateKeywords,
+    keyVisual,
+    updateKeyVisual,
+    selectedCompanyId,
+    selectedCompanyName,
+    selectedProjectId,
+    selectedProjectName,
+    previousFeedback
+  } = useCampaign();
   return (
     <div className="bg-white rounded-lg border p-6">
       {/* Letzte Änderungsanforderung anzeigen */}
@@ -156,17 +125,17 @@ export default React.memo(function ContentTab({
               clientId={selectedCompanyId}
               clientName={selectedCompanyName}
               title={campaignTitle}
-              onTitleChange={onTitleChange}
+              onTitleChange={updateTitle}
               mainContent={editorContent}
-              onMainContentChange={onEditorContentChange}
-              onFullContentChange={onPressReleaseContentChange}
-              onBoilerplateSectionsChange={onBoilerplateSectionsChange}
+              onMainContentChange={updateEditorContent}
+              onFullContentChange={updatePressReleaseContent}
+              onBoilerplateSectionsChange={updateBoilerplateSections}
               initialBoilerplateSections={boilerplateSections}
               hideMainContentField={false}
               hidePreview={true}
               hideBoilerplates={true}
               keywords={keywords}
-              onKeywordsChange={onKeywordsChange}
+              onKeywordsChange={updateKeywords}
               onSeoScoreChange={(scoreData: any) => {
                 // Stelle sicher, dass social Property vorhanden ist
                 if (scoreData && scoreData.breakdown) {
@@ -190,7 +159,7 @@ export default React.memo(function ContentTab({
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <KeyVisualSection
               value={keyVisual}
-              onChange={onKeyVisualChange}
+              onChange={updateKeyVisual}
               clientId={selectedCompanyId}
               clientName={selectedCompanyName}
               organizationId={organizationId}

@@ -579,7 +579,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         priority: 'medium' as const
       };
 
-      const approval = await approvalService.createPipelineApproval(approvalData, {
+      const approval = await approvalService.createPipelineApproval(approvalData as any, {
         organizationId: currentOrganization.id,
         userId: user.uid
       });
@@ -1181,7 +1181,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       )}
 
       {/* ✅ PIPELINE-APPROVAL BANNER (Plan 3/9) */}
-      {!loading && existingCampaign?.projectId && existingCampaign.pipelineStage === 'customer_approval' && (
+      {!loading && existingCampaign?.projectId && (existingCampaign.pipelineStage as any) === 'customer_approval' && (
         <div className="mb-6 border border-orange-200 rounded-lg bg-orange-50">
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -1287,28 +1287,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           <ContentTab
             organizationId={currentOrganization!.id}
             userId={user!.uid}
-            selectedCompanyId={selectedCompanyId}
-            selectedCompanyName={selectedCompanyName}
             campaignId={campaignId}
-            campaignTitle={campaignTitle}
-            onTitleChange={setCampaignTitle}
-            editorContent={editorContent}
-            onEditorContentChange={setEditorContent}
-            pressReleaseContent={pressReleaseContent}
-            onPressReleaseContentChange={setPressReleaseContent}
-            boilerplateSections={boilerplateSections}
-            onBoilerplateSectionsChange={setBoilerplateSections}
-            keywords={keywords}
-            onKeywordsChange={setKeywords}
+            onOpenAiModal={() => setShowAiModal(true)}
             onSeoScoreChange={(scoreData: any) => {
               // Handle SEO score updates
             }}
-            keyVisual={keyVisual}
-            onKeyVisualChange={setKeyVisual}
-            selectedProjectId={selectedProjectId}
-            selectedProjectName={selectedProject?.title}
-            previousFeedback={previousFeedback}
-            onOpenAiModal={() => setShowAiModal(true)}
           />
         )}
 
@@ -1316,12 +1299,6 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {currentStep === 2 && (
           <AttachmentsTab
             organizationId={currentOrganization!.id}
-            clientId={selectedCompanyId}
-            clientName={selectedCompanyName}
-            boilerplateSections={boilerplateSections}
-            onBoilerplateSectionsChange={setBoilerplateSections}
-            attachedAssets={attachedAssets}
-            onRemoveAsset={handleRemoveAsset}
             onOpenAssetSelector={() => setShowAssetSelector(true)}
           />
         )}
@@ -1330,12 +1307,6 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {currentStep === 3 && (
           <ApprovalTab
             organizationId={currentOrganization!.id}
-            clientId={selectedCompanyId}
-            clientName={selectedCompanyName}
-            approvalData={approvalData}
-            onApprovalDataChange={setApprovalData}
-            previousFeedback={previousFeedback}
-            pdfWorkflowPreview={pdfWorkflowPreview}
           />
         )}
 
@@ -1344,25 +1315,6 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           <PreviewTab
             organizationId={currentOrganization!.id}
             campaignId={campaignId}
-            campaign={existingCampaign}
-            campaignTitle={campaignTitle}
-            finalContentHtml={finalContentHtml}
-            editorContent={editorContent}
-            keyVisual={keyVisual}
-            keywords={keywords}
-            boilerplateSections={boilerplateSections}
-            attachedAssets={attachedAssets}
-            realPrScore={realPrScore}
-            selectedCompanyName={selectedCompanyName}
-            campaignAdminName={campaignAdmin?.displayName || campaignAdmin?.email || 'Unbekannt'}
-            approvalData={approvalData}
-            approvalWorkflowResult={approvalWorkflowResult}
-            selectedTemplateId={selectedTemplateId}
-            onTemplateSelect={handleTemplateSelect}
-            currentPdfVersion={currentPdfVersion}
-            generatingPdf={generatingPdf}
-            onGeneratePdf={() => handleGeneratePdf(false)}
-            editLockStatus={editLockStatus}
           />
         )}
 
@@ -1547,7 +1499,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                   const uploadedAsset = await mediaService.uploadClientMedia(
                     file,
                     currentOrganization.id,
-                    existingCampaign.clientId,
+                    existingCampaign.clientId!,
                     preparedAsset.targetFolderId,
                     undefined,
                     {
@@ -1569,7 +1521,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                     });
                   } else if (preparedAsset.type === 'keyVisual') {
                     // Key Visual in Campaign aktualisieren
-                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id), {
+                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id!), {
                       'keyVisual.assetId': uploadedAsset.id,
                       'keyVisual.url': uploadedAsset.downloadUrl
                     });
@@ -1581,7 +1533,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                         ? { ...att, assetId: uploadedAsset.id }
                         : att
                     );
-                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id), {
+                    await updateDoc(doc(db, 'pr_campaigns', existingCampaign.id!), {
                       attachedAssets: updatedAssets
                     });
                   }
@@ -1619,15 +1571,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             // Zeige Erfolgs-Message
             if (result.successCount > 0) {
               toastService.success(
-                `✅ ${result.successCount} ${result.successCount === 1 ? 'Asset' : 'Assets'} erfolgreich in Projekt-Ordner migriert`,
-                { duration: 5000 }
+                `✅ ${result.successCount} ${result.successCount === 1 ? 'Asset' : 'Assets'} erfolgreich in Projekt-Ordner migriert`
               );
             }
 
             if (result.errors && result.errors.length > 0) {
               toastService.error(
-                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Asset konnte' : 'Assets konnten'} nicht migriert werden`,
-                { duration: 5000 }
+                `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Asset konnte' : 'Assets konnten'} nicht migriert werden`
               );
             }
 

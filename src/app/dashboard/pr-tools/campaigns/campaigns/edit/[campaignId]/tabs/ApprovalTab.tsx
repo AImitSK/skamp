@@ -6,7 +6,8 @@ import { CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { FieldGroup } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
 import ApprovalSettings from '@/components/campaigns/ApprovalSettings';
-import { ApprovalData } from '@/types/pr';
+import { useCampaign } from '../context/CampaignContext';
+import { useMemo } from 'react';
 
 interface PDFWorkflowPreview {
   enabled: boolean;
@@ -14,31 +15,35 @@ interface PDFWorkflowPreview {
 }
 
 interface ApprovalTabProps {
-  // Organization & Client
+  // Organization (Infrastructure)
   organizationId: string;
-  clientId: string;
-  clientName: string;
-
-  // Approval Data
-  approvalData: any;
-  onApprovalDataChange: (data: any) => void;
-
-  // Previous Feedback
-  previousFeedback?: any[];
-
-  // PDF Workflow Preview
-  pdfWorkflowPreview: PDFWorkflowPreview;
 }
 
 export default React.memo(function ApprovalTab({
-  organizationId,
-  clientId,
-  clientName,
-  approvalData,
-  onApprovalDataChange,
-  previousFeedback,
-  pdfWorkflowPreview
+  organizationId
 }: ApprovalTabProps) {
+  // Phase 3: Get all state from Context
+  const {
+    selectedCompanyId: clientId,
+    selectedCompanyName: clientName,
+    approvalData,
+    updateApprovalData,
+    previousFeedback
+  } = useCampaign();
+
+  // Computed: PDF Workflow Preview
+  const pdfWorkflowPreview: PDFWorkflowPreview = useMemo(() => {
+    const enabled = approvalData?.customerApprovalRequired || false;
+    const estimatedSteps: string[] = [];
+
+    if (enabled) {
+      estimatedSteps.push('1. PDF wird automatisch generiert');
+      estimatedSteps.push('2. Freigabe-Link wird an Kunde versendet');
+      estimatedSteps.push('3. Kunde kann PDF prüfen und freigeben');
+    }
+
+    return { enabled, estimatedSteps };
+  }, [approvalData]);
   return (
     <div className="bg-white rounded-lg border p-6">
       <FieldGroup>
@@ -52,7 +57,7 @@ export default React.memo(function ApprovalTab({
           </div>
           <ApprovalSettings
             value={approvalData}
-            onChange={onApprovalDataChange}
+            onChange={updateApprovalData}
             organizationId={organizationId}
             clientId={clientId}
             clientName={clientName}

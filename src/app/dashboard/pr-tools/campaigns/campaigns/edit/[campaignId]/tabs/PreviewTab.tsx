@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/tabs/PreviewTab.tsx
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ClockIcon,
   UserGroupIcon,
@@ -14,14 +14,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
-import CampaignPreviewStep from '@/components/campaigns/CampaignPreviewStep';
-import PDFVersionHistory from '@/components/campaigns/PDFVersionHistory';
-import PipelinePDFViewer from '@/components/campaigns/PipelinePDFViewer';
-import { PRCampaign, KeyVisualData, ApprovalData } from '@/types/pr';
-import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
-import { EditLockData } from '@/types/pr';
-import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
+import { CampaignPreviewStep } from '@/components/campaigns/CampaignPreviewStep';
+import { PDFVersionHistory } from '@/components/campaigns/PDFVersionHistory';
+import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 import { EDIT_LOCK_CONFIG } from '@/types/pr';
+import { useCampaign } from '../context/CampaignContext';
 
 interface ApprovalWorkflowResult {
   workflowId: string;
@@ -33,76 +30,58 @@ interface ApprovalWorkflowResult {
 }
 
 interface PreviewTabProps {
-  // Organization
   organizationId: string;
-
-  // Campaign
   campaignId: string;
-  campaign?: PRCampaign | null;
-
-  // Content für Preview
-  campaignTitle: string;
-  finalContentHtml: string;
-  editorContent: string;
-  keyVisual: KeyVisualData | undefined;
-  keywords: string[];
-  boilerplateSections: BoilerplateSection[];
-  attachedAssets: any[];
-
-  // SEO
-  realPrScore: any;
-
-  // Company
-  selectedCompanyName: string;
-
-  // Campaign Admin
-  campaignAdminName: string;
-
-  // Approval
-  approvalData: any;
-  approvalWorkflowResult?: ApprovalWorkflowResult | null;
-
-  // Template
-  selectedTemplateId?: string;
-  onTemplateSelect: (templateId: string, templateName?: string) => void;
-
-  // PDF
-  currentPdfVersion: PDFVersion | null;
-  generatingPdf: boolean;
-  onGeneratePdf: () => void;
-
-  // Edit Lock
-  editLockStatus: EditLockData;
 }
 
 export default React.memo(function PreviewTab({
   organizationId,
-  campaignId,
-  campaign,
-  campaignTitle,
-  finalContentHtml,
-  editorContent,
-  keyVisual,
-  keywords,
-  boilerplateSections,
-  attachedAssets,
-  realPrScore,
-  selectedCompanyName,
-  campaignAdminName,
-  approvalData,
-  approvalWorkflowResult,
-  selectedTemplateId,
-  onTemplateSelect,
-  currentPdfVersion,
-  generatingPdf,
-  onGeneratePdf,
-  editLockStatus
+  campaignId
 }: PreviewTabProps) {
+  // Get all state from Context
+  const {
+    campaign,
+    campaignTitle,
+    editorContent,
+    keyVisual,
+    keywords,
+    boilerplateSections,
+    attachedAssets,
+    seoScore,
+    selectedCompanyName,
+    approvalData,
+    selectedTemplateId,
+    updateSelectedTemplate,
+    currentPdfVersion,
+    generatingPdf,
+    generatePdf,
+    editLockStatus
+  } = useCampaign();
+
+  // Computed values
+  const finalContentHtml = useMemo(() => {
+    // Combine editorContent with boilerplateSections to create finalContentHtml
+    let html = editorContent;
+
+    if (boilerplateSections.length > 0) {
+      const boilerplateHtml = boilerplateSections
+        .map(section => section.content)
+        .join('\n');
+      html = `${html}\n${boilerplateHtml}`;
+    }
+
+    return html;
+  }, [editorContent, boilerplateSections]);
+
+  const campaignAdminName = 'Unbekannt';
+  // TODO: Add approvalWorkflowResult to Context once approval workflow is implemented
+  const approvalWorkflowResult = null as ApprovalWorkflowResult | null;
+
   return (
     <div className="bg-white rounded-lg border p-6">
 
       {/* PDF-WORKFLOW STATUS BANNER */}
-      {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
+      {approvalWorkflowResult?.workflowId && (
         <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-start">
             <ClockIcon className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
@@ -115,10 +94,10 @@ export default React.memo(function PreviewTab({
               </Text>
 
               <div className="flex flex-wrap gap-2">
-                {approvalWorkflowResult.shareableLinks?.team && (
+                {approvalWorkflowResult?.shareableLinks?.team && (
                   <Button
                     plain
-                    onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
+                    onClick={() => window.open(approvalWorkflowResult?.shareableLinks?.team!, '_blank')}
                     className="text-xs text-green-700 hover:text-green-800"
                   >
                     <UserGroupIcon className="h-3 w-3 mr-1" />
@@ -126,10 +105,10 @@ export default React.memo(function PreviewTab({
                   </Button>
                 )}
 
-                {approvalWorkflowResult.shareableLinks?.customer && (
+                {approvalWorkflowResult?.shareableLinks?.customer && (
                   <Button
                     plain
-                    onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
+                    onClick={() => window.open(approvalWorkflowResult?.shareableLinks?.customer!, '_blank')}
                     className="text-xs text-green-700 hover:text-green-800"
                   >
                     <BuildingOfficeIcon className="h-3 w-3 mr-1" />
@@ -152,7 +131,7 @@ export default React.memo(function PreviewTab({
           keyVisual={keyVisual}
           selectedCompanyName={selectedCompanyName}
           campaignAdminName={campaignAdminName}
-          realPrScore={realPrScore}
+          realPrScore={seoScore}
           keywords={keywords}
           boilerplateSections={boilerplateSections}
           attachedAssets={attachedAssets}
@@ -160,7 +139,7 @@ export default React.memo(function PreviewTab({
           approvalData={approvalData}
           organizationId={organizationId}
           selectedTemplateId={selectedTemplateId}
-          onTemplateSelect={onTemplateSelect}
+          onTemplateSelect={updateSelectedTemplate}
           showTemplateSelector={true}
         />
       </div>
@@ -179,7 +158,7 @@ export default React.memo(function PreviewTab({
           ) : !editLockStatus.isLocked ? (
             <Button
               type="button"
-              onClick={onGeneratePdf}
+              onClick={() => generatePdf()}
               disabled={generatingPdf}
               color="secondary"
             >
@@ -277,7 +256,7 @@ export default React.memo(function PreviewTab({
           <PipelinePDFViewer
             campaign={campaign}
             organizationId={organizationId}
-            onPDFGenerated={(pdfUrl) => {
+            onPDFGenerated={(pdfUrl: string) => {
               // PDF generated successfully
             }}
           />
