@@ -112,18 +112,13 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     isValid: boolean;
     validationError?: string;
   }>>([]);
-  
-  // Legacy single list (für Validierung)
-  const [selectedListId, setSelectedListId] = useState('');
-  const [selectedListName, setSelectedListName] = useState('');
-  const [recipientCount, setRecipientCount] = useState(0);
+
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
   const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
-  const [approvalRequired, setApprovalRequired] = useState(false); // Legacy - wird durch approvalData ersetzt
   const [approvalData, setApprovalData] = useState<SimplifiedApprovalData>({
     customerApprovalRequired: false,
     customerContact: undefined,
@@ -370,7 +365,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   // 🆕 ENHANCED PDF & EDIT-LOCK STATE
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [editLocked, setEditLocked] = useState(false); // Legacy compatibility
   const [editLockStatus, setEditLockStatus] = useState<EditLockData>({
     isLocked: false,
     canRequestUnlock: false
@@ -472,7 +466,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       setLoadingEditLock(true);
       const status = await pdfVersionsService.getEditLockStatus(campaignId);
       setEditLockStatus(status);
-      setEditLocked(status.isLocked); // Legacy compatibility
     } catch (error) {
     } finally {
       setLoadingEditLock(false);
@@ -749,13 +742,8 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             setPreviousFeedback(campaign.approvalData.feedbackHistory);
           }
         }
-        
-        // Legacy Kompatibilität
-        setSelectedListId(campaign.distributionListIds?.[0] || '');
-        setSelectedListName(campaign.distributionListNames?.[0] || '');
-        setRecipientCount(campaign.recipientCount || 0);
       }
-      
+
       // Lade Edit-Lock Status
       await loadEditLockStatus(campaignId);
       
