@@ -1138,6 +1138,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         keyVisual,
         clientId: selectedCompanyId,
         clientName: selectedCompanyName,
+        projectId: selectedProjectId || undefined, // 🔥 FIX: projectId übernehmen für korrekten PDF-Upload-Pfad
         status: 'generating_preview' as const,
         userId: user.uid,
         organizationId: currentOrganization.id,
