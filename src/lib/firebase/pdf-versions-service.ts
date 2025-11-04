@@ -118,7 +118,7 @@ class PDFVersionsService {
 
       // Echte PDF-Generation über Puppeteer-API Route
       // 🔥 FIX: campaignId übergeben für projekt-basierten Upload
-      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, 'preview-user', campaignId);
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, 'preview-user', campaignId, 'draft');
 
       return { pdfUrl, fileSize };
     } catch (error) {
@@ -242,7 +242,7 @@ class PDFVersionsService {
       const fileName = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_v${newVersionNumber}_${dateStr}.pdf`;
 
       // Echte PDF-Generation über neue Puppeteer-API Route
-      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, context.userId, campaignId);
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, context.userId, campaignId, context.status);
 
       // Berechne Metadaten
       const wordCount = this.countWords(content.mainContent);
@@ -622,6 +622,8 @@ class PDFVersionsService {
 
   /**
    * Generiert PDF über neue Puppeteer-API Route (Migration von jsPDF)
+   *
+   * @param status - PDF-Status: 'draft' → Vorschau-Ordner, andere → Pressemeldungen direkt
    */
   private async generateRealPDF(
     content: {
@@ -635,7 +637,8 @@ class PDFVersionsService {
     fileName: string,
     organizationId: string,
     userId: string,
-    campaignId?: string
+    campaignId?: string,
+    status?: 'draft' | 'pending_customer' | 'approved' | 'rejected'
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
       // ========================================
@@ -809,48 +812,58 @@ class PDFVersionsService {
               console.log('🎯 PDF: Pressemeldungen-Ordner gefunden:', pressemeldungenFolder);
 
               if (pressemeldungenFolder && campaignData.clientId) {
-                // 🔥 FIX: Finde/Erstelle "Vorschau"-Unterordner unter Pressemeldungen
-                let vorschauFolder = allFolders.find(folder =>
-                  folder.parentFolderId === pressemeldungenFolder.id && folder.name === 'Vorschau'
+                // 🔥 UNTERSCHEIDUNG: Draft → Vorschau/, Finale → Pressemeldungen/
+                const isDraft = status === 'draft';
+                let targetFolderId = pressemeldungenFolder.id;
+                let targetFolderName = 'Pressemeldungen';
+
+                if (isDraft) {
+                  // Draft: Finde/Erstelle "Vorschau"-Unterordner unter Pressemeldungen
+                  let vorschauFolder = allFolders.find(folder =>
+                    folder.parentFolderId === pressemeldungenFolder.id && folder.name === 'Vorschau'
+                  );
+
+                  // Wenn Vorschau-Ordner nicht existiert, erstelle ihn
+                  if (!vorschauFolder) {
+                    console.log('📁 PDF: Erstelle Vorschau-Ordner unter Pressemeldungen');
+                    const vorschauFolderId = await mediaService.createFolder(
+                      {
+                        userId,
+                        name: 'Vorschau',
+                        description: 'PDF-Vorschauversionen für Kampagnen',
+                        parentFolderId: pressemeldungenFolder.id,
+                        color: '#93C5FD' // Hellblau für Vorschau
+                      },
+                      { organizationId, userId }
+                    );
+
+                    // Lade Ordner neu
+                    const updatedFolders = await mediaService.getAllFoldersForOrganization(organizationId);
+                    vorschauFolder = updatedFolders.find(f => f.id === vorschauFolderId);
+                  }
+
+                  if (vorschauFolder) {
+                    targetFolderId = vorschauFolder.id;
+                    targetFolderName = 'Pressemeldungen/Vorschau';
+                  } else {
+                    throw new Error('Vorschau-Ordner konnte nicht erstellt werden');
+                  }
+                }
+
+                // Upload in Ziel-Ordner (Vorschau/ oder Pressemeldungen/ direkt)
+                // ✨ skipLimitCheck=true: PDF-Versionierung darf nicht durch Storage-Limits blockiert werden
+                const uploadedAsset = await mediaService.uploadClientMedia(
+                  pdfFile,
+                  organizationId,
+                  campaignData.clientId,
+                  targetFolderId,
+                  undefined, // Kein Progress-Callback
+                  { userId, description: `PDF für Campaign ${campaignData.title}` },
+                  true // skipLimitCheck - keine Storage-Limits für PDF-Versionierung
                 );
 
-                // Wenn Vorschau-Ordner nicht existiert, erstelle ihn
-                if (!vorschauFolder) {
-                  console.log('📁 PDF: Erstelle Vorschau-Ordner unter Pressemeldungen');
-                  const vorschauFolderId = await mediaService.createFolder(
-                    {
-                      userId,
-                      name: 'Vorschau',
-                      description: 'PDF-Vorschauversionen für Kampagnen',
-                      parentFolderId: pressemeldungenFolder.id,
-                      color: '#93C5FD' // Hellblau für Vorschau
-                    },
-                    { organizationId, userId }
-                  );
-
-                  // Lade Ordner neu
-                  const updatedFolders = await mediaService.getAllFoldersForOrganization(organizationId);
-                  vorschauFolder = updatedFolders.find(f => f.id === vorschauFolderId);
-                }
-
-                if (vorschauFolder) {
-                  // DIREKTER UPLOAD in Pressemeldungen/Vorschau-Ordner
-                  // ✨ skipLimitCheck=true: PDF-Versionierung darf nicht durch Storage-Limits blockiert werden
-                  const uploadedAsset = await mediaService.uploadClientMedia(
-                    pdfFile,
-                    organizationId,
-                    campaignData.clientId,
-                    vorschauFolder.id, // Upload in Pressemeldungen/Vorschau-Ordner
-                    undefined, // Kein Progress-Callback
-                    { userId, description: `PDF für Campaign ${campaignData.title}` },
-                    true // skipLimitCheck - keine Storage-Limits für PDF-Versionierung
-                  );
-
-                  uploadResult = { asset: uploadedAsset };
-                  console.log('✅ PDF erfolgreich in Pressemeldungen/Vorschau-Ordner hochgeladen:', uploadedAsset.downloadUrl);
-                } else {
-                  throw new Error('Vorschau-Ordner konnte nicht erstellt werden');
-                }
+                uploadResult = { asset: uploadedAsset };
+                console.log(`✅ PDF erfolgreich in ${targetFolderName}-Ordner hochgeladen:`, uploadedAsset.downloadUrl);
               } else {
                 throw new Error('Pressemeldungen-Ordner nicht gefunden');
               }
