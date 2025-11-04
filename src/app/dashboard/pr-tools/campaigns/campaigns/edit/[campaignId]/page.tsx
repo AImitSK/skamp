@@ -122,7 +122,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Campaign Context
+  // Campaign Context - Phase 3.5: Alle Campaign-States aus Context
   const {
     campaign: existingCampaign,
     loading,
@@ -132,19 +132,58 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     reloadCampaign,
     editLockStatus,
     loadingEditLock,
-    approvalLoading
+    approvalLoading,
+    // Content States
+    campaignTitle,
+    editorContent,
+    pressReleaseContent,
+    updateTitle,
+    updateEditorContent,
+    updatePressReleaseContent,
+    // SEO States
+    keywords,
+    updateKeywords,
+    seoScore,
+    updateSeoScore,
+    // Visual States
+    keyVisual,
+    updateKeyVisual,
+    // Boilerplates States
+    boilerplateSections,
+    updateBoilerplateSections,
+    // Assets States
+    attachedAssets,
+    updateAttachedAssets,
+    removeAsset,
+    // Company & Project States
+    selectedCompanyId,
+    selectedCompanyName,
+    selectedProjectId,
+    selectedProjectName,
+    selectedProject,
+    dokumenteFolderId,
+    updateCompany,
+    updateProject,
+    updateDokumenteFolderId,
+    // Approval States
+    approvalData,
+    updateApprovalData,
+    previousFeedback,
+    // Template States
+    selectedTemplateId,
+    updateSelectedTemplate,
+    // PDF Generation
+    generatingPdf,
+    currentPdfVersion,
+    generatePdf
   } = useCampaign();
 
-  // Local loading/saving/pdf states für zusätzliche Operationen
+  // Local loading/saving states für zusätzliche Operationen
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
 
-  // Form State
+  // Form State (Distribution-spezifisch)
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
-  const [selectedCompanyId, setSelectedCompanyId] = useState('');
-  const [selectedCompanyName, setSelectedCompanyName] = useState('');
   
   // Multi-List Support
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
@@ -162,29 +201,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     validationError?: string;
   }>>([]);
 
-  const [campaignTitle, setCampaignTitle] = useState('');
-  const [pressReleaseContent, setPressReleaseContent] = useState('');
-  const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO
-  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
-  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
-  const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
-  const [approvalData, setApprovalData] = useState<SimplifiedApprovalData>({
-    customerApprovalRequired: false,
-    customerContact: undefined,
-    customerApprovalMessage: ''
-  });
-
-  // 🆕 Template-State-Management
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
-
-  // ✅ PROJEKT-INTEGRATION STATE
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  // NEU: Dokumente-Ordner für KI-Kontext
-  const [dokumenteFolderId, setDokumenteFolderId] = useState<string | undefined>();
-
-  // State für bisherigen Feedback-Verlauf
-  const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
+  // Phase 3.5: ALLE Content States jetzt im Context
+  // Entfernt: campaignTitle, editorContent, pressReleaseContent, keywords
+  // Entfernt: boilerplateSections, attachedAssets, keyVisual
+  // Entfernt: selectedCompanyId, selectedCompanyName, selectedProjectId
+  // Entfernt: selectedProject, dokumenteFolderId
+  // Entfernt: approvalData, previousFeedback, selectedTemplateId
+  // Entfernt: generatingPdf, currentPdfVersion, finalContentHtml
 
 
   // Asset-Migration State
@@ -262,14 +285,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   // Generiert finale Vorschau und wechselt zu Step 4
   const handleGeneratePreview = () => {
-    const html = generateContentHtml();
-    setFinalContentHtml(html);
+    // Phase 3.5: finalContentHtml entfernt - wird jetzt in PreviewTab mit useMemo berechnet
     setCurrentStep(4);
   };
 
   // 🆕 Template-Select Handler
   const handleTemplateSelect = (templateId: string, templateName: string) => {
-    setSelectedTemplateId(templateId);
+    updateSelectedTemplate(templateId); // Phase 3.5: Context update function
   };
 
   // PDF-WORKFLOW PREVIEW HANDLER
@@ -311,44 +333,41 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   };
 
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
-    setKeyVisual(newKeyVisual);
+    updateKeyVisual(newKeyVisual); // Phase 3.5: Context update function
   };
 
-  const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
-
-  // Finales Content HTML für Vorschau (wird bei Step-Wechsel generiert)
-  const [finalContentHtml, setFinalContentHtml] = useState<string>('');
   const [campaignAdmin, setCampaignAdmin] = useState<TeamMember | null>(null);
 
   // UI State
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
-  const [realPrScore, setRealPrScore] = useState<{
-    totalScore: number;
-    breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number; social: number };
-    hints: string[];
-    keywordMetrics: any[];
-  } | null>(null);
+  // Phase 3.5: realPrScore entfernt - verwende seoScore aus Context
   
   // PR-Score automatisch aktualisieren wenn Inhalt sich ändert
+  // Phase 3.5: Verwendet Context States (campaignTitle, editorContent, keywords)
   useEffect(() => {
     const calculatePrScore = () => {
       const content = `${campaignTitle || ''}\n\n${editorContent || ''}`.trim();
       if (!content || content.length < 50) {
-        setRealPrScore({ totalScore: 28, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 }, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'], keywordMetrics: [] });
+        updateSeoScore({
+          totalScore: 28,
+          breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
+          hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'],
+          keywordMetrics: []
+        });
         return;
       }
-      
+
       let score = 30; // Basis-Score
       const hints: string[] = [];
-      
+
       // Title-Bewertung
       if (campaignTitle && campaignTitle.length > 30) {
         score += 15;
       } else {
         hints.push('Titel sollte mindestens 30 Zeichen haben');
       }
-      
+
       // Content-Länge Bewertung
       const wordCount = content.split(/\s+/).length;
       if (wordCount > 200) {
@@ -356,11 +375,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       } else {
         hints.push('Pressemitteilung sollte mindestens 200 Wörter haben');
       }
-      
+
       // Keywords Bewertung
       if (keywords.length > 0) {
         score += 15;
-        const keywordFound = keywords.some(keyword => 
+        const keywordFound = keywords.some(keyword =>
           content.toLowerCase().includes(keyword.toLowerCase())
         );
         if (keywordFound) {
@@ -371,7 +390,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       } else {
         hints.push('Definieren Sie SEO-Keywords für bessere Auffindbarkeit');
       }
-      
+
       // Struktur-Bewertung (einfache Heuristik)
       const hasStructure = content.includes('\n') || content.length > 500;
       if (hasStructure) {
@@ -379,14 +398,19 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       } else {
         hints.push('Gliedern Sie den Text in Absätze');
       }
-      
+
       score = Math.min(100, score);
-      setRealPrScore({ totalScore: score, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 }, hints, keywordMetrics: [] });
+      updateSeoScore({
+        totalScore: score,
+        breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
+        hints,
+        keywordMetrics: []
+      });
     };
-    
+
     const timeoutId = setTimeout(calculatePrScore, 500); // Debounce
     return () => clearTimeout(timeoutId);
-  }, [campaignTitle, editorContent, keywords]);
+  }, [campaignTitle, editorContent, keywords, updateSeoScore]);
 
   // PDF-Workflow Preview State
   const [pdfWorkflowPreview, setPdfWorkflowPreview] = useState<{
@@ -434,7 +458,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             organizationId: currentOrganization.id
           });
           if (project) {
-            setSelectedProject(project);
+            // Phase 3.5: Context update functions
+            updateProject(selectedProjectId, project.title, project);
 
             // NEU: Lade Dokumente-Ordner für KI-Kontext
             const projectFolders = await projectService.getProjectFolderStructure(
@@ -445,7 +470,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
               (folder: any) => folder.name === 'Dokumente'
             );
             if (dokumenteFolder) {
-              setDokumenteFolderId(dokumenteFolder.id);
+              updateDokumenteFolderId(dokumenteFolder.id); // Phase 3.5: Context update function
             }
           }
         } catch (error) {
@@ -469,11 +494,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     }
   };
 
-  // 🆕 ENHANCED: Lade Edit-Lock Status
-  // HINWEIS: Edit-Lock wird jetzt im Context geladen
-  const loadEditLockStatus = async (campaignId: string) => {
-    // Diese Funktion wird nicht mehr benötigt - Context übernimmt das
-  };
+  // Phase 3.5: Edit-Lock Status wird jetzt vom Context geladen
+  // loadEditLockStatus() entfernt - nicht mehr benötigt
 
   // ✅ PIPELINE-APPROVAL FUNKTIONEN (Plan 3/9)
   
@@ -604,148 +626,37 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     }
   };
 
+  // Phase 3.5: Stark vereinfacht - nur Distribution-spezifische Daten
   const loadData = useCallback(async () => {
-    if (!user || !currentOrganization || !campaignId) return;
+    if (!user || !currentOrganization) return;
     setIsLoadingCampaign(true);
     try {
-      // Lade Verteiler-Listen
+      // 1. Lade Verteiler-Listen (Distribution-spezifisch)
       const listsData = await listsService.getAll(currentOrganization.id, user.uid);
       setAvailableLists(listsData);
-      
-      // Lade bestehende Kampagne
-      const campaign = await prService.getById(campaignId);
-      if (campaign) {
-        setExistingCampaign(campaign);
-        
-        // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
-        if (campaign.approvalData?.shareId && campaign.approvalData.shareId !== '') {
-          try {
-            const campaignWithFeedback = await prService.getCampaignByShareId(campaign.approvalData.shareId);
-            if (campaignWithFeedback?.approvalData?.feedbackHistory) {
-              campaign.approvalData.feedbackHistory = campaignWithFeedback.approvalData.feedbackHistory;
-            } else {
-            }
-          } catch (error) {
-          }
-        } else {
-          // Für alte Kampagnen: Erstelle eine minimale feedbackHistory aus vorhandenen Daten
-          if (campaign.approvalData && 'customerApprovalMessage' in campaign.approvalData && campaign.approvalData.customerApprovalMessage) {
-            const legacyFeedback = [{
-              comment: campaign.approvalData.customerApprovalMessage,
-              requestedAt: (campaign.updatedAt || campaign.createdAt) as any,
-              author: 'Ihre Nachricht (Legacy)'
-            }];
-            setPreviousFeedback(legacyFeedback);
-          }
-        }
-        
-        // Setze alle Formular-Felder mit Kampagnen-Daten
-        setCampaignTitle(campaign.title || '');
-        setPressReleaseContent(campaign.contentHtml || '');
-        setEditorContent(campaign.mainContent || '');
-        setKeywords(campaign.keywords || []);
-        setSelectedCompanyId(campaign.clientId || '');
-        setSelectedCompanyName(campaign.clientName || '');
-        setSelectedProjectId(campaign.projectId || '');
 
-        // 🔥 WICHTIG: Kunde aus Projekt laden wenn Campaign projekt-verknüpft ist
-        if (campaign.projectId) {
-          // Lade Projekt und extrahiere echten Kunden (auch wenn Campaign schon clientName hat)
-          try {
-            const { projectService } = await import('@/lib/firebase/project-service');
-            const project = await projectService.getById(campaign.projectId, {
-              organizationId: currentOrganization.id
-            });
+      // 2. Hole Campaign aus Context (wird bereits von Context.loadCampaign() geladen)
+      if (existingCampaign) {
+        // Setze Distribution-Daten aus Campaign
+        setSelectedListIds(existingCampaign.distributionListIds || []);
+        setSelectedListNames(existingCampaign.distributionListNames || []);
+        setListRecipientCount(existingCampaign.recipientCount || 0);
+        setManualRecipients(existingCampaign.manualRecipients || []);
 
-            if (project?.customer?.id && project?.customer?.name) {
-              setSelectedCompanyId(project.customer.id);
-              setSelectedCompanyName(project.customer.name);
-              setSelectedProject(project);
-            }
-          } catch (error) {
-            // Error handling without logging
-          }
-        }
-        setSelectedListIds(campaign.distributionListIds || []);
-        setSelectedListNames(campaign.distributionListNames || []);
-        setListRecipientCount(campaign.recipientCount || 0);
-        setManualRecipients(campaign.manualRecipients || []);
-        setAttachedAssets(campaign.attachedAssets || []);
-        setKeyVisual(campaign.keyVisual);
-        // Konvertiere CampaignBoilerplateSection zu BoilerplateSection und lade Inhalte
-        const convertedSections: BoilerplateSection[] = await Promise.all(
-          (campaign.boilerplateSections || []).map(async section => {
-            let content = section.content;
-            let boilerplate = null;
-            
-            // Wenn kein Content vorhanden, aber boilerplateId da ist, lade den Inhalt
-            if (!content && section.boilerplateId) {
-              try {
-                boilerplate = await boilerplatesService.getById(section.boilerplateId);
-                content = boilerplate?.content || boilerplate?.description || '';
-              } catch (error) {
-              }
-            }
-            
-            return {
-              id: section.id,
-              type: section.type || 'boilerplate',
-              boilerplateId: section.boilerplateId,
-              content,
-              metadata: section.metadata,
-              order: section.order,
-              isLocked: section.isLocked,
-              isCollapsed: section.isCollapsed || false,
-              customTitle: section.customTitle,
-              // Speichere auch das geladene Boilerplate-Objekt für die Anzeige
-              boilerplate: boilerplate || undefined
-            };
-          })
-        );
-        setBoilerplateSections(convertedSections);
-        
-        // Load team members and find campaign admin
+        // 3. Load team members and find campaign admin (page-spezifisch)
         const members = await teamMemberEnhancedService.getAll(currentOrganization.id);
-
-        // Find current admin (campaign creator)
-        const admin = members.find(member => member.userId === campaign.userId);
+        const admin = members.find(member => member.userId === existingCampaign.userId);
         setCampaignAdmin(admin as any || null);
-        
-        // Setze gespeicherten PR-Score falls vorhanden
-        if (campaign.seoMetrics?.prScore) {
-          setRealPrScore({
-            totalScore: campaign.seoMetrics.prScore,
-            breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
-            hints: campaign.seoMetrics.prHints || [],
-            keywordMetrics: []
-          });
-        }
-        
-        // Setze Approval-Daten falls vorhanden
-        if (campaign.approvalData) {
-          setApprovalData({
-            customerApprovalRequired: 'customerApprovalRequired' in campaign.approvalData ? campaign.approvalData.customerApprovalRequired : false,
-            customerContact: 'customerContact' in campaign.approvalData ? campaign.approvalData.customerContact : undefined,
-            // Nachrichtenfeld beim Editieren leer lassen für neue Nachricht
-            customerApprovalMessage: ''
-          });
-          
-          // Lade bisherigen Feedback-Verlauf falls vorhanden
-          if (campaign.approvalData.feedbackHistory) {
-            setPreviousFeedback(campaign.approvalData.feedbackHistory);
-          }
-        }
+
+        // Phase 3.5: PR-Score wird jetzt vom Context geladen (Context.loadCampaign() setzt seoScore)
       }
 
-      // Lade Edit-Lock Status
-      await loadEditLockStatus(campaignId);
-      
     } catch (error) {
-      toastService.error('Kampagne konnte nicht geladen werden');
+      toastService.error('Daten konnten nicht geladen werden');
     } finally {
       setIsLoadingCampaign(false);
     }
-  }, [user, currentOrganization, campaignId]);
+  }, [user, currentOrganization, existingCampaign]);
 
   // 🆕 ENHANCED SUBMIT HANDLER mit vollständiger Edit-Lock Integration
   const handleSubmit = async (e: React.FormEvent) => {
@@ -817,8 +728,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           keywords: keywords,
           seoMetrics: {
             lastAnalyzed: serverTimestamp() as Timestamp,
-            prScore: realPrScore?.totalScore || 0,
-            prHints: realPrScore?.hints || [],
+            prScore: seoScore?.totalScore || 0, // Phase 3.5: Context seoScore
+            prHints: seoScore?.hints || [], // Phase 3.5: Context seoScore
             prScoreCalculatedAt: serverTimestamp() as Timestamp,
           },
           status: 'draft' as const
@@ -931,7 +842,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       const campaignData = {
         organizationId: currentOrganization.id,
         title: campaignTitle.trim(),
-        contentHtml: finalContentHtml || generateContentHtml(), // Verwende finale HTML oder generiere neu falls nicht vorhanden
+        contentHtml: generateContentHtml(), // Phase 3.5: finalContentHtml entfernt - wird jetzt immer neu generiert
         mainContent: editorContent || '',
         boilerplateSections: cleanedSections as any, // Type conversion for compatibility
         status: 'draft' as const,
@@ -948,8 +859,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         keywords: keywords,
         seoMetrics: {
           lastAnalyzed: serverTimestamp() as Timestamp,
-          prScore: realPrScore?.totalScore || 0,
-          prHints: realPrScore?.hints || [],
+          prScore: seoScore?.totalScore || 0, // Phase 3.5: Context seoScore
+          prHints: seoScore?.hints || [], // Phase 3.5: Context seoScore
           prScoreCalculatedAt: serverTimestamp() as Timestamp,
         },
         clientId: selectedCompanyId || undefined,
@@ -979,7 +890,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   const handleAiGenerate = (result: any) => {
     if (result.structured?.headline) {
-      setCampaignTitle(result.structured.headline);
+      updateTitle(result.structured.headline); // Phase 3.5: Context update function
     }
 
     if (result.structured) {
@@ -1023,18 +934,16 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       }
 
       const fullHtmlContent = htmlParts.join('\n\n');
-      setEditorContent(fullHtmlContent);
-      setPressReleaseContent(fullHtmlContent);
+      updateEditorContent(fullHtmlContent); // Phase 3.5: Context update function
+      updatePressReleaseContent(fullHtmlContent); // Phase 3.5: Context update function
     }
 
     setShowAiModal(false);
   };
 
   const handleRemoveAsset = (assetId: string) => {
-    setAttachedAssets(attachedAssets.filter(a =>
-      !((a.type === 'asset' && a.assetId === assetId) ||
-        (a.type === 'folder' && a.folderId === assetId))
-    ));
+    // Phase 3.5: Context hat bereits removeAsset() Funktion
+    removeAsset(assetId);
   };
 
   const handleGeneratePdf = async (forApproval: boolean = false) => {
@@ -1065,39 +974,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       return;
     }
 
-    setGeneratingPdf(true);
-
-    try {
-      // ✅ VEREINFACHT: PDF direkt für echte Campaign erstellen (kein TEMP mehr)
-      // Die Campaign existiert bereits mit allen korrekten Daten (projectId, clientId, etc.)
-      const pdfVersionId = await pdfVersionsService.createPDFVersion(
-        campaignId, // Echte Campaign-ID aus URL
-        currentOrganization.id,
-        {
-          title: campaignTitle,
-          mainContent: editorContent,
-          boilerplateSections,
-          keyVisual,
-          clientName: selectedCompanyName,
-          templateId: selectedTemplateId
-        },
-        {
-          userId: user.uid,
-          status: forApproval ? 'pending_customer' : 'draft'
-        }
-      );
-
-      // PDF-Version für Vorschau laden
-      const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
-      setCurrentPdfVersion(newVersion);
-
-      toastService.success('PDF erfolgreich generiert!');
-
-    } catch (error) {
-      toastService.error('Fehler bei der PDF-Erstellung');
-    } finally {
-      setGeneratingPdf(false);
-    }
+    // Phase 3.5: Diese Funktion könnte komplett durch Context generatePdf() ersetzt werden
+    // Für jetzt verwenden wir die Context-Funktion direkt
+    await generatePdf();
   };
 
   // 🆕 ENHANCED: Unlock-Request Handler
@@ -1122,9 +1001,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
       toastService.success('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
 
-      // Status neu laden
-      await loadEditLockStatus(campaignId);
-      
+      // Phase 3.5: Context neu laden statt lokale loadEditLockStatus()
+      await reloadCampaign();
+
     } catch (error) {
       throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
     }
@@ -1132,12 +1011,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   // 🆕 ENHANCED: Retry Edit-Lock Status
   const handleRetryEditLock = async (): Promise<void> => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('id');
-    
-    if (campaignId) {
-      await loadEditLockStatus(campaignId);
-    }
+    // Phase 3.5: Context neu laden statt lokale loadEditLockStatus()
+    await reloadCampaign();
   };
 
   if (loading) {
@@ -1396,7 +1271,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           onClose={() => setShowAssetSelector(false)}
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
-          onAssetsSelected={setAttachedAssets}
+          onAssetsSelected={updateAttachedAssets} // Phase 3.5: Context update function
           organizationId={currentOrganization!.id}
           legacyUserId={user.uid}
           selectionMode="multiple"
@@ -1558,14 +1433,14 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
               updatedAt: serverTimestamp()
             });
 
-            // Update lokale State
-            setSelectedProjectId(pendingProjectId);
-            setSelectedProject(pendingProject);
+            // Phase 3.5: Context update functions
+            if (pendingProject) {
+              updateProject(pendingProjectId, pendingProject.title, pendingProject);
+            }
 
             // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
             if (pendingProject?.customer?.id && pendingProject?.customer?.name) {
-              setSelectedCompanyId(pendingProject.customer.id);
-              setSelectedCompanyName(pendingProject.customer.name);
+              updateCompany(pendingProject.customer.id, pendingProject.customer.name);
             }
 
             // Zeige Erfolgs-Message

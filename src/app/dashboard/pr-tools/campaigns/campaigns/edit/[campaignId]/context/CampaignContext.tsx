@@ -7,6 +7,8 @@ import { prService } from '@/lib/firebase/pr-service';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
 import { toastService } from '@/lib/utils/toast';
 import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
+import { Project } from '@/types/project';
+import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
 
 /**
  * Campaign Context für zentrales State Management der Campaign Edit Page
@@ -71,8 +73,11 @@ interface CampaignContextValue {
   selectedCompanyName: string;
   selectedProjectId: string;
   selectedProjectName: string | undefined;
+  selectedProject: Project | null;
+  dokumenteFolderId: string | undefined;
   updateCompany: (companyId: string, companyName: string) => void;
-  updateProject: (projectId: string, projectName?: string) => void;
+  updateProject: (projectId: string, projectName?: string, project?: Project | null) => void;
+  updateDokumenteFolderId: (folderId: string | undefined) => void;
 
   // Approval States
   approvalData: any;
@@ -157,6 +162,8 @@ export function CampaignProvider({
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [dokumenteFolderId, setDokumenteFolderId] = useState<string | undefined>(undefined);
 
   // Phase 3: Approval States
   const [approvalData, setApprovalData] = useState<any>({
@@ -169,7 +176,7 @@ export function CampaignProvider({
   // Phase 3: Template States
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
-  // Load Campaign Data
+  // Load Campaign Data - Phase 3.5: Lädt ALLE Campaign-States
   const loadCampaign = useCallback(async () => {
     setLoading(true);
     try {
@@ -188,6 +195,118 @@ export function CampaignProvider({
           } catch (error) {
             // Fehler beim Laden der Feedback-History - nicht kritisch
           }
+        } else {
+          // Für alte Kampagnen: Erstelle eine minimale feedbackHistory aus vorhandenen Daten
+          if (campaign.approvalData && 'customerApprovalMessage' in campaign.approvalData && campaign.approvalData.customerApprovalMessage) {
+            const legacyFeedback = [{
+              comment: campaign.approvalData.customerApprovalMessage,
+              requestedAt: (campaign.updatedAt || campaign.createdAt) as any,
+              author: 'Ihre Nachricht (Legacy)'
+            }];
+            setPreviousFeedback(legacyFeedback);
+          }
+        }
+
+        // Phase 3.5: Setze ALLE Content States
+        setCampaignTitle(campaign.title || '');
+        setPressReleaseContent(campaign.contentHtml || '');
+        setEditorContent(campaign.mainContent || '');
+        setKeywords(campaign.keywords || []);
+        setSelectedCompanyId(campaign.clientId || '');
+        setSelectedCompanyName(campaign.clientName || '');
+        setSelectedProjectId(campaign.projectId || '');
+        setAttachedAssets(campaign.attachedAssets || []);
+        setKeyVisual(campaign.keyVisual);
+
+        // Lade Projekt wenn projectId vorhanden
+        if (campaign.projectId) {
+          try {
+            const { projectService } = await import('@/lib/firebase/project-service');
+            const project = await projectService.getById(campaign.projectId, {
+              organizationId: organizationId
+            });
+
+            if (project) {
+              setSelectedProject(project);
+              setSelectedProjectName(project.title);
+
+              // Überschreibe Kunde mit Projekt-Kunde falls vorhanden
+              if (project.customer?.id && project.customer?.name) {
+                setSelectedCompanyId(project.customer.id);
+                setSelectedCompanyName(project.customer.name);
+              }
+
+              // Lade Dokumente-Ordner für KI-Kontext
+              const projectFolders = await projectService.getProjectFolderStructure(
+                campaign.projectId,
+                { organizationId: organizationId }
+              );
+              const dokumenteFolder = projectFolders?.subfolders?.find(
+                (folder: any) => folder.name === 'Dokumente'
+              );
+              if (dokumenteFolder) {
+                setDokumenteFolderId(dokumenteFolder.id);
+              }
+            }
+          } catch (error) {
+            // Error handling without logging
+          }
+        }
+
+        // Konvertiere CampaignBoilerplateSection zu BoilerplateSection und lade Inhalte
+        const convertedSections: BoilerplateSection[] = await Promise.all(
+          (campaign.boilerplateSections || []).map(async section => {
+            let content = section.content;
+            let boilerplate = null;
+
+            // Wenn kein Content vorhanden, aber boilerplateId da ist, lade den Inhalt
+            if (!content && section.boilerplateId) {
+              try {
+                boilerplate = await boilerplatesService.getById(section.boilerplateId);
+                content = boilerplate?.content || boilerplate?.description || '';
+              } catch (error) {
+                // Fehler beim Laden - nicht kritisch
+              }
+            }
+
+            return {
+              id: section.id,
+              type: section.type || 'boilerplate',
+              boilerplateId: section.boilerplateId,
+              content,
+              metadata: section.metadata,
+              order: section.order,
+              isLocked: section.isLocked,
+              isCollapsed: section.isCollapsed || false,
+              customTitle: section.customTitle,
+              boilerplate: boilerplate || undefined
+            };
+          })
+        );
+        setBoilerplateSections(convertedSections);
+
+        // Setze Approval-Daten falls vorhanden
+        if (campaign.approvalData) {
+          setApprovalData({
+            customerApprovalRequired: 'customerApprovalRequired' in campaign.approvalData ? campaign.approvalData.customerApprovalRequired : false,
+            customerContact: 'customerContact' in campaign.approvalData ? campaign.approvalData.customerContact : undefined,
+            customerApprovalMessage: ''
+          });
+
+          // Lade bisherigen Feedback-Verlauf falls vorhanden
+          if (campaign.approvalData.feedbackHistory) {
+            setPreviousFeedback(campaign.approvalData.feedbackHistory);
+          }
+        }
+
+        // Setze gespeicherten SEO-Score falls vorhanden
+        if (campaign.seoMetrics?.prScore) {
+          setSeoScore({
+            totalScore: campaign.seoMetrics.prScore,
+            breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
+            hints: campaign.seoMetrics.prHints || [],
+            keywordMetrics: []
+          });
         }
       }
 
@@ -208,7 +327,7 @@ export function CampaignProvider({
     } finally {
       setLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignId, organizationId]);
 
   // Load campaign on mount
   useEffect(() => {
@@ -289,9 +408,16 @@ export function CampaignProvider({
     setSelectedCompanyName(companyName);
   }, []);
 
-  const updateProject = useCallback((projectId: string, projectName?: string) => {
+  const updateProject = useCallback((projectId: string, projectName?: string, project?: Project | null) => {
     setSelectedProjectId(projectId);
     setSelectedProjectName(projectName);
+    if (project !== undefined) {
+      setSelectedProject(project);
+    }
+  }, []);
+
+  const updateDokumenteFolderId = useCallback((folderId: string | undefined) => {
+    setDokumenteFolderId(folderId);
   }, []);
 
   // Phase 3: Approval Actions
@@ -352,8 +478,11 @@ export function CampaignProvider({
     selectedCompanyName,
     selectedProjectId,
     selectedProjectName,
+    selectedProject,
+    dokumenteFolderId,
     updateCompany,
     updateProject,
+    updateDokumenteFolderId,
 
     // Approval States
     approvalData,
