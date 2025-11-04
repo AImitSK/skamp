@@ -72,6 +72,16 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   // Structured Generation Hook (übernimmt isGenerating, error, result)
   const { generate, isGenerating, error, result: generatedResult } = useStructuredGeneration();
 
+  // Handler für Modus-Wechsel (mit Context-Reset)
+  const handleModeChange = useCallback((mode: 'standard' | 'expert') => {
+    setGenerationMode(mode);
+    // Context und Dokumente zurücksetzen beim Modus-Wechsel
+    setContext({});
+    setSelectedDocuments([]);
+    setPrompt('');
+    setSelectedTemplate(null);
+  }, []);
+
   // Handler für Dokument-Auswahl
   const handleDocumentsSelected = useCallback((documents: DocumentContext[]) => {
     setSelectedDocuments(documents);
@@ -202,7 +212,7 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                 onRemoveDocument={(docId) => setSelectedDocuments(prev => prev.filter(d => d.id !== docId))}
                 // NEU: Modus-Props
                 generationMode={generationMode}
-                setGenerationMode={setGenerationMode}
+                setGenerationMode={handleModeChange}
               />
             )}
 
