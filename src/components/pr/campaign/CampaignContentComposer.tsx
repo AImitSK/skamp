@@ -20,57 +20,13 @@ import {
 import { mediaService } from '@/lib/firebase/media-service';
 import { MediaFolder } from '@/types/media';
 import { Text } from '@/components/ui/text';
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
 import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
+import { toastService } from '@/lib/utils/toast';
 
 // PDF-Generation jetzt über Puppeteer API Route (html2pdf entfernt)
 // const loadHtml2Pdf = () => import('html2pdf.js');
-
-// Success/Error Alert Component
-function AlertMessage({ 
-  type, 
-  message, 
-  onClose 
-}: { 
-  type: 'success' | 'error';
-  message: string;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 5000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  return (
-    <div className={`fixed top-4 right-4 z-50 max-w-md animate-slide-in-right`}>
-      <div className={`rounded-lg px-4 py-3 shadow-lg flex items-start gap-3 ${
-        type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-      }`}>
-        {type === 'success' ? (
-          <CheckCircleIcon className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
-        ) : (
-          <XCircleIcon className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-        )}
-        <div className="flex-1">
-          <p className="text-sm font-medium">{message}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className={`ml-4 shrink-0 rounded-md p-1.5 inline-flex hover:bg-opacity-20 ${
-            type === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
-          }`}
-        >
-          <span className="sr-only">Schließen</span>
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
 
 interface CampaignContentComposerProps {
   organizationId: string;
@@ -268,7 +224,6 @@ export default function CampaignContentComposer({
   const [showFolderSelector, setShowFolderSelector] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
-  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   // Keywords werden jetzt als Props übergeben
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -362,10 +317,7 @@ export default function CampaignContentComposer({
 
   const handlePdfExport = () => {
     if (!title) {
-      setAlertMessage({
-        type: 'error',
-        message: 'Bitte geben Sie einen Titel für die Pressemitteilung ein.'
-      });
+      toastService.error('Bitte geben Sie einen Titel für die Pressemitteilung ein.');
       return;
     }
     setShowFolderSelector(true);
@@ -373,15 +325,6 @@ export default function CampaignContentComposer({
 
   return (
     <>
-      {/* Alert Messages */}
-      {alertMessage && (
-        <AlertMessage
-          type={alertMessage.type}
-          message={alertMessage.message}
-          onClose={() => setAlertMessage(null)}
-        />
-      )}
-
       <div className="space-y-6">
         {/* Title Input */}
         {!readOnlyTitle ? (
