@@ -114,7 +114,14 @@ describe('validateExpertMode', () => {
   describe('Valid Input', () => {
     it('sollte valid sein mit 1 Dokument', () => {
       const docs: DocumentContext[] = [
-        { id: 'doc1', fileName: 'test.celero-doc', content: 'Test', wordCount: 100 }
+        {
+          id: 'doc1',
+          fileName: 'test.celero-doc',
+          plainText: 'Test',
+          excerpt: 'Test',
+          wordCount: 100,
+          createdAt: new Date()
+        }
       ];
 
       const result = validateExpertMode(docs);
@@ -125,9 +132,30 @@ describe('validateExpertMode', () => {
 
     it('sollte valid sein mit mehreren Dokumenten', () => {
       const docs: DocumentContext[] = [
-        { id: 'doc1', fileName: 'test1.celero-doc', content: 'Test 1', wordCount: 100 },
-        { id: 'doc2', fileName: 'test2.celero-doc', content: 'Test 2', wordCount: 200 },
-        { id: 'doc3', fileName: 'test3.celero-doc', content: 'Test 3', wordCount: 300 }
+        {
+          id: 'doc1',
+          fileName: 'test1.celero-doc',
+          plainText: 'Test 1',
+          excerpt: 'Test 1',
+          wordCount: 100,
+          createdAt: new Date()
+        },
+        {
+          id: 'doc2',
+          fileName: 'test2.celero-doc',
+          plainText: 'Test 2',
+          excerpt: 'Test 2',
+          wordCount: 200,
+          createdAt: new Date()
+        },
+        {
+          id: 'doc3',
+          fileName: 'test3.celero-doc',
+          plainText: 'Test 3',
+          excerpt: 'Test 3',
+          wordCount: 300,
+          createdAt: new Date()
+        }
       ];
 
       const result = validateExpertMode(docs);
@@ -172,7 +200,14 @@ describe('validateInput', () => {
   describe('Expert-Modus', () => {
     it('sollte validateExpertMode aufrufen', () => {
       const docs: DocumentContext[] = [
-        { id: 'doc1', fileName: 'test.celero-doc', content: 'Test', wordCount: 100 }
+        {
+          id: 'doc1',
+          fileName: 'test.celero-doc',
+          plainText: 'Test',
+          excerpt: 'Test',
+          wordCount: 100,
+          createdAt: new Date()
+        }
       ];
 
       const result = validateInput('expert', '', {}, docs);
@@ -189,7 +224,14 @@ describe('validateInput', () => {
 
     it('sollte Prompt ignorieren im Expert-Modus', () => {
       const docs: DocumentContext[] = [
-        { id: 'doc1', fileName: 'test.celero-doc', content: 'Test', wordCount: 100 }
+        {
+          id: 'doc1',
+          fileName: 'test.celero-doc',
+          plainText: 'Test',
+          excerpt: 'Test',
+          wordCount: 100,
+          createdAt: new Date()
+        }
       ];
 
       const result = validateInput('expert', '', {}, docs);

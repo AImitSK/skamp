@@ -134,7 +134,14 @@ describe('useStructuredGeneration', () => {
       const { result } = renderHook(() => useStructuredGeneration());
 
       const mockDocuments = [
-        { id: 'doc1', fileName: 'test.celero-doc', content: 'Test content', wordCount: 100 }
+        {
+          id: 'doc1',
+          fileName: 'test.celero-doc',
+          plainText: 'Test content',
+          excerpt: 'Test content',
+          wordCount: 100,
+          createdAt: new Date()
+        }
       ];
 
       await act(async () => {
@@ -168,7 +175,14 @@ describe('useStructuredGeneration', () => {
       const { result } = renderHook(() => useStructuredGeneration());
 
       const mockDocuments = [
-        { id: 'doc1', fileName: 'test.celero-doc', content: 'Test', wordCount: 100 }
+        {
+          id: 'doc1',
+          fileName: 'test.celero-doc',
+          plainText: 'Test',
+          excerpt: 'Test',
+          wordCount: 100,
+          createdAt: new Date()
+        }
       ];
 
       await act(async () => {

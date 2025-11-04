@@ -298,7 +298,7 @@ export default function ContextSetupStep({
             </div>
           ) : (
             <Button
-              outline
+              color="secondary"
               onClick={onOpenDocumentPicker}
               className="w-full"
             >
