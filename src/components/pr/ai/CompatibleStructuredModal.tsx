@@ -73,22 +73,15 @@ export default function CompatibleStructuredModal({
 }: Props) {
   
   const handleEnhancedGenerate = (enhancedResult: EnhancedGenerationResult) => {
-    console.log('🔄 Converting Enhanced to Legacy format...');
-    
     if (!enhancedResult.structured) {
       console.error('❌ Enhanced result missing structured data');
       return;
     }
-    
+
     try {
       // Konvertiere Enhanced Result zu Legacy Format
       const legacyResult = AIServiceAdapter.enhancedToLegacy(enhancedResult);
-      
-      console.log('✅ Conversion successful:', {
-        enhanced: enhancedResult.structured.headline,
-        legacy: legacyResult.headline
-      });
-      
+
       // Rufe Legacy Handler auf
       onGenerate(legacyResult);
       
