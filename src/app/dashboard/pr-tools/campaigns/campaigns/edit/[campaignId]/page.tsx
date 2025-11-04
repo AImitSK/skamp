@@ -127,7 +127,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
   // 🆕 Template-State-Management
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
-  const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
 
   // ✅ PROJEKT-INTEGRATION STATE
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
@@ -146,12 +145,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
 
-  // Debug Logging für State-Änderungen
-  useEffect(() => {
-  }, [keyVisual]);
-
-  useEffect(() => {
-  }, [boilerplateSections]);
 
   // Content HTML Generation - kombiniert alle Komponenten zu einem HTML-String
   const generateContentHtml = (): string => {
@@ -228,7 +221,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   // 🆕 Template-Select Handler
   const handleTemplateSelect = (templateId: string, templateName: string) => {
     setSelectedTemplateId(templateId);
-    setSelectedTemplateName(templateName);
   };
 
   // PDF-WORKFLOW PREVIEW HANDLER
@@ -269,20 +261,14 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     }
   };
 
-  // Debug Wrapper-Funktionen
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
     setKeyVisual(newKeyVisual);
-  };
-
-  const handleBoilerplateSectionsChange = (newSections: BoilerplateSection[]) => {
-    setBoilerplateSections(newSections);
   };
 
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // Finales Content HTML für Vorschau (wird bei Step-Wechsel generiert)
   const [finalContentHtml, setFinalContentHtml] = useState<string>('');
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [campaignAdmin, setCampaignAdmin] = useState<TeamMember | null>(null);
   
   // UI State
@@ -357,11 +343,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
-  
-  // Debug: Track currentStep changes
-  useEffect(() => {
-  }, [currentStep]);
-  
   // 🆕 ENHANCED PDF & EDIT-LOCK STATE
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -710,12 +691,9 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         
         // Load team members and find campaign admin
         const members = await teamMemberEnhancedService.getAll(currentOrganization.id);
-        // Fix: Cast TeamMemberExtended[] to TeamMember[]
-        setTeamMembers(members as any);
-        
+
         // Find current admin (campaign creator)
         const admin = members.find(member => member.userId === campaign.userId);
-        // Fix: Cast TeamMemberExtended to TeamMember
         setCampaignAdmin(admin as any || null);
         
         // Setze gespeicherten PR-Score falls vorhanden
