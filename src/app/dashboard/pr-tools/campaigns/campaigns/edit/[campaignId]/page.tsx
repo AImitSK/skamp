@@ -73,7 +73,7 @@ import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 import { ProjectSelector } from "@/components/projects/ProjectSelector";
 import { Project } from "@/types/project";
 import { ProjectAssignmentMigrationDialog } from '@/components/campaigns/ProjectAssignmentMigrationDialog';
-import { toast } from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 // Dynamic import für AI Modal
@@ -81,28 +81,6 @@ import dynamic from 'next/dynamic';
 const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
   ssr: false
 });
-
-
-// Einfache Alert-Komponente für diese Seite
-function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; message: string }) {
-  const Icon = type === 'error' ? XCircleIcon : InformationCircleIcon;
-  const bgColor = type === 'error' ? 'bg-red-50' : 'bg-blue-50';
-  const textColor = type === 'error' ? 'text-red-700' : 'text-blue-700';
-  const iconColor = type === 'error' ? 'text-red-400' : 'text-blue-400';
-
-  return (
-    <div className={`rounded-md p-4 ${bgColor}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`h-5 w-5 ${iconColor}`} />
-        </div>
-        <div className="ml-3">
-          <Text className={`text-sm ${textColor}`}>{message}</Text>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 
 export default function EditPRCampaignPage({ params }: { params: Promise<{ campaignId: string }> }) {
@@ -317,8 +295,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
   const [saving, setSaving] = useState(false);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [successMessage, setSuccessMessage] = useState<string>('');
   const [realPrScore, setRealPrScore] = useState<{
     totalScore: number;
     breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number; social: number };
@@ -463,20 +439,13 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             }
           }
         } catch (error) {
-          console.error('Fehler beim Laden des Projekts:', error);
+          // Error handling without logging
         }
       }
     };
 
     loadProject();
   }, [selectedProjectId, currentOrganization?.id]);
-
-  // Auto-Scroll zu Fehlermeldungen
-  useEffect(() => {
-    if (validationErrors.length > 0) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [validationErrors]);
 
   const loadDataNow = async () => {
     if (!user || !currentOrganization || !campaignId) return;
@@ -485,7 +454,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     try {
       await loadData();
     } catch (error) {
-      setValidationErrors(['Daten konnten nicht geladen werden']);
+      toastService.error('Daten konnten nicht geladen werden');
     } finally {
       setLoading(false);
       setIsLoadingCampaign(false);
@@ -541,7 +510,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         setPipelineApprovalStatus('none');
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Projekt-Freigabe:', error);
       setPipelineApprovalStatus('none');
     } finally {
       setApprovalLoading(false);
@@ -626,9 +594,9 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       
       // Lade die neu erstellte Approval
       await loadProjectApproval();
-      
+
     } catch (error) {
-      console.error('Fehler beim Erstellen der Projekt-Freigabe:', error);
+      // Error handling without logging
     } finally {
       setApprovalLoading(false);
     }
@@ -693,9 +661,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
         // 🔥 WICHTIG: Kunde aus Projekt laden wenn Campaign projekt-verknüpft ist
         if (campaign.projectId) {
-          console.log('🔍 [LOAD-FIX] Kampagne hat Projekt-ID:', campaign.projectId);
-          console.log('🔍 [LOAD-FIX] Aktueller clientName:', campaign.clientName);
-
           // Lade Projekt und extrahiere echten Kunden (auch wenn Campaign schon clientName hat)
           try {
             const { projectService } = await import('@/lib/firebase/project-service');
@@ -704,15 +669,12 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             });
 
             if (project?.customer?.id && project?.customer?.name) {
-              console.log('🏢 [AUTO-CLIENT-LOAD] Überschreibe mit echtem Projekt-Kunden:', project.customer.name);
               setSelectedCompanyId(project.customer.id);
               setSelectedCompanyName(project.customer.name);
               setSelectedProject(project);
-            } else {
-              console.log('⚠️ [LOAD-FIX] Projekt hat keinen Kunden:', project?.customer);
             }
           } catch (error) {
-            console.error('❌ [LOAD-FIX] Fehler beim Laden des Projekt-Kunden:', error);
+            // Error handling without logging
           }
         }
         setSelectedListIds(campaign.distributionListIds || []);
@@ -798,7 +760,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       await loadEditLockStatus(campaignId);
       
     } catch (error) {
-      setValidationErrors(['Kampagne konnte nicht geladen werden']);
+      toastService.error('Kampagne konnte nicht geladen werden');
     } finally {
       setLoading(false);
       setIsLoadingCampaign(false);
@@ -817,7 +779,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     // 🆕 CRITICAL: Edit-Lock Prüfung vor Speicherung
     if (editLockStatus.isLocked) {
       const lockReason = editLockStatus.reason || 'unbekannt';
-      alert(`Diese Kampagne kann nicht gespeichert werden. Grund: ${lockReason}`); 
+      toastService.warning(`Diese Kampagne kann nicht gespeichert werden. Grund: ${lockReason}`);
       return;
     }
     
@@ -835,11 +797,10 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     }
     
     if (errors.length > 0) {
-      setValidationErrors(errors);
+      toastService.error(errors.join(', '));
       return;
     }
-    
-    setValidationErrors([]);
+
     setSaving(true);
     
     try {
@@ -913,18 +874,15 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             { organizationId: currentOrganization!.id, userId: user!.uid }
           );
         } catch (pdfError) {
-          console.warn('Automatische PDF-Generierung fehlgeschlagen:', pdfError);
           // Nicht blockierend - Campaign-Update war erfolgreich
         }
       }
       
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
-        setSuccessMessage(
-          `Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.`
-        );
+        toastService.success('Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.');
       } else {
-        setSuccessMessage('Kampagne erfolgreich gespeichert!');
+        toastService.success('Kampagne erfolgreich gespeichert!');
       }
       
       // Navigation zurück zum Projekt (nicht mehr zu pr-tools)
@@ -945,7 +903,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         errorMessage = `Fehler: ${error.message}`;
       }
 
-      setValidationErrors([errorMessage]);
+      toastService.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1101,7 +1059,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
   const handleGeneratePdf = async (forApproval: boolean = false) => {
     if (!user || !currentOrganization || !campaignTitle.trim()) {
-      setValidationErrors(['Bitte füllen Sie alle erforderlichen Felder aus']);
+      toastService.error('Bitte füllen Sie alle erforderlichen Felder aus');
       return;
     }
 
@@ -1118,12 +1076,12 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
     }
     
     if (errors.length > 0) {
-      setValidationErrors(errors);
+      toastService.error(errors.join(', '));
       return;
     }
 
     if (!campaignId) {
-      setValidationErrors(['Campaign-ID nicht gefunden']);
+      toastService.error('Campaign-ID nicht gefunden');
       return;
     }
 
@@ -1153,10 +1111,10 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
       setCurrentPdfVersion(newVersion);
 
-      setSuccessMessage('PDF erfolgreich generiert!');
+      toastService.success('PDF erfolgreich generiert!');
 
     } catch (error) {
-      setValidationErrors(['Fehler bei der PDF-Erstellung']);
+      toastService.error('Fehler bei der PDF-Erstellung');
     } finally {
       setGeneratingPdf(false);
     }
@@ -1181,9 +1139,9 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         displayName: user.displayName || user.email || 'Unbekannt',
         reason
       });
-      
-      alert('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
-      
+
+      toastService.success('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
+
       // Status neu laden
       await loadEditLockStatus(campaignId);
       
@@ -1471,29 +1429,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       )}
 
       {/* Fehlermeldungen und Erfolgs-Nachrichten oben auf der Seite */}
-      {validationErrors.length > 0 && (
-        <div className="mb-6 animate-shake">
-          <SimpleAlert type="error" message={validationErrors[0]} />
-        </div>
-      )}
-      
-      {successMessage && (
-        <div className="mb-6">
-          <div className="rounded-md p-4 bg-green-50">
-            <div className="flex">
-              <div className="shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <Text className="text-sm text-green-700">{successMessage}</Text>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
         
@@ -1713,7 +1648,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
                         setShowAssetSelector(true);
                       } else {
                         // Zeige Fehlermeldung wenn kein Kunde ausgewählt
-                        setValidationErrors(['Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen']);
+                        toastService.error('Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen');
                       }
                     }}
                   >
@@ -1974,7 +1909,7 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
                   campaign={existingCampaign}
                   organizationId={currentOrganization.id}
                   onPDFGenerated={(pdfUrl) => {
-                    console.log('Pipeline-PDF generiert:', pdfUrl);
+                    // PDF generated successfully
                   }}
                 />
               </div>
@@ -2104,12 +2039,10 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
         onConfirm={async () => {
           if (!existingCampaign || !pendingProjectId || !currentOrganization || !user) return;
 
-          console.log('🚀 [MIGRATION-START] Starte Asset-Migration über API...');
           setIsMigrating(true);
 
           try {
             // Führe Migration über neue API durch
-            console.log('📞 [API-CALL] Rufe /api/migrate-campaign-assets-v2 auf...');
             const response = await fetch('/api/migrate-campaign-assets-v2', {
               method: 'POST',
               headers: {
@@ -2124,14 +2057,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             });
 
             const result = await response.json();
-            console.log('📥 [API-RESPONSE] Migration-Daten erhalten:', result);
-
-            // Logs anzeigen wenn vorhanden
-            if (result.logs && result.logs.length > 0) {
-              console.group('📋 [MIGRATION-LOGS]');
-              result.logs.forEach((log: string) => console.log(log));
-              console.groupEnd();
-            }
 
             if (!response.ok) {
               throw new Error(`API-Fehler: ${result.errors?.[0]?.error || response.statusText}`);
@@ -2142,8 +2067,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             }
 
             // Jetzt die echten Frontend-Uploads durchführen
-            console.log('🚀 [FRONTEND-UPLOADS] Starte Frontend-Uploads mit User-Auth...');
-
             if (result.preparedAssets && result.preparedAssets.length > 0) {
               const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
               const { storage } = await import('@/lib/firebase/config');
@@ -2155,7 +2078,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
               for (const preparedAsset of result.preparedAssets) {
                 try {
-                  console.log(`📤 [UPLOAD] Starte Upload: ${preparedAsset.fileName}`);
 
                   // Verwende Base64-Daten von der API (CORS-Umgehung)
                   const base64Data = preparedAsset.base64Data;
@@ -2186,8 +2108,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
                       originalAssetId: preparedAsset.id
                     }
                   );
-
-                  console.log(`✅ [UPLOAD-SUCCESS] ${preparedAsset.fileName} erfolgreich hochgeladen`);
 
                   // Firestore Updates je nach Asset-Typ
                   if (preparedAsset.type === 'pdf') {
@@ -2220,12 +2140,9 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
                   successCount++;
                 } catch (error) {
-                  console.error(`❌ [UPLOAD-ERROR] Fehler bei ${preparedAsset.fileName}:`, error);
                   errors.push(`${preparedAsset.fileName}: ${error}`);
                 }
               }
-
-              console.log(`🎉 [MIGRATION-COMPLETE] ${successCount}/${result.preparedAssets.length} Assets migriert`);
 
               if (errors.length > 0) {
                 throw new Error(`Migration teilweise fehlgeschlagen: ${errors.join(', ')}`);
@@ -2233,7 +2150,6 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             }
 
             // Update Campaign in Firestore mit neuer Projekt-ID
-            console.log('🔄 [FIRESTORE] Aktualisiere Campaign-Projekt-Referenz...');
             const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
             const { db } = await import('@/lib/firebase/config');
 
@@ -2248,24 +2164,20 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
 
             // 🔥 WICHTIG: Automatisch Kunde aus Projekt übernehmen für PDF-Generierung
             if (pendingProject?.customer?.id && pendingProject?.customer?.name) {
-              console.log('🏢 [AUTO-CLIENT] Übernehme Kunde aus Projekt (Migration):', pendingProject.customer.name);
               setSelectedCompanyId(pendingProject.customer.id);
               setSelectedCompanyName(pendingProject.customer.name);
             }
 
-            console.log('✅ [SUCCESS] Asset-Migration erfolgreich abgeschlossen');
-
             // Zeige Erfolgs-Message
             if (result.successCount > 0) {
-              toast.success(
+              toastService.success(
                 `✅ ${result.successCount} ${result.successCount === 1 ? 'Asset' : 'Assets'} erfolgreich in Projekt-Ordner migriert`,
                 { duration: 5000 }
               );
             }
 
             if (result.errors && result.errors.length > 0) {
-              console.warn('⚠️ [PARTIAL-ERRORS] Einige Assets konnten nicht migriert werden:', result.errors);
-              toast.error(
+              toastService.error(
                 `⚠️ ${result.errors.length} ${result.errors.length === 1 ? 'Asset konnte' : 'Assets konnten'} nicht migriert werden`,
                 { duration: 5000 }
               );
@@ -2275,9 +2187,8 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
             await loadData();
 
           } catch (error) {
-            console.error('💥 [MIGRATION-ERROR] Fehler bei Asset-Migration:', error);
             const errorMessage = error instanceof Error ? error.message : String(error);
-            toast.error(`❌ Migration fehlgeschlagen: ${errorMessage}`);
+            toastService.error(`❌ Migration fehlgeschlagen: ${errorMessage}`);
           } finally {
             setIsMigrating(false);
             setShowMigrationDialog(false);
