@@ -1122,73 +1122,39 @@ export default function EditPRCampaignPage({ params }: { params: Promise<{ campa
       return;
     }
 
+    if (!campaignId) {
+      setValidationErrors(['Campaign-ID nicht gefunden']);
+      return;
+    }
+
     setGeneratingPdf(true);
 
-    console.log('📄 [PDF-DEBUG] selectedProjectId:', selectedProjectId);
-    console.log('📄 [PDF-DEBUG] selectedCompanyId:', selectedCompanyId);
-    console.log('📄 [PDF-DEBUG] selectedCompanyName:', selectedCompanyName);
-
     try {
-      // 1. Temporäre Kampagne mit generating_preview Status erstellen
-      const tempCampaignData = {
-        title: campaignTitle,
-        contentHtml: '',
-        mainContent: editorContent,
-        boilerplateSections: boilerplateSections.map((section, index) => ({
-          ...section,
-          position: 'custom' as const,
-          order: section.order ?? index
-        })) as any,
-        keyVisual,
-        clientId: selectedCompanyId,
-        clientName: selectedCompanyName,
-        projectId: selectedProjectId || undefined, // 🔥 FIX: projectId übernehmen für korrekten PDF-Upload-Pfad
-        status: 'generating_preview' as const,
-        userId: user.uid,
-        organizationId: currentOrganization.id,
-        distributionListId: '',
-        distributionListName: '',
-        recipientCount: 0,
-        approvalRequired: false
-      };
-
-      
-      // 2. Temporäre Kampagne speichern
-      const tempCampaignId = await prService.create(tempCampaignData);
-      
-      try {
-        // 3. PDF für temporäre Kampagne generieren
-        const pdfVersionId = await pdfVersionsService.createPDFVersion(
-          tempCampaignId,
-          currentOrganization.id,
-          {
-            title: campaignTitle,
-            mainContent: editorContent,
-            boilerplateSections,
-            keyVisual,
-            clientName: selectedCompanyName,
-            templateId: selectedTemplateId
-          },
-          {
-            userId: user.uid,
-            status: forApproval ? 'pending_customer' : 'draft'
-          }
-        );
-
-        // 4. PDF-Version für Vorschau laden
-        const newVersion = await pdfVersionsService.getCurrentVersion(tempCampaignId);
-        setCurrentPdfVersion(newVersion);
-
-        setSuccessMessage('PDF erfolgreich generiert!');
-        
-      } finally {
-        // 5. Temporäre Kampagne IMMER löschen (auch bei Fehlern)
-        try {
-          await prService.delete(tempCampaignId);
-        } catch (deleteError) {
+      // ✅ VEREINFACHT: PDF direkt für echte Campaign erstellen (kein TEMP mehr)
+      // Die Campaign existiert bereits mit allen korrekten Daten (projectId, clientId, etc.)
+      const pdfVersionId = await pdfVersionsService.createPDFVersion(
+        campaignId, // Echte Campaign-ID aus URL
+        currentOrganization.id,
+        {
+          title: campaignTitle,
+          mainContent: editorContent,
+          boilerplateSections,
+          keyVisual,
+          clientName: selectedCompanyName,
+          templateId: selectedTemplateId
+        },
+        {
+          userId: user.uid,
+          status: forApproval ? 'pending_customer' : 'draft'
         }
-      }
-      
+      );
+
+      // PDF-Version für Vorschau laden
+      const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
+      setCurrentPdfVersion(newVersion);
+
+      setSuccessMessage('PDF erfolgreich generiert!');
+
     } catch (error) {
       setValidationErrors(['Fehler bei der PDF-Erstellung']);
     } finally {
