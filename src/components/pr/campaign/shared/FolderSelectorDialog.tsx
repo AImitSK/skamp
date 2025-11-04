@@ -1,7 +1,7 @@
 // src/components/pr/campaign/shared/FolderSelectorDialog.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -31,13 +31,15 @@ interface FolderSelectorDialogProps {
  * - Client-Filter Support
  * - Hierarchische Ordner-Struktur
  *
+ * Performance-Optimierung: Mit React.memo gewrappt für optimierte Re-Renders
+ *
  * @param isOpen - Dialog-Sichtbarkeit
  * @param onClose - Callback beim Schließen
  * @param onFolderSelect - Callback bei Ordner-Auswahl
  * @param organizationId - Organisation ID für Folder-Abfrage
  * @param clientId - Optional: Client-Filter für Ordner
  */
-export default function FolderSelectorDialog({
+const FolderSelectorDialog = React.memo(function FolderSelectorDialog({
   isOpen,
   onClose,
   onFolderSelect,
@@ -179,4 +181,6 @@ export default function FolderSelectorDialog({
       </DialogActions>
     </Dialog>
   );
-}
+});
+
+export default FolderSelectorDialog;

@@ -1,7 +1,7 @@
 // src/components/pr/campaign/CampaignContentComposer.tsx
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { GmailStyleEditor } from '@/components/GmailStyleEditor';
 import IntelligentBoilerplateSection, { BoilerplateSection } from './IntelligentBoilerplateSection';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -77,9 +77,9 @@ export default function CampaignContentComposer({
     onFullContentChange
   );
 
-  // Konvertiere Legacy-Sections mit position zu neuen ohne position
-  useEffect(() => {
-    const convertedSections = initialBoilerplateSections.map((section, index) => {
+  // Konvertiere Legacy-Sections mit position zu neuen ohne position (memoized)
+  const convertedSections = useMemo(() => {
+    return initialBoilerplateSections.map((section, index) => {
       // Wenn section noch position hat (legacy), entferne es
       if ('position' in section) {
         const { position, ...sectionWithoutPosition } = section as any;
@@ -93,19 +93,22 @@ export default function CampaignContentComposer({
         order: section.order ?? index
       };
     });
-    
+  }, [initialBoilerplateSections]);
+
+  // Update state wenn convertedSections sich ändern
+  useEffect(() => {
     if (JSON.stringify(convertedSections) !== JSON.stringify(boilerplateSections)) {
       setBoilerplateSections(convertedSections);
     }
-  }, [initialBoilerplateSections]);
+  }, [convertedSections]);
 
   // Update parent when sections change
-  const handleBoilerplateSectionsChange = (sections: BoilerplateSection[]) => {
+  const handleBoilerplateSectionsChange = useCallback((sections: BoilerplateSection[]) => {
     setBoilerplateSections(sections);
     if (onBoilerplateSectionsChange) {
       onBoilerplateSectionsChange(sections);
     }
-  };
+  }, [onBoilerplateSectionsChange]);
 
   return (
     <>
