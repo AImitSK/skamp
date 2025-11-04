@@ -294,29 +294,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     updateSelectedTemplate(templateId); // Phase 3.5: Context update function
   };
 
-  // PDF-WORKFLOW PREVIEW HANDLER
-  const handlePDFWorkflowToggle = (enabled: boolean) => {
-    if (enabled) {
-      const steps = [];
-      if (approvalData.customerApprovalRequired) {
-        steps.push(`Kunden-Freigabe (${approvalData.customerContact?.name || 'TBD'})`);
-      }
-      
-      setPdfWorkflowPreview({
-        enabled: true,
-        estimatedSteps: steps,
-        shareableLinks: {
-          customer: approvalData.customerApprovalRequired ? '/freigabe/[generated-id]' : undefined
-        }
-      });
-    } else {
-      setPdfWorkflowPreview({
-        enabled: false,
-        estimatedSteps: [],
-        shareableLinks: {}
-      });
-    }
-  };
+  // Phase 4: handlePDFWorkflowToggle() entfernt (obsolet, nicht verwendet)
 
   // ENHANCED STEP 3 → STEP 4 ÜBERGANG
   const handleStepTransition = async (targetStep: 1 | 2 | 3 | 4) => {
@@ -412,22 +390,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     return () => clearTimeout(timeoutId);
   }, [campaignTitle, editorContent, keywords, updateSeoScore]);
 
-  // PDF-Workflow Preview State
-  const [pdfWorkflowPreview, setPdfWorkflowPreview] = useState<{
-    enabled: boolean;
-    estimatedSteps: string[];
-    shareableLinks: { team?: string; customer?: string };
-  }>({
-    enabled: false,
-    estimatedSteps: [],
-    shareableLinks: {}
-  });
-  
-  const [approvalWorkflowResult, setApprovalWorkflowResult] = useState<{
-    workflowId?: string;
-    pdfVersionId?: string;
-    shareableLinks?: { team?: string; customer?: string };
-  } | null>(null);
+  // Phase 4: Obsolete PDF-Workflow States entfernt (nicht verwendet)
   
   // ✅ PIPELINE-APPROVAL STATE (Plan 3/9)
   const [projectApproval, setProjectApproval] = useState<any | null>(null);
@@ -744,10 +707,9 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           organizationId: currentOrganization!.id
         }
       );
-      
-      // STORE WORKFLOW RESULT
-      setApprovalWorkflowResult(result);
-      
+
+      // Phase 4: approvalWorkflowResult entfernt (obsolet)
+
       // ✅ Plan 2/9: Automatische Pipeline-PDF-Generierung für Projekt-verknüpfte Kampagnen
       if (existingCampaign?.projectId && existingCampaign.internalPDFs?.enabled) {
         try {
@@ -801,92 +763,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   };
 
 
-  // Hilfsfunktion zum Speichern als Entwurf (für PDF-Generation)
-  const saveAsDraft = async (): Promise<string | null> => {
-    if (!user || !currentOrganization) return null;
-
-    try {
-      // Bereite die boilerplateSections für Firebase vor (ohne position)
-      const cleanedSections = boilerplateSections.map((section, index) => {
-        const cleaned: any = {
-          id: section.id,
-          type: section.type,
-          order: section.order ?? index, // Fallback auf index wenn order fehlt
-          isLocked: section.isLocked || false,
-          isCollapsed: section.isCollapsed || false
-        };
-        
-        // Nur definierte Werte hinzufügen
-        if (section.boilerplateId !== undefined && section.boilerplateId !== null) {
-          cleaned.boilerplateId = section.boilerplateId;
-        }
-        if (section.content !== undefined && section.content !== null) {
-          cleaned.content = section.content;
-        }
-        if (section.metadata !== undefined && section.metadata !== null) {
-          cleaned.metadata = section.metadata;
-        }
-        if (section.customTitle !== undefined && section.customTitle !== null) {
-          cleaned.customTitle = section.customTitle;
-        }
-        
-        return cleaned;
-      });
-
-      // Bereite attachedAssets vor - stelle sicher, dass keine undefined timestamps drin sind
-      const cleanedAttachedAssets = attachedAssets.map(asset => ({
-        ...asset,
-        attachedAt: asset.attachedAt || serverTimestamp()
-      }));
-
-      const campaignData = {
-        organizationId: currentOrganization.id,
-        title: campaignTitle.trim(),
-        contentHtml: generateContentHtml(), // Phase 3.5: finalContentHtml entfernt - wird jetzt immer neu generiert
-        mainContent: editorContent || '',
-        boilerplateSections: cleanedSections as any, // Type conversion for compatibility
-        status: 'draft' as const,
-        // Multi-List Support
-        distributionListIds: selectedListIds,
-        distributionListNames: selectedListNames,
-        // Legacy fields (für Abwärtskompatibilität)
-        distributionListId: selectedListIds[0] || '',
-        distributionListName: selectedListNames[0] || '',
-        recipientCount: listRecipientCount + manualRecipients.length,
-        // Manual Recipients
-        manualRecipients: manualRecipients,
-        // SEO Data
-        keywords: keywords,
-        seoMetrics: {
-          lastAnalyzed: serverTimestamp() as Timestamp,
-          prScore: seoScore?.totalScore || 0, // Phase 3.5: Context seoScore
-          prHints: seoScore?.hints || [], // Phase 3.5: Context seoScore
-          prScoreCalculatedAt: serverTimestamp() as Timestamp,
-        },
-        clientId: selectedCompanyId || undefined,
-        clientName: selectedCompanyName || undefined,
-        keyVisual: keyVisual,
-        attachedAssets: cleanedAttachedAssets,
-        // Approval
-        approvalRequired: approvalData.customerApprovalRequired || false,
-        approvalData: approvalData.customerApprovalRequired ? approvalData as any : undefined,
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-
-      // Entferne null/undefined Werte
-      Object.keys(campaignData).forEach(key => {
-        if (campaignData[key as keyof typeof campaignData] === null) {
-          delete campaignData[key as keyof typeof campaignData];
-        }
-      });
-
-      return await prService.create(campaignData);
-    } catch (error) {
-      throw error;
-    }
-  };
+  // Phase 4: saveAsDraft() entfernt (obsolet, wurde nirgendwo aufgerufen)
 
   const handleAiGenerate = (result: any) => {
     if (result.structured?.headline) {
