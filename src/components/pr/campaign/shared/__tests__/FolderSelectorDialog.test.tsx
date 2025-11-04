@@ -4,6 +4,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import FolderSelectorDialog from '../FolderSelectorDialog';
 import { mediaService } from '@/lib/firebase/media-service';
 import { MediaFolder } from '@/types/media';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock mediaService
 jest.mock('@/lib/firebase/media-service', () => ({
@@ -25,23 +26,21 @@ describe('FolderSelectorDialog', () => {
       id: 'folder-1',
       name: 'Marketing Materials',
       description: 'All marketing content',
-      organizationId: 'org-123',
-      parentId: undefined,
+      userId: 'user-1',
+      parentFolderId: undefined,
       color: '#3B82F6',
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
-      createdBy: 'user-1',
+      createdAt: Timestamp.fromDate(new Date('2024-01-01')),
+      updatedAt: Timestamp.fromDate(new Date('2024-01-01')),
     },
     {
       id: 'folder-2',
       name: 'Press Releases',
       description: 'Press release PDFs',
-      organizationId: 'org-123',
-      parentId: undefined,
+      userId: 'user-1',
+      parentFolderId: undefined,
       color: '#10B981',
-      createdAt: new Date('2024-01-02'),
-      updatedAt: new Date('2024-01-02'),
-      createdBy: 'user-1',
+      createdAt: Timestamp.fromDate(new Date('2024-01-02')),
+      updatedAt: Timestamp.fromDate(new Date('2024-01-02')),
     },
   ];
 
@@ -194,10 +193,9 @@ describe('FolderSelectorDialog', () => {
         {
           id: 'folder-3',
           name: 'Global Folder',
-          organizationId: 'org-123',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: 'user-1',
+          userId: 'user-1',
+          createdAt: Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
         },
       ];
 
@@ -512,10 +510,9 @@ describe('FolderSelectorDialog', () => {
         {
           id: 'folder-1',
           name: 'No Description Folder',
-          organizationId: 'org-123',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: 'user-1',
+          userId: 'user-1',
+          createdAt: Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
         },
       ];
 
@@ -564,10 +561,9 @@ describe('FolderSelectorDialog', () => {
         {
           id: 'folder-1',
           name: 'This is a very long folder name that might cause layout issues if not handled properly',
-          organizationId: 'org-123',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: 'user-1',
+          userId: 'user-1',
+          createdAt: Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
         },
       ];
 
