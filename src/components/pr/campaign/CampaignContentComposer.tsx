@@ -12,7 +12,6 @@ import { Text } from '@/components/ui/text';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
 import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
-import { toastService } from '@/lib/utils/toast';
 import FolderSelectorDialog from './shared/FolderSelectorDialog';
 import { usePDFGeneration } from './hooks/usePDFGeneration';
 import { useBoilerplateProcessing } from './hooks/useBoilerplateProcessing';

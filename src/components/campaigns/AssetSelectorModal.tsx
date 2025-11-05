@@ -88,7 +88,6 @@ export function AssetSelectorModal({
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showAllAssets, setShowAllAssets] = useState(false);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -98,10 +97,9 @@ export function AssetSelectorModal({
       // Reset state when modal closes
       setSelectedItems(new Set());
       setSearchTerm('');
-      setShowAllAssets(false);
       setCurrentFolderId(undefined);
     }
-  }, [isOpen, clientId, showAllAssets]);
+  }, [isOpen, clientId]);
 
   const loadClientMedia = async () => {
     setLoading(true);
@@ -155,37 +153,11 @@ export function AssetSelectorModal({
         }
       } else {
         // ✅ ALTE LOGIK: Kein Projekt, verwende Standard Client-Filter
-        if (showAllAssets) {
-          // Zeige client-spezifische + nicht-zugeordnete Medien
-          const [clientResult, allResult] = await Promise.all([
-            mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId),
-            mediaService.getMediaAssets(organizationId)
-          ]);
-
-          // Filtere nicht-zugeordnete Assets (ohne clientId)
-          const unassignedAssets = allResult.filter(asset => !asset.clientId);
-
-          // Kombiniere client-spezifische + nicht-zugeordnete
-          const combinedAssets = [...clientResult.assets, ...unassignedAssets];
-
-          // Deduplizierung
-          const seenIds = new Set<string>();
-          const uniqueAssets = combinedAssets.filter(asset => {
-            if (!asset.id || seenIds.has(asset.id)) return false;
-            seenIds.add(asset.id);
-            return true;
-          });
-
-          setAssets(uniqueAssets);
-          setFolders(clientResult.folders);
-          setCurrentFolderId(undefined); // No specific folder when showing all assets
-        } else {
-          // Zeige nur client-spezifische Medien
-          const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
-          setAssets(result.assets);
-          setFolders(result.folders);
-          setCurrentFolderId(undefined); // No specific folder for client-only view
-        }
+        // Zeige nur client-spezifische Medien
+        const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
+        setAssets(result.assets);
+        setFolders(result.folders);
+        setCurrentFolderId(undefined); // No specific folder for client-only view
       }
     } catch (error) {
       setAssets([]);
@@ -318,19 +290,6 @@ export function AssetSelectorModal({
           />
         </div>
 
-        {/* Show All Assets Checkbox */}
-        <div className="mb-4">
-          <label className="flex items-center gap-2">
-            <Checkbox
-              checked={showAllAssets}
-              onChange={setShowAllAssets}
-            />
-            <Text className="text-sm text-gray-700">
-              Alle Bilder zeigen (inkl. nicht zugeordnete)
-            </Text>
-          </label>
-        </div>
-
         {loading ? (
           <div className="text-center py-12">
             <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
@@ -407,16 +366,11 @@ export function AssetSelectorModal({
               <div className="text-center py-12">
                 <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <Text>
-                  {showAllAssets 
-                    ? 'Keine Medien gefunden'
-                    : 'Keine Medien für diesen Kunden gefunden'
-                  }
+                  Keine Medien für diesen Kunden gefunden
                 </Text>
-                {!showAllAssets && (
-                  <Text className="text-sm text-gray-500 mt-2">
-                    Aktivieren Sie "Alle Bilder zeigen" oder laden Sie Medien für diesen Kunden hoch
-                  </Text>
-                )}
+                <Text className="text-sm text-gray-500 mt-2">
+                  Laden Sie Medien für diesen Kunden hoch
+                </Text>
                 <Button
                   onClick={() => setShowUploadModal(true)}
                   className="inline-flex items-center mt-4 text-primary hover:text-primary-hover bg-transparent border-0 p-0"

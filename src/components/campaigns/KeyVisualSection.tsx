@@ -14,11 +14,12 @@ import {
   uploadCampaignHeroImage,
   getCampaignUploadFeatureStatus 
 } from '@/lib/firebase/campaign-media-service';
-import { 
+import {
   createFeatureFlagContext,
   getUIEnhancements,
-  isCampaignSmartRouterEnabled 
+  isCampaignSmartRouterEnabled
 } from '@/components/campaigns/config/campaign-feature-flags';
+import { toastService } from '@/lib/utils/toast';
 
 interface KeyVisualData {
   assetId?: string;
@@ -102,12 +103,12 @@ export function KeyVisualSection({
 
     // Validierung
     if (!file.type.startsWith('image/')) {
-      console.warn('Campaign KeyVisual: Nur Bilddateien sind erlaubt');
+      toastService.error('Nur Bilddateien sind erlaubt');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      console.warn('Campaign KeyVisual: Datei zu groß (max 10MB)');
+      toastService.error('Datei zu groß (max 10MB)');
       return;
     }
 
@@ -192,11 +193,13 @@ export function KeyVisualSection({
         url: downloadUrl,
         cropData: cropData
       });
-      
+
+      toastService.success('Key Visual erfolgreich hochgeladen');
       setShowCropper(false);
       setSelectedImageSrc('');
     } catch (error) {
       console.error('Campaign KeyVisual Upload-Fehler:', error);
+      toastService.error('Fehler beim Hochladen des Key Visuals');
       setUploadingWithSmartRouter(false);
     } finally {
       setIsProcessing(false);
@@ -236,7 +239,8 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
 
       } catch (error) {
-        console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
+        console.error('Campaign KeyVisual CORS-Fehler beim Asset-Loading:', error);
+        toastService.error('Fehler beim Laden des Bildes');
         setIsLoadingCropper(false);
       }
     }
@@ -274,7 +278,8 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
 
       } catch (error) {
-        console.warn('Campaign KeyVisual CORS-Fehler beim Asset-Loading');
+        console.error('Campaign KeyVisual CORS-Fehler beim Asset-Loading:', error);
+        toastService.error('Fehler beim Laden des Bildes');
         setIsLoadingCropper(false);
       }
     }

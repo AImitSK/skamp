@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SparklesIcon, CheckIcon } from '@heroicons/react/20/solid';
 import { apiClient } from '@/lib/api/api-client';
+import { toastService } from '@/lib/utils/toast';
 
 interface HeadlineGeneratorProps {
   currentTitle: string;
@@ -30,16 +31,14 @@ export function HeadlineGenerator({
   const [headlines, setHeadlines] = useState<HeadlineOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const generateHeadlines = async () => {
     setLoading(true);
-    setError(null);
 
     // Prüfe ob genug Content vorhanden ist
     const contentToAnalyze = content.trim();
     if (contentToAnalyze.length < 50) {
-      setError('Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.');
+      toastService.error('Bitte geben Sie zuerst etwas Inhalt in die Pressemitteilung ein, damit die KI daraus Headlines generieren kann.');
       setLoading(false);
       return;
     }
@@ -70,11 +69,11 @@ export function HeadlineGenerator({
         setHeadlines(headlineOptions);
         setShowSuggestions(true);
       } else {
-        setError('Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut.');
+        toastService.error('Keine Headlines konnten generiert werden. Bitte versuchen Sie es erneut.');
       }
     } catch (error) {
       console.error('Fehler beim Generieren der Headlines:', error);
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      toastService.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
     } finally {
       setLoading(false);
     }
@@ -89,7 +88,6 @@ export function HeadlineGenerator({
   const closeSuggestions = () => {
     setShowSuggestions(false);
     setHeadlines([]);
-    setError(null);
   };
 
   return (
@@ -101,30 +99,13 @@ export function HeadlineGenerator({
         disabled={loading}
         className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white whitespace-nowrap text-sm"
       >
-        <SparklesIcon className="h-4 w-4 mr-1" />
+        {loading ? (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+        ) : (
+          <SparklesIcon className="h-4 w-4 mr-1" />
+        )}
         {loading ? 'Generiert Headlines...' : 'KI Headlines'}
       </Button>
-
-      {/* Error Message */}
-      {error && (
-        <div className="absolute top-full right-0 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg z-10 min-w-[500px] max-w-[600px]">
-          <div className="flex items-start gap-2">
-            <div className="w-4 h-4 rounded-full bg-amber-400 flex-shrink-0 mt-0.5"></div>
-            <div className="text-sm text-amber-800">
-              <p className="font-medium">Hinweis</p>
-              <p className="mt-1">{error}</p>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-amber-600 hover:text-amber-800"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Headlines Suggestions */}
       {showSuggestions && headlines.length > 0 && (
