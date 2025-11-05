@@ -134,27 +134,22 @@ export function KeyVisualSection({
       let downloadUrl: string;
 
       if (selectedProjectId) {
-        console.log('🔍 Suche Medien-Ordner für Projekt:', selectedProjectId);
-
         // ✅ RICHTIGE LÖSUNG: Finde den Medien-Ordner des Projekts und lade dort hoch
         const { mediaService } = await import('@/lib/firebase/media-service');
 
         // 1. Alle Ordner der Organisation laden
         const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
-        console.log('📁 Alle Ordner:', allFolders.length);
 
         // 2. Projekt-Hauptordner finden - verwende gleiche Logik wie AssetSelectorModal
         const projectFolder = allFolders.find(folder =>
           folder.name.includes('P-') && folder.name.includes(selectedProjectName || 'Dan dann')
         );
-        console.log('🎯 Projekt-Ordner gefunden:', projectFolder);
 
         if (projectFolder) {
           // 3. Medien-Unterordner finden
           const medienFolder = allFolders.find(folder =>
             folder.parentFolderId === projectFolder.id && folder.name === 'Medien'
           );
-          console.log('🎯 Medien-Ordner gefunden:', medienFolder);
 
           if (medienFolder) {
             // 4. DIREKTER UPLOAD mit mediaService.uploadClientMedia (wie SimpleProjectUploadModal)
@@ -168,7 +163,6 @@ export function KeyVisualSection({
             );
 
             downloadUrl = uploadedAsset.downloadUrl;
-            console.log('✅ Upload erfolgreich in Medien-Ordner:', downloadUrl);
           } else {
             throw new Error('Medien-Ordner nicht gefunden');
           }

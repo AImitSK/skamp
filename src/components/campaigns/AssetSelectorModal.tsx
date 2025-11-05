@@ -106,7 +106,6 @@ export function AssetSelectorModal({
     try {
       // ✅ NEUE LOGIK: Wenn Projekt vorhanden, lade aus Projekt-Medien-Ordner
       if (selectedProjectId && selectedProjectName) {
-        console.log('🔍 Lade Medien aus Projekt-Ordner:', selectedProjectId);
 
         // 1. Alle Ordner der Organisation laden
         const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
@@ -123,8 +122,6 @@ export function AssetSelectorModal({
           );
 
           if (medienFolder) {
-            console.log('✅ Medien-Ordner gefunden:', medienFolder.name, medienFolder.id);
-
             // 4. Lade Assets und Unterordner aus dem Medien-Ordner (als neuer ROOT)
             const [medienAssets, medienSubFolders] = await Promise.all([
               mediaService.getMediaAssets(organizationId, medienFolder.id),
@@ -134,9 +131,7 @@ export function AssetSelectorModal({
             setAssets(medienAssets);
             setFolders(medienSubFolders);
             setCurrentFolderId(medienFolder.id); // ✅ SET UPLOAD TARGET FOLDER
-            console.log('📁 Medien-Ordner Inhalt:', medienAssets.length, 'Assets,', medienSubFolders.length, 'Unterordner');
           } else {
-            console.log('⚠️ Medien-Ordner nicht gefunden, verwende Fallback');
             // Fallback: Standard Client-Medien
             const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
             setAssets(result.assets);
@@ -144,7 +139,6 @@ export function AssetSelectorModal({
             setCurrentFolderId(undefined); // No specific folder for fallback
           }
         } else {
-          console.log('⚠️ Projekt-Ordner nicht gefunden, verwende Fallback');
           // Fallback: Standard Client-Medien
           const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
           setAssets(result.assets);
