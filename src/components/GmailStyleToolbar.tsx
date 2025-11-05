@@ -17,6 +17,7 @@ import {
   Bars3BottomRightIcon,
   ChatBubbleLeftRightIcon,
   MegaphoneIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline'; // CeleroPress Design Pattern: nur 24/outline
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -25,9 +26,11 @@ import { Field, Label } from '@/components/ui/fieldset';
 
 type GmailStyleToolbarProps = {
   editor: Editor | null;
+  isAIToolbarExpanded?: boolean;
+  onToggleAIToolbar?: () => void;
 };
 
-export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
+export const GmailStyleToolbar = ({ editor, isAIToolbarExpanded = false, onToggleAIToolbar }: GmailStyleToolbarProps) => {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
@@ -341,6 +344,50 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
               </div>
             )}
           </div>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* KI-Assistent Toggle Button - Premium Feature */}
+          {onToggleAIToolbar && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleAIToolbar();
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className={clsx(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm font-medium',
+                {
+                  'bg-[#005fab] text-white shadow-sm': isAIToolbarExpanded,
+                  'hover:bg-gray-100 text-gray-700': !isAIToolbarExpanded,
+                }
+              )}
+              title={isAIToolbarExpanded ? "KI-Assistent ausblenden" : "KI-Assistent einblenden"}
+            >
+              <SparklesIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">KI-Assistent</span>
+              <svg
+                className={clsx(
+                  'h-3 w-3 ml-0.5 transition-transform',
+                  isAIToolbarExpanded && 'rotate-180'
+                )}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
 
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300 mx-2" />

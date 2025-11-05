@@ -17,7 +17,7 @@ import type { ChainedCommands, Editor as TiptapEditor, CommandProps } from '@tip
 import { QuoteExtension } from './editor/QuoteExtension';
 import { CTAExtension } from './editor/CTAExtension';
 import { HashtagExtension } from './editor/HashtagExtension';
-import { FloatingAIToolbar } from './FloatingAIToolbar';
+import { FixedAIToolbar } from './FixedAIToolbar';
 import { 
   ArrowsPointingOutIcon, 
   ArrowsPointingInIcon 
@@ -195,6 +195,9 @@ export const GmailStyleEditor = ({
   
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // AI Toolbar state
+  const [isAIToolbarExpanded, setIsAIToolbarExpanded] = useState(false);
   
   // Auto-save functionality
   const debouncedAutoSave = useCallback(
@@ -363,8 +366,7 @@ export const GmailStyleEditor = ({
         </div>
       )}
 
-      {/* Floating AI Toolbar - temporär deaktiviert für Debug */}
-      {/* <FloatingAIToolbar editor={editor} /> */}
+      {/* Floating AI Toolbar - entfernt, durch FixedAIToolbar ersetzt */}
       
       {/* Titel-Bereich */}
       {onTitleChange && (
@@ -382,7 +384,21 @@ export const GmailStyleEditor = ({
 
       {/* Toolbar mit Fullscreen Button */}
       <div className="relative">
-        <GmailStyleToolbar editor={editor} />
+        <GmailStyleToolbar
+          editor={editor}
+          isAIToolbarExpanded={isAIToolbarExpanded}
+          onToggleAIToolbar={() => setIsAIToolbarExpanded(!isAIToolbarExpanded)}
+        />
+
+        {/* Fixed AI Toolbar - einblendbar unter der Haupt-Toolbar */}
+        <div
+          className={clsx(
+            'overflow-hidden transition-all duration-300 ease-in-out',
+            isAIToolbarExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          )}
+        >
+          <FixedAIToolbar editor={editor} />
+        </div>
         
         {/* Fullscreen Button - nur im normalen Modus */}
         {!isFullscreen && (
@@ -416,21 +432,18 @@ export const GmailStyleEditor = ({
             ? "max-w-4xl mx-auto p-8" 
             : ""
         )}>
-          <EditorContent 
-            editor={editor} 
+          <EditorContent
+            editor={editor}
             className={clsx(
               "prose prose-lg max-w-none gmail-editor-content",
               isFullscreen && "fullscreen-editor"
             )}
-            style={{ 
+            style={{
               minHeight: isFullscreen ? 'calc(100vh - 300px)' : '350px',
               fontSize: isFullscreen ? '20px' : '18px',
               lineHeight: isFullscreen ? '2.0' : '1.8'
             }}
           />
-          
-          {/* Originale FloatingAIToolbar - mit mechanischen Fixes */}
-          {editor && <FloatingAIToolbar editor={editor} />}
         </div>
       </div>
         
