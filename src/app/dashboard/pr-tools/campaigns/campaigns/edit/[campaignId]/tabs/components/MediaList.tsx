@@ -24,7 +24,7 @@ interface MediaListProps {
  * @param attachments - Array von angehängten Assets (Ordner oder Dateien)
  * @param onRemove - Callback zum Entfernen eines Mediums (wird mit assetId/folderId aufgerufen)
  */
-export function MediaList({ attachments, onRemove }: MediaListProps) {
+export const MediaList = React.memo(function MediaList({ attachments, onRemove }: MediaListProps) {
   return (
     <div className="space-y-2">
       {attachments.map((attachment) => {
@@ -75,4 +75,4 @@ export function MediaList({ attachments, onRemove }: MediaListProps) {
       })}
     </div>
   );
-}
+});

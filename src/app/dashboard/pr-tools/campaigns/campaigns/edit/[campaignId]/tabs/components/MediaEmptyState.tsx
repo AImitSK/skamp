@@ -16,7 +16,7 @@ interface MediaEmptyStateProps {
  *
  * @param onAddMedia - Callback zum Öffnen des Asset-Selectors
  */
-export function MediaEmptyState({ onAddMedia }: MediaEmptyStateProps) {
+export const MediaEmptyState = React.memo(function MediaEmptyState({ onAddMedia }: MediaEmptyStateProps) {
   return (
     <div
       className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
@@ -42,4 +42,4 @@ export function MediaEmptyState({ onAddMedia }: MediaEmptyStateProps) {
       </div>
     </div>
   );
-}
+});
