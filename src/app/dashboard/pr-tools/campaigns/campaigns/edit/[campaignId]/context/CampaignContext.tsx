@@ -9,6 +9,7 @@ import { toastService } from '@/lib/utils/toast';
 import { BoilerplateSection } from '@/components/pr/campaign/SimpleBoilerplateLoader';
 import { Project } from '@/types/project';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Campaign Context für zentrales State Management der Campaign Edit Page
@@ -91,7 +92,7 @@ interface CampaignContextValue {
   // PDF Generation
   generatingPdf: boolean;
   currentPdfVersion: PDFVersion | null;
-  generatePdf: (folderId?: string) => Promise<void>;
+  generatePdf: (forApproval?: boolean) => Promise<void>;
 
   // Edit Lock
   editLockStatus: EditLockData;
@@ -116,6 +117,9 @@ export function CampaignProvider({
   campaignId,
   organizationId
 }: CampaignProviderProps) {
+  // Auth Context für User-Daten
+  const { user } = useAuth();
+
   // Core Campaign State
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -347,8 +351,66 @@ export function CampaignProvider({
     await loadCampaign();
   };
 
-  const generatePdf = async (folderId?: string) => {
-    // Wird in Task 7 implementiert
+  const generatePdf = async (forApproval: boolean = false) => {
+    if (!user || !campaignTitle.trim()) {
+      toastService.error('Bitte füllen Sie alle erforderlichen Felder aus');
+      return;
+    }
+
+    // Validiere erforderliche Felder bevor PDF erstellt wird
+    const errors: string[] = [];
+    if (!selectedCompanyId) {
+      errors.push('Bitte wählen Sie einen Kunden aus');
+    }
+    if (!campaignTitle.trim()) {
+      errors.push('Titel ist erforderlich');
+    }
+    if (!editorContent.trim() || editorContent === '<p></p>') {
+      errors.push('Inhalt ist erforderlich');
+    }
+
+    if (errors.length > 0) {
+      toastService.error(errors.join(', '));
+      return;
+    }
+
+    if (!campaignId) {
+      toastService.error('Campaign-ID nicht gefunden');
+      return;
+    }
+
+    setGeneratingPdf(true);
+
+    try {
+      // PDF für Campaign erstellen
+      const pdfVersionId = await pdfVersionsService.createPDFVersion(
+        campaignId,
+        organizationId,
+        {
+          title: campaignTitle,
+          mainContent: editorContent,
+          boilerplateSections,
+          keyVisual,
+          clientName: selectedCompanyName,
+          templateId: selectedTemplateId
+        },
+        {
+          userId: user.uid,
+          status: forApproval ? 'pending_customer' : 'draft'
+        }
+      );
+
+      // PDF-Version für Vorschau laden
+      const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
+      setCurrentPdfVersion(newVersion);
+
+      toastService.success('PDF erfolgreich generiert!');
+
+    } catch (error) {
+      toastService.error('Fehler bei der PDF-Erstellung');
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   const submitForApproval = async () => {
