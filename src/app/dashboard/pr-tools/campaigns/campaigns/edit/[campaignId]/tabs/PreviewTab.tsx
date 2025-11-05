@@ -74,7 +74,7 @@ export default React.memo(function PreviewTab({
     return html;
   }, [editorContent, boilerplateSections]);
 
-  // TODO: Add approvalWorkflowResult to Context once approval workflow is implemented
+  // Approval Workflow wird in separater Task implementiert
   const approvalWorkflowResult = null as ApprovalWorkflowResult | null;
 
   return (
