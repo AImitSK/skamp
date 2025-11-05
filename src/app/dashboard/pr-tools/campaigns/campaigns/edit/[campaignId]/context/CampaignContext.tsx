@@ -519,6 +519,13 @@ export function CampaignProvider({
   // Phase 3: Template Actions
   const updateSelectedTemplate = useCallback((templateId: string, templateName?: string) => {
     setSelectedTemplateId(templateId);
+
+    // Toast-Meldung für Template-Auswahl
+    if (templateName) {
+      toastService.success(`PDF-Template "${templateName}" ausgewählt`);
+    } else {
+      toastService.success('PDF-Template ausgewählt');
+    }
   }, []);
 
   const value: CampaignContextValue = {
