@@ -203,7 +203,6 @@ class PDFVersionsService {
       }
     } catch (error) {
       // Nicht-blockierender Fehler - Campaign-Save soll erfolgreich bleiben
-      console.warn('Auto-PDF-Generation fehlgeschlagen:', error);
     }
   }
 
@@ -780,36 +779,22 @@ class PDFVersionsService {
                   const project = projectDoc.data();
                   if (project && project.title) {
                     projectName = project.title;
-                    console.log('📂 PDF: Verwende Projekt-Title:', projectName);
                   }
                 }
               }
             } catch (error) {
-              console.warn('📂 PDF: Projekt-Daten konnten nicht geladen werden, verwende Fallback:', error);
+              // Projekt-Daten konnten nicht geladen werden, verwende Fallback
             }
-
-            console.log('📂 PDF: DEBUG - Campaign ID:', campaignId);
-            console.log('📂 PDF: DEBUG - Project ID aus Campaign:', campaignData.projectId);
-            console.log('📂 PDF: DEBUG - Ermittelter Project Name:', projectName);
-            console.log('📂 PDF: Suche Projekt-Ordner für:', projectName);
-            console.log('📂 PDF: Alle Ordner:', allFolders.length, 'gefunden');
-            allFolders.forEach(folder => {
-              if (folder.name.includes('P-')) {
-                console.log('📁 P-Ordner gefunden:', folder.name, '- ID:', folder.id);
-              }
-            });
 
             const projectFolder = allFolders.find(folder =>
               folder.name.includes('P-') && folder.name.includes(projectName)
             );
-            console.log('🎯 PDF: Projekt-Ordner gefunden:', projectFolder);
 
             if (projectFolder) {
               // Finde Pressemeldungen-Unterordner
               const pressemeldungenFolder = allFolders.find(folder =>
                 folder.parentFolderId === projectFolder.id && folder.name === 'Pressemeldungen'
               );
-              console.log('🎯 PDF: Pressemeldungen-Ordner gefunden:', pressemeldungenFolder);
 
               if (pressemeldungenFolder && campaignData.clientId) {
                 // 🔥 UNTERSCHEIDUNG: Draft → Vorschau/, Finale → Pressemeldungen/
@@ -825,7 +810,6 @@ class PDFVersionsService {
 
                   // Wenn Vorschau-Ordner nicht existiert, erstelle ihn
                   if (!vorschauFolder) {
-                    console.log('📁 PDF: Erstelle Vorschau-Ordner unter Pressemeldungen');
                     const vorschauFolderId = await mediaService.createFolder(
                       {
                         userId,
@@ -863,7 +847,6 @@ class PDFVersionsService {
                 );
 
                 uploadResult = { asset: uploadedAsset };
-                console.log(`✅ PDF erfolgreich in ${targetFolderName}-Ordner hochgeladen:`, uploadedAsset.downloadUrl);
               } else {
                 throw new Error('Pressemeldungen-Ordner nicht gefunden');
               }
@@ -873,8 +856,6 @@ class PDFVersionsService {
           } else {
             // Fallback für Campaigns ohne Projekt
             // 🔥 FIX: Erstelle/finde "PDF-Vorschau"-Ordner auf Root-Ebene
-            console.warn('⚠️ PDF: Campaign hat keine projectId - verwende Fallback (PDF-Vorschau Ordner)');
-
             const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
             let pdfVorschauFolder = allFolders.find(folder =>
               !folder.parentFolderId && folder.name === 'PDF-Vorschau'
@@ -882,7 +863,6 @@ class PDFVersionsService {
 
             // Wenn PDF-Vorschau-Ordner nicht existiert, erstelle ihn
             if (!pdfVorschauFolder) {
-              console.log('📁 PDF: Erstelle PDF-Vorschau-Ordner (Root-Ebene)');
               const folderId = await mediaService.createFolder(
                 {
                   userId,
@@ -919,8 +899,6 @@ class PDFVersionsService {
                 asset: uploadedAsset,
                 uploadMethod: 'fallback' as const
               };
-
-              console.log('✅ PDF in Fallback-Ordner (PDF-Vorschau) hochgeladen:', uploadedAsset.downloadUrl);
             } else {
               throw new Error('PDF-Vorschau-Ordner konnte nicht erstellt werden');
             }

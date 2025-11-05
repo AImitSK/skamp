@@ -18,17 +18,16 @@ interface CampaignPreviewStepProps {
   finalContentHtml: string;
   keyVisual?: KeyVisualData;
   selectedCompanyName?: string;
-  campaignAdminName?: string;
   realPrScore: {
     totalScore: number;
-    breakdown: { 
-      headline: number; 
-      keywords: number; 
-      structure: number; 
-      relevance: number; 
-      concreteness: number; 
+    breakdown: {
+      headline: number;
+      keywords: number;
+      structure: number;
+      relevance: number;
+      concreteness: number;
       engagement: number;
-      social: number 
+      social: number
     };
     hints: string[];
     keywordMetrics: any[];
@@ -38,7 +37,7 @@ interface CampaignPreviewStepProps {
   attachedAssets: CampaignAssetAttachment[];
   editorContent: string;
   approvalData: { customerApprovalRequired: boolean };
-  
+
   // 🆕 Template-Integration
   organizationId?: string;
   selectedTemplateId?: string;
@@ -51,7 +50,6 @@ export function CampaignPreviewStep({
   finalContentHtml,
   keyVisual,
   selectedCompanyName,
-  campaignAdminName,
   realPrScore,
   keywords,
   boilerplateSections,
@@ -163,10 +161,6 @@ export function CampaignPreviewStep({
                 <span className="font-medium text-right">{selectedCompanyName}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Kampagnen-Admin:</span>
-              <span className="font-medium text-right">{campaignAdminName || 'Allgemein'}</span>
-            </div>
             {approvalData.customerApprovalRequired && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Freigabe:</span>

@@ -200,7 +200,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     customerMessage?: string,
     teamMemberData?: { name: string; email: string; photoUrl?: string }
   ): Promise<string> {
-    console.log('🔍 DEBUG: approvalService.createCustomerApproval - customerContact:', customerContact);
     try {
 
       // Lade Campaign-Daten für Title und Client-Info
@@ -217,7 +216,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             clientName = client.name;
           }
         } catch (error) {
-          console.error('Fehler beim Laden des Kundennamens:', error);
         }
       }
 
@@ -338,7 +336,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         history: arrayUnion(historyEntry)
       });
     } catch (error) {
-      console.error('Fehler beim Hinzufügen der Team-Nachricht:', error);
       throw error;
     }
   }
@@ -613,7 +610,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       const approval = await this.getByShareId(shareId);
       if (!approval || !approval.id) {
-        console.log('❌ No approval found for shareId:', shareId);
         return;
       }
 
@@ -804,7 +800,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         try {
           await this.sendStatusChangeNotification(approval, newStatus);
         } catch (emailError) {
-          console.error('Email notifications failed, but approval status updated successfully:', emailError);
           // Don't throw - approval was successful even if emails fail
         }
       }
@@ -878,7 +873,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             updatedAt: serverTimestamp()
           });
         } catch (campaignError) {
-          console.error('Fehler beim Aktualisieren des Campaign-Status:', campaignError);
           // Nicht kritisch - Approval ist bereits gesetzt
         }
       }
@@ -888,7 +882,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         try {
           await this.sendStatusChangeNotification(approval, newStatus);
         } catch (emailError) {
-          console.error('Email notifications failed, but approval status updated successfully:', emailError);
           // Don't throw - approval was successful even if emails fail
         }
       }
@@ -1088,7 +1081,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               // Update entfernt um Organisations-Zugriffsfehler zu vermeiden
             }
           } catch (error) {
-            console.error('Fehler beim Nachladen des Kundennamens:', error);
           }
         }
 
@@ -1598,11 +1590,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           }
         } catch (actionError) {
           // Log Fehler aber verhindere nicht das gesamte Completion
-          console.error(`Fehler bei Pipeline-Action ${action.type}:`, actionError);
         }
       }
     } catch (error) {
-      console.error('Fehler beim Pipeline-Approval-Completion:', error);
       throw error;
     }
   }
@@ -1632,7 +1622,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           );
         } catch (projectUpdateError) {
           // Log Fehler aber verhindere nicht die Approval-Erstellung
-          console.error('Fehler beim Projekt-Status-Update:', projectUpdateError);
         }
       }
       
@@ -1656,22 +1645,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested' | 're-request'
   ): Promise<void> {
     try {
-      // ========== DEBUG LOGGING ==========
-      console.log('🚀 sendNotifications called:', {
-        type,
-        approvalId: approval.id,
-        campaignTitle: approval.campaignTitle,
-        recipients: approval.recipients?.map(r => ({
-          email: r.email,
-          status: r.status
-        })),
-        currentStatus: approval.status
-      });
-
       // ✅ KORRIGIERT: Nur echte Status-Changes blockieren, nicht initiale Requests
       if (type === 'status_change' && approval.status !== 'pending') {
-        console.log('⚠️ Blocking non-initial status change emails to customer');
-        console.log('✅ Initial requests (pending status) are allowed through');
         return;
       }
       
@@ -1691,7 +1666,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       try {
         organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
         if (!organizationEmailAddress) {
-          console.warn('⚠️ Keine Organization Email-Adresse gefunden, verwende Fallback');
         }
         
         // Admin-Informationen aus dem Approval-Objekt verwenden
@@ -1703,7 +1677,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           }
         }
       } catch (emailError) {
-        console.error('❌ Fehler beim Laden der Organization Email-Adresse:', emailError);
       }
 
       // Sende E-Mails an ausstehende Empfänger (Kunden)
@@ -1743,22 +1716,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   }
                 }
               } catch (brandingError) {
-                console.warn('⚠️ Failed to load branding settings:', brandingError);
                 // Fallback zu CeleroPress - kein kritischer Fehler
               }
-
-              // ========== ERWEITERTE DEBUG LOGS ==========
-              console.log('📧 Attempting to send email:', {
-                type: approvalType,
-                to: recipient.email,
-                from: organizationEmailAddress?.email || 'NO_ORG_EMAIL',
-                replyTo: replyToAddress || 'NO_REPLY_TO',
-                subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}`,
-                hasOrgEmail: !!organizationEmailAddress,
-                brandingLoaded: !!brandingSettings,
-                agencyName,
-                hasLogo: !!agencyLogoUrl
-              });
 
               // Generiere Template-Content mit geladenen Branding-Daten
               const templateContent = getEmailTemplateContent(approvalType, {
@@ -1794,8 +1753,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 emailAddressId: organizationEmailAddress.id
               });
 
-              console.log('✅ Email sent successfully to:', recipient.email);
-              console.log(`✅ Approval email sent via inbox system to ${recipient.email} (${approvalType})`);
             } else {
               // Fallback: Nutze die Approval-Email Route
               await apiClient.post('/api/sendgrid/send-approval-email', {
@@ -1813,13 +1770,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 }
               });
 
-              console.log(`✅ Approval email sent via fallback to ${recipient.email} (${approvalType})`);
             }
 
             // Update Benachrichtigung-Counter
             recipient.notificationsSent = (recipient.notificationsSent || 0) + 1;
           } catch (emailError) {
-            console.error('Approval-E-Mail-Versand fehlgeschlagen:', emailError);
             // Logge Fehler aber blockiere nicht den Hauptprozess
           }
         }
@@ -1850,7 +1805,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
         } catch (inboxError) {
-          console.error('Inbox-Thread-Erstellung fehlgeschlagen:', inboxError);
         }
       }
 
@@ -1885,12 +1839,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             }
           }
         } catch (notificationError) {
-          console.error('Notification-Erstellung fehlgeschlagen:', notificationError);
         }
       }
 
     } catch (error) {
-      console.error('Fehler beim Senden von Benachrichtigungen:', error);
       // Fehler sollten den Hauptprozess nicht stoppen
     }
   }
@@ -1919,9 +1871,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
           try {
             // Interne Benachrichtigung über Inbox-System (statt hardcoded E-Mail)
-            console.log(`📝 Status-Update von ${changedBy}: ${approval.status} → ${newStatus} für "${approval.campaignTitle || approval.title}" - wird über Inbox-System verarbeitet`);
           } catch (error) {
-            console.error('Status-Update verarbeitung fehlgeschlagen:', error);
           }
         }
       }
@@ -1932,24 +1882,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const lastEntry = approval.history?.[approval.history.length - 1];
         const approverName = lastEntry?.actorName || 'Kunde';
 
-        // ========== DEBUG: Admin notification attempt ==========
-        console.log('🔍 DEBUG: Admin notification attempt:', {
-          status: newStatus,
-          organizationId: approval.organizationId,
-          approvalId: approval.id
-        });
-
         try {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
-          
-          console.log('🔍 DEBUG: Inbox thread lookup result:', {
-            hasInboxThread: !!thread,
-            threadId: thread?.id,
-            approvalId: approval.id
-          });
-          
+
           if (thread) {
             await inboxService.addMessage({
               threadId: thread.id,
@@ -1969,13 +1906,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            
-            console.log('📮 Sending admin notification email to INBOX:', {
-              to: replyToAddress,
-              from: organizationEmailAddress.email,
-              replyTo: replyToAddress,
-              subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`
-            });
 
             await apiClient.post('/api/email/send', {
               to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
@@ -1997,9 +1927,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
           
-          console.log(`✅ Inbox-Nachricht für Freigabe erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
-          console.error('Approval-Granted Verarbeitung fehlgeschlagen:', error);
         }
 
       } else if (newStatus === 'changes_requested') {
@@ -2009,24 +1937,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const feedback = lastEntry?.details?.comment || 'Keine spezifischen Kommentare';
         const inlineComments = lastEntry?.inlineComments || [];
 
-        // ========== DEBUG: Admin notification attempt ==========
-        console.log('🔍 DEBUG: Admin notification attempt:', {
-          status: newStatus,
-          organizationId: approval.organizationId,
-          approvalId: approval.id
-        });
-
         try {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
-          
-          console.log('🔍 DEBUG: Inbox thread lookup result:', {
-            hasInboxThread: !!thread,
-            threadId: thread?.id,
-            approvalId: approval.id
-          });
-          
+
           if (thread) {
             await inboxService.addMessage({
               threadId: thread.id,
@@ -2046,13 +1961,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            
-            console.log('📮 Sending admin notification email to INBOX (changes requested):', {
-              to: replyToAddress,
-              from: organizationEmailAddress.email,
-              replyTo: replyToAddress,
-              subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`
-            });
 
             await apiClient.post('/api/email/send', {
               to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
@@ -2078,15 +1986,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
           
-          console.log(`✅ Inbox-Nachricht für Änderungsanforderung erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
-          console.error('Changes-Requested Verarbeitung fehlgeschlagen:', error);
         }
       }
 
       // ❌ DOPPELTER INBOX-BLOCK ENTFERNT
       // Inbox-Nachrichten werden bereits in den spezifischen if-Blöcken oben erstellt
-      console.log('✅ Status-Change-Verarbeitung abgeschlossen');
 
       // ========== NOTIFICATIONS-SERVICE INTEGRATION ==========
       try {
@@ -2129,11 +2034,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
         // 👀 FIRST VIEW wird bereits in markAsViewed() behandelt - keine doppelte Benachrichtigung
       } catch (notificationError) {
-        console.error('Status-Change Notification fehlgeschlagen:', notificationError);
       }
 
     } catch (error) {
-      console.error('Fehler bei Status-Change-Notification:', error);
     }
 
     // ENTFERNT: Re-Request E-Mails werden jetzt nur noch vom Admin Campaign Edit ausgelöst
@@ -2190,10 +2093,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         });
       }
       
-      console.log(`✅ Campaign-Status synchronisiert: ${approvalStatus} → ${campaignStatus}`);
       
     } catch (error) {
-      console.error('❌ Fehler beim Campaign-Status-Update:', error);
       // Fehler beim Lock-Update sollte den Hauptprozess nicht stoppen
     }
   }
@@ -2274,10 +2175,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       };
       await this.sendNotifications(updatedApproval, 're-request' as any);
 
-      console.log(`✅ Approval ${approvalId} reaktiviert und Re-Request E-Mail gesendet`);
 
     } catch (error) {
-      console.error('❌ Fehler bei Approval-Reaktivierung:', error);
       throw error;
     }
   }
@@ -2390,7 +2289,6 @@ function getEmailTemplateContent(
         throw new Error(`Unknown template type: ${type}`);
     }
   } catch (error) {
-    console.warn('⚠️ New template failed, falling back to legacy templates:', error);
     
     // FALLBACK: Verwende die alten Inline-Templates
     return {
@@ -2838,7 +2736,6 @@ export const approvalServiceExtended = {
               // Update entfernt um Organisations-Zugriffsfehler zu vermeiden
             }
           } catch (error) {
-            console.error('Fehler beim Nachladen des Kundennamens:', error);
           }
         }
 
@@ -2850,7 +2747,6 @@ export const approvalServiceExtended = {
 
       return approvalsWithClientNames;
     } catch (error) {
-      console.error('Fehler beim Laden der Projekt-Freigaben:', error);
       return [];
     }
   }
