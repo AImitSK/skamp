@@ -329,60 +329,147 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       if (!content || content.length < 50) {
         updateSeoScore({
           totalScore: 28,
-          breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
+          breakdown: { headline: 20, keywords: 0, structure: 0, relevance: 40, concreteness: 40, engagement: 20, social: 0 },
           hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'],
           keywordMetrics: []
         });
         return;
       }
 
-      let score = 30; // Basis-Score
       const hints: string[] = [];
+      const breakdown = {
+        headline: 0,
+        keywords: 0,
+        structure: 0,
+        relevance: 0,
+        concreteness: 0,
+        engagement: 0,
+        social: 0
+      };
 
-      // Title-Bewertung
-      if (campaignTitle && campaignTitle.length > 30) {
-        score += 15;
-      } else {
-        hints.push('Titel sollte mindestens 30 Zeichen haben');
-      }
-
-      // Content-Länge Bewertung
-      const wordCount = content.split(/\s+/).length;
-      if (wordCount > 200) {
-        score += 20;
-      } else {
-        hints.push('Pressemitteilung sollte mindestens 200 Wörter haben');
-      }
-
-      // Keywords Bewertung
-      if (keywords.length > 0) {
-        score += 15;
-        const keywordFound = keywords.some(keyword =>
-          content.toLowerCase().includes(keyword.toLowerCase())
-        );
-        if (keywordFound) {
-          score += 15;
+      // 1. Headline-Bewertung (0-100)
+      if (campaignTitle) {
+        const titleLength = campaignTitle.length;
+        if (titleLength >= 30 && titleLength <= 60) {
+          breakdown.headline = 100;
+        } else if (titleLength >= 20 && titleLength < 30) {
+          breakdown.headline = 70;
+        } else if (titleLength > 60 && titleLength <= 80) {
+          breakdown.headline = 80;
+        } else if (titleLength < 20) {
+          breakdown.headline = 40;
+          hints.push('Titel sollte mindestens 30-60 Zeichen haben');
         } else {
-          hints.push('Keywords sollten im Text verwendet werden');
+          breakdown.headline = 50;
+          hints.push('Titel ist zu lang (optimal: 30-60 Zeichen)');
         }
       } else {
+        breakdown.headline = 0;
+        hints.push('Fügen Sie einen aussagekräftigen Titel hinzu');
+      }
+
+      // 2. Keywords-Bewertung (0-100)
+      if (keywords.length >= 3) {
+        breakdown.keywords = 50;
+        const contentLower = content.toLowerCase();
+        const keywordsFound = keywords.filter(keyword =>
+          contentLower.includes(keyword.toLowerCase())
+        );
+
+        if (keywordsFound.length === keywords.length) {
+          breakdown.keywords = 100;
+        } else if (keywordsFound.length >= keywords.length * 0.6) {
+          breakdown.keywords = 75;
+          hints.push('Verwenden Sie alle Keywords im Text');
+        } else {
+          breakdown.keywords = 50;
+          hints.push('Keywords sollten im Text verwendet werden');
+        }
+      } else if (keywords.length > 0) {
+        breakdown.keywords = 40;
+        hints.push('Definieren Sie mindestens 3 SEO-Keywords');
+      } else {
+        breakdown.keywords = 0;
         hints.push('Definieren Sie SEO-Keywords für bessere Auffindbarkeit');
       }
 
-      // Struktur-Bewertung (einfache Heuristik)
-      const hasStructure = content.includes('\n') || content.length > 500;
-      if (hasStructure) {
-        score += 5;
+      // 3. Struktur-Bewertung (0-100)
+      const paragraphs = content.split('\n').filter(p => p.trim().length > 0);
+      const hasList = content.includes('<ul>') || content.includes('<ol>');
+
+      if (paragraphs.length >= 3) {
+        breakdown.structure = 70;
+        if (hasList) {
+          breakdown.structure = 100;
+        }
+      } else if (paragraphs.length >= 2) {
+        breakdown.structure = 50;
+        hints.push('Gliedern Sie den Text in mindestens 3 Absätze');
       } else {
-        hints.push('Gliedern Sie den Text in Absätze');
+        breakdown.structure = 30;
+        hints.push('Gliedern Sie den Text in mehrere Absätze');
       }
 
-      score = Math.min(100, score);
+      // 4. Relevanz-Bewertung (Content-Länge) (0-100)
+      const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+      if (wordCount >= 300 && wordCount <= 800) {
+        breakdown.relevance = 100;
+      } else if (wordCount >= 200 && wordCount < 300) {
+        breakdown.relevance = 75;
+        hints.push('Optimal wären 300-800 Wörter');
+      } else if (wordCount >= 100 && wordCount < 200) {
+        breakdown.relevance = 50;
+        hints.push('Pressemitteilung sollte mindestens 200 Wörter haben');
+      } else if (wordCount > 800) {
+        breakdown.relevance = 80;
+        hints.push('Sehr langer Text - erwägen Sie Kürzung auf 300-800 Wörter');
+      } else {
+        breakdown.relevance = 30;
+        hints.push('Text ist zu kurz (mindestens 200 Wörter empfohlen)');
+      }
+
+      // 5. Konkretheit-Bewertung (Basis-Bewertung) (0-100)
+      const hasNumbers = /\d+/.test(content);
+      const hasQuotes = content.includes('"') || content.includes('„');
+
+      breakdown.concreteness = 60; // Basis
+      if (hasNumbers) breakdown.concreteness += 20;
+      if (hasQuotes) breakdown.concreteness += 20;
+
+      if (!hasNumbers) hints.push('Verwenden Sie konkrete Zahlen und Fakten');
+      if (!hasQuotes) hints.push('Zitate erhöhen die Glaubwürdigkeit');
+
+      // 6. Engagement-Bewertung (0-100)
+      const hasCallToAction = /kontakt|information|website|besuchen|erfahren/i.test(content);
+      breakdown.engagement = hasCallToAction ? 80 : 50;
+
+      if (!hasCallToAction) {
+        hints.push('Call-to-Action hinzufügen (Kontakt, Website, etc.)');
+      }
+
+      // 7. Social-Bewertung (0-100)
+      const hasSocialElements = keywords.length >= 3 && campaignTitle.length >= 30 && wordCount >= 200;
+      breakdown.social = hasSocialElements ? 80 : 40;
+
+      // Gesamt-Score berechnen (Durchschnitt aller Kategorien)
+      const totalScore = Math.round(
+        (breakdown.headline +
+         breakdown.keywords +
+         breakdown.structure +
+         breakdown.relevance +
+         breakdown.concreteness +
+         breakdown.engagement +
+         breakdown.social) / 7
+      );
+
       updateSeoScore({
-        totalScore: score,
-        breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
+        totalScore,
+        breakdown,
         hints,
-        keywordMetrics: []
+        keywordMetrics: keywords.map(keyword => ({
+          keyword,
+          count: (content.match(new RegExp(keyword, 'gi')) || []).length
+        }))
       });
     };
 
