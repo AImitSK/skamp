@@ -491,7 +491,29 @@ export function CampaignProvider({
 
   // Phase 3: Approval Actions
   const updateApprovalData = useCallback((data: any) => {
-    setApprovalData(data);
+    setApprovalData((prevData: any) => {
+      // Toast-Meldungen für Änderungen
+
+      // Kundenfreigabe aktiviert/deaktiviert
+      if (data.customerApprovalRequired !== prevData.customerApprovalRequired) {
+        if (data.customerApprovalRequired) {
+          toastService.success('Kundenfreigabe aktiviert');
+        } else {
+          toastService.success('Kundenfreigabe deaktiviert');
+        }
+      }
+
+      // Freigabe-Kontakt geändert (nur wenn Freigabe aktiv)
+      else if (
+        data.customerApprovalRequired &&
+        data.customerContact?.contactId !== prevData.customerContact?.contactId &&
+        data.customerContact?.contactId // Nur wenn ein Kontakt ausgewählt wurde
+      ) {
+        toastService.success('Freigabe-Kontakt aktualisiert');
+      }
+
+      return data;
+    });
   }, []);
 
   // Phase 3: Template Actions
