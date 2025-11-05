@@ -455,13 +455,20 @@ export function CampaignProvider({
 
   // Phase 3: Assets Actions
   const updateAttachedAssets = useCallback((assets: CampaignAssetAttachment[]) => {
-    setAttachedAssets(assets);
+    setAttachedAssets(prev => {
+      const newCount = assets.length - prev.length;
+      if (newCount > 0) {
+        toastService.success(`${newCount} Medium${newCount > 1 ? 'en' : ''} hinzugefügt`);
+      }
+      return assets;
+    });
   }, []);
 
   const removeAsset = useCallback((assetId: string) => {
     setAttachedAssets(prev => prev.filter(asset =>
       (asset.assetId || asset.folderId) !== assetId
     ));
+    toastService.success('Medium entfernt');
   }, []);
 
   // Phase 3: Company & Project Actions

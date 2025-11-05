@@ -13,7 +13,6 @@ import { FieldGroup } from '@/components/ui/fieldset';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SimpleBoilerplateLoader from '@/components/pr/campaign/SimpleBoilerplateLoader';
-import { toastService } from '@/lib/utils/toast';
 import { useCampaign } from '../context/CampaignContext';
 
 interface AttachmentsTabProps {
@@ -56,17 +55,15 @@ export default React.memo(function AttachmentsTab({
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
-              {clientId && (
-                <Button
-                  type="button"
-                  onClick={onOpenAssetSelector}
-                  color="secondary"
-                  className="text-sm px-3 py-1.5"
-                >
-                  <PlusIcon className="h-4 w-4 mr-1" />
-                  Medien hinzufügen
-                </Button>
-              )}
+              <Button
+                type="button"
+                onClick={onOpenAssetSelector}
+                color="secondary"
+                className="text-sm px-3 py-1.5"
+              >
+                <PlusIcon className="h-4 w-4 mr-1" />
+                Medien hinzufügen
+              </Button>
             </div>
 
             {attachedAssets.length > 0 ? (
@@ -110,22 +107,15 @@ export default React.memo(function AttachmentsTab({
             ) : (
               <div
                 className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
-                onClick={() => {
-                  if (clientId) {
-                    onOpenAssetSelector();
-                  } else {
-                    // Zeige Fehlermeldung wenn kein Kunde ausgewählt
-                    toastService.error('Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen');
-                  }
-                }}
+                onClick={onOpenAssetSelector}
               >
                 <div className="flex flex-col items-center justify-center">
                   <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
                   <p className="text-gray-600 group-hover:text-[#005fab] font-medium">
-                    {clientId ? 'Medien hinzufügen' : 'Zuerst Kunden auswählen'}
+                    Medien hinzufügen
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {clientId ? 'Klicken zum Auswählen' : 'Wählen Sie einen Kunden aus'}
+                    Klicken zum Auswählen
                   </p>
                 </div>
               </div>
