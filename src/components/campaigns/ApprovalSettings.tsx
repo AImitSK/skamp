@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CustomerContactSelector } from './CustomerContactSelector';
 import { FeedbackChatView } from '../freigabe/FeedbackChatView';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
-import { 
-  ClockIcon,
+import {
   CheckCircleIcon,
   InformationCircleIcon,
   DocumentTextIcon,
@@ -157,35 +156,6 @@ export function ApprovalSettings({
           )}
         </div>
       )}
-
-      {/* VEREINFACHTE Workflow-Vorschau - nur Customer */}
-      {value.customerApprovalRequired && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start">
-            <ClockIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">
-                📝 Freigabe-Workflow (Einstufig)
-              </h4>
-              <div className="text-sm text-blue-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Kampagne wird zur Kundenfreigabe eingereicht</span>
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
-                  <span>PDF wird automatisch generiert und an Kunde gesendet</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Nach Freigabe kann Kampagne versendet werden</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Chat-Historie Modal - Neuer FeedbackChatView */}
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
