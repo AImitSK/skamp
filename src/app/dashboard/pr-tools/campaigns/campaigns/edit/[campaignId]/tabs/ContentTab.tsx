@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/tabs/ContentTab.tsx
 "use client";
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FieldGroup } from '@/components/ui/fieldset';
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { KeyVisualSection } from '@/components/campaigns/KeyVisualSection';
@@ -47,6 +47,29 @@ export default React.memo(function ContentTab({
     selectedProjectName,
     previousFeedback
   } = useCampaign();
+
+  // Performance-Optimierung: useCallback für SEO Score Handler
+  const handleSeoScoreChange = useCallback((scoreData: any) => {
+    // Stelle sicher, dass social Property vorhanden ist
+    if (scoreData && scoreData.breakdown) {
+      onSeoScoreChange({
+        ...scoreData,
+        breakdown: {
+          ...scoreData.breakdown,
+          social: scoreData.breakdown.social || 0
+        }
+      });
+    } else {
+      onSeoScoreChange(scoreData);
+    }
+  }, [onSeoScoreChange]);
+
+  // Performance-Optimierung: useMemo für Composer Key
+  const composerKey = useMemo(
+    () => `composer-${boilerplateSections.length}`,
+    [boilerplateSections.length]
+  );
+
   return (
     <div className="bg-white rounded-lg border p-6">
       {/* Letzte Änderungsanforderung anzeigen */}
@@ -63,7 +86,7 @@ export default React.memo(function ContentTab({
 
             {/* Content Composer mit SEO-Features */}
             <CampaignContentComposer
-              key={`composer-${boilerplateSections.length}`}
+              key={composerKey}
               organizationId={organizationId}
               clientId={selectedCompanyId}
               clientName={selectedCompanyName}
@@ -79,20 +102,7 @@ export default React.memo(function ContentTab({
               hideBoilerplates={true}
               keywords={keywords}
               onKeywordsChange={updateKeywords}
-              onSeoScoreChange={(scoreData: any) => {
-                // Stelle sicher, dass social Property vorhanden ist
-                if (scoreData && scoreData.breakdown) {
-                  onSeoScoreChange({
-                    ...scoreData,
-                    breakdown: {
-                      ...scoreData.breakdown,
-                      social: scoreData.breakdown.social || 0
-                    }
-                  });
-                } else {
-                  onSeoScoreChange(scoreData);
-                }
-              }}
+              onSeoScoreChange={handleSeoScoreChange}
             />
           </div>
         </div>
