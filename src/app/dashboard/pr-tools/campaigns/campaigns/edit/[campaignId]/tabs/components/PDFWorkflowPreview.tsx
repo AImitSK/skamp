@@ -19,7 +19,7 @@ interface PDFWorkflowPreviewProps {
  * @param enabled - Ob der PDF-Workflow aktiviert ist (customerApprovalRequired)
  * @param estimatedSteps - Array von Workflow-Schritten, die angezeigt werden
  */
-export function PDFWorkflowPreview({ enabled, estimatedSteps }: PDFWorkflowPreviewProps) {
+export const PDFWorkflowPreview = React.memo(function PDFWorkflowPreview({ enabled, estimatedSteps }: PDFWorkflowPreviewProps) {
   if (!enabled) return null;
 
   return (
@@ -53,4 +53,4 @@ export function PDFWorkflowPreview({ enabled, estimatedSteps }: PDFWorkflowPrevi
       </div>
     </div>
   );
-}
+});
