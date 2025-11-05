@@ -19,6 +19,7 @@ import { PDFVersionHistory } from '@/components/campaigns/PDFVersionHistory';
 import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 import { EDIT_LOCK_CONFIG } from '@/types/pr';
 import { useCampaign } from '../context/CampaignContext';
+import { toastService } from '@/lib/utils/toast';
 
 interface ApprovalWorkflowResult {
   workflowId: string;
@@ -255,7 +256,7 @@ export default React.memo(function PreviewTab({
             campaign={campaign}
             organizationId={organizationId}
             onPDFGenerated={(pdfUrl: string) => {
-              // PDF generated successfully
+              toastService.success('Pipeline-PDF erfolgreich generiert');
             }}
           />
         </div>
