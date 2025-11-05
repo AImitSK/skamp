@@ -73,7 +73,6 @@ export default React.memo(function PreviewTab({
     return html;
   }, [editorContent, boilerplateSections]);
 
-  const campaignAdminName = 'Unbekannt';
   // TODO: Add approvalWorkflowResult to Context once approval workflow is implemented
   const approvalWorkflowResult = null as ApprovalWorkflowResult | null;
 
@@ -130,7 +129,6 @@ export default React.memo(function PreviewTab({
           finalContentHtml={finalContentHtml}
           keyVisual={keyVisual}
           selectedCompanyName={selectedCompanyName}
-          campaignAdminName={campaignAdminName}
           realPrScore={seoScore}
           keywords={keywords}
           boilerplateSections={boilerplateSections}
