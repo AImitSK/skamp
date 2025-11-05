@@ -12,8 +12,7 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  SparklesIcon,
-  CheckIcon
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import { PDFTemplate } from "@/types/pdf-template";
 import { pdfTemplateService } from "@/lib/firebase/pdf-template-service";
@@ -100,10 +99,6 @@ function TemplateCategory({
           )}
         </div>
         <div className="flex items-center space-x-2">
-          {/* Zusätzlicher Hinweis bei geschlossenem Toggle mit Auswahl */}
-          {!isExpanded && selectedTemplateId && templates.some(t => t.id === selectedTemplateId) && (
-            <CheckIcon className="h-4 w-4 text-blue-500" />
-          )}
           {isExpanded ? (
             <ChevronDownIcon className="h-5 w-5 text-gray-500" />
           ) : (

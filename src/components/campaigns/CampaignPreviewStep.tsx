@@ -298,18 +298,6 @@ export function CampaignPreviewStep({
               // TODO: Toast-Benachrichtigung hinzufügen
             }}
           />
-          
-          {/* Template-Auswahl-Hinweis direkt in der Hauptbox */}
-          {selectedTemplateId && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center">
-                <InformationCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
-                <p className="text-sm text-blue-800">
-                  Template ausgewählt. Die finale PDF wird in diesem Design generiert.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
