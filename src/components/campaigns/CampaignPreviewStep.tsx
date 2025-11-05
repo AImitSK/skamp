@@ -198,62 +198,51 @@ export function CampaignPreviewStep({
           </div>
         </div>
         
-        {/* PR-Score Box */}
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center gap-2 mb-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-            <h4 className="font-semibold text-gray-900">PR-SEO Analyse</h4>
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Gesamt-Score</span>
-              <Badge 
-                color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
-                className="text-sm font-semibold"
-              >
-                {realPrScore?.totalScore || 0}/100
-              </Badge>
+        {/* PR-Score Box - nur anzeigen wenn Keywords vorhanden */}
+        {keywords.length > 0 && (
+          <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              <h4 className="font-semibold text-gray-900">PR-SEO Analyse</h4>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Headline</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.headline || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Keywords</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.keywords || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Struktur</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.structure || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Relevanz</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.relevance || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Konkretheit</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.concreteness || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Engagement</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.engagement || 0)}/100</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Social</span>
-              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.social || 0)}/100</span>
-            </div>
-            
-            {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-gray-300">
-                <div className="text-xs text-gray-600 mb-1">Keywords:</div>
-                {realPrScore.keywordMetrics.slice(0, 2).map((kw: any, i: number) => (
-                  <div key={i} className="text-xs text-gray-700">{kw.keyword}</div>
-                ))}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Gesamt-Score</span>
+                <Badge
+                  color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
+                  className="text-sm font-semibold"
+                >
+                  {realPrScore?.totalScore || 0}/100
+                </Badge>
               </div>
-            )}
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Headline</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.headline || 0)}/100</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Keywords</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.keywords || 0)}/100</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Struktur</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.structure || 0)}/100</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Social</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.social || 0)}/100</span>
+              </div>
+
+              {realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-300">
+                  <div className="text-xs text-gray-600 mb-1">Keywords:</div>
+                  {realPrScore.keywordMetrics.slice(0, 2).map((kw: any, i: number) => (
+                    <div key={i} className="text-xs text-gray-700">{kw.keyword}</div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          
-        </div>
+        )}
         
         {/* Anhänge */}
         {attachedAssets.length > 0 && (
