@@ -85,9 +85,11 @@ describe('AttachmentsTab Integration Tests', () => {
       const boilerplateSections: BoilerplateSection[] = [
         {
           id: 'sec-1',
+          type: 'boilerplate',
           content: 'Existing boilerplate',
           order: 0,
-          isLocked: false
+          isLocked: false,
+          isCollapsed: false
         }
       ];
 
