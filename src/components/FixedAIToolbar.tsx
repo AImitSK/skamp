@@ -537,7 +537,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         </button>
 
         {/* Ton ändern Dropdown */}
-        <div className="relative">
+        <div className="relative z-50">
           <button
             type="button"
             onClick={() => setShowToneDropdown(!showToneDropdown)}
@@ -559,7 +559,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
 
           {/* Ton-Dropdown */}
           {showToneDropdown && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-10">
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
               {toneOptions.map((tone) => (
                 <button
                   key={tone.value}
