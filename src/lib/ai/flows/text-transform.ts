@@ -26,17 +26,36 @@ KONTEXT-ANALYSE:
 1. Verstehe den Zweck des Gesamttextes (PR, Marketing, Info)
 2. Erkenne die Rolle der markierten Stelle im Kontext
 3. Behalte die Tonalität passend zum Gesamttext
+4. WICHTIG: Analysiere die TERMINOLOGIE im Gesamttext (Firmennamen, Produkte, Fachbegriffe)
+
+TERMINOLOGIE-BEIBEHALTUNG (KRITISCH!):
+- Übernimm EXAKT die Begriffe, die im Gesamttext verwendet werden
+- Wenn der Gesamttext "KI-gestützt" sagt, nutze NICHT "AI-basiert"
+- Wenn der Gesamttext "Kunden" sagt, nutze NICHT "Nutzer" oder "User"
+- Behalte Firmen-, Produkt- und Eigennamen EXAKT bei
+- Nutze denselben Fachjargon wie im Gesamttext
+
+FORMAT-PRESERVATION (KRITISCH!):
+Wenn der Text folgende Formatierungen enthält, MUSST du sie EXAKT beibehalten:
+- **Fetter Text** → Behalte ** **-Marker an derselben Position
+- [[CTA: Text]] → Behalte [[CTA: ]]-Marker komplett bei
+- [[HASHTAGS: #tag1 #tag2]] → Behalte Hashtag-Block komplett bei
+- #Hashtag → Behalte # vor dem Wort
 
 UMFORMULIERUNG DER MARKIERTEN STELLE:
 - Ersetze Wörter durch passende Synonyme
 - Halte die Länge ähnlich (±5 Wörter max)
 - Behalte die Struktur bei
 - Passe zum Stil des Gesamttextes
+- WICHTIG: Terminologie aus Gesamttext übernehmen!
+- WICHTIG: Formatierungen EXAKT übernehmen!
 
 ❌ VERMEIDE:
 - Neue Informationen hinzufügen
 - PM-Strukturen erstellen
 - Den Kontext zu verändern
+- Formatierungen entfernen
+- Terminologie ändern
 
 Antworte NUR mit der umformulierten markierten Stelle!`,
       user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM UMFORMULIEREN:\n${text}`
@@ -45,27 +64,36 @@ Antworte NUR mit der umformulierten markierten Stelle!`,
     withoutContext: (text: string) => ({
       system: `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT!
 
+FORMAT-PRESERVATION (KRITISCH!):
+Wenn der Text folgende Formatierungen enthält, MUSST du sie EXAKT beibehalten:
+- **Fetter Text** → Behalte ** **-Marker an derselben Position
+- [[CTA: Text]] → Behalte [[CTA: ]]-Marker komplett bei
+- [[HASHTAGS: #tag1 #tag2]] → Behalte Hashtag-Block komplett bei
+- #Hashtag → Behalte # vor dem Wort
+
 ❌ DU DARFST NICHT:
 - Neue Sätze hinzufügen
 - Neue Absätze erstellen
 - Boilerplates/Über-Abschnitte schreiben
 - Pressemitteilungs-Struktur aufbauen
 - Informationen erweitern oder erklären
+- Formatierungen entfernen
 
 ✅ DU DARFST NUR:
 - Wörter durch Synonyme ersetzen
 - Satzstellung leicht ändern
 - Tonalität beibehalten
+- Formatierungen EXAKT übernehmen
 
 STRENGE REGELN:
 - EXAKT ${text.split(' ').length} Wörter (±5 max!)
 - EXAKT ${text.split('\n\n').length} Absatz(e)
-- KEINE Formatierung ändern
+- ALLE Formatierungen beibehalten
 - KEINE Headlines/Überschriften hinzufügen
 
 BEISPIEL:
-Original: "Die Firma bietet Services an."
-Umformuliert: "Das Unternehmen stellt Dienstleistungen bereit."
+Original: "Die **Firma** bietet Services an. [[CTA: Jetzt testen]]"
+Umformuliert: "Das **Unternehmen** stellt Dienstleistungen bereit. [[CTA: Jetzt testen]]"
 
 Antworte NUR mit dem umformulierten Text - keine Erklärungen!`,
       user: `Synonym-Austausch für ${text.split(' ').length} Wörter:\n\n${text}`
@@ -73,85 +101,153 @@ Antworte NUR mit dem umformulierten Text - keine Erklärungen!`,
   },
 
   // ────────────────────────────────────────────────────────────
-  // SHORTEN - Kürzen (~30%)
+  // SHORTEN - Kürzen (30% = 70% des Originals)
   // ────────────────────────────────────────────────────────────
   shorten: {
-    withContext: (fullDocument: string, text: string) => ({
-      system: `Du bist ein professioneller Textredakteur. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle kürzen.
+    withContext: (fullDocument: string, text: string) => {
+      const originalWords = text.split(/\s+/).length;
+      const targetWords = Math.round(originalWords * 0.7);
+      const minWords = Math.round(originalWords * 0.65);
+      const maxWords = Math.round(originalWords * 0.75);
+
+      return {
+        system: `Du bist ein professioneller Textredakteur. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle kürzen.
 
 KONTEXT-ANALYSE:
 1. Verstehe die Funktion der markierten Stelle im Gesamttext
 2. Erkenne welche Informationen essentiell sind
 3. Behalte den Stil des Gesamttextes
 
-KÜRZEN DER MARKIERTEN STELLE (ca. 30%):
+FORMAT-PRESERVATION (KRITISCH!):
+Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+
+PRÄZISE LÄNGEN-VORGABE:
+- Original: ${originalWords} Wörter
+- Ziel: ${targetWords} Wörter (30% kürzer)
+- Erlaubter Bereich: ${minWords}-${maxWords} Wörter
+
+KÜRZEN DER MARKIERTEN STELLE:
 - Entferne Redundanzen und Füllwörter
 - Behalte alle wichtigen Fakten
 - Bewahre die Kernaussage
 - Halte die Tonalität des Gesamttextes
+- WICHTIG: Halte dich an die Wortanzahl-Vorgabe!
+- WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit der gekürzten markierten Stelle!`,
-      user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM KÜRZEN:\n${text}`
-    }),
+        user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM KÜRZEN (${originalWords} → ${targetWords} Wörter):\n${text}`
+      };
+    },
 
-    withoutContext: (text: string) => ({
-      system: `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
+    withoutContext: (text: string) => {
+      const originalWords = text.split(/\s+/).length;
+      const targetWords = Math.round(originalWords * 0.7);
+      const minWords = Math.round(originalWords * 0.65);
+      const maxWords = Math.round(originalWords * 0.75);
+
+      return {
+        system: `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann präzise.
 
 SCHRITT 1 - TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
 - Verkäuferisch: Superlative, Werbesprache, Call-to-Actions
 - Emotional: Persönliche Ansprache, Gefühle, Stories
 
-SCHRITT 2 - KÜRZEN:
+SCHRITT 2 - FORMAT-PRESERVATION (KRITISCH!):
+Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+
+SCHRITT 3 - PRÄZISE LÄNGEN-VORGABE:
+- Original: ${originalWords} Wörter
+- Ziel: ${targetWords} Wörter (30% kürzer)
+- Erlaubter Bereich: ${minWords}-${maxWords} Wörter
+
+SCHRITT 4 - KÜRZEN:
 - Entferne unnötige Details und Wiederholungen
 - BEHALTE die erkannte Tonalität und Verkaufsstärke
 - Behalte alle wichtigen Informationen und Kernaussage
 - Gleiche Struktur beibehalten
+- WICHTIG: Halte dich genau an die Wortanzahl-Vorgabe!
+- WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit dem gekürzten Text.`,
-      user: `Analysiere die Tonalität und kürze dann:\n\n${text}`
-    })
+        user: `Analysiere die Tonalität und kürze dann von ${originalWords} auf ${targetWords} Wörter:\n\n${text}`
+      };
+    }
   },
 
   // ────────────────────────────────────────────────────────────
-  // EXPAND - Erweitern (~50%)
+  // EXPAND - Erweitern (50% = 150% des Originals)
   // ────────────────────────────────────────────────────────────
   expand: {
-    withContext: (fullDocument: string, text: string) => ({
-      system: `Du bist ein professioneller Content-Writer. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle erweitern.
+    withContext: (fullDocument: string, text: string) => {
+      const originalWords = text.split(/\s+/).length;
+      const targetWords = Math.round(originalWords * 1.5);
+      const minWords = Math.round(originalWords * 1.4);
+      const maxWords = Math.round(originalWords * 1.6);
+
+      return {
+        system: `Du bist ein professioneller Content-Writer. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle erweitern.
 
 KONTEXT-ANALYSE:
 1. Verstehe den Zweck und Stil des Gesamttextes
 2. Erkenne welche Details zur markierten Stelle passen würden
 3. Behalte die Tonalität des Gesamttextes
 
-ERWEITERN DER MARKIERTEN STELLE (ca. 50%):
+FORMAT-PRESERVATION (KRITISCH!):
+Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+
+PRÄZISE LÄNGEN-VORGABE:
+- Original: ${originalWords} Wörter
+- Ziel: ${targetWords} Wörter (50% länger)
+- Erlaubter Bereich: ${minWords}-${maxWords} Wörter
+
+ERWEITERN DER MARKIERTEN STELLE:
 - Füge relevante Details hinzu die zum Kontext passen
 - Ergänze sinnvolle Informationen
 - Bewahre den Schreibstil
 - Halte die Struktur konsistent
+- WICHTIG: Halte dich an die Wortanzahl-Vorgabe! NICHT zu viel erweitern!
+- WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit der erweiterten markierten Stelle!`,
-      user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM ERWEITERN:\n${text}`
-    }),
+        user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM ERWEITERN (${originalWords} → ${targetWords} Wörter):\n${text}`
+      };
+    },
 
-    withoutContext: (text: string) => ({
-      system: `Du bist ein professioneller Content-Writer. Analysiere die Tonalität und erweitere dann um ca. 50%.
+    withoutContext: (text: string) => {
+      const originalWords = text.split(/\s+/).length;
+      const targetWords = Math.round(originalWords * 1.5);
+      const minWords = Math.round(originalWords * 1.4);
+      const maxWords = Math.round(originalWords * 1.6);
+
+      return {
+        system: `Du bist ein professioneller Content-Writer. Analysiere die Tonalität und erweitere dann präzise.
 
 SCHRITT 1 - TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
 - Verkäuferisch: Superlative, Werbesprache, Call-to-Actions
 - Emotional: Persönliche Ansprache, Gefühle, Stories
 
-SCHRITT 2 - ERWEITERN:
+SCHRITT 2 - FORMAT-PRESERVATION (KRITISCH!):
+Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+
+SCHRITT 3 - PRÄZISE LÄNGEN-VORGABE:
+- Original: ${originalWords} Wörter
+- Ziel: ${targetWords} Wörter (50% länger)
+- Erlaubter Bereich: ${minWords}-${maxWords} Wörter
+
+SCHRITT 4 - ERWEITERN:
 - Füge passende Details und Informationen hinzu
 - BEHALTE die erkannte Tonalität exakt bei
 - Mache ihn informativer im gleichen Stil
 - Gleiche Struktur beibehalten
+- WICHTIG: Halte dich genau an die Wortanzahl-Vorgabe! NICHT zu viel erweitern!
+- WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit dem erweiterten Text.`,
-      user: `Analysiere die Tonalität und erweitere dann:\n\n${text}`
-    })
+        user: `Analysiere die Tonalität und erweitere dann von ${originalWords} auf ${targetWords} Wörter:\n\n${text}`
+      };
+    }
   },
 
   // ────────────────────────────────────────────────────────────

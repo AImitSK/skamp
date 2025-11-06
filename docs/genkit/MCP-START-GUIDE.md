@@ -43,14 +43,61 @@ genkit start -- npx tsx src/genkit-server.ts
 
 Bevor du mit MCP testest:
 
+- [ ] Port 3100 frei? (Prüfe mit `netstat -ano | findstr :3100`)
+- [ ] Alle alten Genkit Server beendet?
 - [ ] `GENKIT_ENV=dev` gesetzt?
 - [ ] Server zeigt "Flows registriert: ..." in Logs?
-- [ ] Port-Konflikte behoben (keine parallelen Server)?
-- [ ] MCP Test: `mcp__genkit__lookup_genkit_docs` funktioniert?
+- [ ] Server läuft auf Port 3100 (NICHT 3108 oder höher)?
+- [ ] MCP Test: `mcp__genkit__list_flows` zeigt alle Flows?
 
 ---
 
 ## Troubleshooting
+
+### Problem: MCP list_flows gibt keinen Output zurück
+
+**⚠️ HÄUFIGSTES PROBLEM: Port 3100 blockiert!**
+
+Die MCP Tools erwarten, dass der Genkit Server auf Port 3100 läuft. Wenn ein alter Prozess den Port blockiert, funktionieren die MCP Tools NICHT.
+
+**Symptome:**
+- `mcp__genkit__list_flows` → Kein Output (Tool ran without output or errors)
+- Server-Logs zeigen: `Port 3100 is already in use, using next available port 3108`
+- Server läuft und funktioniert, aber MCP nicht
+
+**Lösung:**
+
+**Schritt 1:** Blockierenden Prozess finden
+```bash
+netstat -ano | findstr :3100
+```
+
+**Schritt 2:** Prozess-ID (PID) identifizieren und killen
+```bash
+# In der Ausgabe die PID aus der letzten Spalte notieren
+# Beispiel: Wenn PID 41872 Port 3100 blockiert:
+cmd /c "taskkill /F /PID 41872"
+```
+
+**Schritt 3:** Alle laufenden Genkit Server beenden
+- Beende alle Background-Bash-Prozesse in Claude Code
+- Oder manuell alle `genkit start` Prozesse killen
+
+**Schritt 4:** Sauber neu starten
+```bash
+GENKIT_ENV=dev genkit start -- npx tsx src/genkit-server.ts
+```
+
+**Schritt 5:** Verifizieren
+```bash
+# Server-Logs sollten zeigen:
+# ✅ Genkit Server gestartet!
+# 📦 Flows registriert: ...
+# OHNE "Port 3100 is already in use"
+
+# MCP testen:
+mcp__genkit__list_flows  # Sollte jetzt alle Flows anzeigen
+```
 
 ### Problem: MCP run_flow schlägt fehl
 
@@ -112,6 +159,15 @@ npm run genkit:mcp
 
 ---
 
-**Stand:** 2025-11-06
-**Problem gelöst:** MCP Flow Execution Error
-**Root Cause:** Fehlende GENKIT_ENV Variable
+## Änderungshistorie
+
+**2025-11-06 (Update 2):**
+- **Problem gelöst:** MCP list_flows gibt keinen Output zurück
+- **Root Cause:** Port 3100 blockiert durch alten Prozess
+- **Lösung:** Port freigeben mit taskkill, Server neu starten
+- **Wichtig:** MCP Tools erwarten Port 3100 explizit
+
+**2025-11-06 (Update 1):**
+- **Problem gelöst:** MCP Flow Execution Error
+- **Root Cause:** Fehlende GENKIT_ENV Variable
+- **Lösung:** Immer mit `GENKIT_ENV=dev` starten
