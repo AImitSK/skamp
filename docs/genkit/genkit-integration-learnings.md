@@ -365,16 +365,33 @@ const nextConfig = {
 npx genkit start -- npm run dev
 
 # Local Starten mit:
-
 $env:GENKIT_ENV = "dev"; npm run dev
-
-
-
-
 ```
 
 - **Next.js:** http://localhost:3000
 - **Genkit UI:** http://localhost:4000
+
+### ⚠️ KRITISCH: GENKIT_ENV für MCP
+
+**Wichtig:** Für MCP (Model Context Protocol) Integration ist `GENKIT_ENV=dev` **zwingend erforderlich**!
+
+```bash
+# ❌ NICHT SO (MCP wird nicht funktionieren):
+npm run genkit:dev
+
+# ✅ SO (MCP funktioniert):
+GENKIT_ENV=dev npm run genkit:dev
+```
+
+**Ohne GENKIT_ENV=dev:**
+- `mcp__genkit__list_flows` gibt keinen Output
+- `mcp__genkit__run_flow` wirft Error: "Error running action key='/flow/...' "
+- `mcp__genkit__lookup_genkit_docs` funktioniert trotzdem (unabhängig)
+
+**Mit GENKIT_ENV=dev:**
+- ✅ Alle MCP Tools funktionieren
+- ✅ Flows können via MCP ausgeführt werden
+- ✅ TraceIDs werden korrekt zurückgegeben
 
 ### Im Genkit UI:
 1. Flow auswählen
@@ -421,6 +438,23 @@ ZodError: expected: "string", received: null
 Module not found: Can't resolve 'fs'
 ```
 **Lösung:** Webpack externals konfigurieren!
+
+### MCP Error: Error running action key='/flow/...'
+```
+Error: Error running action key='/flow/textTransform'
+```
+**Symptome:**
+- `mcp__genkit__run_flow` schlägt fehl
+- `mcp__genkit__list_flows` gibt keinen Output
+- `mcp__genkit__lookup_genkit_docs` funktioniert aber einwandfrei
+- Server läuft ohne Fehler, alle Flows registriert
+
+**Lösung:** `GENKIT_ENV=dev` setzen!
+```bash
+GENKIT_ENV=dev npm run genkit:dev
+```
+
+**Root Cause:** MCP Tools benötigen die Environment Variable um Flows zu identifizieren.
 
 ---
 

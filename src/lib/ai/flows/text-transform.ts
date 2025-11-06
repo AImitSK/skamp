@@ -444,22 +444,48 @@ export const textTransformFlow = ai.defineFlow(
     // 2. GEMINI API CALL
     // ══════════════════════════════════════════════════════════════
 
-    const result = await ai.generate({
-      model: gemini25FlashModel,
-      prompt: [
-        { text: systemPrompt },
-        { text: userPrompt }
-      ],
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-      }
+    let result;
+    try {
+      result = await ai.generate({
+        model: gemini25FlashModel,
+        prompt: [
+          { text: systemPrompt },
+          { text: userPrompt }
+        ],
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
+      });
+    } catch (genError: any) {
+      console.error('❌ Gemini API Error:', {
+        error: genError.message,
+        stack: genError.stack,
+        action: input.action
+      });
+      throw new Error(`Gemini API Fehler: ${genError.message}`);
+    }
+
+    // Text Extraction (siehe genkit-integration-learnings.md)
+    const generatedText = result.message?.content?.[0]?.text
+                       || (typeof result.text === 'function' ? result.text() : '')
+                       || '';
+
+    console.log('🔍 Text Extraction Debug:', {
+      hasMessage: !!result.message,
+      hasContent: !!result.message?.content,
+      contentLength: result.message?.content?.length,
+      hasText: !!result.message?.content?.[0]?.text,
+      extractedLength: generatedText.length,
+      resultKeys: Object.keys(result)
     });
 
-    const generatedText = result.message?.content?.[0]?.text || result.text;
-
     if (!generatedText || generatedText.trim() === '') {
-      throw new Error('Keine Antwort von Gemini erhalten');
+      console.error('❌ Leere Gemini Response:', {
+        result: JSON.stringify(result, null, 2),
+        action: input.action
+      });
+      throw new Error('Keine Antwort von Gemini erhalten - Response war leer');
     }
 
     console.log('✅ Text generiert, Länge:', generatedText.length);
