@@ -8,6 +8,7 @@ import {
   type TextTransformInput,
   type TextTransformOutput
 } from '../schemas/text-transform-schemas';
+import { extractFormatting, applyFormatting } from '../utils/format-preservation';
 
 // ══════════════════════════════════════════════════════════════
 // SYSTEM PROMPTS FÜR JEDE ACTION
@@ -154,59 +155,79 @@ Antworte NUR mit dem erweiterten Text.`,
   },
 
   // ────────────────────────────────────────────────────────────
-  // ELABORATE - Ausformulieren
+  // FORMALIZE - Ausformulieren (Rohentwurf → strukturierte PR)
   // ────────────────────────────────────────────────────────────
-  elaborate: {
+  formalize: {
     withContext: (fullDocument: string, text: string) => ({
-      system: `Du bist ein professioneller Text-Creator. Du formulierst Stichpunkte oder Briefings in vollständige, prägnante Sätze aus.
+      system: `Du bist ein erfahrener PR-Experte. Du verwandelst Rohentwürfe, Stichpunkte oder Briefings in professionelle, strukturierte Pressemitteilungs-Texte.
 
-LÄNGENVORGABE:
-- Kurze Stichpunkte (1-3 Wörter) → 2-3 Sätze (30-50 Wörter)
-- Längere Fragmente (4-10 Wörter) → 3-4 Sätze (50-80 Wörter)
-- NIEMALS mehr als 100 Wörter!
+AUFGABE: Erstelle aus dem Rohentwurf eine strukturierte PR mit dieser EXAKTEN Struktur:
+
+STRUKTUR (ZWINGEND EINHALTEN):
+**Lead-Absatz: 5 W-Fragen in 80-150 Zeichen** (Wer, Was, Wann, Wo, Warum/Wie)
+Absatz 2-3: Hauptinformation mit konkreten Details und Kontext
+"Zitat (20-35 Wörter)", sagt [Name/Position].
+[[CTA: Konkrete Handlungsaufforderung mit Kontakt]]
+[[HASHTAGS: 2-3 relevante Hashtags]]
 
 WICHTIGE REGELN:
-- NIEMALS Headlines, Überschriften oder Titel erstellen (# ## ###)
-- NIEMALS <h1>, <h2>, <h3> Tags verwenden
-- NIEMALS "Pressemitteilung:", "Titel:" oder ähnliche Label
-- NUR prägnanten Fließtext erstellen
-- Konzentriere dich auf die Kernaussage
-
-AUFGABE:
-1. Analysiere die Anweisung/den Stichpunkt
-2. Erstelle 2-4 vollständige Sätze (30-80 Wörter)
-3. Nutze Informationen aus dem Gesamttext als Basis
-4. Bleibe prägnant und fokussiert
+- NIEMALS eine Headline/Titel erstellen (# ## ### oder <h1>)
+- Lead mit ** markieren (fett)
+- Zitat aus dem Kontext ableiten oder generisch halten
+- CTA und Hashtags in [[MARKER]] Format
+- 3-4 Absätze, prägnant und professionell
+- Nutze Informationen aus dem Gesamttext
 
 BEISPIEL:
-Input: "KI-gestützte Risikoanalyse"
-Output: "Die KI-gestützte Risikoanalyse nutzt maschinelles Lernen, um potenzielle Gefahren frühzeitig zu identifizieren. Das System analysiert große Datenmengen in Echtzeit und erkennt Muster, die menschlichen Analysten verborgen bleiben. Dies ermöglicht eine proaktive Risikobewertung und bessere Entscheidungsfindung."
+Input: "KI-gestützte Risikoanalyse für Finanzdienstleister"
+Output:
+**Ein neues KI-System revolutioniert die Risikoanalyse im Finanzsektor und ermöglicht erstmals Echtzeit-Bewertungen komplexer Marktszenarien.**
 
-Antworte NUR mit 2-4 prägnanten Sätzen!`,
-      user: `GESAMTER TEXT:\n${fullDocument}\n\nSTICHPUNKT ZUM AUSFORMULIEREN:\n${text}\n\nAntworte mit 2-4 vollständigen Sätzen (max. 80 Wörter):`
+Die innovative Lösung kombiniert maschinelles Lernen mit traditionellen Risikomodellen. Das System analysiert kontinuierlich Marktdaten und identifiziert potenzielle Gefahren, bevor sie kritisch werden.
+
+"Diese Technologie versetzt uns in die Lage, Risiken proaktiv zu managen statt reaktiv zu handeln", erklärt der Produktmanager.
+
+[[CTA: Kostenlose Demo anfordern unter demo@beispiel.de]]
+[[HASHTAGS: #FinTech #KIInnovation #Risikomanagement]]
+
+Antworte NUR mit der strukturierten PR - keine Erklärungen!`,
+      user: `GESAMTER TEXT:\n${fullDocument}\n\nROHENTWURF ZUM AUSFORMULIEREN:\n${text}`
     }),
 
     withoutContext: (text: string) => ({
-      system: `Du bist ein professioneller Text-Creator. Du formulierst Stichpunkte in vollständige, prägnante Sätze aus.
+      system: `Du bist ein erfahrener PR-Experte. Du verwandelst Rohentwürfe, Stichpunkte oder Briefings in professionelle, strukturierte Pressemitteilungs-Texte.
 
-LÄNGENVORGABE:
-- Kurze Stichpunkte (1-3 Wörter) → 2-3 Sätze (30-50 Wörter)
-- Längere Fragmente (4-10 Wörter) → 3-4 Sätze (50-80 Wörter)
-- NIEMALS mehr als 100 Wörter!
+AUFGABE: Erstelle aus dem Rohentwurf eine strukturierte PR mit dieser EXAKTEN Struktur:
+
+STRUKTUR (ZWINGEND EINHALTEN):
+**Lead-Absatz: 5 W-Fragen in 80-150 Zeichen** (Wer, Was, Wann, Wo, Warum/Wie)
+Absatz 2-3: Hauptinformation mit konkreten Details
+"Zitat (20-35 Wörter)", sagt [Name/Position].
+[[CTA: Konkrete Handlungsaufforderung]]
+[[HASHTAGS: 2-3 relevante Hashtags]]
 
 WICHTIGE REGELN:
-- NIEMALS Headlines, Überschriften oder Titel erstellen
-- NIEMALS Markdown/HTML verwenden
-- NUR prägnanten Fließtext in vollständigen Sätzen
-- Konzentriere dich auf die Kernaussage
-- Keine Wiederholungen oder Füllwörter
+- NIEMALS eine Headline/Titel erstellen
+- Lead mit ** markieren (fett)
+- Zitat generisch aber professionell
+- CTA und Hashtags in [[MARKER]] Format
+- 3-4 Absätze, prägnant
+- Keine Übertreibungen oder Marketingsprache
 
 BEISPIEL:
-Input: "Neue Telemedizin-Lösung"
-Output: "Die neue Telemedizin-Lösung verbindet Patienten in ländlichen Gebieten mit Fachärzten. Das System ermöglicht Videosprechstunden und digitale Diagnosen. Erste Pilotprojekte zeigen eine deutliche Reduktion der Wartezeiten."
+Input: "Neue Telemedizin-Plattform"
+Output:
+**Eine neue Telemedizin-Plattform verbindet ab sofort Patienten in ländlichen Regionen mit Fachärzten und ermöglicht digitale Diagnosen.**
 
-Antworte NUR mit 2-4 prägnanten Sätzen (max. 80 Wörter)!`,
-      user: `Formuliere diesen Stichpunkt in 2-4 vollständige Sätze aus:\n\n${text}`
+Die browserbasierte Lösung bietet Videosprechstunden, digitale Rezepte und Zugang zu Spezialist:innen. Erste Pilotprojekte zeigen eine Reduktion der Wartezeiten um durchschnittlich 40%.
+
+"Wir bringen medizinische Expertise dorthin, wo sie am dringendsten gebraucht wird", betont die Projektleitung.
+
+[[CTA: Mehr Informationen unter telemedizin-info.de]]
+[[HASHTAGS: #Telemedizin #DigitaleGesundheit #eHealth]]
+
+Antworte NUR mit der strukturierten PR!`,
+      user: `Formuliere diesen Rohentwurf in eine strukturierte PR aus:\n\n${text}`
     })
   },
 
@@ -255,32 +276,44 @@ Antworte NUR mit dem Text im neuen Ton.`,
   },
 
   // ────────────────────────────────────────────────────────────
-  // CUSTOM - Freie Anweisung
+  // CUSTOM - Freie Anweisung (IMMER mit vollem Dokument-Kontext)
   // ────────────────────────────────────────────────────────────
-  custom: (text: string, instruction: string) => ({
-    system: `Du bist ein präziser Text-Editor. Du machst NUR die minimal notwendige Änderung und behältst alles andere 1:1 bei.
+  custom: (fullDocument: string, instruction: string) => ({
+    system: `Du bist ein präziser Text-Editor mit Kontextverständnis. Du arbeitest IMMER mit dem GESAMTEN Dokument und führst die Anweisung präzise aus.
 
-ORIGINALTEXT (EXAKT beibehalten außer der spezifischen Änderung):
-${text}
+DEIN WORKFLOW:
+1. Verstehe das GESAMTE Dokument und seine Struktur
+2. Interpretiere die Anweisung im Kontext des Gesamttextes
+3. Finde die richtige Stelle für die Änderung
+4. Führe die Änderung minimal und präzise aus
+5. Gib das GESAMTE Dokument mit der Änderung zurück
 
-SPEZIFISCHE ÄNDERUNG:
-${instruction}
+KONTEXTUELLE ANWEISUNGEN (Beispiele):
+- "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein
+- "Ändere den Firmennamen zu ABC Corp" → Ersetze Firmennamen im gesamten Text
+- "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn
+- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein
+- "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es
 
-ABSOLUTE REGELN:
-- Ändere AUSSCHLIESSLICH das, was in der Anweisung steht (z.B. nur Firmennamen ersetzen)
-- EXAKT die gleiche Textlänge und Struktur beibehalten
-- KEINE Umformulierungen, KEINE Ergänzungen, KEINE Kürzungen
-- KEINE neuen Inhalte hinzufügen
-- KEINE Verbesserungen oder Optimierungen
-- Antworte NUR mit dem Text mit der einen spezifischen Änderung
+WICHTIGE REGELN:
+- Gib IMMER das GESAMTE Dokument zurück (nicht nur die geänderte Stelle!)
+- Mache NUR die in der Anweisung genannte Änderung
+- Behalte die Struktur, Formatierung und Tonalität bei
+- KEINE unnötigen Verbesserungen oder Optimierungen
+- KEINE neuen Informationen außer explizit in der Anweisung
 
-BEISPIEL:
-Original: "SK Online Marketing bietet Services an."
-Anweisung: "Firma heißt jetzt XYZ Corp"
-Antwort: "XYZ Corp bietet Services an."
+BEISPIEL 1 - Kontextuelle Ergänzung:
+Dokument: "Die Firma bietet Services an.\n\nUnsere Kunden sind zufrieden.\n\nKontaktieren Sie uns."
+Anweisung: "Füge im letzten Absatz die Telefonnummer 089-123456 hinzu"
+Antwort: "Die Firma bietet Services an.\n\nUnsere Kunden sind zufrieden.\n\nKontaktieren Sie uns unter 089-123456."
 
-WICHTIG: Mache wirklich NUR die eine genannte Änderung!`,
-    user: 'Mache nur die spezifische Änderung und behalte alles andere bei.'
+BEISPIEL 2 - Globale Änderung:
+Dokument: "TechCorp präsentiert Innovation. TechCorp setzt Standards."
+Anweisung: "Firma heißt jetzt InnovateCorp"
+Antwort: "InnovateCorp präsentiert Innovation. InnovateCorp setzt Standards."
+
+Antworte mit dem GESAMTEN, modifizierten Dokument!`,
+    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument:`
   })
 };
 
@@ -398,10 +431,10 @@ export const textTransformFlow = ai.defineFlow(
         break;
       }
 
-      case 'elaborate': {
+      case 'formalize': {
         const prompts = hasFullContext
-          ? PROMPTS.elaborate.withContext(input.fullDocument!, input.text)
-          : PROMPTS.elaborate.withoutContext(input.text);
+          ? PROMPTS.formalize.withContext(input.fullDocument!, input.text)
+          : PROMPTS.formalize.withoutContext(input.text);
         systemPrompt = prompts.system;
         userPrompt = prompts.user;
         break;
@@ -423,7 +456,9 @@ export const textTransformFlow = ai.defineFlow(
         if (!input.instruction) {
           throw new Error('Instruction parameter is required for custom action');
         }
-        const prompts = PROMPTS.custom(input.text, input.instruction);
+        // Custom arbeitet IMMER mit fullDocument (kontextbewusst)
+        const fullDocForCustom = input.fullDocument || input.text;
+        const prompts = PROMPTS.custom(fullDocForCustom, input.instruction);
         systemPrompt = prompts.system;
         userPrompt = prompts.user;
         break;
@@ -439,6 +474,75 @@ export const textTransformFlow = ai.defineFlow(
       systemPromptLength: systemPrompt.length,
       userPromptLength: userPrompt.length
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // 1.5 PRE-PROCESSING: Format Extraction
+    // ══════════════════════════════════════════════════════════════
+
+    // Format-Preservation für alle Actions außer formalize (erstellt eigene PR-Struktur)
+    const shouldPreserveFormat = ['rephrase', 'shorten', 'expand', 'change-tone', 'custom'].includes(input.action);
+    let formatMarkers = null;
+    let textToTransform = input.text;
+
+    if (shouldPreserveFormat) {
+      console.log('🔍 Extrahiere Formatierung vor AI-Transform...');
+      const extracted = extractFormatting(input.text);
+      formatMarkers = extracted.markers;
+      textToTransform = extracted.plainText;
+
+      console.log('📊 Format-Extraktion:', {
+        originalLength: input.text.length,
+        plainTextLength: textToTransform.length,
+        markersCount: formatMarkers.length,
+        markerTypes: formatMarkers.map(m => m.type)
+      });
+
+      // Update prompts mit plainText statt original text
+      const hasFullContext = input.fullDocument && input.fullDocument.length > input.text.length;
+
+      switch (input.action) {
+        case 'rephrase': {
+          const prompts = hasFullContext
+            ? PROMPTS.rephrase.withContext(input.fullDocument!, textToTransform)
+            : PROMPTS.rephrase.withoutContext(textToTransform);
+          systemPrompt = prompts.system;
+          userPrompt = prompts.user;
+          break;
+        }
+        case 'shorten': {
+          const prompts = hasFullContext
+            ? PROMPTS.shorten.withContext(input.fullDocument!, textToTransform)
+            : PROMPTS.shorten.withoutContext(textToTransform);
+          systemPrompt = prompts.system;
+          userPrompt = prompts.user;
+          break;
+        }
+        case 'expand': {
+          const prompts = hasFullContext
+            ? PROMPTS.expand.withContext(input.fullDocument!, textToTransform)
+            : PROMPTS.expand.withoutContext(textToTransform);
+          systemPrompt = prompts.system;
+          userPrompt = prompts.user;
+          break;
+        }
+        case 'change-tone': {
+          const prompts = hasFullContext
+            ? PROMPTS.changeTone.withContext(input.fullDocument!, textToTransform, input.tone!)
+            : PROMPTS.changeTone.withoutContext(textToTransform, input.tone!);
+          systemPrompt = prompts.system;
+          userPrompt = prompts.user;
+          break;
+        }
+        case 'custom': {
+          // Custom arbeitet IMMER mit fullDocument (auch im Pre-Processing)
+          const fullDocForCustom = input.fullDocument || textToTransform;
+          const prompts = PROMPTS.custom(fullDocForCustom, input.instruction!);
+          systemPrompt = prompts.system;
+          userPrompt = prompts.user;
+          break;
+        }
+      }
+    }
 
     // ══════════════════════════════════════════════════════════════
     // 2. GEMINI API CALL
@@ -494,7 +598,24 @@ export const textTransformFlow = ai.defineFlow(
     // 3. POST-PROCESSING: Text-Parsing
     // ══════════════════════════════════════════════════════════════
 
-    const transformedText = parseTextFromAIOutput(generatedText);
+    let transformedText = parseTextFromAIOutput(generatedText);
+
+    // ══════════════════════════════════════════════════════════════
+    // 3.5 POST-PROCESSING: Format Restoration
+    // ══════════════════════════════════════════════════════════════
+
+    if (shouldPreserveFormat && formatMarkers && formatMarkers.length > 0) {
+      console.log('🎨 Wende Formatierung auf transformierten Text an...');
+      const formattedText = applyFormatting(transformedText, formatMarkers);
+
+      console.log('📊 Format-Restoration:', {
+        plainTextLength: transformedText.length,
+        formattedTextLength: formattedText.length,
+        markersApplied: formatMarkers.length
+      });
+
+      transformedText = formattedText;
+    }
 
     // ══════════════════════════════════════════════════════════════
     // 4. METRIKEN BERECHNEN

@@ -10,7 +10,7 @@ export const TransformActionEnum = z.enum([
   'rephrase',      // Umformulieren (Synonyme)
   'shorten',       // Kürzen (~30%)
   'expand',        // Erweitern (~50%)
-  'elaborate',     // Ausformulieren (Anweisung → Text)
+  'formalize',     // Ausformulieren (Rohentwurf → strukturierte PR)
   'change-tone',   // Tonalität ändern
   'custom'         // Custom Instruction
 ]);

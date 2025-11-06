@@ -131,7 +131,7 @@ export type AIAction =
   | 'shorten'
   | 'expand'
   | 'change-tone'
-  | 'elaborate';
+  | 'formalize';
 
 interface ToneOption {
   value: string;
@@ -226,7 +226,7 @@ Antworte NUR mit dem erweiterten Text.`;
           userPrompt = `Analysiere die Tonalität und erweitere dann:\n\n${text}`;
           break;
 
-        case 'elaborate':
+        case 'formalize':
           systemPrompt = `Du bist ein professioneller Text-Creator.
 
 WICHTIGE REGELN:
@@ -378,7 +378,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
     try {
       const newText = await handleAIAction(action, textToProcess);
 
-      if (action === 'elaborate') {
+      if (action === 'formalize') {
         const htmlContent = parseHTMLFromAIOutput(newText);
 
         if (useFullDocument) {
@@ -424,8 +424,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to);
 
-    const textToProcess = selectedText.length > 0 ? selectedText : editor.getText();
-    const useFullDocument = selectedText.length === 0;
+    // Custom arbeitet IMMER mit dem vollen Dokument (kontextbewusst)
+    const textToProcess = editor.getText();  // Immer ganzer Text
+    const useFullDocument = true;  // Custom ist immer kontextbewusst
 
     try {
       const fullDocument = editor?.getHTML() || '';
@@ -434,7 +435,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         text: textToProcess,
         action: 'custom',
         instruction: customInstruction,
-        fullDocument: fullDocument || null
+        fullDocument: fullDocument  // Immer fullDocument senden
       });
 
       const newText = parseTextFromAIOutput(data.generatedText || textToProcess);
@@ -465,9 +466,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
   if (!editor) return null;
 
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="border-b border-gray-200 bg-white overflow-visible">
       {/* Button-Leiste */}
-      <div className="flex items-center gap-2 px-4 py-3 flex-wrap">
+      <div className="flex items-center gap-2 px-4 py-3 flex-wrap overflow-visible">
         {/* Umformulieren */}
         <button
           type="button"
@@ -522,7 +523,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         {/* Ausformulieren */}
         <button
           type="button"
-          onClick={() => executeAction('elaborate')}
+          onClick={() => executeAction('formalize')}
           disabled={isProcessing}
           className={clsx(
             'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all',
@@ -530,7 +531,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow'
           )}
-          title="Ausformulieren (Anweisung ausführen)"
+          title="Ausformulieren (Rohentwurf → strukturierte PR)"
         >
           <DocumentTextIcon className="h-4 w-4" />
           <span>Ausformulieren</span>
