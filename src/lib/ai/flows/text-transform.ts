@@ -454,7 +454,7 @@ export const textTransformFlow = ai.defineFlow(
         ],
         config: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192, // Extended Thinking benötigt mehr Tokens (siehe genkit-integration-learnings.md)
         }
       });
     } catch (genError: any) {
