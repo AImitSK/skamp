@@ -468,18 +468,18 @@ Antworte NUR mit dem erweiterten Text.`;
 
       console.log('📝 Custom Instruction:', { instruction: customInstruction, textLength: fullText.length });
 
-      // WICHTIG: Nutze generate-structured Route (wie formalize) mit Custom Instruction
-      // Kombiniere bestehenden Text + Anweisung im Prompt
-      const combinedPrompt = `Bestehender Text:\n${fullText}\n\nAnweisung: ${customInstruction}`;
-
-      const data = await apiClient.post<any>('/api/ai/generate-structured', {
-        prompt: combinedPrompt,
-        context: null,
-        documentContext: null
+      // WICHTIG: Nutze text-transform mit action:custom für minimale Änderungen
+      const data = await apiClient.post<any>('/api/ai/text-transform', {
+        text: fullText,
+        action: 'custom',
+        instruction: customInstruction,
+        fullDocument: fullText
       });
 
-      // Verwende das bereits perfekt formatierte htmlContent
-      const htmlContent = data.htmlContent || fullText;
+      const transformedText = data.transformedText || fullText;
+
+      // Verwende parseHTMLFromAIOutput um Markdown → HTML zu konvertieren
+      const htmlContent = parseHTMLFromAIOutput(transformedText);
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);

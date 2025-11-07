@@ -426,13 +426,23 @@ DEIN WORKFLOW:
 2. Interpretiere die Anweisung im Kontext des Gesamttextes
 3. Finde die richtige Stelle für die Änderung
 4. Führe die Änderung minimal und präzise aus
-5. Gib das GESAMTE Dokument mit der Änderung zurück
+5. Gib das GESAMTE Dokument mit ALLEN Formatierungen zurück
+
+FORMATIERUNGS-REGELN (KRITISCH!):
+- **Fetter Text** → Mit ** ** markieren (z.B. **Lead-Absatz**)
+- Zitate → Mit > markieren (z.B. > "Zitat Text")
+- CTA → Mit [[CTA: ]] markieren (z.B. [[CTA: Mehr Infos unter...]])
+- Hashtags → Mit [[HASHTAGS: ]] markieren (z.B. [[HASHTAGS: #Tech #Innovation]])
+- Einzelne Hashtags → Mit # markieren (z.B. #Hashtag)
+- Absätze → Mit doppeltem Zeilenumbruch trennen
+
+WICHTIG: ALLE vorhandenen Formatierungen EXAKT beibehalten!
 
 KONTEXTUELLE ANWEISUNGEN (Beispiele):
 - "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein
-- "Ändere den Firmennamen zu ABC Corp" → Ersetze Firmennamen im gesamten Text
+- "Der Geschäftsführer heißt Peter statt Max" → Ersetze Namen im gesamten Text
 - "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn
-- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein
+- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat mit > ein
 - "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es
 
 WICHTIGE REGELN:
@@ -441,16 +451,18 @@ WICHTIGE REGELN:
 - Behalte die Struktur, Formatierung und Tonalität bei
 - KEINE unnötigen Verbesserungen oder Optimierungen
 - KEINE neuen Informationen außer explizit in der Anweisung
+- KEINE Sätze umformulieren außer nötig für die Änderung
+- KEINE Wörter austauschen außer für die Änderung
 
-BEISPIEL 1 - Kontextuelle Ergänzung:
-Dokument: "Die Firma bietet Services an.\n\nUnsere Kunden sind zufrieden.\n\nKontaktieren Sie uns."
-Anweisung: "Füge im letzten Absatz die Telefonnummer 089-123456 hinzu"
-Antwort: "Die Firma bietet Services an.\n\nUnsere Kunden sind zufrieden.\n\nKontaktieren Sie uns unter 089-123456."
+BEISPIEL 1 - Name ändern:
+Dokument: "**TechCorp startet neue Lösung.**\n\n"Wir sind stolz", sagt Max Mustermann, CEO.\n\n[[CTA: Mehr unter techcorp.de]]"
+Anweisung: "CEO heißt Peter Schmidt"
+Antwort: "**TechCorp startet neue Lösung.**\n\n"Wir sind stolz", sagt Peter Schmidt, CEO.\n\n[[CTA: Mehr unter techcorp.de]]"
 
-BEISPIEL 2 - Globale Änderung:
-Dokument: "TechCorp präsentiert Innovation. TechCorp setzt Standards."
-Anweisung: "Firma heißt jetzt InnovateCorp"
-Antwort: "InnovateCorp präsentiert Innovation. InnovateCorp setzt Standards."
+BEISPIEL 2 - Information hinzufügen:
+Dokument: "Die Firma bietet Services an.\n\nKontaktieren Sie uns."
+Anweisung: "Füge Telefonnummer 089-123456 hinzu"
+Antwort: "Die Firma bietet Services an.\n\nKontaktieren Sie uns unter 089-123456."
 
 Antworte mit dem GESAMTEN, modifizierten Dokument!`,
     user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument:`
