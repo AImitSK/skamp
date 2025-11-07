@@ -36,11 +36,12 @@ TERMINOLOGIE-BEIBEHALTUNG (KRITISCH!):
 - Nutze denselben Fachjargon wie im Gesamttext
 
 FORMAT-PRESERVATION (KRITISCH!):
-Wenn der Text folgende Formatierungen enthält, MUSST du sie EXAKT beibehalten:
+Falls der Original-Text Formatierungen enthält, MUSST du sie EXAKT beibehalten:
 - **Fetter Text** → Behalte ** **-Marker an derselben Position
 - [[CTA: Text]] → Behalte [[CTA: ]]-Marker komplett bei
 - [[HASHTAGS: #tag1 #tag2]] → Behalte Hashtag-Block komplett bei
 - #Hashtag → Behalte # vor dem Wort
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 UMFORMULIERUNG DER MARKIERTEN STELLE:
 - Ersetze Wörter durch passende Synonyme
@@ -65,11 +66,12 @@ Antworte NUR mit der umformulierten markierten Stelle!`,
       system: `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT!
 
 FORMAT-PRESERVATION (KRITISCH!):
-Wenn der Text folgende Formatierungen enthält, MUSST du sie EXAKT beibehalten:
+Falls der Original-Text Formatierungen enthält, MUSST du sie EXAKT beibehalten:
 - **Fetter Text** → Behalte ** **-Marker an derselben Position
 - [[CTA: Text]] → Behalte [[CTA: ]]-Marker komplett bei
 - [[HASHTAGS: #tag1 #tag2]] → Behalte Hashtag-Block komplett bei
 - #Hashtag → Behalte # vor dem Wort
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 ❌ DU DARFST NICHT:
 - Neue Sätze hinzufügen
@@ -119,7 +121,8 @@ KONTEXT-ANALYSE:
 3. Behalte den Stil des Gesamttextes
 
 FORMAT-PRESERVATION (KRITISCH!):
-Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+Falls der Original-Text Formatierungen enthält (**Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag), EXAKT beibehalten!
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 PRÄZISE LÄNGEN-VORGABE:
 - Original: ${originalWords} Wörter
@@ -154,7 +157,8 @@ SCHRITT 1 - TONALITÄT ERKENNEN:
 - Emotional: Persönliche Ansprache, Gefühle, Stories
 
 SCHRITT 2 - FORMAT-PRESERVATION (KRITISCH!):
-Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+Falls der Original-Text Formatierungen enthält (**Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag), EXAKT beibehalten!
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 SCHRITT 3 - PRÄZISE LÄNGEN-VORGABE:
 - Original: ${originalWords} Wörter
@@ -194,7 +198,8 @@ KONTEXT-ANALYSE:
 3. Behalte die Tonalität des Gesamttextes
 
 FORMAT-PRESERVATION (KRITISCH!):
-Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+Falls der Original-Text Formatierungen enthält (**Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag), EXAKT beibehalten!
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 PRÄZISE LÄNGEN-VORGABE:
 - Original: ${originalWords} Wörter
@@ -206,7 +211,8 @@ ERWEITERN DER MARKIERTEN STELLE:
 - Ergänze sinnvolle Informationen
 - Bewahre den Schreibstil
 - Halte die Struktur konsistent
-- WICHTIG: Halte dich an die Wortanzahl-Vorgabe! NICHT zu viel erweitern!
+- KRITISCH: Du MUSST die Wortanzahl-Vorgabe erreichen! Mindestens ${minWords} Wörter!
+- Füge beschreibende Adjektive, Zusatzinformationen und Details hinzu
 - WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit der erweiterten markierten Stelle!`,
@@ -229,7 +235,8 @@ SCHRITT 1 - TONALITÄT ERKENNEN:
 - Emotional: Persönliche Ansprache, Gefühle, Stories
 
 SCHRITT 2 - FORMAT-PRESERVATION (KRITISCH!):
-Formatierungen EXAKT beibehalten: **Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag
+Falls der Original-Text Formatierungen enthält (**Bold**, [[CTA: ]], [[HASHTAGS: ]], #Hashtag), EXAKT beibehalten!
+WICHTIG: Füge KEINE neuen Formatierungen hinzu! Nur vorhandene beibehalten!
 
 SCHRITT 3 - PRÄZISE LÄNGEN-VORGABE:
 - Original: ${originalWords} Wörter
@@ -241,7 +248,8 @@ SCHRITT 4 - ERWEITERN:
 - BEHALTE die erkannte Tonalität exakt bei
 - Mache ihn informativer im gleichen Stil
 - Gleiche Struktur beibehalten
-- WICHTIG: Halte dich genau an die Wortanzahl-Vorgabe! NICHT zu viel erweitern!
+- KRITISCH: Du MUSST die Wortanzahl-Vorgabe erreichen! Mindestens ${minWords} Wörter!
+- Füge beschreibende Adjektive, Zusatzinformationen und Details hinzu
 - WICHTIG: Formatierungen EXAKT übernehmen!
 
 Antworte NUR mit dem erweiterten Text.`,
