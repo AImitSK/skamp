@@ -335,62 +335,36 @@ Antworte NUR mit dem erweiterten Text.`;
     setIsProcessing(true);
     setShowToneDropdown(false);
 
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to);
-
-    // Wenn kein Text markiert, auf gesamten Content anwenden (optional)
-    const textToProcess = selectedText.length > 0 ? selectedText : editor.getText();
-    const useFullDocument = selectedText.length === 0;
-
     try {
-      const fullDocument = editor.getHTML() || '';
-      const hasFullContext = fullDocument.length > 0 && fullDocument.length > textToProcess.length;
+      // IMMER gesamten Editor-Content verwenden (wie bei formalize)
+      const fullText = editor.getText();
+      const fullHTML = editor.getHTML();
 
-      let systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
+      console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
-SCHRITT 1 - AKTUELLE TONALITÄT ERKENNEN:
-- Sachlich/Professionell: Fakten, neutrale Sprache
-- Verkäuferisch: Superlative, Werbesprache
-- Emotional: Persönliche Ansprache, Gefühle
-
-SCHRITT 2 - TONALITÄT ÄNDERN:
-- Ändere nur Wortwahl und Stil zum gewünschten Ton: ${tone}
-- Behalte den Inhalt und die Struktur exakt bei
-- Ähnliche Textlänge wie das Original
-- Gleiche Anzahl Absätze beibehalten
-- Keine neuen Headlines hinzufügen
-
-Antworte NUR mit dem Text im neuen Ton.`;
-      let userPrompt = `Analysiere die aktuelle Tonalität und ändere sie zu ${tone}:\n\n${textToProcess}`;
-
+      // API-Route aufrufen - gibt direkt transformedText zurück (mit Format-Preservation)
       const data = await apiClient.post<any>('/api/ai/text-transform', {
-        text: textToProcess,
+        text: fullText,
         action: 'change-tone',
         tone: tone,
-        fullDocument: hasFullContext ? fullDocument : null
+        fullDocument: fullHTML  // Für Kontext
       });
 
-      let newText = parseTextFromAIOutput(data.generatedText || textToProcess);
+      const transformedText = data.transformedText || fullText;
 
-      if (useFullDocument) {
-        // Setze gesamten Editor-Content
-        editor.commands.setContent(newText);
-      } else {
-        // Ersetze nur markierten Text
-        editor.view.dispatch(
-          editor.view.state.tr
-            .setSelection(TextSelection.create(editor.view.state.doc, from, to))
-            .replaceSelectionWith(editor.state.schema.text(newText), false)
-        );
+      // HTML-Formatierung erzeugen (Markdown → HTML konvertieren)
+      const htmlContent = transformedText
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
+        .replace(/\n\n/g, '</p><p>')  // Paragraphen
+        .replace(/^(.+)$/gm, '<p>$1</p>')  // Wrap lines
+        .replace(/<p><\/p>/g, '');  // Leere p entfernen
 
-        // Neue Selection setzen
-        setTimeout(() => {
-          const newTo = from + newText.replace(/<[^>]*>/g, '').length;
-          editor.chain().setTextSelection({ from, to: newTo }).run();
-        }, 100);
-      }
+      // Gesamten Editor-Content ersetzen
+      editor.commands.setContent(htmlContent);
+
+      console.log('✅ Ton erfolgreich geändert');
     } catch (error) {
-      console.error('Ton-Änderung fehlgeschlagen:', error);
+      console.error('❌ Ton-Änderung fehlgeschlagen:', error);
     } finally {
       setIsProcessing(false);
     }
