@@ -336,46 +336,82 @@ Antworte NUR mit der strukturierten PR!`,
   },
 
   // ────────────────────────────────────────────────────────────
-  // CHANGE TONE - Tonalität ändern
+  // CHANGE TONE - Tonalität ändern (wie formalize, aber mit Ton-Parameter)
   // ────────────────────────────────────────────────────────────
   changeTone: {
     withContext: (fullDocument: string, text: string, tone: string) => ({
-      system: `Du bist ein professioneller Texter. Du siehst den GESAMTEN Text, aber sollst NUR die Tonalität der markierten Stelle ändern.
+      system: `Du bist ein erfahrener PR-Experte. Du bekommst eine fertige, strukturierte Pressemitteilung und sollst sie komplett neu im gewünschten Ton schreiben.
 
-WICHTIGE REGELN:
-- Ändere NUR die Wortwahl der markierten Stelle
-- KEINE neuen Absätze oder Struktur hinzufügen
-- KEINE Headlines oder Überschriften erstellen
-- EXAKT die gleiche Textlänge beibehalten
-- NUR Synonym-Austausch für gewünschten Ton: ${tone}
+TONALITÄT: ${tone}
 
-VERBOTEN:
-- Neue Informationen hinzufügen
-- Text erweitern oder strukturieren
-- Headlines wie h1, h2 verwenden
-- Pressemitteilungs-Format erstellen
+TON-DEFINITIONEN:
+- formal: Sachlich, distanziert, offizielle Sprache, keine Umgangssprache
+- casual: Locker, umgangssprachlich, persönlich, weniger steif
+- professional: Geschäftlich, kompetent, seriös aber zugänglich
+- friendly: Warm, einladend, sympathisch, nahbar
+- confident: Selbstbewusst, überzeugend, bestimmt, kraftvoll
 
-Antworte NUR mit der umformulierten markierten Stelle - sonst nichts!`,
-      user: `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE (nur Ton ändern zu ${tone}):\n${text}`
+AUFGABE: Schreibe die PR komplett neu im Ton "${tone}", behalte aber die EXAKTE Struktur bei:
+
+STRUKTUR (ZWINGEND BEIBEHALTEN):
+**Lead-Absatz: Fett formatiert mit 5 W-Fragen**
+Absatz 2-3: Hauptinformation mit Details
+"Zitat", sagt [Name/Position].
+[[CTA: Handlungsaufforderung]]
+[[HASHTAGS: #hashtag1 #hashtag2]]
+
+KRITISCHE REGELN:
+- EXAKT gleiche Struktur wie Original (gleiche Anzahl Absätze)
+- Lead mit ** markieren (fett)
+- Zitate aus Original übernehmen oder anpassen
+- CTA und Hashtags in [[MARKER]] Format exakt übernehmen
+- ALLE Formatierungen beibehalten (**Bold**, [[CTA:]], [[HASHTAGS:]], > Quotes)
+- NUR die Wortwahl und Formulierung im neuen Ton ändern
+- KEINE Informationen hinzufügen oder weglassen
+- KEINE neuen Headlines/Titel erstellen
+
+BEISPIEL:
+Input (professional): **TechCorp präsentiert innovative KI-Lösung für Unternehmen.**\nDie Lösung optimiert Prozesse.\n"Dies ist ein wichtiger Schritt", erklärt der CEO.\n[[CTA: Mehr unter techcorp.de]]
+Ton: friendly
+Output: **TechCorp hat was richtig Cooles für euch: Eine KI-Lösung, die eure Arbeit leichter macht!**\nDie Lösung hilft euch, eure Abläufe zu verbessern.\n"Das wird euch begeistern", freut sich der CEO.\n[[CTA: Mehr unter techcorp.de]]
+
+Antworte mit der komplett neu geschriebenen PR im Ton "${tone}"!`,
+      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}"):\n${text}`
     }),
 
     withoutContext: (text: string, tone: string) => ({
-      system: `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
+      system: `Du bist ein erfahrener PR-Experte. Du bekommst eine fertige, strukturierte Pressemitteilung und sollst sie komplett neu im gewünschten Ton schreiben.
 
-SCHRITT 1 - AKTUELLE TONALITÄT ERKENNEN:
-- Sachlich/Professionell: Fakten, neutrale Sprache
-- Verkäuferisch: Superlative, Werbesprache
-- Emotional: Persönliche Ansprache, Gefühle
+TONALITÄT: ${tone}
 
-SCHRITT 2 - TONALITÄT ÄNDERN:
-- Ändere nur Wortwahl und Stil zum gewünschten Ton: ${tone}
-- Behalte den Inhalt und die Struktur exakt bei
-- Ähnliche Textlänge wie das Original
-- Gleiche Anzahl Absätze beibehalten
-- Keine neuen Headlines hinzufügen
+TON-DEFINITIONEN:
+- formal: Sachlich, distanziert, offizielle Sprache, keine Umgangssprache
+- casual: Locker, umgangssprachlich, persönlich, weniger steif
+- professional: Geschäftlich, kompetent, seriös aber zugänglich
+- friendly: Warm, einladend, sympathisch, nahbar
+- confident: Selbstbewusst, überzeugend, bestimmt, kraftvoll
 
-Antworte NUR mit dem Text im neuen Ton.`,
-      user: `Analysiere die aktuelle Tonalität und ändere sie zu ${tone}:\n\n${text}`
+AUFGABE: Schreibe die PR komplett neu im Ton "${tone}", behalte aber die EXAKTE Struktur bei:
+
+STRUKTUR (ZWINGEND BEIBEHALTEN):
+**Lead-Absatz: Fett formatiert mit 5 W-Fragen**
+Absatz 2-3: Hauptinformation mit Details
+"Zitat", sagt [Name/Position].
+[[CTA: Handlungsaufforderung]]
+[[HASHTAGS: #hashtag1 #hashtag2]]
+
+KRITISCHE REGELN:
+- EXAKT gleiche Struktur wie Original (gleiche Anzahl Absätze)
+- Lead mit ** markieren (fett)
+- Zitate aus Original übernehmen oder anpassen
+- CTA und Hashtags in [[MARKER]] Format exakt übernehmen
+- ALLE Formatierungen beibehalten (**Bold**, [[CTA:]], [[HASHTAGS:]], > Quotes)
+- NUR die Wortwahl und Formulierung im neuen Ton ändern
+- KEINE Informationen hinzufügen oder weglassen
+- KEINE neuen Headlines/Titel erstellen
+
+Antworte mit der komplett neu geschriebenen PR im Ton "${tone}"!`,
+      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}"):\n${text}`
     })
   },
 
@@ -583,8 +619,8 @@ export const textTransformFlow = ai.defineFlow(
     // 1.5 PRE-PROCESSING: Format Extraction
     // ══════════════════════════════════════════════════════════════
 
-    // Format-Preservation für alle Actions außer formalize (erstellt eigene PR-Struktur)
-    const shouldPreserveFormat = ['rephrase', 'shorten', 'expand', 'change-tone', 'custom'].includes(input.action);
+    // Format-Preservation für alle Actions außer formalize und change-tone (beide erstellen eigene PR-Struktur)
+    const shouldPreserveFormat = ['rephrase', 'shorten', 'expand', 'custom'].includes(input.action);
     let formatMarkers = null;
     let textToTransform = input.text;
 

@@ -337,62 +337,22 @@ Antworte NUR mit dem erweiterten Text.`;
 
     try {
       // IMMER gesamten Editor-Content verwenden (wie bei formalize)
-      const fullHTML = editor.getHTML();
       const fullText = editor.getText();  // Plain-Text für Flow
 
       console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
-      // API-Route aufrufen - sendet Plain-Text, Flow gibt transformedText mit Format-Markers zurück
+      // API-Route aufrufen - Flow schreibt PR komplett neu mit Formatierung
       const data = await apiClient.post<any>('/api/ai/text-transform', {
-        text: fullText,  // Sende Plain-Text (Flow verarbeitet das besser)
+        text: fullText,
         action: 'change-tone',
         tone: tone,
-        fullDocument: fullText  // Für Kontext
+        fullDocument: fullText
       });
 
       const transformedText = data.transformedText || fullText;
 
-      // Konvertiere Markdown-Formatierungen zu TipTap-kompatiblem HTML
-      let htmlContent = transformedText;
-
-      // 1. Blockquotes konvertieren (> quote) zu TipTap PR-Quote
-      htmlContent = htmlContent.replace(
-        /^>\s*(.+)$/gm,
-        '<blockquote data-type="pr-quote" class="pr-quote border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">\n        $1\n      </blockquote>'
-      );
-
-      // 2. Bold konvertieren (**text** → <strong>)
-      htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-      // 3. CTA konvertieren ([[CTA: text]] → TipTap CTA span)
-      htmlContent = htmlContent.replace(
-        /\[\[CTA:\s*([^\]]+)\]\]/g,
-        '<span data-type="cta-text" class="cta-text font-bold text-black">$1</span>'
-      );
-
-      // 4. Hashtags konvertieren (#hashtag → TipTap Hashtag span)
-      htmlContent = htmlContent.replace(
-        /#(\w+)/g,
-        '<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">#$1</span>'
-      );
-
-      // 5. Paragraphen-Struktur wiederherstellen
-      // Split by double newlines für Absätze
-      const paragraphs = htmlContent.split('\n\n');
-      const processedParagraphs = paragraphs.map(para => {
-        const trimmed = para.trim();
-        if (!trimmed) return '';
-
-        // Wenn schon HTML-Tag vorhanden (z.B. blockquote), nicht wrappen
-        if (trimmed.startsWith('<blockquote') || trimmed.startsWith('<p>') || trimmed.startsWith('<div>')) {
-          return trimmed;
-        }
-
-        // Sonst in <p> wrappen
-        return `<p>${trimmed}</p>`;
-      });
-
-      htmlContent = processedParagraphs.filter(p => p).join('\n\n');
+      // Verwende parseHTMLFromAIOutput um Markdown → HTML zu konvertieren (wie formalize)
+      const htmlContent = parseHTMLFromAIOutput(transformedText);
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
