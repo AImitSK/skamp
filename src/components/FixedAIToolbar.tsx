@@ -337,27 +337,35 @@ Antworte NUR mit dem erweiterten Text.`;
 
     try {
       // IMMER gesamten Editor-Content verwenden (wie bei formalize)
-      const fullText = editor.getText();
       const fullHTML = editor.getHTML();
+      const fullText = editor.getText();  // Plain-Text für Flow
 
       console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
-      // API-Route aufrufen - gibt direkt transformedText zurück (mit Format-Preservation)
+      // API-Route aufrufen - sendet Plain-Text, Flow gibt transformedText mit Format-Markers zurück
       const data = await apiClient.post<any>('/api/ai/text-transform', {
-        text: fullText,
+        text: fullText,  // Sende Plain-Text (Flow verarbeitet das besser)
         action: 'change-tone',
         tone: tone,
-        fullDocument: fullHTML  // Für Kontext
+        fullDocument: fullText  // Für Kontext
       });
 
       const transformedText = data.transformedText || fullText;
 
-      // HTML-Formatierung erzeugen (Markdown → HTML konvertieren)
-      const htmlContent = transformedText
+      // Konvertiere Markdown-Formatierungen zu HTML
+      let htmlContent = transformedText
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
-        .replace(/\n\n/g, '</p><p>')  // Paragraphen
-        .replace(/^(.+)$/gm, '<p>$1</p>')  // Wrap lines
-        .replace(/<p><\/p>/g, '');  // Leere p entfernen
+        .replace(/\[\[CTA:\s*([^\]]+)\]\]/g, '<span data-type="cta-text" class="cta-text font-bold text-black">$1</span>')  // CTA
+        .replace(/#(\w+)/g, '<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">#$1</span>');  // Hashtags
+
+      // Paragraphen wrappen
+      if (!htmlContent.includes('<p>') && !htmlContent.includes('<div>')) {
+        htmlContent = htmlContent
+          .split('\n\n')
+          .map(p => p.trim() ? `<p>${p.trim()}</p>` : '')
+          .filter(p => p)
+          .join('\n');
+      }
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
