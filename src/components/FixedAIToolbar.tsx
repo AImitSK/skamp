@@ -15,61 +15,46 @@ import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
 /**
- * Parser für strukturierte PR-Ausgaben (wie Structured Generation Modal)
- * Konvertiert Marker [[CTA: ...]], [[HASHTAGS: ...]], Quotes, Bold zu TipTap HTML
+ * Parser für strukturierte PR-Ausgaben (TipTap-kompatibel)
+ * Konvertiert Marker zu einfachem HTML ohne inline-styles
+ * TipTap strippt inline-styles, daher verwenden wir semantisches HTML + visuelle Marker
  */
 function parseStructuredPRToHTML(aiOutput: string): string {
   let html = aiOutput.trim();
 
-  // 1. CTA-Marker konvertieren: [[CTA: text]] → Styled div
+  // 1. CTA-Marker: [[CTA: text]] → Eindeutiger Block mit Emoji-Marker
   html = html.replace(/\[\[CTA:\s*([^\]]+)\]\]/g, (match, ctaText) => {
-    return `<div style="background-color: #eef2ff; padding: 16px; border-radius: 8px; border-left: 4px solid #6366f1; margin: 16px 0;"><p style="font-weight: bold; color: #312e81; margin: 0;">${ctaText.trim()}</p></div>`;
+    return `<p><strong>👉 ${ctaText.trim()}</strong></p>`;
   });
 
-  // 2. HASHTAGS-Marker konvertieren: [[HASHTAGS: #tag1 #tag2]] → Pill-styled spans
+  // 2. HASHTAGS-Marker: [[HASHTAGS: #tag1 #tag2]] → Direkte Hashtag-Zeile
   html = html.replace(/\[\[HASHTAGS?:\s*([^\]]+)\]\]/gi, (match, hashtags) => {
-    const tags = hashtags.trim().split(/\s+/).filter((tag: string) => tag.startsWith('#'));
-    const tagHTML = tags.map((tag: string) =>
-      `<span style="background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; display: inline-block; margin: 0 4px 4px 0;">${tag}</span>`
-    ).join(' ');
-    return `<p style="margin: 16px 0;">${tagHTML}</p>`;
+    return `<p>${hashtags.trim()}</p>`;
   });
 
-  // 3. Einzelne Hashtags konvertieren (falls nicht in [[HASHTAGS: ...]])
-  html = html.replace(/(?:^|\s)(#\w+)/g, (match, tag) => {
-    return ` <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; display: inline-block; margin: 0 4px 4px 0;">${tag}</span>`;
-  });
-
-  // 4. Zitate mit Person konvertieren: > "text" - Person → Blockquote styled
+  // 3. Zitate mit Person konvertieren: > "text" - Person → Standard Blockquote
   html = html.replace(/^>\s*["„"]?([^"\n]+)[""]?(?:\s*[-–]\s*(.+))?$/gm, (match, quoteText, person) => {
-    const personHTML = person ? `<cite style="display: block; margin-top: 8px; font-style: normal; font-weight: 600; color: #1f2937;">— ${person.trim()}</cite>` : '';
-    return `<blockquote style="background-color: #eff6ff; padding: 16px; border-radius: 8px; border-left: 4px solid #60a5fa; margin: 16px 0; font-style: italic; color: #1f2937;"><p style="margin: 0;">&ldquo;${quoteText.trim()}&rdquo;</p>${personHTML}</blockquote>`;
+    const personHTML = person ? `<br><em>— ${person.trim()}</em>` : '';
+    return `<blockquote><p>"${quoteText.trim()}"${personHTML}</p></blockquote>`;
   });
 
-  // 5. Bold-Markdown konvertieren: **text** → <strong>
+  // 4. Bold-Markdown konvertieren: **text** → <strong>
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-  // 6. Italic-Markdown konvertieren: *text* → <em>
+  // 5. Italic-Markdown konvertieren: *text* → <em>
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
 
-  // 7. Absätze strukturieren (wenn noch keine HTML-Tags vorhanden)
+  // 6. Absätze strukturieren (wenn noch keine HTML-Tags vorhanden)
   if (!html.includes('<p>') && !html.includes('<div>') && !html.includes('<blockquote>')) {
     html = html.split('\n\n').map(para => {
       const trimmed = para.trim();
       if (!trimmed) return '';
-      // Überspringe bereits konvertierte styled divs
-      if (trimmed.startsWith('<div style=') || trimmed.startsWith('<blockquote')) return trimmed;
+      if (trimmed.startsWith('<blockquote')) return trimmed;
       return `<p>${trimmed}</p>`;
     }).filter(p => p).join('\n');
   }
 
-  // 8. Lead-Paragraph Erkennung (erster Absatz nach Headline) → Yellow background
-  // Wenn der erste Absatz nach Bold-Headline kommt, markiere ihn als Lead
-  html = html.replace(/(<p><strong>.+?<\/strong><\/p>\s*)(<p>(.+?)<\/p>)/, (match, headline, leadPara, leadText) => {
-    return `${headline}<p style="background-color: #fef9c3; padding: 12px; border-radius: 6px; color: #1f2937;">${leadText}</p>`;
-  });
-
-  // 9. Bereinige störende PM-Phrasen
+  // 7. Bereinige störende PM-Phrasen
   const cleanupPhrases = [
     'Die Pressemitteilung endet hier',
     'Über [Unternehmen]',
