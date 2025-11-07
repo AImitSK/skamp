@@ -119,7 +119,11 @@ VERMEIDE:
 
   // Tonalitäts-spezifische Anpassungen
   tones: {
-    formal: `TONALITÄT: FORMAL - Konservativ, seriös, vertrauenswürdig. Längere Sätze erlaubt (max. 20 Wörter). Fachterminologie angemessen. Zurückhaltende Sprache.`,
+    formal: `TONALITÄT: FORMAL - Konservativ, seriös, vertrauenswürdig. Längere Sätze erlaubt (max. 20 Wörter). Fachterminologie angemessen. Zurückhaltende Sprache. Distanzierte, offizielle Ausdrucksweise.`,
+    casual: `TONALITÄT: LOCKER/CASUAL - Umgangssprachlich, persönlich, nahbar. Kurze, knackige Sätze (max. 10 Wörter). "Du/Ihr" statt "Sie". Aktive Verben, moderne Begriffe wie "mega", "cool", "echt". Emotionale Ausrufe erlaubt! Wie ein Gespräch unter Freunden.`,
+    professional: `TONALITÄT: PROFESSIONELL - Geschäftlich, kompetent, seriös aber zugänglich. Klare, präzise Sprache (max. 15 Wörter pro Satz). Fachbegriffe moderat. Respektvoll aber nicht steif. Ideal für B2B-Kommunikation.`,
+    friendly: `TONALITÄT: FREUNDLICH - Warm, einladend, sympathisch, nahbar. Positive Formulierungen. Leichte, angenehme Sprache (max. 12 Wörter). Vermittle Begeisterung und Hilfsbereitschaft. Persönliche Note ohne zu locker zu werden.`,
+    confident: `TONALITÄT: SELBSTBEWUSST - Überzeugend, bestimmt, kraftvoll, authoritative. Starke Verben, klare Aussagen. Keine Konjunktive oder Abschwächungen. "Wir setzen Standards", "Marktführend", "Bewährt". Fakten mit Überzeugung präsentieren.`,
     modern: `TONALITÄT: MODERN - Zeitgemäß, innovativ, zugänglich. Kurze Sätze (max. 12 Wörter). Moderne Begriffe. Direkte Ansprache.`,
     technical: `TONALITÄT: TECHNISCH - Fachspezifisch, präzise, detailliert. Technische Begriffe korrekt. Zahlen, Daten, Spezifikationen prominent. Für Experten.`,
     startup: `TONALITÄT: STARTUP - SCORE-OPTIMIERT
