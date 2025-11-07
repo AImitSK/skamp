@@ -618,6 +618,13 @@ Erstelle eine professionelle Pressemitteilung nach journalistischen Standards.
     // 6. HTML-GENERIERUNG
     // ══════════════════════════════════════════════════════════════
 
+    // Hashtags als TipTap-kompatible spans (data-type="hashtag")
+    const hashtagsHTML = structured.hashtags && structured.hashtags.length > 0
+      ? `<p>${structured.hashtags.map(tag =>
+          `<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">${tag}</span>`
+        ).join(' ')}</p>`
+      : '';
+
     const htmlContent = `
 <p><strong>${structured.leadParagraph}</strong></p>
 
@@ -630,7 +637,7 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
 
 <p><span data-type="cta-text" class="cta-text font-bold text-black">${structured.cta}</span></p>
 
-${structured.hashtags && structured.hashtags.length > 0 ? `<p class="hashtags text-blue-600">${structured.hashtags.join(' ')}</p>` : ''}
+${hashtagsHTML}
 `.trim();
 
     console.log('✅ Strukturierte PR erfolgreich generiert!', {
