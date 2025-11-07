@@ -21,9 +21,43 @@ function parseHTMLFromAIOutput(aiOutput: string): string {
   // Entferne nur störende PM-Struktur-Tags, behalte Formatierungs-Tags
   text = text.replace(/<\/?h[1-6][^>]*>/gi, '');
   text = text.replace(/<\/?div[^>]*>/gi, '');
-  text = text.replace(/<\/?span[^>]*>/gi, '');
 
-  // Konvertiere Markdown zu HTML
+  // WICHTIG: Konvertiere ZUERST die speziellen Marker (vor dem span-Remove!)
+
+  // 1. Quotes konvertieren (> text oder "> text")
+  text = text.replace(
+    /^>\s*[""]?(.+?)[""]?$/gm,
+    '<blockquote data-type="pr-quote" class="pr-quote border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">$1</blockquote>'
+  );
+
+  // 2. CTA konvertieren ([[CTA: text]])
+  text = text.replace(
+    /\[\[CTA:\s*([^\]]+)\]\]/g,
+    '<span data-type="cta-text" class="cta-text font-bold text-black">$1</span>'
+  );
+
+  // 3. Hashtag-Block konvertieren ([[HASHTAGS: #tag1 #tag2]])
+  text = text.replace(
+    /\[\[HASHTAGS:\s*([^\]]+)\]\]/g,
+    (match, hashtags) => {
+      // Jedes Hashtag einzeln als span wrappen
+      const tagSpans = hashtags.split(/\s+/).map((tag: string) =>
+        `<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">${tag}</span>`
+      ).join(' ');
+      return tagSpans;
+    }
+  );
+
+  // 4. Einzelne Hashtags konvertieren (#hashtag)
+  text = text.replace(
+    /#(\w+)/g,
+    '<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">#$1</span>'
+  );
+
+  // Jetzt spans entfernen (außer unsere speziellen data-type spans)
+  text = text.replace(/<\/?span(?![^>]*data-type)[^>]*>/gi, '');
+
+  // 5. Markdown zu HTML
   text = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -32,19 +66,19 @@ function parseHTMLFromAIOutput(aiOutput: string): string {
     .replace(/`(.*?)`/g, '<code>$1</code>')
     .replace(/~~(.*?)~~/g, '<del>$1</del>');
 
-  // Entferne Heading-Marker
+  // 6. Entferne Heading-Marker
   text = text.replace(/^#{1,6}\s+(.+)$/gm, '<p><strong>$1</strong></p>');
 
-  // Extrahiere Antwort aus Volltext-Kontext
+  // 7. Extrahiere Antwort aus Volltext-Kontext
   const hasFullContext = text.includes('GESAMTER TEXT:') || text.includes('ANWEISUNG ZUM AUSFÜHREN:');
   if (hasFullContext) {
-    const parts = text.split(/(?:ANWEISUNG ZUM AUSFÜHREN:|MARKIERTE STELLE).*?:\s*/);
+    const parts = text.split(/(?:ANWEISUNG ZUM AUSFÜHREN:|MARKIERTE STELLE|ORIGINAL-PR).*?:\s*/);
     if (parts.length > 1) {
       text = parts[parts.length - 1].trim();
     }
   }
 
-  // Bereinige extreme PM-Phrasen
+  // 8. Bereinige extreme PM-Phrasen
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const htmlContent: string[] = [];
 
@@ -58,11 +92,21 @@ function parseHTMLFromAIOutput(aiOutput: string): string {
     htmlContent.push(line);
   }
 
+  // 9. Paragraphen-Struktur (aber nicht blockquotes wrappen!)
   const finalText = htmlContent.join('\n');
   if (finalText && !finalText.includes('<p>') && !finalText.includes('<div>')) {
-    return finalText.split('\n\n').map(paragraph =>
-      paragraph.trim() ? `<p>${paragraph.trim()}</p>` : ''
-    ).filter(p => p).join('\n');
+    return finalText.split('\n\n').map(paragraph => {
+      const trimmed = paragraph.trim();
+      if (!trimmed) return '';
+
+      // Wenn schon HTML-Tag vorhanden (z.B. blockquote), nicht wrappen
+      if (trimmed.startsWith('<blockquote') || trimmed.startsWith('<p>') || trimmed.startsWith('<div>')) {
+        return trimmed;
+      }
+
+      // Sonst in <p> wrappen
+      return `<p>${trimmed}</p>`;
+    }).filter(p => p).join('\n\n');
   }
 
   return finalText;
