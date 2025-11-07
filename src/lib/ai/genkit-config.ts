@@ -28,9 +28,15 @@ export const ai = genkit({
   ]
 });
 
-// Gemini 2.5 Flash (stabil, 1.5 ist retired!)
+// Gemini Modelle (stabil, 1.5 ist retired!)
 // WICHTIG: In JS/TS OHNE 'googleai/' Präfix!
+
+// Gemini 2.5 Flash - Für komplexe Reasoning-Tasks mit Extended Thinking
 export const gemini25FlashModel = googleAI.model('gemini-2.5-flash');
+
+// Gemini 2.5 Flash-Lite - Für einfache Text-Transformationen (75% günstiger)
+// $0.10/1M Input-Tokens, $0.40/1M Output-Tokens
+export const gemini25FlashLiteModel = googleAI.model('gemini-2.5-flash-lite');
 
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';

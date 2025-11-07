@@ -1,7 +1,7 @@
 // src/lib/ai/flows/text-transform.ts
 // Genkit Flow für Text-Transformationen im Editor (FloatingAIToolbar)
 
-import { ai, gemini25FlashModel } from '../genkit-config';
+import { ai, gemini25FlashModel, gemini25FlashLiteModel } from '../genkit-config';
 import {
   TextTransformInputSchema,
   TextTransformOutputSchema,
@@ -644,18 +644,30 @@ export const textTransformFlow = ai.defineFlow(
     // 2. GEMINI API CALL
     // ══════════════════════════════════════════════════════════════
 
+    // Model-Auswahl basierend auf Task-Komplexität
+    // - Einfache Transformationen: Gemini 2.5 Flash-Lite (75% günstiger, schneller)
+    // - Komplexe Reasoning: Gemini 2.5 Flash (mit Extended Thinking)
+    const isComplexTask = input.action === 'formalize' || input.action === 'custom';
+    const selectedModel = isComplexTask ? gemini25FlashModel : gemini25FlashLiteModel;
+    const modelConfig = isComplexTask
+      ? { temperature: 0.7, maxOutputTokens: 8192 } // Extended Thinking für komplexe Tasks
+      : { temperature: 0.7, maxOutputTokens: 2048 }; // Flash-Lite für einfache Tasks
+
+    console.log('🤖 Model Selection:', {
+      action: input.action,
+      model: isComplexTask ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite',
+      maxOutputTokens: modelConfig.maxOutputTokens
+    });
+
     let result;
     try {
       result = await ai.generate({
-        model: gemini25FlashModel,
+        model: selectedModel,
         prompt: [
           { text: systemPrompt },
           { text: userPrompt }
         ],
-        config: {
-          temperature: 0.7,
-          maxOutputTokens: 8192, // Extended Thinking benötigt mehr Tokens (siehe genkit-integration-learnings.md)
-        }
+        config: modelConfig
       });
     } catch (genError: any) {
       console.error('❌ Gemini API Error:', {
