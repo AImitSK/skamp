@@ -301,32 +301,49 @@ function parseStructuredOutput(text: string): Omit<StructuredPressRelease, 'html
       currentSection = 'body';
     }
 
-    // 3. Zitat
-    if (line.startsWith('"')) {
+    // 3. Zitat - MEHRERE FORMATE UNTERSTÜTZEN
+    if (line.startsWith('"') || line.includes('sagt:') || line.includes('sagt "')) {
       currentSection = 'quote';
 
-      const quoteMatch = line.match(/"([^"]+)"[,\s]*sagt\s+([^,]+?)(?:,\s*([^,]+?))?(?:\s+bei\s+([^.]+))?\.?$/);
-      if (quoteMatch) {
+      // Format 1: "Text", sagt Person, Rolle bei Firma.
+      const quoteMatch1 = line.match(/"([^"]+)"[,\s]*sagt\s+([^,]+?)(?:,\s*([^,]+?))?(?:\s+bei\s+([^.]+))?\.?$/);
+      if (quoteMatch1) {
         quote = {
-          text: quoteMatch[1],
-          person: quoteMatch[2].trim(),
-          role: quoteMatch[3] ? quoteMatch[3].trim() : 'Sprecher',
-          company: quoteMatch[4] ? quoteMatch[4].trim() : ''
+          text: quoteMatch1[1],
+          person: quoteMatch1[2].trim(),
+          role: quoteMatch1[3] ? quoteMatch1[3].trim() : 'Sprecher',
+          company: quoteMatch1[4] ? quoteMatch1[4].trim() : ''
         };
-      } else {
-        const simpleMatch = line.match(/"([^"]+)"/);
-        if (simpleMatch) {
-          quote.text = simpleMatch[1];
-          if (i + 1 < lines.length) {
-            const nextLine = lines[i + 1].trim();
-            const personMatch = nextLine.match(/[-–—]\s*(.+)/);
-            if (personMatch) {
-              const parts = personMatch[1].split(',').map(p => p.trim());
-              quote.person = parts[0] || 'Sprecher';
-              quote.role = parts[1] || 'Geschäftsführer';
-              quote.company = parts[2] || '';
-              i++;
-            }
+        currentSection = 'cta';
+        continue;
+      }
+
+      // Format 2: Rolle Person sagt: "Text"
+      const quoteMatch2 = line.match(/([A-ZÄÖÜ][a-zäöüß]+)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)\s+sagt:\s*"([^"]+)"/);
+      if (quoteMatch2) {
+        quote = {
+          text: quoteMatch2[3],
+          person: quoteMatch2[2].trim(),
+          role: quoteMatch2[1].trim(),
+          company: ''
+        };
+        currentSection = 'cta';
+        continue;
+      }
+
+      // Format 3: "Text" mit Person in nächster Zeile
+      const simpleMatch = line.match(/"([^"]+)"/);
+      if (simpleMatch) {
+        quote.text = simpleMatch[1];
+        if (i + 1 < lines.length) {
+          const nextLine = lines[i + 1].trim();
+          const personMatch = nextLine.match(/[-–—]\s*(.+)/);
+          if (personMatch) {
+            const parts = personMatch[1].split(',').map(p => p.trim());
+            quote.person = parts[0] || 'Sprecher';
+            quote.role = parts[1] || 'Geschäftsführer';
+            quote.company = parts[2] || '';
+            i++;
           }
         }
       }
@@ -612,6 +629,8 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
 </blockquote>
 
 <p><span data-type="cta-text" class="cta-text font-bold text-black">${structured.cta}</span></p>
+
+${structured.hashtags && structured.hashtags.length > 0 ? `<p class="hashtags text-blue-600">${structured.hashtags.join(' ')}</p>` : ''}
 `.trim();
 
     console.log('✅ Strukturierte PR erfolgreich generiert!', {
