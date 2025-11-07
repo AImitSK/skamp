@@ -5,7 +5,10 @@
       "args": [
         "mcp",
         "--no-update-notification"
-      ]
+      ],
+      "env": {
+        "GENKIT_ENV": "dev"
+      }
     }
   }
 }

@@ -697,6 +697,14 @@ export const textTransformFlow = ai.defineFlow(
     let transformedText = parseTextFromAIOutput(generatedText);
 
     // ══════════════════════════════════════════════════════════════
+    // 3.3 POST-PROCESSING: Doppelpunkt-Bug beheben
+    // ══════════════════════════════════════════════════════════════
+
+    // FIX: Entferne doppelte Punkte am Ende von Sätzen
+    // Problem: AI fügt manchmal ".." statt "." hinzu
+    transformedText = transformedText.replace(/\.{2,}/g, '.');
+
+    // ══════════════════════════════════════════════════════════════
     // 3.5 POST-PROCESSING: Format Restoration
     // ══════════════════════════════════════════════════════════════
 
