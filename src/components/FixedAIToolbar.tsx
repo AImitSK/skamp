@@ -1,7 +1,7 @@
 // src/components/FixedAIToolbar.tsx
 "use client";
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import {
@@ -150,6 +150,37 @@ export const FixedAIToolbar = ({ editor, onAIAction }: FixedAIToolbarProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [customInstruction, setCustomInstruction] = useState('');
+  const toneButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Berechne Dropdown-Position wenn es geöffnet wird
+  useEffect(() => {
+    if (showToneDropdown && toneButtonRef.current) {
+      const rect = toneButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left
+      });
+    }
+  }, [showToneDropdown]);
+
+  // Click-Outside Handler für Dropdown
+  useEffect(() => {
+    if (!showToneDropdown) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (toneButtonRef.current && !toneButtonRef.current.contains(event.target as Node)) {
+        // Prüfe auch ob das Dropdown selbst geklickt wurde
+        const dropdown = document.querySelector('[data-dropdown="tone"]');
+        if (!dropdown || !dropdown.contains(event.target as Node)) {
+          setShowToneDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showToneDropdown]);
 
   // Default KI-Action Handler
   const handleAIAction = useCallback(async (action: AIAction, text: string): Promise<string> => {
@@ -536,8 +567,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
         </button>
 
         {/* Ton ändern Dropdown */}
-        <div className="relative z-50">
+        <div className="relative">
           <button
+            ref={toneButtonRef}
             type="button"
             onClick={() => setShowToneDropdown(!showToneDropdown)}
             disabled={isProcessing}
@@ -556,9 +588,17 @@ Antworte NUR mit dem Text im neuen Ton.`;
             </svg>
           </button>
 
-          {/* Ton-Dropdown */}
+          {/* Ton-Dropdown - Fixed positioning mit z-[9999] über allem */}
           {showToneDropdown && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50">
+            <div
+              data-dropdown="tone"
+              className="fixed w-48 bg-white border border-gray-200 rounded-md shadow-xl py-1"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`,
+                zIndex: 9999
+              }}
+            >
               {toneOptions.map((tone) => (
                 <button
                   key={tone.value}
