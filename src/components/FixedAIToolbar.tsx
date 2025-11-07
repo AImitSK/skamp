@@ -380,22 +380,23 @@ Antworte NUR mit dem erweiterten Text.`;
     setShowToneDropdown(false);
 
     try {
-      // IMMER gesamten Editor-Content verwenden (wie bei formalize)
+      // IMMER gesamten Editor-Content verwenden
       const fullText = editor.getText();  // Plain-Text für Flow
 
       console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
-      // WICHTIG: Nutze generate-structured Route (wie formalize) mit Ton-Parameter
-      const data = await apiClient.post<any>('/api/ai/generate-structured', {
-        prompt: fullText,  // Bestehende PR als Input
-        context: {
-          tone: tone  // Ton-Parameter für Neuschreibung
-        },
-        documentContext: null
+      // WICHTIG: Nutze text-transform mit action:change-tone (hat eigenen dedizierten Prompt)
+      const data = await apiClient.post<any>('/api/ai/text-transform', {
+        text: fullText,
+        action: 'change-tone',
+        tone: tone,
+        fullDocument: fullText
       });
 
-      // Verwende das bereits perfekt formatierte htmlContent
-      const htmlContent = data.htmlContent || fullText;
+      const transformedText = data.transformedText || fullText;
+
+      // Verwende parseHTMLFromAIOutput um Markdown → HTML zu konvertieren
+      const htmlContent = parseHTMLFromAIOutput(transformedText);
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
