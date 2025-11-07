@@ -352,20 +352,47 @@ Antworte NUR mit dem erweiterten Text.`;
 
       const transformedText = data.transformedText || fullText;
 
-      // Konvertiere Markdown-Formatierungen zu HTML
-      let htmlContent = transformedText
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
-        .replace(/\[\[CTA:\s*([^\]]+)\]\]/g, '<span data-type="cta-text" class="cta-text font-bold text-black">$1</span>')  // CTA
-        .replace(/#(\w+)/g, '<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">#$1</span>');  // Hashtags
+      // Konvertiere Markdown-Formatierungen zu TipTap-kompatiblem HTML
+      let htmlContent = transformedText;
 
-      // Paragraphen wrappen
-      if (!htmlContent.includes('<p>') && !htmlContent.includes('<div>')) {
-        htmlContent = htmlContent
-          .split('\n\n')
-          .map(p => p.trim() ? `<p>${p.trim()}</p>` : '')
-          .filter(p => p)
-          .join('\n');
-      }
+      // 1. Blockquotes konvertieren (> quote) zu TipTap PR-Quote
+      htmlContent = htmlContent.replace(
+        /^>\s*(.+)$/gm,
+        '<blockquote data-type="pr-quote" class="pr-quote border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">\n        $1\n      </blockquote>'
+      );
+
+      // 2. Bold konvertieren (**text** → <strong>)
+      htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // 3. CTA konvertieren ([[CTA: text]] → TipTap CTA span)
+      htmlContent = htmlContent.replace(
+        /\[\[CTA:\s*([^\]]+)\]\]/g,
+        '<span data-type="cta-text" class="cta-text font-bold text-black">$1</span>'
+      );
+
+      // 4. Hashtags konvertieren (#hashtag → TipTap Hashtag span)
+      htmlContent = htmlContent.replace(
+        /#(\w+)/g,
+        '<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">#$1</span>'
+      );
+
+      // 5. Paragraphen-Struktur wiederherstellen
+      // Split by double newlines für Absätze
+      const paragraphs = htmlContent.split('\n\n');
+      const processedParagraphs = paragraphs.map(para => {
+        const trimmed = para.trim();
+        if (!trimmed) return '';
+
+        // Wenn schon HTML-Tag vorhanden (z.B. blockquote), nicht wrappen
+        if (trimmed.startsWith('<blockquote') || trimmed.startsWith('<p>') || trimmed.startsWith('<div>')) {
+          return trimmed;
+        }
+
+        // Sonst in <p> wrappen
+        return `<p>${trimmed}</p>`;
+      });
+
+      htmlContent = processedParagraphs.filter(p => p).join('\n\n');
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
