@@ -385,18 +385,17 @@ Antworte NUR mit dem erweiterten Text.`;
 
       console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
-      // API-Route aufrufen - Flow schreibt PR komplett neu mit Formatierung
-      const data = await apiClient.post<any>('/api/ai/text-transform', {
-        text: fullText,
-        action: 'change-tone',
-        tone: tone,
-        fullDocument: fullText
+      // WICHTIG: Nutze generate-structured Route (wie formalize) mit Ton-Parameter
+      const data = await apiClient.post<any>('/api/ai/generate-structured', {
+        prompt: fullText,  // Bestehende PR als Input
+        context: {
+          tone: tone  // Ton-Parameter für Neuschreibung
+        },
+        documentContext: null
       });
 
-      const transformedText = data.transformedText || fullText;
-
-      // Verwende parseHTMLFromAIOutput um Markdown → HTML zu konvertieren (wie formalize)
-      const htmlContent = parseHTMLFromAIOutput(transformedText);
+      // Verwende das bereits perfekt formatierte htmlContent
+      const htmlContent = data.htmlContent || fullText;
 
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
@@ -463,43 +462,32 @@ Antworte NUR mit dem erweiterten Text.`;
 
     setIsProcessing(true);
 
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to);
-
-    // Custom arbeitet IMMER mit dem vollen Dokument (kontextbewusst)
-    const textToProcess = editor.getText();  // Immer ganzer Text
-    const useFullDocument = true;  // Custom ist immer kontextbewusst
-
     try {
-      const fullDocument = editor?.getHTML() || '';
+      // Custom arbeitet IMMER mit dem vollen Dokument (kontextbewusst)
+      const fullText = editor.getText();  // Plain-Text für Flow
 
-      const data = await apiClient.post<any>('/api/ai/text-transform', {
-        text: textToProcess,
-        action: 'custom',
-        instruction: customInstruction,
-        fullDocument: fullDocument  // Immer fullDocument senden
+      console.log('📝 Custom Instruction:', { instruction: customInstruction, textLength: fullText.length });
+
+      // WICHTIG: Nutze generate-structured Route (wie formalize) mit Custom Instruction
+      // Kombiniere bestehenden Text + Anweisung im Prompt
+      const combinedPrompt = `Bestehender Text:\n${fullText}\n\nAnweisung: ${customInstruction}`;
+
+      const data = await apiClient.post<any>('/api/ai/generate-structured', {
+        prompt: combinedPrompt,
+        context: null,
+        documentContext: null
       });
 
-      const newText = parseTextFromAIOutput(data.generatedText || textToProcess);
+      // Verwende das bereits perfekt formatierte htmlContent
+      const htmlContent = data.htmlContent || fullText;
 
-      if (useFullDocument) {
-        editor.commands.setContent(newText);
-      } else {
-        editor.view.dispatch(
-          editor.view.state.tr
-            .setSelection(TextSelection.create(editor.view.state.doc, from, to))
-            .replaceSelectionWith(editor.state.schema.text(newText), false)
-        );
-
-        setTimeout(() => {
-          const newTo = from + newText.replace(/<[^>]*>/g, '').length;
-          editor.chain().setTextSelection({ from, to: newTo }).run();
-        }, 100);
-      }
+      // Gesamten Editor-Content ersetzen
+      editor.commands.setContent(htmlContent);
 
       setCustomInstruction('');
+      console.log('✅ Custom Instruction erfolgreich ausgeführt');
     } catch (error) {
-      console.error('Custom Instruction fehlgeschlagen:', error);
+      console.error('❌ Custom Instruction fehlgeschlagen:', error);
     } finally {
       setIsProcessing(false);
     }
