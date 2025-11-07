@@ -1,7 +1,7 @@
 // src/lib/ai/flows/generate-headlines.ts
 // Genkit Flow für KI-gestützte Headline-Generierung (3 Varianten)
 
-import { ai, gemini25FlashModel } from '../genkit-config';
+import { ai, gemini25FlashLiteModel } from '../genkit-config';
 import {
   GenerateHeadlinesInputSchema,
   GenerateHeadlinesOutputSchema,
@@ -190,15 +190,18 @@ Erstelle JETZT 3 verschiedene Headlines mit den 3 Stilen (Faktisch-Direkt, Nutze
     // 3. GEMINI API CALL
     // ══════════════════════════════════════════════════════════════
 
+    // Headline-Generierung ist eine einfache Task - nutze Flash-Lite für Geschwindigkeit + Kosten
+    console.log('🤖 Model: gemini-2.5-flash-lite (optimiert für Headlines)');
+
     const result = await ai.generate({
-      model: gemini25FlashModel,
+      model: gemini25FlashLiteModel,
       prompt: [
         { text: HEADLINE_SYSTEM_PROMPT },
         { text: userPrompt }
       ],
       config: {
         temperature: 0.8,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 1024, // Headlines sind kurz, 1024 reicht aus
       }
     });
 
