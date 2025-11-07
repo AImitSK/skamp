@@ -14,62 +14,6 @@ import {
 import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
-/**
- * Parser für strukturierte PR-Ausgaben (TipTap-kompatibel)
- * Konvertiert Marker zu einfachem HTML ohne inline-styles
- * TipTap strippt inline-styles, daher verwenden wir semantisches HTML + visuelle Marker
- */
-function parseStructuredPRToHTML(aiOutput: string): string {
-  let html = aiOutput.trim();
-
-  // 1. CTA-Marker: [[CTA: text]] → Eindeutiger Block mit Emoji-Marker
-  html = html.replace(/\[\[CTA:\s*([^\]]+)\]\]/g, (match, ctaText) => {
-    return `<p><strong>👉 ${ctaText.trim()}</strong></p>`;
-  });
-
-  // 2. HASHTAGS-Marker: [[HASHTAGS: #tag1 #tag2]] → Direkte Hashtag-Zeile
-  html = html.replace(/\[\[HASHTAGS?:\s*([^\]]+)\]\]/gi, (match, hashtags) => {
-    return `<p>${hashtags.trim()}</p>`;
-  });
-
-  // 3. Zitate mit Person konvertieren: > "text" - Person → Standard Blockquote
-  html = html.replace(/^>\s*["„"]?([^"\n]+)[""]?(?:\s*[-–]\s*(.+))?$/gm, (match, quoteText, person) => {
-    const personHTML = person ? `<br><em>— ${person.trim()}</em>` : '';
-    return `<blockquote><p>"${quoteText.trim()}"${personHTML}</p></blockquote>`;
-  });
-
-  // 4. Bold-Markdown konvertieren: **text** → <strong>
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-  // 5. Italic-Markdown konvertieren: *text* → <em>
-  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-
-  // 6. Absätze strukturieren (wenn noch keine HTML-Tags vorhanden)
-  if (!html.includes('<p>') && !html.includes('<div>') && !html.includes('<blockquote>')) {
-    html = html.split('\n\n').map(para => {
-      const trimmed = para.trim();
-      if (!trimmed) return '';
-      if (trimmed.startsWith('<blockquote')) return trimmed;
-      return `<p>${trimmed}</p>`;
-    }).filter(p => p).join('\n');
-  }
-
-  // 7. Bereinige störende PM-Phrasen
-  const cleanupPhrases = [
-    'Die Pressemitteilung endet hier',
-    'Über [Unternehmen]',
-    'Pressekontakt:',
-    'ENDE DER PRESSEMITTEILUNG',
-    'Weitere Informationen unter:'
-  ];
-
-  cleanupPhrases.forEach(phrase => {
-    html = html.replace(new RegExp(`<p[^>]*>.*?${phrase}.*?</p>`, 'gi'), '');
-  });
-
-  return html;
-}
-
 // Re-use parsing functions from FloatingAIToolbar
 function parseHTMLFromAIOutput(aiOutput: string): string {
   let text = aiOutput;
@@ -283,26 +227,20 @@ Antworte NUR mit dem erweiterten Text.`;
           break;
 
         case 'formalize':
-          systemPrompt = `Du bist ein professioneller PR-Creator. Erstelle eine strukturierte Pressemitteilung aus dem Briefing.
+          // SPEZIAL: formalize ruft strukturierte Generierung auf (wie Structured Generation Modal)
+          try {
+            const data = await apiClient.post<any>('/api/ai/generate-structured', {
+              prompt: text,
+              context: null,
+              documentContext: null
+            });
 
-STRUKTUR:
-1. **Headline** (fett formatiert mit **text**)
-2. Lead-Paragraph (Einstieg mit wichtigsten Infos)
-3. Body-Paragraphs (Details, Kontext, Mehrwert)
-4. Optional: Zitat mit Person (Format: > "Zitat-Text" - Person)
-5. [[CTA: Call-to-Action Text]] (z.B. "Jetzt mehr erfahren auf...")
-6. [[HASHTAGS: #Tag1 #Tag2 #Tag3]]
-
-WICHTIGE FORMATIERUNGS-REGELN:
-- Verwende **text** für Bold (Headline, wichtige Begriffe)
-- Verwende [[CTA: ...]] für Call-to-Action
-- Verwende [[HASHTAGS: #tag1 #tag2 ...]] für Hashtags
-- Verwende > "Zitat" - Person für Zitate
-- Absätze mit doppeltem Zeilenumbruch trennen
-
-KEINE HTML-Tags verwenden! Nur die oben genannten Markdown-Marker!`;
-          userPrompt = `Erstelle strukturierte PR aus diesem Briefing:\n\n${text}`;
-          break;
+            // Verwende das bereits perfekt formatierte htmlContent
+            return data.htmlContent || text;
+          } catch (error: any) {
+            console.error('Strukturierte Generierung fehlgeschlagen:', error);
+            throw error;
+          }
 
         default:
           return text;
@@ -446,11 +384,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
       const newText = await handleAIAction(action, textToProcess);
 
       if (action === 'formalize') {
-        // STRUKTURIERTE PR: Verwende speziellen Parser für CTA, Hashtags, Quotes, Bold
-        const structuredHTML = parseStructuredPRToHTML(newText);
-
-        // Immer gesamten Content ersetzen bei formalize
-        editor.commands.setContent(structuredHTML);
+        // STRUKTURIERTE PR: newText ist bereits perfekt formatiertes HTML von /api/ai/generate-structured
+        // Direkt ins Editor setzen ohne Parser (kommt von Genkit Flow mit optimiertem HTML)
+        editor.commands.setContent(newText);
       } else {
         const plainText = parseTextFromAIOutput(newText);
 
