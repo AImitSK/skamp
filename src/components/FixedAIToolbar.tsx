@@ -14,6 +14,77 @@ import {
 import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
+/**
+ * Parser für strukturierte PR-Ausgaben (wie Structured Generation Modal)
+ * Konvertiert Marker [[CTA: ...]], [[HASHTAGS: ...]], Quotes, Bold zu TipTap HTML
+ */
+function parseStructuredPRToHTML(aiOutput: string): string {
+  let html = aiOutput.trim();
+
+  // 1. CTA-Marker konvertieren: [[CTA: text]] → Styled div
+  html = html.replace(/\[\[CTA:\s*([^\]]+)\]\]/g, (match, ctaText) => {
+    return `<div style="background-color: #eef2ff; padding: 16px; border-radius: 8px; border-left: 4px solid #6366f1; margin: 16px 0;"><p style="font-weight: bold; color: #312e81; margin: 0;">${ctaText.trim()}</p></div>`;
+  });
+
+  // 2. HASHTAGS-Marker konvertieren: [[HASHTAGS: #tag1 #tag2]] → Pill-styled spans
+  html = html.replace(/\[\[HASHTAGS?:\s*([^\]]+)\]\]/gi, (match, hashtags) => {
+    const tags = hashtags.trim().split(/\s+/).filter((tag: string) => tag.startsWith('#'));
+    const tagHTML = tags.map((tag: string) =>
+      `<span style="background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; display: inline-block; margin: 0 4px 4px 0;">${tag}</span>`
+    ).join(' ');
+    return `<p style="margin: 16px 0;">${tagHTML}</p>`;
+  });
+
+  // 3. Einzelne Hashtags konvertieren (falls nicht in [[HASHTAGS: ...]])
+  html = html.replace(/(?:^|\s)(#\w+)/g, (match, tag) => {
+    return ` <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; display: inline-block; margin: 0 4px 4px 0;">${tag}</span>`;
+  });
+
+  // 4. Zitate mit Person konvertieren: > "text" - Person → Blockquote styled
+  html = html.replace(/^>\s*["„"]?([^"\n]+)[""]?(?:\s*[-–]\s*(.+))?$/gm, (match, quoteText, person) => {
+    const personHTML = person ? `<cite style="display: block; margin-top: 8px; font-style: normal; font-weight: 600; color: #1f2937;">— ${person.trim()}</cite>` : '';
+    return `<blockquote style="background-color: #eff6ff; padding: 16px; border-radius: 8px; border-left: 4px solid #60a5fa; margin: 16px 0; font-style: italic; color: #1f2937;"><p style="margin: 0;">&ldquo;${quoteText.trim()}&rdquo;</p>${personHTML}</blockquote>`;
+  });
+
+  // 5. Bold-Markdown konvertieren: **text** → <strong>
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // 6. Italic-Markdown konvertieren: *text* → <em>
+  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+
+  // 7. Absätze strukturieren (wenn noch keine HTML-Tags vorhanden)
+  if (!html.includes('<p>') && !html.includes('<div>') && !html.includes('<blockquote>')) {
+    html = html.split('\n\n').map(para => {
+      const trimmed = para.trim();
+      if (!trimmed) return '';
+      // Überspringe bereits konvertierte styled divs
+      if (trimmed.startsWith('<div style=') || trimmed.startsWith('<blockquote')) return trimmed;
+      return `<p>${trimmed}</p>`;
+    }).filter(p => p).join('\n');
+  }
+
+  // 8. Lead-Paragraph Erkennung (erster Absatz nach Headline) → Yellow background
+  // Wenn der erste Absatz nach Bold-Headline kommt, markiere ihn als Lead
+  html = html.replace(/(<p><strong>.+?<\/strong><\/p>\s*)(<p>(.+?)<\/p>)/, (match, headline, leadPara, leadText) => {
+    return `${headline}<p style="background-color: #fef9c3; padding: 12px; border-radius: 6px; color: #1f2937;">${leadText}</p>`;
+  });
+
+  // 9. Bereinige störende PM-Phrasen
+  const cleanupPhrases = [
+    'Die Pressemitteilung endet hier',
+    'Über [Unternehmen]',
+    'Pressekontakt:',
+    'ENDE DER PRESSEMITTEILUNG',
+    'Weitere Informationen unter:'
+  ];
+
+  cleanupPhrases.forEach(phrase => {
+    html = html.replace(new RegExp(`<p[^>]*>.*?${phrase}.*?</p>`, 'gi'), '');
+  });
+
+  return html;
+}
+
 // Re-use parsing functions from FloatingAIToolbar
 function parseHTMLFromAIOutput(aiOutput: string): string {
   let text = aiOutput;
@@ -227,17 +298,25 @@ Antworte NUR mit dem erweiterten Text.`;
           break;
 
         case 'formalize':
-          systemPrompt = `Du bist ein professioneller Text-Creator.
+          systemPrompt = `Du bist ein professioneller PR-Creator. Erstelle eine strukturierte Pressemitteilung aus dem Briefing.
 
-WICHTIGE REGELN:
-- NIEMALS Headlines, Überschriften oder Titel erstellen (# ## ###)
-- NIEMALS <h1>, <h2>, <h3> Tags verwenden
-- NIEMALS "Pressemitteilung:", "Titel:" oder ähnliche Label
-- NUR reinen Fließtext erstellen
-- Titel gibt es bereits in einem separaten Feld
+STRUKTUR:
+1. **Headline** (fett formatiert mit **text**)
+2. Lead-Paragraph (Einstieg mit wichtigsten Infos)
+3. Body-Paragraphs (Details, Kontext, Mehrwert)
+4. Optional: Zitat mit Person (Format: > "Zitat-Text" - Person)
+5. [[CTA: Call-to-Action Text]] (z.B. "Jetzt mehr erfahren auf...")
+6. [[HASHTAGS: #Tag1 #Tag2 #Tag3]]
 
-Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Fließtext-Content, KEINE Überschriften!`;
-          userPrompt = `Führe diese Anweisung aus:\n\n${text}`;
+WICHTIGE FORMATIERUNGS-REGELN:
+- Verwende **text** für Bold (Headline, wichtige Begriffe)
+- Verwende [[CTA: ...]] für Call-to-Action
+- Verwende [[HASHTAGS: #tag1 #tag2 ...]] für Hashtags
+- Verwende > "Zitat" - Person für Zitate
+- Absätze mit doppeltem Zeilenumbruch trennen
+
+KEINE HTML-Tags verwenden! Nur die oben genannten Markdown-Marker!`;
+          userPrompt = `Erstelle strukturierte PR aus diesem Briefing:\n\n${text}`;
           break;
 
         default:
@@ -371,24 +450,22 @@ Antworte NUR mit dem Text im neuen Ton.`;
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to);
 
-    // Wenn kein Text markiert, auf gesamten Content anwenden (optional)
-    const textToProcess = selectedText.length > 0 ? selectedText : editor.getText();
-    const useFullDocument = selectedText.length === 0;
+    // SPEZIAL: formalize arbeitet IMMER mit gesamtem Content (Briefing → Strukturierte PR)
+    const textToProcess = action === 'formalize'
+      ? editor.getText()  // Immer ganzer Text für formalize
+      : (selectedText.length > 0 ? selectedText : editor.getText());
+
+    const useFullDocument = action === 'formalize' || selectedText.length === 0;
 
     try {
       const newText = await handleAIAction(action, textToProcess);
 
       if (action === 'formalize') {
-        const htmlContent = parseHTMLFromAIOutput(newText);
+        // STRUKTURIERTE PR: Verwende speziellen Parser für CTA, Hashtags, Quotes, Bold
+        const structuredHTML = parseStructuredPRToHTML(newText);
 
-        if (useFullDocument) {
-          editor.commands.setContent(htmlContent);
-        } else {
-          editor.chain()
-            .setTextSelection({ from, to })
-            .insertContent(htmlContent)
-            .run();
-        }
+        // Immer gesamten Content ersetzen bei formalize
+        editor.commands.setContent(structuredHTML);
       } else {
         const plainText = parseTextFromAIOutput(newText);
 
