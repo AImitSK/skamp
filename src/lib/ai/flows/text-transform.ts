@@ -537,17 +537,27 @@ function formatPressRelease(plainText: string): string {
     /["„"]([^"„"]+)[""], sagt ([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
       const formattedQuote = `> "${quote.trim()}", sagt ${person.trim()}${role ? ', ' + role.trim() : ''}`;
-      // Stelle sicher dass Leerzeilen davor/danach sind (wenn nicht am Anfang/Ende)
-      return match.startsWith('\n') ? `\n${formattedQuote}\n\n` : `\n\n${formattedQuote}\n\n`;
+      return `\n\n${formattedQuote}\n\n`;
     }
   );
 
-  // Pattern 2: "Text" - Person, Rolle (ohne "sagt")
+  // Pattern 2: "Text", Person, Rolle (OHNE "sagt" oder "-")
+  // z.B. "Zitat", Max Mustermann, CEO bei Firma
+  formatted = formatted.replace(
+    /["„"]([^"„"]+)[""],\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*),\s+([^.\n]+)/gm,
+    (match, quote, person, role) => {
+      // Nur matchen wenn Person wie ein Name aussieht (Großbuchstaben am Anfang)
+      const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
+      return `\n\n${formattedQuote}\n\n`;
+    }
+  );
+
+  // Pattern 3: "Text" - Person, Rolle (mit Gedankenstrich)
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""][\s]*[-–—][\s]*([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
       const formattedQuote = `> "${quote.trim()}", ${person.trim()}${role ? ', ' + role.trim() : ''}`;
-      return match.startsWith('\n') ? `\n${formattedQuote}\n\n` : `\n\n${formattedQuote}\n\n`;
+      return `\n\n${formattedQuote}\n\n`;
     }
   );
 
@@ -563,10 +573,16 @@ function formatPressRelease(plainText: string): string {
   });
 
   // 5. CTA: Finde typische CTA-Phrasen und formatiere sie
-  // Pattern: Mehr Informationen, Jetzt registrieren, Kontakt, Website-URLs etc.
+  // Pattern: Mehr Informationen, Jetzt registrieren, Kontakt, Website-URLs, E-Mail-Adressen mit Kontext etc.
   const ctaPatterns = [
+    // Standard CTA-Phrasen (Mehr Informationen, Jetzt registrieren, etc.)
     /(?:^|\n\n)((?:Mehr Informationen|Weitere Informationen|Jetzt registrieren|Kontakt|Besuchen Sie|Erfahren Sie mehr)[^\n]+)/gim,
-    /(?:^|\n\n)((?:https?:\/\/|www\.)[^\s]+)/gim
+    // URLs (http://, https://, www.)
+    /(?:^|\n\n)((?:https?:\/\/|www\.)[^\s]+)/gim,
+    // Phrasen mit "anfordern", "anfragen", "kontaktieren" + E-Mail oder Website
+    /(?:^|\n\n)([^.\n]*(?:anfordern|anfragen|kontaktieren|buchen|bestellen)[^.\n]*(?:[:@])[^\n]+)/gim,
+    // E-Mail-Adressen mit Kontext (z.B. "Beratung: email@example.com")
+    /(?:^|\n\n)([^.\n]*[:]\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[^\n]*)/gim
   ];
 
   ctaPatterns.forEach(pattern => {
