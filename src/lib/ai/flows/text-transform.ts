@@ -454,66 +454,120 @@ Antworte mit der neu geschriebenen PR im Ton "${tone}" mit ALLEN Formatierungs-M
   // CUSTOM - Freie Anweisung (IMMER mit vollem Dokument-Kontext)
   // ────────────────────────────────────────────────────────────
   custom: (fullDocument: string, instruction: string) => ({
-    system: `Du bist ein präziser Text-Editor mit Kontextverständnis. Du arbeitest IMMER mit dem GESAMTEN Dokument und führst die Anweisung präzise aus.
+    system: `Du bist ein präziser Text-Editor. Du arbeitest IMMER mit dem GESAMTEN Dokument und führst die Anweisung präzise aus.
 
-DEIN WORKFLOW:
-1. Verstehe das GESAMTE Dokument und seine Struktur
-2. Interpretiere die Anweisung im Kontext des Gesamttextes
-3. Finde die richtige Stelle für die Änderung
-4. Führe die Änderung minimal und präzise aus
-5. Gib das GESAMTE Dokument mit ALLEN Formatierungen zurück
-
-FORMATIERUNGS-REGELN (ABSOLUT ZWINGEND!):
-Du MUSST die Ausgabe mit diesen EXAKTEN Markdown-Markern formatieren:
-
-1. **Fetter Lead-Absatz** → MUSS mit **Text** umschlossen sein
-   Beispiel: **Ab Januar startet die Firma XY ihr neues Produkt.**
-
-2. Absätze trennen → MUSS mit doppeltem Zeilenumbruch \\n\\n
-   Beispiel: Absatz 1.\\n\\nAbsatz 2.\\n\\nAbsatz 3.
-
-3. Zitate → MUSS mit > am Zeilenanfang + Leerzeile davor/danach
-   Beispiel: \\n\\n> "Das ist super", sagt Max Mustermann, CEO.\\n\\n
-
-4. CTA → MUSS mit [[CTA: Text]] Format
-   Beispiel: [[CTA: Kostenlose Demo unter info@firma.de]]
-
-5. Hashtags → MUSS mit [[HASHTAGS: #tag1 #tag2 #tag3]] Format
-   Beispiel: [[HASHTAGS: #Innovation #Tech #News]]
-
-WICHTIG: Wenn das Original diese Marker hat, MUSST du sie EXAKT übernehmen!
+WICHTIGSTE REGEL:
+- Führe NUR die in der Anweisung genannte Aufgabe aus
+- Gib IMMER das GESAMTE Dokument zurück (nicht nur die geänderte Stelle!)
+- Mache KEINE unnötigen Änderungen am Rest des Textes
+- KEINE Umformulierungen außer für die spezifische Aufgabe
+- KEINE Optimierungen oder Verbesserungen die nicht gefordert wurden
+- Behalte die Tonalität und den Schreibstil EXAKT bei
 
 KONTEXTUELLE ANWEISUNGEN (Beispiele):
 - "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein
 - "Der Geschäftsführer heißt Peter statt Max" → Ersetze Namen im gesamten Text
 - "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn
-- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat mit > ein
+- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein
 - "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es
+- "Füge Informationen über Produkt XYZ hinzu" → Integriere sinnvoll in passenden Absatz
 
-WICHTIGE REGELN:
-- Gib IMMER das GESAMTE Dokument zurück (nicht nur die geänderte Stelle!)
-- Mache NUR die in der Anweisung genannte Änderung
-- Behalte die Struktur, Formatierung und Tonalität bei
-- KEINE unnötigen Verbesserungen oder Optimierungen
-- KEINE neuen Informationen außer explizit in der Anweisung
-- KEINE Sätze umformulieren außer nötig für die Änderung
-- KEINE Wörter austauschen außer für die Änderung
-- ALLE Markdown-Marker beibehalten (**, >, [[CTA:]], [[HASHTAGS:]])
-
-BEISPIEL 1 - Name ändern (MIT Formatierung):
-Input: **TechCorp startet neue Lösung.**\\n\\n> "Wir sind stolz", sagt Max Mustermann, CEO.\\n\\n[[CTA: Mehr unter techcorp.de]]\\n\\n[[HASHTAGS: #Tech #News]]
+BEISPIEL 1 - Name ändern:
+Input: "TechCorp startet neue Lösung. Max Mustermann ist CEO."
 Anweisung: "CEO heißt Peter Schmidt"
-Output: **TechCorp startet neue Lösung.**\\n\\n> "Wir sind stolz", sagt Peter Schmidt, CEO.\\n\\n[[CTA: Mehr unter techcorp.de]]\\n\\n[[HASHTAGS: #Tech #News]]
+Output: "TechCorp startet neue Lösung. Peter Schmidt ist CEO."
 
-BEISPIEL 2 - Information hinzufügen (MIT Formatierung):
-Input: **Die Firma bietet Services an.**\\n\\nKontaktieren Sie uns.\\n\\n[[CTA: info@firma.de]]
+BEISPIEL 2 - Information hinzufügen:
+Input: "Die Firma bietet Services an. Kontaktieren Sie uns."
 Anweisung: "Füge Telefonnummer 089-123456 hinzu"
-Output: **Die Firma bietet Services an.**\\n\\nKontaktieren Sie uns unter 089-123456.\\n\\n[[CTA: info@firma.de]]
+Output: "Die Firma bietet Services an. Kontaktieren Sie uns unter 089-123456."
 
-Antworte mit dem GESAMTEN, modifizierten Dokument mit ALLEN Markdown-Markern!`,
-    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument mit ALLEN Markdown-Markern:`
+WICHTIG: Antworte OHNE jegliche Formatierungen (kein Markdown, kein HTML). Nur reiner Text!`,
+    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument als reinen Text (ohne Formatierungen):`
   })
 };
+
+// ══════════════════════════════════════════════════════════════
+// PR-FORMATTER: Automatische Formatierung nach PR-Schema
+// ══════════════════════════════════════════════════════════════
+
+function formatPressRelease(plainText: string): string {
+  console.log('🎨 Starte automatische PR-Formatierung...');
+
+  let formatted = plainText;
+
+  // 1. ABSÄTZE: Stelle sicher dass Absätze mit \n\n getrennt sind
+  // Normalisiere unterschiedliche Zeilenumbrüche
+  formatted = formatted.replace(/\r\n/g, '\n'); // Windows → Unix
+  formatted = formatted.replace(/\n{3,}/g, '\n\n'); // Mehr als 2 → genau 2
+
+  // 2. ERSTER ABSATZ FETT: Finde ersten Absatz und mache ihn fett (falls nicht schon)
+  const paragraphs = formatted.split('\n\n');
+  if (paragraphs.length > 0 && paragraphs[0].trim()) {
+    const firstPara = paragraphs[0].trim();
+    // Nur fett machen wenn noch nicht fett
+    if (!firstPara.startsWith('**') && !firstPara.includes('**')) {
+      paragraphs[0] = `**${firstPara}**`;
+    }
+  }
+  formatted = paragraphs.join('\n\n');
+
+  // 3. ZITATE: Finde Zitate und formatiere sie mit >
+  // Pattern 1: "Text", sagt Person, Rolle
+  formatted = formatted.replace(
+    /["„"]([^"„"]+)[""], sagt ([^,.\n]+)(?:, ([^.\n]+))?/gm,
+    (match, quote, person, role) => {
+      const formattedQuote = `> "${quote.trim()}", sagt ${person.trim()}${role ? ', ' + role.trim() : ''}`;
+      // Stelle sicher dass Leerzeilen davor/danach sind (wenn nicht am Anfang/Ende)
+      return match.startsWith('\n') ? `\n${formattedQuote}\n\n` : `\n\n${formattedQuote}\n\n`;
+    }
+  );
+
+  // Pattern 2: "Text" - Person, Rolle (ohne "sagt")
+  formatted = formatted.replace(
+    /["„"]([^"„"]+)[""][\s]*[-–—][\s]*([^,.\n]+)(?:, ([^.\n]+))?/gm,
+    (match, quote, person, role) => {
+      const formattedQuote = `> "${quote.trim()}", ${person.trim()}${role ? ', ' + role.trim() : ''}`;
+      return match.startsWith('\n') ? `\n${formattedQuote}\n\n` : `\n\n${formattedQuote}\n\n`;
+    }
+  );
+
+  // 4. HASHTAGS: Finde Hashtags und formatiere sie
+  // Pattern: #tag1 #tag2 #tag3 (am Ende oder in eigener Zeile)
+  const hashtagPattern = /(#\w+(?:\s+#\w+)*)/g;
+  formatted = formatted.replace(hashtagPattern, (match) => {
+    // Wenn nicht schon im [[HASHTAGS: ]] Format
+    if (!formatted.includes(`[[HASHTAGS: ${match}]]`)) {
+      return `[[HASHTAGS: ${match}]]`;
+    }
+    return match;
+  });
+
+  // 5. CTA: Finde typische CTA-Phrasen und formatiere sie
+  // Pattern: Mehr Informationen, Jetzt registrieren, Kontakt, Website-URLs etc.
+  const ctaPatterns = [
+    /(?:^|\n\n)((?:Mehr Informationen|Weitere Informationen|Jetzt registrieren|Kontakt|Besuchen Sie|Erfahren Sie mehr)[^\n]+)/gim,
+    /(?:^|\n\n)((?:https?:\/\/|www\.)[^\s]+)/gim
+  ];
+
+  ctaPatterns.forEach(pattern => {
+    formatted = formatted.replace(pattern, (match, cta) => {
+      const trimmed = cta.trim();
+      // Nur umwandeln wenn nicht schon im [[CTA: ]] Format
+      if (!formatted.includes(`[[CTA: ${trimmed}]]`) && !trimmed.startsWith('[[CTA:')) {
+        return `\n\n[[CTA: ${trimmed}]]`;
+      }
+      return match;
+    });
+  });
+
+  // 6. Cleanup: Entferne überschüssige Leerzeilen
+  formatted = formatted.replace(/\n{3,}/g, '\n\n');
+  formatted = formatted.trim();
+
+  console.log('✅ PR-Formatierung abgeschlossen');
+  return formatted;
+}
 
 // ══════════════════════════════════════════════════════════════
 // TEXT-PARSER: Entfernt Formatierungen und PM-Strukturen
@@ -677,8 +731,8 @@ export const textTransformFlow = ai.defineFlow(
     // 1.5 PRE-PROCESSING: Format Extraction
     // ══════════════════════════════════════════════════════════════
 
-    // Format-Preservation für alle Actions außer formalize und change-tone (beide erstellen eigene PR-Struktur)
-    const shouldPreserveFormat = ['rephrase', 'shorten', 'expand', 'custom'].includes(input.action);
+    // Format-Preservation für alle Actions außer formalize, change-tone (eigene PR-Struktur) und custom (eigene Post-Processing Formatierung)
+    const shouldPreserveFormat = ['rephrase', 'shorten', 'expand'].includes(input.action);
     let formatMarkers = null;
     let textToTransform = input.text;
 
@@ -815,10 +869,16 @@ export const textTransformFlow = ai.defineFlow(
     transformedText = transformedText.replace(/\.{2,}/g, '.');
 
     // ══════════════════════════════════════════════════════════════
-    // 3.5 POST-PROCESSING: Format Restoration
+    // 3.5 POST-PROCESSING: Format Restoration / PR Formatting
     // ══════════════════════════════════════════════════════════════
 
-    if (shouldPreserveFormat && formatMarkers && formatMarkers.length > 0) {
+    // CUSTOM Action: Automatische PR-Formatierung anwenden
+    if (input.action === 'custom') {
+      console.log('📝 Custom Action: Wende automatische PR-Formatierung an...');
+      transformedText = formatPressRelease(transformedText);
+    }
+    // Andere Actions: Format-Preservation anwenden
+    else if (shouldPreserveFormat && formatMarkers && formatMarkers.length > 0) {
       console.log('🎨 Wende Formatierung auf transformierten Text an...');
       const formattedText = applyFormatting(transformedText, formatMarkers);
 
