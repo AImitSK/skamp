@@ -120,7 +120,41 @@ VERMEIDE:
   // Tonalitäts-spezifische Anpassungen
   tones: {
     formal: `TONALITÄT: FORMAL - Konservativ, seriös, vertrauenswürdig. Längere Sätze erlaubt (max. 20 Wörter). Fachterminologie angemessen. Zurückhaltende Sprache. Distanzierte, offizielle Ausdrucksweise.`,
-    casual: `TONALITÄT: LOCKER/CASUAL - Umgangssprachlich, persönlich, nahbar. Kurze, knackige Sätze (max. 10 Wörter). "Du/Ihr" statt "Sie". Aktive Verben, moderne Begriffe wie "mega", "cool", "echt". Emotionale Ausrufe erlaubt! Wie ein Gespräch unter Freunden.`,
+    casual: `🔥 TONALITÄT: LOCKER/CASUAL - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🔥
+
+WICHTIG: Ignoriere "professionelle Pressemitteilung" aus dem Base-Prompt! Schreibe stattdessen RICHTIG locker und umgangssprachlich!
+
+ZWINGEND VERWENDEN:
+- "Na, schon gespannt?" / "Hey Leute!" / "Aufgepasst!" als Einstieg
+- "easy", "mega", "cool", "krass", "echt", "Bock auf...?", "checkt das aus"
+- "haut raus", "bringt auf den Markt", "gibt's ab sofort"
+- "das Ding", "das Teil", "diese Lösung hier"
+- "ihr", "euch", "eure" statt "Sie", "Ihnen"
+- Ausrufezeichen erlaubt! Emotionen zeigen!
+- Umgangssprache wie im Gespräch unter Freunden
+
+VERBOTEN:
+- ❌ "lanciert", "präsentiert", "offeriert"
+- ❌ "innovative Lösung", "optimiert", "implementiert"
+- ❌ Steife Business-Sprache
+- ❌ "Sie", "Ihnen" (nur "du/ihr")
+- ❌ Lange, verschachtelte Sätze
+
+BEISPIEL CASUAL LEAD:
+❌ FALSCH: "Die Firma XY präsentiert ab Januar die innovative Lösung Z."
+✅ RICHTIG: "Na, aufgepasst! Ab Januar haut Firma XY ihr neues Ding raus – und das ist echt mega cool!"
+
+BEISPIEL CASUAL BODY:
+❌ FALSCH: "Das System optimiert Prozesse erheblich."
+✅ RICHTIG: "Das Teil macht eure Arbeit mega viel einfacher!"
+
+BEISPIEL CASUAL ZITAT:
+❌ FALSCH: "Dies stellt einen bedeutenden Fortschritt dar", erklärt der CEO.
+✅ RICHTIG: "Das wird echt ein Gamechanger für euch sein!", freut sich der CEO.
+
+BEISPIEL CASUAL CTA:
+❌ FALSCH: [[CTA: Für weitere Informationen kontaktieren Sie uns unter...]]
+✅ RICHTIG: [[CTA: Bock drauf? Schreibt uns einfach an info@firma.de!]]`,
     professional: `TONALITÄT: PROFESSIONELL - Geschäftlich, kompetent, seriös aber zugänglich. Klare, präzise Sprache (max. 15 Wörter pro Satz). Fachbegriffe moderat. Respektvoll aber nicht steif. Ideal für B2B-Kommunikation.`,
     friendly: `TONALITÄT: FREUNDLICH - Warm, einladend, sympathisch, nahbar. Positive Formulierungen. Leichte, angenehme Sprache (max. 12 Wörter). Vermittle Begeisterung und Hilfsbereitschaft. Persönliche Note ohne zu locker zu werden.`,
     confident: `TONALITÄT: SELBSTBEWUSST - Überzeugend, bestimmt, kraftvoll, authoritative. Starke Verben, klare Aussagen. Keine Konjunktive oder Abschwächungen. "Wir setzen Standards", "Marktführend", "Bewährt". Fakten mit Überzeugung präsentieren.`,
