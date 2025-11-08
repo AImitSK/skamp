@@ -543,12 +543,17 @@ function formatPressRelease(plainText: string): string {
 
   // Pattern 2: "Text", Person, Rolle (OHNE "sagt" oder "-")
   // z.B. "Zitat", Max Mustermann, CEO bei Firma
+  // Flexibler Regex: Matched Namen mit 1-4 Wörtern (mit Großbuchstaben, Umlauten, etc.)
+  // Rolle kann auch Punkte enthalten (z.B. "GmbH.")
   formatted = formatted.replace(
-    /["„"]([^"„"]+)[""],\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*),\s+([^.\n]+)/gm,
+    /["„"]([^"„"]+)[""],\s+([A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+(?:\s+[A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+){0,3}),\s+([^\n]+?)(?=\n\n|\n|$)/gm,
     (match, quote, person, role) => {
-      // Nur matchen wenn Person wie ein Name aussieht (Großbuchstaben am Anfang)
-      const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
-      return `\n\n${formattedQuote}\n\n`;
+      // Validierung: Person sollte wie ein Name aussehen (mindestens 2 Zeichen, beginnt mit Großbuchstaben)
+      if (person.length >= 2 && /^[A-ZÄÖÜ]/.test(person)) {
+        const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
+        return `\n\n${formattedQuote}\n\n`;
+      }
+      return match; // Kein Match, Original beibehalten
     }
   );
 
