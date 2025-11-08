@@ -628,33 +628,31 @@ function formatPressRelease(plainText: string): string {
     return match;
   });
 
-  // 5. CTA: Finde typische CTA-Phrasen und formatiere sie als HTML <span>
-  const ctaPatterns = [
-    // Standard CTA-Phrasen (Mehr Informationen, Jetzt registrieren, etc.)
-    /(?:^|\n\n)((?:Mehr Informationen|Weitere Informationen|Jetzt registrieren|Kontakt|Besuchen Sie|Erfahren Sie mehr)[^\n]+)/gim,
-    // URLs (http://, https://, www.)
-    /(?:^|\n\n)((?:https?:\/\/|www\.)[^\s]+)/gim,
-    // Sätze mit "Kontaktieren Sie uns" + Email/Telefon
-    /(Kontaktieren Sie uns (?:unter|per|via)[^\n.]+[@+][^\n.]+\.)/gim,
-    // Phrasen mit "anfordern", "anfragen", "kontaktieren" + E-Mail oder Website
-    /(?:^|\n\n)([^.\n]*(?:anfordern|anfragen|kontaktieren|buchen|bestellen)[^.\n]*(?:[:@])[^\n]+)/gim,
-    // "Erfahren Sie mehr" am Anfang eines Absatzes
-    /(Erfahren Sie mehr[^\n.]+[.!])/gim
-  ];
+  // 5. CTA: Finde CTA-Absätze und formatiere sie als HTML <span>
+  // WICHTIG: Wenn ein Absatz "Kontaktieren Sie uns" oder ähnliches enthält, ist der GANZE Absatz die CTA!
 
-  ctaPatterns.forEach(pattern => {
-    formatted = formatted.replace(pattern, (match, cta) => {
-      const trimmed = cta.trim();
-      // Nur umwandeln wenn nicht schon als CTA formatiert
-      if (!trimmed.includes('data-type="cta-text"') && !trimmed.includes('<span')) {
-        const ctaSpan = `<span data-type="cta-text" class="cta-text font-bold text-black">${trimmed}</span>`;
-        // Preserve leading whitespace/newlines from match
-        const leadingSpace = match.match(/^(\s*)/)?.[1] || '';
-        return `${leadingSpace}${ctaSpan}`;
-      }
-      return match;
-    });
+  // Erst: Finde Absätze die CTA-Trigger-Wörter enthalten
+  const ctaTriggers = /kontaktieren sie uns|erfahren sie mehr|mehr informationen|jetzt registrieren|besuchen sie|weitere informationen/i;
+
+  const paragraphs2 = formatted.split('\n\n');
+  const processedParagraphs = paragraphs2.map(para => {
+    const trimmed = para.trim();
+
+    // Skip wenn schon HTML-Block oder schon CTA-formatiert
+    if (trimmed.startsWith('<') || trimmed.includes('data-type="cta-text"')) {
+      return para;
+    }
+
+    // Wenn Absatz CTA-Trigger enthält UND Kontaktdaten (Email oder Telefon)
+    if (ctaTriggers.test(trimmed) && (trimmed.includes('@') || trimmed.includes('+49') || trimmed.includes('www.'))) {
+      // Ganzen Absatz als CTA formatieren
+      return `<p><span data-type="cta-text" class="cta-text font-bold text-black">${trimmed}</span></p>`;
+    }
+
+    return para;
   });
+
+  formatted = processedParagraphs.join('\n\n');
 
   // 6. Wrapping: Normale Absätze in <p> Tags wrappen
   // Split bei \n\n und wrap jeden Absatz der NICHT schon HTML ist
