@@ -548,6 +548,14 @@ function stripPRFormatting(text: string): string {
 
 function formatPressRelease(plainText: string): string {
   console.log('🎨 Starte automatische PR-Formatierung (HTML-Modus)...');
+  console.log('📥 Input Text (erste 500 Zeichen):', plainText.substring(0, 500));
+  console.log('📊 Input Stats:', {
+    length: plainText.length,
+    paragraphs: plainText.split('\n\n').length,
+    hasQuotes: plainText.includes('"'),
+    hasHashtags: plainText.includes('#'),
+    hasCTA: /kontaktieren|erfahren sie mehr|mehr informationen/i.test(plainText)
+  });
 
   let formatted = plainText;
 
@@ -653,6 +661,16 @@ function formatPressRelease(plainText: string): string {
   formatted = formatted.trim();
 
   console.log('✅ PR-Formatierung abgeschlossen');
+  console.log('📤 Output Stats:', {
+    length: formatted.length,
+    paragraphs: formatted.split('\n\n').length,
+    hasBlockquote: formatted.includes('<blockquote>'),
+    hasCTASpan: formatted.includes('data-type="cta-text"'),
+    hasHashtagSpan: formatted.includes('data-type="hashtag"'),
+    lengthDiff: formatted.length - plainText.length
+  });
+  console.log('📤 Output Text (erste 500 Zeichen):', formatted.substring(0, 500));
+
   return formatted;
 }
 
