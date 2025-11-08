@@ -746,18 +746,14 @@ export const textTransformFlow = ai.defineFlow(
     // 2. GEMINI API CALL
     // ══════════════════════════════════════════════════════════════
 
-    // Model-Auswahl basierend auf Task-Komplexität
-    // - Einfache Transformationen: Gemini 2.5 Flash-Lite (75% günstiger, schneller)
-    // - Komplexe Reasoning: Gemini 2.5 Flash (mit Extended Thinking)
-    const isComplexTask = input.action === 'formalize' || input.action === 'custom';
-    const selectedModel = isComplexTask ? gemini25FlashModel : gemini25FlashLiteModel;
-    const modelConfig = isComplexTask
-      ? { temperature: 0.7, maxOutputTokens: 8192 } // Extended Thinking für komplexe Tasks
-      : { temperature: 0.7, maxOutputTokens: 2048 }; // Flash-Lite für einfache Tasks
+    // Model-Auswahl: Immer Gemini 2.5 Flash für beste Qualität
+    // (Nach Tests: Flash liefert deutlich bessere Ergebnisse, besonders bei Ton-Änderungen)
+    const selectedModel = gemini25FlashModel;
+    const modelConfig = { temperature: 0.7, maxOutputTokens: 8192 };
 
     console.log('🤖 Model Selection:', {
       action: input.action,
-      model: isComplexTask ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       maxOutputTokens: modelConfig.maxOutputTokens
     });
 
