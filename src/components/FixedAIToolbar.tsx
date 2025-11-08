@@ -20,13 +20,22 @@ function getPlainTextWithParagraphs(editor: Editor): string {
 
   // Konvertiere <p> Tags zu Text mit doppelten Zeilenumbrüchen
   let text = html
-    // Ersetze </p><p> durch doppelten Zeilenumbruch
+    // Entferne innere HTML Tags (strong, em, span, etc.) aber behalte Text
+    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '$1')
+    .replace(/<em[^>]*>(.*?)<\/em>/gi, '$1')
+    .replace(/<span[^>]*>(.*?)<\/span>/gi, '$1')
+    .replace(/<a[^>]*>(.*?)<\/a>/gi, '$1')
+    // Ersetze </p> gefolgt von optionalen Whitespace/Newlines und <p> durch doppelten Zeilenumbruch
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
     // Entferne öffnende <p> Tags
     .replace(/<p[^>]*>/gi, '')
     // Entferne schließende </p> Tags
     .replace(/<\/p>/gi, '')
-    // Entferne alle anderen HTML Tags
+    // Entferne blockquote und andere Block-Tags
+    .replace(/<\/?blockquote[^>]*>/gi, '\n\n')
+    .replace(/<\/?div[^>]*>/gi, '')
+    .replace(/<\/?h[1-6][^>]*>/gi, '')
+    // Entferne alle verbleibenden HTML Tags
     .replace(/<[^>]+>/g, '')
     // Dekodiere HTML Entities
     .replace(/&nbsp;/g, ' ')
@@ -34,6 +43,10 @@ function getPlainTextWithParagraphs(editor: Editor): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    // Normalisiere Whitespace
+    .replace(/[ \t]+/g, ' ')  // Multiple spaces → single space
+    .replace(/\n\n\n+/g, '\n\n')  // 3+ newlines → 2 newlines
     // Trimme whitespace
     .trim();
 
