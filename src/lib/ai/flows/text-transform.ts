@@ -510,6 +510,31 @@ WICHTIG: Deine Antwort muss LEERZEILEN zwischen Absätzen haben, genau wie im Or
 // PR-FORMATTER: Automatische Formatierung nach PR-Schema
 // ══════════════════════════════════════════════════════════════
 
+/**
+ * Entfernt PR-Formatierungen aus dem Text, damit die AI nur Plain-Text sieht
+ */
+function stripPRFormatting(text: string): string {
+  let stripped = text;
+
+  // Entferne CTA-Formatierung: [[CTA: text]] → text
+  stripped = stripped.replace(/\[\[CTA:\s*([^\]]+)\]\]/g, '$1');
+
+  // Entferne HASHTAG-Formatierung: [[HASHTAGS: #tag1 #tag2]] → #tag1 #tag2
+  stripped = stripped.replace(/\[\[HASHTAGS:\s*([^\]]+)\]\]/g, '$1');
+
+  // Entferne Blockquote-Formatierung: > "quote", Person, Rolle → "quote", Person, Rolle
+  stripped = stripped.replace(/^>\s*(.+)$/gm, '$1');
+
+  // Entferne fett-Formatierung vom ersten Absatz: **text** → text
+  const lines = stripped.split('\n');
+  if (lines.length > 0 && lines[0].startsWith('**') && lines[0].endsWith('**')) {
+    lines[0] = lines[0].slice(2, -2);
+    stripped = lines.join('\n');
+  }
+
+  return stripped;
+}
+
 function formatPressRelease(plainText: string): string {
   console.log('🎨 Starte automatische PR-Formatierung...');
 
@@ -827,8 +852,15 @@ export const textTransformFlow = ai.defineFlow(
         }
         case 'custom': {
           // Custom arbeitet IMMER mit fullDocument (auch im Pre-Processing)
+          // WICHTIG: Entferne PR-Formatierung VOR AI-Call, damit AI nur Plain-Text sieht
           const fullDocForCustom = input.fullDocument || textToTransform;
-          const prompts = PROMPTS.custom(fullDocForCustom, input.instruction!);
+          const strippedDoc = stripPRFormatting(fullDocForCustom);
+          console.log('🧹 Entferne PR-Formatierung für Custom Instruction:', {
+            originalLength: fullDocForCustom.length,
+            strippedLength: strippedDoc.length,
+            hadFormatting: fullDocForCustom !== strippedDoc
+          });
+          const prompts = PROMPTS.custom(strippedDoc, input.instruction!);
           systemPrompt = prompts.system;
           userPrompt = prompts.user;
           break;
