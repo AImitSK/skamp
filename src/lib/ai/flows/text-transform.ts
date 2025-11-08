@@ -591,6 +591,19 @@ function formatPressRelease(plainText: string): string {
     }
   );
 
+  // Pattern 4: Multiline Quote - "Text" auf eigener Zeile, dann — Person, Rolle
+  // z.B.:
+  // "Zitat..."
+  //
+  // — Max Mustermann, CEO
+  formatted = formatted.replace(
+    /["„"]([^"„"]+)["\"]\s*\n+\s*[—–-]\s*([^,\n]+),\s*([^\n]+)/gm,
+    (match, quote, person, role) => {
+      const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
+      return `\n\n${formattedQuote}\n\n`;
+    }
+  );
+
   // 4. HASHTAGS: Finde Hashtags und formatiere sie
   // Pattern: #tag1 #tag2 #tag3 (am Ende oder in eigener Zeile)
   const hashtagPattern = /(#\w+(?:\s+#\w+)*)/g;
@@ -609,6 +622,8 @@ function formatPressRelease(plainText: string): string {
     /(?:^|\n\n)((?:Mehr Informationen|Weitere Informationen|Jetzt registrieren|Kontakt|Besuchen Sie|Erfahren Sie mehr)[^\n]+)/gim,
     // URLs (http://, https://, www.)
     /(?:^|\n\n)((?:https?:\/\/|www\.)[^\s]+)/gim,
+    // Sätze mit "Kontaktieren Sie uns" + Email/Telefon
+    /(Kontaktieren Sie uns (?:unter|per|via)[^\n.]+[@+][^\n.]+\.)/gim,
     // Phrasen mit "anfordern", "anfragen", "kontaktieren" + E-Mail oder Website
     /(?:^|\n\n)([^.\n]*(?:anfordern|anfragen|kontaktieren|buchen|bestellen)[^.\n]*(?:[:@])[^\n]+)/gim,
     // E-Mail-Adressen mit Kontext (z.B. "Beratung: email@example.com")
