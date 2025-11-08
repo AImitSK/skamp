@@ -14,6 +14,32 @@ import {
 import { apiClient } from '@/lib/api/api-client';
 import clsx from 'clsx';
 
+// Helper: Konvertiert TipTap Editor-Content zu Plain Text mit korrekten Absatzumbrüchen
+function getPlainTextWithParagraphs(editor: Editor): string {
+  const html = editor.getHTML();
+
+  // Konvertiere <p> Tags zu Text mit doppelten Zeilenumbrüchen
+  let text = html
+    // Ersetze </p><p> durch doppelten Zeilenumbruch
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    // Entferne öffnende <p> Tags
+    .replace(/<p[^>]*>/gi, '')
+    // Entferne schließende </p> Tags
+    .replace(/<\/p>/gi, '')
+    // Entferne alle anderen HTML Tags
+    .replace(/<[^>]+>/g, '')
+    // Dekodiere HTML Entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    // Trimme whitespace
+    .trim();
+
+  return text;
+}
+
 // Re-use parsing functions from FloatingAIToolbar
 function parseHTMLFromAIOutput(aiOutput: string): string {
   let text = aiOutput;
@@ -463,7 +489,8 @@ Antworte NUR mit dem erweiterten Text.`;
 
     try {
       // Custom arbeitet IMMER mit dem vollen Dokument (kontextbewusst)
-      const fullText = editor.getText();  // Plain-Text für Flow
+      // WICHTIG: Nutze getPlainTextWithParagraphs() um Absätze korrekt zu erhalten (\n\n zwischen <p> Tags)
+      const fullText = getPlainTextWithParagraphs(editor);
 
       console.log('📝 Custom Instruction:', { instruction: customInstruction, textLength: fullText.length });
 
