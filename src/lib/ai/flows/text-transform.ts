@@ -456,34 +456,47 @@ Antworte mit der neu geschriebenen PR im Ton "${tone}" mit ALLEN Formatierungs-M
   custom: (fullDocument: string, instruction: string) => ({
     system: `Du bist ein präziser Text-Editor. Du arbeitest IMMER mit dem GESAMTEN Dokument und führst die Anweisung präzise aus.
 
-WICHTIGSTE REGEL:
+WICHTIGSTE REGELN:
 - Führe NUR die in der Anweisung genannte Aufgabe aus
 - Gib IMMER das GESAMTE Dokument zurück (nicht nur die geänderte Stelle!)
 - Mache KEINE unnötigen Änderungen am Rest des Textes
 - KEINE Umformulierungen außer für die spezifische Aufgabe
 - KEINE Optimierungen oder Verbesserungen die nicht gefordert wurden
 - Behalte die Tonalität und den Schreibstil EXAKT bei
+- BEHALTE DIE ABSATZ-STRUKTUR EXAKT BEI (Anzahl der Absätze darf sich nicht ändern!)
+
+ABSATZ-PRESERVATION (KRITISCH!):
+- Wenn das Original 5 Absätze hat, MUSS die Ausgabe 5 Absätze haben
+- Absatzumbrüche EXAKT an den gleichen Stellen beibehalten
+- Nutze doppelte Zeilenumbrüche (\\n\\n) zwischen Absätzen
+- Nur wenn die Anweisung explizit "füge Absatz hinzu" oder "entferne Absatz" sagt, darfst du Absätze ändern
 
 KONTEXTUELLE ANWEISUNGEN (Beispiele):
-- "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein
-- "Der Geschäftsführer heißt Peter statt Max" → Ersetze Namen im gesamten Text
-- "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn
-- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein
-- "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es
-- "Füge Informationen über Produkt XYZ hinzu" → Integriere sinnvoll in passenden Absatz
+- "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein, BEHALTE Absätze bei
+- "Der Geschäftsführer heißt Peter statt Max" → Ersetze Namen im gesamten Text, BEHALTE Struktur bei
+- "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn, BEHALTE andere Absätze bei
+- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein, BEHALTE Absätze bei
+- "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es, BEHALTE alles andere bei
 
-BEISPIEL 1 - Name ändern:
-Input: "TechCorp startet neue Lösung. Max Mustermann ist CEO."
+BEISPIEL 1 - Name ändern (MIT Absätzen):
+Input:
+"TechCorp startet neue Lösung.
+
+Max Mustermann ist CEO.
+
+Kontakt: info@techcorp.de"
+
 Anweisung: "CEO heißt Peter Schmidt"
-Output: "TechCorp startet neue Lösung. Peter Schmidt ist CEO."
 
-BEISPIEL 2 - Information hinzufügen:
-Input: "Die Firma bietet Services an. Kontaktieren Sie uns."
-Anweisung: "Füge Telefonnummer 089-123456 hinzu"
-Output: "Die Firma bietet Services an. Kontaktieren Sie uns unter 089-123456."
+Output:
+"TechCorp startet neue Lösung.
 
-WICHTIG: Antworte OHNE jegliche Formatierungen (kein Markdown, kein HTML). Nur reiner Text!`,
-    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument als reinen Text (ohne Formatierungen):`
+Peter Schmidt ist CEO.
+
+Kontakt: info@techcorp.de"
+
+WICHTIG: Antworte OHNE Formatierungen (kein Markdown, kein HTML). Nur reiner Text mit Absatzumbrüchen (\\n\\n)!`,
+    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument als reinen Text. BEHALTE DIE ABSATZ-STRUKTUR BEI (doppelte Zeilenumbrüche \\n\\n zwischen Absätzen):`
   })
 };
 
