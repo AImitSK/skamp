@@ -346,37 +346,52 @@ TONALITÄT: ${tone}
 
 TON-DEFINITIONEN:
 - formal: Sachlich, distanziert, offizielle Sprache, keine Umgangssprache
-- casual: Locker, umgangssprachlich, persönlich, weniger steif
+- casual: Locker, umgangssprachlich, persönlich, weniger steif. "Na, schon gespannt?", "easy", "mega", "Bock auf...?"
 - professional: Geschäftlich, kompetent, seriös aber zugänglich
 - friendly: Warm, einladend, sympathisch, nahbar
 - confident: Selbstbewusst, überzeugend, bestimmt, kraftvoll
 
-AUFGABE: Schreibe die PR komplett neu im Ton "${tone}", behalte aber die EXAKTE Struktur bei:
+FORMATIERUNGS-REGELN (ABSOLUT ZWINGEND!):
+Du MUSST die Ausgabe mit diesen EXAKTEN Markdown-Markern formatieren:
 
-STRUKTUR (ZWINGEND BEIBEHALTEN):
-**Lead-Absatz: Fett formatiert mit 5 W-Fragen**
-Absatz 2-3: Hauptinformation mit Details
-"Zitat", sagt [Name/Position].
+1. **Fetter Lead-Absatz** → MUSS mit **Text** umschlossen sein
+   Beispiel: **Ab Januar startet die Firma XY ihr neues Produkt.**
+
+2. Absätze trennen → MUSS mit doppeltem Zeilenumbruch \\n\\n
+   Beispiel: Absatz 1.\\n\\nAbsatz 2.\\n\\nAbsatz 3.
+
+3. Zitate → MUSS mit > am Zeilenanfang + Leerzeile davor/danach
+   Beispiel: \\n\\n> "Das ist super", sagt Max Mustermann, CEO.\\n\\n
+
+4. CTA → MUSS mit [[CTA: Text]] Format
+   Beispiel: [[CTA: Kostenlose Demo unter info@firma.de]]
+
+5. Hashtags → MUSS mit [[HASHTAGS: #tag1 #tag2 #tag3]] Format
+   Beispiel: [[HASHTAGS: #Innovation #Tech #News]]
+
+AUSGABE-FORMAT-BEISPIEL (EXAKT SO!):
+**Lead-Absatz mit 5 W-Fragen.**
+
+Absatz 2 mit Details.
+
+Absatz 3 mit mehr Infos.
+
+> "Zitat Text", sagt Name, Position.
+
 [[CTA: Handlungsaufforderung]]
-[[HASHTAGS: #hashtag1 #hashtag2]]
 
-KRITISCHE REGELN:
-- EXAKT gleiche Struktur wie Original (gleiche Anzahl Absätze)
-- Lead mit ** markieren (fett)
-- Zitate aus Original übernehmen oder anpassen
-- CTA und Hashtags in [[MARKER]] Format exakt übernehmen
-- ALLE Formatierungen beibehalten (**Bold**, [[CTA:]], [[HASHTAGS:]], > Quotes)
-- NUR die Wortwahl und Formulierung im neuen Ton ändern
-- KEINE Informationen hinzufügen oder weglassen
-- KEINE neuen Headlines/Titel erstellen
+[[HASHTAGS: #tag1 #tag2]]
 
-BEISPIEL:
-Input (professional): **TechCorp präsentiert innovative KI-Lösung für Unternehmen.**\nDie Lösung optimiert Prozesse.\n"Dies ist ein wichtiger Schritt", erklärt der CEO.\n[[CTA: Mehr unter techcorp.de]]
-Ton: friendly
-Output: **TechCorp hat was richtig Cooles für euch: Eine KI-Lösung, die eure Arbeit leichter macht!**\nDie Lösung hilft euch, eure Abläufe zu verbessern.\n"Das wird euch begeistern", freut sich der CEO.\n[[CTA: Mehr unter techcorp.de]]
+WICHTIG:
+- Gleiche Anzahl Absätze wie Original (mit \\n\\n getrennt)
+- Lead MUSS ** ** haben
+- Zitat MUSS > haben
+- CTA MUSS [[CTA: ]] haben
+- Hashtags MÜSSEN [[HASHTAGS: ]] haben
+- NUR Wortwahl im Ton "${tone}" ändern, KEINE Informationen ändern
 
-Antworte mit der komplett neu geschriebenen PR im Ton "${tone}"!`,
-      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}"):\n${text}`
+Antworte mit der neu geschriebenen PR im Ton "${tone}" mit ALLEN Formatierungs-Markern!`,
+      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}" mit ALLEN Markdown-Markern):\n${text}`
     }),
 
     withoutContext: (text: string, tone: string) => ({
@@ -386,32 +401,52 @@ TONALITÄT: ${tone}
 
 TON-DEFINITIONEN:
 - formal: Sachlich, distanziert, offizielle Sprache, keine Umgangssprache
-- casual: Locker, umgangssprachlich, persönlich, weniger steif
+- casual: Locker, umgangssprachlich, persönlich, weniger steif. "Na, schon gespannt?", "easy", "mega", "Bock auf...?"
 - professional: Geschäftlich, kompetent, seriös aber zugänglich
 - friendly: Warm, einladend, sympathisch, nahbar
 - confident: Selbstbewusst, überzeugend, bestimmt, kraftvoll
 
-AUFGABE: Schreibe die PR komplett neu im Ton "${tone}", behalte aber die EXAKTE Struktur bei:
+FORMATIERUNGS-REGELN (ABSOLUT ZWINGEND!):
+Du MUSST die Ausgabe mit diesen EXAKTEN Markdown-Markern formatieren:
 
-STRUKTUR (ZWINGEND BEIBEHALTEN):
-**Lead-Absatz: Fett formatiert mit 5 W-Fragen**
-Absatz 2-3: Hauptinformation mit Details
-"Zitat", sagt [Name/Position].
+1. **Fetter Lead-Absatz** → MUSS mit **Text** umschlossen sein
+   Beispiel: **Ab Januar startet die Firma XY ihr neues Produkt.**
+
+2. Absätze trennen → MUSS mit doppeltem Zeilenumbruch \\n\\n
+   Beispiel: Absatz 1.\\n\\nAbsatz 2.\\n\\nAbsatz 3.
+
+3. Zitate → MUSS mit > am Zeilenanfang + Leerzeile davor/danach
+   Beispiel: \\n\\n> "Das ist super", sagt Max Mustermann, CEO.\\n\\n
+
+4. CTA → MUSS mit [[CTA: Text]] Format
+   Beispiel: [[CTA: Kostenlose Demo unter info@firma.de]]
+
+5. Hashtags → MUSS mit [[HASHTAGS: #tag1 #tag2 #tag3]] Format
+   Beispiel: [[HASHTAGS: #Innovation #Tech #News]]
+
+AUSGABE-FORMAT-BEISPIEL (EXAKT SO!):
+**Lead-Absatz mit 5 W-Fragen.**
+
+Absatz 2 mit Details.
+
+Absatz 3 mit mehr Infos.
+
+> "Zitat Text", sagt Name, Position.
+
 [[CTA: Handlungsaufforderung]]
-[[HASHTAGS: #hashtag1 #hashtag2]]
 
-KRITISCHE REGELN:
-- EXAKT gleiche Struktur wie Original (gleiche Anzahl Absätze)
-- Lead mit ** markieren (fett)
-- Zitate aus Original übernehmen oder anpassen
-- CTA und Hashtags in [[MARKER]] Format exakt übernehmen
-- ALLE Formatierungen beibehalten (**Bold**, [[CTA:]], [[HASHTAGS:]], > Quotes)
-- NUR die Wortwahl und Formulierung im neuen Ton ändern
-- KEINE Informationen hinzufügen oder weglassen
-- KEINE neuen Headlines/Titel erstellen
+[[HASHTAGS: #tag1 #tag2]]
 
-Antworte mit der komplett neu geschriebenen PR im Ton "${tone}"!`,
-      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}"):\n${text}`
+WICHTIG:
+- Gleiche Anzahl Absätze wie Original (mit \\n\\n getrennt)
+- Lead MUSS ** ** haben
+- Zitat MUSS > haben
+- CTA MUSS [[CTA: ]] haben
+- Hashtags MÜSSEN [[HASHTAGS: ]] haben
+- NUR Wortwahl im Ton "${tone}" ändern, KEINE Informationen ändern
+
+Antworte mit der neu geschriebenen PR im Ton "${tone}" mit ALLEN Formatierungs-Markern!`,
+      user: `ORIGINAL-PR (Schreibe sie neu im Ton "${tone}" mit ALLEN Markdown-Markern):\n${text}`
     })
   },
 
@@ -428,15 +463,25 @@ DEIN WORKFLOW:
 4. Führe die Änderung minimal und präzise aus
 5. Gib das GESAMTE Dokument mit ALLEN Formatierungen zurück
 
-FORMATIERUNGS-REGELN (KRITISCH!):
-- **Fetter Text** → Mit ** ** markieren (z.B. **Lead-Absatz**)
-- Zitate → Mit > markieren (z.B. > "Zitat Text")
-- CTA → Mit [[CTA: ]] markieren (z.B. [[CTA: Mehr Infos unter...]])
-- Hashtags → Mit [[HASHTAGS: ]] markieren (z.B. [[HASHTAGS: #Tech #Innovation]])
-- Einzelne Hashtags → Mit # markieren (z.B. #Hashtag)
-- Absätze → Mit doppeltem Zeilenumbruch trennen
+FORMATIERUNGS-REGELN (ABSOLUT ZWINGEND!):
+Du MUSST die Ausgabe mit diesen EXAKTEN Markdown-Markern formatieren:
 
-WICHTIG: ALLE vorhandenen Formatierungen EXAKT beibehalten!
+1. **Fetter Lead-Absatz** → MUSS mit **Text** umschlossen sein
+   Beispiel: **Ab Januar startet die Firma XY ihr neues Produkt.**
+
+2. Absätze trennen → MUSS mit doppeltem Zeilenumbruch \\n\\n
+   Beispiel: Absatz 1.\\n\\nAbsatz 2.\\n\\nAbsatz 3.
+
+3. Zitate → MUSS mit > am Zeilenanfang + Leerzeile davor/danach
+   Beispiel: \\n\\n> "Das ist super", sagt Max Mustermann, CEO.\\n\\n
+
+4. CTA → MUSS mit [[CTA: Text]] Format
+   Beispiel: [[CTA: Kostenlose Demo unter info@firma.de]]
+
+5. Hashtags → MUSS mit [[HASHTAGS: #tag1 #tag2 #tag3]] Format
+   Beispiel: [[HASHTAGS: #Innovation #Tech #News]]
+
+WICHTIG: Wenn das Original diese Marker hat, MUSST du sie EXAKT übernehmen!
 
 KONTEXTUELLE ANWEISUNGEN (Beispiele):
 - "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein
@@ -453,19 +498,20 @@ WICHTIGE REGELN:
 - KEINE neuen Informationen außer explizit in der Anweisung
 - KEINE Sätze umformulieren außer nötig für die Änderung
 - KEINE Wörter austauschen außer für die Änderung
+- ALLE Markdown-Marker beibehalten (**, >, [[CTA:]], [[HASHTAGS:]])
 
-BEISPIEL 1 - Name ändern:
-Dokument: "**TechCorp startet neue Lösung.**\n\n"Wir sind stolz", sagt Max Mustermann, CEO.\n\n[[CTA: Mehr unter techcorp.de]]"
+BEISPIEL 1 - Name ändern (MIT Formatierung):
+Input: **TechCorp startet neue Lösung.**\\n\\n> "Wir sind stolz", sagt Max Mustermann, CEO.\\n\\n[[CTA: Mehr unter techcorp.de]]\\n\\n[[HASHTAGS: #Tech #News]]
 Anweisung: "CEO heißt Peter Schmidt"
-Antwort: "**TechCorp startet neue Lösung.**\n\n"Wir sind stolz", sagt Peter Schmidt, CEO.\n\n[[CTA: Mehr unter techcorp.de]]"
+Output: **TechCorp startet neue Lösung.**\\n\\n> "Wir sind stolz", sagt Peter Schmidt, CEO.\\n\\n[[CTA: Mehr unter techcorp.de]]\\n\\n[[HASHTAGS: #Tech #News]]
 
-BEISPIEL 2 - Information hinzufügen:
-Dokument: "Die Firma bietet Services an.\n\nKontaktieren Sie uns."
+BEISPIEL 2 - Information hinzufügen (MIT Formatierung):
+Input: **Die Firma bietet Services an.**\\n\\nKontaktieren Sie uns.\\n\\n[[CTA: info@firma.de]]
 Anweisung: "Füge Telefonnummer 089-123456 hinzu"
-Antwort: "Die Firma bietet Services an.\n\nKontaktieren Sie uns unter 089-123456."
+Output: **Die Firma bietet Services an.**\\n\\nKontaktieren Sie uns unter 089-123456.\\n\\n[[CTA: info@firma.de]]
 
-Antworte mit dem GESAMTEN, modifizierten Dokument!`,
-    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument:`
+Antworte mit dem GESAMTEN, modifizierten Dokument mit ALLEN Markdown-Markern!`,
+    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument mit ALLEN Markdown-Markern:`
   })
 };
 
