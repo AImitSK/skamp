@@ -512,73 +512,80 @@ WICHTIG: Deine Antwort muss LEERZEILEN zwischen Absätzen haben, genau wie im Or
 
 /**
  * Entfernt PR-Formatierungen aus dem Text, damit die AI nur Plain-Text sieht
+ * Unterstützt sowohl alte Markdown-Syntax als auch neue HTML-Syntax
  */
 function stripPRFormatting(text: string): string {
   let stripped = text;
 
+  // ===== ALTE MARKDOWN-SYNTAX (für Rückwärtskompatibilität) =====
   // Entferne CTA-Formatierung: [[CTA: text]] → text
   stripped = stripped.replace(/\[\[CTA:\s*([^\]]+)\]\]/g, '$1');
-
   // Entferne HASHTAG-Formatierung: [[HASHTAGS: #tag1 #tag2]] → #tag1 #tag2
   stripped = stripped.replace(/\[\[HASHTAGS:\s*([^\]]+)\]\]/g, '$1');
-
   // Entferne Blockquote-Formatierung: > "quote", Person, Rolle → "quote", Person, Rolle
   stripped = stripped.replace(/^>\s*(.+)$/gm, '$1');
+  // Entferne fett-Formatierung: **text** → text
+  stripped = stripped.replace(/\*\*([^*]+)\*\*/g, '$1');
 
-  // Entferne fett-Formatierung vom ersten Absatz: **text** → text
-  const lines = stripped.split('\n');
-  if (lines.length > 0 && lines[0].startsWith('**') && lines[0].endsWith('**')) {
-    lines[0] = lines[0].slice(2, -2);
-    stripped = lines.join('\n');
-  }
+  // ===== NEUE HTML-SYNTAX =====
+  // Entferne <blockquote> Tags: <blockquote><p>"quote"</p><footer>— Person, Rolle</footer></blockquote> → "quote"\n\n— Person, Rolle
+  stripped = stripped.replace(/<blockquote>\s*<p>"([^"]+)"<\/p>\s*<footer>([^<]+)<\/footer>\s*<\/blockquote>/g, '"$1"\n\n$2');
 
-  return stripped;
+  // Entferne CTA <span>: <span data-type="cta-text" class="...">text</span> → text
+  stripped = stripped.replace(/<span\s+data-type="cta-text"[^>]*>([^<]+)<\/span>/g, '$1');
+
+  // Entferne Hashtag <span>: <span data-type="hashtag" class="...">#tag</span> → #tag
+  stripped = stripped.replace(/<span\s+data-type="hashtag"[^>]*>(#\w+)<\/span>/g, '$1');
+
+  // Entferne <strong> Tags: <strong>text</strong> → text
+  stripped = stripped.replace(/<strong>([^<]+)<\/strong>/g, '$1');
+
+  // Cleanup: Normalisiere mehrfache Leerzeilen
+  stripped = stripped.replace(/\n{3,}/g, '\n\n');
+
+  return stripped.trim();
 }
 
 function formatPressRelease(plainText: string): string {
-  console.log('🎨 Starte automatische PR-Formatierung...');
+  console.log('🎨 Starte automatische PR-Formatierung (HTML-Modus)...');
 
   let formatted = plainText;
 
-  // 1. ABSÄTZE: Stelle sicher dass Absätze mit \n\n getrennt sind
-  // Normalisiere unterschiedliche Zeilenumbrüche
+  // 1. ABSÄTZE: Normalisiere Zeilenumbrüche
   formatted = formatted.replace(/\r\n/g, '\n'); // Windows → Unix
   formatted = formatted.replace(/\n{3,}/g, '\n\n'); // Mehr als 2 → genau 2
 
-  // 2. ERSTER ABSATZ FETT: Finde ersten Absatz und mache ihn fett (falls nicht schon)
+  // 2. ERSTER ABSATZ FETT: Wrapped in <strong> tags (falls noch nicht)
   const paragraphs = formatted.split('\n\n');
   if (paragraphs.length > 0 && paragraphs[0].trim()) {
     const firstPara = paragraphs[0].trim();
-    // Nur fett machen wenn noch nicht fett
-    if (!firstPara.startsWith('**') && !firstPara.includes('**')) {
-      paragraphs[0] = `**${firstPara}**`;
+    // Nur fett machen wenn noch nicht fett (weder HTML noch Markdown)
+    if (!firstPara.startsWith('<strong>') && !firstPara.startsWith('**')) {
+      paragraphs[0] = `<strong>${firstPara}</strong>`;
     }
   }
   formatted = paragraphs.join('\n\n');
 
-  // 3. ZITATE: Finde Zitate und formatiere sie mit >
+  // 3. ZITATE: Finde Zitate und formatiere sie als HTML <blockquote>
   // Pattern 1: "Text", sagt Person, Rolle
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""], sagt ([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
-      const formattedQuote = `> "${quote.trim()}", sagt ${person.trim()}${role ? ', ' + role.trim() : ''}`;
-      return `\n\n${formattedQuote}\n\n`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, sagt${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
+      return `\n\n${blockquote}\n\n`;
     }
   );
 
   // Pattern 2: "Text", Person, Rolle (OHNE "sagt" oder "-")
   // z.B. "Zitat", Max Mustermann, CEO bei Firma
-  // Flexibler Regex: Matched Namen mit 1-4 Wörtern (mit Großbuchstaben, Umlauten, etc.)
-  // Rolle kann auch Punkte enthalten (z.B. "GmbH.")
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""],\s+([A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+(?:\s+[A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+){0,3}),\s+([^\n]+?)(?=\n\n|\n|$)/gm,
     (match, quote, person, role) => {
-      // Validierung: Person sollte wie ein Name aussehen (mindestens 2 Zeichen, beginnt mit Großbuchstaben)
       if (person.length >= 2 && /^[A-ZÄÖÜ]/.test(person)) {
-        const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
-        return `\n\n${formattedQuote}\n\n`;
+        const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, ${role.trim()}</footer>\n</blockquote>`;
+        return `\n\n${blockquote}\n\n`;
       }
-      return match; // Kein Match, Original beibehalten
+      return match;
     }
   );
 
@@ -586,37 +593,34 @@ function formatPressRelease(plainText: string): string {
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""][\s]*[-–—][\s]*([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
-      const formattedQuote = `> "${quote.trim()}", ${person.trim()}${role ? ', ' + role.trim() : ''}`;
-      return `\n\n${formattedQuote}\n\n`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
+      return `\n\n${blockquote}\n\n`;
     }
   );
 
   // Pattern 4: Multiline Quote - "Text" auf eigener Zeile, dann — Person, Rolle
-  // z.B.:
-  // "Zitat..."
-  //
-  // — Max Mustermann, CEO
   formatted = formatted.replace(
-    /["„"]([^"„"]+)["\"]\s*\n+\s*[—–-]\s*([^,\n]+),\s*([^\n]+)/gm,
+    /["„"]([^"„"]+)["\"]\s*\n+\s*[—–-]\s*([^,\n]+),\s+([^\n]+)/gm,
     (match, quote, person, role) => {
-      const formattedQuote = `> "${quote.trim()}", ${person.trim()}, ${role.trim()}`;
-      return `\n\n${formattedQuote}\n\n`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, ${role.trim()}</footer>\n</blockquote>`;
+      return `\n\n${blockquote}\n\n`;
     }
   );
 
-  // 4. HASHTAGS: Finde Hashtags und formatiere sie
-  // Pattern: #tag1 #tag2 #tag3 (am Ende oder in eigener Zeile)
+  // 4. HASHTAGS: Finde Hashtags und formatiere sie als HTML <span>
   const hashtagPattern = /(#\w+(?:\s+#\w+)*)/g;
   formatted = formatted.replace(hashtagPattern, (match) => {
-    // Wenn nicht schon im [[HASHTAGS: ]] Format
-    if (!formatted.includes(`[[HASHTAGS: ${match}]]`)) {
-      return `[[HASHTAGS: ${match}]]`;
+    // Wenn nicht schon formatiert
+    if (!match.includes('<span') && !match.includes('data-type="hashtag"')) {
+      const tags = match.split(/\s+/).filter(t => t.startsWith('#'));
+      return tags.map(tag =>
+        `<span data-type="hashtag" class="hashtag text-blue-600 font-semibold cursor-pointer hover:text-blue-800 transition-colors duration-200">${tag}</span>`
+      ).join(' ');
     }
     return match;
   });
 
-  // 5. CTA: Finde typische CTA-Phrasen und formatiere sie
-  // Pattern: Mehr Informationen, Jetzt registrieren, Kontakt, Website-URLs, E-Mail-Adressen mit Kontext etc.
+  // 5. CTA: Finde typische CTA-Phrasen und formatiere sie als HTML <span>
   const ctaPatterns = [
     // Standard CTA-Phrasen (Mehr Informationen, Jetzt registrieren, etc.)
     /(?:^|\n\n)((?:Mehr Informationen|Weitere Informationen|Jetzt registrieren|Kontakt|Besuchen Sie|Erfahren Sie mehr)[^\n]+)/gim,
@@ -626,16 +630,19 @@ function formatPressRelease(plainText: string): string {
     /(Kontaktieren Sie uns (?:unter|per|via)[^\n.]+[@+][^\n.]+\.)/gim,
     // Phrasen mit "anfordern", "anfragen", "kontaktieren" + E-Mail oder Website
     /(?:^|\n\n)([^.\n]*(?:anfordern|anfragen|kontaktieren|buchen|bestellen)[^.\n]*(?:[:@])[^\n]+)/gim,
-    // E-Mail-Adressen mit Kontext (z.B. "Beratung: email@example.com")
-    /(?:^|\n\n)([^.\n]*[:]\s*[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[^\n]*)/gim
+    // "Erfahren Sie mehr" am Anfang eines Absatzes
+    /(Erfahren Sie mehr[^\n.]+[.!])/gim
   ];
 
   ctaPatterns.forEach(pattern => {
     formatted = formatted.replace(pattern, (match, cta) => {
       const trimmed = cta.trim();
-      // Nur umwandeln wenn nicht schon im [[CTA: ]] Format
-      if (!formatted.includes(`[[CTA: ${trimmed}]]`) && !trimmed.startsWith('[[CTA:')) {
-        return `\n\n[[CTA: ${trimmed}]]`;
+      // Nur umwandeln wenn nicht schon als CTA formatiert
+      if (!trimmed.includes('data-type="cta-text"') && !trimmed.includes('<span')) {
+        const ctaSpan = `<span data-type="cta-text" class="cta-text font-bold text-black">${trimmed}</span>`;
+        // Preserve leading whitespace/newlines from match
+        const leadingSpace = match.match(/^(\s*)/)?.[1] || '';
+        return `${leadingSpace}${ctaSpan}`;
       }
       return match;
     });
