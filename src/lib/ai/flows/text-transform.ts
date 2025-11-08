@@ -465,38 +465,44 @@ WICHTIGSTE REGELN:
 - Behalte die Tonalität und den Schreibstil EXAKT bei
 - BEHALTE DIE ABSATZ-STRUKTUR EXAKT BEI (Anzahl der Absätze darf sich nicht ändern!)
 
-ABSATZ-PRESERVATION (KRITISCH!):
-- Wenn das Original 5 Absätze hat, MUSS die Ausgabe 5 Absätze haben
-- Absatzumbrüche EXAKT an den gleichen Stellen beibehalten
-- Nutze doppelte Zeilenumbrüche (\\n\\n) zwischen Absätzen
-- Nur wenn die Anweisung explizit "füge Absatz hinzu" oder "entferne Absatz" sagt, darfst du Absätze ändern
+ABSATZ-PRESERVATION (ABSOLUT KRITISCH!):
+Das Dokument hat mehrere Absätze die durch LEERZEILEN getrennt sind.
+Du MUSST diese EXAKT beibehalten!
 
-KONTEXTUELLE ANWEISUNGEN (Beispiele):
-- "Füge im letzten Absatz etwas über XYZ hinzu" → Finde letzten Absatz, füge Information ein, BEHALTE Absätze bei
-- "Der Geschäftsführer heißt Peter statt Max" → Ersetze Namen im gesamten Text, BEHALTE Struktur bei
-- "Mache den zweiten Absatz kürzer" → Identifiziere zweiten Absatz, kürze ihn, BEHALTE andere Absätze bei
-- "Füge ein Zitat von Max Mustermann hinzu" → Wähle passende Stelle, füge Zitat ein, BEHALTE Absätze bei
-- "Ersetze das Datum durch 15. November 2025" → Finde Datum, ersetze es, BEHALTE alles andere bei
+REGEL:
+- Zähle die Absätze im Original-Dokument
+- Deine Ausgabe MUSS die EXAKT GLEICHE Anzahl Absätze haben
+- Absatzumbrüche an den GLEICHEN Stellen wie im Original
+- Zwischen Absätzen MUSS eine Leerzeile sein
+- Nur wenn die Anweisung explizit sagt "füge Absatz hinzu" oder "lösche Absatz", darfst du die Anzahl ändern
 
-BEISPIEL 1 - Name ändern (MIT Absätzen):
-Input:
-"TechCorp startet neue Lösung.
+BEISPIEL - So sieht ein Dokument mit 3 Absätzen aus:
+────────────────────────────────────────
+TechCorp startet neue Lösung ab Januar.
 
-Max Mustermann ist CEO.
+Max Mustermann ist CEO und Gründer.
 
-Kontakt: info@techcorp.de"
+Kontakt unter info@techcorp.de möglich.
+────────────────────────────────────────
 
 Anweisung: "CEO heißt Peter Schmidt"
 
-Output:
-"TechCorp startet neue Lösung.
+RICHTIGE Ausgabe (3 Absätze mit Leerzeilen):
+────────────────────────────────────────
+TechCorp startet neue Lösung ab Januar.
 
-Peter Schmidt ist CEO.
+Peter Schmidt ist CEO und Gründer.
 
-Kontakt: info@techcorp.de"
+Kontakt unter info@techcorp.de möglich.
+────────────────────────────────────────
 
-WICHTIG: Antworte OHNE Formatierungen (kein Markdown, kein HTML). Nur reiner Text mit Absatzumbrüchen (\\n\\n)!`,
-    user: `GESAMTES DOKUMENT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${instruction}\n\nAntworte mit dem GESAMTEN modifizierten Dokument als reinen Text. BEHALTE DIE ABSATZ-STRUKTUR BEI (doppelte Zeilenumbrüche \\n\\n zwischen Absätzen):`
+FALSCHE Ausgabe (alles in einem Block):
+────────────────────────────────────────
+TechCorp startet neue Lösung ab Januar. Peter Schmidt ist CEO und Gründer. Kontakt unter info@techcorp.de möglich.
+────────────────────────────────────────
+
+WICHTIG: Deine Antwort muss LEERZEILEN zwischen Absätzen haben, genau wie im Original!`,
+    user: `GESAMTES DOKUMENT (beachte die LEERZEILEN zwischen Absätzen!):\n${fullDocument}\n\nANWEISUNG:\n${instruction}\n\nAntworte mit dem GESAMTEN Dokument. BEHALTE ALLE LEERZEILEN ZWISCHEN ABSÄTZEN!`
   })
 };
 
