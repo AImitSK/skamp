@@ -774,8 +774,15 @@ export const textTransformFlow = ai.defineFlow(
           throw new Error('Instruction parameter is required for custom action');
         }
         // Custom arbeitet IMMER mit fullDocument (kontextbewusst)
+        // WICHTIG: Entferne PR-Formatierung VOR AI-Call, damit AI nur Plain-Text sieht
         const fullDocForCustom = input.fullDocument || input.text;
-        const prompts = PROMPTS.custom(fullDocForCustom, input.instruction);
+        const strippedDoc = stripPRFormatting(fullDocForCustom);
+        console.log('🧹 Entferne PR-Formatierung für Custom Instruction:', {
+          originalLength: fullDocForCustom.length,
+          strippedLength: strippedDoc.length,
+          hadFormatting: fullDocForCustom !== strippedDoc
+        });
+        const prompts = PROMPTS.custom(strippedDoc, input.instruction);
         systemPrompt = prompts.system;
         userPrompt = prompts.user;
         break;
@@ -850,21 +857,7 @@ export const textTransformFlow = ai.defineFlow(
           userPrompt = prompts.user;
           break;
         }
-        case 'custom': {
-          // Custom arbeitet IMMER mit fullDocument (auch im Pre-Processing)
-          // WICHTIG: Entferne PR-Formatierung VOR AI-Call, damit AI nur Plain-Text sieht
-          const fullDocForCustom = input.fullDocument || textToTransform;
-          const strippedDoc = stripPRFormatting(fullDocForCustom);
-          console.log('🧹 Entferne PR-Formatierung für Custom Instruction:', {
-            originalLength: fullDocForCustom.length,
-            strippedLength: strippedDoc.length,
-            hadFormatting: fullDocForCustom !== strippedDoc
-          });
-          const prompts = PROMPTS.custom(strippedDoc, input.instruction!);
-          systemPrompt = prompts.system;
-          userPrompt = prompts.user;
-          break;
-        }
+        // Note: 'custom' wird im Haupt-Switch behandelt (Zeile 772-789), nicht hier
       }
     }
 
