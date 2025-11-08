@@ -117,38 +117,36 @@ function parseHTMLFromAIOutput(aiOutput: string): string {
     }
   }
 
-  // 8. Bereinige extreme PM-Phrasen
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  const htmlContent: string[] = [];
+  // 8. Bereinige extreme PM-Phrasen OHNE Absätze zu zerstören
+  // WICHTIG: Split bei \n\n (Absätze) NICHT bei \n (Zeilen)!
+  const paragraphs = text.split('\n\n').map(p => p.trim()).filter(p => p.length > 0);
+  const cleanedParagraphs: string[] = [];
 
-  for (const line of lines) {
-    if (line.includes('Die Pressemitteilung endet hier') ||
-        line.includes('Über [Unternehmen]') ||
-        line.includes('Pressekontakt:') ||
-        line.includes('Weitere Informationen unter:')) {
+  for (const paragraph of paragraphs) {
+    if (paragraph.includes('Die Pressemitteilung endet hier') ||
+        paragraph.includes('Über [Unternehmen]') ||
+        paragraph.includes('Pressekontakt:') ||
+        paragraph.includes('Weitere Informationen unter:')) {
       continue;
     }
-    htmlContent.push(line);
+    cleanedParagraphs.push(paragraph);
   }
 
   // 9. Paragraphen-Struktur (aber nicht blockquotes wrappen!)
-  const finalText = htmlContent.join('\n');
-  if (finalText && !finalText.includes('<p>') && !finalText.includes('<div>')) {
-    return finalText.split('\n\n').map(paragraph => {
-      const trimmed = paragraph.trim();
-      if (!trimmed) return '';
-
+  if (cleanedParagraphs.length > 0 && !text.includes('<p>') && !text.includes('<div>')) {
+    return cleanedParagraphs.map(paragraph => {
       // Wenn schon HTML-Tag vorhanden (z.B. blockquote), nicht wrappen
-      if (trimmed.startsWith('<blockquote') || trimmed.startsWith('<p>') || trimmed.startsWith('<div>')) {
-        return trimmed;
+      if (paragraph.startsWith('<blockquote') || paragraph.startsWith('<p>') || paragraph.startsWith('<div>')) {
+        return paragraph;
       }
 
       // Sonst in <p> wrappen
-      return `<p>${trimmed}</p>`;
-    }).filter(p => p).join('\n\n');
+      return `<p>${paragraph}</p>`;
+    }).join('\n\n');
   }
 
-  return finalText;
+  // Falls schon HTML drin ist, einfach zurückgeben
+  return text;
 }
 
 function parseTextFromAIOutput(aiOutput: string): string {
