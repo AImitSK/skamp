@@ -183,11 +183,10 @@ interface ToneOption {
 }
 
 const toneOptions: ToneOption[] = [
-  { value: 'formal', label: 'Formell' },
-  { value: 'casual', label: 'Locker' },
-  { value: 'professional', label: 'Professionell' },
-  { value: 'friendly', label: 'Freundlich' },
-  { value: 'confident', label: 'Selbstbewusst' }
+  { value: 'formal', label: 'Formal' },
+  { value: 'modern', label: 'Modern' },
+  { value: 'technical', label: 'Technisch' },
+  { value: 'startup', label: 'Startup' }
 ];
 
 export const FixedAIToolbar = ({ editor, onAIAction }: FixedAIToolbarProps) => {

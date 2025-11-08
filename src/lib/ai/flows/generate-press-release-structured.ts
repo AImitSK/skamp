@@ -1,7 +1,7 @@
 // src/lib/ai/flows/generate-press-release-structured.ts
 // Genkit Flow für strukturierte Pressemitteilungs-Generierung mit PR-SEO Score Optimierung
 
-import { ai, gemini25FlashModel } from '../genkit-config';
+import { ai, gemini25FlashLiteModel } from '../genkit-config';
 import {
   GeneratePressReleaseStructuredInputSchema,
   StructuredPressReleaseSchema,
@@ -119,7 +119,64 @@ VERMEIDE:
 
   // Tonalitäts-spezifische Anpassungen
   tones: {
-    formal: `TONALITÄT: FORMAL - Konservativ, seriös, vertrauenswürdig. Längere Sätze erlaubt (max. 20 Wörter). Fachterminologie angemessen. Zurückhaltende Sprache. Distanzierte, offizielle Ausdrucksweise.`,
+    formal: `🔥 TONALITÄT: FORMAL - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🔥
+
+WICHTIG: Schreibe in offizieller, konservativer Geschäftssprache für höchste Seriosität!
+
+ZWINGEND VERWENDEN:
+- "Das Unternehmen", "Die Gesellschaft", "Die Organisation"
+- "präsentiert", "verkündet", "gibt bekannt", "stellt vor"
+- "innovative Lösung", "fortschrittliche Technologie", "bewährte Methodik"
+- "optimiert", "implementiert", "realisiert", "etabliert"
+- Vollständige Titel und Positionen ("Dr.", "Geschäftsführer", "Vorstandsvorsitzender")
+- Längere, strukturierte Sätze (15-20 Wörter erlaubt)
+- Fachterminologie angemessen einsetzen
+- Distanzierte, objektive Ausdrucksweise
+
+ANREDE-REGELN (SEHR WICHTIG!):
+✅ ERLAUBT: "Sie", "Ihnen", "Ihrer" (formelle Anrede 2. Person Plural)
+✅ ERLAUBT: Possessivpronomen 3. Person: "ihrer", "seine", "deren" (gehörend zu Firma/Person/KMU)
+   Beispiel: "KMU nutzen ihre Daten" → KORREKT (Possessiv 3. Person)
+   Beispiel: "Unternehmen optimieren ihre Prozesse" → KORREKT
+
+❌ VERBOTEN: Informelle Anrede 2. Person:
+   - "du", "dein", "dir" (informell Singular)
+   - "ihr" als direkte Anrede (aber "ihr/ihre" als Possessiv 3. Person ist OK!)
+   - "euch" (informell Plural)
+
+REGEL: Nutze NUR "Sie"-Form zur direkten Ansprache. Possessivpronomen 3. Person (ihr/ihre/seinen/deren) sind erlaubt.
+
+BEISPIEL ANREDE RICHTIG:
+✅ "Unternehmen automatisieren ihre Prozesse mit der Lösung." (Possessiv 3. Person - OK!)
+✅ "Wir unterstützen Sie bei Ihrer digitalen Transformation." (Sie-Form - OK!)
+
+BEISPIEL ANREDE FALSCH:
+❌ "Automatisiert eure Prozesse jetzt!" (Anrede 2. Person - VERBOTEN!)
+❌ "Ihr könnt damit..." (Anrede 2. Person - VERBOTEN!)
+
+VERBOTEN:
+- ❌ Umgangssprache ("cool", "mega", "krass", "easy")
+- ❌ Informelle Anrede 2. Person ("du", "dein", "ihr" als Anrede, "euch")
+- ❌ Ausrufezeichen (außer bei sehr wichtigen Ankündigungen)
+- ❌ Übertriebene Emotionen
+- ❌ Verkürzte Sätze ohne Struktur
+
+BEISPIEL FORMAL LEAD:
+❌ FALSCH: "Ab Januar gibt's unser neues Tool – das wird mega cool!"
+✅ RICHTIG: "**Die Firma XY präsentiert ab Januar 2025 ihre innovative Analytics-Plattform für den deutschen Mittelstand.**"
+
+BEISPIEL FORMAL BODY:
+❌ FALSCH: "Das Teil macht eure Arbeit viel einfacher!"
+✅ RICHTIG: "Die Lösung optimiert betriebliche Prozesse und steigert die Effizienz nachweislich um durchschnittlich 35 Prozent."
+
+BEISPIEL FORMAL ZITAT:
+❌ FALSCH: "Das wird ein Gamechanger!", freut sich der CEO.
+✅ RICHTIG: "Diese Entwicklung stellt einen bedeutenden Meilenstein in unserer Unternehmensstrategie dar", erklärt Dr. Schmidt, Vorstandsvorsitzender.
+
+BEISPIEL FORMAL CTA:
+❌ FALSCH: [[CTA: Bock drauf? Schreibt uns an!]]
+✅ RICHTIG: [[CTA: Für weitere Informationen und Terminvereinbarungen kontaktieren Sie uns unter info@firma.de oder +49 89 12345678]]`,
+
     casual: `🔥 TONALITÄT: LOCKER/CASUAL - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🔥
 
 WICHTIG: Ignoriere "professionelle Pressemitteilung" aus dem Base-Prompt! Schreibe stattdessen RICHTIG locker und umgangssprachlich!
@@ -155,17 +212,176 @@ BEISPIEL CASUAL ZITAT:
 BEISPIEL CASUAL CTA:
 ❌ FALSCH: [[CTA: Für weitere Informationen kontaktieren Sie uns unter...]]
 ✅ RICHTIG: [[CTA: Bock drauf? Schreibt uns einfach an info@firma.de!]]`,
-    professional: `TONALITÄT: PROFESSIONELL - Geschäftlich, kompetent, seriös aber zugänglich. Klare, präzise Sprache (max. 15 Wörter pro Satz). Fachbegriffe moderat. Respektvoll aber nicht steif. Ideal für B2B-Kommunikation.`,
-    friendly: `TONALITÄT: FREUNDLICH - Warm, einladend, sympathisch, nahbar. Positive Formulierungen. Leichte, angenehme Sprache (max. 12 Wörter). Vermittle Begeisterung und Hilfsbereitschaft. Persönliche Note ohne zu locker zu werden.`,
-    confident: `TONALITÄT: SELBSTBEWUSST - Überzeugend, bestimmt, kraftvoll, authoritative. Starke Verben, klare Aussagen. Keine Konjunktive oder Abschwächungen. "Wir setzen Standards", "Marktführend", "Bewährt". Fakten mit Überzeugung präsentieren.`,
-    modern: `TONALITÄT: MODERN - Zeitgemäß, innovativ, zugänglich. Kurze Sätze (max. 12 Wörter). Moderne Begriffe. Direkte Ansprache.`,
-    technical: `TONALITÄT: TECHNISCH - Fachspezifisch, präzise, detailliert. Technische Begriffe korrekt. Zahlen, Daten, Spezifikationen prominent. Für Experten.`,
-    startup: `TONALITÄT: STARTUP - SCORE-OPTIMIERT
-✓ Dynamische Verben (erhöht Headline-Score)
-✓ Wachstumszahlen (erhöht Konkretheit-Score)
-✓ Trending Hashtags (erhöht Social-Score)
-✓ Vision-Statement als Zitat (erhöht Engagement-Score)
-Hashtags: #Startup #Innovation #TechNews #Disruption #Funding #Skalierung`
+
+    modern: `🔥 TONALITÄT: MODERN - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🔥
+
+WICHTIG: Schreibe zeitgemäß, innovativ und zugänglich – perfekt für Tech-affine Zielgruppen!
+
+ZWINGEND VERWENDEN:
+- Kurze, knackige Sätze (8-12 Wörter ideal)
+- "launcht", "startet", "bringt", "revolutioniert", "transformiert"
+- Moderne Tech-Begriffe: "KI-gestützt", "cloud-basiert", "smart", "digital", "intelligent"
+- "User", "Experience", "Interface", "Platform", "Dashboard", "App"
+- Direkte Ansprache möglich ("Sie" oder "ihr" je nach Kontext)
+- Dynamische, aktive Verben
+- Zahlen und Metriken prominent
+
+ZUKUNFTS-SPRACHE (EXPLIZIT ERLAUBT UND ERWÜNSCHT!):
+✅ "Next-Level", "Next Generation", "Zukunft 2025+", "Future-Ready"
+✅ "Game-Changer" (sparsam verwenden, aber erlaubt)
+✅ "State-of-the-Art", "Cutting-Edge"
+✅ "Innovation", "disruptiv" (in moderatem Maß)
+
+WICHTIG: Diese Begriffe sind KEINE Werbesprache sondern zeitgemäßes Tech-Vokabular!
+
+BEISPIEL MODERN MIT ZUKUNFTS-SPRACHE:
+❌ FALSCH: "TechCorp stellt neue Lösung vor."
+✅ RICHTIG: "**TechCorp launcht Next-Level Analytics-Platform – Future-Ready für 2025.**"
+✅ AUCH GUT: "**Game-Changer: TechCorp bringt KI-gestützte Platform für Smart Business.**"
+
+VERBOTEN:
+- ❌ Altmodische Begriffe ("etabliert", "bewährt", "traditionell")
+- ❌ Lange, verschachtelte Sätze (>15 Wörter)
+- ❌ Passive Konstruktionen
+- ❌ Verstaubte Floskeln ("freuen uns bekanntzugeben")
+- ❌ Umgangssprache wie bei Casual ("mega", "krass", "Ding")
+
+BEISPIEL MODERN LEAD:
+❌ FALSCH: "Die Firma XY freut sich, die bewährte Lösung Z vorzustellen."
+✅ RICHTIG: "**TechCorp launcht ab Januar 2025 die KI-gestützte Analytics-Platform für Smart Business.**"
+
+BEISPIEL MODERN BODY:
+❌ FALSCH: "Das System optimiert die betrieblichen Prozesse durch bewährte Methoden."
+✅ RICHTIG: "Die Platform automatisiert Workflows. Steigert Effizienz um 40%. Reduziert manuelle Tasks auf ein Minimum."
+
+BEISPIEL MODERN ZITAT:
+❌ FALSCH: "Wir freuen uns über diese bewährte Entwicklung", erklärt der Geschäftsführer.
+✅ RICHTIG: "Wir transformieren Business Intelligence – smart, schnell, skalierbar", sagt Sarah Müller, CEO.
+
+BEISPIEL MODERN CTA:
+❌ FALSCH: [[CTA: Für weitere Informationen kontaktieren Sie uns telefonisch unter...]]
+✅ RICHTIG: [[CTA: Live-Demo jetzt starten: demo.techcorp.io]]`,
+
+    technical: `🔧 TONALITÄT: TECHNISCH - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🔧
+
+WICHTIG: Du schreibst für technische Experten und Entwickler! KEINE Marketing-Sprache!
+
+⚙️ PFLICHT-ELEMENTE (MINDESTENS 3 VON 5 IN LEAD/BODY):
+1. **Performance-Daten:** "Latenz <50ms", "99.9% Uptime", "10.000 req/s", "Response Time 5ms"
+2. **Architektur-Details:** "Microservices", "REST API", "gRPC", "Kubernetes", "PostgreSQL 15", "Redis Cache"
+3. **Versionsnummern:** "v3.0", "API v2.5", "SDK 1.8.2", "TLS 1.3", "HTTP/2"
+4. **Metriken & Benchmarks:** "50.000 Transaktionen/Sek", "2TB Durchsatz", "40% schneller als v2.8"
+5. **Standards & Protokolle:** "OAuth 2.0", "WebSocket", "gRPC", "JSON API", "OpenAPI 3.0"
+
+ZUSÄTZLICH bei spezifischen Branchen:
+- **Automotive:** "kWh", "Reichweite 600km", "Ladezeit 18min", "CCS-Standard", "WLTP"
+- **FinTech:** "TLS 1.3 Verschlüsselung", "SEPA-Instant", "PSD2-konform", "AES-256"
+- **Tech/Software:** "API-Rate-Limit", "JWT-Tokens", "Container-Orchestrierung"
+
+ZWINGEND IN LEAD ODER BODY:
+- Mindestens 2 konkrete technische Specs
+- Mindestens 1 Performance-Metrik mit Zahl
+
+BEISPIEL TECHNICAL LEAD (SO MUSS ES SEIN!):
+❌ FALSCH: "TechCorp startet neue Cloud-Lösung ab Januar."
+✅ RICHTIG: "**TechCorp released v3.0 der Analytics-Platform mit REST API, PostgreSQL 15 Backend und <50ms Query-Latenz.**"
+
+BEISPIEL TECHNICAL BODY (SO MUSS ES SEIN!):
+❌ FALSCH: "Das System ist sehr schnell und skalierbar."
+✅ RICHTIG: "Die Microservices-Architektur ermöglicht horizontale Skalierung auf 10.000+ parallele Requests. Kubernetes-Orchestrierung garantiert 99.95% Uptime. PostgreSQL 15 Backend verarbeitet 50.000 Transaktionen/Sekunde bei durchschnittlich 35ms Latenz. Redis Cache reduziert Datenbankzugriffe um 80%. REST API v3 unterstützt OAuth 2.0 und liefert JSON-Responses mit <5ms."
+
+BEISPIEL TECHNICAL ZITAT (SO MUSS ES SEIN!):
+❌ FALSCH: "Das wird den Markt revolutionieren!", freut sich der CEO.
+✅ RICHTIG: "Mit der neuen gRPC-Implementierung reduzieren wir die Netzwerk-Latenz um 60% verglichen mit v2.8. Kubernetes Auto-Scaling ermöglicht uns 10.000+ concurrent connections", erklärt Dr. Schmidt, CTO.
+
+BEISPIEL TECHNICAL CTA (SO MUSS ES SEIN!):
+❌ FALSCH: [[CTA: Schau dir das unbedingt an unter unserer Website!]]
+✅ RICHTIG: [[CTA: API-Dokumentation: docs.techcorp.dev/api/v3 | SDK Download: github.com/techcorp/sdk | OpenAPI Spec: api.techcorp.dev/openapi.json]]
+
+VERBOTEN:
+- ❌ Marketing-Sprache ohne Fakten ("revolutionär", "bahnbrechend", "game-changing")
+- ❌ Unspezifische Aussagen ("sehr schnell", "ziemlich gut", "hochperformant")
+- ❌ Emotionale Sprache oder Ausrufezeichen
+- ❌ Vereinfachungen für Laien
+
+💾 OHNE KONKRETE SPECS (Zahlen, Versionen, Architekturen) IST DER TEXT FALSCH! 💾
+
+BEISPIEL TECHNICAL LEAD:
+❌ FALSCH: "Firma XY bringt eine mega innovative Cloud-Lösung raus!"
+✅ RICHTIG: "**TechCorp released v3.0 der Analytics-Platform mit REST API, PostgreSQL 15 Backend und <50ms Query-Latenz.**"
+
+BEISPIEL TECHNICAL BODY:
+❌ FALSCH: "Das System ist sehr schnell und macht vieles einfacher."
+✅ RICHTIG: "Die Microservices-Architektur ermöglicht horizontal Skalierung auf 10.000+ parallele Requests. Kubernetes-Orchestrierung garantiert 99.95% Uptime. Das PostgreSQL 15 Backend verarbeitet 50.000 Transaktionen/Sekunde bei durchschnittlich 35ms Latenz."
+
+BEISPIEL TECHNICAL ZITAT:
+❌ FALSCH: "Das wird den Markt revolutionieren!", freut sich der CEO.
+✅ RICHTIG: "Mit der neuen gRPC-Implementierung reduzieren wir die Netzwerk-Latenz um 60% verglichen mit v2.8", erklärt Dr. Schmidt, CTO.
+
+BEISPIEL TECHNICAL CTA:
+❌ FALSCH: [[CTA: Schau dir das unbedingt an unter unserer Website!]]
+✅ RICHTIG: [[CTA: API-Dokumentation und SDK Download: docs.techcorp.dev/api/v3 | GitHub: github.com/techcorp/analytics-sdk]]`,
+
+    startup: `🚨 STARTUP-TON - ÜBERSCHREIBT ALLE ANDEREN REGELN! 🚨
+
+Du schreibst NICHT für etablierte Unternehmen. Du schreibst für STARTUPS und INVESTOREN!
+
+⚡ PFLICHT-ELEMENTE (MINDESTENS 4 VON 6 IN LEAD/BODY):
+1. **Growth-Metrik:** "300% YoY Growth", "10x Wachstum in 6 Monaten", "ARR von €500K auf €3M"
+2. **Funding:** "raised €8M Series A led by Sequoia", "€5M Seed-Runde abgeschlossen", "Backed by Y Combinator"
+3. **User-Zahlen:** "50.000 User in 6 Monaten", "10K+ Beta-Signups", "5.000 zahlende Kunden"
+4. **Traction:** "Product-Market-Fit erreicht Q2 2024", "MRR €100K", "Break-even in Q4"
+5. **Action-Verben:** "skaliert", "disrupted", "expandiert", "wächst um X%", "launcht"
+6. **Vision/Mission:** "Mission: X für 1M User demokratisieren", "Vision: Next Unicorn 2027"
+
+ZWINGEND IN HEADLINE ODER LEAD:
+- Mindestens 1 Growth-Zahl ("300% YoY", "50.000 User", "€5M raised")
+- Mindestens 1 Action-Verb ("skaliert", "raised", "expandiert")
+
+BEISPIEL STARTUP LEAD (SO MUSS ES SEIN!):
+❌ FALSCH: "TechVision lanciert DataSense Pro ab Januar 2025."
+✅ RICHTIG: "**TechVision raised €5M Series A für DataSense Pro – skaliert auf 50.000 User in 6 Monaten mit 400% YoY Growth.**"
+
+BEISPIEL STARTUP BODY (SO MUSS ES SEIN!):
+❌ FALSCH: "Die Plattform wurde entwickelt um KMU zu unterstützen."
+✅ RICHTIG: "TechVision erreichte Product-Market-Fit im Q3 2024. Wuchs von 1.000 auf 50.000 aktive User in nur 6 Monaten. ARR stieg von €500K auf €3M. Series-A-Funding von €5M led by Index Ventures sichert aggressive Europa-Expansion 2025. Target: 200.000 User bis Q4 2025."
+
+BEISPIEL STARTUP ZITAT (SO MUSS ES SEIN!):
+❌ FALSCH: "Wir freuen uns über diese Entwicklung."
+✅ RICHTIG: "Unsere Mission: Datenanalyse für 1 Million KMUs demokratisieren. Mit €5M Series-A-Funding skalieren wir jetzt europaweit – Target: 200.000 User bis Q4 2025", sagt Anna Weber, Co-Founder & CEO.
+
+BEISPIEL STARTUP CTA (SO MUSS ES SEIN!):
+❌ FALSCH: [[CTA: Für weitere Informationen kontaktieren Sie uns.]]
+✅ RICHTIG: [[CTA: Join waitlist (10K+ bereits registriert): startup.io/join | Investors: pitch@startup.io]]
+
+VERBOTEN:
+- ❌ "etabliert", "bewährt", "langjährige Erfahrung", "traditionell"
+- ❌ Vorsichtige Sprache ("möglicherweise", "plant", "erwägt", "eventuell")
+- ❌ Texte OHNE konkrete Zahlen und Metriken
+- ❌ Passive Konstruktionen
+- ❌ Langweilige Corporate-Sprache
+
+💥 WENN DU DIESE REGELN IGNORIERST, IST DER OUTPUT FALSCH! 💥
+💥 OHNE GROWTH-ZAHLEN UND FUNDING-INFO IST ES KEIN STARTUP-TON! 💥
+
+BEISPIEL STARTUP LEAD:
+❌ FALSCH: "Die Firma XY präsentiert eine neue Software-Lösung."
+✅ RICHTIG: "**FinTech-Startup PayFast raised €8M Series A, skaliert auf 50.000 User in 6 Monaten – 400% YoY Growth.**"
+
+BEISPIEL STARTUP BODY:
+❌ FALSCH: "Das Unternehmen wächst stetig und gewinnt Kunden."
+✅ RICHTIG: "PayFast erreichte Product-Market-Fit im Q2 2024. Wuchs von 1.000 auf 50.000 aktive User in nur 6 Monaten. ARR stieg von €500K auf €3M. Series-A-Funding von €8M led by Sequoia Capital sichert aggressive Europa-Expansion für 2025."
+
+BEISPIEL STARTUP ZITAT:
+❌ FALSCH: "Wir freuen uns über diese Entwicklung", sagt der Geschäftsführer.
+✅ RICHTIG: "Unsere Mission: Banking für 10 Millionen Freelancer demokratisieren. Mit €8M Funding skalieren wir jetzt europaweit", sagt Max Bauer, Co-Founder & CEO.
+
+BEISPIEL STARTUP CTA:
+❌ FALSCH: [[CTA: Für weitere Informationen besuchen Sie unsere Website.]]
+✅ RICHTIG: [[CTA: Join waitlist (10K+ already signed up): payfast.io/join | Investors: pitch@payfast.io]]
+
+HASHTAGS ZWINGEND:
+#Startup #Funding #SeriesA #TechNews #ScaleUp #Growth #Innovation #SaaS #Disruption`
   },
 
   // Zielgruppen-spezifische Anpassungen
@@ -262,16 +478,20 @@ Wenn alle Checks ✓ → Text erreicht 85-95% Score!`;
 // ══════════════════════════════════════════════════════════════
 
 function buildSystemPrompt(context?: GeneratePressReleaseStructuredInput['context']): string {
-  let systemPrompt = SYSTEM_PROMPTS.base;
+  let systemPrompt = '';
 
+  // QUICK WIN: Ton-Prompt ZUERST für maximale Priorität
+  // LLMs priorisieren frühere Instruktionen - Ton muss Base-Regeln dominieren
+  if (context?.tone && SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones]) {
+    systemPrompt += SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones];
+    systemPrompt += '\n\n';
+  }
+
+  // Base-Prompt kommt NACH Ton
+  systemPrompt += SYSTEM_PROMPTS.base;
   systemPrompt += '\n' + SYSTEM_PROMPTS.scoreRules;
   systemPrompt += '\n' + SYSTEM_PROMPTS.exampleOptimizations;
   systemPrompt += '\n' + SYSTEM_PROMPTS.rules;
-
-  // Tonalität
-  if (context?.tone && SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones]) {
-    systemPrompt += '\n' + SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones];
-  }
 
   // Zielgruppe
   if (context?.audience && SYSTEM_PROMPTS.audiences[context.audience as keyof typeof SYSTEM_PROMPTS.audiences]) {
@@ -619,18 +839,18 @@ Erstelle eine professionelle Pressemitteilung nach journalistischen Standards.
     const userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${enhancedPrompt}${contextInfo}`;
 
     // ══════════════════════════════════════════════════════════════
-    // 3. AI GENERIERUNG MIT GEMINI 2.5 FLASH
+    // 3. AI GENERIERUNG MIT GEMINI 2.5 FLASH-LITE (75% günstiger)
     // ══════════════════════════════════════════════════════════════
 
     const result = await ai.generate({
-      model: gemini25FlashModel,
+      model: gemini25FlashLiteModel,
       prompt: [
         { text: systemPrompt },
         { text: userPrompt }
       ],
       config: {
         temperature: 0.7,
-        maxOutputTokens: 8192, // Erhöht für Gemini 2.5 Extended Thinking + vollständigen Output
+        maxOutputTokens: 8192,
       }
     });
 

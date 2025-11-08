@@ -1,0 +1,254 @@
+[
+  {
+    "testCaseId": "b2b-product-formal",
+    "description": "B2B Produktlaunch - Formal Ton",
+    "input": {
+      "prompt": "TechVision lanciert ab Januar 2025 die KI-gestützte Analytics-Plattform DataSense Pro für mittelständische Unternehmen. Die Lösung automatisiert Datenanalyse-Prozesse und steigert die Effizienz um durchschnittlich 40 Prozent. Über 150 Unternehmen haben bereits Interesse bekundet. Verfügbar ab 499 Euro pro Monat.",
+      "context": {
+        "industry": "technology",
+        "tone": "formal",
+        "audience": "b2b",
+        "companyName": "TechVision"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "formal",
+      "mustContain": ["präsentiert", "Unternehmen", "Lösung", "optimiert", "Sie"],
+      "mustNotContain": ["mega", "cool", "krass", "du", "ihr", "easy"],
+      "sentenceLength": "long (15-20 words)",
+      "style": "conservative, official, serious"
+    }
+  },
+  {
+    "testCaseId": "b2b-product-modern",
+    "description": "B2B Produktlaunch - Modern Ton",
+    "input": {
+      "prompt": "TechVision lanciert ab Januar 2025 die KI-gestützte Analytics-Plattform DataSense Pro für mittelständische Unternehmen. Die Lösung automatisiert Datenanalyse-Prozesse und steigert die Effizienz um durchschnittlich 40 Prozent. Über 150 Unternehmen haben bereits Interesse bekundet. Verfügbar ab 499 Euro pro Monat.",
+      "context": {
+        "industry": "technology",
+        "tone": "modern",
+        "audience": "b2b",
+        "companyName": "TechVision"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "modern",
+      "mustContain": ["launcht", "Platform", "KI-gestützt", "smart", "digital"],
+      "mustNotContain": ["etabliert", "bewährt", "traditionell", "mega", "krass"],
+      "sentenceLength": "short (8-12 words)",
+      "style": "contemporary, innovative, accessible"
+    }
+  },
+  {
+    "testCaseId": "b2b-product-technical",
+    "description": "B2B Produktlaunch - Technical Ton",
+    "input": {
+      "prompt": "TechVision lanciert ab Januar 2025 die KI-gestützte Analytics-Plattform DataSense Pro für mittelständische Unternehmen. Die Lösung automatisiert Datenanalyse-Prozesse und steigert die Effizienz um durchschnittlich 40 Prozent. Über 150 Unternehmen haben bereits Interesse bekundet. Verfügbar ab 499 Euro pro Monat.",
+      "context": {
+        "industry": "technology",
+        "tone": "technical",
+        "audience": "b2b",
+        "companyName": "TechVision"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "technical",
+      "mustContain": ["API", "Architektur", "Performance", "ms", "Latenz", "Backend"],
+      "mustNotContain": ["revolutionär", "bahnbrechend", "game-changing", "mega"],
+      "sentenceLength": "medium with technical details",
+      "style": "technical, precise, expert-focused"
+    }
+  },
+  {
+    "testCaseId": "b2b-product-startup",
+    "description": "B2B Produktlaunch - Startup Ton",
+    "input": {
+      "prompt": "TechVision lanciert ab Januar 2025 die KI-gestützte Analytics-Plattform DataSense Pro für mittelständische Unternehmen. Die Lösung automatisiert Datenanalyse-Prozesse und steigert die Effizienz um durchschnittlich 40 Prozent. Über 150 Unternehmen haben bereits Interesse bekundet. Verfügbar ab 499 Euro pro Monat.",
+      "context": {
+        "industry": "technology",
+        "tone": "startup",
+        "audience": "b2b",
+        "companyName": "TechVision"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "startup",
+      "mustContain": ["skaliert", "Growth", "YoY", "raised", "ARR", "User"],
+      "mustNotContain": ["etabliert", "bewährt", "traditionell", "möglicherweise"],
+      "sentenceLength": "dynamic with growth metrics",
+      "style": "dynamic, visionary, growth-oriented"
+    }
+  },
+  {
+    "testCaseId": "event-announcement-formal",
+    "description": "Event-Ankündigung - Formal Ton",
+    "input": {
+      "prompt": "Die FinTech Konferenz 2025 findet vom 15. bis 17. März in Frankfurt statt. Über 500 Teilnehmer aus 25 Ländern erwartet. 80 Speaker präsentieren neueste Entwicklungen in Blockchain, KI und digitalen Zahlungssystemen. Keynote von EZB-Präsidentin Christine Lagarde. Tickets ab 899 Euro verfügbar.",
+      "context": {
+        "industry": "finance",
+        "tone": "formal",
+        "audience": "media",
+        "companyName": "FinTech Konferenz"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "formal",
+      "mustContain": ["verkündet", "präsentiert", "Veranstaltung", "Teilnehmer"],
+      "mustNotContain": ["mega", "cool", "krass", "checkt das aus"],
+      "sentenceLength": "long (15-20 words)",
+      "style": "conservative, official, serious"
+    }
+  },
+  {
+    "testCaseId": "event-announcement-modern",
+    "description": "Event-Ankündigung - Modern Ton",
+    "input": {
+      "prompt": "Die FinTech Konferenz 2025 findet vom 15. bis 17. März in Frankfurt statt. Über 500 Teilnehmer aus 25 Ländern erwartet. 80 Speaker präsentieren neueste Entwicklungen in Blockchain, KI und digitalen Zahlungssystemen. Keynote von EZB-Präsidentin Christine Lagarde. Tickets ab 899 Euro verfügbar.",
+      "context": {
+        "industry": "finance",
+        "tone": "modern",
+        "audience": "media",
+        "companyName": "FinTech Konferenz"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "modern",
+      "mustContain": ["startet", "launcht", "Event", "Next-Level", "digital"],
+      "mustNotContain": ["etabliert", "bewährt", "freuen uns bekanntzugeben"],
+      "sentenceLength": "short (8-12 words)",
+      "style": "contemporary, innovative, accessible"
+    }
+  },
+  {
+    "testCaseId": "event-announcement-technical",
+    "description": "Event-Ankündigung - Technical Ton",
+    "input": {
+      "prompt": "Die FinTech Konferenz 2025 findet vom 15. bis 17. März in Frankfurt statt. Über 500 Teilnehmer aus 25 Ländern erwartet. 80 Speaker präsentieren neueste Entwicklungen in Blockchain, KI und digitalen Zahlungssystemen. Keynote von EZB-Präsidentin Christine Lagarde. Tickets ab 899 Euro verfügbar.",
+      "context": {
+        "industry": "finance",
+        "tone": "technical",
+        "audience": "media",
+        "companyName": "FinTech Konferenz"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "technical",
+      "mustContain": ["Protokoll", "Spezifikation", "Implementierung", "Architektur"],
+      "mustNotContain": ["revolutionär", "mega cool", "bahnbrechend"],
+      "sentenceLength": "medium with technical specs",
+      "style": "technical, precise, expert-focused"
+    }
+  },
+  {
+    "testCaseId": "event-announcement-startup",
+    "description": "Event-Ankündigung - Startup Ton",
+    "input": {
+      "prompt": "Die FinTech Konferenz 2025 findet vom 15. bis 17. März in Frankfurt statt. Über 500 Teilnehmer aus 25 Ländern erwartet. 80 Speaker präsentieren neueste Entwicklungen in Blockchain, KI und digitalen Zahlungssystemen. Keynote von EZB-Präsidentin Christine Lagarde. Tickets ab 899 Euro verfügbar.",
+      "context": {
+        "industry": "finance",
+        "tone": "startup",
+        "audience": "media",
+        "companyName": "FinTech Konferenz"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "startup",
+      "mustContain": ["Funding", "Investor", "Networking", "Pitch", "Scale"],
+      "mustNotContain": ["etabliert", "bewährt", "möglicherweise"],
+      "sentenceLength": "dynamic with metrics",
+      "style": "dynamic, visionary, growth-oriented"
+    }
+  },
+  {
+    "testCaseId": "company-milestone-formal",
+    "description": "Unternehmens-Meilenstein - Formal Ton",
+    "input": {
+      "prompt": "AutoTech Deutschland erreicht Produktionsmeilenstein von 100.000 Elektrofahrzeugen. 25 Prozent Wachstum gegenüber Vorjahr. 1.200 neue Arbeitsplätze geschaffen. CEO Michael Weber: 'Wir investieren weitere 500 Millionen Euro in Batterieforschung bis 2027.' Werk in Leipzig wird bis 2026 auf 150.000 Fahrzeuge pro Jahr erweitert.",
+      "context": {
+        "industry": "automotive",
+        "tone": "formal",
+        "audience": "media",
+        "companyName": "AutoTech Deutschland"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "formal",
+      "mustContain": ["Das Unternehmen", "verkündet", "erreicht", "Vorstandsvorsitzender"],
+      "mustNotContain": ["mega", "krass", "cool", "easy"],
+      "sentenceLength": "long (15-20 words)",
+      "style": "conservative, official, serious"
+    }
+  },
+  {
+    "testCaseId": "company-milestone-modern",
+    "description": "Unternehmens-Meilenstein - Modern Ton",
+    "input": {
+      "prompt": "AutoTech Deutschland erreicht Produktionsmeilenstein von 100.000 Elektrofahrzeugen. 25 Prozent Wachstum gegenüber Vorjahr. 1.200 neue Arbeitsplätze geschaffen. CEO Michael Weber: 'Wir investieren weitere 500 Millionen Euro in Batterieforschung bis 2027.' Werk in Leipzig wird bis 2026 auf 150.000 Fahrzeuge pro Jahr erweitert.",
+      "context": {
+        "industry": "automotive",
+        "tone": "modern",
+        "audience": "media",
+        "companyName": "AutoTech Deutschland"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "modern",
+      "mustContain": ["knackt", "Meilenstein", "Next-Level", "transformiert"],
+      "mustNotContain": ["etabliert", "bewährt", "freuen uns"],
+      "sentenceLength": "short (8-12 words)",
+      "style": "contemporary, innovative, accessible"
+    }
+  },
+  {
+    "testCaseId": "company-milestone-technical",
+    "description": "Unternehmens-Meilenstein - Technical Ton",
+    "input": {
+      "prompt": "AutoTech Deutschland erreicht Produktionsmeilenstein von 100.000 Elektrofahrzeugen. 25 Prozent Wachstum gegenüber Vorjahr. 1.200 neue Arbeitsplätze geschaffen. CEO Michael Weber: 'Wir investieren weitere 500 Millionen Euro in Batterieforschung bis 2027.' Werk in Leipzig wird bis 2026 auf 150.000 Fahrzeuge pro Jahr erweitert.",
+      "context": {
+        "industry": "automotive",
+        "tone": "technical",
+        "audience": "media",
+        "companyName": "AutoTech Deutschland"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "technical",
+      "mustContain": ["kWh", "Reichweite", "Ladezeit", "Effizienz", "Spezifikation"],
+      "mustNotContain": ["revolutionär", "bahnbrechend", "mega"],
+      "sentenceLength": "medium with technical data",
+      "style": "technical, precise, expert-focused"
+    }
+  },
+  {
+    "testCaseId": "company-milestone-startup",
+    "description": "Unternehmens-Meilenstein - Startup Ton",
+    "input": {
+      "prompt": "AutoTech Deutschland erreicht Produktionsmeilenstein von 100.000 Elektrofahrzeugen. 25 Prozent Wachstum gegenüber Vorjahr. 1.200 neue Arbeitsplätze geschaffen. CEO Michael Weber: 'Wir investieren weitere 500 Millionen Euro in Batterieforschung bis 2027.' Werk in Leipzig wird bis 2026 auf 150.000 Fahrzeuge pro Jahr erweitert.",
+      "context": {
+        "industry": "automotive",
+        "tone": "startup",
+        "audience": "media",
+        "companyName": "AutoTech Deutschland"
+      },
+      "documentContext": null
+    },
+    "expectedToneCharacteristics": {
+      "tone": "startup",
+      "mustContain": ["skaliert", "25% YoY Growth", "expandiert", "Meilenstein"],
+      "mustNotContain": ["etabliert", "bewährt", "möglicherweise"],
+      "sentenceLength": "dynamic with growth numbers",
+      "style": "dynamic, visionary, growth-oriented"
+    }
+  }
+]
