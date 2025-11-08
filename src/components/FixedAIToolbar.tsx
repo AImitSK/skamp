@@ -505,7 +505,14 @@ Antworte NUR mit dem erweiterten Text.`;
       // WICHTIG: Nutze getPlainTextWithParagraphs() um Absätze korrekt zu erhalten (\n\n zwischen <p> Tags)
       const fullText = getPlainTextWithParagraphs(editor);
 
-      console.log('📝 Custom Instruction:', { instruction: customInstruction, textLength: fullText.length });
+      // DEBUG: Zeige wie Text extrahiert wurde
+      console.log('📝 Custom Instruction DEBUG:', {
+        instruction: customInstruction,
+        textLength: fullText.length,
+        paragraphCount: fullText.split('\n\n').length,
+        firstChars: fullText.substring(0, 200),
+        containsDoubleNewlines: fullText.includes('\n\n')
+      });
 
       // WICHTIG: Nutze text-transform mit action:custom für minimale Änderungen
       const data = await apiClient.post<any>('/api/ai/text-transform', {
