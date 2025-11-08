@@ -528,17 +528,29 @@ function stripPRFormatting(text: string): string {
   stripped = stripped.replace(/\*\*([^*]+)\*\*/g, '$1');
 
   // ===== NEUE HTML-SYNTAX =====
-  // Entferne <blockquote> Tags: <blockquote><p>"quote"</p><footer>— Person, Rolle</footer></blockquote> → "quote"\n\n— Person, Rolle
-  stripped = stripped.replace(/<blockquote>\s*<p>"([^"]+)"<\/p>\s*<footer>([^<]+)<\/footer>\s*<\/blockquote>/g, '"$1"\n\n$2');
+  // Entferne <blockquote> komplett (flexibel mit beliebigem Inhalt)
+  stripped = stripped.replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/g, (match) => {
+    // Extrahiere Zitat-Text und Footer
+    const quoteMatch = match.match(/"([^"]+)"/);
+    const footerMatch = match.match(/<footer>([^<]+)<\/footer>/);
+    if (quoteMatch && footerMatch) {
+      return `"${quoteMatch[1]}"\n\n${footerMatch[1]}`;
+    }
+    // Fallback: Entferne einfach alle HTML-Tags
+    return match.replace(/<[^>]+>/g, '').trim();
+  });
 
   // Entferne CTA <span>: <span data-type="cta-text" class="...">text</span> → text
-  stripped = stripped.replace(/<span\s+data-type="cta-text"[^>]*>([^<]+)<\/span>/g, '$1');
+  stripped = stripped.replace(/<span\s+data-type="cta-text"[^>]*>([\s\S]*?)<\/span>/g, '$1');
 
   // Entferne Hashtag <span>: <span data-type="hashtag" class="...">#tag</span> → #tag
   stripped = stripped.replace(/<span\s+data-type="hashtag"[^>]*>(#\w+)<\/span>/g, '$1');
 
   // Entferne <strong> Tags: <strong>text</strong> → text
-  stripped = stripped.replace(/<strong>([^<]+)<\/strong>/g, '$1');
+  stripped = stripped.replace(/<strong>([\s\S]*?)<\/strong>/g, '$1');
+
+  // Entferne <p> Tags: <p>text</p> → text (mit Absatz-Trennung)
+  stripped = stripped.replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1');
 
   // Cleanup: Normalisiere mehrfache Leerzeilen
   stripped = stripped.replace(/\n{3,}/g, '\n\n');
