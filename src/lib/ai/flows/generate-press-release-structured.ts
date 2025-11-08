@@ -1,7 +1,7 @@
 // src/lib/ai/flows/generate-press-release-structured.ts
 // Genkit Flow für strukturierte Pressemitteilungs-Generierung mit PR-SEO Score Optimierung
 
-import { ai, gemini25FlashLiteModel } from '../genkit-config';
+import { ai, gemini25FlashModel } from '../genkit-config';
 import {
   GeneratePressReleaseStructuredInputSchema,
   StructuredPressReleaseSchema,
@@ -839,11 +839,11 @@ Erstelle eine professionelle Pressemitteilung nach journalistischen Standards.
     const userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${enhancedPrompt}${contextInfo}`;
 
     // ══════════════════════════════════════════════════════════════
-    // 3. AI GENERIERUNG MIT GEMINI 2.5 FLASH-LITE (75% günstiger)
+    // 3. AI GENERIERUNG MIT GEMINI 2.5 FLASH
     // ══════════════════════════════════════════════════════════════
 
     const result = await ai.generate({
-      model: gemini25FlashLiteModel,
+      model: gemini25FlashModel,
       prompt: [
         { text: systemPrompt },
         { text: userPrompt }
