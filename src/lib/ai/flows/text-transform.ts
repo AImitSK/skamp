@@ -656,7 +656,30 @@ function formatPressRelease(plainText: string): string {
     });
   });
 
-  // 6. Cleanup: Entferne überschüssige Leerzeilen
+  // 6. Wrapping: Normale Absätze in <p> Tags wrappen
+  // Split bei \n\n und wrap jeden Absatz der NICHT schon HTML ist
+  const finalParagraphs = formatted.split('\n\n').map(para => {
+    const trimmed = para.trim();
+    if (!trimmed) return '';
+
+    // Wenn schon ein HTML-Block-Element, nicht wrappen
+    if (trimmed.startsWith('<blockquote>') ||
+        trimmed.startsWith('<div>') ||
+        trimmed.startsWith('<p>') ||
+        trimmed.startsWith('<h1>') ||
+        trimmed.startsWith('<h2>') ||
+        trimmed.startsWith('<ul>') ||
+        trimmed.startsWith('<ol>')) {
+      return trimmed;
+    }
+
+    // Sonst in <p> wrappen
+    return `<p>${trimmed}</p>`;
+  }).filter(p => p.length > 0);
+
+  formatted = finalParagraphs.join('\n\n');
+
+  // 7. Cleanup: Entferne überschüssige Leerzeilen
   formatted = formatted.replace(/\n{3,}/g, '\n\n');
   formatted = formatted.trim();
 
@@ -667,6 +690,7 @@ function formatPressRelease(plainText: string): string {
     hasBlockquote: formatted.includes('<blockquote>'),
     hasCTASpan: formatted.includes('data-type="cta-text"'),
     hasHashtagSpan: formatted.includes('data-type="hashtag"'),
+    hasPTags: formatted.includes('<p>'),
     lengthDiff: formatted.length - plainText.length
   });
   console.log('📤 Output Text (erste 500 Zeichen):', formatted.substring(0, 500));
