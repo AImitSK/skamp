@@ -644,7 +644,8 @@ function formatPressRelease(plainText: string): string {
   // WICHTIG: Wenn ein Absatz "Kontaktieren Sie uns" oder ähnliches enthält, ist der GANZE Absatz die CTA!
 
   // Erst: Finde Absätze die CTA-Trigger-Wörter enthalten
-  const ctaTriggers = /kontaktieren sie uns|erfahren sie mehr|mehr informationen|jetzt registrieren|besuchen sie|weitere informationen/i;
+  // Flexibel: "kontaktieren" kann auch "kontaktieren Sie" oder "kontaktieren Sie uns" sein
+  const ctaTriggers = /kontaktieren\s+sie|erfahren\s+sie\s+mehr|mehr\s+informationen|jetzt\s+registrieren|besuchen\s+sie|weitere\s+informationen|für\s+.*\s+kontakt/i;
 
   const paragraphs2 = formatted.split('\n\n');
   let ctaFound = false;
