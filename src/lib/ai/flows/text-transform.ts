@@ -647,6 +647,7 @@ function formatPressRelease(plainText: string): string {
   const ctaTriggers = /kontaktieren sie uns|erfahren sie mehr|mehr informationen|jetzt registrieren|besuchen sie|weitere informationen/i;
 
   const paragraphs2 = formatted.split('\n\n');
+  let ctaFound = false;
   const processedParagraphs = paragraphs2.map(para => {
     const trimmed = para.trim();
 
@@ -657,12 +658,24 @@ function formatPressRelease(plainText: string): string {
 
     // Wenn Absatz CTA-Trigger enthält UND Kontaktdaten (Email oder Telefon)
     if (ctaTriggers.test(trimmed) && (trimmed.includes('@') || trimmed.includes('+49') || trimmed.includes('www.'))) {
+      ctaFound = true;
+      console.log('✅ CTA gefunden und formatiert:', trimmed.substring(0, 100) + '...');
       // Ganzen Absatz als CTA formatieren
       return `<p><span data-type="cta-text" class="cta-text font-bold text-black">${trimmed}</span></p>`;
     }
 
     return para;
   });
+
+  if (!ctaFound && formatted.toLowerCase().includes('kontaktieren')) {
+    console.log('⚠️ CTA-Trigger gefunden aber nicht formatiert! Prüfe Absätze:');
+    paragraphs2.forEach((p, i) => {
+      if (p.toLowerCase().includes('kontaktieren')) {
+        console.log(`  Absatz ${i}: startsWithHTML=${p.trim().startsWith('<')}, hasEmail=${p.includes('@')}, hasTel=${p.includes('+49')}`);
+        console.log(`  Text: ${p.trim().substring(0, 150)}...`);
+      }
+    });
+  }
 
   formatted = processedParagraphs.join('\n\n');
 
