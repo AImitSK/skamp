@@ -849,9 +849,17 @@ export const textTransformFlow = ai.defineFlow(
         if (!input.tone) {
           throw new Error('Tone parameter is required for change-tone action');
         }
+        // WICHTIG: Entferne PR-Formatierung VOR AI-Call, damit AI nur Plain-Text sieht
+        const fullDocForTone = input.fullDocument || input.text;
+        const strippedDoc = stripPRFormatting(fullDocForTone);
+        console.log('🧹 Entferne PR-Formatierung für Tone Change:', {
+          originalLength: fullDocForTone.length,
+          strippedLength: strippedDoc.length,
+          hadFormatting: fullDocForTone !== strippedDoc
+        });
         const prompts = hasFullContext
-          ? PROMPTS.changeTone.withContext(input.fullDocument!, input.text, input.tone)
-          : PROMPTS.changeTone.withoutContext(input.text, input.tone);
+          ? PROMPTS.changeTone.withContext(input.fullDocument!, strippedDoc, input.tone)
+          : PROMPTS.changeTone.withoutContext(strippedDoc, input.tone);
         systemPrompt = prompts.system;
         userPrompt = prompts.user;
         break;
@@ -891,7 +899,7 @@ export const textTransformFlow = ai.defineFlow(
     // 1.5 PRE-PROCESSING: Format Extraction
     // ══════════════════════════════════════════════════════════════
 
-    // Format-Preservation für alle Actions außer formalize, change-tone (eigene PR-Struktur) und custom (eigene Post-Processing Formatierung)
+    // Format-Preservation für alle Actions außer formalize und custom/change-tone (verwenden HTML-basierte PR-Formatierung)
     const shouldPreserveFormat = ['rephrase', 'shorten', 'expand'].includes(input.action);
     let formatMarkers = null;
     let textToTransform = input.text;
@@ -937,15 +945,7 @@ export const textTransformFlow = ai.defineFlow(
           userPrompt = prompts.user;
           break;
         }
-        case 'change-tone': {
-          const prompts = hasFullContext
-            ? PROMPTS.changeTone.withContext(input.fullDocument!, textToTransform, input.tone!)
-            : PROMPTS.changeTone.withoutContext(textToTransform, input.tone!);
-          systemPrompt = prompts.system;
-          userPrompt = prompts.user;
-          break;
-        }
-        // Note: 'custom' wird im Haupt-Switch behandelt (Zeile 772-789), nicht hier
+        // Note: 'custom' und 'change-tone' werden im Haupt-Switch behandelt (verwenden HTML-basierte PR-Formatierung)
       }
     }
 
@@ -1025,9 +1025,9 @@ export const textTransformFlow = ai.defineFlow(
     // 3.5 POST-PROCESSING: Format Restoration / PR Formatting
     // ══════════════════════════════════════════════════════════════
 
-    // CUSTOM Action: Automatische PR-Formatierung anwenden
-    if (input.action === 'custom') {
-      console.log('📝 Custom Action: Wende automatische PR-Formatierung an...');
+    // CUSTOM & CHANGE-TONE Actions: Automatische PR-Formatierung anwenden
+    if (input.action === 'custom' || input.action === 'change-tone') {
+      console.log(`📝 ${input.action} Action: Wende automatische PR-Formatierung an...`);
       transformedText = formatPressRelease(transformedText);
     }
     // Andere Actions: Format-Preservation anwenden
