@@ -591,7 +591,7 @@ function formatPressRelease(plainText: string): string {
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""], sagt ([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
-      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, sagt${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— <strong>${person.trim()}</strong>, sagt${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
       return `\n\n${blockquote}\n\n`;
     }
   );
@@ -602,7 +602,7 @@ function formatPressRelease(plainText: string): string {
     /["„"]([^"„"]+)[""],\s+([A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+(?:\s+[A-ZÄÖÜA-Z][a-zäöüßA-ZÄÖÜa-z]+){0,3}),\s+([^\n]+?)(?=\n\n|\n|$)/gm,
     (match, quote, person, role) => {
       if (person.length >= 2 && /^[A-ZÄÖÜ]/.test(person)) {
-        const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, ${role.trim()}</footer>\n</blockquote>`;
+        const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— <strong>${person.trim()}</strong>, ${role.trim()}</footer>\n</blockquote>`;
         return `\n\n${blockquote}\n\n`;
       }
       return match;
@@ -613,7 +613,7 @@ function formatPressRelease(plainText: string): string {
   formatted = formatted.replace(
     /["„"]([^"„"]+)[""][\s]*[-–—][\s]*([^,.\n]+)(?:, ([^.\n]+))?/gm,
     (match, quote, person, role) => {
-      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— <strong>${person.trim()}</strong>${role ? ', ' + role.trim() : ''}</footer>\n</blockquote>`;
       return `\n\n${blockquote}\n\n`;
     }
   );
@@ -622,7 +622,7 @@ function formatPressRelease(plainText: string): string {
   formatted = formatted.replace(
     /["„"]([^"„"]+)["\"]\s*\n+\s*[—–-]\s*([^,\n]+),\s+([^\n]+)/gm,
     (match, quote, person, role) => {
-      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— ${person.trim()}, ${role.trim()}</footer>\n</blockquote>`;
+      const blockquote = `<blockquote>\n  <p>"${quote.trim()}"</p>\n  <footer>— <strong>${person.trim()}</strong>, ${role.trim()}</footer>\n</blockquote>`;
       return `\n\n${blockquote}\n\n`;
     }
   );

@@ -890,7 +890,7 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
 
 <blockquote>
   <p>"${structured.quote.text}"</p>
-  <footer>— ${structured.quote.person}, ${structured.quote.role}${structured.quote.company ? ` bei ${structured.quote.company}` : ''}</footer>
+  <footer>— <strong>${structured.quote.person}</strong>, ${structured.quote.role}${structured.quote.company ? ` bei ${structured.quote.company}` : ''}</footer>
 </blockquote>
 
 <p><span data-type="cta-text" class="cta-text font-bold text-black">${structured.cta}</span></p>
