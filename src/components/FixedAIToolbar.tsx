@@ -12,6 +12,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { apiClient } from '@/lib/api/api-client';
+import { toastService } from '@/lib/utils/toast';
 import clsx from 'clsx';
 
 // Helper: Konvertiert TipTap Editor-Content zu Plain Text mit korrekten Absatzumbrüchen
@@ -349,7 +350,8 @@ Antworte NUR mit dem erweiterten Text.`;
             // Verwende das bereits perfekt formatierte htmlContent
             return data.htmlContent || text;
           } catch (error: any) {
-            console.error('Strukturierte Generierung fehlgeschlagen:', error);
+            toastService.error('Strukturierte Generierung fehlgeschlagen');
+            console.error('Structured generation failed:', error);
             throw error;
           }
 
@@ -404,7 +406,8 @@ Antworte NUR mit dem erweiterten Text.`;
 
       return result;
     } catch (error) {
-      console.error('KI-Aktion fehlgeschlagen:', error);
+      toastService.error('KI-Aktion fehlgeschlagen');
+      console.error('AI action failed:', error);
       return text;
     }
   }, [onAIAction, editor]);
@@ -418,8 +421,6 @@ Antworte NUR mit dem erweiterten Text.`;
     try {
       // IMMER gesamten Editor-Content verwenden (wie bei formalize)
       const fullText = editor.getText();  // Plain-Text für Flow
-
-      console.log('🎨 Ändere Ton des gesamten Dokuments:', { tone, textLength: fullText.length });
 
       // WICHTIG: Nutze generate-structured Route (wie formalize) mit Ton-Parameter
       const data = await apiClient.post<any>('/api/ai/generate-structured', {
@@ -436,9 +437,11 @@ Antworte NUR mit dem erweiterten Text.`;
       // Gesamten Editor-Content ersetzen
       editor.commands.setContent(htmlContent);
 
-      console.log('✅ Ton erfolgreich geändert');
+      toastService.success(`Ton zu "${tone}" geändert`);
     } catch (error) {
-      console.error('❌ Ton-Änderung fehlgeschlagen:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ton-Änderung fehlgeschlagen';
+      toastService.error(errorMessage);
+      console.error('Tone change failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -486,8 +489,19 @@ Antworte NUR mit dem erweiterten Text.`;
           }, 100);
         }
       }
+
+      // Success-Toasts für jede Action
+      const actionMessages: Record<AIAction, string> = {
+        'rephrase': 'Text umformuliert',
+        'shorten': 'Text gekürzt',
+        'expand': 'Text erweitert',
+        'formalize': 'Text ausformuliert',
+      };
+      toastService.success(actionMessages[action] || 'Aktion erfolgreich');
     } catch (error) {
-      console.error('Aktion fehlgeschlagen:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Aktion fehlgeschlagen';
+      toastService.error(errorMessage);
+      console.error('AI Toolbar action failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -502,15 +516,6 @@ Antworte NUR mit dem erweiterten Text.`;
       // Custom arbeitet IMMER mit dem vollen Dokument (kontextbewusst)
       // WICHTIG: Nutze getPlainTextWithParagraphs() um Absätze korrekt zu erhalten (\n\n zwischen <p> Tags)
       const fullText = getPlainTextWithParagraphs(editor);
-
-      // DEBUG: Zeige wie Text extrahiert wurde
-      console.log('📝 Custom Instruction DEBUG:', {
-        instruction: customInstruction,
-        textLength: fullText.length,
-        paragraphCount: fullText.split('\n\n').length,
-        firstChars: fullText.substring(0, 200),
-        containsDoubleNewlines: fullText.includes('\n\n')
-      });
 
       // WICHTIG: Nutze text-transform mit action:custom für minimale Änderungen
       const data = await apiClient.post<any>('/api/ai/text-transform', {
@@ -529,9 +534,11 @@ Antworte NUR mit dem erweiterten Text.`;
       editor.commands.setContent(htmlContent);
 
       setCustomInstruction('');
-      console.log('✅ Custom Instruction erfolgreich ausgeführt');
+      toastService.success('Anweisung erfolgreich ausgeführt');
     } catch (error) {
-      console.error('❌ Custom Instruction fehlgeschlagen:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Anweisung fehlgeschlagen';
+      toastService.error(errorMessage);
+      console.error('Custom instruction failed:', error);
     } finally {
       setIsProcessing(false);
     }
