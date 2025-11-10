@@ -983,6 +983,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       // Context neu laden
       await reloadCampaign();
 
+      // Approval Tab neu laden
+      if ((window as any).refreshApprovalTab) {
+        (window as any).refreshApprovalTab();
+      }
+
     } catch (error: any) {
       toastService.error(error.message || 'Die Freigabe konnte nicht erteilt werden.');
       throw error;
@@ -1027,6 +1032,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
       // Context neu laden
       await reloadCampaign();
+
+      // Approval Tab neu laden
+      if ((window as any).refreshApprovalTab) {
+        (window as any).refreshApprovalTab();
+      }
 
     } catch (error: any) {
       toastService.error(error.message || 'Änderungen konnten nicht angefordert werden.');
@@ -1201,6 +1211,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {currentStep === 3 && (
           <ApprovalTab
             organizationId={currentOrganization!.id}
+            campaignId={campaignId}
           />
         )}
 

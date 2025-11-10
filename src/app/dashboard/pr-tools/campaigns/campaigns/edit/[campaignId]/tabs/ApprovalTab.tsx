@@ -1,19 +1,22 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/tabs/ApprovalTab.tsx
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { FieldGroup } from '@/components/ui/fieldset';
 import ApprovalSettings from '@/components/campaigns/ApprovalSettings';
 import { useCampaign } from '../context/CampaignContext';
 import { PDFWorkflowPreview } from './components/PDFWorkflowPreview';
+import { approvalService } from '@/lib/firebase/approval-service';
 
 interface ApprovalTabProps {
   // Organization (Infrastructure)
   organizationId: string;
+  campaignId: string;
 }
 
 export default React.memo(function ApprovalTab({
-  organizationId
+  organizationId,
+  campaignId
 }: ApprovalTabProps) {
   // Phase 3: Get all state from Context
   const {
@@ -23,6 +26,39 @@ export default React.memo(function ApprovalTab({
     updateApprovalData,
     previousFeedback
   } = useCampaign();
+
+  // Load current approval for this campaign
+  const [currentApproval, setCurrentApproval] = useState<any>(null);
+  const [approvalRefreshKey, setApprovalRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const loadApproval = async () => {
+      if (!campaignId || !organizationId) return;
+
+      try {
+        const approval = await approvalService.getApprovalByCampaignId(
+          campaignId,
+          organizationId
+        );
+        setCurrentApproval(approval);
+      } catch (error) {
+        // Keine Approval gefunden ist ok
+        setCurrentApproval(null);
+      }
+    };
+
+    loadApproval();
+  }, [campaignId, organizationId, approvalRefreshKey]);
+
+  // Expose refresh function via window for page.tsx to trigger reload
+  useEffect(() => {
+    (window as any).refreshApprovalTab = () => {
+      setApprovalRefreshKey(prev => prev + 1);
+    };
+    return () => {
+      delete (window as any).refreshApprovalTab;
+    };
+  }, []);
 
   // Computed: PDF Workflow Preview Data
   const pdfWorkflowData = useMemo(() => {
@@ -55,6 +91,7 @@ export default React.memo(function ApprovalTab({
             clientId={clientId}
             clientName={clientName}
             previousFeedback={previousFeedback}
+            currentApproval={currentApproval}
           />
         </div>
 
