@@ -70,7 +70,9 @@ export function transformCommunicationItems(feedbackHistory: any[]) {
           : new Date(),
         isRead: true,
         campaignId: '',
-        organizationId: ''
+        organizationId: '',
+        manualApproval: (feedback as any).manualApproval || false,
+        manualChangesRequested: (feedback as any).manualChangesRequested || false
       };
     });
 }
