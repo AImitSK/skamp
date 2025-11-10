@@ -950,9 +950,6 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       throw new Error('User nicht verfügbar');
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('id');
-
     if (!campaignId) {
       throw new Error('Campaign-ID nicht gefunden');
     }
@@ -993,9 +990,6 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     if (!user) {
       throw new Error('User nicht verfügbar');
     }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('id');
 
     if (!campaignId) {
       throw new Error('Campaign-ID nicht gefunden');
