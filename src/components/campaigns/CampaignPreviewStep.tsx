@@ -231,6 +231,18 @@ export function CampaignPreviewStep({
                 <span className="text-sm text-gray-600">Social</span>
                 <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.social || 0)}/100</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Relevanz</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.relevance || 0)}/100</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Konkretheit</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.concreteness || 0)}/100</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Engagement</span>
+                <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.engagement || 0)}/100</span>
+              </div>
 
               {realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-300">

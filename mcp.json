@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "genkit": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "genkit",
+        "mcp",
+        "--cwd",
+        "C:\\Users\\skuehne\\Desktop\\Projekt\\skamp"
+      ],
+      "timeout": 30000
+    }
+  }
+}
