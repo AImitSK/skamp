@@ -40,6 +40,7 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
 interface EditLockBannerProps {
   campaign: PRCampaign;
   onGrantApproval?: (reason: string) => Promise<void>;
+  onRequestChanges?: (reason: string) => Promise<void>;
   className?: string;
   showDetails?: boolean;
 }
@@ -55,11 +56,14 @@ interface EditLockBannerProps {
 export function EditLockBanner({
   campaign,
   onGrantApproval,
+  onRequestChanges,
   className = "",
   showDetails = true
 }: EditLockBannerProps) {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showChangesModal, setShowChangesModal] = useState(false);
   const [approvalReason, setApprovalReason] = useState('');
+  const [changesReason, setChangesReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Früher Return wenn kein Edit-Lock aktiv
@@ -80,6 +84,21 @@ export function EditLockBanner({
       setApprovalReason('');
     } catch (error) {
       console.error('Fehler bei der Freigabe-Erteilung:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRequestChanges = async () => {
+    if (!changesReason.trim() || !onRequestChanges) return;
+
+    setIsSubmitting(true);
+    try {
+      await onRequestChanges(changesReason.trim());
+      setShowChangesModal(false);
+      setChangesReason('');
+    } catch (error) {
+      console.error('Fehler bei der Änderungsanfrage:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -180,17 +199,21 @@ export function EditLockBanner({
 
           {/* 🆕 Actions */}
           <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+            {onRequestChanges && (
+              <Button
+                onClick={() => setShowChangesModal(true)}
+                className="whitespace-nowrap transition-colors text-sm bg-amber-600 hover:bg-amber-700 text-white"
+                data-testid="request-changes-button"
+                aria-label="Änderungen erbeten"
+              >
+                <InformationCircleIcon className="h-4 w-4 mr-1" />
+                Änderungen erbeten
+              </Button>
+            )}
             {onGrantApproval && (
               <Button
                 onClick={() => setShowApprovalModal(true)}
-                className={clsx(
-                  "whitespace-nowrap transition-colors text-sm",
-                  config.color === 'red' && "bg-red-600 hover:bg-red-700 text-white",
-                  config.color === 'yellow' && "bg-yellow-600 hover:bg-yellow-700 text-white",
-                  config.color === 'blue' && "bg-blue-600 hover:bg-blue-700 text-white",
-                  config.color === 'green' && "bg-green-600 hover:bg-green-700 text-white",
-                  config.color === 'zinc' && "bg-gray-600 hover:bg-gray-700 text-white"
-                )}
+                className="whitespace-nowrap transition-colors text-sm bg-green-600 hover:bg-green-700 text-white"
                 data-testid="grant-approval-button"
                 aria-label="Freigabe erteilen"
               >
@@ -201,6 +224,73 @@ export function EditLockBanner({
           </div>
         </div>
       </div>
+
+      {/* 🆕 Request Changes Modal */}
+      <Dialog
+        open={showChangesModal}
+        onClose={() => !isSubmitting && setShowChangesModal(false)}
+        className="relative z-50"
+      >
+        <DialogTitle>Änderungen erbeten</DialogTitle>
+        <DialogBody>
+          <div className="space-y-4">
+            <Text className="text-sm text-gray-600">
+              Bitte dokumentieren Sie die gewünschten Änderungen:
+            </Text>
+
+            <Textarea
+              value={changesReason}
+              onChange={(e) => setChangesReason(e.target.value)}
+              rows={4}
+              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch angerufen: Andere Bilder verwenden und...'"
+              className="w-full"
+              autoFocus
+              disabled={isSubmitting}
+              data-testid="changes-reason-input"
+              aria-label="Begründung für Änderungen"
+            />
+
+            <div className="p-3 bg-amber-50 rounded border border-amber-200">
+              <div className="flex items-start gap-2">
+                <InformationCircleIcon className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <Text className="text-sm text-amber-800 font-medium mb-1">
+                    Hinweis
+                  </Text>
+                  <Text className="text-xs text-amber-700">
+                    Diese Aktion setzt den Status auf "Änderungen erbeten" und hebt den Edit-Lock auf.
+                    Die Kampagne kann dann bearbeitet werden. Die Begründung wird im Freigabe-Verlauf dokumentiert.
+                  </Text>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button
+            plain
+            onClick={() => setShowChangesModal(false)}
+            disabled={isSubmitting}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleRequestChanges}
+            disabled={!changesReason.trim() || isSubmitting}
+            className="bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="submit-changes"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Wird gesetzt...
+              </>
+            ) : (
+              'Änderungen erbeten'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 🆕 Manual Approval Modal */}
       <Dialog
@@ -219,7 +309,7 @@ export function EditLockBanner({
               value={approvalReason}
               onChange={(e) => setApprovalReason(e.target.value)}
               rows={4}
-              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch freigegeben, möchte aber noch...'"
+              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch freigegeben: Ja, das machen wir so!'"
               className="w-full"
               autoFocus
               disabled={isSubmitting}
@@ -227,15 +317,15 @@ export function EditLockBanner({
               aria-label="Begründung für Freigabe"
             />
 
-            <div className="p-3 bg-amber-50 rounded border border-amber-200">
+            <div className="p-3 bg-green-50 rounded border border-green-200">
               <div className="flex items-start gap-2">
-                <InformationCircleIcon className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <Text className="text-sm text-amber-800 font-medium mb-1">
+                  <Text className="text-sm text-green-800 font-medium mb-1">
                     Hinweis
                   </Text>
-                  <Text className="text-xs text-amber-700">
-                    Diese Aktion erteilt die Freigabe und hebt den Edit-Lock auf.
+                  <Text className="text-xs text-green-700">
+                    Diese Aktion erteilt die Freigabe. Die Kampagne bleibt gesperrt, um ungenehmigte Änderungen zu verhindern.
                     Die Begründung wird im Freigabe-Verlauf dokumentiert und ist für den Kunden sichtbar.
                   </Text>
                 </div>

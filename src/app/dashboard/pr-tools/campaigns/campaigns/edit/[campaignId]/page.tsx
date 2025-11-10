@@ -944,7 +944,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     await generatePdf();
   };
 
-  // 🆕 ENHANCED: Unlock-Request Handler
+  // 🆕 ENHANCED: Manual Approval Handler
   const handleGrantManualApproval = async (reason: string): Promise<void> => {
     if (!user) {
       throw new Error('User nicht verfügbar');
@@ -988,6 +988,50 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     }
   };
 
+  // 🆕 ENHANCED: Request Manual Changes Handler
+  const handleRequestManualChanges = async (reason: string): Promise<void> => {
+    if (!user) {
+      throw new Error('User nicht verfügbar');
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignId = urlParams.get('id');
+
+    if (!campaignId) {
+      throw new Error('Campaign-ID nicht gefunden');
+    }
+
+    try {
+      // Hole Approval für diese Kampagne
+      const approval = await approvalService.getApprovalByCampaignId(campaignId);
+
+      if (!approval) {
+        throw new Error('Keine Freigabe-Anfrage gefunden');
+      }
+
+      // Setze Status auf "Änderungen erbeten"
+      await approvalService.requestManualChanges(
+        approval.id!,
+        {
+          organizationId: params.organizationId,
+          userId: user.uid,
+          displayName: user.displayName || user.email || 'Unbekannt',
+          email: user.email || ''
+        },
+        reason
+      );
+
+      toastService.success('Änderungen erbeten. Die Kampagne kann nun bearbeitet werden.');
+
+      // Context neu laden
+      await reloadCampaign();
+
+    } catch (error: any) {
+      toastService.error(error.message || 'Änderungen konnten nicht angefordert werden.');
+      throw error;
+    }
+  };
+
   if (loading) {
     return <LoadingState />;
   }
@@ -1022,6 +1066,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             unlockRequests: editLockStatus.unlockRequests
           } as PRCampaign}
           onGrantApproval={handleGrantManualApproval}
+          onRequestChanges={handleRequestManualChanges}
           className="mb-6"
           showDetails={true}
         />

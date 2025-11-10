@@ -279,7 +279,8 @@ export function ApprovalSettings({
                         isRead: true,
                         campaignId: currentApproval.campaignId || '',
                         organizationId: organizationId || '',
-                        manualApproval: historyEntry.details?.manualApproval || false
+                        manualApproval: historyEntry.details?.manualApproval || false,
+                        manualChangesRequested: historyEntry.details?.manualChangesRequested || false
                       };
                     });
                 })()}
@@ -373,7 +374,8 @@ export function ApprovalSettings({
                     isRead: true,
                     campaignId: currentApproval.campaignId || '',
                     organizationId: organizationId || '',
-                    manualApproval: latest.details?.manualApproval || false
+                    manualApproval: latest.details?.manualApproval || false,
+                    manualChangesRequested: latest.details?.manualChangesRequested || false
                   };
                 })()}
               />

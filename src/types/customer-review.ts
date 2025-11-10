@@ -244,6 +244,8 @@ export interface CommunicationItem {
   replyTo?: string;
   /** Flag für manuelle Freigabe durch Team-Member */
   manualApproval?: boolean;
+  /** Flag für manuelle Änderungsanfrage durch Team-Member */
+  manualChangesRequested?: boolean;
 }
 
 // Kunden-Entscheidung

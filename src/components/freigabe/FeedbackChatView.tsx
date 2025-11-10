@@ -115,7 +115,12 @@ export function FeedbackChatView({
                 </span>
                 {latestMessage.manualApproval && (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                    Manuelle Freigabe
+                    Freigabe erteilt
+                  </span>
+                )}
+                {latestMessage.manualChangesRequested && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Änderungen erbeten
                   </span>
                 )}
                 <span className="text-sm text-green-700">
@@ -180,7 +185,12 @@ export function FeedbackChatView({
                       </span>
                       {communication.manualApproval && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Manuelle Freigabe
+                          Freigabe erteilt
+                        </span>
+                      )}
+                      {communication.manualChangesRequested && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          Änderungen erbeten
                         </span>
                       )}
                       <span className="text-xs text-gray-500">
