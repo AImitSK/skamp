@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, memo, useMemo } from 'react';
-import { ChatBubbleLeftRightIcon, UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftRightIcon, UserCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { ToggleBox } from './ToggleBox';
 import { CommunicationToggleBoxProps, CommunicationItem } from '@/types/customer-review';
 
@@ -160,14 +160,26 @@ function CommunicationToggleBoxComponent({
                       {getTypeLabel(latestMessage.type)}
                     </span>
                     {latestMessage.manualApproval && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                        Freigabe erteilt
-                      </span>
+                      <>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                          Freigabe erteilt
+                        </span>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                          Manuell freigegeben
+                        </span>
+                      </>
                     )}
                     {latestMessage.manualChangesRequested && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        Änderungen erbeten
-                      </span>
+                      <>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          Änderungen erbeten
+                        </span>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                          Manuell entsperrt
+                        </span>
+                      </>
                     )}
                     <span className="text-sm text-blue-700">
                       {formatTimeAgo(latestMessage.createdAt)}
@@ -230,14 +242,26 @@ function CommunicationToggleBoxComponent({
                             {getTypeLabel(communication.type)}
                           </span>
                           {communication.manualApproval && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                              Freigabe erteilt
-                            </span>
+                            <>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                Freigabe erteilt
+                              </span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                                Manuell freigegeben
+                              </span>
+                            </>
                           )}
                           {communication.manualChangesRequested && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              Änderungen erbeten
-                            </span>
+                            <>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Änderungen erbeten
+                              </span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                                Manuell entsperrt
+                              </span>
+                            </>
                           )}
                           <div className="flex items-center text-sm text-gray-500">
                             <ClockIcon className="h-4 w-4 mr-1" />

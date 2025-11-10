@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { ChatBubbleLeftRightIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftRightIcon, UserCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { CommunicationItem } from '@/types/customer-review';
 
 /**
@@ -114,14 +114,26 @@ export function FeedbackChatView({
                   {getTypeLabel(latestMessage.type)}
                 </span>
                 {latestMessage.manualApproval && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                    Freigabe erteilt
-                  </span>
+                  <>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                      Freigabe erteilt
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                      Manuell freigegeben
+                    </span>
+                  </>
                 )}
                 {latestMessage.manualChangesRequested && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                    Änderungen erbeten
-                  </span>
+                  <>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      Änderungen erbeten
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                      Manuell entsperrt
+                    </span>
+                  </>
                 )}
                 <span className="text-sm text-green-700">
                   {formatTimeAgo(latestMessage.createdAt)}
@@ -184,14 +196,26 @@ export function FeedbackChatView({
                         {getTypeLabel(communication.type)}
                       </span>
                       {communication.manualApproval && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Freigabe erteilt
-                        </span>
+                        <>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Freigabe erteilt
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                            Manuell freigegeben
+                          </span>
+                        </>
                       )}
                       {communication.manualChangesRequested && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                          Änderungen erbeten
-                        </span>
+                        <>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            Änderungen erbeten
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                            Manuell entsperrt
+                          </span>
+                        </>
                       )}
                       <span className="text-xs text-gray-500">
                         {formatTimeAgo(communication.createdAt)}
