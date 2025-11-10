@@ -2182,6 +2182,84 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
+   * Erteilt manuelle Freigabe durch Team-Member
+   * Wird verwendet wenn Kunde telefonisch/per E-Mail freigegeben hat
+   */
+  async grantManualApproval(
+    approvalId: string,
+    context: { organizationId: string; userId: string; displayName: string; email: string },
+    reason: string
+  ): Promise<void> {
+    try {
+      const approval = await this.getById(approvalId, context.organizationId);
+      if (!approval) {
+        throw new Error('Freigabe nicht gefunden');
+      }
+
+      if (approval.status === 'approved') {
+        throw new Error('Freigabe wurde bereits erteilt');
+      }
+
+      // Historie-Eintrag hinzufügen (wie Chat-Nachricht)
+      const historyEntry: ApprovalHistoryEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'changes_requested', // Nutzt bestehenden Action-Type für Chat-Kompatibilität
+        actorName: context.displayName,
+        actorEmail: context.email,
+        details: {
+          comment: reason,
+          manualApproval: true // Flag für Badge
+        }
+      };
+
+      // Update Approval Status
+      const updates: any = {
+        status: 'approved',
+        approvedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        history: arrayUnion(historyEntry)
+      };
+
+      // Update Recipients Status
+      if (approval.recipients && Array.isArray(approval.recipients)) {
+        updates.recipients = approval.recipients.map(recipient => ({
+          ...recipient,
+          status: 'approved' as const,
+          respondedAt: Timestamp.now()
+        }));
+      }
+
+      // Update Firestore
+      if (!approval.id) {
+        throw new Error('Approval ID ist erforderlich');
+      }
+      await updateDoc(doc(db, this.collectionName, approval.id), updates);
+
+      // Campaign Status aktualisieren
+      if (approval.campaignId) {
+        const { prService } = await import('./pr-service');
+        await prService.update(approval.campaignId, {
+          status: 'approved'
+        });
+      }
+
+      // Edit-Lock aufheben
+      if (approval.campaignId) {
+        const { pdfVersionsService } = await import('./pdf-versions-service');
+        await pdfVersionsService.unlockCampaignEditing(approval.campaignId, {
+          userId: context.userId,
+          displayName: context.displayName,
+          reason: 'Manuelle Freigabe erteilt'
+        });
+      }
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Plant automatische Erinnerungen
    */
   async scheduleReminders(

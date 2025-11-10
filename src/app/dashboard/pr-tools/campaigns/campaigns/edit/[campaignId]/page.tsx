@@ -65,6 +65,7 @@ import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/cam
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
+import { approvalService } from '@/lib/firebase/approval-service';
 // 🆕 NEW: Enhanced Edit-Lock Integration
 import EditLockBanner from '@/components/campaigns/EditLockBanner';
 import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndicator';
@@ -944,39 +945,47 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   };
 
   // 🆕 ENHANCED: Unlock-Request Handler
-  const handleUnlockRequest = async (reason: string): Promise<void> => {
+  const handleGrantManualApproval = async (reason: string): Promise<void> => {
     if (!user) {
       throw new Error('User nicht verfügbar');
     }
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const campaignId = urlParams.get('id');
-    
+
     if (!campaignId) {
       throw new Error('Campaign-ID nicht gefunden');
     }
-    
+
     try {
-      await pdfVersionsService.requestUnlock(campaignId, {
-        userId: user.uid,
-        displayName: user.displayName || user.email || 'Unbekannt',
+      // Hole Approval für diese Kampagne
+      const approval = await approvalService.getApprovalByCampaignId(campaignId);
+
+      if (!approval) {
+        throw new Error('Keine Freigabe-Anfrage gefunden');
+      }
+
+      // Erteile manuelle Freigabe
+      await approvalService.grantManualApproval(
+        approval.id!,
+        {
+          organizationId: params.organizationId,
+          userId: user.uid,
+          displayName: user.displayName || user.email || 'Unbekannt',
+          email: user.email || ''
+        },
         reason
-      });
+      );
 
-      toastService.success('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
+      toastService.success('Freigabe erfolgreich erteilt. Die Kampagne kann nun bearbeitet werden.');
 
-      // Phase 3.5: Context neu laden statt lokale loadEditLockStatus()
+      // Context neu laden
       await reloadCampaign();
 
-    } catch (error) {
-      throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
+    } catch (error: any) {
+      toastService.error(error.message || 'Die Freigabe konnte nicht erteilt werden.');
+      throw error;
     }
-  };
-
-  // 🆕 ENHANCED: Retry Edit-Lock Status
-  const handleRetryEditLock = async (): Promise<void> => {
-    // Phase 3.5: Context neu laden statt lokale loadEditLockStatus()
-    await reloadCampaign();
   };
 
   if (loading) {
@@ -1005,15 +1014,14 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       {/* 🆕 ENHANCED: Edit-Lock Banner */}
       {!loading && !loadingEditLock && editLockStatus.isLocked && (
         <EditLockBanner
-          campaign={{ 
+          campaign={{
             editLocked: editLockStatus.isLocked,
             editLockedReason: editLockStatus.reason,
             lockedBy: editLockStatus.lockedBy,
             lockedAt: editLockStatus.lockedAt,
             unlockRequests: editLockStatus.unlockRequests
           } as PRCampaign}
-          onRequestUnlock={handleUnlockRequest}
-          onRetry={handleRetryEditLock}
+          onGrantApproval={handleGrantManualApproval}
           className="mb-6"
           showDetails={true}
         />

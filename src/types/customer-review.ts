@@ -242,6 +242,8 @@ export interface CommunicationItem {
   attachments?: MediaItem[];
   /** Antwort auf andere Nachricht */
   replyTo?: string;
+  /** Flag für manuelle Freigabe durch Team-Member */
+  manualApproval?: boolean;
 }
 
 // Kunden-Entscheidung

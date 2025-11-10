@@ -237,7 +237,8 @@ export function ApprovalSettings({
                           createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt)),
                           isRead: true,
                           campaignId: '',
-                          organizationId: organizationId || ''
+                          organizationId: organizationId || '',
+                          manualApproval: false // Legacy feedback hat keine manuelle Freigabe
                         };
                       });
                   }
@@ -272,12 +273,13 @@ export function ApprovalSettings({
                         },
                         senderName: senderName,
                         senderAvatar: senderAvatar,
-                        createdAt: historyEntry.timestamp?.seconds 
+                        createdAt: historyEntry.timestamp?.seconds
                           ? new Date(historyEntry.timestamp.seconds * 1000)
                           : new Date(historyEntry.timestamp),
                         isRead: true,
                         campaignId: currentApproval.campaignId || '',
-                        organizationId: organizationId || ''
+                        organizationId: organizationId || '',
+                        manualApproval: historyEntry.details?.manualApproval || false
                       };
                     });
                 })()}
@@ -327,7 +329,8 @@ export function ApprovalSettings({
                       createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt)),
                       isRead: true,
                       campaignId: '',
-                      organizationId: organizationId || ''
+                      organizationId: organizationId || '',
+                      manualApproval: false // Legacy feedback hat keine manuelle Freigabe
                     };
                   }
                   
@@ -364,12 +367,13 @@ export function ApprovalSettings({
                     },
                     senderName: senderName,
                     senderAvatar: senderAvatar,
-                    createdAt: latest.timestamp?.seconds 
+                    createdAt: latest.timestamp?.seconds
                       ? new Date(latest.timestamp.seconds * 1000)
                       : new Date(latest.timestamp),
                     isRead: true,
                     campaignId: currentApproval.campaignId || '',
-                    organizationId: organizationId || ''
+                    organizationId: organizationId || '',
+                    manualApproval: latest.details?.manualApproval || false
                   };
                 })()}
               />

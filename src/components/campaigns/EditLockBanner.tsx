@@ -39,8 +39,7 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
 
 interface EditLockBannerProps {
   campaign: PRCampaign;
-  onRequestUnlock?: (reason: string) => Promise<void>;
-  onRetry?: () => Promise<void>;
+  onGrantApproval?: (reason: string) => Promise<void>;
   className?: string;
   showDetails?: boolean;
 }
@@ -49,19 +48,18 @@ interface EditLockBannerProps {
  * 🆕 ENHANCED EditLockBanner - Vollständig integrierte Lock-Status Anzeige
  * Features:
  * - Intelligente Status-basierte Anzeige
- * - Unlock-Request System mit Modal
+ * - Manuelle Freigabe-Erteilung mit Begründung
  * - Performance-optimierte Rendering
  * - Vollständige Accessibility-Unterstützung
  */
-export function EditLockBanner({ 
-  campaign, 
-  onRequestUnlock, 
-  onRetry,
+export function EditLockBanner({
+  campaign,
+  onGrantApproval,
   className = "",
   showDetails = true
 }: EditLockBannerProps) {
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [unlockReason, setUnlockReason] = useState('');
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalReason, setApprovalReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Früher Return wenn kein Edit-Lock aktiv
@@ -71,17 +69,17 @@ export function EditLockBanner({
   
   const config = EDIT_LOCK_CONFIG[campaign.editLockedReason];
   const IconComponent = ICON_MAP[config.icon] || LockClosedIcon;
-  
-  const handleUnlockRequest = async () => {
-    if (!unlockReason.trim() || !onRequestUnlock) return;
-    
+
+  const handleGrantApproval = async () => {
+    if (!approvalReason.trim() || !onGrantApproval) return;
+
     setIsSubmitting(true);
     try {
-      await onRequestUnlock(unlockReason.trim());
-      setShowUnlockModal(false);
-      setUnlockReason('');
+      await onGrantApproval(approvalReason.trim());
+      setShowApprovalModal(false);
+      setApprovalReason('');
     } catch (error) {
-      console.error('Fehler beim Unlock-Request:', error);
+      console.error('Fehler bei der Freigabe-Erteilung:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -92,12 +90,6 @@ export function EditLockBanner({
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleString('de-DE');
   };
-
-  const getPendingUnlockRequest = (): UnlockRequest | undefined => {
-    return campaign.unlockRequests?.find(req => req.status === 'pending');
-  };
-
-  const pendingRequest = getPendingUnlockRequest();
 
   return (
     <>
@@ -183,44 +175,14 @@ export function EditLockBanner({
                   )}
                 </div>
               )}
-              
-              {/* 🆕 Pending Unlock Request Display */}
-              {pendingRequest && (
-                <div className="mt-3 p-3 bg-white rounded border border-dashed border-orange-300">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ExclamationTriangleIcon className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                    <Text className="font-medium text-sm text-orange-900">
-                      Unlock-Anfrage eingereicht
-                    </Text>
-                  </div>
-                  <Text className="text-xs text-orange-700 mb-1">
-                    &ldquo;{pendingRequest.reason}&rdquo;
-                  </Text>
-                  <Text className="text-xs text-orange-600">
-                    Eingereicht am {formatDate(pendingRequest.requestedAt)}
-                  </Text>
-                </div>
-              )}
             </div>
           </div>
-          
+
           {/* 🆕 Actions */}
           <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-            {onRetry && config.severity === 'low' && (
+            {onGrantApproval && (
               <Button
-                plain
-                onClick={onRetry}
-                className="whitespace-nowrap text-sm"
-                aria-label="Status erneut prüfen"
-              >
-                <ArrowPathIcon className="h-4 w-4 mr-1" />
-                Status prüfen
-              </Button>
-            )}
-            
-            {config.canRequestUnlock && !pendingRequest && onRequestUnlock && (
-              <Button
-                onClick={() => setShowUnlockModal(true)}
+                onClick={() => setShowApprovalModal(true)}
                 className={clsx(
                   "whitespace-nowrap transition-colors text-sm",
                   config.color === 'red' && "bg-red-600 hover:bg-red-700 text-white",
@@ -229,42 +191,42 @@ export function EditLockBanner({
                   config.color === 'green' && "bg-green-600 hover:bg-green-700 text-white",
                   config.color === 'zinc' && "bg-gray-600 hover:bg-gray-700 text-white"
                 )}
-                data-testid="request-unlock-button"
-                aria-label="Entsperrung anfragen"
+                data-testid="grant-approval-button"
+                aria-label="Freigabe erteilen"
               >
-                <KeyIcon className="h-4 w-4 mr-1" />
-                Entsperrung anfragen
+                <CheckCircleIcon className="h-4 w-4 mr-1" />
+                Freigabe erteilen
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      {/* 🆕 Unlock Request Modal */}
-      <Dialog 
-        open={showUnlockModal} 
-        onClose={() => !isSubmitting && setShowUnlockModal(false)}
+      {/* 🆕 Manual Approval Modal */}
+      <Dialog
+        open={showApprovalModal}
+        onClose={() => !isSubmitting && setShowApprovalModal(false)}
         className="relative z-50"
       >
-        <DialogTitle>Entsperrung anfragen</DialogTitle>
+        <DialogTitle>Freigabe erteilen</DialogTitle>
         <DialogBody>
           <div className="space-y-4">
             <Text className="text-sm text-gray-600">
-              Bitte begründen Sie, warum diese Kampagne entsperrt werden soll:
+              Bitte dokumentieren Sie die Begründung für die manuelle Freigabe:
             </Text>
-            
+
             <Textarea
-              value={unlockReason}
-              onChange={(e) => setUnlockReason(e.target.value)}
+              value={approvalReason}
+              onChange={(e) => setApprovalReason(e.target.value)}
               rows={4}
-              placeholder="Grund für die Entsperrung..."
+              placeholder="z.B. 'Kunde hat am 10.11.2025 telefonisch freigegeben, möchte aber noch...'"
               className="w-full"
               autoFocus
               disabled={isSubmitting}
-              data-testid="unlock-reason-input"
-              aria-label="Grund für Entsperrung"
+              data-testid="approval-reason-input"
+              aria-label="Begründung für Freigabe"
             />
-            
+
             <div className="p-3 bg-amber-50 rounded border border-amber-200">
               <div className="flex items-start gap-2">
                 <InformationCircleIcon className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -273,8 +235,8 @@ export function EditLockBanner({
                     Hinweis
                   </Text>
                   <Text className="text-xs text-amber-700">
-                    Ihre Anfrage wird an die zuständigen Administratoren weitergeleitet. 
-                    Sie erhalten eine Benachrichtigung sobald über Ihre Anfrage entschieden wurde.
+                    Diese Aktion erteilt die Freigabe und hebt den Edit-Lock auf.
+                    Die Begründung wird im Freigabe-Verlauf dokumentiert und ist für den Kunden sichtbar.
                   </Text>
                 </div>
               </div>
@@ -282,26 +244,26 @@ export function EditLockBanner({
           </div>
         </DialogBody>
         <DialogActions>
-          <Button 
-            plain 
-            onClick={() => setShowUnlockModal(false)}
+          <Button
+            plain
+            onClick={() => setShowApprovalModal(false)}
             disabled={isSubmitting}
           >
             Abbrechen
           </Button>
           <Button
-            onClick={handleUnlockRequest}
-            disabled={!unlockReason.trim() || isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="submit-unlock-request"
+            onClick={handleGrantApproval}
+            disabled={!approvalReason.trim() || isSubmitting}
+            className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="submit-approval"
           >
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Wird gesendet...
+                Wird erteilt...
               </>
             ) : (
-              'Anfrage senden'
+              'Freigabe erteilen'
             )}
           </Button>
         </DialogActions>
