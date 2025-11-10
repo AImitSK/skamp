@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   ChatBubbleLeftRightIcon,
   PlusIcon,
   XMarkIcon,
-  CheckIcon
+  CheckIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import { ApprovalEnhanced } from "@/types/approvals";
 import { formatDate } from "@/utils/dateHelpers";
@@ -137,10 +138,32 @@ export function CustomerCommentSystem({
           <div className="space-y-3">
             {previousFeedback.map((entry, index) => (
               <div key={entry.id || index} className="bg-white rounded p-3 border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <Badge color={entry.actorEmail?.includes('agentur@') ? 'yellow' : 'orange'}>
                     {entry.actorName || 'Unbekannt'}
                   </Badge>
+                  {entry.details?.manualApproval && (
+                    <>
+                      <Badge color="green">
+                        Freigabe erteilt
+                      </Badge>
+                      <Badge color="blue">
+                        <ExclamationTriangleIcon className="h-3 w-3 inline mr-1" />
+                        Manuell freigegeben
+                      </Badge>
+                    </>
+                  )}
+                  {entry.details?.manualChangesRequested && (
+                    <>
+                      <Badge color="orange">
+                        Änderungen erbeten
+                      </Badge>
+                      <Badge color="blue">
+                        <ExclamationTriangleIcon className="h-3 w-3 inline mr-1" />
+                        Manuell entsperrt
+                      </Badge>
+                    </>
+                  )}
                   <Text className="text-xs text-gray-500">
                     {formatDate(entry.timestamp)}
                   </Text>
