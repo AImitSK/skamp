@@ -202,7 +202,7 @@ export function EditLockBanner({
             {onRequestChanges && (
               <Button
                 onClick={() => setShowChangesModal(true)}
-                className="whitespace-nowrap transition-colors text-sm bg-amber-600 hover:bg-amber-700 text-white"
+                className="whitespace-nowrap transition-colors text-sm bg-yellow-600 hover:bg-yellow-700 text-white"
                 data-testid="request-changes-button"
                 aria-label="Änderungen erbeten"
               >
@@ -213,7 +213,7 @@ export function EditLockBanner({
             {onGrantApproval && (
               <Button
                 onClick={() => setShowApprovalModal(true)}
-                className="whitespace-nowrap transition-colors text-sm bg-green-600 hover:bg-green-700 text-white"
+                className="whitespace-nowrap transition-colors text-sm bg-yellow-600 hover:bg-yellow-700 text-white"
                 data-testid="grant-approval-button"
                 aria-label="Freigabe erteilen"
               >

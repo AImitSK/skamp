@@ -159,6 +159,16 @@ function CommunicationToggleBoxComponent({
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {getTypeLabel(latestMessage.type)}
                     </span>
+                    {latestMessage.manualApproval && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        Freigabe erteilt
+                      </span>
+                    )}
+                    {latestMessage.manualChangesRequested && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        Änderungen erbeten
+                      </span>
+                    )}
                     <span className="text-sm text-blue-700">
                       {formatTimeAgo(latestMessage.createdAt)}
                     </span>
@@ -219,6 +229,16 @@ function CommunicationToggleBoxComponent({
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                             {getTypeLabel(communication.type)}
                           </span>
+                          {communication.manualApproval && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              Freigabe erteilt
+                            </span>
+                          )}
+                          {communication.manualChangesRequested && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              Änderungen erbeten
+                            </span>
+                          )}
                           <div className="flex items-center text-sm text-gray-500">
                             <ClockIcon className="h-4 w-4 mr-1" />
                             {formatDate(communication.createdAt)}
