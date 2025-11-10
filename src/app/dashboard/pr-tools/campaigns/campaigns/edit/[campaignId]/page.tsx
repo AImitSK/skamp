@@ -956,7 +956,10 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
     try {
       // Hole Approval für diese Kampagne
-      const approval = await approvalService.getApprovalByCampaignId(campaignId);
+      const approval = await approvalService.getApprovalByCampaignId(
+        campaignId,
+        currentOrganization!.id
+      );
 
       if (!approval) {
         throw new Error('Keine Freigabe-Anfrage gefunden');
@@ -966,7 +969,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       await approvalService.grantManualApproval(
         approval.id!,
         {
-          organizationId: params.organizationId,
+          organizationId: currentOrganization!.id,
           userId: user.uid,
           displayName: user.displayName || user.email || 'Unbekannt',
           email: user.email || ''
@@ -997,7 +1000,10 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
     try {
       // Hole Approval für diese Kampagne
-      const approval = await approvalService.getApprovalByCampaignId(campaignId);
+      const approval = await approvalService.getApprovalByCampaignId(
+        campaignId,
+        currentOrganization!.id
+      );
 
       if (!approval) {
         throw new Error('Keine Freigabe-Anfrage gefunden');
@@ -1007,7 +1013,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       await approvalService.requestManualChanges(
         approval.id!,
         {
-          organizationId: params.organizationId,
+          organizationId: currentOrganization!.id,
           userId: user.uid,
           displayName: user.displayName || user.email || 'Unbekannt',
           email: user.email || ''
