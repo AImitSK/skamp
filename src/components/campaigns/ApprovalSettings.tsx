@@ -105,14 +105,31 @@ export function ApprovalSettings({
       {value.customerApprovalRequired && (
         <div className="ml-6 space-y-4">
           {clientId ? (
-            <CustomerContactSelector
-              selectedContact={value.customerContact?.contactId}
-              onContactChange={(contact) => onChange({
-                ...value,
-                customerContact: contact
-              })}
-              clientId={clientId}
-            />
+            <>
+              <CustomerContactSelector
+                selectedContact={value.customerContact?.contactId}
+                onContactChange={(contact) => onChange({
+                  ...value,
+                  customerContact: contact
+                })}
+                clientId={clientId}
+              />
+
+              {/* Warnung wenn kein Kontakt ausgewählt */}
+              {!value.customerContact?.contactId && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                  <InformationCircleIcon className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <Text className="text-sm text-amber-800 font-medium">
+                      Kontakt erforderlich
+                    </Text>
+                    <Text className="text-xs text-amber-700 mt-1">
+                      Bitte wählen Sie einen Kontakt aus. Die Kampagne kann erst gespeichert werden, wenn ein Freigabe-Kontakt ausgewählt wurde.
+                    </Text>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
               <Text className="text-sm text-yellow-800">

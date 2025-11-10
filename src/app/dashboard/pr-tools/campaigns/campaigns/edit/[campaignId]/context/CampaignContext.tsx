@@ -369,6 +369,11 @@ export function CampaignProvider({
       errors.push('Inhalt ist erforderlich');
     }
 
+    // VALIDIERUNG: Freigabe-Kontakt erforderlich wenn Kundenfreigabe aktiviert
+    if (approvalData?.customerApprovalRequired && !approvalData?.customerContact?.contactId) {
+      errors.push('Freigabe-Kontakt ist erforderlich (Tab 3: Freigabe)');
+    }
+
     if (errors.length > 0) {
       toastService.error(errors.join(', '));
       return;
@@ -492,6 +497,16 @@ export function CampaignProvider({
   // Phase 3: Approval Actions
   const updateApprovalData = useCallback((data: any) => {
     setApprovalData((prevData: any) => {
+      // VALIDIERUNG: Verhindere das Entfernen eines Kontakts wenn Freigabe aktiv ist
+      if (
+        data.customerApprovalRequired &&
+        prevData.customerContact?.contactId &&
+        !data.customerContact?.contactId
+      ) {
+        toastService.warning('Deaktivieren Sie die Kundenfreigabe, um den Kontakt zu entfernen.');
+        return prevData; // Keine Änderung - behalte alten Zustand
+      }
+
       // Toast-Meldungen für Änderungen
 
       // Kundenfreigabe aktiviert/deaktiviert
