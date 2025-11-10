@@ -2308,7 +2308,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (approval.campaignId) {
         const { prService } = await import('./pr-service');
         await prService.update(approval.campaignId, {
-          status: 'in_progress'
+          status: 'changes_requested'
         });
       }
 
