@@ -972,7 +972,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           organizationId: currentOrganization!.id,
           userId: user.uid,
           displayName: user.displayName || user.email || 'Unbekannt',
-          email: user.email || ''
+          email: user.email || '',
+          photoUrl: user.photoURL || undefined
         },
         reason
       );
@@ -1016,7 +1017,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           organizationId: currentOrganization!.id,
           userId: user.uid,
           displayName: user.displayName || user.email || 'Unbekannt',
-          email: user.email || ''
+          email: user.email || '',
+          photoUrl: user.photoURL || undefined
         },
         reason
       );

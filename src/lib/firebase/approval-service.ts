@@ -2188,7 +2188,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   async grantManualApproval(
     approvalId: string,
-    context: { organizationId: string; userId: string; displayName: string; email: string },
+    context: { organizationId: string; userId: string; displayName: string; email: string; photoUrl?: string },
     reason: string
   ): Promise<void> {
     try {
@@ -2208,6 +2208,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         action: 'changes_requested', // Nutzt bestehenden Action-Type für Chat-Kompatibilität
         actorName: context.displayName,
         actorEmail: context.email,
+        actorPhotoUrl: context.photoUrl,
         details: {
           comment: reason,
           manualApproval: true // Flag für Badge "Freigabe erteilt"
@@ -2260,7 +2261,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   async requestManualChanges(
     approvalId: string,
-    context: { organizationId: string; userId: string; displayName: string; email: string },
+    context: { organizationId: string; userId: string; displayName: string; email: string; photoUrl?: string },
     reason: string
   ): Promise<void> {
     try {
@@ -2276,6 +2277,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         action: 'changes_requested',
         actorName: context.displayName,
         actorEmail: context.email,
+        actorPhotoUrl: context.photoUrl,
         details: {
           comment: reason,
           manualChangesRequested: true // Flag für Badge "Änderungen erbeten"

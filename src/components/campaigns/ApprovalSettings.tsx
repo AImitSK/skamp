@@ -252,13 +252,15 @@ export function ApprovalSettings({
                     })
                     .map((historyEntry: any, index: number) => {
                       const isCustomer = historyEntry.action === 'changes_requested';
-                      const senderName = isCustomer 
+                      const senderName = isCustomer
                         ? (currentApproval.recipients?.[0]?.name || historyEntry.actorName || 'Kunde')
                         : (historyEntry.actorName || 'Teammitglied');
-                      
-                      const senderAvatar = isCustomer
-                        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+
+                      const senderAvatar = historyEntry.actorPhotoUrl
+                        ? historyEntry.actorPhotoUrl
+                        : isCustomer
+                          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
 
                       return {
                         id: historyEntry.id || `history-${index}`,
@@ -347,13 +349,15 @@ export function ApprovalSettings({
                   
                   const latest = feedbackEntries[0];
                   const isCustomer = latest.action === 'changes_requested';
-                  const senderName = isCustomer 
+                  const senderName = isCustomer
                     ? (currentApproval.recipients?.[0]?.name || latest.actorName || 'Kunde')
                     : (latest.actorName || 'Teammitglied');
-                  
-                  const senderAvatar = isCustomer
-                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+
+                  const senderAvatar = latest.actorPhotoUrl
+                    ? latest.actorPhotoUrl
+                    : isCustomer
+                      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
 
                   return {
                     id: latest.id || 'latest',
