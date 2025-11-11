@@ -85,20 +85,17 @@ export default function RecipientManager({
             Keine Verteilerlisten für diese Kampagne definiert
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {campaignLists.map((list) => (
               <div
                 key={list.id}
-                className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50"
+                className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
               >
                 <UserGroupIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{list.name}</div>
-                  {list.description && (
-                    <p className="text-sm text-gray-600 mt-0.5">{list.description}</p>
-                  )}
+                <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-medium text-gray-900">
+                  {list.name}
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-gray-600 flex-shrink-0">
                   <UserGroupIcon className="h-4 w-4" />
                   <span className="text-sm font-medium">{list.contactCount || 0}</span>
                 </div>
