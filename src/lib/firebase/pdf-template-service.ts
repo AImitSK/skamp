@@ -989,14 +989,82 @@ class PDFTemplateService {
             body {
               padding: 15mm;
             }
-            
+
             .boilerplate-section {
               break-inside: avoid;
             }
           }
+
+          /* Modern Professional Template spezifische Anpassungen */
+          body.template-modern-professional .document-header {
+            border-bottom: none;
+          }
+
+          body.template-modern-professional .press-date {
+            margin-bottom: 5mm;
+          }
+
+          body.template-modern-professional .key-visual {
+            margin: 5mm 0 8mm 0;
+          }
+
+          body.template-modern-professional .key-visual img {
+            box-shadow: none;
+          }
+
+          body.template-modern-professional .main-content {
+            font-size: 10pt;
+            margin-top: 5mm;
+          }
+
+          body.template-modern-professional .main-content strong {
+            color: #333;
+          }
+
+          body.template-modern-professional .main-content h2 {
+            color: ${template.colorScheme.primary};
+          }
+
+          body.template-modern-professional .boilerplate-content {
+            font-size: 9pt;
+          }
+
+          body.template-modern-professional .boilerplate-content p strong:first-child {
+            color: #333;
+            font-size: 9pt;
+          }
+
+          body.template-modern-professional .boilerplate-content blockquote {
+            margin-bottom: 5mm;
+          }
+
+          body.template-modern-professional .boilerplate-content p {
+            margin: 0 0 0mm 0;
+          }
+
+          body.template-modern-professional .boilerplate-content blockquote + p {
+            margin-top: 0mm;
+          }
+
+          body.template-modern-professional .hashtags-section {
+            margin-top: 10mm;
+            padding-top: 8mm;
+          }
+
+          body.template-modern-professional .hashtags-title {
+            font-weight: bold;
+            font-size: 10pt;
+            color: #333;
+            margin-bottom: 3mm;
+          }
+
+          body.template-modern-professional .hashtags {
+            color: ${template.colorScheme.primary};
+            font-size: 9pt;
+          }
         </style>
       </head>
-      <body>
+      <body class="template-${template.id}">
         <div class="document-header">
           ${clientName ? `<div class="company-info">${clientName}</div>` : ''}
           <div class="document-title">Pressemitteilung</div>
