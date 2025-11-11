@@ -2189,14 +2189,36 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         });
       }
 
+      // Lade echte User-Daten für Email
+      let adminName = 'Admin';
+      let adminEmail = '';
+
+      if (context.userId) {
+        try {
+          const { userService } = await import('@/lib/firebase/user-service');
+          const userProfile = await userService.getProfile(context.userId);
+          console.log('🔍 [ReactivateApproval] Geladenes User-Profil:', userProfile);
+
+          if (userProfile) {
+            adminName = userProfile.displayName || userProfile.email || 'Admin';
+            adminEmail = userProfile.email;
+          }
+        } catch (error) {
+          console.error('❌ [ReactivateApproval] Fehler beim Laden des User-Profils:', error);
+        }
+      }
+
       // E-Mail-Benachrichtigung an Kunden senden (Re-Request)
-      const updatedApproval = { 
-        ...approval, 
-        ...updates, 
+      const updatedApproval = {
+        ...approval,
+        ...updates,
         recipients: resetRecipients,
         adminMessage,
-        adminName: 'Admin'
+        adminName,
+        adminEmail,
+        createdBy: context.userId // Überschreibe 'system' mit echter userId
       };
+      console.log('📧 [ReactivateApproval] Sende Re-Request mit:', { adminName, adminEmail, userId: context.userId });
       await this.sendNotifications(updatedApproval, 're-request' as any);
 
 
