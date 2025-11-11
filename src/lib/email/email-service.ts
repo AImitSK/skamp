@@ -526,23 +526,16 @@ export class EmailService {
   }
 
   /**
-   * Preview HTML aufbauen
+   * Preview HTML aufbauen - Vereinfachte Version ohne Header
    */
   private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string, keyVisual?: { url: string; cropData?: any }): string {
-    const mediaButtonHtml = mediaShareUrl ? `
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="${mediaShareUrl}" 
-                   style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                    📎 Medien ansehen
+    const mediaLinkHtml = mediaShareUrl ? `
+            <p style="margin: 20px 0;">
+                <a href="${mediaShareUrl}"
+                   style="color: #005fab; text-decoration: underline;">
+                    → Medien-Anhänge ansehen
                 </a>
-            </div>` : '';
-
-    const keyVisualHtml = keyVisual ? `
-            <div style="text-align: center; margin: 0 0 20px 0;">
-                <img src="${keyVisual.url}" 
-                     alt="Key Visual" 
-                     style="width: 100%; max-width: 600px; height: auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
-            </div>` : '';
+            </p>` : '';
 
     return `
 <!DOCTYPE html>
@@ -552,104 +545,44 @@ export class EmailService {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${this.replaceVariables(email.subject, variables)}</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            line-height: 1.6; 
-            color: #333; 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #f8f9fa;
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: white; 
-            border-radius: 8px; 
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px; 
-            text-align: center;
-        }
-        .header h1 { 
-            margin: 0; 
-            font-size: 24px; 
-            font-weight: 600;
-        }
-        .content { 
-            padding: 30px 20px; 
-        }
-        .greeting { 
-            font-size: 16px; 
-            margin-bottom: 20px; 
-        }
-        .introduction { 
-            margin-bottom: 25px; 
-            color: #555;
-        }
-        .press-release { 
-            background: #f8f9fa; 
-            padding: 25px; 
-            border-left: 4px solid #667eea; 
-            margin: 25px 0; 
-            border-radius: 0 8px 8px 0;
-        }
-        .closing { 
-            margin: 25px 0; 
-        }
-        .signature { 
-            border-top: 2px solid #e9ecef; 
-            padding-top: 20px; 
-            margin-top: 30px; 
-            background: #f8f9fa;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
             padding: 20px;
-            border-radius: 8px;
+            background-color: #ffffff;
         }
-        .footer { 
-            font-size: 12px; 
-            color: #6c757d; 
-            text-align: center;
-            padding: 20px;
-            background: #f1f3f4;
+        .content {
+            max-width: 600px;
+            margin: 0;
+        }
+        .email-body {
+            margin-bottom: 25px;
+        }
+        .signature {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        p {
+            margin: 0 0 1em 0;
+        }
+        a {
+            color: #005fab;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>${variables.senderCompany}</h1>
+    <div class="content">
+        <div class="email-body">
+            ${this.replaceVariables(email.introduction, variables)}
         </div>
-        
-        <div class="content">
-            <div class="greeting">
-                ${this.replaceVariables(email.greeting, variables)}
-            </div>
-            
-            <div class="introduction">
-                ${this.replaceVariables(email.introduction, variables)}
-            </div>
-            
-            <div class="press-release">
-                ${keyVisualHtml}
-                ${this.replaceVariables(email.pressReleaseHtml, variables)}
-            </div>
-            
-            ${mediaButtonHtml}
-            
-            <div class="closing">
-                ${this.replaceVariables(email.closing, variables)}
-            </div>
-            
-            <div class="signature">
-                ${this.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')}
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Diese E-Mail wurde über CeleroPress versendet.</p>
+
+        ${mediaLinkHtml}
+
+        <div class="signature">
+            ${this.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')}
         </div>
     </div>
 </body>
@@ -657,26 +590,15 @@ export class EmailService {
   }
 
   /**
-   * Preview Text aufbauen
+   * Preview Text aufbauen - Vereinfachte Version
    */
   private buildPreviewText(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string): string {
-    const mediaText = mediaShareUrl ? `\n\n📎 Medien ansehen: ${mediaShareUrl}\n` : '';
-    
+    const mediaText = mediaShareUrl ? `\n\nMedian-Anhänge: ${mediaShareUrl}\n` : '';
+
     return `
-${this.replaceVariables(email.greeting, variables)}
-
-${this.replaceVariables(email.introduction, variables)}
-
---- PRESSEMITTEILUNG ---
-${this.stripHtml(this.replaceVariables(email.pressReleaseHtml, variables))}
---- ENDE PRESSEMITTEILUNG ---
+${this.stripHtml(this.replaceVariables(email.introduction, variables))}
 ${mediaText}
-${this.replaceVariables(email.closing, variables)}
-
 ${this.replaceVariables(email.signature, variables)}
-
----
-Diese E-Mail wurde über CeleroPress versendet.
 `;
   }
 
