@@ -1662,18 +1662,32 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       let organizationEmailAddress;
       let adminName = 'PR-Team';
       let adminEmail = '';
-      
+
       try {
         organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
         if (!organizationEmailAddress) {
         }
-        
-        // Admin-Informationen aus dem Approval-Objekt verwenden
+
+        // Lade echte User-Daten (nicht Organization-Email!)
         if (approval.createdBy) {
-          // Verwende einfach die Organization Email-Adresse als Admin-Info
-          if (organizationEmailAddress) {
-            adminName = organizationEmailAddress.displayName || 'PR-Team';
-            adminEmail = organizationEmailAddress.email;
+          try {
+            const { userService } = await import('@/lib/firebase/user-service');
+            const userProfile = await userService.getProfile(approval.createdBy);
+
+            if (userProfile) {
+              adminName = userProfile.displayName || userProfile.email || 'PR-Team';
+              adminEmail = userProfile.email;
+            } else if (organizationEmailAddress) {
+              // Fallback zur Organization Email nur wenn User nicht gefunden
+              adminName = organizationEmailAddress.displayName || 'PR-Team';
+              adminEmail = organizationEmailAddress.email;
+            }
+          } catch (userError) {
+            // Fallback zur Organization Email bei Fehler
+            if (organizationEmailAddress) {
+              adminName = organizationEmailAddress.displayName || 'PR-Team';
+              adminEmail = organizationEmailAddress.email;
+            }
           }
         }
       } catch (emailError) {
