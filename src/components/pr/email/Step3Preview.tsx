@@ -563,71 +563,6 @@ export default function Step3Preview({
         )}
 
         <div className="space-y-6">
-          {/* E-Mail-Vorschau (volle Breite) */}
-          <div>
-            {/* Vorschau-Header */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-medium flex items-center gap-2">
-                  <EyeIcon className="h-5 w-5 text-gray-500" />
-                  E-Mail-Vorschau
-                </h4>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPreviewMode('desktop')}
-                    className={`p-2 rounded ${previewMode === 'desktop' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                    title="Desktop-Ansicht"
-                  >
-                    <ComputerDesktopIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setPreviewMode('mobile')}
-                    className={`p-2 rounded ${previewMode === 'mobile' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                    title="Mobile Ansicht"
-                  >
-                    <DevicePhoneMobileIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Email-Metadaten */}
-              <div className="mb-4 p-3 bg-gray-50 rounded text-sm space-y-1">
-                <div><strong>Von:</strong> {draft.sender.type === 'contact' 
-                  ? draft.sender.contactData?.name 
-                  : draft.sender.manual?.name} &lt;{draft.sender.type === 'contact' 
-                  ? draft.sender.contactData?.email 
-                  : draft.sender.manual?.email}&gt;</div>
-                <div><strong>An:</strong> {totalRecipients} Empfänger</div>
-                <div><strong>Betreff:</strong> {draft.metadata.subject}</div>
-                {draft.metadata.preheader && (
-                  <div><strong>Vorschau:</strong> {draft.metadata.preheader}</div>
-                )}
-                {attachments.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <strong>Anhänge:</strong>
-                    <span className="flex items-center gap-1">
-                      <PaperClipIcon className="h-4 w-4 text-gray-500" />
-                      {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Preview Frame */}
-              <div className={`border rounded overflow-hidden bg-gray-100 ${
-                previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''
-              }`}>
-                <iframe
-                  srcDoc={previewHtml}
-                  className="w-full min-h-[1000px]"
-                  style={{ height: '100%', border: 'none' }}
-                  scrolling="no"
-                  title="E-Mail Vorschau"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Test-Versand und Finaler Versand (50/50 Grid) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Test-Versand */}
@@ -782,6 +717,71 @@ export default function Step3Preview({
                     )}
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* E-Mail-Vorschau (volle Breite) */}
+          <div>
+            {/* Vorschau-Header */}
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <EyeIcon className="h-5 w-5 text-gray-500" />
+                  E-Mail-Vorschau
+                </h4>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPreviewMode('desktop')}
+                    className={`p-2 rounded ${previewMode === 'desktop' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                    title="Desktop-Ansicht"
+                  >
+                    <ComputerDesktopIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode('mobile')}
+                    className={`p-2 rounded ${previewMode === 'mobile' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
+                    title="Mobile Ansicht"
+                  >
+                    <DevicePhoneMobileIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Email-Metadaten */}
+              <div className="mb-4 p-3 bg-gray-50 rounded text-sm space-y-1">
+                <div><strong>Von:</strong> {draft.sender.type === 'contact'
+                  ? draft.sender.contactData?.name
+                  : draft.sender.manual?.name} &lt;{draft.sender.type === 'contact'
+                  ? draft.sender.contactData?.email
+                  : draft.sender.manual?.email}&gt;</div>
+                <div><strong>An:</strong> {totalRecipients} Empfänger</div>
+                <div><strong>Betreff:</strong> {draft.metadata.subject}</div>
+                {draft.metadata.preheader && (
+                  <div><strong>Vorschau:</strong> {draft.metadata.preheader}</div>
+                )}
+                {attachments.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <strong>Anhänge:</strong>
+                    <span className="flex items-center gap-1">
+                      <PaperClipIcon className="h-4 w-4 text-gray-500" />
+                      {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Frame */}
+              <div className={`border rounded overflow-hidden bg-gray-100 ${
+                previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''
+              }`}>
+                <iframe
+                  srcDoc={previewHtml}
+                  className="w-full min-h-[1000px]"
+                  style={{ height: '100%', border: 'none' }}
+                  scrolling="no"
+                  title="E-Mail Vorschau"
+                />
               </div>
             </div>
           </div>
