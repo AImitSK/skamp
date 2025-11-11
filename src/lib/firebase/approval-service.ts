@@ -198,7 +198,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     organizationId: string,
     customerContact?: any,
     customerMessage?: string,
-    teamMemberData?: { name: string; email: string; photoUrl?: string }
+    teamMemberData?: { name: string; email: string; photoUrl?: string },
+    userId?: string // Wer erstellt die Approval
   ): Promise<string> {
     try {
 
@@ -292,7 +293,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         version: 1,
         createdAt: Timestamp.now(), // Verwende Timestamp.now() für sofortige Anzeige
         updatedAt: Timestamp.now(),
-        createdBy: 'system' // Simplified for customer-only
+        createdBy: userId || 'system' // Verwende echte userId oder 'system' als Fallback
       };
 
 
@@ -1669,16 +1670,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
 
         // Lade echte User-Daten (nicht Organization-Email!)
+        // Nutze TeamMember-Service wie in der Kampagnen-Tabelle
         if (approval.createdBy) {
           try {
-            const { userService } = await import('@/lib/firebase/user-service');
-            const userProfile = await userService.getProfile(approval.createdBy);
+            const { teamMemberService } = await import('@/lib/firebase/team-service-enhanced');
+            const teamMembers = await teamMemberService.getByOrganization(approval.organizationId);
+            const teamMember = teamMembers.find(m => m.userId === approval.createdBy);
 
-            if (userProfile) {
-              adminName = userProfile.displayName || userProfile.email || 'PR-Team';
-              adminEmail = userProfile.email;
+            if (teamMember) {
+              adminName = teamMember.displayName || teamMember.email || 'PR-Team';
+              adminEmail = teamMember.email;
             } else if (organizationEmailAddress) {
-              // Fallback zur Organization Email nur wenn User nicht gefunden
+              // Fallback zur Organization Email nur wenn TeamMember nicht gefunden
               adminName = organizationEmailAddress.displayName || 'PR-Team';
               adminEmail = organizationEmailAddress.email;
             }
@@ -2180,20 +2183,22 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
 
       // Lade echte User-Daten für Email
+      // Nutze TeamMember-Service wie in der Kampagnen-Tabelle
       let adminName = 'Admin';
       let adminEmail = '';
 
       if (context.userId) {
         try {
-          const { userService } = await import('@/lib/firebase/user-service');
-          const userProfile = await userService.getProfile(context.userId);
+          const { teamMemberService } = await import('@/lib/firebase/team-service-enhanced');
+          const teamMembers = await teamMemberService.getByOrganization(context.organizationId);
+          const teamMember = teamMembers.find(m => m.userId === context.userId);
 
-          if (userProfile) {
-            adminName = userProfile.displayName || userProfile.email || 'Admin';
-            adminEmail = userProfile.email;
+          if (teamMember) {
+            adminName = teamMember.displayName || teamMember.email || 'Admin';
+            adminEmail = teamMember.email;
           }
         } catch (error) {
-          // Fehler beim Laden des User-Profils - nutze Fallback-Werte
+          // Fehler beim Laden des TeamMembers - nutze Fallback-Werte
         }
       }
 

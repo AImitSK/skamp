@@ -1433,7 +1433,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             context.organizationId,
             customerApprovalData.customerContact,
             undefined, // Keine Nachricht beim Erstellen
-            teamMemberData
+            teamMemberData,
+            context.userId // Echte userId für createdBy
           );
           
           // Füge Team-Nachricht hinzu, falls vorhanden
@@ -1647,7 +1648,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           context.organizationId,
           customerApprovalData.customerContact,
           undefined, // Keine Nachricht beim Erstellen
-          teamMemberData
+          teamMemberData,
+          context.userId // Echte userId für createdBy
         );
         
         // Füge Team-Nachricht hinzu, falls vorhanden
