@@ -15,6 +15,8 @@ import { apiClient } from '@/lib/api/api-client';
 import { db } from '@/lib/firebase/client-init';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { emailLogger } from '@/utils/emailLogger';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { 
   EyeIcon,
   PaperAirplaneIcon,
@@ -99,6 +101,9 @@ export default function Step3Preview({
   autoTransitionAfterSend = false,
   onPipelineComplete
 }: Step3PreviewProps) {
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
+
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [testEmail, setTestEmail] = useState('');
   const [testEmailError, setTestEmailError] = useState('');
@@ -123,6 +128,8 @@ export default function Step3Preview({
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
   useEffect(() => {
     const loadPreviewContact = async () => {
+      if (!user || !currentOrganization) return;
+
       try {
         // Wenn manuelle Empfänger vorhanden, nutze den ersten
         if (draft.recipients.manual.length > 0) {
@@ -134,14 +141,28 @@ export default function Step3Preview({
         if (draft.recipients.listIds.length > 0) {
           const { listsService } = await import('@/lib/firebase/lists-service');
           const { contactsService } = await import('@/lib/firebase/crm-service');
-          const { useAuth } = await import('@/context/AuthContext');
-          const { useOrganization } = await import('@/context/OrganizationContext');
 
           // Lade erste Liste
           const firstListId = draft.recipients.listIds[0];
-          // Hole Kontakte aus der Liste über listsService
-          // Dies ist vereinfacht - in der Praxis müsste man die List-Members laden
-          // Für jetzt verwenden wir den Fallback
+          const list = await listsService.getById(firstListId, currentOrganization.id, user.uid);
+
+          if (list && list.members && list.members.length > 0) {
+            // Hole ersten Kontakt aus der Liste
+            const firstMemberId = list.members[0];
+            const contact = await contactsService.getById(firstMemberId, currentOrganization.id, user.uid);
+
+            if (contact) {
+              // Konvertiere Contact zu Preview-Format
+              setPreviewContact({
+                salutation: contact.name?.salutation || contact.salutation,
+                title: contact.name?.title || contact.title,
+                firstName: contact.name?.firstName || contact.firstName,
+                lastName: contact.name?.lastName || contact.lastName,
+                email: contact.email || contact.emails?.[0]?.address,
+                companyName: contact.companyName
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Fehler beim Laden des Preview-Kontakts:', error);
@@ -149,7 +170,7 @@ export default function Step3Preview({
     };
 
     loadPreviewContact();
-  }, [draft.recipients]);
+  }, [draft.recipients, user, currentOrganization]);
 
   // Lade ausgewählte Signatur
   useEffect(() => {
