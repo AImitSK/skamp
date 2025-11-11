@@ -1000,6 +1000,12 @@ class PDFTemplateService {
 
           /* Modern Professional Template spezifische Anpassungen */
 
+          /* Oberen und unteren Rand halbieren (20mm → 10mm) */
+          body.template-modern-professional {
+            padding-top: 10mm;
+            padding-bottom: 10mm;
+          }
+
           /* Horizontale Linie unter Datum entfernen + Abstände minimieren */
           body.template-modern-professional .document-header {
             border-bottom: none;
