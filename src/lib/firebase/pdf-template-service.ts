@@ -1023,11 +1023,17 @@ class PDFTemplateService {
             margin-bottom: 0;
           }
 
-          /* Footer: minimale Abstände */
+          /* Footer: minimale Abstände, vertikal + horizontal zentriert, symmetrisches Padding */
           body.template-modern-professional .footer {
             margin-top: 8mm;
-            padding-top: 0;
+            padding: 4mm 8mm;
             border-top: none;
+            background: #f9f9f9;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 12mm;
           }
 
           /* Bild direkt nach Datum, minimaler Abstand! */
