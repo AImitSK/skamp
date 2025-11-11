@@ -43,16 +43,19 @@ export function PDFVersionHistory({
 
   const loadVersions = async () => {
     if (!campaignId) return;
-    
+
     try {
       setLoading(true);
       const versionHistory = await pdfVersionsService.getVersionHistory(campaignId);
       const current = await pdfVersionsService.getCurrentVersion(campaignId);
-      
-      
+
+      // Filtere Entwürfe aus der Historie (nur finale Versionen zeigen)
+      // Entwürfe werden nur in der "Aktuelle PDF-Version" Box oben angezeigt
+      const finalVersions = versionHistory.filter(v => v.status !== 'draft');
+
       // Sortiere nach Version absteigend (neueste zuerst)
-      const sortedVersions = versionHistory.sort((a, b) => b.version - a.version);
-      
+      const sortedVersions = finalVersions.sort((a, b) => b.version - a.version);
+
       setVersions(sortedVersions);
       setCurrentVersion(current);
     } catch (error) {
