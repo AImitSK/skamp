@@ -1,7 +1,7 @@
 // src/components/pr/email/Step2Details.tsx
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, SenderInfo, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,9 @@ import { InfoTooltip } from '@/components/InfoTooltip';
 import { EnvelopeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/20/solid';
 import RecipientManager from '@/components/pr/email/RecipientManager';
 import SenderSelector from '@/components/pr/email/SenderSelector';
+import { projectService } from '@/lib/firebase/project-service';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 
 interface Step2DetailsProps {
   recipients: EmailDraft['recipients'];
@@ -35,29 +38,75 @@ export default function Step2Details({
   validation,
   campaign
 }: Step2DetailsProps) {
-  // Verwende useRef um zu tracken, ob wir bereits initialisiert haben
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const hasInitialized = useRef(false);
+  const [loadingProject, setLoadingProject] = useState(false);
 
-  // Vorauswahl der Kampagnen-Verteilerlisten beim ersten Laden
+  // Lade Projekt und setze Verteilerlisten aus dem Projekt
   useEffect(() => {
-    // Nur einmal beim ersten Laden ausführen und nur wenn keine Listen ausgewählt sind
-    if (!hasInitialized.current && recipients.listIds.length === 0) {
-      hasInitialized.current = true;
-      
-      // Prüfe ob die Kampagne Verteilerlisten hat
-      if (campaign.distributionListIds && campaign.distributionListIds.length > 0) {
-        console.log('📋 Vorauswahl der Kampagnen-Verteilerlisten:', campaign.distributionListIds);
-        
-        // Setze die Kampagnen-Verteilerlisten als vorausgewählt
-        onRecipientsChange({
-          listIds: campaign.distributionListIds,
-          listNames: campaign.distributionListNames || [],
-          totalCount: campaign.recipientCount || 0,
-          validCount: campaign.recipientCount || 0
-        });
+    const loadProjectLists = async () => {
+      console.log('🔍 Step2Details - Check:', {
+        hasInitialized: hasInitialized.current,
+        recipientsListsLength: recipients.listIds.length,
+        projectId: campaign.projectId,
+        hasUser: !!user,
+        hasOrg: !!currentOrganization
+      });
+
+      // Nur einmal beim ersten Laden ausführen und nur wenn keine Listen ausgewählt sind
+      if (hasInitialized.current || recipients.listIds.length > 0) {
+        console.log('⏭️ Skip: Already initialized or lists already set');
+        return;
       }
-    }
-  }, [campaign, recipients.listIds.length, onRecipientsChange]);
+
+      if (!campaign.projectId) {
+        console.warn('⚠️ Keine projectId in campaign:', campaign);
+        return;
+      }
+
+      if (!user || !currentOrganization) {
+        console.log('⏳ Warte auf user/organization');
+        return;
+      }
+
+      hasInitialized.current = true;
+      setLoadingProject(true);
+
+      try {
+        console.log('📋 Lade Projekt:', campaign.projectId);
+        const project = await projectService.getById(campaign.projectId, {
+          userId: user.uid,
+          organizationId: currentOrganization.id
+        });
+
+        console.log('✅ Projekt geladen:', {
+          projectTitle: project?.title,
+          distributionLists: project?.distributionLists
+        });
+
+        if (project && project.distributionLists && project.distributionLists.length > 0) {
+          console.log('📋 Setze Verteilerlisten:', project.distributionLists);
+
+          // Setze die Projekt-Verteilerlisten
+          onRecipientsChange({
+            listIds: project.distributionLists,
+            listNames: [], // Namen werden später von RecipientManager geladen
+            totalCount: 0, // Wird von RecipientManager berechnet
+            validCount: 0
+          });
+        } else {
+          console.warn('⚠️ Projekt hat keine Verteilerlisten');
+        }
+      } catch (error) {
+        console.error('❌ Fehler beim Laden der Projekt-Verteilerlisten:', error);
+      } finally {
+        setLoadingProject(false);
+      }
+    };
+
+    loadProjectLists();
+  }, [campaign.projectId, user, currentOrganization, recipients.listIds.length, onRecipientsChange]);
 
   return (
     <div className="p-6">
@@ -69,22 +118,6 @@ export default function Step2Details({
             <InfoTooltip content="Wählen Sie die Empfänger aus Ihren Verteilerlisten und legen Sie den Absender fest." />
           </div>
         </div>
-
-        {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
-        {campaign.distributionListIds && campaign.distributionListIds.length > 0 && (
-          <div className="bg-blue-50 rounded-lg p-4 flex items-start gap-3">
-            <svg className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="text-sm text-blue-900">
-              <p className="font-medium mb-1">Kampagnen-Verteilerlisten</p>
-              <p className="text-blue-800">
-                Die für diese Kampagne definierten Verteilerlisten wurden automatisch vorausgewählt. 
-                Sie können die Auswahl bei Bedarf anpassen.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Empfänger-Verwaltung */}
         <div className="border rounded-lg p-6">
@@ -181,17 +214,6 @@ export default function Step2Details({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Hilfe-Box */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Tipps für bessere Zustellbarkeit</h4>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>Verwenden Sie einen aussagekräftigen Betreff ohne Spam-Wörter</li>
-            <li>Der Vorschautext sollte den Betreff ergänzen, nicht wiederholen</li>
-            <li>Nutzen Sie einen verifizierten Absender aus der Firma</li>
-            <li>Vermeiden Sie zu viele Empfänger auf einmal (max. 500 pro Versand)</li>
-          </ul>
         </div>
       </div>
     </div>

@@ -10,17 +10,15 @@ import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { 
-  UserGroupIcon, 
-  UserPlusIcon, 
+import {
+  UserGroupIcon,
+  UserPlusIcon,
   XMarkIcon,
-  CheckIcon,
-  ExclamationCircleIcon,
-  MagnifyingGlassIcon
+  ExclamationCircleIcon
 } from '@heroicons/react/20/solid';
 
 interface RecipientManagerProps {
-  selectedListIds: string[];
+  selectedListIds: string[]; // Read-only: kommt aus der Kampagne
   manualRecipients: ManualRecipient[];
   onListsChange: (listIds: string[], listNames: string[], totalFromLists: number) => void;
   onAddManualRecipient: (recipient: Omit<ManualRecipient, 'id'>) => void;
@@ -38,133 +36,74 @@ export default function RecipientManager({
 }: RecipientManagerProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-  const [lists, setLists] = useState<DistributionList[]>([]);
+  const [campaignLists, setCampaignLists] = useState<DistributionList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
-  // Lade Verteilerlisten
+  // Lade nur die ausgewählten Kampagnen-Listen
   useEffect(() => {
-    const loadLists = async () => {
-      if (!user || !currentOrganization) return;
-      
+    const loadCampaignLists = async () => {
+      if (!user || !currentOrganization || selectedListIds.length === 0) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const userLists = await listsService.getAll(currentOrganization.id, user.uid);
-        setLists(userLists);
+        // Lade nur die Listen die in selectedListIds sind
+        const listPromises = selectedListIds.map(listId =>
+          listsService.getById(listId, currentOrganization.id, user.uid)
+        );
+        const loadedLists = await Promise.all(listPromises);
+        setCampaignLists(loadedLists.filter(Boolean) as DistributionList[]);
       } catch (error) {
-        console.error('Fehler beim Laden der Listen:', error);
+        console.error('Fehler beim Laden der Kampagnen-Listen:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadLists();
-  }, [user, currentOrganization]);
-
-  // Gefilterte Listen
-  const filteredLists = lists.filter(list =>
-    list.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    list.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Handler für Listen-Auswahl
-  const handleListToggle = (listId: string) => {
-    let newSelectedIds: string[];
-    
-    if (selectedListIds.includes(listId)) {
-      newSelectedIds = selectedListIds.filter(id => id !== listId);
-    } else {
-      newSelectedIds = [...selectedListIds, listId];
-    }
-
-    const selectedLists = lists.filter(list => newSelectedIds.includes(list.id!));
-    const selectedNames = selectedLists.map(list => list.name);
-    const totalFromLists = selectedLists.reduce((sum, list) => sum + (list.contactCount || 0), 0);
-
-    onListsChange(newSelectedIds, selectedNames, totalFromLists);
-  };
+    loadCampaignLists();
+  }, [user, currentOrganization, selectedListIds]);
 
   // Berechne Gesamt-Empfänger aus Listen
-  const listRecipientCount = lists
-    .filter(list => selectedListIds.includes(list.id!))
-    .reduce((sum, list) => sum + (list.contactCount || 0), 0);
+  const listRecipientCount = campaignLists.reduce((sum, list) => sum + (list.contactCount || 0), 0);
 
   // Berechne totale Empfänger (Listen + Manuelle)
   const totalRecipientCount = listRecipientCount + manualRecipients.length;
 
   return (
     <div className="space-y-6">
-      {/* Verteilerlisten */}
+      {/* Verteilerlisten (Read-Only) */}
       <div>
-        <h4 className="font-medium mb-3 flex items-center gap-2">
-          <UserGroupIcon className="h-5 w-5 text-gray-500" />
-          Verteilerlisten
-        </h4>
-        
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab]"></div>
           </div>
+        ) : campaignLists.length === 0 ? (
+          <div className="p-4 text-center text-gray-500 border border-dashed rounded-lg">
+            Keine Verteilerlisten für diese Kampagne definiert
+          </div>
         ) : (
           <div className="space-y-3">
-            {/* Suche */}
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Listen durchsuchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Listen */}
-            <div className="max-h-60 overflow-y-auto border rounded-lg">
-              {filteredLists.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  {searchTerm ? 'Keine Listen gefunden' : 'Keine Verteilerlisten vorhanden'}
+            {campaignLists.map((list) => (
+              <div
+                key={list.id}
+                className="flex items-center gap-3 p-4 border rounded-lg bg-gray-50"
+              >
+                <UserGroupIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900">{list.name}</div>
+                  {list.description && (
+                    <p className="text-sm text-gray-600 mt-0.5">{list.description}</p>
+                  )}
                 </div>
-              ) : (
-                <div className="divide-y">
-                  {filteredLists.map((list) => (
-                    <label
-                      key={list.id}
-                      className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedListIds.includes(list.id!)}
-                        onChange={() => handleListToggle(list.id!)}
-                        className="h-4 w-4 text-[#005fab] rounded border-gray-300 focus:ring-[#005fab]"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-gray-900">{list.name}</span>
-                          <span className="text-sm text-gray-500">
-                            {list.contactCount || 0} Kontakte
-                          </span>
-                        </div>
-                        {list.description && (
-                          <p className="text-sm text-gray-600 mt-0.5">{list.description}</p>
-                        )}
-                      </div>
-                    </label>
-                  ))}
+                <div className="flex items-center gap-2 text-gray-600">
+                  <UserGroupIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium">{list.contactCount || 0}</span>
                 </div>
-              )}
-            </div>
-
-            {/* Zusammenfassung */}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">
-                {selectedListIds.length} {selectedListIds.length === 1 ? 'Liste' : 'Listen'} ausgewählt
-              </span>
-              <span className="font-medium text-gray-900">
-                {listRecipientCount} Empfänger aus Listen
-              </span>
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -221,23 +160,12 @@ export default function RecipientManager({
       </div>
 
       {/* Gesamt-Zusammenfassung */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-blue-900 mb-2">Empfänger-Übersicht</h4>
-        <dl className="text-sm space-y-1">
-          <div className="flex justify-between">
-            <dt className="text-blue-700">Aus Verteilerlisten:</dt>
-            <dd className="font-medium text-blue-900">{listRecipientCount}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-blue-700">Manuell hinzugefügt:</dt>
-            <dd className="font-medium text-blue-900">{manualRecipients.length}</dd>
-          </div>
-          <div className="flex justify-between pt-2 border-t border-blue-200">
-            <dt className="text-blue-700 font-medium">Gesamt:</dt>
-            <dd className="font-bold text-blue-900">{totalRecipientCount} Empfänger</dd>
-          </div>
-        </dl>
-      </div>
+      {totalRecipientCount > 0 && (
+        <div className="bg-blue-50 rounded-lg p-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-blue-900">Gesamt</span>
+          <span className="text-lg font-bold text-blue-900">{totalRecipientCount} Empfänger</span>
+        </div>
+      )}
 
       {/* Modal für manuelle Eingabe */}
       <AddRecipientModal
