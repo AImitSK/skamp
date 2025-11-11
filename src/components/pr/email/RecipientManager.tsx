@@ -119,14 +119,12 @@ export default function RecipientManager({
                 key={recipient.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group"
               >
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">
-                    {recipient.firstName} {recipient.lastName}
+                <div className="flex-1 overflow-hidden">
+                  <div className="text-sm text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
+                    <span className="font-medium">{recipient.firstName} {recipient.lastName}</span>
+                    <span className="text-gray-400 mx-2">·</span>
+                    <span className="text-gray-600">{recipient.email}</span>
                   </div>
-                  <div className="text-sm text-gray-600">{recipient.email}</div>
-                  {recipient.companyName && (
-                    <div className="text-sm text-gray-500">{recipient.companyName}</div>
-                  )}
                   {!recipient.isValid && recipient.validationError && (
                     <div className="text-sm text-red-600 flex items-center gap-1 mt-1">
                       <ExclamationCircleIcon className="h-4 w-4" />
@@ -136,7 +134,7 @@ export default function RecipientManager({
                 </div>
                 <button
                   onClick={() => onRemoveManualRecipient(recipient.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded flex-shrink-0"
                   title="Entfernen"
                 >
                   <XMarkIcon className="h-5 w-5 text-gray-500" />
