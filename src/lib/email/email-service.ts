@@ -544,12 +544,12 @@ export class EmailService {
    */
   private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string, keyVisual?: { url: string; cropData?: any }, signatureHtml?: string): string {
     const mediaLinkHtml = mediaShareUrl ? `
-            <p style="margin: 20px 0;">
-                <a href="${mediaShareUrl}"
-                   style="color: #005fab; text-decoration: underline;">
-                    → Medien-Anhänge ansehen
-                </a>
-            </p>` : '';
+        <div style="margin: 30px 0 20px 0; padding: 15px; background-color: #f0f7ff; border-left: 4px solid #005fab; border-radius: 4px;">
+            <p style="margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong style="color: #005fab;">→ Medien-Anhänge:</strong><br>
+                <a href="${mediaShareUrl}" style="color: #005fab; text-decoration: underline; font-weight: 500;">Hier können Sie die Medien-Dateien zu dieser Pressemitteilung herunterladen</a>
+            </p>
+        </div>` : '';
 
     // Verwende HTML-Signatur falls vorhanden, ansonsten die alte Text-Signatur
     const signatureContent = signatureHtml
@@ -575,12 +575,13 @@ export class EmailService {
         .content {
             max-width: 600px;
             margin: 0;
+            padding-bottom: 10px;
         }
         .email-body {
-            margin-bottom: 25px;
+            margin-bottom: 10px;
         }
         .signature {
-            margin-top: 30px;
+            margin-top: 20px;
         }
         p {
             margin: 0 0 1em 0;

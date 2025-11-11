@@ -128,49 +128,104 @@ export default function Step3Preview({
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
   useEffect(() => {
     const loadPreviewContact = async () => {
-      if (!user || !currentOrganization) return;
+      if (!user || !currentOrganization) {
+        console.log('⏳ Warte auf user/organization');
+        return;
+      }
 
       try {
+        console.log('🔍 Lade Preview-Kontakt:', {
+          manualCount: draft.recipients.manual.length,
+          listCount: draft.recipients.listIds.length,
+          lists: draft.recipients.listIds,
+          projectId: campaign.projectId
+        });
+
         // Wenn manuelle Empfänger vorhanden, nutze den ersten
         if (draft.recipients.manual.length > 0) {
+          console.log('✅ Verwende ersten manuellen Empfänger:', draft.recipients.manual[0]);
           setPreviewContact(draft.recipients.manual[0]);
           return;
         }
 
         // Ansonsten lade ersten Kontakt aus erster Liste
-        if (draft.recipients.listIds.length > 0) {
+        if (draft.recipients.listIds.length > 0 && campaign.projectId) {
+          const { projectListsService } = await import('@/lib/firebase/project-lists-service');
           const { listsService } = await import('@/lib/firebase/lists-service');
           const { contactsService } = await import('@/lib/firebase/crm-service');
 
-          // Lade erste Liste
-          const firstListId = draft.recipients.listIds[0];
-          const list = await listsService.getById(firstListId, currentOrganization.id, user.uid);
+          // Lade alle Projekt-Listen, um den Typ zu bestimmen
+          const projectLists = await projectListsService.getProjectLists(campaign.projectId);
+          console.log('📋 Projekt-Listen geladen:', projectLists);
 
-          if (list && list.members && list.members.length > 0) {
-            // Hole ersten Kontakt aus der Liste
-            const firstMemberId = list.members[0];
-            const contact = await contactsService.getById(firstMemberId, currentOrganization.id, user.uid);
+          // Gehe durch die listIds und finde die erste mit Kontakten
+          for (const listId of draft.recipients.listIds) {
+            console.log('🔍 Prüfe Liste:', listId);
 
-            if (contact) {
-              // Konvertiere Contact zu Preview-Format
-              setPreviewContact({
-                salutation: contact.name?.salutation || contact.salutation,
-                title: contact.name?.title || contact.title,
-                firstName: contact.name?.firstName || contact.firstName,
-                lastName: contact.name?.lastName || contact.lastName,
-                email: contact.email || contact.emails?.[0]?.address,
-                companyName: contact.companyName
-              });
+            // Finde die ProjectDistributionList für diese ID
+            const projectList = projectLists.find(pl =>
+              pl.id === listId || pl.masterListId === listId
+            );
+
+            console.log('📋 Gefundene Projekt-Liste:', projectList);
+
+            let contactId: string | undefined;
+
+            // Custom-Liste: contactIds direkt aus ProjectDistributionList
+            if (projectList?.type === 'custom' && projectList.contactIds && projectList.contactIds.length > 0) {
+              contactId = projectList.contactIds[0];
+              console.log('📋 Custom-Liste, erster contactId:', contactId);
+            }
+            // Linked-Liste: members aus master distribution_lists
+            else if (projectList?.type === 'linked' && projectList.masterListId) {
+              const masterList = await listsService.getById(projectList.masterListId);
+              if (masterList && masterList.members && masterList.members.length > 0) {
+                contactId = masterList.members[0];
+                console.log('📋 Linked-Liste, erster member:', contactId);
+              }
+            }
+            // Fallback: Versuche direkt als distribution_list zu laden
+            else {
+              const list = await listsService.getById(listId);
+              if (list && list.members && list.members.length > 0) {
+                contactId = list.members[0];
+                console.log('📋 Direkte Liste, erster member:', contactId);
+              }
+            }
+
+            // Wenn wir eine contactId haben, lade den Kontakt
+            if (contactId) {
+              console.log('👤 Lade Kontakt:', contactId);
+              const contact = await contactsService.getById(contactId, currentOrganization.id, user.uid);
+
+              console.log('👤 Kontakt geladen:', contact);
+
+              if (contact) {
+                // Konvertiere Contact zu Preview-Format
+                const previewData = {
+                  salutation: contact.name?.salutation || contact.salutation || '',
+                  title: contact.name?.title || contact.title || '',
+                  firstName: contact.name?.firstName || contact.firstName || '',
+                  lastName: contact.name?.lastName || contact.lastName || '',
+                  email: contact.email || contact.emails?.[0]?.address || '',
+                  companyName: contact.companyName || ''
+                };
+                console.log('✅ Preview-Kontakt gesetzt:', previewData);
+                setPreviewContact(previewData);
+                return; // Erfolg! Beende die Schleife
+              }
             }
           }
+
+          console.warn('⚠️ Kein Kontakt in keiner Liste gefunden');
         }
       } catch (error) {
-        console.error('Fehler beim Laden des Preview-Kontakts:', error);
+        console.error('❌ Fehler beim Laden des Preview-Kontakts:', error);
       }
     };
 
     loadPreviewContact();
-  }, [draft.recipients, user, currentOrganization]);
+  }, [draft.recipients, user, currentOrganization, campaign.projectId]);
 
   // Lade ausgewählte Signatur
   useEffect(() => {
@@ -196,15 +251,32 @@ export default function Step3Preview({
 
   // Generiere Vorschau-HTML
   const previewHtml = useMemo(() => {
+    console.log('🎨 Generiere Vorschau mit Kontakt:', previewContact);
+    console.log('📧 Campaign assetShareUrl:', campaign.assetShareUrl);
+
+    // WARNUNG wenn kein echter Kontakt geladen wurde
+    if (!previewContact) {
+      console.error('⚠️ WARNUNG: Kein echter Kontakt geladen! Verwende Fallback.');
+      console.log('📊 Debug Info:', {
+        manualRecipientsCount: draft.recipients.manual.length,
+        listIdsCount: draft.recipients.listIds.length,
+        listIds: draft.recipients.listIds,
+        hasUser: !!user,
+        hasOrg: !!currentOrganization
+      });
+    }
+
     // Verwende den ersten echten Kontakt oder einen Beispiel-Empfänger
     const sampleRecipient = previewContact || {
       salutation: 'Herr',
       title: 'Dr.',
-      firstName: 'Max',
-      lastName: 'Mustermann',
-      email: 'max.mustermann@example.com',
+      firstName: 'Beispiel',
+      lastName: 'Empfänger',
+      email: 'empfaenger@example.com',
       companyName: 'Beispiel GmbH'
     };
+
+    console.log('👤 Verwende Empfänger für Vorschau:', sampleRecipient);
 
     // Extrahiere Sender-Info
     const senderInfo = draft.sender.type === 'contact' 
@@ -856,10 +928,18 @@ export default function Step3Preview({
               }`}>
                 <iframe
                   srcDoc={previewHtml}
-                  className="w-full min-h-[1000px]"
-                  style={{ height: '100%', border: 'none' }}
+                  className="w-full"
+                  style={{ height: 'auto', minHeight: '400px', border: 'none' }}
                   scrolling="no"
                   title="E-Mail Vorschau"
+                  onLoad={(e) => {
+                    // Auto-resize iframe to content height
+                    const iframe = e.target as HTMLIFrameElement;
+                    if (iframe.contentWindow) {
+                      const height = iframe.contentWindow.document.body.scrollHeight;
+                      iframe.style.height = `${height + 20}px`;
+                    }
+                  }}
                 />
               </div>
             </div>
