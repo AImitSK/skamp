@@ -619,8 +619,9 @@ export default function Step3Preview({
               }`}>
                 <iframe
                   srcDoc={previewHtml}
-                  className="w-full"
-                  style={{ height: '700px' }}
+                  className="w-full min-h-[1000px]"
+                  style={{ height: '100%', border: 'none' }}
+                  scrolling="no"
                   title="E-Mail Vorschau"
                 />
               </div>
