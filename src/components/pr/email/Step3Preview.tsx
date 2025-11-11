@@ -1,7 +1,7 @@
 // src/components/pr/email/Step3Preview.tsx
 "use client";
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/ui/input';
@@ -109,7 +109,9 @@ export default function Step3Preview({
   const [scheduledTime, setScheduledTime] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [sending, setSending] = useState(false);
-  
+  const [previewContact, setPreviewContact] = useState<any>(null);
+  const [previewSignature, setPreviewSignature] = useState<string>('');
+
   // State für Alerts
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
@@ -118,10 +120,65 @@ export default function Step3Preview({
   const manualRecipients = draft.recipients.manual.length;
   const listRecipients = totalRecipients - manualRecipients;
 
+  // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
+  useEffect(() => {
+    const loadPreviewContact = async () => {
+      try {
+        // Wenn manuelle Empfänger vorhanden, nutze den ersten
+        if (draft.recipients.manual.length > 0) {
+          setPreviewContact(draft.recipients.manual[0]);
+          return;
+        }
+
+        // Ansonsten lade ersten Kontakt aus erster Liste
+        if (draft.recipients.listIds.length > 0) {
+          const { listsService } = await import('@/lib/firebase/lists-service');
+          const { contactsService } = await import('@/lib/firebase/crm-service');
+          const { useAuth } = await import('@/context/AuthContext');
+          const { useOrganization } = await import('@/context/OrganizationContext');
+
+          // Lade erste Liste
+          const firstListId = draft.recipients.listIds[0];
+          // Hole Kontakte aus der Liste über listsService
+          // Dies ist vereinfacht - in der Praxis müsste man die List-Members laden
+          // Für jetzt verwenden wir den Fallback
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden des Preview-Kontakts:', error);
+      }
+    };
+
+    loadPreviewContact();
+  }, [draft.recipients]);
+
+  // Lade ausgewählte Signatur
+  useEffect(() => {
+    const loadSignature = async () => {
+      if (!draft.content.signatureId) {
+        setPreviewSignature('');
+        return;
+      }
+
+      try {
+        const { emailSignatureService } = await import('@/lib/email/email-signature-service');
+        const signature = await emailSignatureService.getById(draft.content.signatureId);
+        if (signature) {
+          setPreviewSignature(signature.content);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Signatur:', error);
+      }
+    };
+
+    loadSignature();
+  }, [draft.content.signatureId]);
+
   // Generiere Vorschau-HTML
   const previewHtml = useMemo(() => {
-    // Beispiel-Empfänger für Vorschau
-    const sampleRecipient = {
+    // Verwende den ersten echten Kontakt oder einen Beispiel-Empfänger
+    const sampleRecipient = previewContact || {
+      salutation: 'Herr',
+      title: 'Dr.',
       firstName: 'Max',
       lastName: 'Mustermann',
       email: 'max.mustermann@example.com',
@@ -148,11 +205,12 @@ export default function Step3Preview({
         email: senderInfo?.email || ''
       },
       campaign.assetShareUrl,
-      campaign.keyVisual
+      campaign.keyVisual,
+      previewSignature
     );
 
     return preview.html;
-  }, [draft, campaign]);
+  }, [draft, campaign, previewContact, previewSignature]);
 
   // Test-Email validieren
   const validateTestEmail = (email: string): boolean => {

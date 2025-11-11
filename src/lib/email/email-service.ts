@@ -419,7 +419,7 @@ export class EmailService {
    * E-Mail-Preview generieren (clientseitig)
    */
   generatePreview(
-    contact: Contact,
+    contact: Contact | any,
     campaignEmail: PRCampaignEmail,
     senderInfo: {
       name: string;
@@ -429,9 +429,10 @@ export class EmailService {
       email?: string;
     },
     mediaShareUrl?: string,
-    keyVisual?: { url: string; cropData?: any }
+    keyVisual?: { url: string; cropData?: any },
+    signatureHtml?: string
   ): EmailPreviewData {
-    
+
     const recipient = {
       email: contact.email || 'preview@example.com',
       name: `${contact.firstName} ${contact.lastName}`,
@@ -440,8 +441,21 @@ export class EmailService {
       companyName: contact.companyName
     };
 
+    // Berechne salutationFormal basierend auf salutation
+    let salutationFormal = 'Sehr geehrte Damen und Herren';
+    if (contact.salutation) {
+      const salutation = contact.salutation.toLowerCase();
+      if (salutation === 'herr') {
+        salutationFormal = 'Sehr geehrter Herr';
+      } else if (salutation === 'frau') {
+        salutationFormal = 'Sehr geehrte Frau';
+      }
+    }
+
     // Variablen ersetzen
     const variables = {
+      salutationFormal: salutationFormal,
+      title: contact.title || '',
       firstName: contact.firstName,
       lastName: contact.lastName,
       fullName: `${contact.firstName} ${contact.lastName}`,
@@ -459,7 +473,7 @@ export class EmailService {
       mediaShareUrl: mediaShareUrl || ''
     };
 
-    const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl, keyVisual);
+    const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl, keyVisual, signatureHtml);
     const text = this.buildPreviewText(campaignEmail, variables, mediaShareUrl);
     const subject = this.replaceVariables(campaignEmail.subject, variables);
 
@@ -528,7 +542,7 @@ export class EmailService {
   /**
    * Preview HTML aufbauen - Vereinfachte Version ohne Header
    */
-  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string, keyVisual?: { url: string; cropData?: any }): string {
+  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string, keyVisual?: { url: string; cropData?: any }, signatureHtml?: string): string {
     const mediaLinkHtml = mediaShareUrl ? `
             <p style="margin: 20px 0;">
                 <a href="${mediaShareUrl}"
@@ -536,6 +550,11 @@ export class EmailService {
                     → Medien-Anhänge ansehen
                 </a>
             </p>` : '';
+
+    // Verwende HTML-Signatur falls vorhanden, ansonsten die alte Text-Signatur
+    const signatureContent = signatureHtml
+      ? this.replaceVariables(signatureHtml, variables)
+      : this.replaceVariables(email.signature, variables).replace(/\n/g, '<br>');
 
     return `
 <!DOCTYPE html>
@@ -562,8 +581,6 @@ export class EmailService {
         }
         .signature {
             margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
         }
         p {
             margin: 0 0 1em 0;
@@ -582,7 +599,7 @@ export class EmailService {
         ${mediaLinkHtml}
 
         <div class="signature">
-            ${this.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')}
+            ${signatureContent}
         </div>
     </div>
 </body>
