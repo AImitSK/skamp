@@ -161,7 +161,7 @@ export default function Step3Preview({
 
       try {
         const { emailSignatureService } = await import('@/lib/email/email-signature-service');
-        const signature = await emailSignatureService.getById(draft.content.signatureId);
+        const signature = await emailSignatureService.get(draft.content.signatureId);
         if (signature) {
           setPreviewSignature(signature.content);
         }
