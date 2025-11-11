@@ -192,9 +192,6 @@ export default function Step2Details({
                 onChange={(e) => onMetadataChange({ subject: e.target.value })}
                 placeholder="z.B. Pressemitteilung: {{campaignTitle}}"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Sie können Variablen wie {"{{campaignTitle}}"} verwenden
-              </p>
               {validation.errors.subject && (
                 <p className="text-sm text-red-600 mt-1">{validation.errors.subject}</p>
               )}
@@ -212,10 +209,7 @@ export default function Step2Details({
                 placeholder="Kurze Zusammenfassung für die E-Mail-Vorschau"
                 maxLength={150}
               />
-              <div className="flex justify-between items-center mt-1">
-                <p className="text-xs text-gray-500">
-                  Wird in vielen E-Mail-Clients als Vorschau angezeigt
-                </p>
+              <div className="flex justify-end mt-1">
                 <span className="text-xs text-gray-500">
                   {metadata.preheader.length}/150
                 </span>

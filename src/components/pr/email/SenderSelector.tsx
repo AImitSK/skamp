@@ -143,40 +143,6 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
                   ))}
                 </Select>
               </div>
-
-              {/* Kontakt-Vorschau */}
-              {sender.contactId && sender.contactData && (
-                <div className="p-4 bg-gray-50 rounded-lg space-y-2">
-                  <div className="flex items-center gap-2">
-                    <UserIcon className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">{sender.contactData.name}</span>
-                  </div>
-                  {sender.contactData.title && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <BriefcaseIcon className="h-4 w-4 text-gray-400" />
-                      {sender.contactData.title}
-                    </div>
-                  )}
-                  {sender.contactData.company && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <BuildingOfficeIcon className="h-4 w-4 text-gray-400" />
-                      {sender.contactData.company}
-                    </div>
-                  )}
-                  {sender.contactData.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                      {sender.contactData.email}
-                    </div>
-                  )}
-                  {sender.contactData.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <PhoneIcon className="h-4 w-4 text-gray-400" />
-                      {sender.contactData.phone}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -247,24 +213,6 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
               placeholder={campaign.clientName || 'Firma GmbH'}
             />
           </div>
-
-          {/* Vorschau der manuellen Eingabe */}
-          {(manualData.name || manualData.email) && (
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-1">Vorschau:</p>
-              <p className="text-sm text-gray-600">
-                {manualData.name}
-                {manualData.title && `, ${manualData.title}`}
-                {manualData.company && ` bei ${manualData.company}`}
-              </p>
-              {manualData.email && (
-                <p className="text-sm text-gray-600">{manualData.email}</p>
-              )}
-              {manualData.phone && (
-                <p className="text-sm text-gray-600">{manualData.phone}</p>
-              )}
-            </div>
-          )}
         </div>
       )}
 

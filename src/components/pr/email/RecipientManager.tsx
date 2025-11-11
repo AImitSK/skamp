@@ -160,7 +160,7 @@ export default function RecipientManager({
       {totalRecipientCount > 0 && (
         <div className="bg-blue-50 rounded-lg p-4 flex items-center justify-between">
           <span className="text-sm font-medium text-blue-900">Gesamt</span>
-          <span className="text-lg font-bold text-blue-900">{totalRecipientCount} Empfänger</span>
+          <span className="text-sm font-bold text-blue-900">{totalRecipientCount} Empfänger</span>
         </div>
       )}
 
