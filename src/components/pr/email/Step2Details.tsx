@@ -9,7 +9,7 @@ import { InfoTooltip } from '@/components/InfoTooltip';
 import { EnvelopeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/20/solid';
 import RecipientManager from '@/components/pr/email/RecipientManager';
 import SenderSelector from '@/components/pr/email/SenderSelector';
-import { projectService } from '@/lib/firebase/project-service';
+import { projectListsService } from '@/lib/firebase/project-lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 
@@ -43,7 +43,7 @@ export default function Step2Details({
   const hasInitialized = useRef(false);
   const [loadingProject, setLoadingProject] = useState(false);
 
-  // Lade Projekt und setze Verteilerlisten aus dem Projekt
+  // Lade Projekt-Verteilerlisten aus project_distribution_lists Collection
   useEffect(() => {
     const loadProjectLists = async () => {
       console.log('🔍 Step2Details - Check:', {
@@ -74,27 +74,43 @@ export default function Step2Details({
       setLoadingProject(true);
 
       try {
-        console.log('📋 Lade Projekt:', campaign.projectId);
-        const project = await projectService.getById(campaign.projectId, {
-          userId: user.uid,
-          organizationId: currentOrganization.id
+        console.log('📋 Lade Projekt-Verteilerlisten:', campaign.projectId);
+
+        // Lade Listen aus project_distribution_lists Collection
+        const projectLists = await projectListsService.getProjectLists(campaign.projectId);
+
+        console.log('✅ Projekt-Listen geladen:', {
+          anzahl: projectLists.length,
+          listen: projectLists
         });
 
-        console.log('✅ Projekt geladen:', {
-          projectTitle: project?.title,
-          distributionLists: project?.distributionLists
-        });
+        if (projectLists && projectLists.length > 0) {
+          // Extrahiere die masterListIds (verknüpfte Listen)
+          const linkedListIds = projectLists
+            .filter(pl => pl.type === 'linked' && pl.masterListId)
+            .map(pl => pl.masterListId!);
 
-        if (project && project.distributionLists && project.distributionLists.length > 0) {
-          console.log('📋 Setze Verteilerlisten:', project.distributionLists);
+          // Extrahiere die IDs von custom-Listen
+          const customListIds = projectLists
+            .filter(pl => pl.type === 'custom' && pl.id)
+            .map(pl => pl.id!);
 
-          // Setze die Projekt-Verteilerlisten
-          onRecipientsChange({
-            listIds: project.distributionLists,
-            listNames: [], // Namen werden später von RecipientManager geladen
-            totalCount: 0, // Wird von RecipientManager berechnet
-            validCount: 0
+          const allListIds = [...linkedListIds, ...customListIds];
+
+          console.log('📋 Setze Verteilerlisten:', {
+            linkedListIds,
+            customListIds,
+            allListIds
           });
+
+          if (allListIds.length > 0) {
+            onRecipientsChange({
+              listIds: allListIds,
+              listNames: [], // Namen werden später von RecipientManager geladen
+              totalCount: 0, // Wird von RecipientManager berechnet
+              validCount: 0
+            });
+          }
         } else {
           console.warn('⚠️ Projekt hat keine Verteilerlisten');
         }
