@@ -1000,10 +1000,15 @@ class PDFTemplateService {
 
           /* Modern Professional Template spezifische Anpassungen */
 
-          /* Oberen und unteren Rand halbieren (20mm → 10mm) */
+          /* Oberen und unteren Rand MINIMAL (20mm → 5mm) */
           body.template-modern-professional {
-            padding-top: 10mm;
-            padding-bottom: 10mm;
+            padding-top: 5mm;
+            padding-bottom: 5mm;
+          }
+
+          /* Company-Info: kein zusätzlicher Abstand */
+          body.template-modern-professional .company-info {
+            margin-bottom: 0;
           }
 
           /* Horizontale Linie unter Datum entfernen + Abstände minimieren */
@@ -1016,6 +1021,13 @@ class PDFTemplateService {
           /* Datum: kein zusätzlicher Abstand */
           body.template-modern-professional .press-date {
             margin-bottom: 0;
+          }
+
+          /* Footer: minimale Abstände */
+          body.template-modern-professional .footer {
+            margin-top: 8mm;
+            padding-top: 0;
+            border-top: none;
           }
 
           /* Bild direkt nach Datum, minimaler Abstand! */
