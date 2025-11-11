@@ -128,21 +128,38 @@ export function TextbausteinDisplay({
   if (isCustomerView) {
     return (
       <div className={clsx("space-y-6", className)}>
-        {loadedBoilerplates.map((boilerplate, index) => (
-          <div key={boilerplate.id || index}>
-            <h3 className="font-semibold text-gray-900 mb-3">
-              {boilerplate.name || `Textbaustein ${index + 1}`}
-            </h3>
-            {boilerplate.content && (
-              <div 
-                className="prose max-w-none text-gray-700 text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ 
-                  __html: boilerplate.content 
-                }}
-              />
-            )}
-          </div>
-        ))}
+        {textbausteine.map((section, index) => {
+          // Extrahiere Titel und Content
+          const sectionTitle = section.customTitle ||
+                              section.boilerplate?.name ||
+                              section.boilerplate?.title ||
+                              section.name ||
+                              section.title ||
+                              '';
+
+          const sectionContent = section.content ||
+                                section.boilerplate?.content ||
+                                '';
+
+          // Überspringe Sections ohne Titel
+          if (!sectionTitle) return null;
+
+          return (
+            <div key={section.id || index}>
+              <h3 className="font-semibold text-gray-900 mb-3">
+                {sectionTitle}
+              </h3>
+              {sectionContent && (
+                <div
+                  className="prose max-w-none text-gray-700 text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{
+                    __html: sectionContent
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
