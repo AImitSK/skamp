@@ -93,13 +93,16 @@ export interface EmailDraft {
 
 /**
  * Manuell hinzugefügter Empfänger
+ * WICHTIG: Felder müssen mit ContactEnhanced.name (StructuredName) übereinstimmen
  */
 export interface ManualRecipient {
   id: string; // Temporäre ID für UI
-  firstName: string;
-  lastName: string;
+  salutation?: string; // Mr., Ms., Dr., Prof. - für {{salutationFormal}}
+  title?: string; // Academic/Professional titles - für {{title}}
+  firstName: string; // für {{firstName}}
+  lastName: string; // für {{lastName}}
   email: string;
-  companyName?: string;
+  companyName?: string; // für {{companyName}}
   isValid?: boolean;
   validationError?: string;
 }

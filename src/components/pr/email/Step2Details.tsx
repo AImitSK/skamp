@@ -127,14 +127,6 @@ export default function Step2Details({
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold">Versand-Details festlegen</h3>
-            <InfoTooltip content="Wählen Sie die Empfänger aus Ihren Verteilerlisten und legen Sie den Absender fest." />
-          </div>
-        </div>
-
         {/* Empfänger-Verwaltung */}
         <div className="border rounded-lg p-6">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">

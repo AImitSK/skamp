@@ -188,6 +188,8 @@ function AddRecipientModal({
   onAdd: (recipient: Omit<ManualRecipient, 'id'>) => void;
 }) {
   const [formData, setFormData] = useState({
+    salutation: '',
+    title: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -198,6 +200,9 @@ function AddRecipientModal({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.salutation.trim()) {
+      newErrors.salutation = 'Anrede ist erforderlich';
+    }
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'Vorname ist erforderlich';
     }
@@ -223,6 +228,8 @@ function AddRecipientModal({
       onClose();
       // Reset form
       setFormData({
+        salutation: '',
+        title: '',
         firstName: '',
         lastName: '',
         email: '',
@@ -239,6 +246,43 @@ function AddRecipientModal({
       <DialogTitle className="px-6 pt-6">Empfänger hinzufügen</DialogTitle>
       <DialogBody className="px-6 pb-2">
         <div className="space-y-4">
+          {/* Anrede und Titel */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="salutation" className="block text-sm font-medium mb-1">
+                Anrede *
+              </label>
+              <select
+                id="salutation"
+                value={formData.salutation}
+                onChange={(e) => setFormData({ ...formData, salutation: e.target.value })}
+                className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent ${
+                  errors.salutation ? 'border-red-300' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="Herr">Herr</option>
+                <option value="Frau">Frau</option>
+                <option value="Divers">Divers</option>
+              </select>
+              {errors.salutation && (
+                <p className="text-sm text-red-600 mt-1">{errors.salutation}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium mb-1">
+                Titel (optional)
+              </label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="z.B. Dr., Prof."
+              />
+            </div>
+          </div>
+
+          {/* Vorname und Nachname */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium mb-1">

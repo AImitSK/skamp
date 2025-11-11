@@ -78,14 +78,6 @@ export default function Step1Content({
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold">Anschreiben verfassen</h3>
-            <InfoTooltip content="Verfassen Sie Ihre E-Mail mit persönlicher Ansprache. Die Pressemitteilung wird automatisch aus der Kampagne übernommen und unterhalb Ihres Textes eingefügt." />
-          </div>
-        </div>
-
         {/* TipTap Editor */}
         <div className="space-y-4">
           <EmailEditor

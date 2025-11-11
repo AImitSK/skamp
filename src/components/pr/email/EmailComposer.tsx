@@ -418,9 +418,12 @@ export default function EmailComposer({
       {/* Header mit Progress - OHNE Close Button */}
       <div className="border-b px-6 py-4">
         <div className="mb-4">
-          <h2 className="text-2xl font-semibold">E-Mail-Versand: {campaign.title}</h2>
+          <h2 className="text-lg overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="font-bold">E-Mail-Versand:</span>{' '}
+            <span className="font-normal">{campaign.title}</span>
+          </h2>
         </div>
-        
+
         <StepIndicator
           currentStep={state.currentStep}
           completedSteps={state.completedSteps}

@@ -535,14 +535,6 @@ export default function Step3Preview({
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold">Vorschau & Versand</h3>
-            <InfoTooltip content={`Überprüfen Sie Ihre E-Mail und senden Sie sie an ${totalRecipients} Empfänger`} />
-          </div>
-        </div>
-
         {/* Alert anzeigen falls vorhanden */}
         {alert && (
           <div className="mb-6">
