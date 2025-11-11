@@ -996,48 +996,68 @@ class PDFTemplateService {
           }
 
           /* Modern Professional Template spezifische Anpassungen */
+
+          /* Horizontale Linie unter Datum entfernen */
           body.template-modern-professional .document-header {
             border-bottom: none;
           }
 
+          /* Abstand Datum -> Bild sehr klein (wie Unternehmensname -> "Pressemitteilung") */
           body.template-modern-professional .press-date {
             margin-bottom: 5mm;
           }
 
+          /* Bild näher ans Datum, Abstand zu Text kleiner */
           body.template-modern-professional .key-visual {
-            margin: 5mm 0 8mm 0;
+            margin: 5mm 0 5mm 0;
           }
 
+          /* Schlagschatten am Bild entfernen */
           body.template-modern-professional .key-visual img {
             box-shadow: none;
           }
 
+          /* Gesamter Text unter Bild 2 Punkt kleiner (10pt statt 12pt) */
           body.template-modern-professional .main-content {
             font-size: 10pt;
             margin-top: 5mm;
           }
 
+          /* Fettzeilen/Strong-Elemente auf normale Textfarbe (nicht blau) */
           body.template-modern-professional .main-content strong {
             color: #333;
           }
 
+          /* Überschriften bleiben blau */
           body.template-modern-professional .main-content h2 {
             color: ${template.colorScheme.primary};
           }
 
+          /* Linie zwischen Inhalt und Boilerplates entfernen */
+          body.template-modern-professional .boilerplate-sections {
+            border-top: none;
+            margin-top: 8mm;
+            padding-top: 0;
+          }
+
+          /* Boilerplate-Text 2 Punkt kleiner (9pt statt 11pt) */
           body.template-modern-professional .boilerplate-content {
             font-size: 9pt;
           }
 
+          /* Zitatgeber-Name auf normale Textfarbe und kleiner */
           body.template-modern-professional .boilerplate-content p strong:first-child {
             color: #333;
             font-size: 9pt;
           }
 
+          /* Zitat-Styling: kursiv, Abstand danach erhöht */
           body.template-modern-professional .boilerplate-content blockquote {
+            font-style: italic;
             margin-bottom: 5mm;
           }
 
+          /* Leerzeile zwischen Zitat und Name entfernen */
           body.template-modern-professional .boilerplate-content p {
             margin: 0 0 0mm 0;
           }
@@ -1046,6 +1066,33 @@ class PDFTemplateService {
             margin-top: 0mm;
           }
 
+          /* === TipTap Extensions Formatting === */
+
+          /* CTA (Call-to-Action) - Fett, schwarz */
+          body.template-modern-professional .cta-text,
+          body.template-modern-professional span[data-type="cta-text"] {
+            font-weight: bold;
+            color: #000;
+          }
+
+          /* Hashtags - Blau, fett */
+          body.template-modern-professional .hashtag,
+          body.template-modern-professional span[data-type="hashtag"] {
+            color: ${template.colorScheme.primary};
+            font-weight: 600;
+          }
+
+          /* Zitat (Quote) - Kursiv, linker Border, grauer Text */
+          body.template-modern-professional .pr-quote,
+          body.template-modern-professional blockquote[data-type="pr-quote"] {
+            border-left: 4px solid ${template.colorScheme.primary};
+            padding-left: 8mm;
+            font-style: italic;
+            color: #555;
+            margin: 5mm 0;
+          }
+
+          /* Hashtags Section (falls separat vorhanden) */
           body.template-modern-professional .hashtags-section {
             margin-top: 10mm;
             padding-top: 8mm;
@@ -1058,9 +1105,8 @@ class PDFTemplateService {
             margin-bottom: 3mm;
           }
 
-          body.template-modern-professional .hashtags {
-            color: ${template.colorScheme.primary};
-            font-size: 9pt;
+          body.template-modern-professional .hashtags-title::before {
+            content: "Social Media Hashtags";
           }
         </style>
       </head>
