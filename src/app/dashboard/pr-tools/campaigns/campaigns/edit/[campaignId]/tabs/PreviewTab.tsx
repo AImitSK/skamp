@@ -66,7 +66,23 @@ export default React.memo(function PreviewTab({
 
     if (boilerplateSections.length > 0) {
       const boilerplateHtml = boilerplateSections
-        .map(section => section.content)
+        .map(section => {
+          // Titel aus verschiedenen Quellen extrahieren
+          const sectionTitle = section.customTitle ||
+                             section.boilerplate?.name ||
+                             section.boilerplate?.title ||
+                             '';
+
+          // Content aus verschiedenen Quellen extrahieren
+          const content = section.content ||
+                         section.boilerplate?.content ||
+                         '';
+
+          // HTML mit Überschrift (falls vorhanden) und Content
+          return sectionTitle
+            ? `<h3>${sectionTitle}</h3>\n${content}`
+            : content;
+        })
         .join('\n');
       html = `${html}\n${boilerplateHtml}`;
     }
