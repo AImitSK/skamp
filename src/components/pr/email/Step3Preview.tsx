@@ -178,10 +178,20 @@ export default function Step3Preview({
             }
             // Linked-Liste: members aus master distribution_lists
             else if (projectList?.type === 'linked' && projectList.masterListId) {
+              console.log('🔗 Lade masterList:', projectList.masterListId);
               const masterList = await listsService.getById(projectList.masterListId);
+              console.log('🔗 MasterList geladen:', {
+                id: masterList?.id,
+                name: masterList?.name,
+                members: masterList?.members,
+                memberCount: masterList?.members?.length
+              });
+
               if (masterList && masterList.members && masterList.members.length > 0) {
                 contactId = masterList.members[0];
                 console.log('📋 Linked-Liste, erster member:', contactId);
+              } else {
+                console.warn('⚠️ MasterList hat keine members!');
               }
             }
             // Fallback: Versuche direkt als distribution_list zu laden
