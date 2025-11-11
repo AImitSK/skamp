@@ -176,30 +176,31 @@ export default function Step3Preview({
               contactId = projectList.contactIds[0];
               console.log('📋 Custom-Liste, erster contactId:', contactId);
             }
-            // Linked-Liste: members aus master distribution_lists
+            // Linked-Liste: contactIds aus master distribution_lists
             else if (projectList?.type === 'linked' && projectList.masterListId) {
               console.log('🔗 Lade masterList:', projectList.masterListId);
               const masterList = await listsService.getById(projectList.masterListId);
               console.log('🔗 MasterList geladen:', {
                 id: masterList?.id,
                 name: masterList?.name,
-                members: masterList?.members,
-                memberCount: masterList?.members?.length
+                type: masterList?.type,
+                contactIds: masterList?.contactIds,
+                contactCount: masterList?.contactIds?.length
               });
 
-              if (masterList && masterList.members && masterList.members.length > 0) {
-                contactId = masterList.members[0];
-                console.log('📋 Linked-Liste, erster member:', contactId);
+              if (masterList && masterList.contactIds && masterList.contactIds.length > 0) {
+                contactId = masterList.contactIds[0];
+                console.log('📋 Linked-Liste, erster contactId:', contactId);
               } else {
-                console.warn('⚠️ MasterList hat keine members!');
+                console.warn('⚠️ MasterList hat keine contactIds!');
               }
             }
             // Fallback: Versuche direkt als distribution_list zu laden
             else {
               const list = await listsService.getById(listId);
-              if (list && list.members && list.members.length > 0) {
-                contactId = list.members[0];
-                console.log('📋 Direkte Liste, erster member:', contactId);
+              if (list && list.contactIds && list.contactIds.length > 0) {
+                contactId = list.contactIds[0];
+                console.log('📋 Direkte Liste, erster contactId:', contactId);
               }
             }
 
