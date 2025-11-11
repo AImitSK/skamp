@@ -191,9 +191,22 @@ export default function BrandingPage() {
       try {
         const emailLogoFile = await createEmailLogo(file);
 
-        // Upload Email-Version
+        // Erstelle neuen File mit eindeutigem Namen für Email-Version
+        const originalName = file.name;
+        const nameParts = originalName.split('.');
+        const extension = nameParts.pop() || 'jpg';
+        const baseName = nameParts.join('.');
+        const emailFileName = `${baseName}_email.${extension}`;
+
+        // Neues File-Objekt mit eindeutigem Namen
+        const emailFileWithNewName = new File([emailLogoFile], emailFileName, {
+          type: emailLogoFile.type,
+          lastModified: Date.now()
+        });
+
+        // Upload Email-Version mit eindeutigem Namen
         emailAsset = await mediaService.uploadMedia(
-          emailLogoFile,
+          emailFileWithNewName,
           organizationId,
           brandingFolderId,
           (progress) => {
