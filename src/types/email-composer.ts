@@ -221,91 +221,43 @@ export interface EmailVariables {
 export interface VariableDefinition {
   key: string;
   label: string;
-  category: 'recipient' | 'sender' | 'campaign' | 'system';
   example: string;
   description?: string;
-  isRequired?: boolean;
 }
 
 /**
- * Vordefinierte Variablen für die Anzeige
+ * Vordefinierte Variablen für die Anzeige (nur CRM-Personen Felder)
  */
 export const EMAIL_VARIABLES: VariableDefinition[] = [
-  // Empfänger
+  {
+    key: '{{salutationFormal}}',
+    label: 'Formelle Anrede',
+    example: 'Sehr geehrte Frau',
+    description: 'Komplette formelle Anrede (Sehr geehrte Frau / Sehr geehrter Herr)'
+  },
+  {
+    key: '{{title}}',
+    label: 'Titel',
+    example: 'Dr.',
+    description: 'Akademischer Titel'
+  },
   {
     key: '{{firstName}}',
     label: 'Vorname',
-    category: 'recipient',
     example: 'Max',
     description: 'Vorname des Empfängers'
   },
   {
     key: '{{lastName}}',
     label: 'Nachname',
-    category: 'recipient',
     example: 'Mustermann',
     description: 'Nachname des Empfängers'
   },
   {
-    key: '{{fullName}}',
-    label: 'Vollständiger Name',
-    category: 'recipient',
-    example: 'Max Mustermann',
-    description: 'Vor- und Nachname des Empfängers'
-  },
-  {
     key: '{{companyName}}',
     label: 'Firma',
-    category: 'recipient',
     example: 'Musterfirma GmbH',
     description: 'Firma des Empfängers'
-  },
-  
-  // Absender
-  {
-    key: '{{senderName}}',
-    label: 'Absender Name',
-    category: 'sender',
-    example: 'Anna Schmidt',
-    description: 'Name des Absenders'
-  },
-  {
-    key: '{{senderTitle}}',
-    label: 'Absender Position',
-    category: 'sender',
-    example: 'PR Manager',
-    description: 'Position/Titel des Absenders'
-  },
-  {
-    key: '{{senderCompany}}',
-    label: 'Absender Firma',
-    category: 'sender',
-    example: 'PR Agentur Berlin',
-    description: 'Firma des Absenders'
-  },
-  {
-    key: '{{senderPhone}}',
-    label: 'Absender Telefon',
-    category: 'sender',
-    example: '+49 30 12345678',
-    description: 'Telefonnummer des Absenders'
-  },
-  {
-    key: '{{senderEmail}}',
-    label: 'Absender E-Mail',
-    category: 'sender',
-    example: 'anna.schmidt@pr-agentur.de',
-    description: 'E-Mail des Absenders'
-  },
-  
-  // System
-  {
-    key: '{{currentDate}}',
-    label: 'Aktuelles Datum',
-    category: 'system',
-    example: '15. März 2024',
-    description: 'Heutiges Datum (formatiert)',
-    isRequired: true
   }
 ];
 

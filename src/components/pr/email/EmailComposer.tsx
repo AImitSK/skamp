@@ -12,15 +12,8 @@ import {
   ManualRecipient,
   SenderInfo
 } from '@/types/email-composer';
-import { useAuth } from '@/context/AuthContext';
-import { useOrganization } from '@/context/OrganizationContext';
-import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
-import { emailService } from '@/lib/email/email-service';
-import { emailComposerService } from '@/lib/email/email-composer-service';
 import { Timestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
-import { emailLogger } from '@/utils/emailLogger';
-import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, ICON_SIZES } from '@/constants/ui';
 
 // Import der Unter-Komponenten
 import StepIndicator from '@/components/pr/email/StepIndicator';
@@ -39,12 +32,8 @@ type ComposerAction =
   | { type: 'UPDATE_METADATA'; metadata: Partial<EmailDraft['metadata']> }
   | { type: 'UPDATE_SCHEDULING'; scheduling: EmailDraft['scheduling'] }
   | { type: 'SET_VALIDATION'; step: ComposerStep; validation: StepValidation[`step${ComposerStep}`] }
-  | { type: 'SET_LOADING'; isLoading: boolean }
-  | { type: 'SET_SAVING'; isSaving: boolean }
   | { type: 'SET_ERROR'; field: string; error: string }
   | { type: 'CLEAR_ERROR'; field: string }
-  | { type: 'LOAD_DRAFT'; draft: EmailDraft }
-  | { type: 'SET_LAST_SAVED'; timestamp: Date }
   | { type: 'RESET_DRAFT' };
 
 // Reducer für State Management
@@ -181,12 +170,6 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
         }
       };
 
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.isLoading };
-
-    case 'SET_SAVING':
-      return { ...state, isSaving: action.isSaving };
-
     case 'SET_ERROR':
       return {
         ...state,
@@ -196,19 +179,6 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
     case 'CLEAR_ERROR':
       const { [action.field]: _, ...remainingErrors } = state.errors;
       return { ...state, errors: remainingErrors };
-
-    case 'LOAD_DRAFT':
-      return {
-        ...state,
-        draft: action.draft,
-        isLoading: false
-      };
-
-    case 'SET_LAST_SAVED':
-      return {
-        ...state,
-        lastSaved: action.timestamp
-      };
 
     case 'RESET_DRAFT':
       return createInitialState(state.draft.campaignId, state.draft.campaignTitle);
@@ -221,17 +191,11 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
 // Initiale State-Factory
 function createInitialState(campaignId: string, campaignTitle: string): EmailComposerState {
   // Vorausgefüllter E-Mail-Text mit sinnvollen Variablen
-  const defaultEmailContent = `<p>Sehr geehrte{{companyName ? 'r Herr/Frau' : ''}} {{firstName}} {{lastName}}{{companyName ? ',' : ''}}</p>
+  const defaultEmailContent = `<p>{{salutationFormal}} {{title}} {{firstName}} {{lastName}},</p>
 <p>ich freue mich, Ihnen unsere aktuelle Pressemitteilung "${campaignTitle}" zukommen zu lassen.</p>
-<p>Die Mitteilung dürfte für Ihre Leserschaft von besonderem Interesse sein, da sie wichtige Entwicklungen in unserer Branche aufzeigt.</p>
+<p>Die Mitteilung dürfte für Ihre Leserschaft von besonderem Interesse sein, da sie wichtige Entwicklungen aufzeigt.</p>
 <p>Gerne stehe ich Ihnen für Rückfragen, weitere Informationen oder ein persönliches Gespräch zur Verfügung. Bildmaterial sowie ergänzende Unterlagen finden Sie anbei.</p>
-<p>Über eine Veröffentlichung würde ich mich sehr freuen.</p>
-<p>Mit freundlichen Grüßen</p>
-<p>{{senderName}}<br>
-{{senderTitle}}<br>
-{{senderCompany}}<br>
-{{senderPhone}}<br>
-{{senderEmail}}</p>`;
+<p>Über eine Veröffentlichung würde ich mich sehr freuen.</p>`;
 
   return {
     currentStep: 1,
@@ -290,19 +254,14 @@ export default function EmailComposer({
   onClose, 
   onSent,
   projectMode = false,
-  onPipelineComplete 
+  onPipelineComplete
 }: EmailComposerProps) {
-  const { user } = useAuth();
-  const { currentOrganization } = useOrganization();
   const [state, dispatch] = useReducer(
-    composerReducer, 
+    composerReducer,
     { campaignId: campaign.id!, campaignTitle: campaign.title },
     ({ campaignId, campaignTitle }) => createInitialState(campaignId, campaignTitle)
   );
 
-  // Auto-Save mit Debouncing
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
-  
   // ✅ PIPELINE-STATE HINZUGEFÜGT (Plan 4/9)
   const [pipelineDistribution, setPipelineDistribution] = useState<boolean>(false);
   const [autoTransitionAfterSend, setAutoTransitionAfterSend] = useState<boolean>(false);
@@ -363,85 +322,6 @@ export default function EmailComposer({
     }
   }, [state.draft]);
 
-  // ENTFERNT: Automatische Validierung bei Step 2
-  // Der folgende useEffect wurde entfernt, da er die Validierung
-  // automatisch beim Laden von Step 2 auslöste
-
-  // ANGEPASST: Auto-Save Logik mit direktem emailComposerService
-  const autoSaveDraft = useCallback(async () => {
-    if (!DEFAULT_COMPOSER_CONFIG.autoSave.enabled || state.isSaving) return;
-    if (!user) return; // Stelle sicher, dass User eingeloggt ist
-
-    dispatch({ type: 'SET_SAVING', isSaving: true });
-    
-    try {
-      emailLogger.debug('Auto-saving draft', { campaignId: campaign.id });
-      
-      // ANGEPASST: Nutze direkt den emailComposerService (client-side)
-      const result = await emailComposerService.saveDraft(
-        campaign.id!,
-        state.draft,
-        user.uid,
-        currentOrganization?.id || user.uid // organizationId aus Context
-      );
-      
-      if (result.success) {
-        emailLogger.draftSaved(campaign.id || 'unknown');
-        dispatch({ type: 'SET_LAST_SAVED', timestamp: new Date() });
-      }
-    } catch (error) {
-      emailLogger.error('Auto-save failed', { campaignId: campaign.id || 'unknown', error: (error as Error).message });
-      dispatch({ type: 'SET_ERROR', field: 'autoSave', error: 'Automatisches Speichern fehlgeschlagen' });
-    } finally {
-      dispatch({ type: 'SET_SAVING', isSaving: false });
-    }
-  }, [campaign.id, state.draft, state.isSaving, user]);
-
-  // Trigger Auto-Save bei Änderungen
-  useEffect(() => {
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
-    }
-
-    const timer = setTimeout(() => {
-      autoSaveDraft();
-    }, DEFAULT_COMPOSER_CONFIG.autoSave.debounceMs);
-
-    setAutoSaveTimer(timer);
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [state.draft]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ANGEPASST: Lade existierenden Draft beim Mount mit direktem Service
-  useEffect(() => {
-    const loadDraft = async () => {
-      dispatch({ type: 'SET_LOADING', isLoading: true });
-      
-      try {
-        emailLogger.debug('Loading draft for campaign', { campaignId: campaign.id });
-        
-        // ANGEPASST: Nutze direkt den emailComposerService (client-side)
-        const draftDoc = await emailComposerService.loadDraft(campaign.id!);
-        
-        if (draftDoc) {
-          dispatch({ type: 'LOAD_DRAFT', draft: draftDoc.content });
-          emailLogger.debug('Draft loaded successfully', { campaignId: campaign.id });
-        } else {
-          emailLogger.debug('No existing draft found', { campaignId: campaign.id });
-        }
-      } catch (error) {
-        emailLogger.error('Failed to load draft', { campaignId: campaign.id || 'unknown', error: (error as Error).message });
-      } finally {
-        dispatch({ type: 'SET_LOADING', isLoading: false });
-      }
-    };
-
-    if (user && campaign.id) {
-      loadDraft();
-    }
-  }, [campaign.id, user]);
 
   // ✅ PIPELINE-INITIALISIERUNG HINZUGEFÜGT (Plan 4/9)
   useEffect(() => {
@@ -533,17 +413,6 @@ export default function EmailComposer({
     onPipelineComplete
   };
 
-  if (state.isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
-          <p className="mt-4 text-gray-600">Lade E-Mail-Editor...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* Header mit Progress - OHNE Close Button */}
@@ -605,25 +474,7 @@ export default function EmailComposer({
 
       {/* Footer mit Navigation */}
       <div className="border-t px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {state.isSaving && (
-              <span className="text-sm text-gray-500 flex items-center gap-2">
-                <svg className={`animate-spin ${ICON_SIZES.sm} text-gray-400`} fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Automatisch gespeichert...
-              </span>
-            )}
-            {state.lastSaved && !state.isSaving && (
-              <span className="text-sm text-gray-500">
-                Zuletzt gespeichert: {state.lastSaved.toLocaleTimeString('de-DE')}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
             <button
               onClick={onClose}
               className="px-4 py-2 text-gray-700 hover:text-gray-900"
@@ -659,7 +510,6 @@ export default function EmailComposer({
                 Weiter
               </button>
             )}
-          </div>
         </div>
       </div>
     </div>

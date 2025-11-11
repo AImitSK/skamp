@@ -24,8 +24,8 @@ export default function EmailSendModal({
 }: EmailSendModalProps) {
   return (
     <Dialog open={true} onClose={onClose} size="5xl">
-      <div className="h-[90vh] flex flex-col overflow-hidden">
-        <EmailComposer 
+      <div className="h-[75vh] flex flex-col overflow-hidden">
+        <EmailComposer
           campaign={campaign}
           onClose={onClose}
           onSent={onSent}
