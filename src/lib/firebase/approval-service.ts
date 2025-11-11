@@ -1669,37 +1669,27 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
 
         // Lade echte User-Daten (nicht Organization-Email!)
-        console.log('🔍 DEBUG approval.createdBy:', approval.createdBy);
         if (approval.createdBy) {
           try {
             const { userService } = await import('@/lib/firebase/user-service');
             const userProfile = await userService.getProfile(approval.createdBy);
-            console.log('🔍 DEBUG userProfile loaded:', userProfile);
 
             if (userProfile) {
               adminName = userProfile.displayName || userProfile.email || 'PR-Team';
               adminEmail = userProfile.email;
-              console.log('✅ User-Daten geladen:', adminName, adminEmail);
-            } else {
-              console.log('⚠️ userProfile ist null - verwende Organization Fallback');
-              if (organizationEmailAddress) {
-                // Fallback zur Organization Email nur wenn User nicht gefunden
-                adminName = organizationEmailAddress.displayName || 'PR-Team';
-                adminEmail = organizationEmailAddress.email;
-              }
+            } else if (organizationEmailAddress) {
+              // Fallback zur Organization Email nur wenn User nicht gefunden
+              adminName = organizationEmailAddress.displayName || 'PR-Team';
+              adminEmail = organizationEmailAddress.email;
             }
           } catch (userError) {
-            console.error('❌ Fehler beim Laden der User-Daten:', userError);
             // Fallback zur Organization Email bei Fehler
             if (organizationEmailAddress) {
               adminName = organizationEmailAddress.displayName || 'PR-Team';
               adminEmail = organizationEmailAddress.email;
             }
           }
-        } else {
-          console.log('⚠️ approval.createdBy ist nicht gesetzt - verwende Organization Fallback');
         }
-        console.log('📧 Finale Werte - adminName:', adminName, 'adminEmail:', adminEmail);
       } catch (emailError) {
       }
 
@@ -2197,14 +2187,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         try {
           const { userService } = await import('@/lib/firebase/user-service');
           const userProfile = await userService.getProfile(context.userId);
-          console.log('🔍 [ReactivateApproval] Geladenes User-Profil:', userProfile);
 
           if (userProfile) {
             adminName = userProfile.displayName || userProfile.email || 'Admin';
             adminEmail = userProfile.email;
           }
         } catch (error) {
-          console.error('❌ [ReactivateApproval] Fehler beim Laden des User-Profils:', error);
+          // Fehler beim Laden des User-Profils - nutze Fallback-Werte
         }
       }
 
@@ -2218,7 +2207,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         adminEmail,
         createdBy: context.userId // Überschreibe 'system' mit echter userId
       };
-      console.log('📧 [ReactivateApproval] Sende Re-Request mit:', { adminName, adminEmail, userId: context.userId });
       await this.sendNotifications(updatedApproval, 're-request' as any);
 
 
