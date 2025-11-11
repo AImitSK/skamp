@@ -81,9 +81,9 @@ function generateEmailFooter(data: ApprovalEmailData): string {
     const companyName = branding?.companyName || data.agencyName;
     const logoUrl = branding?.logoUrl || data.agencyLogoUrl;
 
-    // Logo (falls vorhanden)
+    // Logo (falls vorhanden) - mit Zeilenumbruch danach!
     const logoHtml = logoUrl
-      ? `<img src="${logoUrl}" alt="${companyName}" class="logo" style="max-width: 250px; display: block; margin-bottom: 15px;">`
+      ? `<img src="${logoUrl}" alt="${companyName}" class="logo" style="max-width: 250px; max-height: 100px; display: block; margin-bottom: 15px; object-fit: contain;"><br>`
       : '';
 
     // Firmenname (immer anzeigen)
@@ -100,9 +100,9 @@ function generateEmailFooter(data: ApprovalEmailData): string {
       }
     }
 
-    // Trennlinie vor Kontaktdaten
+    // Trennlinie vor Kontaktdaten (ohne Leerzeilen!)
     const separatorHtml = (branding?.phone || branding?.email || branding?.website)
-      ? '<br>---------<br><br>'
+      ? '---------<br>'
       : '';
 
     // Kontaktdaten
@@ -144,8 +144,8 @@ function getBaseEmailStyles(): string {
     .admin-message-box { border-left: 4px solid #28a745; padding-left: 15px; margin: 20px 0; }
     .original-message-box { border-left: 4px solid #999; padding-left: 15px; margin: 20px 0; }
     .link-section { margin: 30px 0; font-size: 16px; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #333; font-size: 14px; line-height: 1.4; }
-    .footer .logo { max-width: 250px; display: block; margin-bottom: 15px; }
+    .footer { margin-top: 40px; padding-top: 0; border-top: none; font-size: 14px; line-height: 1.4; }
+    .footer .logo { max-width: 250px; max-height: 100px; display: block; margin-bottom: 15px; object-fit: contain; }
     a { color: #007bff; text-decoration: none; }
     @media only screen and (max-width: 600px) {
       body { padding: 10px !important; }
