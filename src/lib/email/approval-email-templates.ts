@@ -9,6 +9,7 @@
 export interface EmailBrandingSettings {
   companyName?: string;
   logoUrl?: string;
+  emailLogoUrl?: string; // Email-optimierte Version (max 250x100px)
   address?: {
     street?: string;
     postalCode?: string;

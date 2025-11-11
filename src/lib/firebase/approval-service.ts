@@ -1752,6 +1752,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 brandingSettings: brandingSettings ? {
                   companyName: brandingSettings.companyName,
                   logoUrl: brandingSettings.logoUrl,
+                  emailLogoUrl: brandingSettings.emailLogoUrl, // Email-optimierte Logo-Version
                   address: brandingSettings.address,
                   phone: brandingSettings.phone,
                   email: brandingSettings.email,
@@ -1762,8 +1763,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
               await apiClient.post('/api/email/send', {
                 to: [{ email: recipient.email, name: recipient.name }],
-                from: { email: organizationEmailAddress.email, name: organizationEmailAddress.displayName || agencyName },
-                replyTo: replyToAddress,
+                from: { email: organizationEmailAddress.email, name: adminName }, // Nutze echten User-Namen
+                replyTo: { email: replyToAddress.email, name: adminName }, // Nutze echten User-Namen
                 subject: templateContent.subject,
                 htmlContent: templateContent.html,
                 textContent: templateContent.text,
