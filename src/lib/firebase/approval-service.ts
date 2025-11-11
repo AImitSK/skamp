@@ -1764,7 +1764,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               await apiClient.post('/api/email/send', {
                 to: [{ email: recipient.email, name: recipient.name }],
                 from: { email: organizationEmailAddress.email, name: adminName }, // Nutze echten User-Namen
-                replyTo: { email: replyToAddress.email, name: adminName }, // Nutze echten User-Namen
+                replyTo: { email: replyToAddress, name: adminName }, // replyToAddress ist bereits ein String!
                 subject: templateContent.subject,
                 htmlContent: templateContent.html,
                 textContent: templateContent.text,
