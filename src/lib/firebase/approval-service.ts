@@ -1669,27 +1669,37 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
 
         // Lade echte User-Daten (nicht Organization-Email!)
+        console.log('🔍 DEBUG approval.createdBy:', approval.createdBy);
         if (approval.createdBy) {
           try {
             const { userService } = await import('@/lib/firebase/user-service');
             const userProfile = await userService.getProfile(approval.createdBy);
+            console.log('🔍 DEBUG userProfile loaded:', userProfile);
 
             if (userProfile) {
               adminName = userProfile.displayName || userProfile.email || 'PR-Team';
               adminEmail = userProfile.email;
-            } else if (organizationEmailAddress) {
-              // Fallback zur Organization Email nur wenn User nicht gefunden
-              adminName = organizationEmailAddress.displayName || 'PR-Team';
-              adminEmail = organizationEmailAddress.email;
+              console.log('✅ User-Daten geladen:', adminName, adminEmail);
+            } else {
+              console.log('⚠️ userProfile ist null - verwende Organization Fallback');
+              if (organizationEmailAddress) {
+                // Fallback zur Organization Email nur wenn User nicht gefunden
+                adminName = organizationEmailAddress.displayName || 'PR-Team';
+                adminEmail = organizationEmailAddress.email;
+              }
             }
           } catch (userError) {
+            console.error('❌ Fehler beim Laden der User-Daten:', userError);
             // Fallback zur Organization Email bei Fehler
             if (organizationEmailAddress) {
               adminName = organizationEmailAddress.displayName || 'PR-Team';
               adminEmail = organizationEmailAddress.email;
             }
           }
+        } else {
+          console.log('⚠️ approval.createdBy ist nicht gesetzt - verwende Organization Fallback');
         }
+        console.log('📧 Finale Werte - adminName:', adminName, 'adminEmail:', adminEmail);
       } catch (emailError) {
       }
 
