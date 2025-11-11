@@ -816,6 +816,9 @@ class PDFTemplateService {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${title || 'Pressemitteilung'}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
         <style>
           * {
             margin: 0;
@@ -997,17 +1000,19 @@ class PDFTemplateService {
 
           /* Modern Professional Template spezifische Anpassungen */
 
-          /* Horizontale Linie unter Datum entfernen */
+          /* Horizontale Linie unter Datum entfernen + Abstände minimieren */
           body.template-modern-professional .document-header {
             border-bottom: none;
-          }
-
-          /* Abstand Datum -> Bild sehr klein: 0,5cm total */
-          body.template-modern-professional .press-date {
+            padding-bottom: 0;
             margin-bottom: 5mm;
           }
 
-          /* Bild direkt nach Datum, kein zusätzlicher margin-top! */
+          /* Datum: kein zusätzlicher Abstand */
+          body.template-modern-professional .press-date {
+            margin-bottom: 0;
+          }
+
+          /* Bild direkt nach Datum, minimaler Abstand! */
           body.template-modern-professional .key-visual {
             margin: 0 0 5mm 0;
           }
