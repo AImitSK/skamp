@@ -824,7 +824,7 @@ class PDFTemplateService {
           }
           
           body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-family: 'Roboto', 'Arial', 'Helvetica', sans-serif;
             font-size: 12pt;
             line-height: 1.6;
             color: #333;
@@ -1075,11 +1075,14 @@ class PDFTemplateService {
             color: #000;
           }
 
-          /* Hashtags - Blau, fett */
+          /* Hashtags - Blau, fett, kein zusätzlicher Abstand */
           body.template-modern-professional .hashtag,
           body.template-modern-professional span[data-type="hashtag"] {
             color: ${template.colorScheme.primary};
             font-weight: 600;
+            display: inline;
+            margin: 0;
+            padding: 0;
           }
 
           /* Zitat (Quote) - Kursiv, linker Border, grauer Text */
@@ -1094,15 +1097,15 @@ class PDFTemplateService {
 
           /* Hashtags Section (falls separat vorhanden) */
           body.template-modern-professional .hashtags-section {
-            margin-top: 10mm;
-            padding-top: 8mm;
+            margin-top: 5mm;
+            padding-top: 0;
           }
 
           body.template-modern-professional .hashtags-title {
             font-weight: bold;
             font-size: 10pt;
             color: #333;
-            margin-bottom: 3mm;
+            margin-bottom: 2mm;
           }
 
           body.template-modern-professional .hashtags-title::before {
@@ -1296,8 +1299,8 @@ class PDFTemplateService {
       },
       
       typography: {
-        primaryFont: 'Inter',
-        secondaryFont: 'Inter',
+        primaryFont: 'Roboto',
+        secondaryFont: 'Roboto',
         baseFontSize: 11,
         lineHeight: 1.6,
         headingScale: [24, 20, 16, 14]
