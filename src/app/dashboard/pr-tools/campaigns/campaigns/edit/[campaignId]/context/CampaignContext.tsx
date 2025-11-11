@@ -87,7 +87,7 @@ interface CampaignContextValue {
 
   // Template States
   selectedTemplateId: string | undefined;
-  updateSelectedTemplate: (templateId: string, templateName?: string) => void;
+  updateSelectedTemplate: (templateId: string, templateName?: string, silent?: boolean) => void;
 
   // PDF Generation
   generatingPdf: boolean;
@@ -532,14 +532,16 @@ export function CampaignProvider({
   }, []);
 
   // Phase 3: Template Actions
-  const updateSelectedTemplate = useCallback((templateId: string, templateName?: string) => {
+  const updateSelectedTemplate = useCallback((templateId: string, templateName?: string, silent?: boolean) => {
     setSelectedTemplateId(templateId);
 
-    // Toast-Meldung für Template-Auswahl
-    if (templateName) {
-      toastService.success(`PDF-Template "${templateName}" ausgewählt`);
-    } else {
-      toastService.success('PDF-Template ausgewählt');
+    // Toast-Meldung für Template-Auswahl (nur wenn nicht silent)
+    if (!silent) {
+      if (templateName) {
+        toastService.success(`PDF-Template "${templateName}" ausgewählt`);
+      } else {
+        toastService.success('PDF-Template ausgewählt');
+      }
     }
   }, []);
 

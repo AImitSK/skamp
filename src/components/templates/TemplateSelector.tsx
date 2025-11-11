@@ -38,7 +38,7 @@ const LoadingSpinner = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
 interface TemplateSelectorProps {
   organizationId: string;
   selectedTemplateId?: string;
-  onTemplateSelect: (templateId: string, templateName: string) => void;
+  onTemplateSelect: (templateId: string, templateName: string, silent?: boolean) => void;
   className?: string;
   showPreview?: boolean;
   disabled?: boolean;
@@ -352,12 +352,12 @@ export function TemplateSelector({
   }, [loadTemplates]);
 
   /**
-   * Erstes Template automatisch als Default auswählen
+   * Erstes Template automatisch als Default auswählen (silent = keine Toast-Meldung)
    */
   useEffect(() => {
     if (templates.length > 0 && !selectedTemplateId) {
       const firstTemplate = templates[0];
-      onTemplateSelect(firstTemplate.id, firstTemplate.name);
+      onTemplateSelect(firstTemplate.id, firstTemplate.name, true); // silent = true
     }
   }, [templates, selectedTemplateId, onTemplateSelect]);
 
