@@ -562,9 +562,9 @@ export default function Step3Preview({
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Linke Spalte: Vorschau (60%) */}
-          <div className="lg:col-span-7 space-y-4">
+        <div className="space-y-6">
+          {/* E-Mail-Vorschau (volle Breite) */}
+          <div>
             {/* Vorschau-Header */}
             <div className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
@@ -625,39 +625,10 @@ export default function Step3Preview({
                 />
               </div>
             </div>
-
-            {/* Anhang-Liste */}
-            {attachments.length > 0 && (
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                  <PaperClipIcon className="h-5 w-5 text-gray-500" />
-                  Anhänge ({attachments.length})
-                </h4>
-                <div className="space-y-2">
-                  {attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <attachment.icon className="h-5 w-5 text-gray-400" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{attachment.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {attachment.type}
-                            {attachment.description && ` • ${attachment.description}`}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  Diese Dateien werden automatisch an jede E-Mail angehängt.
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* Rechte Spalte: Versand-Optionen (40%) */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* Test-Versand und Finaler Versand (50/50 Grid) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Test-Versand */}
             <div className="border rounded-lg p-6">
               <h4 className="font-medium mb-4 flex items-center gap-2">
@@ -811,52 +782,6 @@ export default function Step3Preview({
                   </Button>
                 </div>
               </div>
-            </div>
-
-            {/* Zusammenfassung */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">Versand-Übersicht</h4>
-              <dl className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <dt className="text-blue-700">Empfänger gesamt:</dt>
-                  <dd className="font-medium text-blue-900">{totalRecipients}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-blue-700">Aus Verteilerlisten:</dt>
-                  <dd className="font-medium text-blue-900">{listRecipients}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-blue-700">Manuell hinzugefügt:</dt>
-                  <dd className="font-medium text-blue-900">{manualRecipients}</dd>
-                </div>
-                {attachments.length > 0 && (
-                  <div className="flex justify-between">
-                    <dt className="text-blue-700">Anhänge:</dt>
-                    <dd className="font-medium text-blue-900">{attachments.length} Datei{attachments.length !== 1 ? 'en' : ''}</dd>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <dt className="text-blue-700">Status:</dt>
-                  <dd className="font-medium text-blue-900">{
-                    campaign.status === 'draft' ? 'Entwurf' :
-                    campaign.status === 'scheduled' ? 'Geplant' :
-                    campaign.status === 'sending' ? 'Wird versendet' :
-                    campaign.status === 'sent' ? 'Versendet' :
-                    campaign.status
-                  }</dd>
-                </div>
-              </dl>
-              
-              {draft.recipients.listNames && draft.recipients.listNames.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="text-xs text-blue-700 mb-1">Ausgewählte Listen:</p>
-                  <ul className="text-xs text-blue-800 list-disc list-inside">
-                    {draft.recipients.listNames.map((name, index) => (
-                      <li key={index}>{name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
         </div>
