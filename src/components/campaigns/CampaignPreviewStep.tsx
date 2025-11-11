@@ -99,21 +99,35 @@ export function CampaignPreviewStep({
               .campaign-preview-content :global(*) {
                 color: #374151 !important; /* text-gray-700 */
               }
-              
+
+              /* Boilerplate H3-Überschriften - Fett mit Abstand */
+              .campaign-preview-content :global(h3) {
+                font-weight: bold !important;
+                font-size: 1.1rem !important;
+                margin-top: 1.5rem !important;
+                margin-bottom: 0.5rem !important;
+                color: #1f2937 !important; /* Dunkler für Kontrast */
+              }
+
+              /* Erster H3 ohne oberen Abstand */
+              .campaign-preview-content :global(h3:first-of-type) {
+                margin-top: 0 !important;
+              }
+
               .campaign-preview-content :global(span[data-type="cta-text"]),
               .campaign-preview-content :global(.cta-text) {
                 color: #000000 !important;
                 font-weight: bold !important;
                 text-decoration: none !important;
               }
-              
+
               .campaign-preview-content :global(span[data-type="hashtag"]),
               .campaign-preview-content :global(.hashtag) {
                 color: #000000 !important;
                 font-weight: normal !important;
                 text-decoration: none !important;
               }
-              
+
               .campaign-preview-content :global(blockquote) {
                 color: #374151 !important;
                 border-left: 4px solid #d1d5db;
@@ -121,12 +135,12 @@ export function CampaignPreviewStep({
                 margin: 1.5rem 0;
                 font-style: italic;
               }
-              
+
               .campaign-preview-content :global(a) {
                 color: #374151 !important;
                 text-decoration: none !important;
               }
-              
+
               /* Keine Hover-Effekte */
               .campaign-preview-content :global(*:hover) {
                 color: inherit !important;
