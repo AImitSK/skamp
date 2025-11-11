@@ -15,6 +15,7 @@ import { mediaService } from "@/lib/firebase/media-service";
 import { BrandingSettings } from "@/types/branding";
 import { teamMemberService } from "@/lib/firebase/organization-service";
 import { SettingsNav } from '@/components/SettingsNav'; // ✨ Hinzugefügt
+import { createEmailLogo } from "@/utils/imageHelpers";
 import {
   BuildingOfficeIcon,
   PhotoIcon,
@@ -169,11 +170,11 @@ export default function BrandingPage() {
         user.uid
       );
 
-      // 3. Upload Logo in den Branding-Ordner
+      // 3. Upload Original-Logo in den Branding-Ordner
       const asset = await mediaService.uploadMedia(
         file,
         organizationId,
-        brandingFolderId, // Logo im Branding-Ordner speichern
+        brandingFolderId,
         (progress) => {
           // Optional: Progress-Tracking
         }
@@ -181,24 +182,53 @@ export default function BrandingPage() {
 
       // 4. Update das Asset mit einer speziellen Markierung
       await mediaService.updateAsset(asset.id!, {
-        tags: ['__branding__'], // Spezieller Tag für zusätzliche Filterung
+        tags: ['__branding__'],
         description: 'Firmenlogo für Branding'
       });
 
-      // 5. Speichere Logo direkt in Firestore (nicht nur im lokalen State)
+      // 5. Erstelle Email-optimierte Version (max 250x100px)
+      let emailAsset = null;
+      try {
+        const emailLogoFile = await createEmailLogo(file);
+
+        // Upload Email-Version
+        emailAsset = await mediaService.uploadMedia(
+          emailLogoFile,
+          organizationId,
+          brandingFolderId,
+          (progress) => {
+            // Optional: Progress-Tracking
+          }
+        );
+
+        // Markiere Email-Version
+        await mediaService.updateAsset(emailAsset.id!, {
+          tags: ['__branding__', '__email__'],
+          description: 'Firmenlogo für E-Mails (optimiert)'
+        });
+      } catch (emailError) {
+        console.error('Fehler beim Erstellen der Email-Logo-Version:', emailError);
+        // Fahre fort auch wenn Email-Version fehlschlägt
+      }
+
+      // 6. Speichere beide Logos direkt in Firestore
       await brandingService.updateBrandingSettings(
         {
           logoUrl: asset.downloadUrl,
-          logoAssetId: asset.id
+          logoAssetId: asset.id,
+          emailLogoUrl: emailAsset?.downloadUrl || asset.downloadUrl, // Fallback auf Original
+          emailLogoAssetId: emailAsset?.id || asset.id
         },
         { organizationId, userId: user.uid }
       );
 
-      // 6. Update lokalen State
+      // 7. Update lokalen State
       setFormData(prev => ({
         ...prev,
         logoUrl: asset.downloadUrl,
-        logoAssetId: asset.id
+        logoAssetId: asset.id,
+        emailLogoUrl: emailAsset?.downloadUrl || asset.downloadUrl,
+        emailLogoAssetId: emailAsset?.id || asset.id
       }));
 
       showAlert('success', 'Logo erfolgreich hochgeladen und gespeichert');
@@ -224,7 +254,9 @@ export default function BrandingPage() {
       setFormData(prev => ({
         ...prev,
         logoUrl: undefined,
-        logoAssetId: undefined
+        logoAssetId: undefined,
+        emailLogoUrl: undefined,
+        emailLogoAssetId: undefined
       }));
 
       showAlert('success', 'Logo erfolgreich entfernt und gespeichert');

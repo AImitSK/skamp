@@ -10,6 +10,8 @@ export interface BrandingSettings {
   companyName: string;
   logoUrl?: string;
   logoAssetId?: string; // Referenz zum Media Asset
+  emailLogoUrl?: string; // Kleinere Version für E-Mails (max 250x100px)
+  emailLogoAssetId?: string; // Referenz zum Email-Logo Asset
   
   // Kontaktdaten
   address?: {

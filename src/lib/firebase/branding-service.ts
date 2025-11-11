@@ -197,7 +197,7 @@ export const brandingService = {
       // Lade aktuelle Branding-Einstellungen um logoAssetId zu bekommen
       const settings = await this.getBrandingSettings(context.organizationId);
 
-      // Lösche das tatsächliche Asset aus Storage und Firestore
+      // Lösche das Original-Logo Asset aus Storage und Firestore
       if (settings?.logoAssetId) {
         try {
           const asset = await mediaService.getMediaAssetById(settings.logoAssetId);
@@ -213,11 +213,29 @@ export const brandingService = {
         }
       }
 
+      // Lösche das Email-Logo Asset aus Storage und Firestore
+      if (settings?.emailLogoAssetId && settings.emailLogoAssetId !== settings.logoAssetId) {
+        try {
+          const emailAsset = await mediaService.getMediaAssetById(settings.emailLogoAssetId);
+          if (emailAsset) {
+            await mediaService.deleteMediaAsset(emailAsset);
+            console.log('Email-Logo-Asset erfolgreich gelöscht:', settings.emailLogoAssetId);
+          } else {
+            console.warn('Email-Logo-Asset nicht gefunden:', settings.emailLogoAssetId);
+          }
+        } catch (assetError) {
+          console.error('Email-Logo-Asset konnte nicht gelöscht werden:', assetError);
+          // Fahre fort, auch wenn Asset-Löschung fehlschlägt
+        }
+      }
+
       // Update Firestore-Referenzen
       const docRef = doc(db, 'branding_settings', context.organizationId);
       await updateDoc(docRef, {
         logoUrl: null,
         logoAssetId: null,
+        emailLogoUrl: null,
+        emailLogoAssetId: null,
         updatedAt: serverTimestamp(),
         updatedBy: context.userId
       });

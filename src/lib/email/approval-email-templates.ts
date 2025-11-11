@@ -79,7 +79,8 @@ function generateEmailFooter(data: ApprovalEmailData): string {
   if (hasCustomBranding) {
     const branding = data.brandingSettings;
     const companyName = branding?.companyName || data.agencyName;
-    const logoUrl = branding?.logoUrl || data.agencyLogoUrl;
+    // Nutze Email-optimierte Logo-Version (max 250x100px), fallback auf Original
+    const logoUrl = branding?.emailLogoUrl || branding?.logoUrl || data.agencyLogoUrl;
 
     // Logo (falls vorhanden) - mit Zeilenumbruch danach!
     const logoHtml = logoUrl
