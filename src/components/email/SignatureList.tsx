@@ -81,35 +81,7 @@ export function SignatureList({
   };
 
   const getPreviewHtml = (signature: EmailSignature): string => {
-    const previewData = {
-      userName: signature.variables?.includeUserName ? 'Max Mustermann' : '',
-      userTitle: signature.variables?.includeUserTitle ? 'Geschäftsführer' : '',
-      companyName: signature.variables?.includeCompanyName ? 'Musterfirma GmbH' : '',
-      phone: signature.variables?.includePhone ? '+49 123 456789' : '',
-      website: signature.variables?.includeWebsite ? 'www.musterfirma.de' : '',
-      socialLinks: signature.variables?.includeSocialLinks ? 'LinkedIn | Twitter | Facebook' : ''
-    };
-
-    let previewContent = signature.content || '';
-    
-    const fields = [];
-    if (previewData.userName) fields.push(`<strong>${previewData.userName}</strong>`);
-    if (previewData.userTitle) fields.push(previewData.userTitle);
-    if (previewData.companyName) fields.push(previewData.companyName);
-    if (previewData.phone) fields.push(`Tel: ${previewData.phone}`);
-    if (previewData.website) fields.push(`<a href="https://${previewData.website}">${previewData.website}</a>`);
-    if (previewData.socialLinks) fields.push(previewData.socialLinks);
-    
-    if (fields.length > 0) {
-      previewContent = `
-        <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
-          ${fields.join('<br>')}
-          ${previewContent ? '<br><br>' + previewContent : ''}
-        </div>
-      `;
-    }
-    
-    return previewContent;
+    return signature.content || '<p>Keine Inhalte vorhanden</p>';
   };
 
   // Debug log für showEditor state
@@ -228,39 +200,6 @@ export function SignatureList({
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
-              </div>
-
-              {/* Features */}
-              <div className="mb-4">
-                <p className="text-xs text-gray-600 mb-2">Enthaltene Felder:</p>
-                <div className="flex flex-wrap gap-1">
-                  {signature.variables?.includeUserName && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Name</Badge>
-                  )}
-                  {signature.variables?.includeUserTitle && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Titel</Badge>
-                  )}
-                  {signature.variables?.includeCompanyName && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Firma</Badge>
-                  )}
-                  {signature.variables?.includePhone && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Telefon</Badge>
-                  )}
-                  {signature.variables?.includeWebsite && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Website</Badge>
-                  )}
-                  {signature.variables?.includeSocialLinks && (
-                    <Badge color="zinc" className="text-xs whitespace-nowrap">Social Media</Badge>
-                  )}
-                  {!signature.variables?.includeUserName && 
-                   !signature.variables?.includeUserTitle && 
-                   !signature.variables?.includeCompanyName && 
-                   !signature.variables?.includePhone && 
-                   !signature.variables?.includeWebsite && 
-                   !signature.variables?.includeSocialLinks && (
-                    <span className="text-xs text-gray-400">Keine Standard-Felder</span>
-                  )}
-                </div>
               </div>
 
               {/* Assigned Emails */}

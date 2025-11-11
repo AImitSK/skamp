@@ -106,10 +106,14 @@ export interface EmailSignature extends BaseEntity {
   name: string;
   content: string; // HTML
   isDefault: boolean;
-  
+
+  // Logo
+  logoUrl?: string;
+  logoAssetId?: string;
+
   // Zuordnungen
   emailAddressIds: string[]; // Welche E-Mail-Adressen nutzen diese Signatur
-  
+
   // Variablen
   variables: {
     includeUserName?: boolean;
@@ -119,7 +123,7 @@ export interface EmailSignature extends BaseEntity {
     includeWebsite?: boolean;
     includeSocialLinks?: boolean;
   };
-  
+
   // Templates für verschiedene Kontexte
   variants?: Array<{
     id: string;

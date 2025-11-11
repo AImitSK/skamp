@@ -43,7 +43,10 @@ export interface EmailDraft {
   content: {
     // Kombinierter Rich-Text Content (Begrüßung + Einleitung + Schluss)
     body: string; // HTML aus TipTap Editor
-    
+
+    // Signatur
+    signatureId?: string; // ID der ausgewählten E-Mail-Signatur
+
     // Extrahierte Teile für Variablen-Replacement
     sections?: {
       greeting?: string;    // z.B. "Sehr geehrte Frau {{firstName}}"

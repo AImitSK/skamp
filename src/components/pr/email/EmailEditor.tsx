@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
+import TiptapImage from '@tiptap/extension-image';
 import {
   BoldIcon,
   ItalicIcon,
@@ -14,14 +15,17 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   CodeBracketIcon,
-  LinkIcon
+  LinkIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { StrikethroughIcon } from '@heroicons/react/24/outline';
 import { QueueListIcon as ListOrderedIcon } from '@heroicons/react/24/outline';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { mediaService } from '@/lib/firebase/media-service';
+import { useOrganization } from '@/context/OrganizationContext';
 
 interface EmailEditorProps {
   content: string;
@@ -40,8 +44,14 @@ export default function EmailEditor({
   minHeight = '400px',
   error
 }: EmailEditorProps) {
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
+
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -59,6 +69,12 @@ export default function EmailEditor({
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph']
+      }),
+      TiptapImage.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto',
+          style: 'max-width: 400px;'
+        }
       })
     ],
     content,
@@ -100,6 +116,80 @@ export default function EmailEditor({
     setShowLinkDialog(false);
     setLinkUrl('');
   }, [editor, linkUrl]);
+
+  const handleLogoClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleLogoUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !editor) return;
+
+    // Validiere Dateityp
+    if (!file.type.startsWith('image/')) {
+      setLogoError('Bitte wählen Sie eine Bilddatei aus');
+      setTimeout(() => setLogoError(''), 3000);
+      return;
+    }
+
+    // Validiere Dateigröße (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setLogoError('Die Datei darf maximal 5MB groß sein');
+      setTimeout(() => setLogoError(''), 3000);
+      return;
+    }
+
+    try {
+      setUploadingLogo(true);
+      setLogoError('');
+
+      // Prüfe Bildabmessungen
+      const img = new Image();
+      const imageUrl = URL.createObjectURL(file);
+
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          if (img.width > 400 || img.height > 300) {
+            reject(new Error('Das Logo darf maximal 400x300 Pixel groß sein'));
+          } else {
+            resolve(true);
+          }
+          URL.revokeObjectURL(imageUrl);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(imageUrl);
+          reject(new Error('Fehler beim Laden des Bildes'));
+        };
+        img.src = imageUrl;
+      });
+
+      // Upload Logo in signatures/ Ordner
+      const asset = await mediaService.uploadMedia(
+        file,
+        organizationId,
+        'signature-logo',
+        {
+          folder: 'signatures',
+          tags: ['signature', 'logo'],
+          description: 'Logo für E-Mail-Signatur'
+        }
+      );
+
+      // Füge Bild an Cursor-Position ein
+      editor.chain().focus().setImage({ src: asset.downloadUrl, alt: 'Logo' }).run();
+
+    } catch (error) {
+      console.error('Fehler beim Logo-Upload:', error);
+      setLogoError(error instanceof Error ? error.message : 'Fehler beim Hochladen des Logos');
+      setTimeout(() => setLogoError(''), 3000);
+    } finally {
+      setUploadingLogo(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [editor, organizationId]);
 
   const insertVariable = useCallback((variable: string) => {
     if (!editor) return;
@@ -165,6 +255,15 @@ export default function EmailEditor({
             title="Link einfügen (Strg+K)"
           >
             <LinkIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); handleLogoClick(); }}
+            disabled={uploadingLogo}
+            className={`p-2 rounded hover:bg-gray-200 transition-colors ${uploadingLogo ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title="Logo einfügen (max. 400x300px)"
+          >
+            <PhotoIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -261,6 +360,30 @@ export default function EmailEditor({
         )}
       </div>
 
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleLogoUpload}
+        className="hidden"
+      />
+
+      {/* Logo Upload Error */}
+      {logoError && (
+        <div className="px-4 py-2 bg-red-50 text-red-700 text-sm border-t border-red-200">
+          {logoError}
+        </div>
+      )}
+
+      {/* Logo Upload Status */}
+      {uploadingLogo && (
+        <div className="px-4 py-2 bg-blue-50 text-blue-700 text-sm border-t border-blue-200 flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+          Logo wird hochgeladen...
+        </div>
+      )}
+
       {/* Editor */}
       <div className="bg-white relative" style={{ minHeight }}>
         {!content && (
@@ -340,6 +463,18 @@ export default function EmailEditor({
             background-color: transparent !important;
             padding: 0 !important;
             color: #f3f4f6 !important;
+          }
+          :global(.ProseMirror img) {
+            max-width: 400px !important;
+            height: auto !important;
+            display: block !important;
+            margin: 1em 0 !important;
+            border-radius: 0.25em !important;
+            cursor: pointer !important;
+          }
+          :global(.ProseMirror img.ProseMirror-selectednode) {
+            outline: 2px solid #005fab !important;
+            outline-offset: 2px !important;
           }
         `}</style>
       </div>

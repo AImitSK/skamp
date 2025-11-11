@@ -7,10 +7,11 @@ import { Field, Label, Description } from '@/components/ui/fieldset';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
-import { RichTextEditor } from '@/components/RichTextEditor';
+import EmailEditor from '@/components/pr/email/EmailEditor';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { EmailSignature } from '@/types/email-enhanced';
-import { 
+import { useOrganization } from '@/context/OrganizationContext';
+import {
   PencilSquareIcon,
   CheckCircleIcon,
   EyeIcon
@@ -31,21 +32,15 @@ export function SignatureEditor({
   onSave,
   emailAddresses
 }: SignatureEditorProps) {
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
+
   const [formData, setFormData] = useState({
     name: '',
     content: '',
-    isDefault: false,
-    emailAddressIds: [] as string[],
-    variables: {
-      includeUserName: true,
-      includeUserTitle: true,
-      includeCompanyName: true,
-      includePhone: true,
-      includeWebsite: false,
-      includeSocialLinks: false
-    }
+    emailAddressIds: [] as string[]
   });
-  
+
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,32 +50,14 @@ export function SignatureEditor({
       setFormData({
         name: signature.name,
         content: signature.content,
-        isDefault: signature.isDefault,
-        emailAddressIds: signature.emailAddressIds || [],
-        variables: {
-          includeUserName: signature.variables?.includeUserName ?? true,
-          includeUserTitle: signature.variables?.includeUserTitle ?? true,
-          includeCompanyName: signature.variables?.includeCompanyName ?? true,
-          includePhone: signature.variables?.includePhone ?? true,
-          includeWebsite: signature.variables?.includeWebsite ?? false,
-          includeSocialLinks: signature.variables?.includeSocialLinks ?? false
-        }
+        emailAddressIds: signature.emailAddressIds || []
       });
     } else {
       // Reset für neue Signatur
       setFormData({
         name: '',
         content: '',
-        isDefault: false,
-        emailAddressIds: [],
-        variables: {
-          includeUserName: true,
-          includeUserTitle: true,
-          includeCompanyName: true,
-          includePhone: true,
-          includeWebsite: false,
-          includeSocialLinks: false
-        }
+        emailAddressIds: []
       });
     }
   }, [signature]);
@@ -124,46 +101,17 @@ export function SignatureEditor({
   };
 
   const getPreviewHtml = () => {
-    // Beispiel-Daten für Vorschau
-    const previewData = {
-      userName: formData.variables.includeUserName ? 'Max Mustermann' : '',
-      userTitle: formData.variables.includeUserTitle ? 'Geschäftsführer' : '',
-      companyName: formData.variables.includeCompanyName ? 'Musterfirma GmbH' : '',
-      phone: formData.variables.includePhone ? '+49 123 456789' : '',
-      website: formData.variables.includeWebsite ? 'www.musterfirma.de' : '',
-      socialLinks: formData.variables.includeSocialLinks ? 'LinkedIn | Twitter | Facebook' : ''
-    };
-
-    let previewContent = formData.content;
-    
-    // Füge Standard-Felder hinzu wenn aktiviert
-    const fields = [];
-    if (previewData.userName) fields.push(`<strong>${previewData.userName}</strong>`);
-    if (previewData.userTitle) fields.push(previewData.userTitle);
-    if (previewData.companyName) fields.push(previewData.companyName);
-    if (previewData.phone) fields.push(`Tel: ${previewData.phone}`);
-    if (previewData.website) fields.push(`<a href="https://${previewData.website}">${previewData.website}</a>`);
-    if (previewData.socialLinks) fields.push(previewData.socialLinks);
-    
-    if (fields.length > 0) {
-      previewContent = `
-        <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
-          ${fields.join('<br>')}
-          ${previewContent ? '<br><br>' + previewContent : ''}
-        </div>
-      `;
-    }
-    
-    return previewContent;
+    return formData.content || '<p>Keine Inhalte vorhanden</p>';
   };
 
   return (
     <>
       <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
-        <DialogTitle className="px-6 py-4">
-          {signature ? 'Signatur bearbeiten' : 'Neue Signatur erstellen'}
-        </DialogTitle>
-        <DialogBody className="p-6">
+        <div className="h-[75vh] flex flex-col overflow-hidden">
+          <DialogTitle className="px-6 py-4 flex-shrink-0">
+            {signature ? 'Signatur bearbeiten' : 'Neue Signatur erstellen'}
+          </DialogTitle>
+          <DialogBody className="p-6 flex-1 overflow-y-auto">
           {errors.submit && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
               {errors.submit}
@@ -183,110 +131,38 @@ export function SignatureEditor({
               {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
             </Field>
 
-            {/* Standard-Felder */}
-            <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-              <h3 className="text-sm font-medium text-gray-900">Standard-Felder</h3>
-              <p className="text-xs text-gray-500">
-                Wählen Sie aus, welche Informationen automatisch in die Signatur eingefügt werden sollen.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Name des Benutzers</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includeUserName}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includeUserName: checked }
-                    })}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Titel/Position</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includeUserTitle}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includeUserTitle: checked }
-                    })}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Firmenname</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includeCompanyName}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includeCompanyName: checked }
-                    })}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Telefonnummer</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includePhone}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includePhone: checked }
-                    })}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Website</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includeWebsite}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includeWebsite: checked }
-                    })}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Social Media Links</span>
-                  <SimpleSwitch
-                    checked={formData.variables.includeSocialLinks}
-                    onChange={(checked) => setFormData({
-                      ...formData,
-                      variables: { ...formData.variables, includeSocialLinks: checked }
-                    })}
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Signatur Content */}
             <Field>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Zusätzlicher Inhalt</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label>Signatur-Inhalt</Label>
+                <InfoTooltip content="Gestalten Sie Ihre E-Mail-Signatur mit Texten, Formatierungen, Links und Logos. Das Logo kann direkt im Editor über den Foto-Button eingefügt werden." />
                 <Button
                   type="button"
                   plain
                   onClick={() => setShowPreview(true)}
-                  className="text-sm"
+                  className="text-sm ml-auto"
                 >
                   <EyeIcon className="h-4 w-4 mr-1" />
                   Vorschau
                 </Button>
               </div>
-              <RichTextEditor
+              <EmailEditor
                 content={formData.content}
                 onChange={(content) => setFormData({ ...formData, content })}
+                placeholder="Mit freundlichen Grüßen..."
+                minHeight="200px"
+                error={errors.content}
               />
-              <Description className="mt-2">
-                Fügen Sie zusätzliche Informationen wie Disclaimer, Auszeichnungen oder Marketing-Texte hinzu.
-              </Description>
               {errors.content && <p className="text-sm text-red-600 mt-1">{errors.content}</p>}
             </Field>
 
             {/* E-Mail-Adressen Zuordnung */}
             {emailAddresses.length > 0 && (
               <div className="space-y-3">
-                <span className="text-sm font-medium text-gray-700">Diese Signatur verwenden für</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Diese Signatur verwenden für</span>
+                  <InfoTooltip content="Wählen Sie die E-Mail-Adressen aus, die diese Signatur verwenden sollen." />
+                </div>
                 <div className="max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2">
                   {emailAddresses.map((email) => (
                     <label
@@ -308,39 +184,23 @@ export function SignatureEditor({
                     </label>
                   ))}
                 </div>
-                <Description>
-                  Wählen Sie die E-Mail-Adressen aus, die diese Signatur verwenden sollen.
-                </Description>
               </div>
             )}
-
-            {/* Standard-Signatur */}
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <span className="text-sm font-medium text-gray-900">Als Standard-Signatur festlegen</span>
-                <p className="text-xs text-gray-600 mt-1">
-                  Diese Signatur wird automatisch für neue E-Mail-Adressen verwendet
-                </p>
-              </div>
-              <SimpleSwitch
-                checked={formData.isDefault}
-                onChange={(checked) => setFormData({ ...formData, isDefault: checked })}
-              />
-            </div>
           </div>
-        </DialogBody>
-        <DialogActions className="px-6 py-4">
-          <Button plain onClick={onClose} disabled={saving}>
-            Abbrechen
-          </Button>
-          <Button
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? 'Speichern...' : (signature ? 'Speichern' : 'Signatur erstellen')}
-          </Button>
-        </DialogActions>
+          </DialogBody>
+          <DialogActions className="px-6 py-4 flex-shrink-0">
+            <Button plain onClick={onClose} disabled={saving}>
+              Abbrechen
+            </Button>
+            <Button
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+              onClick={handleSubmit}
+              disabled={saving}
+            >
+              {saving ? 'Speichern...' : (signature ? 'Speichern' : 'Signatur erstellen')}
+            </Button>
+          </DialogActions>
+        </div>
       </Dialog>
 
       {/* Preview Modal */}

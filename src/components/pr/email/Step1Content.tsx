@@ -1,13 +1,16 @@
 // src/components/pr/email/Step1Content.tsx
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation } from '@/types/email-composer';
+import { EmailSignature } from '@/types/email-enhanced';
 import EmailEditor from '@/components/pr/email/EmailEditor';
 import VariablesModal from '@/components/pr/email/VariablesModal';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { InformationCircleIcon } from '@heroicons/react/20/solid';
+import { useOrganization } from '@/context/OrganizationContext';
+import { emailSignatureService } from '@/lib/email/email-signature-service';
 
 interface Step1ContentProps {
   content: EmailDraft['content'];
@@ -22,11 +25,41 @@ export default function Step1Content({
   validation,
   campaign
 }: Step1ContentProps) {
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
+
   const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [signatures, setSignatures] = useState<EmailSignature[]>([]);
+  const [loadingSignatures, setLoadingSignatures] = useState(true);
+
+  // Signaturen laden
+  useEffect(() => {
+    const loadSignatures = async () => {
+      if (!organizationId) return;
+
+      try {
+        setLoadingSignatures(true);
+        const sigs = await emailSignatureService.getByOrganization(organizationId);
+        setSignatures(sigs);
+      } catch (error) {
+        console.error('Fehler beim Laden der Signaturen:', error);
+      } finally {
+        setLoadingSignatures(false);
+      }
+    };
+
+    loadSignatures();
+  }, [organizationId]);
 
   // Handler für Content-Änderungen
   const handleContentChange = useCallback((newContent: string) => {
     onChange({ body: newContent });
+  }, [onChange]);
+
+  // Handler für Signatur-Auswahl
+  const handleSignatureChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const signatureId = e.target.value || undefined;
+    onChange({ signatureId });
   }, [onChange]);
 
   // Handler für Variable einfügen
@@ -81,14 +114,29 @@ ich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen..."
               <InfoTooltip content="Die ausgewählte Signatur wird automatisch am Ende der E-Mail eingefügt." />
             </div>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
-              defaultValue=""
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              value={content.signatureId || ''}
+              onChange={handleSignatureChange}
+              disabled={loadingSignatures}
             >
-              <option value="">Signatur auswählen...</option>
-              <option value="standard">Standard-Signatur</option>
-              <option value="formal">Formelle Signatur</option>
-              <option value="short">Kurz-Signatur</option>
+              <option value="">
+                {loadingSignatures ? 'Signaturen werden geladen...' : 'Keine Signatur verwenden'}
+              </option>
+              {signatures.map((signature) => (
+                <option key={signature.id} value={signature.id}>
+                  {signature.name}
+                  {signature.isDefault ? ' (Standard)' : ''}
+                </option>
+              ))}
             </select>
+            {!loadingSignatures && signatures.length === 0 && (
+              <p className="text-xs text-gray-500 mt-2">
+                Noch keine Signaturen vorhanden. Erstellen Sie Signaturen in den{' '}
+                <a href="/dashboard/settings/email" className="text-[#005fab] hover:underline">
+                  E-Mail-Einstellungen
+                </a>.
+              </p>
+            )}
           </div>
         </div>
       </div>
