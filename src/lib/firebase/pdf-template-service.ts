@@ -1002,14 +1002,14 @@ class PDFTemplateService {
             border-bottom: none;
           }
 
-          /* Abstand Datum -> Bild sehr klein (wie Unternehmensname -> "Pressemitteilung") */
+          /* Abstand Datum -> Bild sehr klein: 0,5cm total */
           body.template-modern-professional .press-date {
             margin-bottom: 5mm;
           }
 
-          /* Bild näher ans Datum, Abstand zu Text kleiner */
+          /* Bild direkt nach Datum, kein zusätzlicher margin-top! */
           body.template-modern-professional .key-visual {
-            margin: 5mm 0 5mm 0;
+            margin: 0 0 5mm 0;
           }
 
           /* Schlagschatten am Bild entfernen */
