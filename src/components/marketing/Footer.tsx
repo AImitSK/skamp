@@ -1,50 +1,193 @@
-import Link from 'next/link'
+import { PlusGrid, PlusGridItem, PlusGridRow } from './plus-grid'
+import { Button } from './Button'
+import { Container } from './Container'
+import { Gradient } from './gradient'
+import { Link } from './link'
+import { Logo } from './Logo'
+import { Subheading } from './text'
 
-import { Container } from '@/components/marketing/Container'
-import { Logo } from '@/components/marketing/Logo'
-import { NavLink } from '@/components/marketing/NavLink'
+function CallToAction() {
+  return (
+    <div className="relative pt-20 pb-16 text-center sm:py-24">
+      <hgroup>
+        <Subheading>Get started</Subheading>
+        <p className="mt-6 text-3xl font-medium tracking-tight text-gray-950 sm:text-5xl">
+          Ready to dive in?
+          <br />
+          Start your free trial today.
+        </p>
+      </hgroup>
+      <p className="mx-auto mt-6 max-w-xs text-sm/6 text-gray-500">
+        Get the cheat codes for selling and unlock your team&apos;s revenue
+        potential.
+      </p>
+      <div className="mt-6">
+        <Button className="w-full sm:w-auto" href="#">
+          Get started
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function SitemapHeading({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-sm/6 font-medium text-gray-950/50">{children}</h3>
+}
+
+function SitemapLinks({ children }: { children: React.ReactNode }) {
+  return <ul className="mt-6 space-y-4 text-sm/6">{children}</ul>
+}
+
+function SitemapLink(props: React.ComponentPropsWithoutRef<typeof Link>) {
+  return (
+    <li>
+      <Link
+        {...props}
+        className="font-medium text-gray-950 data-hover:text-gray-950/75"
+      />
+    </li>
+  )
+}
+
+function Sitemap() {
+  return (
+    <>
+      <div>
+        <SitemapHeading>Product</SitemapHeading>
+        <SitemapLinks>
+          <SitemapLink href="/pricing">Pricing</SitemapLink>
+          <SitemapLink href="#">Analysis</SitemapLink>
+          <SitemapLink href="#">API</SitemapLink>
+        </SitemapLinks>
+      </div>
+      <div>
+        <SitemapHeading>Company</SitemapHeading>
+        <SitemapLinks>
+          <SitemapLink href="#">Careers</SitemapLink>
+          <SitemapLink href="/blog">Blog</SitemapLink>
+          <SitemapLink href="/company">Company</SitemapLink>
+        </SitemapLinks>
+      </div>
+      <div>
+        <SitemapHeading>Support</SitemapHeading>
+        <SitemapLinks>
+          <SitemapLink href="#">Help center</SitemapLink>
+          <SitemapLink href="#">Community</SitemapLink>
+        </SitemapLinks>
+      </div>
+      <div>
+        <SitemapHeading>Company</SitemapHeading>
+        <SitemapLinks>
+          <SitemapLink href="#">Terms of service</SitemapLink>
+          <SitemapLink href="#">Privacy policy</SitemapLink>
+        </SitemapLinks>
+      </div>
+    </>
+  )
+}
+
+function SocialIconX(props: React.ComponentPropsWithoutRef<'svg'>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" {...props}>
+      <path d="M12.6 0h2.454l-5.36 6.778L16 16h-4.937l-3.867-5.594L2.771 16H.316l5.733-7.25L0 0h5.063l3.495 5.114L12.6 0zm-.86 14.376h1.36L4.323 1.539H2.865l8.875 12.837z" />
+    </svg>
+  )
+}
+
+function SocialIconFacebook(props: React.ComponentPropsWithoutRef<'svg'>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 8.05C16 3.603 12.418 0 8 0S0 3.604 0 8.05c0 4.016 2.926 7.346 6.75 7.95v-5.624H4.718V8.05H6.75V6.276c0-2.017 1.194-3.131 3.022-3.131.875 0 1.79.157 1.79.157v1.98h-1.008c-.994 0-1.304.62-1.304 1.257v1.51h2.219l-.355 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.95z"
+      />
+    </svg>
+  )
+}
+
+function SocialIconLinkedIn(props: React.ComponentPropsWithoutRef<'svg'>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" {...props}>
+      <path d="M14.82 0H1.18A1.169 1.169 0 000 1.154v13.694A1.168 1.168 0 001.18 16h13.64A1.17 1.17 0 0016 14.845V1.15A1.171 1.171 0 0014.82 0zM4.744 13.64H2.369V5.996h2.375v7.644zm-1.18-8.684a1.377 1.377 0 11.52-.106 1.377 1.377 0 01-.527.103l.007.003zm10.075 8.683h-2.375V9.921c0-.885-.015-2.025-1.234-2.025-1.218 0-1.425.966-1.425 1.968v3.775H6.233V5.997H8.51v1.05h.032c.317-.601 1.09-1.235 2.246-1.235 2.405-.005 2.851 1.578 2.851 3.63v4.197z" />
+    </svg>
+  )
+}
+
+function SocialLinks() {
+  return (
+    <>
+      <Link
+        href="https://facebook.com"
+        target="_blank"
+        aria-label="Visit us on Facebook"
+        className="text-gray-950 data-hover:text-gray-950/75"
+      >
+        <SocialIconFacebook className="size-4" />
+      </Link>
+      <Link
+        href="https://x.com"
+        target="_blank"
+        aria-label="Visit us on X"
+        className="text-gray-950 data-hover:text-gray-950/75"
+      >
+        <SocialIconX className="size-4" />
+      </Link>
+      <Link
+        href="https://linkedin.com"
+        target="_blank"
+        aria-label="Visit us on LinkedIn"
+        className="text-gray-950 data-hover:text-gray-950/75"
+      >
+        <SocialIconLinkedIn className="size-4" />
+      </Link>
+    </>
+  )
+}
+
+function Copyright() {
+  return (
+    <div className="text-sm/6 text-gray-950">
+      &copy; {new Date().getFullYear()} Radiant Inc.
+    </div>
+  )
+}
 
 export function Footer() {
   return (
-    <footer className="bg-zinc-50">
-      <Container>
-        <div className="py-16">
-          <Logo className="mx-auto h-10 w-auto" />
-          <nav className="mt-10 text-sm" aria-label="quick links">
-            <div className="-my-1 flex justify-center gap-x-6">
-              <NavLink href="#features">Features</NavLink>
-              <NavLink href="#testimonials">Testimonials</NavLink>
-              <NavLink href="#pricing">Pricing</NavLink>
-            </div>
-          </nav>
-        </div>
-        <div className="flex flex-col items-center border-t border-zinc-400/10 py-10 sm:flex-row-reverse sm:justify-between">
-          <div className="flex gap-x-6">
-            <Link href="#" className="group" aria-label="TaxPal on X">
-              <svg
-                className="h-6 w-6 fill-zinc-500 group-hover:fill-zinc-700"
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-              >
-                <path d="M13.3174 10.7749L19.1457 4H17.7646L12.7039 9.88256L8.66193 4H4L10.1122 12.8955L4 20H5.38119L10.7254 13.7878L14.994 20H19.656L13.3171 10.7749H13.3174ZM11.4257 12.9738L10.8064 12.0881L5.87886 5.03974H8.00029L11.9769 10.728L12.5962 11.6137L17.7652 19.0075H15.6438L11.4257 12.9742V12.9738Z" />
-              </svg>
-            </Link>
-            <Link href="#" className="group" aria-label="TaxPal on GitHub">
-              <svg
-                className="h-6 w-6 fill-zinc-500 group-hover:fill-zinc-700"
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z" />
-              </svg>
-            </Link>
-          </div>
-          <p className="mt-6 text-sm text-zinc-500 sm:mt-0">
-            Copyright &copy; {new Date().getFullYear()} TaxPal. All rights
-            reserved.
-          </p>
-        </div>
-      </Container>
+    <footer>
+      <Gradient className="relative">
+        <div className="absolute inset-2 rounded-4xl bg-white/80" />
+        <Container>
+          <CallToAction />
+          <PlusGrid className="pb-16">
+            <PlusGridRow>
+              <div className="grid grid-cols-2 gap-y-10 pb-6 lg:grid-cols-6 lg:gap-8">
+                <div className="col-span-2 flex">
+                  <PlusGridItem className="pt-6 lg:pb-6">
+                    <Logo className="h-9" />
+                  </PlusGridItem>
+                </div>
+                <div className="col-span-2 grid grid-cols-2 gap-x-8 gap-y-12 lg:col-span-4 lg:grid-cols-subgrid lg:pt-6">
+                  <Sitemap />
+                </div>
+              </div>
+            </PlusGridRow>
+            <PlusGridRow className="flex justify-between">
+              <div>
+                <PlusGridItem className="py-3">
+                  <Copyright />
+                </PlusGridItem>
+              </div>
+              <div className="flex">
+                <PlusGridItem className="flex items-center gap-8 py-3">
+                  <SocialLinks />
+                </PlusGridItem>
+              </div>
+            </PlusGridRow>
+          </PlusGrid>
+        </Container>
+      </Gradient>
     </footer>
   )
 }

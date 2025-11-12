@@ -3,7 +3,10 @@
     "allow": [
       "mcp__genkit__run_flow",
       "Bash(npx tsx:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

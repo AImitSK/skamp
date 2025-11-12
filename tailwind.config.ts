@@ -12,22 +12,42 @@ const config: Config = {
       colors: {
         primary: {
           DEFAULT: '#005fab',
-          hover: '#004a8c', // Eine dunklere Variante für den Hover-Effekt
-          25: '#f0f7fd',   // Extra helles CI-Blau für sehr subtile Hintergründe
-          50: '#ebf4fb',   // Heller als vorher - sehr helles CI-Blau für Hintergründe
-          100: '#d6eaf7',  // Heller als vorher - helles CI-Blau für Akzente  
-          200: '#add8f0',  // Heller als vorher - Light CI-Blau für Borders
-          300: '#66b1e1',  // Medium-Light CI-Blau
-          400: '#3397d7',  // Medium CI-Blau
-          500: '#0080cd',  // Etwas heller als primary
-          600: '#005fab',  // Primary CI-Blau
-          700: '#004a8c',  // Primary hover
-          800: '#003969',  // Dunkel
-          900: '#002846',  // Sehr dunkel
+          hover: '#004a8c',
+          25: '#f0f7fd',
+          50: '#ebf4fb',
+          100: '#d6eaf7',
+          200: '#add8f0',
+          300: '#66b1e1',
+          400: '#3397d7',
+          500: '#0080cd',
+          600: '#005fab',
+          700: '#004a8c',
+          800: '#003969',
+          900: '#002846',
         },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Switzer', 'system-ui', 'sans-serif'], // Template Font
+      },
+      borderRadius: {
+        '4xl': '2rem',
+      },
+      spacing: {
+        '144': '36rem',
+        '304': '76rem',
+      },
+      keyframes: {
+        'move-x': {
+          '0%': { transform: 'translateX(var(--move-x-from))' },
+          '100%': { transform: 'translateX(var(--move-x-to))' },
+        },
+      },
+      animation: {
+        'move-x': 'move-x var(--move-x-duration, 1s) linear infinite',
       },
     },
   },
-  plugins: [], // Leer lassen für maximale Stabilität
+  plugins: [],
 }
 export default config
