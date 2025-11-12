@@ -83,7 +83,9 @@ export default function RecipientManager({
       });
       onListsChange(selectedListIds, listNames, listRecipientCount);
     }
-  }, [campaignLists, listRecipientCount, loading, selectedListIds, onListsChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaignLists, listRecipientCount, loading, selectedListIds]);
+  // WICHTIG: onListsChange NICHT in deps - sonst Endlosschleife!
 
   return (
     <div className="space-y-6">
