@@ -220,7 +220,7 @@ export default function Step3Preview({
                   title: contact.name?.title || contact.title || '',
                   firstName: contact.name?.firstName || contact.firstName || '',
                   lastName: contact.name?.lastName || contact.lastName || '',
-                  email: contact.email || contact.emails?.[0]?.address || '',
+                  email: contact.email || contact.emails?.[0]?.email || contact.emails?.[0]?.address || '',
                   companyName: contact.companyName || ''
                 };
                 console.log('✅ Preview-Kontakt gesetzt:', previewData);
