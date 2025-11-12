@@ -1,5 +1,6 @@
 // tailwind.config.ts
 import type { Config } from 'tailwindcss'
+import plugin from 'tailwindcss/plugin'
 
 const config: Config = {
   content: [
@@ -52,6 +53,24 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function ({ addVariant }) {
+      // Headless UI data-* variants
+      addVariant('data-dark', '&[data-dark="true"]')
+      addVariant('data-hover', '&[data-hover]')
+      addVariant('data-active', '&[data-active]')
+      addVariant('data-disabled', '&[data-disabled]')
+      addVariant('data-focus', '&[data-focus]')
+      addVariant('data-checked', '&[data-checked]')
+      addVariant('data-selected', '&[data-selected]')
+
+      // Group variants
+      addVariant('group-data-dark', ':merge(.group)[data-dark="true"] &')
+      addVariant('group-data-hover', ':merge(.group)[data-hover] &')
+      addVariant('group-data-active', ':merge(.group)[data-active] &')
+      addVariant('group-data-disabled', ':merge(.group)[data-disabled] &')
+      addVariant('group-data-focus', ':merge(.group)[data-focus] &')
+    }),
+  ],
 }
 export default config
