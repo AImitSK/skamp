@@ -18,8 +18,9 @@ import { ChevronRightIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  title: 'CeleroPress - PR-Arbeit neu gedacht',
   description:
-    'CeleroPress hilft dir, deine PR-Arbeit zu optimieren und mehr zu verkaufen.',
+    'CeleroPress hilft dir, deine PR-Arbeit zu optimieren und mehr zu verkaufen. Moderne Email-Kampagnen, KI-gestützte Inhalte und intelligentes Kontaktmanagement.',
 }
 
 function Hero() {
@@ -43,7 +44,8 @@ function Hero() {
             PR-Arbeit neu gedacht.
           </h1>
           <p className="mt-8 max-w-lg text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            CeleroPress hilft dir, deine PR-Arbeit zu optimieren und mehr zu verkaufen.
+            CeleroPress hilft dir, deine PR-Arbeit zu optimieren und mehr zu
+            verkaufen mit KI-gestützten Email-Kampagnen.
           </p>
           <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
             <Button href="/signup">Jetzt starten</Button>
@@ -62,7 +64,7 @@ function FeatureSection() {
     <div className="overflow-hidden">
       <Container className="pb-24">
         <Heading as="h2" className="max-w-3xl">
-          Dein komplettes PR-Management in einer Plattform.
+          Deine gesamte PR-Kampagne auf einen Blick.
         </Heading>
         <Screenshot
           width={1216}
@@ -78,16 +80,16 @@ function FeatureSection() {
 function BentoSection() {
   return (
     <Container>
-      <Subheading>Features</Subheading>
+      <Subheading>Kampagnen</Subheading>
       <Heading as="h3" className="mt-2 max-w-3xl">
-        Alles, was du für erfolgreiche PR-Arbeit brauchst.
+        Erreiche deine Zielgruppe effektiver.
       </Heading>
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
         <BentoCard
-          eyebrow="Kontakte"
-          title="Perfekte Übersicht"
-          description="Verwalte alle deine Medienkontakte zentral. Importiere Kontakte aus Excel oder erstelle sie direkt in der App."
+          eyebrow="Intelligenz"
+          title="Perfekte Einblicke"
+          description="CeleroPress analysiert deine Kontakte und erstellt automatisch personalisierte Kampagnen. Kenne die Interessen, Bedürfnisse und das perfekte Timing für jeden Empfänger."
           graphic={
             <div className="h-80 bg-[url(/screenshots/profile.png)] bg-size-[1000px_560px] bg-position-[left_-109px_top_-112px] bg-no-repeat" />
           }
@@ -95,9 +97,9 @@ function BentoSection() {
           className="max-lg:rounded-t-4xl lg:col-span-3 lg:rounded-tl-4xl"
         />
         <BentoCard
-          eyebrow="Verteilerlisten"
-          title="Zielgerichtete Kampagnen"
-          description="Erstelle intelligente Verteilerlisten und erreiche genau die richtigen Kontakte für deine Story."
+          eyebrow="Analyse"
+          title="Verstehe deine Zielgruppe"
+          description="Mit unseren detaillierten Analysen siehst du genau, welche Inhalte bei deiner Zielgruppe ankommen und wie du deine Kampagnen optimieren kannst."
           graphic={
             <div className="absolute inset-0 bg-[url(/screenshots/competitors.png)] bg-size-[1100px_650px] bg-position-[left_-38px_top_-73px] bg-no-repeat" />
           }
@@ -105,9 +107,9 @@ function BentoSection() {
           className="lg:col-span-3 lg:rounded-tr-4xl"
         />
         <BentoCard
-          eyebrow="E-Mail-Editor"
-          title="Professionelle Kampagnen"
-          description="Erstelle und versende professionelle E-Mail-Kampagnen mit unserem intuitiven Drag-and-Drop Editor."
+          eyebrow="Geschwindigkeit"
+          title="Für Power-User optimiert"
+          description="Mit unseren Tastatur-Shortcuts versendest du E-Mails schneller als je zuvor. Maximale Effizienz für deine PR-Arbeit."
           graphic={
             <div className="flex size-full pt-10 pl-10">
               <Keyboard highlighted={['LeftCommand', 'LeftShift', 'D']} />
@@ -116,16 +118,16 @@ function BentoSection() {
           className="lg:col-span-2 lg:rounded-bl-4xl"
         />
         <BentoCard
-          eyebrow="Tracking"
-          title="Erfolg messbar machen"
-          description="Verfolge Öffnungen, Klicks und Antworten. Optimiere deine Kampagnen basierend auf echten Daten."
+          eyebrow="Integration"
+          title="Maximale Reichweite"
+          description="Importiere Kontakte aus allen gängigen Plattformen und verwalte sie zentral in CeleroPress."
           graphic={<LogoCluster />}
           className="lg:col-span-2"
         />
         <BentoCard
-          eyebrow="Projekte"
-          title="Strukturiert arbeiten"
-          description="Organisiere deine PR-Arbeit in Projekten und behalte den Überblick über alle laufenden Kampagnen."
+          eyebrow="Global"
+          title="Weltweit verkaufen"
+          description="CeleroPress unterstützt mehrere Sprachen und Zeitzonen. Erreiche deine Kunden überall auf der Welt."
           graphic={<Map />}
           className="max-lg:rounded-b-4xl lg:col-span-2 lg:rounded-br-4xl"
         />
@@ -138,17 +140,17 @@ function DarkBentoSection() {
   return (
     <div className="mx-2 mt-2 rounded-4xl bg-gray-900 py-32">
       <Container>
-        <Subheading dark>Automatisierung</Subheading>
+        <Subheading dark>Kommunikation</Subheading>
         <Heading as="h3" dark className="mt-2 max-w-3xl">
-          Spare Zeit mit intelligenter Automatisierung.
+          Kundenkommunikation war noch nie so einfach.
         </Heading>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
           <BentoCard
             dark
-            eyebrow="Templates"
-            title="Schneller arbeiten"
-            description="Erstelle Vorlagen für wiederkehrende E-Mails und spare Zeit bei der Kampagnenerstellung."
+            eyebrow="KI-Assistent"
+            title="Verkaufe mit Lichtgeschwindigkeit"
+            description="Unsere KI-Chat-Assistenten analysieren deine Konversationen in Echtzeit und geben dir sofort Optimierungsvorschläge."
             graphic={
               <div className="h-80 bg-[url(/screenshots/networking.png)] bg-size-[851px_344px] bg-no-repeat" />
             }
@@ -158,24 +160,24 @@ function DarkBentoSection() {
           <BentoCard
             dark
             eyebrow="Integrationen"
-            title="Nahtlos verbunden"
-            description="Integriere CeleroPress mit deinen bestehenden Tools und arbeite noch effizienter."
+            title="Erreiche Leads überall"
+            description="Mit tausenden Integrationen verpasst du keine Gelegenheit mehr. CeleroPress integriert sich nahtlos in deine bestehenden Tools."
             graphic={<LogoTimeline />}
             className="z-10 overflow-visible! lg:col-span-2 lg:rounded-tr-4xl"
           />
           <BentoCard
             dark
-            eyebrow="Planung"
-            title="Termingerecht versenden"
-            description="Plane deine Kampagnen im Voraus und versende sie zum optimalen Zeitpunkt."
+            eyebrow="Verteilerlisten"
+            title="Intelligentes Kontaktmanagement"
+            description="Organisiere deine Kontakte in intelligenten Verteilerlisten und versende zielgerichtete Kampagnen."
             graphic={<LinkedAvatars />}
             className="lg:col-span-2 lg:rounded-bl-4xl"
           />
           <BentoCard
             dark
-            eyebrow="Reporting"
-            title="Transparente Erfolge"
-            description="Erstelle Berichte über deine PR-Erfolge und teile sie mit deinem Team oder Kunden."
+            eyebrow="Content"
+            title="KI-gestützte Inhalte"
+            description="CeleroPress AI schreibt automatisch überzeugende E-Mails und Pressemitteilungen, die bei deiner Zielgruppe ankommen."
             graphic={
               <div className="h-80 bg-[url(/screenshots/engagement.png)] bg-size-[851px_344px] bg-no-repeat" />
             }
