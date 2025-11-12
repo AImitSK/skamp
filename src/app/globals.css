@@ -4,6 +4,63 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tailwind v4 Theme Compatibility */
+@layer utilities {
+  /* Gradient directions */
+  .bg-linear-115 {
+    background-image: linear-gradient(115deg, var(--tw-gradient-stops));
+  }
+  .bg-linear-145 {
+    background-image: linear-gradient(145deg, var(--tw-gradient-stops));
+  }
+  .bg-linear-to-t {
+    background-image: linear-gradient(to top, var(--tw-gradient-stops));
+  }
+  .bg-linear-to-b {
+    background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+  }
+  .bg-linear-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  }
+
+  /* Background sizes */
+  .bg-size-\[1000px_560px\] {
+    background-size: 1000px 560px;
+  }
+  .bg-size-\[1100px_650px\] {
+    background-size: 1100px 650px;
+  }
+  .bg-size-\[851px_344px\] {
+    background-size: 851px 344px;
+  }
+  .bg-size-\[12px_100\%\] {
+    background-size: 12px 100%;
+  }
+
+  /* Background positions */
+  .bg-position-\[left_-109px_top_-112px\] {
+    background-position: left -109px top -112px;
+  }
+  .bg-position-\[left_-38px_top_-73px\] {
+    background-position: left -38px top -73px;
+  }
+
+  /* Overflow visible with important */
+  .overflow-visible\! {
+    overflow: visible !important;
+  }
+}
+
+/* Keyframes for animations */
+@keyframes move-x {
+  0% {
+    transform: translateX(var(--move-x-from));
+  }
+  100% {
+    transform: translateX(var(--move-x-to));
+  }
+}
+
 /* Email Content Styling */
 @import '../styles/email-content.css';
 
