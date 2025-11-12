@@ -325,7 +325,7 @@ export async function POST(request: NextRequest) {
         try {
           console.log('📝 Lade HTML-Signatur:', data.signatureId);
           // SERVER-SIDE: Verwende Admin SDK direkt
-          const { adminDb } = await import('@/lib/firebase/admin');
+          const { adminDb } = await import('@/lib/firebase/admin-init');
           const signatureDoc = await adminDb.collection('email_signatures').doc(data.signatureId).get();
 
           if (signatureDoc.exists) {
