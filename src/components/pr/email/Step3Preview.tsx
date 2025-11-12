@@ -131,7 +131,13 @@ export default function Step3Preview({
     totalRecipients,
     listIds: draft.recipients.listIds,
     listNames: draft.recipients.listNames,
-    sender: draft.sender
+    validCount: draft.recipients.validCount,
+    manualCount: draft.recipients.manual.length,
+    sender: {
+      type: draft.sender.type,
+      contactData: draft.sender.contactData,
+      manual: draft.sender.manual
+    }
   });
 
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
