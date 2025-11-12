@@ -219,7 +219,7 @@ describe('POST /api/pr/email/send', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.error).toBe('Unvollständiger Email-Entwurf');
+      expect(json.error).toBe('Unvollstaendiger Email-Entwurf');
     });
 
     it('sollte 400 zurückgeben wenn scheduledDate fehlt bei geplantem Versand', async () => {

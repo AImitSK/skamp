@@ -3,7 +3,7 @@
  * Cron-Job: Verarbeitet geplante Emails
  *
  * Wird alle 5 Minuten von Vercel Cron aufgerufen
- * Lädt pending Emails wo sendAt <= now und versendet sie
+ * Laedt pending Emails wo sendAt <= now und versendet sie
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,7 +16,7 @@ const BATCH_SIZE = 50; // Max. Emails pro Cron-Run
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Auth: CRON_SECRET prüfen
+    // 1. Auth: CRON_SECRET pruefen
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
@@ -144,11 +144,11 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/pr/email/cron
- * Health-Check für Monitoring
+ * Health-Check fuer Monitoring
  */
 export async function GET(request: NextRequest) {
   try {
-    // Auth: CRON_SECRET prüfen
+    // Auth: CRON_SECRET pruefen
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 

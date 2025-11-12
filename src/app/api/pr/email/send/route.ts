@@ -1,6 +1,6 @@
 /**
  * POST /api/pr/email/send
- * Email sofort versenden ODER f�r sp�teren Versand einplanen
+ * Email sofort versenden ODER fuer spaeteren Versand einplanen
  *
  * Verwendet den neuen emailSenderService (mit Admin SDK)
  */
@@ -14,7 +14,7 @@ import { SendEmailRequest, SendEmailResponse, ScheduledEmail } from '@/types/sch
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Auth pr�fen
+    // 1. Auth pruefen
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (!draft || !draft.recipients || !draft.sender || !draft.metadata) {
       return NextResponse.json(
-        { success: false, error: 'Unvollständiger Email-Entwurf' },
+        { success: false, error: 'Unvollstaendiger Email-Entwurf' },
         { status: 400 }
       );
     }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response, { status: 200 });
     }
 
-    // 4b. F�R SP�TER EINPLANEN
+    // 4b. FUER SPAETER EINPLANEN
     if (scheduledDate) {
       const sendAt = new Date(scheduledDate);
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback: Sollte nie erreicht werden
     return NextResponse.json(
-      { success: false, error: 'Ung�ltige Anfrage' },
+      { success: false, error: 'Ungueltige Anfrage' },
       { status: 400 }
     );
 
