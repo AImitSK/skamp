@@ -147,6 +147,7 @@ export default function ProjectPressemeldungenTab({
       {/* Kampagnen-Tabelle */}
       <PressemeldungCampaignTable
         campaigns={campaigns}
+        approvals={approvals}
         organizationId={organizationId}
         onRefresh={refetch}
       />

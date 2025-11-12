@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
+import { ApprovalEnhanced } from '@/types/approvals';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import EmailSendModal from '@/components/pr/EmailSendModal';
 import CampaignTableRow from './components/CampaignTableRow';
@@ -12,12 +13,14 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   campaigns: PRCampaign[];
+  approvals: ApprovalEnhanced[];
   organizationId: string;
   onRefresh: () => void;
 }
 
 export default function PressemeldungCampaignTable({
   campaigns,
+  approvals,
   organizationId,
   onRefresh
 }: Props) {
@@ -96,6 +99,8 @@ export default function PressemeldungCampaignTable({
             key={campaign.id}
             campaign={campaign}
             teamMembers={teamMembers}
+            approvals={approvals}
+            organizationId={organizationId}
             onRefresh={onRefresh}
             onSend={setShowSendModal}
           />

@@ -1,21 +1,26 @@
 // src/components/projects/pressemeldungen/components/CampaignTableRow.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import {
   EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  ArrowTopRightOnSquareIcon,
+  EnvelopeIcon,
+  ClipboardDocumentIcon
 } from '@heroicons/react/24/outline';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
+import { ApprovalEnhanced } from '@/types/approvals';
 import { prService } from '@/lib/firebase/pr-service';
+import { approvalServiceExtended } from '@/lib/firebase/approval-service';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
@@ -23,15 +28,28 @@ import { toastService } from '@/lib/utils/toast';
 interface CampaignTableRowProps {
   campaign: PRCampaign;
   teamMembers: TeamMember[];
+  approvals: ApprovalEnhanced[];
+  organizationId: string;
   onRefresh: () => void;
   onSend: (campaign: PRCampaign) => void;
 }
 
-function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: CampaignTableRowProps) {
+function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, onRefresh, onSend }: CampaignTableRowProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  // Finde die Freigabe für diese Kampagne
+  const campaignApproval = useMemo(
+    () => approvals.find(approval => approval.campaignId === campaign.id),
+    [approvals, campaign.id]
+  );
+
+  // Prüfe ob Freigabe-Funktionen verfügbar sind (Kampagne darf nicht im Entwurf sein und muss eine Freigabe haben)
+  const hasApproval = !!campaignApproval;
+  const approvalDisabled = !hasApproval;
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -85,6 +103,43 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
 
   const handleSend = () => {
     onSend(campaign);
+  };
+
+  const handleOpenApproval = () => {
+    if (campaignApproval?.shareId) {
+      window.open(`/freigabe/${campaignApproval.shareId}`, '_blank');
+    }
+  };
+
+  const handleResendApprovalLink = async () => {
+    if (!campaignApproval?.id || !user?.uid) return;
+
+    setIsResending(true);
+    try {
+      await approvalServiceExtended.sendNotifications(
+        campaignApproval,
+        're-request'
+      );
+      toastService.success('Freigabe-Link erfolgreich versendet');
+    } catch (error) {
+      console.error('Error resending approval link:', error);
+      toastService.error('Fehler beim Versenden des Freigabe-Links');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleCopyApprovalLink = async () => {
+    if (!campaignApproval?.shareId) return;
+
+    const approvalUrl = `${window.location.origin}/freigabe/${campaignApproval.shareId}`;
+    try {
+      await navigator.clipboard.writeText(approvalUrl);
+      toastService.success('Freigabe-Link kopiert');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toastService.error('Fehler beim Kopieren des Links');
+    }
   };
 
   const formatDate = (timestamp: any) => {
@@ -202,6 +257,20 @@ function CampaignTableRow({ campaign, teamMembers, onRefresh, onSend }: Campaign
                 <PencilIcon className="h-4 w-4" />
                 Bearbeiten
               </DropdownItem>
+              <DropdownItem onClick={handleOpenApproval} disabled={approvalDisabled}>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                Freigabe öffnen
+              </DropdownItem>
+              <DropdownDivider />
+              <DropdownItem onClick={handleResendApprovalLink} disabled={approvalDisabled || isResending}>
+                <EnvelopeIcon className="h-4 w-4" />
+                {isResending ? 'Wird gesendet...' : 'Freigabe Link erneut senden'}
+              </DropdownItem>
+              <DropdownItem onClick={handleCopyApprovalLink} disabled={approvalDisabled}>
+                <ClipboardDocumentIcon className="h-4 w-4" />
+                Freigabe Link kopieren
+              </DropdownItem>
+              <DropdownDivider />
               <DropdownItem onClick={handleDeleteClick} disabled={isDeleting}>
                 <TrashIcon className="h-4 w-4" />
                 <span className="text-red-600">
