@@ -20,7 +20,7 @@ import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
 import { ApprovalEnhanced } from '@/types/approvals';
 import { prService } from '@/lib/firebase/pr-service';
-import { approvalServiceExtended } from '@/lib/firebase/approval-service';
+import { approvalService } from '@/lib/firebase/approval-service';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
@@ -116,7 +116,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
 
     setIsResending(true);
     try {
-      await approvalServiceExtended.sendNotifications(
+      await approvalService.sendNotifications(
         campaignApproval,
         're-request'
       );
