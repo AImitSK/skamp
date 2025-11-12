@@ -250,6 +250,8 @@ export const emailComposerService = {
       lastName: string;
       email: string;
       companyName?: string;
+      salutation?: string;
+      title?: string;
     },
     sender: {
       name: string;
@@ -264,8 +266,22 @@ export const emailComposerService = {
     },
     mediaShareUrl?: string
   ): EmailVariables {
+    // Berechne salutationFormal basierend auf salutation
+    let salutationFormal = 'Sehr geehrte Damen und Herren';
+    if (contact.salutation) {
+      const salutation = contact.salutation.toLowerCase();
+      if (salutation === 'herr') {
+        salutationFormal = 'Sehr geehrter Herr';
+      } else if (salutation === 'frau') {
+        salutationFormal = 'Sehr geehrte Frau';
+      }
+    }
+
     return {
       recipient: {
+        salutation: contact.salutation || '',
+        salutationFormal: salutationFormal,
+        title: contact.title || '',
         firstName: contact.firstName,
         lastName: contact.lastName,
         fullName: `${contact.firstName} ${contact.lastName}`,

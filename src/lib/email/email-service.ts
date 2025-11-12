@@ -200,6 +200,8 @@ export class EmailService {
         firstName: request.recipientName?.split(' ')[0] || 'Test',
         lastName: request.recipientName?.split(' ')[1] || 'Empfänger',
         email: request.recipientEmail,
+        salutation: 'Herr', // Standard-Anrede für Test
+        title: 'Dr.', // Standard-Titel für Test
         companyName: 'Test Company',
         companyId: '',
         createdAt: Timestamp.now(),
@@ -219,11 +221,14 @@ export class EmailService {
           name: testContact.firstName + ' ' + testContact.lastName,
           firstName: testContact.firstName,
           lastName: testContact.lastName,
-          companyName: testContact.companyName
+          companyName: testContact.companyName,
+          salutation: testContact.salutation,
+          title: testContact.title
         },
         campaignEmail: emailContent,
         senderInfo,
         campaignId: request.campaignId, // NEU: Campaign ID übergeben
+        signatureId: request.draft.content.signatureId, // NEU: Signatur-ID übergeben
         testMode: true
       });
 

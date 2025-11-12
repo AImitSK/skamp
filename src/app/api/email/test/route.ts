@@ -90,6 +90,8 @@ interface TestEmailRequest {
     firstName: string;
     lastName: string;
     companyName?: string;
+    salutation?: string;
+    title?: string;
   };
   campaignEmail: {
     subject: string;
@@ -107,6 +109,7 @@ interface TestEmailRequest {
     email?: string;
   };
   campaignId?: string;
+  signatureId?: string; // NEU: Signatur-ID für HTML-Signatur
   testMode: boolean;
 }
 
@@ -314,26 +317,43 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // NEU: Lade HTML-Signatur falls signatureId vorhanden
+      let signatureHtml = '';
+      if (data.signatureId) {
+        try {
+          const { emailSignatureService } = await import('@/lib/email/email-signature-service');
+          const signature = await emailSignatureService.get(data.signatureId);
+          if (signature) {
+            signatureHtml = signature.content;
+            console.log('✅ HTML-Signatur geladen:', data.signatureId);
+          }
+        } catch (error) {
+          console.error('⚠️ Fehler beim Laden der Signatur:', error);
+          // Fallback auf Text-Signatur
+        }
+      }
+
       // Variablen für E-Mail vorbereiten
       const variables = emailComposerService.prepareVariables(
         data.recipient,
         data.senderInfo,
-        { 
-          title: campaign?.title || 'Test-Kampagne', 
-          clientName: campaign?.clientName || auth.organizationId 
+        {
+          title: campaign?.title || 'Test-Kampagne',
+          clientName: campaign?.clientName || auth.organizationId
         },
         mediaShareUrl
       );
 
       // HTML und Text Content generieren
       const htmlContent = buildTestEmailHtml(
-        data.campaignEmail, 
+        data.campaignEmail,
         variables,
         data.testMode,
         mediaShareUrl,
         campaign,
         replyToAddress, // NEU: Reply-To für Info im Footer
-        campaign?.keyVisual // NEU: Key Visual für Test-E-Mails
+        campaign?.keyVisual, // NEU: Key Visual für Test-E-Mails
+        signatureHtml // NEU: HTML-Signatur
       );
       
       const textContent = buildTestEmailText(
@@ -466,18 +486,19 @@ function buildTestEmailHtml(
   mediaShareUrl?: string,
   campaign?: PRCampaign | null,
   replyToAddress?: string,
-  keyVisual?: { url: string; cropData?: any }
+  keyVisual?: { url: string; cropData?: any },
+  signatureHtml?: string
 ): string {
   const testBanner = isTest ? `
     <div style="background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold;">
-      🧪 TEST-EMAIL - Dies ist keine echte Kampagnen-Email
+      TEST-EMAIL - Dies ist keine echte Kampagnen-Email
     </div>` : '';
 
   // Media Link Box (ähnlich wie in der Preview)
   const mediaLinkHtml = mediaShareUrl ? `
     <div style="margin: 30px 0 20px 0; padding: 15px; background-color: #f0f7ff; border-left: 4px solid #005fab; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; line-height: 1.5;">
-            <strong style="color: #005fab;">→ Medien-Anhänge:</strong><br>
+            <strong style="color: #005fab;">Medien-Anhänge:</strong><br>
             <a href="${mediaShareUrl}" style="color: #005fab; text-decoration: underline; font-weight: 500;">Hier können Sie die Medien-Dateien zu dieser Pressemitteilung herunterladen</a>
         </p>
     </div>` : '';
@@ -488,7 +509,7 @@ function buildTestEmailHtml(
     pdfAttachmentInfo = `
     <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
         <p style="margin: 0; font-size: 14px; color: #6c757d;">
-            <strong>📄 Pressemitteilung:</strong> Die vollständige Pressemitteilung ist als PDF im Anhang dieser E-Mail enthalten.
+            <strong>Pressemitteilung:</strong> Die vollständige Pressemitteilung ist als PDF im Anhang dieser E-Mail enthalten.
         </p>
     </div>`;
   }
@@ -500,7 +521,7 @@ function buildTestEmailHtml(
     assetsInfo = `
     <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
         <p style="margin: 0; font-size: 14px; color: #6c757d;">
-            <strong>📎 Weitere Anhänge:</strong> Diese E-Mail enthält ${assetCount} ${assetCount === 1 ? 'weitere Datei' : 'weitere Dateien'}
+            <strong>Weitere Anhänge:</strong> Diese E-Mail enthält ${assetCount} ${assetCount === 1 ? 'weitere Datei' : 'weitere Dateien'}
         </p>
     </div>`;
   }
@@ -512,9 +533,11 @@ function buildTestEmailHtml(
   );
 
   // Verwende HTML-Signatur falls vorhanden, ansonsten die alte Text-Signatur
-  const signatureHtml = email.signature
-    ? emailComposerService.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')
-    : '';
+  const formattedSignature = signatureHtml
+    ? emailComposerService.replaceVariables(signatureHtml, variables)
+    : (email.signature
+      ? emailComposerService.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')
+      : '');
 
   return `
 <!DOCTYPE html>
@@ -571,13 +594,13 @@ function buildTestEmailHtml(
 
         ${replyToAddress ? `
         <div class="reply-info">
-            <p style="margin: 0;"><strong>ℹ️ Reply-To System aktiv:</strong></p>
+            <p style="margin: 0;"><strong>Reply-To System aktiv:</strong></p>
             <p style="margin: 5px 0 0 0;">Antworten auf diese E-Mail landen automatisch in Ihrer CeleroPress Inbox.</p>
         </div>
         ` : ''}
 
         <div class="signature">
-            ${signatureHtml}
+            ${formattedSignature}
         </div>
     </div>
 </body>
