@@ -9,6 +9,7 @@ export function Logo({ className }: { className?: string }) {
       width={134}
       height={42}
       className={clsx(className)}
+      style={{ filter: 'brightness(0) saturate(100%) invert(3%)' }}
       priority
     />
   )
@@ -22,6 +23,7 @@ export function Mark({ className }: { className?: string }) {
       width={40}
       height={40}
       className={clsx(className)}
+      style={{ filter: 'brightness(0) saturate(100%) invert(3%)' }}
     />
   )
 }
