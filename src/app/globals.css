@@ -49,6 +49,23 @@
   .overflow-visible\! {
     overflow: visible !important;
   }
+
+  /* Screenshot background images */
+  .bg-\[url\(\/screenshots\/profile\.png\)\] {
+    background-image: url(/screenshots/profile.png);
+  }
+  .bg-\[url\(\/screenshots\/competitors\.png\)\] {
+    background-image: url(/screenshots/competitors.png);
+  }
+  .bg-\[url\(\/screenshots\/networking\.png\)\] {
+    background-image: url(/screenshots/networking.png);
+  }
+  .bg-\[url\(\/screenshots\/engagement\.png\)\] {
+    background-image: url(/screenshots/engagement.png);
+  }
+  .bg-\[url\(\/screenshots\/app\.png\)\] {
+    background-image: url(/screenshots/app.png);
+  }
 }
 
 /* Keyframes for animations */
