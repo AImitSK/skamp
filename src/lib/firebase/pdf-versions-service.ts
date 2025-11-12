@@ -123,7 +123,9 @@ class PDFVersionsService {
 
       return { pdfUrl, fileSize };
     } catch (error) {
-      throw new Error('Fehler beim Erstellen der PDF-Vorschau');
+      console.error('❌ createPreviewPDF Error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Fehler beim Erstellen der PDF-Vorschau: ${errorMessage}`);
     }
   }
 
@@ -716,7 +718,15 @@ class PDFVersionsService {
       };
 
       // API-Aufruf an neue Puppeteer-Route
-      const response = await fetch('/api/generate-pdf', {
+      // WICHTIG: Im Server-Context brauchen wir die vollständige URL
+      const baseUrl = typeof window !== 'undefined'
+        ? '' // Client-Side: relativer Pfad funktioniert
+        : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'); // Server-Side: volle URL
+
+      const apiUrl = `${baseUrl}/api/generate-pdf`;
+      console.log('📄 PDF-API URL:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
