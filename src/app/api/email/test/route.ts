@@ -321,11 +321,18 @@ export async function POST(request: NextRequest) {
       let signatureHtml = '';
       if (data.signatureId) {
         try {
-          const { emailSignatureService } = await import('@/lib/email/email-signature-service');
-          const signature = await emailSignatureService.get(data.signatureId);
-          if (signature) {
-            signatureHtml = signature.content;
-            console.log('✅ HTML-Signatur geladen:', data.signatureId);
+          // SERVER-SIDE: Verwende Admin SDK direkt
+          const { adminDb } = await import('@/lib/firebase/admin');
+          const signatureDoc = await adminDb.collection('email_signatures').doc(data.signatureId).get();
+
+          if (signatureDoc.exists) {
+            const signatureData = signatureDoc.data();
+            if (signatureData && signatureData.content) {
+              signatureHtml = signatureData.content;
+              console.log('✅ HTML-Signatur geladen:', data.signatureId);
+            }
+          } else {
+            console.warn('⚠️ Signatur nicht gefunden:', data.signatureId);
           }
         } catch (error) {
           console.error('⚠️ Fehler beim Laden der Signatur:', error);
