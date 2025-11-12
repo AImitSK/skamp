@@ -526,13 +526,19 @@ export class EmailService {
     // Dies ist eine vereinfachte Version - in der Praxis würde man das HTML parsen
     const content = draft.content.body;
 
+    // WICHTIG: Wenn eine HTML-Signatur ausgewählt ist, KEINE Text-Signatur erstellen
+    // Die HTML-Signatur wird vom Backend geladen (via signatureId)
+    const textSignature = draft.content.signatureId
+      ? '' // Leer lassen wenn HTML-Signatur ausgewählt
+      : '{{senderName}}\n{{senderTitle}}\n{{senderCompany}}\n{{senderPhone}}\n{{senderEmail}}'; // Fallback
+
     return {
       subject: draft.metadata.subject,
       greeting: 'Sehr geehrte/r {{firstName}} {{lastName}},',
       introduction: content,
       pressReleaseHtml: `<h2>${campaignTitle}</h2><p>[Pressemitteilung wird hier eingefügt]</p>`,
       closing: 'Mit freundlichen Grüßen',
-      signature: '{{senderName}}\n{{senderTitle}}\n{{senderCompany}}\n{{senderPhone}}\n{{senderEmail}}'
+      signature: textSignature
     };
   }
 
