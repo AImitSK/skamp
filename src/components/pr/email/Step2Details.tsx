@@ -122,7 +122,10 @@ export default function Step2Details({
     };
 
     loadProjectLists();
-  }, [campaign.projectId, user, currentOrganization, recipients.listIds.length, onRecipientsChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaign.projectId, user, currentOrganization, recipients.listIds.length]);
+  // WICHTIG: onRecipientsChange NICHT in deps - sonst Endlosschleife!
+  // Der useEffect lädt nur initial die Listen, danach nie wieder (hasInitialized.current)
 
   return (
     <div className="p-6">
