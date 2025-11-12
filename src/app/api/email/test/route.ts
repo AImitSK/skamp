@@ -319,8 +319,11 @@ export async function POST(request: NextRequest) {
 
       // NEU: Lade HTML-Signatur falls signatureId vorhanden
       let signatureHtml = '';
+      console.log('🔍 Signatur-ID prüfen:', data.signatureId);
+
       if (data.signatureId) {
         try {
+          console.log('📝 Lade HTML-Signatur:', data.signatureId);
           // SERVER-SIDE: Verwende Admin SDK direkt
           const { adminDb } = await import('@/lib/firebase/admin');
           const signatureDoc = await adminDb.collection('email_signatures').doc(data.signatureId).get();
@@ -329,15 +332,20 @@ export async function POST(request: NextRequest) {
             const signatureData = signatureDoc.data();
             if (signatureData && signatureData.content) {
               signatureHtml = signatureData.content;
-              console.log('✅ HTML-Signatur geladen:', data.signatureId);
+              console.log('✅ HTML-Signatur geladen, Länge:', signatureHtml.length);
+            } else {
+              console.warn('⚠️ Signatur-Dokument hat kein content-Feld');
             }
           } else {
             console.warn('⚠️ Signatur nicht gefunden:', data.signatureId);
           }
         } catch (error) {
-          console.error('⚠️ Fehler beim Laden der Signatur:', error);
-          // Fallback auf Text-Signatur
+          console.error('❌ Fehler beim Laden der Signatur:', error);
+          // Fallback: Verwende Sender-Daten als Text-Signatur
+          signatureHtml = '';
         }
+      } else {
+        console.log('ℹ️ Keine signatureId vorhanden, verwende Sender-Daten');
       }
 
       // Variablen für E-Mail vorbereiten
@@ -397,14 +405,22 @@ export async function POST(request: NextRequest) {
             contentHtmlLength: campaign.contentHtml?.length || 0
           });
 
+          // Verwende mainContent mit Fallback auf contentHtml
+          const pdfContent = campaign.mainContent || campaign.contentHtml || '';
+
+          if (!pdfContent.trim()) {
+            console.warn('⚠️ Kein Content für PDF vorhanden');
+            throw new Error('Kein Content für PDF');
+          }
+
           const pdfResult = await pdfVersionsService.createPreviewPDF(
             {
               title: campaign.title,
-              mainContent: campaign.mainContent || '', // EXAKT wie CampaignContext (editorContent)
+              mainContent: pdfContent,
               boilerplateSections: campaign.boilerplateSections || [],
               keyVisual: campaign.keyVisual,
               clientName: campaign.clientName,
-              templateId: campaign.templateId // WICHTIG: Template-ID der Campaign verwenden
+              templateId: campaign.templateId
             },
             auth.organizationId,
             campaign.id
@@ -597,12 +613,27 @@ function buildTestEmailHtml(
     emailComposerService.replaceVariables(email.introduction, variables)
   );
 
-  // Verwende HTML-Signatur falls vorhanden, ansonsten die alte Text-Signatur
-  const formattedSignature = signatureHtml
-    ? emailComposerService.replaceVariables(signatureHtml, variables)
-    : (email.signature
-      ? emailComposerService.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')
-      : '');
+  // Signatur-Hierarchie: HTML-Signatur > Text-Signatur > Sender-Daten-Fallback
+  let formattedSignature = '';
+  if (signatureHtml) {
+    // 1. Priorität: HTML-Signatur
+    formattedSignature = emailComposerService.replaceVariables(signatureHtml, variables);
+    console.log('✅ Verwende HTML-Signatur');
+  } else if (email.signature) {
+    // 2. Priorität: Text-Signatur aus email.signature
+    formattedSignature = emailComposerService.replaceVariables(email.signature, variables).replace(/\n/g, '<br>');
+    console.log('✅ Verwende Text-Signatur aus email.signature');
+  } else {
+    // 3. Fallback: Sender-Daten aus variables als einfache Signatur
+    formattedSignature = [
+      variables.sender.name,
+      variables.sender.title,
+      variables.sender.company,
+      variables.sender.phone,
+      variables.sender.email
+    ].filter(Boolean).join('<br>');
+    console.log('⚠️ Verwende Sender-Daten als Fallback-Signatur');
+  }
 
   return `
 <!DOCTYPE html>
