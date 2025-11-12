@@ -12,8 +12,6 @@ import { useProjectPressData } from '@/lib/hooks/useCampaignData';
 import { projectService } from '@/lib/firebase/project-service';
 import { toastService } from '@/lib/utils/toast';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
-import PressemeldungApprovalTable from './PressemeldungApprovalTable';
-import PressemeldungToggleSection from './PressemeldungToggleSection';
 
 interface Props {
   projectId: string;
@@ -151,27 +149,6 @@ export default function ProjectPressemeldungenTab({
         organizationId={organizationId}
         onRefresh={refetch}
       />
-
-      {/* Freigabe-Tabelle */}
-      <div className="space-y-4">
-        <Heading level={3}>Freigabe</Heading>
-        <PressemeldungApprovalTable
-          approvals={approvals}
-          onRefresh={refetch}
-        />
-      </div>
-
-      {/* Toggle-Bereiche - nur anzeigen wenn Freigaben vorhanden sind */}
-      {approvals.length > 0 && (
-        <div className="space-y-4">
-          <Heading level={3}>Freigabe-Details</Heading>
-          <PressemeldungToggleSection
-            projectId={projectId}
-            campaignId={campaigns[0]?.id}
-            organizationId={organizationId}
-          />
-        </div>
-      )}
 
       {/* Bestätigungs-Dialog */}
       <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} size="sm">
