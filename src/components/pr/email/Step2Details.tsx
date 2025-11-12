@@ -159,7 +159,7 @@ export default function Step2Details({
         </div>
 
         {/* Absender-Verwaltung */}
-        <div className="border rounded-lg p-6">
+        <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <UserIcon className="h-5 w-5 text-gray-500" />
             Absender
@@ -174,7 +174,7 @@ export default function Step2Details({
         </div>
 
         {/* E-Mail Metadaten */}
-        <div className="border rounded-lg p-6">
+        <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
             <DocumentTextIcon className="h-5 w-5 text-gray-500" />
             E-Mail Details
