@@ -589,7 +589,7 @@ function buildTestEmailHtml(
       TEST-EMAIL - Dies ist keine echte Kampagnen-Email
     </div>` : '';
 
-  // Media Link Box (ähnlich wie in der Preview)
+  // Media Link Box (nur wenn vorhanden)
   const mediaLinkHtml = mediaShareUrl ? `
     <div style="margin: 30px 0 20px 0; padding: 15px; background-color: #f0f7ff; border-left: 4px solid #005fab; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; line-height: 1.5;">
@@ -597,29 +597,6 @@ function buildTestEmailHtml(
             <a href="${mediaShareUrl}" style="color: #005fab; text-decoration: underline; font-weight: 500;">Hier können Sie die Medien-Dateien zu dieser Pressemitteilung herunterladen</a>
         </p>
     </div>` : '';
-
-  // PDF-Anhang-Information (statt inline Press Release)
-  let pdfAttachmentInfo = '';
-  if (campaign?.contentHtml || campaign?.contentText) {
-    pdfAttachmentInfo = `
-    <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
-        <p style="margin: 0; font-size: 14px; color: #6c757d;">
-            <strong>Pressemitteilung:</strong> Die vollständige Pressemitteilung ist als PDF im Anhang dieser E-Mail enthalten.
-        </p>
-    </div>`;
-  }
-
-  // Weitere Anhänge (Assets)
-  let assetsInfo = '';
-  if (campaign?.attachedAssets && campaign.attachedAssets.length > 0) {
-    const assetCount = campaign.attachedAssets.length;
-    assetsInfo = `
-    <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
-        <p style="margin: 0; font-size: 14px; color: #6c757d;">
-            <strong>Weitere Anhänge:</strong> Diese E-Mail enthält ${assetCount} ${assetCount === 1 ? 'weitere Datei' : 'weitere Dateien'}
-        </p>
-    </div>`;
-  }
 
   // Verwende prepareHtmlForEmail für bessere E-Mail-Kompatibilität
   // WICHTIG: email.introduction enthält bereits Greeting + Einleitungstext als HTML
@@ -682,13 +659,6 @@ function buildTestEmailHtml(
         a {
             color: #005fab;
         }
-        .reply-info {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
@@ -698,16 +668,7 @@ function buildTestEmailHtml(
             ${formattedIntroduction}
         </div>
 
-        ${pdfAttachmentInfo}
-        ${assetsInfo}
         ${mediaLinkHtml}
-
-        ${replyToAddress ? `
-        <div class="reply-info">
-            <p style="margin: 0;"><strong>Reply-To System aktiv:</strong></p>
-            <p style="margin: 5px 0 0 0;">Antworten auf diese E-Mail landen automatisch in Ihrer CeleroPress Inbox.</p>
-        </div>
-        ` : ''}
 
         <div class="signature">
             ${formattedSignature}
@@ -718,7 +679,7 @@ function buildTestEmailHtml(
 }
 
 function buildTestEmailText(
-  email: TestEmailRequest['campaignEmail'], 
+  email: TestEmailRequest['campaignEmail'],
   variables: any,
   isTest: boolean,
   mediaShareUrl?: string,
@@ -726,22 +687,17 @@ function buildTestEmailText(
 ): string {
   const testHeader = isTest ? '🧪 TEST-EMAIL - Dies ist keine echte Kampagnen-Email\n\n' : '';
   const mediaText = mediaShareUrl ? `\n\n📎 Medien ansehen: ${mediaShareUrl}\n` : '';
-  const replyText = replyToAddress ? `\n\nℹ️ Reply-To System aktiv: Antworten landen in Ihrer CeleroPress Inbox\n` : '';
-  
+
   // Extrahiere nur die Einleitung aus dem HTML (ohne Greeting und Signature)
   const introText = stripHtml(emailComposerService.replaceVariables(email.introduction, variables));
-  
+
   return `${testHeader}${introText}
 
 --- PRESSEMITTEILUNG ---
 ${stripHtml(emailComposerService.replaceVariables(email.pressReleaseHtml, variables))}
 --- ENDE PRESSEMITTEILUNG ---
-${mediaText}${replyText}
+${mediaText}
 ${emailComposerService.replaceVariables(email.signature, variables)}
-
----
-Diese TEST-E-Mail wurde über das CeleroPress PR-Tool versendet.
-${replyToAddress ? `Reply-To: ${replyToAddress}` : ''}
 `;
 }
 
