@@ -387,25 +387,12 @@ export async function POST(request: NextRequest) {
       // Test-Email Prefix
       const testSubject = `[TEST] ${personalizedSubject}`;
 
-      // NEU: Generiere PDF der Pressemitteilung - GENAU WIE VORSCHAU-TAB
+      // NEU: Generiere PDF der Pressemitteilung - DIREKT über API
       let pdfAttachment;
-      if (campaign?.contentHtml || campaign?.mainContent) {
+      if (campaign?.mainContent || campaign?.contentHtml) {
         try {
-          console.log('📄 Generiere PDF für Pressemitteilung (wie Vorschau-Tab)...');
+          console.log('📄 Generiere PDF für Pressemitteilung...');
 
-          // Verwende pdfVersionsService.createPreviewPDF() - wie im Vorschau-Tab
-          const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
-
-          // WICHTIG: Verwende campaign.mainContent (nicht contentHtml!)
-          // Im CampaignContext wird editorContent = campaign.mainContent verwendet
-          console.log('📄 Campaign-Daten für PDF:', {
-            hasMainContent: !!campaign.mainContent,
-            hasContentHtml: !!campaign.contentHtml,
-            mainContentLength: campaign.mainContent?.length || 0,
-            contentHtmlLength: campaign.contentHtml?.length || 0
-          });
-
-          // Verwende mainContent mit Fallback auf contentHtml
           const pdfContent = campaign.mainContent || campaign.contentHtml || '';
 
           if (!pdfContent.trim()) {
@@ -413,33 +400,60 @@ export async function POST(request: NextRequest) {
             throw new Error('Kein Content für PDF');
           }
 
-          const pdfResult = await pdfVersionsService.createPreviewPDF(
-            {
-              title: campaign.title,
+          // Generiere Template-HTML
+          const { pdfTemplateService } = await import('@/lib/firebase/pdf-template-service');
+
+          let template;
+          if (campaign.templateId) {
+            template = await pdfTemplateService.getTemplateById(campaign.templateId);
+          }
+          if (!template) {
+            const systemTemplates = await pdfTemplateService.getSystemTemplates();
+            template = systemTemplates[0];
+          }
+
+          const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
+            title: campaign.title,
+            mainContent: pdfContent,
+            boilerplateSections: campaign.boilerplateSections || [],
+            keyVisual: campaign.keyVisual,
+            clientName: campaign.clientName || 'Test Client',
+            date: new Date().toISOString()
+          });
+
+          // Direkt PDF-API aufrufen (kein Upload, nur Base64)
+          const pdfResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-pdf`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              campaignId: campaign.id || 'temp',
+              organizationId: auth.organizationId,
               mainContent: pdfContent,
-              boilerplateSections: campaign.boilerplateSections || [],
-              keyVisual: campaign.keyVisual,
-              clientName: campaign.clientName,
-              templateId: campaign.templateId
-            },
-            auth.organizationId,
-            campaign.id
-          );
+              clientName: campaign.clientName || 'Test',
+              userId: auth.userId,
+              html: templateHtml,
+              fileName: `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_Pressemitteilung.pdf`,
+              title: campaign.title,
+              options: {
+                format: 'A4' as const,
+                orientation: 'portrait' as const,
+                printBackground: true,
+                waitUntil: 'networkidle0' as const,
+                margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+              }
+            })
+          });
 
-          if (pdfResult.pdfUrl) {
-            // Lade das PDF herunter und konvertiere zu Base64 für SendGrid
-            const pdfDownloadResponse = await fetch(pdfResult.pdfUrl);
-            if (pdfDownloadResponse.ok) {
-              const pdfBuffer = await pdfDownloadResponse.arrayBuffer();
-              const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
-
+          if (pdfResponse.ok) {
+            const pdfResult = await pdfResponse.json();
+            if (pdfResult.success && pdfResult.pdfBase64) {
               pdfAttachment = {
-                content: pdfBase64,
+                content: pdfResult.pdfBase64,
                 filename: `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_Pressemitteilung.pdf`,
                 type: 'application/pdf',
                 disposition: 'attachment'
               };
-              console.log('✅ PDF generiert (wie Vorschau-Tab):', pdfAttachment.filename);
+              console.log('✅ PDF generiert:', pdfAttachment.filename);
             }
           }
         } catch (pdfError) {
