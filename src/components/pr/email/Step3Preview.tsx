@@ -414,7 +414,15 @@ export default function Step3Preview({
         campaignId: campaign.id,
         recipientEmail: testEmail
       });
-      
+
+      // DEBUG: Prüfe ob signatureId vorhanden ist
+      console.log('🔍 DEBUG Test-Email Draft:', {
+        hasSignatureId: !!draft.content.signatureId,
+        signatureId: draft.content.signatureId,
+        senderType: draft.sender.type,
+        hasSenderData: !!draft.sender.contactData
+      });
+
       // API Call für Test-Email
       const result = await emailService.sendTestEmail({
         campaignId: campaign.id!,
