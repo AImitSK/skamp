@@ -10,14 +10,151 @@ global.fetch = jest.fn(() =>
   })
 ) as jest.Mock;
 
-// Mock Response for Firebase
-global.Response = class {
-  ok = true;
-  status = 200;
-  statusText = 'OK';
-  constructor(public body?: any, options?: any) {}
-  json() { return Promise.resolve(this.body); }
-  text() { return Promise.resolve(String(this.body)); }
+// Mock Request for Next.js Server APIs
+global.Request = class Request {
+  private _url: string;
+  private _method: string;
+  private _headers: Map<string, string>;
+  private _body: any;
+
+  constructor(url: string | URL, init?: RequestInit) {
+    this._url = typeof url === 'string' ? url : url.toString();
+    this._method = init?.method || 'GET';
+    this._headers = new Map();
+
+    if (init?.headers) {
+      Object.entries(init.headers).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          this._headers.set(key.toLowerCase(), value);
+        }
+      });
+    }
+
+    this._body = init?.body;
+  }
+
+  get url() { return this._url; }
+  get method() { return this._method; }
+  get headers() { return this._headers; }
+  get body() { return this._body; }
+
+  json() {
+    return Promise.resolve(JSON.parse(this._body as string));
+  }
+
+  text() {
+    return Promise.resolve(String(this._body));
+  }
+
+  clone() {
+    return new Request(this._url, {
+      method: this._method,
+      headers: Object.fromEntries(this._headers),
+      body: this._body
+    });
+  }
+} as any;
+
+// Mock Response for Next.js Server APIs and Firebase
+global.Response = class Response {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: Map<string, string>;
+  body: any;
+
+  constructor(body?: any, init?: ResponseInit) {
+    this.body = body;
+    this.status = init?.status || 200;
+    this.statusText = init?.statusText || 'OK';
+    this.ok = this.status >= 200 && this.status < 300;
+    this.headers = new Map();
+
+    if (init?.headers) {
+      Object.entries(init.headers).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          this.headers.set(key.toLowerCase(), value);
+        }
+      });
+    }
+  }
+
+  json() {
+    if (typeof this.body === 'string') {
+      return Promise.resolve(JSON.parse(this.body));
+    }
+    return Promise.resolve(this.body);
+  }
+
+  text() {
+    return Promise.resolve(String(this.body));
+  }
+
+  clone() {
+    return new Response(this.body, {
+      status: this.status,
+      statusText: this.statusText,
+      headers: Object.fromEntries(this.headers)
+    });
+  }
+
+  static json(data: any, init?: ResponseInit) {
+    return new Response(JSON.stringify(data), {
+      ...init,
+      headers: {
+        'content-type': 'application/json',
+        ...init?.headers
+      }
+    });
+  }
+} as any;
+
+// Mock Headers for Next.js Server APIs
+global.Headers = class Headers extends Map<string, string> {
+  constructor(init?: Record<string, string> | [string, string][] | Headers) {
+    super();
+
+    if (init) {
+      if (init instanceof Headers || init instanceof Map) {
+        init.forEach((value, key) => {
+          this.set(key.toLowerCase(), value);
+        });
+      } else if (Array.isArray(init)) {
+        init.forEach(([key, value]) => {
+          this.set(key.toLowerCase(), value);
+        });
+      } else {
+        Object.entries(init).forEach(([key, value]) => {
+          this.set(key.toLowerCase(), value);
+        });
+      }
+    }
+  }
+
+  get(name: string): string | null {
+    return super.get(name.toLowerCase()) || null;
+  }
+
+  set(name: string, value: string): this {
+    return super.set(name.toLowerCase(), value);
+  }
+
+  has(name: string): boolean {
+    return super.has(name.toLowerCase());
+  }
+
+  delete(name: string): boolean {
+    return super.delete(name.toLowerCase());
+  }
+
+  append(name: string, value: string): void {
+    const existing = this.get(name);
+    if (existing) {
+      this.set(name, `${existing}, ${value}`);
+    } else {
+      this.set(name, value);
+    }
+  }
 } as any;
 
 // Mock crypto for sharing IDs
