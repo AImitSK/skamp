@@ -34,8 +34,12 @@ const config: Config = {
         '4xl': '2rem',
       },
       spacing: {
+        '104': '26rem',
         '144': '36rem',
+        '180': '45rem',
+        '271.25': '67.8125rem',
         '304': '76rem',
+        'xl': '36rem',
       },
       keyframes: {
         'move-x': {

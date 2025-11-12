@@ -4,6 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables für Tailwind v4 Kompatibilität */
+:root {
+  --color-blue-500: #0080cd;
+  --color-blue-600: #005fab;
+  --color-blue-700: #004a8c;
+  --color-blue-900: #002846;
+}
+
 /* Tailwind v4 Theme Compatibility */
 @layer utilities {
   /* Gradient directions */
@@ -36,6 +44,9 @@
   .bg-size-\[12px_100\%\] {
     background-size: 12px 100%;
   }
+  .bg-size-\[530px_430px\] {
+    background-size: 530px 430px;
+  }
 
   /* Background positions */
   .bg-position-\[left_-109px_top_-112px\] {
@@ -43,6 +54,9 @@
   }
   .bg-position-\[left_-38px_top_-73px\] {
     background-position: left -38px top -73px;
+  }
+  .bg-position-\[center_-75px\] {
+    background-position: center -75px;
   }
 
   /* Overflow visible with important */
@@ -65,6 +79,107 @@
   }
   .bg-\[url\(\/screenshots\/app\.png\)\] {
     background-image: url(/screenshots/app.png);
+  }
+  .bg-\[url\(\/map\.png\)\] {
+    background-image: url(/map.png);
+  }
+
+  /* CSS Masks */
+  .mask-\[linear-gradient\(to_bottom\,black_50\%\,transparent\)\] {
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent);
+    mask-image: linear-gradient(to bottom, black 50%, transparent);
+  }
+
+  /* Radial Gradients with color-mix */
+  .bg-\[radial-gradient\(circle\,transparent_25\%\,color-mix\(in_srgb\,var\(--color-blue-500\)_var\(--opacity\)\,transparent\)_100\%\)\] {
+    background-image: radial-gradient(
+      circle,
+      transparent 25%,
+      color-mix(in srgb, var(--color-blue-500) var(--opacity), transparent) 100%
+    );
+  }
+
+  /* Gradient stop positions with arbitrary values */
+  .from-\[-25\%\] {
+    --tw-gradient-from-position: -25%;
+  }
+
+  /* Data attribute variants for dark mode */
+  .data-dark\:text-white[data-dark="true"] {
+    color: white;
+  }
+
+  .data-dark\:text-gray-400[data-dark="true"] {
+    color: rgb(156 163 175);
+  }
+
+  .group[data-dark="true"] .group-data-dark\:from-gray-800 {
+    --tw-gradient-from: #1f2937 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(31 41 55 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .group[data-dark="true"] .group-data-dark\:from-\[-25\%\] {
+    --tw-gradient-from-position: -25%;
+  }
+
+  .group[data-dark="true"] .group-data-dark\:text-white {
+    color: white;
+  }
+
+  .group[data-dark="true"] .group-data-dark\:text-gray-400 {
+    color: rgb(156 163 175);
+  }
+
+  /* Data hover variants (Headless UI v2) */
+  .data-hover\:text-gray-950\/75[data-hover] {
+    color: rgb(3 7 18 / 0.75);
+  }
+
+  .data-hover\:bg-black\/2\.5[data-hover] {
+    background-color: rgb(0 0 0 / 0.025);
+  }
+
+  .data-hover\:bg-black\/5[data-hover] {
+    background-color: rgb(0 0 0 / 0.05);
+  }
+
+  .data-hover\:bg-gray-800[data-hover] {
+    background-color: #1f2937;
+  }
+
+  .data-hover\:bg-white\/20[data-hover] {
+    background-color: rgb(255 255 255 / 0.2);
+  }
+
+  .data-hover\:bg-gray-50[data-hover] {
+    background-color: #f9fafb;
+  }
+
+  .data-hover\:bg-gray-400[data-hover] {
+    background-color: #9ca3af;
+  }
+
+  /* Data disabled variants */
+  .data-disabled\:bg-gray-950[data-disabled] {
+    background-color: #030712;
+  }
+
+  .data-disabled\:opacity-40[data-disabled] {
+    opacity: 0.4;
+  }
+
+  .data-disabled\:bg-white\/15[data-disabled] {
+    background-color: rgb(255 255 255 / 0.15);
+  }
+
+  .data-disabled\:bg-transparent[data-disabled] {
+    background-color: transparent;
+  }
+
+  /* Data active variants */
+  .data-active\:bg-gray-400[data-active] {
+    background-color: #9ca3af;
   }
 }
 
