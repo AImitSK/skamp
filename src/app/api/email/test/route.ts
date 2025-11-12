@@ -388,10 +388,19 @@ export async function POST(request: NextRequest) {
           // Verwende pdfVersionsService.createPreviewPDF() - wie im Vorschau-Tab
           const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
 
+          // WICHTIG: Verwende campaign.mainContent (nicht contentHtml!)
+          // Im CampaignContext wird editorContent = campaign.mainContent verwendet
+          console.log('📄 Campaign-Daten für PDF:', {
+            hasMainContent: !!campaign.mainContent,
+            hasContentHtml: !!campaign.contentHtml,
+            mainContentLength: campaign.mainContent?.length || 0,
+            contentHtmlLength: campaign.contentHtml?.length || 0
+          });
+
           const pdfResult = await pdfVersionsService.createPreviewPDF(
             {
               title: campaign.title,
-              mainContent: campaign.contentHtml || campaign.mainContent || '',
+              mainContent: campaign.mainContent || '', // EXAKT wie CampaignContext (editorContent)
               boilerplateSections: campaign.boilerplateSections || [],
               keyVisual: campaign.keyVisual,
               clientName: campaign.clientName,
