@@ -106,6 +106,7 @@ class PDFVersionsService {
       boilerplateSections: any[];
       keyVisual?: any;
       clientName?: string;
+      templateId?: string; // NEU: Template-ID für korrekte PDF-Formatierung (wie Vorschau-Tab)
     },
     organizationId: string,
     campaignId?: string
