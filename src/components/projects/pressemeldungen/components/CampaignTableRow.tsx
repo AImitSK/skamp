@@ -56,7 +56,8 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
       case 'draft': return 'zinc';
       case 'in_review': return 'amber';
       case 'approved': return 'green';
-      case 'sent': return 'blue';
+      case 'scheduled': return 'blue';
+      case 'sent': return 'green';
       case 'rejected': return 'red';
       case 'changes_requested': return 'orange';
       default: return 'zinc';
@@ -68,6 +69,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
       case 'draft': return 'Entwurf';
       case 'in_review': return 'In Prüfung';
       case 'approved': return 'Freigegeben';
+      case 'scheduled': return 'Geplant';
       case 'sent': return 'Versendet';
       case 'rejected': return 'Abgelehnt';
       case 'changes_requested': return 'Änderungen Angefordert';
@@ -194,6 +196,17 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
           >
             {getStatusLabel(campaign.status)}
           </Badge>
+          {campaign.status === 'scheduled' && campaign.scheduledAt && (
+            <div className="text-xs text-gray-500 mt-1">
+              {new Date(campaign.scheduledAt.toDate ? campaign.scheduledAt.toDate() : campaign.scheduledAt).toLocaleString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          )}
         </div>
 
         {/* Admin */}

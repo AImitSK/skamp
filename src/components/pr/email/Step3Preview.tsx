@@ -507,66 +507,54 @@ export default function Step3Preview({
       }
 
       if (sendMode === 'scheduled') {
-        // Geplanter Versand
+        // Geplanter Versand via neuer API
         const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
         emailLogger.info('Email scheduling requested', {
           campaignId: campaign.id,
           scheduledDateTime: scheduledDateTime.toISOString(),
           recipientCount: draft.recipients.totalCount
         });
-        
-        // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
-        // Filtere leere oder ungültige List IDs heraus
-        const validListIds = draft.recipients.listIds?.filter(id => id && id.trim() !== '') || [];
 
-        const campaignWithLists = {
-          ...campaign,
-          distributionListIds: validListIds.length > 0 ? validListIds : undefined,
-          distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
-          recipientCount: draft.recipients.totalCount,
-          assetShareUrl: assetShareUrl // Verwende den aktuellen Share-Link aus dem State
-        };
+        // Firebase ID Token für Auth
+        const idToken = await user?.getIdToken();
+        if (!idToken) {
+          throw new Error('Keine Authentifizierung vorhanden');
+        }
 
-        emailLogger.debug('Campaign data prepared for scheduling', {
-          campaignId: campaign.id,
-          listIds: campaignWithLists.distributionListIds,
-          listNames: campaignWithLists.distributionListNames,
-          totalCount: campaignWithLists.recipientCount,
-          hasValidLists: validListIds.length > 0,
-          manualRecipientsCount: draft.recipients.manual?.length || 0
-        });
-        
-        const result = await emailService.scheduleEmail({
-          campaign: campaignWithLists,
-          emailContent,
-          senderInfo: {
-            name: senderInfo.name,
-            title: senderInfo.title || '',
-            company: senderInfo.company || campaign.clientName || '',
-            phone: senderInfo.phone || '',
-            email: senderInfo.email || ''
+        // API Call zum neuen Endpoint
+        const response = await fetch('/api/pr/email/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
           },
-          scheduledDate: scheduledDateTime,
-          timezone: 'Europe/Berlin',
-          manualRecipients: draft.recipients.manual
+          body: JSON.stringify({
+            campaignId: campaign.id,
+            organizationId: organization?.id,
+            draft: draft,
+            sendImmediately: false,
+            scheduledDate: scheduledDateTime.toISOString()
+          })
         });
-        
-        if (result.success) {
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
           emailLogger.info('Email scheduled successfully', {
             campaignId: campaign.id,
-            jobId: result.jobId,
-            scheduledDateTime: scheduledDateTime.toISOString()
+            scheduledEmailId: result.scheduledEmailId,
+            scheduledFor: result.scheduledFor
           });
-          
+
           // WICHTIG: Update Campaign Status auf "scheduled"
           await updateCampaignStatus('scheduled', {
             scheduledAt: scheduledDateTime,
-            emailJobId: result.jobId
+            scheduledEmailId: result.scheduledEmailId
           });
-          
-          setAlert({ 
-            type: 'success', 
-            message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!` 
+
+          setAlert({
+            type: 'success',
+            message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!`
           });
           setShowConfirmDialog(false);
           if (onSent) {

@@ -100,6 +100,28 @@ export async function POST(request: NextRequest) {
           updatedAt: Timestamp.now()
         });
 
+        // Campaign Status aktualisieren (scheduled -> sent/failed)
+        try {
+          const campaignRef = adminDb.collection('pr_campaigns').doc(scheduledEmail.campaignId);
+          const campaignSnap = await campaignRef.get();
+
+          if (campaignSnap.exists && campaignSnap.data()?.status === 'scheduled') {
+            await campaignRef.update({
+              status: result.failureCount === 0 ? 'sent' : 'scheduled',
+              sentAt: result.failureCount === 0 ? Timestamp.now() : null,
+              emailSendResult: {
+                successCount: result.successCount,
+                failureCount: result.failureCount,
+                errors: result.errors
+              },
+              updatedAt: Timestamp.now()
+            });
+          }
+        } catch (campaignUpdateError) {
+          // Campaign-Update Fehler nicht kritisch - Email wurde versendet
+          console.error('Failed to update campaign status:', campaignUpdateError);
+        }
+
         results.processed++;
         if (result.failureCount === 0) {
           results.sent++;
