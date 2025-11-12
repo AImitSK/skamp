@@ -116,6 +116,7 @@ export default function Step3Preview({
   const [sending, setSending] = useState(false);
   const [previewContact, setPreviewContact] = useState<any>(null);
   const [previewSignature, setPreviewSignature] = useState<string>('');
+  const [assetShareUrl, setAssetShareUrl] = useState<string | undefined>(campaign.assetShareUrl);
 
   // State für Alerts
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -282,10 +283,59 @@ export default function Step3Preview({
     loadSignature();
   }, [draft.content.signatureId]);
 
+  // Erstelle automatisch Share-Link für Campaign-Assets
+  useEffect(() => {
+    const createAssetShareLink = async () => {
+      // Prüfe ob Assets vorhanden sind
+      if (!campaign.attachedAssets || campaign.attachedAssets.length === 0) {
+        console.log('📎 Keine Assets an Kampagne angehängt');
+        return;
+      }
+
+      // Prüfe ob bereits ein Share-Link existiert
+      if (campaign.assetShareUrl) {
+        console.log('✅ Asset Share-Link bereits vorhanden:', campaign.assetShareUrl);
+        return;
+      }
+
+      try {
+        console.log('🔗 Erstelle Asset Share-Link für', campaign.attachedAssets.length, 'Assets...');
+        const { prService } = await import('@/lib/firebase/pr-service');
+
+        const shareLink = await prService.createCampaignShareLink(campaign, {
+          allowDownload: true,
+          watermark: false
+        });
+
+        console.log('✅ Asset Share-Link erstellt:', shareLink.shareId);
+
+        // Setze Share-URL im lokalen State für sofortige Anzeige
+        const baseUrl = window.location.origin;
+        const shareUrl = `${baseUrl}/share/${shareLink.shareId}`;
+        setAssetShareUrl(shareUrl);
+
+        // Zeige Info-Alert
+        setAlert({
+          type: 'info',
+          message: `Medien-Link generiert: ${campaign.attachedAssets.length} ${campaign.attachedAssets.length === 1 ? 'Datei' : 'Dateien'} verfügbar`
+        });
+
+        // Auto-hide alert after 3 seconds
+        setTimeout(() => setAlert(null), 3000);
+
+      } catch (error) {
+        console.error('❌ Fehler beim Erstellen des Asset Share-Links:', error);
+        // Kein Alert für Fehler - silent fail
+      }
+    };
+
+    createAssetShareLink();
+  }, [campaign.id, campaign.attachedAssets, campaign.assetShareUrl]);
+
   // Generiere Vorschau-HTML
   const previewHtml = useMemo(() => {
     console.log('🎨 Generiere Vorschau mit Kontakt:', previewContact);
-    console.log('📧 Campaign assetShareUrl:', campaign.assetShareUrl);
+    console.log('📧 Asset Share URL:', assetShareUrl);
 
     // WARNUNG wenn kein echter Kontakt geladen wurde
     if (!previewContact) {
@@ -330,13 +380,13 @@ export default function Step3Preview({
         phone: senderInfo?.phone || '',
         email: senderInfo?.email || ''
       },
-      campaign.assetShareUrl,
+      assetShareUrl, // Verwende lokalen State statt campaign.assetShareUrl
       campaign.keyVisual,
       previewSignature
     );
 
     return preview.html;
-  }, [draft, campaign, previewContact, previewSignature]);
+  }, [draft, campaign, previewContact, previewSignature, assetShareUrl]);
 
   // Test-Email validieren
   const validateTestEmail = (email: string): boolean => {
@@ -465,7 +515,8 @@ export default function Step3Preview({
           ...campaign,
           distributionListIds: validListIds.length > 0 ? validListIds : undefined,
           distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
-          recipientCount: draft.recipients.totalCount
+          recipientCount: draft.recipients.totalCount,
+          assetShareUrl: assetShareUrl // Verwende den aktuellen Share-Link aus dem State
         };
 
         emailLogger.debug('Campaign data prepared for scheduling', {
@@ -532,7 +583,8 @@ export default function Step3Preview({
           ...campaign,
           distributionListIds: validListIds.length > 0 ? validListIds : undefined,
           distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
-          recipientCount: draft.recipients.totalCount
+          recipientCount: draft.recipients.totalCount,
+          assetShareUrl: assetShareUrl // Verwende den aktuellen Share-Link aus dem State
         };
 
         emailLogger.debug('Campaign data prepared for immediate send', {
