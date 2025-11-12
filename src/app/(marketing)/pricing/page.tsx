@@ -439,7 +439,6 @@ export default async function Pricing({
 
   return (
     <main className="overflow-hidden">
-      <Gradient className="absolute inset-2 -z-10 rounded-4xl" />
       <Container>
         <Navbar />
       </Container>
