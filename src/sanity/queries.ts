@@ -4,7 +4,6 @@ import { sanityFetch } from './live'
 const TOTAL_POSTS_QUERY = defineQuery(/* groq */ `count(*[
   _type == "post"
   && defined(slug.current)
-  && (isFeatured != true || defined($category))
   && select(defined($category) => $category in categories[]->slug.current, true)
 ])`)
 
@@ -18,7 +17,6 @@ export async function getPostsCount(category?: string) {
 const POSTS_QUERY = defineQuery(/* groq */ `*[
   _type == "post"
   && defined(slug.current)
-  && (isFeatured != true || defined($category))
   && select(defined($category) => $category in categories[]->slug.current, true)
 ]|order(publishedAt desc)[$startIndex...$endIndex]{
   title,
