@@ -208,8 +208,10 @@ export const contactsService = {
   },
 
   async getById(id: string): Promise<Contact | null> {
-    const docRef = doc(db, 'contacts', id);
-    const docSnap = await getDoc(docRef);
+    // KONSISTENZ-FIX: Versuche zuerst contacts_enhanced (wie bei companies)
+    let docRef = doc(db, 'contacts_enhanced', id);
+    let docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
       const contact = { id: docSnap.id, ...docSnap.data() } as Contact;
       if (contact.companyId) {
@@ -218,6 +220,19 @@ export const contactsService = {
       }
       return contact;
     }
+
+    // Fallback: Legacy contacts collection
+    docRef = doc(db, 'contacts', id);
+    docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const contact = { id: docSnap.id, ...docSnap.data() } as Contact;
+      if (contact.companyId) {
+        const company = await companiesService.getById(contact.companyId);
+        contact.companyName = company?.name;
+      }
+      return contact;
+    }
+
     return null;
   },
 

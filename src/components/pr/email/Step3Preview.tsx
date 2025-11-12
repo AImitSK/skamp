@@ -207,11 +207,13 @@ export default function Step3Preview({
             // Wenn wir eine contactId haben, lade den Kontakt
             if (contactId) {
               console.log('👤 Lade Kontakt:', contactId);
-              const contact = await contactsService.getById(contactId, currentOrganization.id, user.uid);
 
-              console.log('👤 Kontakt geladen:', contact);
+              try {
+                const contact = await contactsService.getById(contactId);
 
-              if (contact) {
+                console.log('👤 Kontakt geladen:', contact);
+
+                if (contact) {
                 // Konvertiere Contact zu Preview-Format
                 const previewData = {
                   salutation: contact.name?.salutation || contact.salutation || '',
@@ -224,7 +226,12 @@ export default function Step3Preview({
                 console.log('✅ Preview-Kontakt gesetzt:', previewData);
                 setPreviewContact(previewData);
                 return; // Erfolg! Beende die Schleife
+              } else {
+                console.warn('⚠️ Kontakt ist null oder leer für contactId:', contactId);
               }
+            } catch (contactError) {
+              console.error('❌ Fehler beim Laden des Kontakts:', contactId, contactError);
+            }
             }
           }
 
