@@ -460,7 +460,7 @@ function isValidEmail(email: string): boolean {
 }
 
 function buildTestEmailHtml(
-  email: TestEmailRequest['campaignEmail'], 
+  email: TestEmailRequest['campaignEmail'],
   variables: any,
   isTest: boolean,
   mediaShareUrl?: string,
@@ -473,43 +473,48 @@ function buildTestEmailHtml(
       🧪 TEST-EMAIL - Dies ist keine echte Kampagnen-Email
     </div>` : '';
 
-  // NEU: Media Button wenn Share URL vorhanden
-  const mediaButtonHtml = mediaShareUrl ? `
-    <div style="text-align: center; margin: 30px 0;">
-        <a href="${mediaShareUrl}" 
-           style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-            📎 Medien ansehen
-        </a>
+  // Media Link Box (ähnlich wie in der Preview)
+  const mediaLinkHtml = mediaShareUrl ? `
+    <div style="margin: 30px 0 20px 0; padding: 15px; background-color: #f0f7ff; border-left: 4px solid #005fab; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; line-height: 1.5;">
+            <strong style="color: #005fab;">→ Medien-Anhänge:</strong><br>
+            <a href="${mediaShareUrl}" style="color: #005fab; text-decoration: underline; font-weight: 500;">Hier können Sie die Medien-Dateien zu dieser Pressemitteilung herunterladen</a>
+        </p>
     </div>` : '';
 
-  // NEU: Key Visual HTML
-  const keyVisualHtml = keyVisual ? `
-    <div style="text-align: center; margin: 0 0 20px 0;">
-        <img src="${keyVisual.url}" 
-             alt="Key Visual" 
-             style="width: 100%; max-width: 600px; height: auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
-    </div>` : '';
-
-  // NEU: Anhang-Information
-  let attachmentInfo = '';
-  if (campaign?.attachedAssets && campaign.attachedAssets.length > 0) {
-    const attachmentCount = campaign.attachedAssets.length;
-    attachmentInfo = `
+  // PDF-Anhang-Information (statt inline Press Release)
+  let pdfAttachmentInfo = '';
+  if (campaign?.contentHtml || campaign?.contentText) {
+    pdfAttachmentInfo = `
     <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
         <p style="margin: 0; font-size: 14px; color: #6c757d;">
-            <strong>📎 Anhänge:</strong> Diese E-Mail enthält ${attachmentCount} ${attachmentCount === 1 ? 'Anhang' : 'Anhänge'}
+            <strong>📄 Pressemitteilung:</strong> Die vollständige Pressemitteilung ist als PDF im Anhang dieser E-Mail enthalten.
+        </p>
+    </div>`;
+  }
+
+  // Weitere Anhänge (Assets)
+  let assetsInfo = '';
+  if (campaign?.attachedAssets && campaign.attachedAssets.length > 0) {
+    const assetCount = campaign.attachedAssets.length;
+    assetsInfo = `
+    <div style="background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #e9ecef;">
+        <p style="margin: 0; font-size: 14px; color: #6c757d;">
+            <strong>📎 Weitere Anhänge:</strong> Diese E-Mail enthält ${assetCount} ${assetCount === 1 ? 'weitere Datei' : 'weitere Dateien'}
         </p>
     </div>`;
   }
 
   // Verwende prepareHtmlForEmail für bessere E-Mail-Kompatibilität
+  // WICHTIG: email.introduction enthält bereits Greeting + Einleitungstext als HTML
   const formattedIntroduction = emailComposerService.prepareHtmlForEmail(
     emailComposerService.replaceVariables(email.introduction, variables)
   );
-  
-  const formattedPressRelease = emailComposerService.prepareHtmlForEmail(
-    emailComposerService.replaceVariables(email.pressReleaseHtml, variables)
-  );
+
+  // Verwende HTML-Signatur falls vorhanden, ansonsten die alte Text-Signatur
+  const signatureHtml = email.signature
+    ? emailComposerService.replaceVariables(email.signature, variables).replace(/\n/g, '<br>')
+    : '';
 
   return `
 <!DOCTYPE html>
@@ -519,72 +524,30 @@ function buildTestEmailHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${emailComposerService.replaceVariables(email.subject, variables)}</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            line-height: 1.6; 
-            color: #333; 
-            margin: 0; 
-            padding: 0; 
-            background-color: #f8f9fa;
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: white; 
-            border-radius: 8px; 
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px; 
-            text-align: center;
-        }
-        .header h1 { 
-            margin: 0; 
-            font-size: 24px; 
-            font-weight: 600;
-        }
-        .content { 
-            padding: 30px 20px; 
-        }
-        .greeting { 
-            font-size: 16px; 
-            margin-bottom: 20px; 
-        }
-        .introduction { 
-            margin-bottom: 25px; 
-            color: #555;
-        }
-        .press-release { 
-            background: #f8f9fa; 
-            padding: 25px; 
-            border-left: 4px solid #667eea; 
-            margin: 25px 0; 
-            border-radius: 0 8px 8px 0;
-        }
-        .press-release h1, .press-release h2, .press-release h3 {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
             color: #333;
-        }
-        .closing { 
-            margin: 25px 0; 
-        }
-        .signature { 
-            border-top: 2px solid #e9ecef; 
-            padding-top: 20px; 
-            margin-top: 30px; 
-            background: #f8f9fa;
+            margin: 0;
             padding: 20px;
-            border-radius: 8px;
-            white-space: pre-line;
+            background-color: #ffffff;
         }
-        .footer { 
-            font-size: 12px; 
-            color: #6c757d; 
-            text-align: center;
-            padding: 20px;
-            background: #f1f3f4;
+        .content {
+            max-width: 600px;
+            margin: 0;
+            padding-bottom: 10px;
+        }
+        .email-body {
+            margin-bottom: 10px;
+        }
+        .signature {
+            margin-top: 20px;
+        }
+        p {
+            margin: 0 0 1em 0;
+        }
+        a {
+            color: #005fab;
         }
         .reply-info {
             background: #e3f2fd;
@@ -597,40 +560,24 @@ function buildTestEmailHtml(
 </head>
 <body>
     ${testBanner}
-    <div class="container">
-        <div class="header">
-            <h1>${variables.sender.company || 'Test Company'}</h1>
+    <div class="content">
+        <div class="email-body">
+            ${formattedIntroduction}
         </div>
-        
-        <div class="content">
-            <div class="introduction">
-                ${formattedIntroduction}
-            </div>
-            
-            <div class="press-release">
-                ${keyVisualHtml}
-                ${formattedPressRelease}
-            </div>
-            
-            ${attachmentInfo}
-            ${mediaButtonHtml}
-            
-            ${replyToAddress ? `
-            <div class="reply-info">
-                <p style="margin: 0;"><strong>ℹ️ Reply-To System aktiv:</strong></p>
-                <p style="margin: 5px 0 0 0;">Antworten auf diese E-Mail landen automatisch in Ihrer CeleroPress Inbox.</p>
-            </div>
-            ` : ''}
-            
-            <div class="signature">
-                ${emailComposerService.replaceVariables(email.signature, variables)}
-            </div>
+
+        ${pdfAttachmentInfo}
+        ${assetsInfo}
+        ${mediaLinkHtml}
+
+        ${replyToAddress ? `
+        <div class="reply-info">
+            <p style="margin: 0;"><strong>ℹ️ Reply-To System aktiv:</strong></p>
+            <p style="margin: 5px 0 0 0;">Antworten auf diese E-Mail landen automatisch in Ihrer CeleroPress Inbox.</p>
         </div>
-        
-        <div class="footer">
-            <p>Diese TEST-E-Mail wurde über das CeleroPress PR-Tool versendet.</p>
-            ${campaign ? `<p style="font-size: 11px; color: #adb5bd;">Campaign: ${campaign.title}</p>` : ''}
-            ${replyToAddress ? `<p style="font-size: 11px; color: #adb5bd;">Reply-To: ${replyToAddress}</p>` : ''}
+        ` : ''}
+
+        <div class="signature">
+            ${signatureHtml}
         </div>
     </div>
 </body>
