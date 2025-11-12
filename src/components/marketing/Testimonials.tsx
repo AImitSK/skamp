@@ -142,7 +142,7 @@ function TestimonialCard({
         <figcaption className="mt-6 border-t border-white/20 pt-6">
           <p className="text-sm/6 font-medium text-white">{name}</p>
           <p className="text-sm/6 font-medium">
-            <span className="bg-linear-to-r from-[#fbbf24] from-28% via-[#14b8a6] via-70% to-[#0080cd] bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-[#fde68a] from-28% via-[#6ee7b7] via-70% to-[#60a5fa] bg-clip-text text-transparent">
               {title}
             </span>
           </p>
