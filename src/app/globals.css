@@ -204,6 +204,18 @@
     aspect-ratio: 3 / 2;
   }
 
+  .aspect-3\/4 {
+    aspect-ratio: 3 / 4;
+  }
+
+  .aspect-9\/16 {
+    aspect-ratio: 9 / 16;
+  }
+
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+
   /* Ring utilities */
   .ring-inset {
     --tw-ring-inset: inset;
@@ -288,6 +300,88 @@
 
   .\[animation-timing-function\:linear\] {
     animation-timing-function: linear;
+  }
+
+  /* CSS variable-based utilities for Testimonials slider */
+  .px-\(--scroll-padding\) {
+    padding-left: var(--scroll-padding);
+    padding-right: var(--scroll-padding);
+  }
+
+  .scroll-ml-\(--scroll-padding\) {
+    scroll-margin-left: var(--scroll-padding);
+  }
+
+  /* Container CSS variables */
+  .\[--container-2xl\:theme\(maxWidth\.2xl\)\],
+  .\[--container-2xl\:672px\] {
+    --container-2xl: 42rem;
+  }
+
+  .\[--container-7xl\:theme\(maxWidth\.7xl\)\],
+  .\[--container-7xl\:1280px\] {
+    --container-7xl: 80rem;
+  }
+
+  /* Complex scroll padding with max() and calc() */
+  .\[--scroll-padding\:max\(--spacing\(6\)\,calc\(\(100vw-\(var\(--container-2xl\)\)\)\/2\)\)\],
+  .\[--scroll-padding\:max\(theme\(spacing\.6\)\,calc\(\(100vw-672px\)\/2\)\)\] {
+    --scroll-padding: max(1.5rem, calc((100vw - 42rem) / 2));
+  }
+
+  @media (min-width: 1024px) {
+    .lg\:\[--scroll-padding\:max\(--spacing\(8\)\,calc\(\(100vw-\(var\(--container-7xl\)\)\)\/2\)\)\],
+    .lg\:\[--scroll-padding\:max\(theme\(spacing\.8\)\,calc\(\(100vw-1280px\)\/2\)\)\] {
+      --scroll-padding: max(2rem, calc((100vw - 80rem) / 2));
+    }
+  }
+
+  /* Scrollbar hiding */
+  .\[scrollbar-width\:none\] {
+    scrollbar-width: none;
+  }
+
+  .\[\&\:\:-webkit-scrollbar\]\:hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Snap utilities */
+  .snap-x {
+    scroll-snap-type: x mandatory;
+  }
+
+  .snap-mandatory {
+    scroll-snap-type: var(--tw-scroll-snap-strictness) mandatory;
+  }
+
+  .snap-start {
+    scroll-snap-align: start;
+  }
+
+  /* Overscroll */
+  .overscroll-x-contain {
+    overscroll-behavior-x: contain;
+  }
+
+  /* Scroll smooth */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Width utilities */
+  .w-216 {
+    width: 54rem;
+  }
+
+  /* Forced-colors media query variants */
+  @media (forced-colors: active) {
+    .forced-colors\:data-active\:bg-\[Highlight\][data-active] {
+      background-color: Highlight;
+    }
+
+    .forced-colors\:data-focus\:outline-offset-4[data-focus] {
+      outline-offset: 4px;
+    }
   }
 }
 
