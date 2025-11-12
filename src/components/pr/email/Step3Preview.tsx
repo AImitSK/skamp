@@ -125,6 +125,15 @@ export default function Step3Preview({
   const manualRecipients = draft.recipients.manual.length;
   const listRecipients = totalRecipients - manualRecipients;
 
+  // Debug: Log draft data
+  console.log('📧 Step3 Draft Info:', {
+    totalCount: draft.recipients.totalCount,
+    totalRecipients,
+    listIds: draft.recipients.listIds,
+    listNames: draft.recipients.listNames,
+    sender: draft.sender
+  });
+
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
   useEffect(() => {
     const loadPreviewContact = async () => {
