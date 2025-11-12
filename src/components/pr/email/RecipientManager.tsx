@@ -72,6 +72,19 @@ export default function RecipientManager({
   // Berechne totale Empfänger (Listen + Manuelle)
   const totalRecipientCount = listRecipientCount + manualRecipients.length;
 
+  // WICHTIG: Informiere Parent über Änderungen (totalCount updaten)
+  useEffect(() => {
+    if (campaignLists.length > 0 && !loading) {
+      const listNames = campaignLists.map(list => list.name);
+      console.log('📊 RecipientManager: Calling onListsChange with:', {
+        listIds: selectedListIds,
+        listNames,
+        totalFromLists: listRecipientCount
+      });
+      onListsChange(selectedListIds, listNames, listRecipientCount);
+    }
+  }, [campaignLists, listRecipientCount, loading, selectedListIds, onListsChange]);
+
   return (
     <div className="space-y-6">
       {/* Verteilerlisten (Read-Only) */}

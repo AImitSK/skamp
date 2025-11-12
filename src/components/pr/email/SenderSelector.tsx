@@ -65,7 +65,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
     if (contact) {
       const contactData = {
         name: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
-        email: contact.emails?.[0]?.address || contact.email || '',
+        email: contact.email || contact.emails?.[0]?.email || contact.emails?.[0]?.address || '',
         title: contact.position || '',
         company: campaign.clientName || contact.companyName || '',
         phone: contact.phones?.[0]?.number || contact.phone || ''
