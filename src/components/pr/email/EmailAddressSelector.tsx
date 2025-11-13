@@ -50,9 +50,10 @@ export default function EmailAddressSelector({
         }))
       });
 
-      // Filter: Nur aktive und verifizierte Emails
+      // Filter: Nur aktive Emails
+      // Wenn verificationStatus nicht gesetzt ist, akzeptieren wir die Email (Backwards-Kompatibilität)
       const activeAddresses = addresses.filter(
-        (addr) => addr.isActive && addr.verificationStatus === 'verified'
+        (addr) => addr.isActive && (!addr.verificationStatus || addr.verificationStatus === 'verified')
       );
 
       console.log('✅ Gefilterte Adressen:', {
