@@ -14,6 +14,9 @@
     },
     "src/app/api/cron/cleanup-pending-signups/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/pr/email/cron/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
