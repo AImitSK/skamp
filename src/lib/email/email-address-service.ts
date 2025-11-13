@@ -778,7 +778,7 @@ export class EmailAddressService {
     try {
       const docRef = doc(db, this.collectionName, emailAddressId);
       const docSnap = await getDoc(docRef);
-      
+
       if (!docSnap.exists()) {
         return;
       }
@@ -799,24 +799,6 @@ export class EmailAddressService {
     } catch (error) {
       // Fehler nicht werfen, da Statistiken nicht kritisch sind
     }
-  }
-
-  /**
-   * Generiert eine eindeutige Reply-To Adresse für diese E-Mail-Adresse
-   * Format: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
-   */
-  generateReplyToAddress(emailAddress: EmailAddress): string {
-    // Kurzer Prefix aus der lokalen E-Mail-Adresse
-    const prefix = emailAddress.localPart
-      .substring(0, 10)
-      .replace(/[^a-z0-9]/gi, ''); // Nur alphanumerisch
-    
-    // Kurze IDs verwenden (erste 8 Zeichen)
-    const shortOrgId = emailAddress.organizationId.substring(0, 8);
-    const shortEmailId = emailAddress.id!.substring(0, 8);
-    
-    // Verwende sk-online-marketing.de statt celeropress.de
-    return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
   }
 
 // src/lib/email/email-address-service.ts - findByReplyToAddress Methode
@@ -941,6 +923,67 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
     return null;
   }
 }
+
+  /**
+   * Holt eine E-Mail-Adresse per ID (für Server-seitige Verwendung)
+   */
+  async getEmailAddressById(id: string): Promise<EmailAddress | null> {
+    return this.get(id);
+  }
+
+  /**
+   * Holt E-Mail-Adressen einer Organisation (Alias für getByOrganization)
+   * Verwendet für Client-seitige Komponenten (keine userId erforderlich)
+   */
+  async getEmailAddressesByOrganization(organizationId: string): Promise<EmailAddress[]> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('organizationId', '==', organizationId),
+        orderBy('isDefault', 'desc'),
+        orderBy('email', 'asc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const emailAddresses: EmailAddress[] = [];
+
+      querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = doc.data() as EmailAddress;
+        emailAddresses.push({ ...data, id: doc.id });
+      });
+
+      // Populate Domains
+      await this.populateDomains(emailAddresses, organizationId);
+
+      return emailAddresses;
+    } catch (error) {
+      console.error('Error fetching email addresses:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generiert eine Reply-To Adresse für eine EmailAddress ID
+   * Server-seitige Methode für email-sender-service
+   */
+  async generateReplyToAddress(organizationId: string, emailAddressId: string): Promise<string> {
+    const emailAddress = await this.get(emailAddressId);
+    if (!emailAddress) {
+      throw new Error(`EmailAddress nicht gefunden: ${emailAddressId}`);
+    }
+
+    // Kurzer Prefix aus der lokalen E-Mail-Adresse
+    const prefix = emailAddress.localPart
+      .substring(0, 10)
+      .replace(/[^a-z0-9]/gi, ''); // Nur alphanumerisch
+
+    // Kurze IDs verwenden (erste 8 Zeichen)
+    const shortOrgId = organizationId.substring(0, 8);
+    const shortEmailId = emailAddressId.substring(0, 8);
+
+    // Verwende sk-online-marketing.de statt celeropress.de
+    return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
+  }
 
   /**
    * Holt die Standard E-Mail-Adresse einer Organisation
