@@ -331,12 +331,21 @@ export class EmailSenderService {
       false // isTest = false
     );
 
+    // Sender Email/Name basierend auf type
+    const senderEmail = sender.type === 'contact'
+      ? sender.contactData?.email
+      : sender.manual?.email;
+
+    const senderName = sender.type === 'contact'
+      ? sender.contactData?.company
+      : sender.manual?.company;
+
     // SendGrid Mail Objekt
     const msg = {
       to: recipient.email,
       from: {
-        email: sender.contactData?.email || process.env.SENDGRID_FROM_EMAIL!,
-        name: sender.contactData?.companyName || process.env.SENDGRID_FROM_NAME!
+        email: senderEmail || process.env.SENDGRID_FROM_EMAIL!,
+        name: senderName || process.env.SENDGRID_FROM_NAME!
       },
       subject: personalizedSubject,
       html: emailHtml,
