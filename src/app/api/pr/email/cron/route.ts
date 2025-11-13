@@ -51,8 +51,10 @@ export async function POST(request: NextRequest) {
     console.log('✅ Auth erfolgreich');
 
     const now = Timestamp.now();
+    console.log('⏰ Aktueller Zeitstempel:', now.toDate().toISOString());
 
     // 2. Pending Emails laden (sendAt <= now)
+    console.log('🔍 Suche nach pending Emails...');
     const snapshot = await adminDb
       .collection('scheduled_emails')
       .where('status', '==', 'pending')
@@ -61,7 +63,10 @@ export async function POST(request: NextRequest) {
       .limit(BATCH_SIZE)
       .get();
 
+    console.log(`📊 Gefundene Emails: ${snapshot.size}`);
+
     if (snapshot.empty) {
+      console.log('ℹ️ Keine geplanten Emails zum Versenden');
       return NextResponse.json({
         success: true,
         message: 'Keine geplanten Emails zum Versenden',
@@ -170,10 +175,12 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    console.error('❌ Cron-Job Fehler:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+        error: error instanceof Error ? error.message : 'Unbekannter Fehler',
+        stack: error instanceof Error ? error.stack : undefined
       },
       { status: 500 }
     );
