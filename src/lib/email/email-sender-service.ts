@@ -239,11 +239,14 @@ export class EmailSenderService {
     };
 
     // Alle Empfänger laden (Listen + Manuelle)
+    console.log('📋 Lade Empfänger...');
     const allRecipients = await this.loadAllRecipients(recipients);
+    console.log(`✅ ${allRecipients.length} Empfänger geladen`);
 
     // Einzeln versenden
     for (const recipient of allRecipients) {
       try {
+        console.log(`📤 Sende Email an ${recipient.email}...`);
         await this.sendSingleEmail(
           recipient,
           preparedData,
@@ -252,10 +255,12 @@ export class EmailSenderService {
         );
 
         result.successCount++;
+        console.log(`✅ Email an ${recipient.email} gesendet`);
       } catch (error) {
         result.failureCount++;
         const errorMessage = error instanceof Error ? error.message : String(error);
         result.errors.push(`${recipient.email}: ${errorMessage}`);
+        console.error(`❌ Email an ${recipient.email} fehlgeschlagen:`, errorMessage);
       }
     }
 

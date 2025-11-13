@@ -93,20 +93,24 @@ export async function POST(request: NextRequest) {
         });
 
         // Email-Daten vorbereiten
+        console.log(`📧 [${doc.id}] Bereite Email-Daten vor...`);
         const preparedData = await emailSenderService.prepareEmailData(
           scheduledEmail.campaignId,
           scheduledEmail.organizationId,
           scheduledEmail.draft.content.signatureId,
           scheduledEmail.userId
         );
+        console.log(`✅ [${doc.id}] Email-Daten vorbereitet`);
 
         // Emails versenden
+        console.log(`📤 [${doc.id}] Starte Email-Versand an ${scheduledEmail.draft.recipients.totalCount} Empfänger...`);
         const result = await emailSenderService.sendToRecipients(
           scheduledEmail.draft.recipients,
           preparedData,
           scheduledEmail.draft.sender,
           scheduledEmail.draft.metadata
         );
+        console.log(`✅ [${doc.id}] Email-Versand abgeschlossen: ${result.successCount} erfolgreich, ${result.failureCount} fehlgeschlagen`);
 
         // Status aktualisieren
         await doc.ref.update({
