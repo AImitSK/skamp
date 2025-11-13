@@ -126,16 +126,6 @@ export default function Step3Preview({
   const manualRecipients = draft.recipients.manual.length;
   const listRecipients = totalRecipients - manualRecipients;
 
-  // Debug: Log draft data
-    totalCount: draft.recipients.totalCount,
-    totalRecipients,
-    listIds: draft.recipients.listIds,
-    listNames: draft.recipients.listNames,
-    validCount: draft.recipients.validCount,
-    manualCount: draft.recipients.manual.length,
-    emailAddressId: draft.emailAddressId
-  });
-
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
   useEffect(() => {
     const loadPreviewContact = async () => {
@@ -144,12 +134,6 @@ export default function Step3Preview({
       }
 
       try {
-          manualCount: draft.recipients.manual.length,
-          listCount: draft.recipients.listIds.length,
-          lists: draft.recipients.listIds,
-          projectId: campaign.projectId
-        });
-
         // Wenn manuelle Empfänger vorhanden, nutze den ersten
         if (draft.recipients.manual.length > 0) {
           setPreviewContact(draft.recipients.manual[0]);
@@ -183,12 +167,6 @@ export default function Step3Preview({
             // Linked-Liste: contactIds aus master distribution_lists
             else if (projectList?.type === 'linked' && projectList.masterListId) {
               const masterList = await listsService.getById(projectList.masterListId);
-                id: masterList?.id,
-                name: masterList?.name,
-                type: masterList?.type,
-                contactIds: masterList?.contactIds,
-                contactCount: masterList?.contactIds?.length
-              });
 
               if (masterList && masterList.contactIds && masterList.contactIds.length > 0) {
                 contactId = masterList.contactIds[0];
@@ -312,12 +290,6 @@ export default function Step3Preview({
     // WARNUNG wenn kein echter Kontakt geladen wurde
     if (!previewContact) {
       console.error('⚠️ WARNUNG: Kein echter Kontakt geladen! Verwende Fallback.');
-        manualRecipientsCount: draft.recipients.manual.length,
-        listIdsCount: draft.recipients.listIds.length,
-        listIds: draft.recipients.listIds,
-        hasUser: !!user,
-        hasOrg: !!currentOrganization
-      });
     }
 
     // Verwende den ersten echten Kontakt oder einen Beispiel-Empfänger
@@ -383,12 +355,6 @@ export default function Step3Preview({
       emailLogger.info('Test email requested', {
         campaignId: campaign.id,
         recipientEmail: testEmail
-      });
-
-      // DEBUG: Prüfe ob signatureId vorhanden ist
-        hasSignatureId: !!draft.content.signatureId,
-        signatureId: draft.content.signatureId,
-        emailAddressId: draft.emailAddressId
       });
 
       // API Call für Test-Email
