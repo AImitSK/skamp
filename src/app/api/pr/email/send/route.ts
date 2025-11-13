@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
       const preparedData = await emailSenderService.prepareEmailData(
         campaignId,
         organizationId,
-        draft.content.signatureId
+        draft.content.signatureId,
+        userId
       );
 
       // Emails versenden

@@ -49,7 +49,8 @@ export class EmailSenderService {
   async prepareEmailData(
     campaignId: string,
     organizationId: string,
-    signatureId?: string
+    signatureId?: string,
+    userId?: string
   ): Promise<PreparedEmailData> {
     // 1. Campaign laden
     const campaign = await this.loadCampaign(campaignId, organizationId);
@@ -58,7 +59,7 @@ export class EmailSenderService {
     const signatureHtml = await this.loadSignature(signatureId);
 
     // 3. PDF generieren
-    const pdfBase64 = await this.generatePDF(campaign);
+    const pdfBase64 = await this.generatePDF(campaign, userId);
 
     // 4. Media-Share-Link
     const mediaShareUrl = this.getMediaShareUrl(campaign);
@@ -127,11 +128,18 @@ export class EmailSenderService {
   /**
    * Generiert PDF über /api/generate-pdf
    */
-  private async generatePDF(campaign: PRCampaign): Promise<string> {
+  private async generatePDF(campaign: PRCampaign, userId?: string): Promise<string> {
     const pdfContent = campaign.mainContent || campaign.contentHtml || '';
 
     if (!pdfContent.trim()) {
       throw new Error('Kein Content für PDF vorhanden');
+    }
+
+    // userId: Nutze übergebenen userId, oder campaign.createdBy, oder campaign.userId als Fallback
+    const effectiveUserId = userId || campaign.createdBy || campaign.userId;
+
+    if (!effectiveUserId) {
+      throw new Error('userId für PDF-Generation nicht verfügbar');
     }
 
     try {
@@ -166,7 +174,7 @@ export class EmailSenderService {
           organizationId: campaign.organizationId,
           mainContent: campaign.mainContent, // mainContent!
           clientName: campaign.clientName || 'Client',
-          userId: campaign.createdBy,
+          userId: effectiveUserId,
           html: templateHtml,
           fileName: `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_Pressemitteilung.pdf`,
           title: campaign.title,
