@@ -131,32 +131,15 @@ export const emailComposerService = {
    * Email-Felder aus Draft und Campaign zusammenführen
    */
   mergeEmailFields(
-    draft: EmailDraft, 
+    draft: EmailDraft,
     campaign: PRCampaign
   ): PRCampaignEmail {
     emailLogger.debug('Merging email fields');
 
-    // Extrahiere Sender-Info
+    // HINWEIS: Sender-Info wird jetzt über emailAddressId verwaltet
+    // Signatur kommt aus dem draft.content.signatureId (optional)
+    // Die Sender-Signature wird vom email-sender-service generiert
     let senderSignature = '';
-    if (draft.sender.type === 'contact' && draft.sender.contactData) {
-      const contact = draft.sender.contactData;
-      senderSignature = [
-        contact.name,
-        contact.title,
-        contact.company,
-        contact.phone,
-        contact.email
-      ].filter(Boolean).join('\n');
-    } else if (draft.sender.type === 'manual' && draft.sender.manual) {
-      const manual = draft.sender.manual;
-      senderSignature = [
-        manual.name,
-        manual.title,
-        manual.company,
-        manual.phone,
-        manual.email
-      ].filter(Boolean).join('\n');
-    }
 
     // WICHTIG: Verwende den HTML-Content direkt, ohne die Formatierung zu zerstören
     // Die introduction ist der gesamte HTML-Body aus dem Editor
@@ -166,7 +149,7 @@ export const emailComposerService = {
       introduction: draft.content.body, // Behalte das komplette HTML
       pressReleaseHtml: campaign.contentHtml || '<p>[Pressemitteilung]</p>',
       closing: '', // Wird im Email-Service aus dem HTML extrahiert
-      signature: senderSignature
+      signature: senderSignature // Leer, wird vom email-sender-service hinzugefügt
     };
 
     return emailContent;
