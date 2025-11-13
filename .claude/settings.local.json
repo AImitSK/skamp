@@ -9,7 +9,9 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(npm test:*)",
-      "Bash(\"src/app/api/pr/email/send/route.ts\")"
+      "Bash(\"src/app/api/pr/email/send/route.ts\")",
+      "Bash(node -e:*)",
+      "Bash(node cleanup-console.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

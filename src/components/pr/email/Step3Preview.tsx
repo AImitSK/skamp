@@ -127,7 +127,6 @@ export default function Step3Preview({
   const listRecipients = totalRecipients - manualRecipients;
 
   // Debug: Log draft data
-  console.log('📧 Step3 Draft Info:', {
     totalCount: draft.recipients.totalCount,
     totalRecipients,
     listIds: draft.recipients.listIds,
@@ -141,12 +140,10 @@ export default function Step3Preview({
   useEffect(() => {
     const loadPreviewContact = async () => {
       if (!user || !currentOrganization) {
-        console.log('⏳ Warte auf user/organization');
         return;
       }
 
       try {
-        console.log('🔍 Lade Preview-Kontakt:', {
           manualCount: draft.recipients.manual.length,
           listCount: draft.recipients.listIds.length,
           lists: draft.recipients.listIds,
@@ -155,7 +152,6 @@ export default function Step3Preview({
 
         // Wenn manuelle Empfänger vorhanden, nutze den ersten
         if (draft.recipients.manual.length > 0) {
-          console.log('✅ Verwende ersten manuellen Empfänger:', draft.recipients.manual[0]);
           setPreviewContact(draft.recipients.manual[0]);
           return;
         }
@@ -168,31 +164,25 @@ export default function Step3Preview({
 
           // Lade alle Projekt-Listen, um den Typ zu bestimmen
           const projectLists = await projectListsService.getProjectLists(campaign.projectId);
-          console.log('📋 Projekt-Listen geladen:', projectLists);
 
           // Gehe durch die listIds und finde die erste mit Kontakten
           for (const listId of draft.recipients.listIds) {
-            console.log('🔍 Prüfe Liste:', listId);
 
             // Finde die ProjectDistributionList für diese ID
             const projectList = projectLists.find(pl =>
               pl.id === listId || pl.masterListId === listId
             );
 
-            console.log('📋 Gefundene Projekt-Liste:', projectList);
 
             let contactId: string | undefined;
 
             // Custom-Liste: contactIds direkt aus ProjectDistributionList
             if (projectList?.type === 'custom' && projectList.contactIds && projectList.contactIds.length > 0) {
               contactId = projectList.contactIds[0];
-              console.log('📋 Custom-Liste, erster contactId:', contactId);
             }
             // Linked-Liste: contactIds aus master distribution_lists
             else if (projectList?.type === 'linked' && projectList.masterListId) {
-              console.log('🔗 Lade masterList:', projectList.masterListId);
               const masterList = await listsService.getById(projectList.masterListId);
-              console.log('🔗 MasterList geladen:', {
                 id: masterList?.id,
                 name: masterList?.name,
                 type: masterList?.type,
@@ -202,9 +192,7 @@ export default function Step3Preview({
 
               if (masterList && masterList.contactIds && masterList.contactIds.length > 0) {
                 contactId = masterList.contactIds[0];
-                console.log('📋 Linked-Liste, erster contactId:', contactId);
               } else {
-                console.warn('⚠️ MasterList hat keine contactIds!');
               }
             }
             // Fallback: Versuche direkt als distribution_list zu laden
@@ -212,18 +200,15 @@ export default function Step3Preview({
               const list = await listsService.getById(listId);
               if (list && list.contactIds && list.contactIds.length > 0) {
                 contactId = list.contactIds[0];
-                console.log('📋 Direkte Liste, erster contactId:', contactId);
               }
             }
 
             // Wenn wir eine contactId haben, lade den Kontakt
             if (contactId) {
-              console.log('👤 Lade Kontakt:', contactId);
 
               try {
                 const contact = await contactsService.getById(contactId);
 
-                console.log('👤 Kontakt geladen:', contact);
 
                 if (contact) {
                 // Konvertiere Contact zu Preview-Format
@@ -235,11 +220,9 @@ export default function Step3Preview({
                   email: contact.email || contact.emails?.[0]?.email || contact.emails?.[0]?.address || '',
                   companyName: contact.companyName || ''
                 };
-                console.log('✅ Preview-Kontakt gesetzt:', previewData);
                 setPreviewContact(previewData);
                 return; // Erfolg! Beende die Schleife
               } else {
-                console.warn('⚠️ Kontakt ist null oder leer für contactId:', contactId);
               }
             } catch (contactError) {
               console.error('❌ Fehler beim Laden des Kontakts:', contactId, contactError);
@@ -247,7 +230,6 @@ export default function Step3Preview({
             }
           }
 
-          console.warn('⚠️ Kein Kontakt in keiner Liste gefunden');
         }
       } catch (error) {
         console.error('❌ Fehler beim Laden des Preview-Kontakts:', error);
@@ -284,18 +266,15 @@ export default function Step3Preview({
     const createAssetShareLink = async () => {
       // Prüfe ob Assets vorhanden sind
       if (!campaign.attachedAssets || campaign.attachedAssets.length === 0) {
-        console.log('📎 Keine Assets an Kampagne angehängt');
         return;
       }
 
       // Prüfe ob bereits ein Share-Link existiert
       if (campaign.assetShareUrl) {
-        console.log('✅ Asset Share-Link bereits vorhanden:', campaign.assetShareUrl);
         return;
       }
 
       try {
-        console.log('🔗 Erstelle Asset Share-Link für', campaign.attachedAssets.length, 'Assets...');
         const { prService } = await import('@/lib/firebase/pr-service');
 
         const shareLink = await prService.createCampaignShareLink(campaign, {
@@ -303,7 +282,6 @@ export default function Step3Preview({
           watermark: false
         });
 
-        console.log('✅ Asset Share-Link erstellt:', shareLink.shareId);
 
         // Setze Share-URL im lokalen State für sofortige Anzeige
         const baseUrl = window.location.origin;
@@ -330,13 +308,10 @@ export default function Step3Preview({
 
   // Generiere Vorschau-HTML
   const previewHtml = useMemo(() => {
-    console.log('🎨 Generiere Vorschau mit Kontakt:', previewContact);
-    console.log('📧 Asset Share URL:', assetShareUrl);
 
     // WARNUNG wenn kein echter Kontakt geladen wurde
     if (!previewContact) {
       console.error('⚠️ WARNUNG: Kein echter Kontakt geladen! Verwende Fallback.');
-      console.log('📊 Debug Info:', {
         manualRecipientsCount: draft.recipients.manual.length,
         listIdsCount: draft.recipients.listIds.length,
         listIds: draft.recipients.listIds,
@@ -355,10 +330,7 @@ export default function Step3Preview({
       companyName: 'Beispiel GmbH'
     };
 
-    console.log('👤 Verwende Empfänger für Vorschau:', sampleRecipient);
 
-    // TODO Phase 6: Lade EmailAddress statt draft.sender
-    // Für jetzt: Dummy-Daten für Vorschau
     const senderInfo = {
       name: 'Absender',
       email: draft.emailAddressId ? 'absender@example.com' : ''
@@ -414,7 +386,6 @@ export default function Step3Preview({
       });
 
       // DEBUG: Prüfe ob signatureId vorhanden ist
-      console.log('🔍 DEBUG Test-Email Draft:', {
         hasSignatureId: !!draft.content.signatureId,
         signatureId: draft.content.signatureId,
         emailAddressId: draft.emailAddressId
@@ -498,8 +469,7 @@ export default function Step3Preview({
     try {
       // Merge Email-Felder
       const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
-      
-      // TODO Phase 6: EmailAddress ID Validierung
+
       if (!draft.emailAddressId) {
         throw new Error('Keine Absender-Email ausgewählt');
       }
