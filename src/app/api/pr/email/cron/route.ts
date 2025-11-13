@@ -15,12 +15,21 @@ import { ScheduledEmail } from '@/types/scheduled-email';
 const BATCH_SIZE = 50; // Max. Emails pro Cron-Run
 
 export async function POST(request: NextRequest) {
+  console.log('🤖 Email Cron-Job gestartet');
+
   try {
     // 1. Auth: CRON_SECRET pruefen via Authorization Header
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
+    console.log('🔐 Auth Check:', {
+      hasAuthHeader: !!authHeader,
+      hasCronSecret: !!cronSecret,
+      authHeaderPrefix: authHeader?.substring(0, 10)
+    });
+
     if (!cronSecret) {
+      console.error('❌ CRON_SECRET nicht konfiguriert');
       return NextResponse.json(
         { error: 'CRON_SECRET nicht konfiguriert' },
         { status: 500 }
@@ -28,11 +37,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+      console.error('❌ Auth fehlgeschlagen:', {
+        hasAuthHeader: !!authHeader,
+        match: authHeader === `Bearer ${cronSecret}`
+      });
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    console.log('✅ Auth erfolgreich');
 
     const now = Timestamp.now();
 
