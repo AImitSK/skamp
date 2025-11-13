@@ -353,6 +353,13 @@ export class EmailSenderService {
       ? sender.contactData?.company
       : sender.manual?.company;
 
+    console.log('🔍 Sender-Info:', {
+      type: sender.type,
+      senderEmail,
+      senderName,
+      fallbackEmail: process.env.SENDGRID_FROM_EMAIL
+    });
+
     // SendGrid Mail Objekt
     const msg = {
       to: recipient.email,
