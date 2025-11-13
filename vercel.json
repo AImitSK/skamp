@@ -34,7 +34,7 @@
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/pr/email/cron?secret=$CRON_SECRET",
+      "path": "/api/pr/email/cron",
       "schedule": "*/5 * * * *"
     }
   ],
