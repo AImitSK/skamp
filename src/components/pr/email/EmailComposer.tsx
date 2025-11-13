@@ -3,14 +3,13 @@
 
 import { useState, useCallback, useEffect, useReducer } from 'react';
 import { PRCampaign } from '@/types/pr';
-import { 
-  EmailComposerState, 
-  EmailDraft, 
+import {
+  EmailComposerState,
+  EmailDraft,
   ComposerStep,
   StepValidation,
   DEFAULT_COMPOSER_CONFIG,
-  ManualRecipient,
-  SenderInfo
+  ManualRecipient
 } from '@/types/email-composer';
 import { Timestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
@@ -28,7 +27,7 @@ type ComposerAction =
   | { type: 'UPDATE_RECIPIENTS'; recipients: Partial<EmailDraft['recipients']> }
   | { type: 'ADD_MANUAL_RECIPIENT'; recipient: ManualRecipient }
   | { type: 'REMOVE_MANUAL_RECIPIENT'; id: string }
-  | { type: 'UPDATE_SENDER'; sender: SenderInfo }
+  | { type: 'UPDATE_EMAIL_ADDRESS'; emailAddressId: string }
   | { type: 'UPDATE_METADATA'; metadata: Partial<EmailDraft['metadata']> }
   | { type: 'UPDATE_SCHEDULING'; scheduling: EmailDraft['scheduling'] }
   | { type: 'SET_VALIDATION'; step: ComposerStep; validation: StepValidation[`step${ComposerStep}`] }
@@ -127,12 +126,12 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
         }
       };
 
-    case 'UPDATE_SENDER':
+    case 'UPDATE_EMAIL_ADDRESS':
       return {
         ...state,
         draft: {
           ...state.draft,
-          sender: action.sender,
+          emailAddressId: action.emailAddressId,
           updatedAt: Timestamp.now(),
           lastModifiedStep: 2
         }
@@ -218,9 +217,7 @@ function createInitialState(campaignId: string, campaignTitle: string): EmailCom
         totalCount: 0,
         validCount: 0
       },
-      sender: {
-        type: 'contact'
-      },
+      emailAddressId: '', // Wird von EmailAddressSelector auto-selected
       metadata: {
         subject: `Pressemitteilung: ${campaignTitle}`,
         preheader: 'Aktuelle Pressemitteilung für Ihre Berichterstattung'
@@ -298,17 +295,16 @@ export default function EmailComposer({
         } as StepValidation['step1'];
 
       case 2:
-        const hasRecipients = state.draft.recipients.listIds.length > 0 || 
+        const hasRecipients = state.draft.recipients.listIds.length > 0 ||
                              state.draft.recipients.manual.length > 0;
-        const hasSender = (state.draft.sender.type === 'contact' && !!state.draft.sender.contactId) ||
-                         (state.draft.sender.type === 'manual' && !!state.draft.sender.manual?.name && !!state.draft.sender.manual?.email);
+        const hasEmailAddress = !!state.draft.emailAddressId;
         const hasSubject = state.draft.metadata.subject.length >= DEFAULT_COMPOSER_CONFIG.validation.minSubjectLength;
 
         return {
-          isValid: hasRecipients && hasSender && hasSubject,
+          isValid: hasRecipients && hasEmailAddress && hasSubject,
           errors: {
             recipients: !hasRecipients ? 'Mindestens ein Empfänger erforderlich' : undefined,
-            sender: !hasSender ? 'Absender muss ausgewählt werden' : undefined,
+            emailAddress: !hasEmailAddress ? 'Absender-Email muss ausgewählt werden' : undefined,
             subject: !hasSubject ? 'Betreff erforderlich' : undefined
           }
         } as StepValidation['step2'];
@@ -383,7 +379,7 @@ export default function EmailComposer({
 
   const step2Props = {
     recipients: state.draft.recipients,
-    sender: state.draft.sender,
+    emailAddressId: state.draft.emailAddressId,
     metadata: state.draft.metadata,
     onRecipientsChange: (recipients: Partial<EmailDraft['recipients']>) =>
       dispatch({ type: 'UPDATE_RECIPIENTS', recipients }),
@@ -391,8 +387,8 @@ export default function EmailComposer({
       dispatch({ type: 'ADD_MANUAL_RECIPIENT', recipient: { ...recipient, id: nanoid() } }),
     onRemoveManualRecipient: (id: string) =>
       dispatch({ type: 'REMOVE_MANUAL_RECIPIENT', id }),
-    onSenderChange: (sender: SenderInfo) =>
-      dispatch({ type: 'UPDATE_SENDER', sender }),
+    onEmailAddressChange: (emailAddressId: string) =>
+      dispatch({ type: 'UPDATE_EMAIL_ADDRESS', emailAddressId }),
     onMetadataChange: (metadata: Partial<EmailDraft['metadata']>) =>
       dispatch({ type: 'UPDATE_METADATA', metadata }),
     validation: state.validation.step2,

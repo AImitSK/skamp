@@ -133,11 +133,7 @@ export default function Step3Preview({
     listNames: draft.recipients.listNames,
     validCount: draft.recipients.validCount,
     manualCount: draft.recipients.manual.length,
-    sender: {
-      type: draft.sender.type,
-      contactData: draft.sender.contactData,
-      manual: draft.sender.manual
-    }
+    emailAddressId: draft.emailAddressId
   });
 
   // Lade ersten Kontakt aus Verteilerlisten für realistische Vorschau
@@ -360,10 +356,12 @@ export default function Step3Preview({
 
     console.log('👤 Verwende Empfänger für Vorschau:', sampleRecipient);
 
-    // Extrahiere Sender-Info
-    const senderInfo = draft.sender.type === 'contact' 
-      ? draft.sender.contactData 
-      : draft.sender.manual;
+    // TODO Phase 6: Lade EmailAddress statt draft.sender
+    // Für jetzt: Dummy-Daten für Vorschau
+    const senderInfo = {
+      name: 'Absender',
+      email: draft.emailAddressId ? 'absender@example.com' : ''
+    };
 
     // Erstelle Email-Content aus Draft
     const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
@@ -418,8 +416,7 @@ export default function Step3Preview({
       console.log('🔍 DEBUG Test-Email Draft:', {
         hasSignatureId: !!draft.content.signatureId,
         signatureId: draft.content.signatureId,
-        senderType: draft.sender.type,
-        hasSenderData: !!draft.sender.contactData
+        emailAddressId: draft.emailAddressId
       });
 
       // API Call für Test-Email
@@ -496,13 +493,9 @@ export default function Step3Preview({
       // Merge Email-Felder
       const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
       
-      // Extrahiere Sender-Info
-      const senderInfo = draft.sender.type === 'contact' 
-        ? draft.sender.contactData 
-        : draft.sender.manual;
-
-      if (!senderInfo) {
-        throw new Error('Keine Absender-Informationen gefunden');
+      // TODO Phase 6: EmailAddress ID Validierung
+      if (!draft.emailAddressId) {
+        throw new Error('Keine Absender-Email ausgewählt');
       }
 
       if (sendMode === 'scheduled') {
@@ -975,11 +968,7 @@ export default function Step3Preview({
 
               {/* Email-Metadaten */}
               <div className="mb-4 p-3 bg-gray-50 rounded text-sm space-y-1">
-                <div><strong>Von:</strong> {draft.sender.type === 'contact'
-                  ? draft.sender.contactData?.name
-                  : draft.sender.manual?.name} &lt;{draft.sender.type === 'contact'
-                  ? draft.sender.contactData?.email
-                  : draft.sender.manual?.email}&gt;</div>
+                <div><strong>Von:</strong> {draft.emailAddressId ? `Email ID: ${draft.emailAddressId.substring(0, 8)}...` : 'Nicht ausgewählt'}</div>
                 <div><strong>An:</strong> {totalRecipients} Empfänger</div>
                 <div><strong>Betreff:</strong> {draft.metadata.subject}</div>
                 {draft.metadata.preheader && (

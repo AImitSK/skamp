@@ -330,11 +330,9 @@ export const emailComposerService = {
       missingFields.push('Empfänger');
     }
 
-    // Prüfe Absender
-    if (draft.sender.type === 'contact' && !draft.sender.contactId) {
-      missingFields.push('Absender-Kontakt');
-    } else if (draft.sender.type === 'manual' && (!draft.sender.manual?.name || !draft.sender.manual?.email)) {
-      missingFields.push('Absender-Informationen');
+    // Prüfe Absender (EmailAddress ID)
+    if (!draft.emailAddressId) {
+      missingFields.push('Absender-Email');
     }
 
     // Prüfe Metadaten

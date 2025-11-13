@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       const result = await emailSenderService.sendToRecipients(
         draft.recipients,
         preparedData,
-        draft.sender,
+        draft.emailAddressId,
         draft.metadata
       );
 

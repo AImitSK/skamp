@@ -69,8 +69,9 @@ export interface EmailDraft {
     validCount: number;
   };
   
-  sender: SenderInfo;
-  
+  // Absender (Verifizierte Email aus email_addresses Collection)
+  emailAddressId: string;
+
   metadata: {
     subject: string;
     preheader: string; // Vorschautext
@@ -108,11 +109,13 @@ export interface ManualRecipient {
 }
 
 /**
- * Absender-Information
+ * Absender-Information (DEPRECATED - Verwende emailAddressId stattdessen)
+ *
+ * Wird für Migration alter Drafts noch benötigt
  */
 export interface SenderInfo {
   type: 'contact' | 'manual';
-  
+
   // Bei type === 'contact'
   contactId?: string;
   contactData?: {
@@ -122,7 +125,7 @@ export interface SenderInfo {
     company?: string;
     phone?: string;
   };
-  
+
   // Bei type === 'manual'
   manual?: {
     name: string;
@@ -171,7 +174,7 @@ export interface StepValidation {
     isValid: boolean;
     errors: {
       recipients?: string;
-      sender?: string;
+      emailAddress?: string;
       subject?: string;
       preheader?: string;
     };
@@ -197,8 +200,8 @@ export interface EmailVariables {
     companyName?: string;
     email: string;
   };
-  
-  // Absender
+
+  // Absender (für Signatur-Variablen)
   sender: {
     name: string;
     title?: string;
@@ -206,13 +209,13 @@ export interface EmailVariables {
     phone?: string;
     email?: string;
   };
-  
+
   // Kampagne
   campaign: {
     title: string;
     clientName?: string;
   };
-  
+
   // System
   system: {
     currentDate: string;
@@ -332,7 +335,7 @@ export interface EmailComposerFormData {
   step2: {
     listIds: string[];
     manualRecipients: Omit<ManualRecipient, 'id' | 'isValid' | 'validationError'>[];
-    sender: SenderInfo;
+    emailAddressId: string;
     subject: string;
     preheader: string;
   };

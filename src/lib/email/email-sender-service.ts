@@ -8,8 +8,10 @@
 import { adminDb } from '@/lib/firebase/admin-init';
 import sgMail from '@sendgrid/mail';
 import { emailComposerService } from '@/lib/email/email-composer-service';
+import { emailAddressService } from '@/lib/firebase/email-address-service';
 import { PRCampaign } from '@/types/pr';
-import { EmailDraft, ManualRecipient, SenderInfo, EmailMetadata, EmailVariables } from '@/types/email-composer';
+import { EmailDraft, ManualRecipient, EmailMetadata, EmailVariables } from '@/types/email-composer';
+import { EmailAddress } from '@/types/email';
 
 // SendGrid konfigurieren
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
@@ -229,7 +231,7 @@ export class EmailSenderService {
   async sendToRecipients(
     recipients: EmailDraft['recipients'],
     preparedData: PreparedEmailData,
-    sender: SenderInfo,
+    emailAddressId: string,
     metadata: EmailMetadata
   ): Promise<SendResult> {
     const result: SendResult = {
@@ -238,19 +240,33 @@ export class EmailSenderService {
       errors: []
     };
 
-    // Alle Empfänger laden (Listen + Manuelle)
+    // 1. Lade EmailAddress
+    console.log(`📧 Lade EmailAddress: ${emailAddressId}`);
+    const emailAddress = await emailAddressService.getEmailAddressById(emailAddressId);
+
+    if (!emailAddress) {
+      throw new Error(`EmailAddress nicht gefunden: ${emailAddressId}`);
+    }
+
+    if (!emailAddress.isActive || emailAddress.verificationStatus !== 'verified') {
+      throw new Error(`EmailAddress ist nicht aktiv oder verifiziert: ${emailAddress.email}`);
+    }
+
+    console.log(`✅ EmailAddress geladen: ${emailAddress.email}`);
+
+    // 2. Alle Empfänger laden (Listen + Manuelle)
     console.log('📋 Lade Empfänger...');
     const allRecipients = await this.loadAllRecipients(recipients);
     console.log(`✅ ${allRecipients.length} Empfänger geladen`);
 
-    // Einzeln versenden
+    // 3. Einzeln versenden
     for (const recipient of allRecipients) {
       try {
         console.log(`📤 Sende Email an ${recipient.email}...`);
         await this.sendSingleEmail(
           recipient,
           preparedData,
-          sender,
+          emailAddress,
           metadata
         );
 
@@ -313,10 +329,10 @@ export class EmailSenderService {
   private async sendSingleEmail(
     recipient: Recipient,
     preparedData: PreparedEmailData,
-    sender: SenderInfo,
+    emailAddress: EmailAddress,
     metadata: EmailMetadata
   ): Promise<void> {
-    // Variablen vorbereiten
+    // Variablen vorbereiten (für Signatur)
     const variables = emailComposerService.prepareVariables(
       {
         firstName: recipient.firstName,
@@ -326,7 +342,13 @@ export class EmailSenderService {
         salutation: recipient.salutation,
         title: recipient.title
       },
-      sender,
+      {
+        name: emailAddress.displayName || emailAddress.email,
+        email: emailAddress.email,
+        company: emailAddress.domain,
+        title: undefined,
+        phone: undefined
+      },
       preparedData.campaign
     );
 
@@ -344,29 +366,30 @@ export class EmailSenderService {
       false // isTest = false
     );
 
-    // Sender Email/Name basierend auf type
-    const senderEmail = sender.type === 'contact'
-      ? sender.contactData?.email
-      : sender.manual?.email;
+    // FROM: Verifizierte EmailAddress
+    const senderEmail = emailAddress.email;
+    const senderName = emailAddress.displayName || emailAddress.domain || undefined;
 
-    const senderName = sender.type === 'contact'
-      ? sender.contactData?.company
-      : sender.manual?.company;
+    // REPLY-TO: Generiere Reply-To Adresse
+    const replyToAddress = await emailAddressService.generateReplyToAddress(
+      preparedData.campaign.organizationId,
+      emailAddress.id!
+    );
 
     console.log('🔍 Sender-Info:', {
-      type: sender.type,
-      senderEmail,
-      senderName,
-      fallbackEmail: process.env.SENDGRID_FROM_EMAIL
+      from: senderEmail,
+      fromName: senderName,
+      replyTo: replyToAddress
     });
 
     // SendGrid Mail Objekt
     const msg = {
       to: recipient.email,
       from: {
-        email: senderEmail || process.env.SENDGRID_FROM_EMAIL!,
-        name: senderName || process.env.SENDGRID_FROM_NAME!
+        email: senderEmail,
+        name: senderName
       },
+      replyTo: replyToAddress, // ✅ Reply-To hinzugefügt
       subject: personalizedSubject,
       html: emailHtml,
       attachments: [

@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         const result = await emailSenderService.sendToRecipients(
           scheduledEmail.draft.recipients,
           preparedData,
-          scheduledEmail.draft.sender,
+          scheduledEmail.draft.emailAddressId,
           scheduledEmail.draft.metadata
         );
         console.log(`✅ [${doc.id}] Email-Versand abgeschlossen: ${result.successCount} erfolgreich, ${result.failureCount} fehlgeschlagen`);

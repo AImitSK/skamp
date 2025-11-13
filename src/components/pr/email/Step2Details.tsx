@@ -3,24 +3,24 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PRCampaign } from '@/types/pr';
-import { EmailDraft, ManualRecipient, SenderInfo, StepValidation } from '@/types/email-composer';
+import { EmailDraft, ManualRecipient, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/ui/input';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { EnvelopeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/20/solid';
 import RecipientManager from '@/components/pr/email/RecipientManager';
-import SenderSelector from '@/components/pr/email/SenderSelector';
+import EmailAddressSelector from '@/components/pr/email/EmailAddressSelector';
 import { projectListsService } from '@/lib/firebase/project-lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 
 interface Step2DetailsProps {
   recipients: EmailDraft['recipients'];
-  sender: EmailDraft['sender'];
+  emailAddressId: string;
   metadata: EmailDraft['metadata'];
   onRecipientsChange: (recipients: Partial<EmailDraft['recipients']>) => void;
   onAddManualRecipient: (recipient: Omit<ManualRecipient, 'id'>) => void;
   onRemoveManualRecipient: (id: string) => void;
-  onSenderChange: (sender: SenderInfo) => void;
+  onEmailAddressChange: (emailAddressId: string) => void;
   onMetadataChange: (metadata: Partial<EmailDraft['metadata']>) => void;
   validation: StepValidation['step2'];
   campaign: PRCampaign;
@@ -28,12 +28,12 @@ interface Step2DetailsProps {
 
 export default function Step2Details({
   recipients,
-  sender,
+  emailAddressId,
   metadata,
   onRecipientsChange,
   onAddManualRecipient,
   onRemoveManualRecipient,
-  onSenderChange,
+  onEmailAddressChange,
   onMetadataChange,
   validation,
   campaign
@@ -167,13 +167,16 @@ export default function Step2Details({
             <UserIcon className="h-5 w-5 text-gray-500" />
             Absender
           </h3>
-          
-          <SenderSelector
-            campaign={campaign}
-            sender={sender}
-            onChange={onSenderChange}
-            error={validation.errors.sender}
+
+          <EmailAddressSelector
+            value={emailAddressId}
+            onChange={onEmailAddressChange}
+            organizationId={currentOrganization?.id || ''}
           />
+
+          {validation.errors.emailAddress && (
+            <p className="text-sm text-red-600 mt-2">{validation.errors.emailAddress}</p>
+          )}
         </div>
 
         {/* E-Mail Metadaten */}
