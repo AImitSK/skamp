@@ -16,8 +16,9 @@ const BATCH_SIZE = 50; // Max. Emails pro Cron-Run
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Auth: CRON_SECRET pruefen
-    const authHeader = request.headers.get('authorization');
+    // 1. Auth: CRON_SECRET pruefen (Query Parameter wie andere Crons)
+    const { searchParams } = new URL(request.url);
+    const secret = searchParams.get('secret');
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    if (secret !== cronSecret) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -170,8 +171,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Auth: CRON_SECRET pruefen
-    const authHeader = request.headers.get('authorization');
+    // Auth: CRON_SECRET pruefen (Query Parameter)
+    const { searchParams } = new URL(request.url);
+    const secret = searchParams.get('secret');
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
@@ -181,7 +183,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    if (secret !== cronSecret) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
