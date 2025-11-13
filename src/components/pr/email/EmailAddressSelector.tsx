@@ -40,10 +40,25 @@ export default function EmailAddressSelector({
       // Lade alle Email-Adressen der Organisation
       const addresses = await emailAddressService.getEmailAddressesByOrganization(organizationId);
 
+      console.log('🔍 EmailAddressSelector Debug:', {
+        totalAddresses: addresses.length,
+        addresses: addresses.map(a => ({
+          id: a.id,
+          email: a.email,
+          isActive: a.isActive,
+          verificationStatus: a.verificationStatus
+        }))
+      });
+
       // Filter: Nur aktive und verifizierte Emails
       const activeAddresses = addresses.filter(
         (addr) => addr.isActive && addr.verificationStatus === 'verified'
       );
+
+      console.log('✅ Gefilterte Adressen:', {
+        activeCount: activeAddresses.length,
+        activeAddresses: activeAddresses.map(a => ({ id: a.id, email: a.email }))
+      });
 
       setEmailAddresses(activeAddresses);
 
