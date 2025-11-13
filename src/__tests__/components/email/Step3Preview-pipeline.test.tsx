@@ -124,16 +124,7 @@ describe('Step3Preview Pipeline Stage-Transitions Tests', () => {
       totalCount: 100,
       validCount: 100
     },
-    sender: {
-      type: 'manual',
-      manual: {
-        name: 'Test Sender',
-        email: 'sender@test.com',
-        title: 'Marketing Manager',
-        company: 'Test Company',
-        phone: '+49 123 456789'
-      }
-    },
+    emailAddressId: 'test-email-address-id',
     metadata: {
       subject: 'Pipeline Test Subject',
       preheader: 'Pipeline test preheader'
