@@ -151,7 +151,7 @@ export default function EmailAddressSelector({
         {emailAddresses.map((emailAddress) => (
           <option key={emailAddress.id} value={emailAddress.id}>
             {emailAddress.email}
-            {emailAddress.domain && ` (${emailAddress.domain})`}
+            {emailAddress.domain?.name && ` (${emailAddress.domain.name})`}
             {emailAddress.isDefault && ' [Standard]'}
           </option>
         ))}
