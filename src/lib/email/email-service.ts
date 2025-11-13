@@ -495,27 +495,19 @@ export class EmailService {
 
   /**
    * Helper: Sender-Info aus Draft extrahieren
+   * HINWEIS: Sender-Info wird jetzt über emailAddressId verwaltet
+   * Die echte Sender-Info wird vom Backend aus der EmailAddress Collection geladen
    */
   private extractSenderInfo(draft: EmailDraft) {
-    if (draft.sender.type === 'contact' && draft.sender.contactData) {
-      return {
-        name: draft.sender.contactData.name,
-        title: draft.sender.contactData.title || '',
-        company: draft.sender.contactData.company || '',
-        phone: draft.sender.contactData.phone,
-        email: draft.sender.contactData.email
-      };
-    } else if (draft.sender.type === 'manual' && draft.sender.manual) {
-      return {
-        name: draft.sender.manual.name,
-        title: draft.sender.manual.title || '',
-        company: draft.sender.manual.company || '',
-        phone: draft.sender.manual.phone,
-        email: draft.sender.manual.email
-      };
-    }
-
-    throw new Error('Keine gültigen Absender-Informationen gefunden');
+    // Placeholder Sender-Info für Test-Email
+    // Die echte Sender-Info wird im Backend über emailAddressId geladen
+    return {
+      name: 'Absender',
+      title: '',
+      company: '',
+      phone: '',
+      email: draft.emailAddressId || 'noreply@example.com'
+    };
   }
 
   /**

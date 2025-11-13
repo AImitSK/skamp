@@ -19,12 +19,15 @@ export async function POST(request: NextRequest) {
   console.log('🤖 [POST] Email Cron-Job gestartet');
 
   try {
-    // 1. Auth: CRON_SECRET pruefen via Authorization Header
+    // 1. Auth: CRON_SECRET pruefen via Authorization Header ODER Query Parameter
     const authHeader = request.headers.get('authorization');
+    const { searchParams } = new URL(request.url);
+    const secretParam = searchParams.get('secret');
     const cronSecret = process.env.CRON_SECRET;
 
     console.log('🔐 Auth Check:', {
       hasAuthHeader: !!authHeader,
+      hasSecretParam: !!secretParam,
       hasCronSecret: !!cronSecret,
       authHeaderPrefix: authHeader?.substring(0, 10)
     });
@@ -37,10 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+    // Akzeptiere ENTWEDER Bearer Token ODER Query Parameter
+    const isAuthValid =
+      (authHeader && authHeader === `Bearer ${cronSecret}`) ||
+      (secretParam && secretParam === cronSecret);
+
+    if (!isAuthValid) {
       console.error('❌ Auth fehlgeschlagen:', {
         hasAuthHeader: !!authHeader,
-        match: authHeader === `Bearer ${cronSecret}`
+        hasSecretParam: !!secretParam,
+        bearerMatch: authHeader === `Bearer ${cronSecret}`,
+        paramMatch: secretParam === cronSecret
       });
       return NextResponse.json(
         { error: 'Unauthorized' },
