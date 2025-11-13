@@ -93,15 +93,7 @@ describe('POST /api/pr/email/send', () => {
       totalCount: 10,
       validCount: 10
     },
-    sender: {
-      type: 'contact' as const,
-      contactId: 'contact-123',
-      contactData: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        company: 'Test Company'
-      }
-    },
+    emailAddressId: 'email-address-123',
     metadata: {
       subject: 'Test Subject',
       preheader: 'Test Preheader'
@@ -281,13 +273,14 @@ describe('POST /api/pr/email/send', () => {
       expect(mockEmailSenderService.prepareEmailData).toHaveBeenCalledWith(
         'campaign-123',
         'org-123',
-        'sig-123'
+        'sig-123',
+        'user-123' // userId hinzugefügt
       );
 
       expect(mockEmailSenderService.sendToRecipients).toHaveBeenCalledWith(
         validDraft.recipients,
         mockPreparedData,
-        validDraft.sender,
+        validDraft.emailAddressId,
         validDraft.metadata
       );
     });

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { EmailAddress } from '@/types/email';
-import { emailAddressService } from '@/lib/firebase/email-address-service';
-import { useAuth } from '@/contexts/AuthContext';
+import { emailAddressService } from '@/lib/email/email-address-service';
+import { useAuth } from '@/context/AuthContext';
 
 interface EmailAddressSelectorProps {
   value: string; // emailAddressId

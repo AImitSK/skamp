@@ -8,7 +8,7 @@
 import { adminDb } from '@/lib/firebase/admin-init';
 import sgMail from '@sendgrid/mail';
 import { emailComposerService } from '@/lib/email/email-composer-service';
-import { emailAddressService } from '@/lib/firebase/email-address-service';
+import { emailAddressService } from '@/lib/email/email-address-service';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, EmailMetadata, EmailVariables } from '@/types/email-composer';
 import { EmailAddress } from '@/types/email';

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!draft || !draft.recipients || !draft.sender || !draft.metadata) {
+    if (!draft || !draft.recipients || !draft.emailAddressId || !draft.metadata) {
       return NextResponse.json(
         { success: false, error: 'Unvollstaendiger Email-Entwurf' },
         { status: 400 }
