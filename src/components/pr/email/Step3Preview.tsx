@@ -530,7 +530,7 @@ export default function Step3Preview({
           },
           body: JSON.stringify({
             campaignId: campaign.id,
-            organizationId: organization?.id,
+            organizationId: currentOrganization?.id,
             draft: draft,
             sendImmediately: false,
             scheduledDate: scheduledDateTime.toISOString()
