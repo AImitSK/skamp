@@ -14,8 +14,9 @@ import { ScheduledEmail } from '@/types/scheduled-email';
 
 const BATCH_SIZE = 50; // Max. Emails pro Cron-Run
 
+// WICHTIG: Vercel Cron ruft per POST auf
 export async function POST(request: NextRequest) {
-  console.log('🤖 Email Cron-Job gestartet');
+  console.log('🤖 [POST] Email Cron-Job gestartet');
 
   try {
     // 1. Auth: CRON_SECRET pruefen via Authorization Header
@@ -181,13 +182,20 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/pr/email/cron
- * Health-Check fuer Monitoring
+ * Health-Check fuer Monitoring (wird auch von Vercel Cron aufgerufen wenn POST nicht existiert)
  */
 export async function GET(request: NextRequest) {
+  console.log('🤖 [GET] Email Cron-Job Route aufgerufen - WARNUNG: Vercel Cron sollte POST nutzen!');
+
   try {
     // Auth: CRON_SECRET pruefen via Authorization Header
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
+
+    console.log('🔐 [GET] Auth Check:', {
+      hasAuthHeader: !!authHeader,
+      hasCronSecret: !!cronSecret
+    });
 
     if (!cronSecret) {
       return NextResponse.json(
