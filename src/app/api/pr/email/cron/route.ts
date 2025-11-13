@@ -60,6 +60,28 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Auth erfolgreich');
 
+    // Delegiere an gemeinsame Funktion
+    return processScheduledEmails();
+
+  } catch (error) {
+    console.error('❌ Cron-Job Fehler:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unbekannter Fehler',
+        stack: error instanceof Error ? error.stack : undefined
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Gemeinsame Funktion für Email-Verarbeitung
+ * Wird von GET und POST Handlern verwendet
+ */
+async function processScheduledEmails() {
+  try {
     const now = Timestamp.now();
     console.log('⏰ Aktueller Zeitstempel:', now.toDate().toISOString());
 
@@ -204,16 +226,48 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/pr/email/cron
- * Health-Check Endpoint: Gibt Status und Statistiken zurück
+ * Vercel Cron ruft diesen Endpoint auf (per GET mit ?secret Parameter)
+ *
+ * Dieser Handler verarbeitet geplante Emails wenn ?secret Parameter vorhanden ist,
+ * ansonsten gibt er Health-Check Statistiken zurück
  */
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const secretParam = searchParams.get('secret');
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  // Wenn secret Parameter vorhanden ist, führe Email-Verarbeitung durch
+  if (secretParam) {
+    console.log('🤖 [GET] Email Cron-Job gestartet (via Query Parameter)');
+
+    // Auth prüfen
+    if (!cronSecret) {
+      console.error('❌ CRON_SECRET nicht konfiguriert');
+      return NextResponse.json(
+        { error: 'CRON_SECRET nicht konfiguriert' },
+        { status: 500 }
+      );
+    }
+
+    if (secretParam !== cronSecret) {
+      console.error('❌ Auth fehlgeschlagen: Ungültiger Secret');
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Nutze die gleiche Logik wie der POST-Handler
+    // Delegiere an eine gemeinsame Funktion
+    return processScheduledEmails();
+  }
+
+  // Ansonsten: Health-Check
   console.log('🔍 [GET] Health-Check gestartet');
 
   try {
-    // 1. Auth: CRON_SECRET pruefen via Authorization Header
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
+    // Auth prüfen (für Health-Check)
     if (!cronSecret) {
       return NextResponse.json(
         { error: 'CRON_SECRET nicht konfiguriert' },
@@ -228,7 +282,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 2. Statistiken abfragen
+    // Statistiken abfragen
     const [pendingSnapshot, processingSnapshot] = await Promise.all([
       adminDb
         .collection('scheduled_emails')
