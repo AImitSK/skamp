@@ -16,6 +16,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { emailLogger } from '@/utils/emailLogger';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { toastService } from '@/lib/utils/toast';
 import { 
   EyeIcon,
   PaperAirplaneIcon,
@@ -430,13 +431,16 @@ export default function Step3Preview({
       if (result.success) {
         setTestSent(true);
         setTimeout(() => setTestSent(false), 5000);
+        toastService.success(`Test-Email an ${testEmail} versendet`);
         emailLogger.info('Test email sent successfully', {
           campaignId: campaign.id,
           messageId: result.messageId,
           recipientEmail: testEmail
         });
       } else {
-        setTestEmailError(result.error || 'Test-Versand fehlgeschlagen');
+        const errorMsg = result.error || 'Test-Versand fehlgeschlagen';
+        setTestEmailError(errorMsg);
+        toastService.error(errorMsg);
       }
     } catch (error: any) {
       emailLogger.error('Test email failed', {
@@ -444,7 +448,9 @@ export default function Step3Preview({
         error: error.message,
         recipientEmail: testEmail
       });
-      setTestEmailError(error.message || 'Test-Versand fehlgeschlagen');
+      const errorMsg = error.message || 'Test-Versand fehlgeschlagen';
+      setTestEmailError(errorMsg);
+      toastService.error(errorMsg);
     } finally {
       setSendingTest(false);
     }
@@ -548,6 +554,7 @@ export default function Step3Preview({
             type: 'success',
             message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!`
           });
+          toastService.success(`E-Mail für ${scheduledDateTime.toLocaleString('de-DE')} geplant`);
           setShowConfirmDialog(false);
           if (onSent) {
             setTimeout(() => onSent(), 2000);
@@ -659,12 +666,17 @@ export default function Step3Preview({
             }
           }
 
+          const successMsg = pipelineMode && autoTransitionAfterSend && successCount > 0
+            ? `E-Mail an ${successCount} Empfänger gesendet - Projekt zur Monitoring-Phase weitergeleitet`
+            : `E-Mail erfolgreich an ${successCount} Empfänger gesendet`;
+
           setAlert({
             type: 'success',
             message: pipelineMode && autoTransitionAfterSend && successCount > 0
               ? `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet.`
               : `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet!`
           });
+          toastService.success(successMsg);
           setShowConfirmDialog(false);
           if (onSent) {
             setTimeout(() => onSent(), 2000);
@@ -681,10 +693,12 @@ export default function Step3Preview({
         error: error.message,
         sendMode
       });
-      setAlert({ 
-        type: 'error', 
-        message: `Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}` 
+      const errorMsg = `Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`;
+      setAlert({
+        type: 'error',
+        message: errorMsg
       });
+      toastService.error(errorMsg);
       setShowConfirmDialog(false);
     } finally {
       setSending(false);

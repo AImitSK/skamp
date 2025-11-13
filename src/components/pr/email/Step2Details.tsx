@@ -12,6 +12,7 @@ import EmailAddressSelector from '@/components/pr/email/EmailAddressSelector';
 import { projectListsService } from '@/lib/firebase/project-lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { toastService } from '@/lib/utils/toast';
 
 interface Step2DetailsProps {
   recipients: EmailDraft['recipients'];
@@ -46,27 +47,16 @@ export default function Step2Details({
   // Lade Projekt-Verteilerlisten aus project_distribution_lists Collection
   useEffect(() => {
     const loadProjectLists = async () => {
-      console.log('🔍 Step2Details - Check:', {
-        hasInitialized: hasInitialized.current,
-        recipientsListsLength: recipients.listIds.length,
-        projectId: campaign.projectId,
-        hasUser: !!user,
-        hasOrg: !!currentOrganization
-      });
-
       // Nur einmal beim ersten Laden ausführen und nur wenn keine Listen ausgewählt sind
       if (hasInitialized.current || recipients.listIds.length > 0) {
-        console.log('⏭️ Skip: Already initialized or lists already set');
         return;
       }
 
       if (!campaign.projectId) {
-        console.warn('⚠️ Keine projectId in campaign:', campaign);
         return;
       }
 
       if (!user || !currentOrganization) {
-        console.log('⏳ Warte auf user/organization');
         return;
       }
 
@@ -74,15 +64,8 @@ export default function Step2Details({
       setLoadingProject(true);
 
       try {
-        console.log('📋 Lade Projekt-Verteilerlisten:', campaign.projectId);
-
         // Lade Listen aus project_distribution_lists Collection
         const projectLists = await projectListsService.getProjectLists(campaign.projectId);
-
-        console.log('✅ Projekt-Listen geladen:', {
-          anzahl: projectLists.length,
-          listen: projectLists
-        });
 
         if (projectLists && projectLists.length > 0) {
           // Extrahiere die masterListIds (verknüpfte Listen)
@@ -97,12 +80,6 @@ export default function Step2Details({
 
           const allListIds = [...linkedListIds, ...customListIds];
 
-          console.log('📋 Setze Verteilerlisten:', {
-            linkedListIds,
-            customListIds,
-            allListIds
-          });
-
           if (allListIds.length > 0) {
             onRecipientsChange({
               listIds: allListIds,
@@ -110,12 +87,11 @@ export default function Step2Details({
               totalCount: 0, // Wird von RecipientManager berechnet
               validCount: 0
             });
+            toastService.success(`${allListIds.length} Verteilerliste(n) geladen`);
           }
-        } else {
-          console.warn('⚠️ Projekt hat keine Verteilerlisten');
         }
       } catch (error) {
-        console.error('❌ Fehler beim Laden der Projekt-Verteilerlisten:', error);
+        toastService.error('Fehler beim Laden der Verteilerlisten');
       } finally {
         setLoadingProject(false);
       }

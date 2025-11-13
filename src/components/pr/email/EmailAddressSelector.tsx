@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { EmailAddress } from '@/types/email';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { useAuth } from '@/context/AuthContext';
+import { toastService } from '@/lib/utils/toast';
 
 interface EmailAddressSelectorProps {
   value: string; // emailAddressId
@@ -57,8 +58,9 @@ export default function EmailAddressSelector({
         }
       }
     } catch (err) {
-      console.error('Fehler beim Laden der Email-Adressen:', err);
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden');
+      const errorMessage = err instanceof Error ? err.message : 'Fehler beim Laden der Email-Adressen';
+      setError(errorMessage);
+      toastService.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

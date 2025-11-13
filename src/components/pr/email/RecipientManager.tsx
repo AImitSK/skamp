@@ -10,6 +10,7 @@ import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { toastService } from '@/lib/utils/toast';
 import {
   UserGroupIcon,
   UserPlusIcon,
@@ -57,7 +58,7 @@ export default function RecipientManager({
         const loadedLists = await Promise.all(listPromises);
         setCampaignLists(loadedLists.filter(Boolean) as DistributionList[]);
       } catch (error) {
-        console.error('Fehler beim Laden der Kampagnen-Listen:', error);
+        toastService.error('Fehler beim Laden der Verteilerlisten');
       } finally {
         setLoading(false);
       }
@@ -76,11 +77,6 @@ export default function RecipientManager({
   useEffect(() => {
     if (campaignLists.length > 0 && !loading) {
       const listNames = campaignLists.map(list => list.name);
-      console.log('📊 RecipientManager: Calling onListsChange with:', {
-        listIds: selectedListIds,
-        listNames,
-        totalFromLists: listRecipientCount
-      });
       onListsChange(selectedListIds, listNames, listRecipientCount);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,6 +231,7 @@ function AddRecipientModal({
         ...formData,
         isValid: true
       });
+      toastService.success(`${formData.firstName} ${formData.lastName} hinzugefügt`);
       onClose();
       // Reset form
       setFormData({
