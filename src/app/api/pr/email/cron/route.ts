@@ -182,64 +182,11 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/pr/email/cron
- * Health-Check fuer Monitoring (wird auch von Vercel Cron aufgerufen wenn POST nicht existiert)
+ * Vercel Cron ruft standardmäßig GET auf - daher hier die gleiche Logik wie POST
  */
 export async function GET(request: NextRequest) {
-  console.log('🤖 [GET] Email Cron-Job Route aufgerufen - WARNUNG: Vercel Cron sollte POST nutzen!');
+  console.log('🤖 [GET] Email Cron-Job gestartet (Vercel Cron verwendet GET)');
 
-  try {
-    // Auth: CRON_SECRET pruefen via Authorization Header
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    console.log('🔐 [GET] Auth Check:', {
-      hasAuthHeader: !!authHeader,
-      hasCronSecret: !!cronSecret
-    });
-
-    if (!cronSecret) {
-      return NextResponse.json(
-        { error: 'CRON_SECRET nicht konfiguriert' },
-        { status: 500 }
-      );
-    }
-
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Statistiken abrufen
-    const pendingSnapshot = await adminDb
-      .collection('scheduled_emails')
-      .where('status', '==', 'pending')
-      .count()
-      .get();
-
-    const processingSnapshot = await adminDb
-      .collection('scheduled_emails')
-      .where('status', '==', 'processing')
-      .count()
-      .get();
-
-    return NextResponse.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      stats: {
-        pending: pendingSnapshot.data().count,
-        processing: processingSnapshot.data().count
-      }
-    });
-
-  } catch (error) {
-    return NextResponse.json(
-      {
-        status: 'unhealthy',
-        error: error instanceof Error ? error.message : 'Unbekannter Fehler'
-      },
-      { status: 500 }
-    );
-  }
+  // Rufe POST-Logik auf
+  return POST(request);
 }
