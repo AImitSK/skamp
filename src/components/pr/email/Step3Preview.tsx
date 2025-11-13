@@ -10,7 +10,6 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';
-import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { apiClient } from '@/lib/api/api-client';
 import { db } from '@/lib/firebase/client-init';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -564,80 +563,74 @@ export default function Step3Preview({
           throw new Error(result.error || 'Planung fehlgeschlagen');
         }
       } else {
-        // Sofortiger Versand über emailCampaignService
+        // Sofortiger Versand via neuer API
         emailLogger.info('Immediate email send initiated', {
           campaignId: campaign.id,
           totalRecipients,
           manualRecipients: draft.recipients.manual.length
         });
 
-        // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
-        // Filtere leere oder ungültige List IDs heraus
-        const validListIds = draft.recipients.listIds?.filter(id => id && id.trim() !== '') || [];
-
-        const campaignWithLists = {
-          ...campaign,
-          distributionListIds: validListIds.length > 0 ? validListIds : undefined,
-          distributionListNames: validListIds.length > 0 ? draft.recipients.listNames : undefined,
-          recipientCount: draft.recipients.totalCount,
-          assetShareUrl: assetShareUrl // Verwende den aktuellen Share-Link aus dem State
-        };
-
-        emailLogger.debug('Campaign data prepared for immediate send', {
-          campaignId: campaign.id,
-          listIds: campaignWithLists.distributionListIds,
-          listNames: campaignWithLists.distributionListNames,
-          totalCount: campaignWithLists.recipientCount,
-          hasValidLists: validListIds.length > 0,
-          manualRecipientsCount: draft.recipients.manual?.length || 0
-        });
+        // Firebase ID Token für Auth
+        const idToken = await user?.getIdToken();
+        if (!idToken) {
+          throw new Error('Keine Authentifizierung vorhanden');
+        }
 
         // WICHTIG: Update Campaign Status auf "sending" VOR dem Versand
         await updateCampaignStatus('sending');
 
         try {
-          const result = await emailCampaignService.sendPRCampaign(
-            campaignWithLists,
-            emailContent,
-            {
-              name: senderInfo.name,
-              title: senderInfo.title || '',
-              company: senderInfo.company || campaign.clientName || '',
-              phone: senderInfo.phone || '',
-              email: senderInfo.email || ''
+          // API Call zum neuen Endpoint
+          const response = await fetch('/api/pr/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
             },
-            draft.recipients.manual
-          );
-          
+            body: JSON.stringify({
+              campaignId: campaign.id,
+              organizationId: currentOrganization?.id,
+              draft: draft,
+              sendImmediately: true
+            })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Versand fehlgeschlagen');
+          }
+
           emailLogger.info('Email sent successfully', {
             campaignId: campaign.id,
-            successCount: result.success,
+            successCount: result.result?.successCount || 0,
             totalRecipients
           });
-          
+
           // WICHTIG: Update Campaign Status auf "sent" NACH erfolgreichem Versand
+          const successCount = result.result?.successCount || 0;
           await updateCampaignStatus('sent', {
             sentAt: serverTimestamp(),
-            actualRecipientCount: result.success,
+            actualRecipientCount: successCount,
             // ✅ PIPELINE-DISTRIBUTION-STATUS HINZUFÜGEN (Plan 4/9)
             ...(pipelineMode && campaign.projectId && {
               distributionStatus: {
                 status: 'sent' as const,
                 sentAt: serverTimestamp(),
                 recipientCount: totalRecipients,
-                successCount: result.success,
-                failureCount: totalRecipients - result.success,
+                successCount: successCount,
+                failureCount: result.result?.failureCount || 0,
                 distributionId: `dist_${Date.now()}`
               }
             })
           });
 
           // ✅ PIPELINE AUTO-TRANSITION (Plan 4/9)
-          if (pipelineMode && campaign.projectId && autoTransitionAfterSend && result.success > 0) {
+          if (pipelineMode && campaign.projectId && autoTransitionAfterSend && successCount > 0) {
             try {
               // Importiere projektService dynamisch um Circular Dependency zu vermeiden
               const { projectService } = await import('@/lib/firebase/project-service');
-              
+
               await projectService.updateStage(
                 campaign.projectId,
                 'monitoring',
@@ -646,7 +639,7 @@ export default function Step3Preview({
                   transitionBy: 'user', // Kann später mit echter userId erweitert werden
                   transitionAt: serverTimestamp(),
                   distributionData: {
-                    recipientCount: result.success,
+                    recipientCount: successCount,
                     distributionId: `dist_${Date.now()}`
                   }
                 },
@@ -661,7 +654,7 @@ export default function Step3Preview({
               emailLogger.info('Pipeline auto-transition to monitoring completed', {
                 campaignId: campaign.id,
                 projectId: campaign.projectId,
-                recipientCount: result.success
+                recipientCount: successCount
               });
             } catch (pipelineError) {
               emailLogger.error('Pipeline auto-transition failed', {
@@ -672,12 +665,12 @@ export default function Step3Preview({
               // Pipeline-Fehler sollen den E-Mail-Versand nicht beeinträchtigen
             }
           }
-          
-          setAlert({ 
-            type: 'success', 
-            message: pipelineMode && autoTransitionAfterSend && result.success > 0
-              ? `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet.`
-              : `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!`
+
+          setAlert({
+            type: 'success',
+            message: pipelineMode && autoTransitionAfterSend && successCount > 0
+              ? `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet.`
+              : `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet!`
           });
           setShowConfirmDialog(false);
           if (onSent) {
