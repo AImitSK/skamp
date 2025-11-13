@@ -937,11 +937,10 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
    */
   async getEmailAddressesByOrganization(organizationId: string): Promise<EmailAddress[]> {
     try {
+      // Einfache Query ohne orderBy um Index-Anforderung zu vermeiden
       const q = query(
         collection(db, this.collectionName),
-        where('organizationId', '==', organizationId),
-        orderBy('isDefault', 'desc'),
-        orderBy('email', 'asc')
+        where('organizationId', '==', organizationId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -954,6 +953,16 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
 
       // Populate Domains
       await this.populateDomains(emailAddresses, organizationId);
+
+      // Sortierung im Client: isDefault zuerst, dann alphabetisch nach email
+      emailAddresses.sort((a, b) => {
+        // isDefault zuerst (true vor false)
+        if (a.isDefault && !b.isDefault) return -1;
+        if (!a.isDefault && b.isDefault) return 1;
+
+        // Dann alphabetisch nach email
+        return a.email.localeCompare(b.email);
+      });
 
       return emailAddresses;
     } catch (error) {
