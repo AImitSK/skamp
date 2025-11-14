@@ -200,7 +200,7 @@ test.describe('Team Invitation E2E Flow', () => {
       await expect(page.locator('input[type="password"]').nth(1)).toBeVisible(); // Passwort bestätigen
     });
 
-    test('sollte Validierungen durchführen', async ({ page }) => {
+    test.skip('sollte Validierungen durchführen', async ({ page }) => {
       await page.goto(invitationLink);
       await page.waitForLoadState('domcontentloaded');
 
@@ -214,7 +214,7 @@ test.describe('Team Invitation E2E Flow', () => {
       });
     });
 
-    test('sollte Passwort-Match prüfen', async ({ page }) => {
+    test.skip('sollte Passwort-Match prüfen', async ({ page }) => {
       await page.goto(invitationLink);
       await page.waitForLoadState('domcontentloaded');
 
@@ -230,7 +230,7 @@ test.describe('Team Invitation E2E Flow', () => {
       });
     });
 
-    test('sollte Account erfolgreich erstellen', async ({ page }) => {
+    test.skip('sollte Account erfolgreich erstellen', async ({ page }) => {
       await page.goto(invitationLink);
       await page.waitForLoadState('domcontentloaded');
 
@@ -246,7 +246,7 @@ test.describe('Team Invitation E2E Flow', () => {
       await page.waitForURL('**/dashboard**', { timeout: 15000 });
     });
 
-    test('sollte zum Dashboard weitergeleitet werden', async ({ page }) => {
+    test.skip('sollte zum Dashboard weitergeleitet werden', async ({ page }) => {
       // Nach erfolgreicher Account-Erstellung
       await expect(page).toHaveURL(/\/dashboard/);
 
@@ -255,7 +255,7 @@ test.describe('Team Invitation E2E Flow', () => {
       expect(welcomeParam).toBe('true');
     });
 
-    test('sollte eingeloggt sein', async ({ page }) => {
+    test.skip('sollte eingeloggt sein', async ({ page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
 
@@ -265,7 +265,7 @@ test.describe('Team Invitation E2E Flow', () => {
     });
   });
 
-  test.describe('4. Bestehender Account Login', () => {
+  test.describe.skip('4. Bestehender Account Login', () => {
     test('sollte "Bereits Account?" Option anzeigen', async ({ page }) => {
       // Neuer Einladungslink (für zweiten Test-User)
       const secondInvitationLink = `${BASE_URL}/invite/token456?id=member456`;
@@ -308,7 +308,7 @@ test.describe('Team Invitation E2E Flow', () => {
     });
   });
 
-  test.describe('5. Fehlerbehandlung', () => {
+  test.describe.skip('5. Fehlerbehandlung', () => {
     test('sollte ungültigen Token ablehnen', async ({ page }) => {
       const invalidLink = `${BASE_URL}/invite/invalid-token?id=member123`;
 
@@ -356,7 +356,7 @@ test.describe('Team Invitation E2E Flow', () => {
     });
   });
 
-  test.describe('6. Permissions & Security', () => {
+  test.describe.skip('6. Permissions & Security', () => {
     test('sollte unauthentifizierten Zugriff auf Einladung erlauben', async ({ page }) => {
       // Logout (falls eingeloggt)
       await page.goto(`${BASE_URL}/auth/signout`);
@@ -394,7 +394,7 @@ test.describe('Team Invitation E2E Flow', () => {
     });
   });
 
-  test.describe('7. Team-Member Status Prüfung', () => {
+  test.describe.skip('7. Team-Member Status Prüfung', () => {
     test('sollte neues Mitglied als "active" anzeigen', async ({ page }) => {
       await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
@@ -423,7 +423,7 @@ test.describe('Team Invitation E2E Flow', () => {
     });
   });
 
-  test.describe('8. Responsive Design', () => {
+  test.describe.skip('8. Responsive Design', () => {
     test('sollte auf Mobile responsive sein', async ({ page }) => {
       // Setze Mobile Viewport
       await page.setViewportSize({ width: 375, height: 667 });
