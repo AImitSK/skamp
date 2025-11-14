@@ -41,8 +41,12 @@ interface EmailDraft {
   campaignId: string;
   campaignTitle: string;
   content: {
-    body: string;
-    signatureId?: string;
+    body: string;              // ⭐ User-verfasster Email-Text
+                               // - Personalisierte Nachricht an Journalisten
+                               // - Unterstützt Variablen wie {{firstName}}, {{companyName}}
+                               // - NICHT die vollständige Pressemitteilung!
+                               // - campaign.mainContent wird nur als PDF angehängt
+    signatureId?: string;      // Optional: HTML-Signatur ID
   };
   recipients: {
     listIds: string[];
@@ -63,6 +67,34 @@ interface EmailDraft {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+```
+
+**Email-Content Best Practices:**
+
+1. **Email-Body schreiben:**
+   ```typescript
+   draft.content.body = `Sehr geehrte{{r}} {{salutation}} {{lastName}},
+
+anbei senden wir Ihnen unsere Pressemitteilung zu {{campaignTitle}}.
+
+Die vollständige Pressemitteilung finden Sie im PDF-Anhang.
+
+Beste Grüße`;
+   ```
+
+2. **Verfügbare Variablen:**
+   - `{{firstName}}`, `{{lastName}}` → Empfänger-Name
+   - `{{salutation}}` → Herr/Frau
+   - `{{salutationFormal}}` → Sehr geehrter Herr / Sehr geehrte Frau
+   - `{{title}}` → Dr., Prof., etc.
+   - `{{companyName}}` → Firma des Empfängers
+   - `{{campaignTitle}}` → Titel der Kampagne
+   - `{{senderName}}` → Name des Absenders
+
+3. **Pressemitteilung:**
+   - Liegt in `campaign.mainContent`
+   - Wird automatisch als PDF generiert
+   - NICHT im Email-Body enthalten
 ```
 
 ### Reducer Actions

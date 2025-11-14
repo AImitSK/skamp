@@ -33,12 +33,63 @@ Das Campaign Email System ermöglicht den professionellen Versand von Pressemitt
 **Step 2: Email-Details konfigurieren**
 - Verifizierte Absender-Email auswählen
 - Betreff und Vorschautext definieren
+- **Email-Text verfassen** (personalisierte Nachricht mit Variablen)
 - HTML-Signatur optional
 
 **Step 3: Vorschau & Versand**
 - Realistische Email-Vorschau (Desktop & Mobile)
 - Test-Email an beliebige Adresse
 - Sofort-Versand ODER zeitgesteuerter Versand
+
+### Email-Content Struktur ⭐
+
+**Wichtige Unterscheidung:**
+
+Das Campaign Email System trennt Email-Body und Pressemitteilung:
+
+**1. Email-Body** (`draft.content.body`)
+- Personalisierte Nachricht an Journalisten/Redakteure
+- Wird vom User im Email-Editor verfasst
+- Enthält Variablen wie `{{firstName}}`, `{{companyName}}`, `{{campaignTitle}}`
+- Wird direkt im Email-Body angezeigt
+- Variablen werden für jeden Empfänger individuell ersetzt
+
+**2. Pressemitteilung** (`campaign.mainContent`)
+- Vollständiger Pressemitteilungs-Text
+- Wird NUR als PDF-Anhang mitgesendet
+- NICHT im Email-Body sichtbar
+- Keine Variablen-Ersetzung
+
+**Beispiel:**
+
+```typescript
+const draft: EmailDraft = {
+  content: {
+    // Email-Body (sichtbar in der Email)
+    body: `Sehr geehrte{{r}} {{salutation}} {{lastName}},
+
+anbei senden wir Ihnen unsere aktuelle Pressemitteilung zu {{campaignTitle}}.
+
+Die vollständige Pressemitteilung finden Sie im PDF-Anhang.
+
+Beste Grüße`,
+
+    signatureId: "sig-123" // Optional
+  },
+  // ...
+};
+
+// campaign.mainContent enthält die vollständige PM (nur im PDF-Anhang!)
+```
+
+**Verfügbare Variablen:**
+- `{{firstName}}`, `{{lastName}}` - Empfänger-Name
+- `{{salutation}}` - Herr/Frau
+- `{{salutationFormal}}` - Sehr geehrter Herr / Sehr geehrte Frau
+- `{{title}}` - Dr., Prof., etc.
+- `{{companyName}}` - Firma des Empfängers
+- `{{campaignTitle}}` - Titel der Kampagne
+- `{{senderName}}` - Name des Absenders
 
 ### 2. Verifizierte Absender-Emails
 

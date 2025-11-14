@@ -38,9 +38,12 @@ Authorization: Bearer <firebase-id-token>
     "campaignId": "camp-123",
     "campaignTitle": "Neue Produkt-Ankündigung",
     "content": {
-      "body": "<p>Email-Inhalt...</p>",
+      "body": "Sehr geehrte{{r}} {{salutation}} {{lastName}},\n\nanbei senden wir Ihnen unsere Pressemitteilung zu {{campaignTitle}}.\n\nBeste Grüße",
       "signatureId": "sig-789" // Optional
     },
+    // ⭐ WICHTIG: content.body ist NICHT campaign.mainContent
+    // - content.body: User-verfasster Email-Text (personalisiert, mit Variablen)
+    // - campaign.mainContent: Vollständige PM (nur im PDF-Anhang)
     "recipients": {
       "listIds": ["list-1", "list-2"],
       "listNames": ["Journalisten", "Tech-Medien"],
@@ -78,6 +81,23 @@ Authorization: Bearer <firebase-id-token>
   "draft": { /* Wie oben */ }
 }
 ```
+
+**Verfügbare Variablen in `content.body`:**
+
+Die folgenden Variablen werden für jeden Empfänger individuell ersetzt:
+
+| Variable | Beschreibung | Beispiel |
+|----------|--------------|----------|
+| `{{firstName}}` | Vorname des Empfängers | Max |
+| `{{lastName}}` | Nachname des Empfängers | Mustermann |
+| `{{salutation}}` | Anrede (Herr/Frau) | Herr |
+| `{{salutationFormal}}` | Formelle Anrede | Sehr geehrter Herr |
+| `{{title}}` | Titel des Empfängers | Dr. |
+| `{{companyName}}` | Firma des Empfängers | Example GmbH |
+| `{{campaignTitle}}` | Titel der Kampagne | Neue Produkt-Ankündigung |
+| `{{senderName}}` | Name des Absenders | Anna Schmidt |
+
+**Wichtig:** Variablen werden NUR im `content.body` ersetzt, NICHT in `campaign.mainContent` (PDF-Anhang)!
 
 ### Response
 
@@ -398,16 +418,24 @@ async sendToRecipients(
   recipients: EmailDraft['recipients'],
   preparedData: PreparedEmailData,
   emailAddressId: string,
-  metadata: EmailMetadata
+  metadata: EmailMetadata,
+  emailBody: string  // ⭐ NEU: User-verfasster Email-Text
 ): Promise<SendResult>
 ```
 
 **Was macht es:**
 1. Lädt EmailAddress aus Firestore
 2. Validiert Verifizierung (isActive, verificationStatus)
+3. **Filtert ungültige Email-Adressen** (trailing/leading dots, fehlende Domain)
 3. Lädt alle Empfänger (Listen + Manuelle)
 4. Sendet einzeln via SendGrid
 5. Generiert Reply-To Address
+
+**Parameter:**
+- `emailBody`: User-verfasster Text aus `draft.content.body`
+  - Enthält Variablen wie `{{firstName}}`, `{{companyName}}`
+  - Wird personalisiert für jeden Empfänger
+  - **Unterscheidet sich von `campaign.mainContent`** (PDF-Anhang)
 
 **Verwendung:**
 ```typescript
@@ -415,12 +443,24 @@ const result = await emailSenderService.sendToRecipients(
   draft.recipients,
   preparedData,
   'email-addr-123',
-  draft.metadata
+  draft.metadata,
+  draft.content.body  // ⭐ Email-Body aus Draft
 );
 
 console.log(`Erfolgreich: ${result.successCount}`);
 console.log(`Fehlgeschlagen: ${result.failureCount}`);
 console.log(`Fehler: ${result.errors.join(', ')}`);
+```
+
+**Email-Validierung:**
+
+Der Service filtert automatisch ungültige Email-Adressen:
+- ❌ Trailing/leading dots: `example.@domain.com`, `.user@domain.com`
+- ❌ Fehlende Domain: `user@`
+- ❌ Fehlende TLD: `user@domain`
+- ✅ Duplikate werden entfernt
+
+Bei ungültigen Emails erscheint in den Logs: `⚠️ Ungültige Email-Adresse übersprungen: {email}`
 ```
 
 ### emailAddressService
