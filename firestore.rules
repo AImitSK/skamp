@@ -14,18 +14,9 @@ service cloud.firestore {
     // Prüft ob User SuperAdmin ist (für Cron Jobs und Admin-Funktionen)
     // SuperAdmin = Mitglied der Super-Admin Organization (info@sk-online-marketing.de)
     function isSuperAdmin() {
-      if (request.auth == null) {
-        return false;
-      }
-
-      // 1. Check Custom Claim (backward compatible)
-      if (request.auth.token.role == 'super-admin') {
-        return true;
-      }
-
-      // 2. Check if user's organizationId matches Super-Admin Organization
-      let superAdminOrgId = get(/databases/$(database)/documents/system_settings/super_admin).data.organizationId;
-      return request.auth.token.organizationId == superAdminOrgId;
+      return request.auth != null
+             && (request.auth.token.role == 'super-admin'
+                 || request.auth.token.organizationId == get(/databases/$(database)/documents/system_settings/super_admin).data.organizationId);
     }
 
     // Prüft ob User zur Organisation gehört
@@ -388,6 +379,34 @@ service cloud.firestore {
 
       // Schreiben: Nur Super-Admin (normale Writes passieren via Admin SDK in Webhooks)
       allow write: if isSuperAdmin();
+    }
+
+    // ========================================
+    // TEAM MEMBERS (Team-Management)
+    // ========================================
+
+    // Team Members - Org-isoliert + Einladungs-Validierung
+    match /team_members/{memberId} {
+      // Lesen: Entweder Org-Member ODER Einladungs-Validierung (für neue User)
+      allow read: if isAuthenticated()
+                  && (resource.data.organizationId == request.auth.token.organizationId
+                      || resource.data.userId == request.auth.uid)
+                  // ODER: Unauthentifizierter Zugriff für Einladungs-Validierung
+                  || resource.data.status == 'invited';
+
+      // Erstellen: Nur Org-Member (für Einladungen)
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+
+      // Update: Org-Member ODER der eingeladene User selbst (für Akzeptierung)
+      allow update: if isAuthenticated()
+                    && (resource.data.organizationId == request.auth.token.organizationId
+                        || (resource.data.status == 'invited'
+                            && resource.data.email == request.auth.token.email));
+
+      // Löschen: Nur Org-Member
+      allow delete: if isAuthenticated()
+                    && resource.data.organizationId == request.auth.token.organizationId;
     }
 
     // ========================================
