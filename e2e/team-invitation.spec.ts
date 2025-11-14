@@ -22,6 +22,20 @@ const NEW_USER_EMAIL = 'newuser-e2e@test.com';
 const NEW_USER_PASSWORD = 'newuser-password-123';
 const NEW_USER_NAME = 'E2E Test User';
 
+// Helper-Funktion: Warte auf Team-Settings-Seite
+async function waitForTeamPage(page: Page) {
+  await page.waitForSelector('h1:has-text("Team-Verwaltung")', { timeout: 10000 });
+}
+
+// Helper-Funktion: Login als Admin
+async function loginAsAdmin(page: Page) {
+  await page.goto(`${BASE_URL}/login`);
+  await page.fill('input[type="email"]', ADMIN_EMAIL);
+  await page.fill('input[type="password"]', ADMIN_PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForURL('**/dashboard**');
+}
+
 test.describe('Team Invitation E2E Flow', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -36,39 +50,34 @@ test.describe('Team Invitation E2E Flow', () => {
 
   test.describe('1. Admin lädt neuen User ein', () => {
     test('sollte zum Team-Settings navigieren können', async ({ page }) => {
-      // Login als Admin
-      await page.goto(`${BASE_URL}/auth/signin`);
-      await page.fill('input[type="email"]', ADMIN_EMAIL);
-      await page.fill('input[type="password"]', ADMIN_PASSWORD);
-      await page.click('button[type="submit"]');
-
-      // Warte auf Dashboard
-      await page.waitForURL('**/dashboard**');
+      await loginAsAdmin(page);
 
       // Navigiere zu Team-Settings
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await waitForTeamPage(page);
 
       // Prüfe ob Team-Settings-Seite geladen ist
-      await expect(page.locator('h1, h2')).toContainText(/team/i);
+      await expect(page.locator('h1')).toContainText('Team-Verwaltung');
     });
 
     test('sollte Einladungs-Dialog öffnen können', async ({ page }) => {
+      await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await waitForTeamPage(page);
 
       // Klicke "Mitglied einladen" Button
       const inviteButton = page.locator('button', { hasText: /einladen|invite/i });
       await inviteButton.click();
 
-      // Prüfe ob Dialog geöffnet wurde
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible();
+      // Prüfe ob Dialog-Inhalt sichtbar ist (wartet auf Transition)
+      await expect(page.locator('text="Neues Team-Mitglied einladen"')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('input[type="email"]')).toBeVisible();
     });
 
     test('sollte Einladungs-Formular ausfüllen und absenden', async ({ page }) => {
+      await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Öffne Dialog
       await page.click('button:has-text("Mitglied einladen")');
@@ -87,8 +96,9 @@ test.describe('Team Invitation E2E Flow', () => {
     });
 
     test('sollte eingeladenen User in der Liste sehen', async ({ page }) => {
+      await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Suche nach Email in Team-Liste
       const emailCell = page.locator(`text="${NEW_USER_EMAIL}"`);
@@ -128,7 +138,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte Einladungs-Details anzeigen', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Email wird angezeigt
       await expect(page.locator(`text="${NEW_USER_EMAIL}"`)).toBeVisible();
@@ -144,7 +154,7 @@ test.describe('Team Invitation E2E Flow', () => {
   test.describe('3. Neuer Account erstellen', () => {
     test('sollte Account-Erstellungs-Formular anzeigen', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Formular-Felder
       await expect(page.locator('input[type="text"]')).toBeVisible(); // Name
@@ -154,7 +164,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte Validierungen durchführen', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Versuche ohne Name
       await page.fill('input[type="password"]', NEW_USER_PASSWORD);
@@ -168,7 +178,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte Passwort-Match prüfen', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Unterschiedliche Passwörter
       await page.fill('input[type="text"]', NEW_USER_NAME);
@@ -184,7 +194,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte Account erfolgreich erstellen', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Fülle Formular korrekt aus
       await page.fill('input[type="text"]', NEW_USER_NAME);
@@ -209,7 +219,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte eingeloggt sein', async ({ page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe User-Menü oder Avatar ist sichtbar
       const userMenu = page.locator('[data-testid="user-menu"], [aria-label*="user"], img[alt*="avatar"]');
@@ -223,7 +233,7 @@ test.describe('Team Invitation E2E Flow', () => {
       const secondInvitationLink = `${BASE_URL}/invite/token456?id=member456`;
 
       await page.goto(secondInvitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Suche nach Login-Option
       const loginLink = page.locator('text=/bereits.*account|bestehend.*account/i');
@@ -232,7 +242,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte zu Login-Formular wechseln', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Klicke "Bereits Account" Link
       await page.click('text=/bereits.*account/i');
@@ -244,7 +254,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte mit bestehendem Account anmelden', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Wechsle zu Login
       await page.click('text=/bereits.*account/i');
@@ -265,7 +275,7 @@ test.describe('Team Invitation E2E Flow', () => {
       const invalidLink = `${BASE_URL}/invite/invalid-token?id=member123`;
 
       await page.goto(invalidLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Fehler-Message
       await expect(page.locator('text=/ungültig|invalid/i')).toBeVisible();
@@ -276,7 +286,7 @@ test.describe('Team Invitation E2E Flow', () => {
       const expiredLink = `${BASE_URL}/invite/expired-token?id=member999`;
 
       await page.goto(expiredLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Fehler-Message
       await expect(page.locator('text=/abgelaufen|expired/i')).toBeVisible();
@@ -285,7 +295,7 @@ test.describe('Team Invitation E2E Flow', () => {
     test('sollte bereits genutzte Einladung ablehnen', async ({ page }) => {
       // Versuche selbe Einladung nochmal zu nutzen
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Sollte Fehler zeigen (bereits accepted)
       await expect(page.locator('text=/bereits.*verwendet|already.*used/i')).toBeVisible({
@@ -301,7 +311,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
       for (const link of invalidLinks) {
         await page.goto(link);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         await expect(page.locator('text=/ungültig|fehler|error/i')).toBeVisible();
       }
@@ -323,14 +333,14 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte falschen User abweisen', async ({ page }) => {
       // Login als falscher User
-      await page.goto(`${BASE_URL}/auth/signin`);
+      await page.goto(`${BASE_URL}/login`);
       await page.fill('input[type="email"]', 'wronguser@test.com');
       await page.fill('input[type="password"]', 'password123');
       await page.click('button[type="submit"]');
 
       // Öffne Einladung für anderen User
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Sollte Warnung anzeigen
       await expect(page.locator('text=/andere.*e-mail|different.*email/i')).toBeVisible();
@@ -338,7 +348,7 @@ test.describe('Team Invitation E2E Flow', () => {
 
     test('sollte Abmelde-Option bei falschem User anbieten', async ({ page }) => {
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Logout-Button
       const logoutButton = page.locator('button, a', { hasText: /abmelden|sign.*out/i });
@@ -348,15 +358,9 @@ test.describe('Team Invitation E2E Flow', () => {
 
   test.describe('7. Team-Member Status Prüfung', () => {
     test('sollte neues Mitglied als "active" anzeigen', async ({ page }) => {
-      // Login als Admin
-      await page.goto(`${BASE_URL}/auth/signin`);
-      await page.fill('input[type="email"]', ADMIN_EMAIL);
-      await page.fill('input[type="password"]', ADMIN_PASSWORD);
-      await page.click('button[type="submit"]');
-
-      // Gehe zu Team-Settings
+      await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Suche neuen User
       const userRow = page.locator(`tr:has-text("${NEW_USER_EMAIL}")`);
@@ -367,8 +371,9 @@ test.describe('Team Invitation E2E Flow', () => {
     });
 
     test('sollte joinedAt Timestamp haben', async ({ page }) => {
+      await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Beitrittsdatum wird angezeigt
       const userRow = page.locator(`tr:has-text("${NEW_USER_EMAIL}")`);
@@ -386,7 +391,7 @@ test.describe('Team Invitation E2E Flow', () => {
       await page.setViewportSize({ width: 375, height: 667 });
 
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Prüfe Content ist sichtbar
       await expect(page.locator('text=/einladung/i')).toBeVisible();
@@ -397,7 +402,7 @@ test.describe('Team Invitation E2E Flow', () => {
       await page.setViewportSize({ width: 768, height: 1024 });
 
       await page.goto(invitationLink);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('text=/einladung/i')).toBeVisible();
     });
@@ -405,14 +410,6 @@ test.describe('Team Invitation E2E Flow', () => {
 });
 
 // Helper Functions für E2E Tests
-async function loginAsAdmin(page: Page) {
-  await page.goto(`${BASE_URL}/auth/signin`);
-  await page.fill('input[type="email"]', ADMIN_EMAIL);
-  await page.fill('input[type="password"]', ADMIN_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/dashboard**');
-}
-
 async function createTestInvitation(page: Page) {
   await loginAsAdmin(page);
   await page.goto(`${BASE_URL}/dashboard/settings/team`);
