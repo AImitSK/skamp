@@ -8,7 +8,6 @@
 import { adminDb } from '@/lib/firebase/admin-init';
 import sgMail from '@sendgrid/mail';
 import { emailComposerService } from '@/lib/email/email-composer-service';
-import { emailAddressService } from '@/lib/email/email-address-service';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, EmailMetadata, EmailVariables } from '@/types/email-composer';
 import { EmailAddress } from '@/types/email';
@@ -240,15 +239,17 @@ export class EmailSenderService {
       errors: []
     };
 
-    // 1. Lade EmailAddress
+    // 1. Lade EmailAddress (Server-seitig via adminDb)
     console.log(`📧 Lade EmailAddress: ${emailAddressId}`);
-    const emailAddress = await emailAddressService.getEmailAddressById(emailAddressId);
+    const emailAddressDoc = await adminDb.collection('email_addresses').doc(emailAddressId).get();
 
-    if (!emailAddress) {
+    if (!emailAddressDoc.exists) {
       throw new Error(`EmailAddress nicht gefunden: ${emailAddressId}`);
     }
 
-    if (!emailAddress.isActive || emailAddress.verificationStatus !== 'verified') {
+    const emailAddress = { id: emailAddressDoc.id, ...emailAddressDoc.data() } as any;
+
+    if (!emailAddress.isActive || (emailAddress.verificationStatus && emailAddress.verificationStatus !== 'verified')) {
       throw new Error(`EmailAddress ist nicht aktiv oder verifiziert: ${emailAddress.email}`);
     }
 
@@ -370,11 +371,11 @@ export class EmailSenderService {
     const senderEmail = emailAddress.email;
     const senderName = emailAddress.displayName || emailAddress.domain || undefined;
 
-    // REPLY-TO: Generiere Reply-To Adresse
-    const replyToAddress = await emailAddressService.generateReplyToAddress(
-      preparedData.campaign.organizationId,
-      emailAddress.id!
-    );
+    // REPLY-TO: Generiere Reply-To Adresse (inline statt emailAddressService wegen Server-Kontext)
+    const prefix = emailAddress.localPart?.substring(0, 10).replace(/[^a-z0-9]/gi, '') || 'email';
+    const shortOrgId = preparedData.campaign.organizationId.substring(0, 8);
+    const shortEmailId = emailAddress.id!.substring(0, 8);
+    const replyToAddress = `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
 
     console.log('🔍 Sender-Info:', {
       from: senderEmail,
