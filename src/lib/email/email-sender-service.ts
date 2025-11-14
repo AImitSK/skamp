@@ -231,7 +231,8 @@ export class EmailSenderService {
     recipients: EmailDraft['recipients'],
     preparedData: PreparedEmailData,
     emailAddressId: string,
-    metadata: EmailMetadata
+    metadata: EmailMetadata,
+    emailBody: string
   ): Promise<SendResult> {
     const result: SendResult = {
       successCount: 0,
@@ -268,7 +269,8 @@ export class EmailSenderService {
           recipient,
           preparedData,
           emailAddress,
-          metadata
+          metadata,
+          emailBody
         );
 
         result.successCount++;
@@ -331,7 +333,8 @@ export class EmailSenderService {
     recipient: Recipient,
     preparedData: PreparedEmailData,
     emailAddress: EmailAddress,
-    metadata: EmailMetadata
+    metadata: EmailMetadata,
+    emailBody: string
   ): Promise<void> {
     // Variablen vorbereiten (für Signatur)
     const variables = emailComposerService.prepareVariables(
@@ -364,6 +367,7 @@ export class EmailSenderService {
       preparedData,
       variables,
       metadata,
+      emailBody,
       false // isTest = false
     );
 
@@ -414,6 +418,7 @@ export class EmailSenderService {
     preparedData: PreparedEmailData,
     variables: EmailVariables,
     metadata: EmailMetadata,
+    emailBody: string,
     isTest: boolean
   ): string {
     // TEST-Banner (nur für Test-Emails)
@@ -431,9 +436,9 @@ export class EmailSenderService {
         </p>
       </div>` : '';
 
-    // Einleitung mit Variablen
+    // Email-Body mit Variablen (aus Draft, nicht aus Campaign!)
     const formattedIntroduction = emailComposerService.replaceVariables(
-      preparedData.campaign.mainContent || '',
+      emailBody || '',
       variables
     );
 

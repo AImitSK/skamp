@@ -351,22 +351,25 @@ describe('EmailSenderService', () => {
       validCount: 2
     };
 
-    const mockSender = {
-      type: 'contact' as const,
-      contactData: {
-        firstName: 'Anna',
-        lastName: 'Schmidt',
-        email: 'anna@example.com',
-        phone: '+49 123 456789',
-        title: 'PR Manager',
-        companyName: 'PR Agentur'
-      }
+    const mockEmailAddressId = 'email-address-123';
+
+    const mockEmailAddress = {
+      id: mockEmailAddressId,
+      email: 'anna@example.com',
+      displayName: 'Anna Schmidt',
+      domain: 'example.com',
+      isActive: true,
+      verificationStatus: 'verified',
+      organizationId: 'org-123',
+      localPart: 'anna'
     };
 
     const mockMetadata = {
       subject: 'Pressemitteilung: {{campaignTitle}}',
       preheader: 'Neue Pressemitteilung'
     };
+
+    const mockEmailBody = '<p>{{salutationFormal}} {{title}} {{firstName}} {{lastName}},</p><p>hiermit möchten wir Sie über folgende Neuigkeit informieren...</p>';
 
     const mockListRecipients = [
       {
@@ -381,6 +384,9 @@ describe('EmailSenderService', () => {
     ];
 
     beforeEach(() => {
+      // Mock email_addresses Collection (wird in sendToRecipients aufgerufen)
+      mockCollectionData('email_addresses', [mockEmailAddress]);
+
       // Mock loadAllRecipients (wird in sendToRecipients aufgerufen)
       mockCollectionData('distribution_lists', [
         {
@@ -400,8 +406,9 @@ describe('EmailSenderService', () => {
       const result = await service.sendToRecipients(
         mockRecipients,
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -418,8 +425,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -438,8 +446,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -455,8 +464,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -479,8 +489,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -498,8 +509,9 @@ describe('EmailSenderService', () => {
       const result = await service.sendToRecipients(
         mockRecipients,
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -517,8 +529,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert
@@ -538,8 +551,9 @@ describe('EmailSenderService', () => {
       await service.sendToRecipients(
         { ...mockRecipients, listIds: [], listNames: [] },
         mockPreparedData,
-        mockSender,
-        mockMetadata
+        mockEmailAddressId,
+        mockMetadata,
+        mockEmailBody
       );
 
       // Assert

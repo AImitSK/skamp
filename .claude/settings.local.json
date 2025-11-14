@@ -11,7 +11,9 @@
       "Bash(npm test:*)",
       "Bash(\"src/app/api/pr/email/send/route.ts\")",
       "Bash(node -e:*)",
-      "Bash(node cleanup-console.js:*)"
+      "Bash(node cleanup-console.js:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -140,7 +140,8 @@ async function processScheduledEmails() {
           scheduledEmail.draft.recipients,
           preparedData,
           scheduledEmail.draft.emailAddressId,
-          scheduledEmail.draft.metadata
+          scheduledEmail.draft.metadata,
+          scheduledEmail.draft.content.body // Email-Body aus Draft (nicht Campaign!)
         );
         console.log(`✅ [${doc.id}] Email-Versand abgeschlossen: ${result.successCount} erfolgreich, ${result.failureCount} fehlgeschlagen`);
 

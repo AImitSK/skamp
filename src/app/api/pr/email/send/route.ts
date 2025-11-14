@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
         draft.recipients,
         preparedData,
         draft.emailAddressId,
-        draft.metadata
+        draft.metadata,
+        draft.content.body // Email-Body aus Draft (nicht Campaign!)
       );
 
       const response: SendEmailResponse = {
