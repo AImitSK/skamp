@@ -150,8 +150,24 @@ npm run test:e2e:debug
 ## Test-Ergebnisse
 
 ### Aktueller Status
-✅ **Unit-Tests:** 34/34 passed
-✅ **E2E-Tests:** TBD (benötigt Live-System)
+✅ **Unit-Tests:** 34/34 passed (100%)
+✅ **E2E-Tests:** 8/27 passed (30%), 19 skipped
+
+### E2E-Tests Details
+**✅ Funktionierende Tests (8):**
+- Admin-Flow: Navigation, Dialog, Formular, User in Liste
+- Einladungslink-Validierung: Link laden, Seite laden, Details anzeigen
+- Account-Formular anzeigen
+
+**⏭️ Geskippte Tests (19):**
+Diese Tests sind implementiert, aber übersprungen, da sie vollständige Feature-Implementierung benötigen:
+- Account-Validierung (Formular-Validierung, Passwort-Match)
+- Account-Erstellung (Firebase Auth Integration)
+- Bestehender Account Login
+- Fehlerbehandlung (Ungültige/abgelaufene Einladungen)
+- Permissions & Security
+- Team-Member Status nach Akzeptanz
+- Responsive Design
 
 ### Coverage
 - Einladungs-Erstellung: ✅ 100%
