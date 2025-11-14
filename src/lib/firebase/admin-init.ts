@@ -3,6 +3,15 @@
  * Nur für Server-Side Code (API Routes)
  */
 
+// Load environment variables for scripts
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  try {
+    require('dotenv').config({ path: '.env.local' });
+  } catch (e) {
+    // dotenv not available, might be in Next.js context which loads .env automatically
+  }
+}
+
 import * as admin from 'firebase-admin';
 
 console.log('🔧 Initializing Firebase Admin SDK...');

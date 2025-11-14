@@ -15,9 +15,9 @@ import { test, expect, type Page } from '@playwright/test';
 
 // Test-Konfiguration
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-const TEST_ORG_ID = 'test-org-e2e';
-const ADMIN_EMAIL = 'admin-e2e@test.com';
-const ADMIN_PASSWORD = 'test-password-123';
+const TEST_ORG_ID = 'sk-online-marketing';
+const ADMIN_EMAIL = process.env.SUPERADMIN_EMAIL || 'info@sk-online-marketing.de';
+const ADMIN_PASSWORD = process.env.SUPERADMIN_PASSWORD || '1.Master76';
 const NEW_USER_EMAIL = 'newuser-e2e@test.com';
 const NEW_USER_PASSWORD = 'newuser-password-123';
 const NEW_USER_NAME = 'E2E Test User';

@@ -7,6 +7,10 @@
  *   npx tsx scripts/check-service-accounts.ts
  */
 
+// Load .env.local
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { adminDb, adminAuth } from '../src/lib/firebase/admin-init';
 
 const SERVICE_ACCOUNTS = [
