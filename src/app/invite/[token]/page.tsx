@@ -1,6 +1,7 @@
 // src/app/invite/[token]/page.tsx
 "use client";
 
+
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -444,7 +445,14 @@ export default function AcceptInvitationPage() {
                   
                   <Button
                     type="submit"
-                    disabled={accepting || !displayName || !password || !confirmPassword}
+                    disabled={
+                      accepting ||
+                      !displayName.trim() ||
+                      !password ||
+                      !confirmPassword ||
+                      password !== confirmPassword ||
+                      password.length < 6
+                    }
                     className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white mt-4"
                   >
                     {accepting ? (
