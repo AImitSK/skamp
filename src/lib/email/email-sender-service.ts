@@ -287,6 +287,21 @@ export class EmailSenderService {
   }
 
   /**
+   * Validiert Email-Adresse
+   */
+  private isValidEmail(email: string): boolean {
+    // Einfache Email-Validierung
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Prüfe auf trailing dot oder andere ungültige Zeichen
+    if (email.endsWith('.') || email.startsWith('.')) {
+      return false;
+    }
+
+    return emailRegex.test(email);
+  }
+
+  /**
    * Lädt alle Empfänger (Listen + Manuelle)
    */
   private async loadAllRecipients(
@@ -315,8 +330,15 @@ export class EmailSenderService {
     // 2. Manuelle Empfänger hinzufügen
     allRecipients.push(...recipients.manual);
 
-    // 3. Duplikate entfernen (nach Email)
+    // 3. Duplikate entfernen (nach Email) + ungültige Emails filtern
     const uniqueRecipients = allRecipients.reduce((acc, recipient) => {
+      // Prüfe ob Email gültig ist
+      if (!this.isValidEmail(recipient.email)) {
+        console.warn(`⚠️ Ungültige Email-Adresse übersprungen: ${recipient.email}`);
+        return acc;
+      }
+
+      // Prüfe auf Duplikate
       if (!acc.find(r => r.email === recipient.email)) {
         acc.push(recipient);
       }
