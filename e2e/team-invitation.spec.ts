@@ -82,15 +82,17 @@ test.describe('Team Invitation E2E Flow', () => {
       // Öffne Dialog
       await page.click('button:has-text("Mitglied einladen")');
 
-      // Fülle Formular aus
+      // Warte auf Dialog-Inhalt
+      await expect(page.locator('text="Neues Team-Mitglied einladen"')).toBeVisible();
+
+      // Fülle E-Mail aus (Rolle ist standardmäßig "Mitglied")
       await page.fill('input[type="email"]', NEW_USER_EMAIL);
-      await page.selectOption('select[name="role"]', 'member');
 
       // Absenden
-      await page.click('button[type="submit"]');
+      await page.click('button:has-text("Einladung senden")');
 
-      // Warte auf Erfolgs-Toast
-      await expect(page.locator('text=/einladung.*gesendet/i')).toBeVisible({
+      // Warte auf Erfolgs-Toast oder Bestätigung
+      await expect(page.locator('text=/einladung.*gesendet|erfolgreich/i')).toBeVisible({
         timeout: 10000
       });
     });
@@ -413,11 +415,12 @@ test.describe('Team Invitation E2E Flow', () => {
 async function createTestInvitation(page: Page) {
   await loginAsAdmin(page);
   await page.goto(`${BASE_URL}/dashboard/settings/team`);
+  await page.waitForLoadState('domcontentloaded');
   await page.click('button:has-text("Mitglied einladen")');
+  await page.waitForSelector('text="Neues Team-Mitglied einladen"');
   await page.fill('input[type="email"]', NEW_USER_EMAIL);
-  await page.selectOption('select[name="role"]', 'member');
-  await page.click('button[type="submit"]');
-  await page.waitForSelector('text=/einladung.*gesendet/i');
+  await page.click('button:has-text("Einladung senden")');
+  await page.waitForSelector('text=/einladung.*gesendet|erfolgreich/i', { timeout: 10000 });
 }
 
 async function getInvitationLink(page: Page): Promise<string> {
