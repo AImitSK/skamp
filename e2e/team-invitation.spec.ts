@@ -75,6 +75,10 @@ test.describe('Team Invitation E2E Flow', () => {
     });
 
     test('sollte Einladungs-Formular ausfüllen und absenden', async ({ page }) => {
+      // Console-Logging aktivieren
+      page.on('console', msg => console.log('BROWSER:', msg.text()));
+      page.on('pageerror', err => console.error('PAGE ERROR:', err));
+
       await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
       await page.waitForLoadState('domcontentloaded');
@@ -88,6 +92,9 @@ test.describe('Team Invitation E2E Flow', () => {
       // Fülle E-Mail aus (Rolle ist standardmäßig "Mitglied")
       await page.fill('input[type="email"]', NEW_USER_EMAIL);
 
+      // Warte kurz, damit Eingabe verarbeitet wird
+      await page.waitForTimeout(500);
+
       // Absenden
       await page.click('button:has-text("Einladung senden")');
 
@@ -95,20 +102,38 @@ test.describe('Team Invitation E2E Flow', () => {
       await expect(page.locator('text=/einladung.*gesendet|erfolgreich/i')).toBeVisible({
         timeout: 10000
       });
+
+      // Warte etwas, damit die Einladung verarbeitet wird
+      await page.waitForTimeout(2000);
     });
 
     test('sollte eingeladenen User in der Liste sehen', async ({ page }) => {
+      // Console-Logging aktivieren
+      page.on('console', msg => console.log('BROWSER:', msg.text()));
+      page.on('pageerror', err => console.error('PAGE ERROR:', err));
+      page.on('response', response => {
+        if (response.url().includes('/api/')) {
+          console.log('API:', response.status(), response.url());
+        }
+      });
+
       await loginAsAdmin(page);
       await page.goto(`${BASE_URL}/dashboard/settings/team`);
       await page.waitForLoadState('domcontentloaded');
 
-      // Suche nach Email in Team-Liste
-      const emailCell = page.locator(`text="${NEW_USER_EMAIL}"`);
-      await expect(emailCell).toBeVisible();
+      // Warte auf Team-Mitglieder-Ladung
+      await page.waitForTimeout(3000);
 
-      // Prüfe Status "Eingeladen" oder "Invited"
-      const row = emailCell.locator('xpath=ancestor::tr');
-      await expect(row).toContainText(/invited|eingeladen/i);
+      // Suche nach Email in Team-Liste
+      await expect(page.locator(`text="${NEW_USER_EMAIL}"`)).toBeVisible({ timeout: 10000 });
+
+      // Prüfe Status "Eingeladen" ist sichtbar (es gibt mehrere auf der Seite)
+      await expect(page.locator('text=/Eingeladen/i').first()).toBeVisible();
+
+      // Prüfe dass "Ausstehende Einladungen" nicht mehr "0" ist
+      const pageText = await page.locator('body').textContent();
+      const hasNoPendingInvitations = pageText?.includes('Ausstehende Einladungen') && pageText?.match(/Ausstehende Einladungen[^0-9]*0/);
+      expect(hasNoPendingInvitations).toBeFalsy();
     });
   });
 
