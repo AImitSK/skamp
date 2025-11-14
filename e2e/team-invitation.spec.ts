@@ -138,19 +138,30 @@ test.describe('Team Invitation E2E Flow', () => {
   });
 
   test.describe('2. Einladungslink Validierung', () => {
-    test('sollte Einladungslink aus Test-Setup laden', async () => {
-      // In einem echten E2E-Test würde man hier:
-      // 1. Email-Service mocken/abfangen
-      // 2. Oder: Über API den generierten Link abrufen
-      // 3. Oder: Aus Firestore lesen (für E2E-Tests mit Admin SDK)
+    test('sollte Einladungslink aus Firestore laden', async () => {
+      // Lade die Einladung aus Firestore via Script
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
 
-      // Für diesen Test: Simuliere Link-Struktur
-      invitationToken = 'test-token-123';
-      invitationId = 'test-member-id-123';
-      invitationLink = `${BASE_URL}/invite/${invitationToken}?id=${invitationId}`;
+      const { stdout } = await execAsync(`npx tsx scripts/get-invitation-link.ts "${NEW_USER_EMAIL}" 2>&1`);
+      // Finde die JSON-Zeile (letzte Zeile, die mit { beginnt)
+      const lines = stdout.trim().split('\n');
+      const jsonLine = lines.reverse().find(line => line.trim().startsWith('{'));
+      const invitationData = JSON.parse(jsonLine!);
+
+      invitationToken = invitationData.token;
+      invitationId = invitationData.id;
+      invitationLink = invitationData.link;
+
+      console.log('🔗 Invitation Link:', invitationLink);
+      console.log('📧 Email:', invitationData.email);
+      console.log('🏢 Organization:', invitationData.organizationId);
 
       expect(invitationLink).toContain('/invite/');
       expect(invitationLink).toContain('?id=');
+      expect(invitationToken).toBeTruthy();
+      expect(invitationToken).toHaveLength(32); // Token sollte 32 Zeichen haben
     });
 
     test('sollte Einladungs-Seite laden', async ({ page }) => {
@@ -160,7 +171,7 @@ test.describe('Team Invitation E2E Flow', () => {
       await page.waitForSelector('text=/einladung/i', { timeout: 10000 });
 
       // Prüfe dass Seite geladen ist (nicht Error-State)
-      await expect(page.locator('text=/team.*einladung/i')).toBeVisible();
+      await expect(page.locator('text=/team.*einladung/i').first()).toBeVisible();
     });
 
     test('sollte Einladungs-Details anzeigen', async ({ page }) => {
