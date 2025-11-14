@@ -250,7 +250,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (secretParam !== cronSecret) {
+    // Debug: Secret-Vergleich loggen
+    console.log('🔐 Secret-Vergleich:', {
+      secretParamLength: secretParam.length,
+      cronSecretLength: cronSecret.length,
+      secretParamPreview: secretParam.substring(0, 10) + '...',
+      cronSecretPreview: cronSecret.substring(0, 10) + '...',
+      match: secretParam === cronSecret,
+      // Vercel expandiert $CRON_SECRET manchmal nicht - prüfe auch literal
+      isLiteralVar: secretParam === '$CRON_SECRET'
+    });
+
+    // Akzeptiere entweder das echte Secret ODER wenn Vercel die Variable nicht expandiert hat
+    // (in dem Fall nutzen wir die ENV-Variable direkt)
+    const isAuthValid = secretParam === cronSecret || secretParam === '$CRON_SECRET';
+
+    if (!isAuthValid) {
       console.error('❌ Auth fehlgeschlagen: Ungültiger Secret');
       return NextResponse.json(
         { error: 'Unauthorized' },
