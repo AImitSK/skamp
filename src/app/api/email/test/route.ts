@@ -191,8 +191,11 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Using email address:', emailAddress.email);
 
-      // NEU: Reply-To Adresse generieren
-      const replyToAddress = emailAddressService.generateReplyToAddress(emailAddress);
+      // NEU: Reply-To Adresse generieren (inline, da emailAddressService im Server-Kontext nicht verfügbar)
+      const prefix = emailAddress.localPart?.substring(0, 10).replace(/[^a-z0-9]/gi, '') || 'email';
+      const shortOrgId = auth.organizationId.substring(0, 8);
+      const shortEmailId = emailAddress.id!.substring(0, 8);
+      const replyToAddress = `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
       console.log('📧 Generated reply-to address:', replyToAddress);
 
       // SICHERHEIT: Rate Limiting prüfen
