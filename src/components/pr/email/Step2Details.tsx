@@ -43,6 +43,7 @@ export default function Step2Details({
   const { currentOrganization } = useOrganization();
   const hasInitialized = useRef(false);
   const [loadingProject, setLoadingProject] = useState(false);
+  const [projectLists, setProjectLists] = useState<any[]>([]);
 
   // Lade Projekt-Verteilerlisten aus project_distribution_lists Collection
   useEffect(() => {
@@ -65,18 +66,19 @@ export default function Step2Details({
 
       try {
         // Lade Listen aus project_distribution_lists Collection
-        const projectLists = await projectListsService.getProjectLists(campaign.projectId);
+        const lists = await projectListsService.getProjectLists(campaign.projectId);
 
-        console.log('🔍 Step2Details: Projekt-Listen geladen:', projectLists);
+        console.log('🔍 Step2Details: Projekt-Listen geladen:', lists);
+        setProjectLists(lists); // Speichere für RecipientManager
 
-        if (projectLists && projectLists.length > 0) {
+        if (lists && lists.length > 0) {
           // Extrahiere die masterListIds (verknüpfte Listen)
-          const linkedListIds = projectLists
+          const linkedListIds = lists
             .filter(pl => pl.type === 'linked' && pl.masterListId)
             .map(pl => pl.masterListId!);
 
           // Extrahiere die IDs von custom-Listen
-          const customListIds = projectLists
+          const customListIds = lists
             .filter(pl => pl.type === 'custom' && pl.id)
             .map(pl => pl.id!);
 
@@ -123,6 +125,7 @@ export default function Step2Details({
           
           <RecipientManager
             selectedListIds={recipients.listIds}
+            projectLists={projectLists}
             manualRecipients={recipients.manual}
             onListsChange={(listIds, listNames, totalFromLists) => {
               // Berechne die Gesamtzahl korrekt

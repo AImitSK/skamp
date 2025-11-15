@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ManualRecipient } from '@/types/email-composer';
 import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
+import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { toastService } from '@/lib/utils/toast';
@@ -20,6 +21,7 @@ import {
 
 interface RecipientManagerProps {
   selectedListIds: string[]; // Read-only: kommt aus der Kampagne
+  projectLists: ProjectDistributionList[]; // NEU: Komplette Projekt-Listen
   manualRecipients: ManualRecipient[];
   onListsChange: (listIds: string[], listNames: string[], totalFromLists: number) => void;
   onAddManualRecipient: (recipient: Omit<ManualRecipient, 'id'>) => void;
@@ -29,6 +31,7 @@ interface RecipientManagerProps {
 
 export default function RecipientManager({
   selectedListIds,
+  projectLists,
   manualRecipients,
   onListsChange,
   onAddManualRecipient,
@@ -45,6 +48,7 @@ export default function RecipientManager({
   useEffect(() => {
     const loadCampaignLists = async () => {
       console.log('🔍 RecipientManager: selectedListIds:', selectedListIds);
+      console.log('🔍 RecipientManager: projectLists:', projectLists);
 
       if (!user || !currentOrganization || selectedListIds.length === 0) {
         console.log('⚠️ RecipientManager: Keine Listen zu laden', { user: !!user, org: !!currentOrganization, listIdsLength: selectedListIds.length });
@@ -55,14 +59,53 @@ export default function RecipientManager({
       setLoading(true);
       try {
         console.log('🔍 RecipientManager: Lade Listen für IDs:', selectedListIds);
-        // Lade nur die Listen die in selectedListIds sind
-        const listPromises = selectedListIds.map(listId =>
-          listsService.getById(listId, currentOrganization.id, user.uid)
-        );
-        const loadedLists = await Promise.all(listPromises);
-        const validLists = loadedLists.filter(Boolean) as DistributionList[];
-        console.log('✅ RecipientManager: Listen geladen:', validLists);
-        setCampaignLists(validLists);
+
+        const loadedLists: DistributionList[] = [];
+
+        // Unterscheide zwischen linked und custom Listen
+        for (const listId of selectedListIds) {
+          // Finde die ProjectDistributionList für diese ID
+          const projectList = projectLists.find(pl =>
+            (pl.type === 'linked' && pl.masterListId === listId) ||
+            (pl.type === 'custom' && pl.id === listId)
+          );
+
+          console.log('🔍 RecipientManager: projectList für', listId, ':', projectList);
+
+          if (!projectList) {
+            console.log('⚠️ RecipientManager: Keine projectList gefunden für ID:', listId);
+            continue;
+          }
+
+          if (projectList.type === 'linked' && projectList.masterListId) {
+            // Linked List: Lade aus distribution_lists
+            const masterList = await listsService.getById(projectList.masterListId, currentOrganization.id, user.uid);
+            if (masterList) {
+              loadedLists.push(masterList);
+            }
+          } else if (projectList.type === 'custom') {
+            // Custom List: Konvertiere zu DistributionList Format
+            const customList: DistributionList = {
+              id: projectList.id!,
+              name: projectList.name || 'Unbenannte Liste',
+              description: projectList.description || '',
+              organizationId: projectList.organizationId,
+              createdBy: projectList.addedBy,
+              createdAt: projectList.addedAt,
+              updatedAt: projectList.lastModified,
+              contactIds: projectList.contactIds || [],
+              contactCount: projectList.cachedContactCount || projectList.contactIds?.length || 0,
+              category: projectList.category || 'custom',
+              filters: projectList.filters || {},
+              listType: projectList.listType || 'static',
+              isActive: true
+            };
+            loadedLists.push(customList);
+          }
+        }
+
+        console.log('✅ RecipientManager: Listen geladen:', loadedLists);
+        setCampaignLists(loadedLists);
       } catch (error) {
         console.error('❌ RecipientManager: Fehler beim Laden:', error);
         toastService.error('Fehler beim Laden der Verteilerlisten');
@@ -72,7 +115,7 @@ export default function RecipientManager({
     };
 
     loadCampaignLists();
-  }, [user, currentOrganization, selectedListIds]);
+  }, [user, currentOrganization, selectedListIds, projectLists]);
 
   // Berechne Gesamt-Empfänger aus Listen
   const listRecipientCount = campaignLists.reduce((sum, list) => sum + (list.contactCount || 0), 0);
