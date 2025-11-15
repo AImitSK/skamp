@@ -59,13 +59,13 @@ export default function SharePage() {
 
         // Lade Inhalte je nach Typ
         if (shareLink.type === 'folder') {
-          await loadFolderContent(shareLink.targetId);
+          await loadFolderContent(shareLink);
         } else if (shareLink.type === 'campaign') {
           // NEU: Behandle Campaign-Typ
           await loadCampaignContent(shareLink);
         } else {
           // Default: Single file
-          await loadFileContent(shareLink.targetId);
+          await loadFileContent(shareLink);
         }
 
       } catch (error) {
@@ -76,46 +76,74 @@ export default function SharePage() {
     loadAdditionalContent();
   }, [shareLink, passwordValidated]);
 
-  // NEU: Lade Campaign-Medien
+  // NEU: Lade Campaign-Medien über Public API-Route
   const loadCampaignContent = async (shareLink: ShareLink) => {
     try {
-      // Verwende die neue getCampaignMediaAssets Methode
-      const assets = await mediaService.getCampaignMediaAssets(shareLink);
-      
+      // Verwende Public API-Route statt direkter Firestore-Zugriff
+      // Dies funktioniert auch für nicht-eingeloggte User
+      const response = await fetch(`/api/media/share/${shareLink.shareId}/assets`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load campaign assets');
+      }
+
+      const data = await response.json();
+      const assets = data.assets || [];
+
       setMediaItems(assets);
-      
+
       if (assets.length === 0) {
         setError('Keine Medien in dieser Kampagne gefunden.');
       }
     } catch (error) {
+      console.error('Error loading campaign assets:', error);
       setError('Kampagnen-Medien konnten nicht geladen werden.');
     }
   };
 
-  const loadFolderContent = async (folderId: string) => {
+  const loadFolderContent = async (shareLink: ShareLink) => {
     try {
-      // Lade Ordner-Info
-      const folder = await mediaService.getFolder(folderId);
-      setFolderInfo(folder);
+      // Verwende Public API-Route auch für Folder-Shares
+      // Dies funktioniert auch für nicht-eingeloggte User
+      const response = await fetch(`/api/media/share/${shareLink.shareId}/assets`);
 
-      // Lade alle Dateien im Ordner
-      const assets = await mediaService.getMediaAssetsInFolder(folderId);
+      if (!response.ok) {
+        throw new Error('Failed to load folder assets');
+      }
+
+      const data = await response.json();
+      const assets = data.assets || [];
+
       setMediaItems(assets);
+
+      if (assets.length === 0) {
+        setError('Dieser Ordner ist leer.');
+      }
     } catch (error) {
+      console.error('Error loading folder assets:', error);
       setError('Ordner konnte nicht geladen werden.');
     }
   };
 
-  const loadFileContent = async (assetId: string) => {
+  const loadFileContent = async (shareLink: ShareLink) => {
     try {
-      // Lade einzelne Datei
-      const asset = await mediaService.getMediaAssetById(assetId);
-      if (asset) {
-        setMediaItems([asset]);
+      // Verwende Public API-Route auch für Single-File-Shares
+      const response = await fetch(`/api/media/share/${shareLink.shareId}/assets`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load file');
+      }
+
+      const data = await response.json();
+      const assets = data.assets || [];
+
+      if (assets.length > 0) {
+        setMediaItems(assets);
       } else {
         setError('Datei nicht gefunden.');
       }
     } catch (error) {
+      console.error('Error loading file:', error);
       setError('Datei konnte nicht geladen werden.');
     }
   };
