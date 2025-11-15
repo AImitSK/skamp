@@ -44,20 +44,27 @@ export default function RecipientManager({
   // Lade nur die ausgewählten Kampagnen-Listen
   useEffect(() => {
     const loadCampaignLists = async () => {
+      console.log('🔍 RecipientManager: selectedListIds:', selectedListIds);
+
       if (!user || !currentOrganization || selectedListIds.length === 0) {
+        console.log('⚠️ RecipientManager: Keine Listen zu laden', { user: !!user, org: !!currentOrganization, listIdsLength: selectedListIds.length });
         setLoading(false);
         return;
       }
 
       setLoading(true);
       try {
+        console.log('🔍 RecipientManager: Lade Listen für IDs:', selectedListIds);
         // Lade nur die Listen die in selectedListIds sind
         const listPromises = selectedListIds.map(listId =>
           listsService.getById(listId, currentOrganization.id, user.uid)
         );
         const loadedLists = await Promise.all(listPromises);
-        setCampaignLists(loadedLists.filter(Boolean) as DistributionList[]);
+        const validLists = loadedLists.filter(Boolean) as DistributionList[];
+        console.log('✅ RecipientManager: Listen geladen:', validLists);
+        setCampaignLists(validLists);
       } catch (error) {
+        console.error('❌ RecipientManager: Fehler beim Laden:', error);
         toastService.error('Fehler beim Laden der Verteilerlisten');
       } finally {
         setLoading(false);

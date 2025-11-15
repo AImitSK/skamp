@@ -67,6 +67,8 @@ export default function Step2Details({
         // Lade Listen aus project_distribution_lists Collection
         const projectLists = await projectListsService.getProjectLists(campaign.projectId);
 
+        console.log('🔍 Step2Details: Projekt-Listen geladen:', projectLists);
+
         if (projectLists && projectLists.length > 0) {
           // Extrahiere die masterListIds (verknüpfte Listen)
           const linkedListIds = projectLists
@@ -80,6 +82,10 @@ export default function Step2Details({
 
           const allListIds = [...linkedListIds, ...customListIds];
 
+          console.log('🔍 Step2Details: Linked List IDs:', linkedListIds);
+          console.log('🔍 Step2Details: Custom List IDs:', customListIds);
+          console.log('🔍 Step2Details: All List IDs:', allListIds);
+
           if (allListIds.length > 0) {
             onRecipientsChange({
               listIds: allListIds,
@@ -88,6 +94,8 @@ export default function Step2Details({
               validCount: 0
             });
             toastService.success(`${allListIds.length} Verteilerliste(n) geladen`);
+          } else {
+            console.log('⚠️ Step2Details: Keine Liste-IDs gefunden!');
           }
         }
       } catch (error) {
