@@ -1,166 +1,50 @@
 import { db } from './client-init';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { emailCampaignService } from './email-campaign-service';
-import { clippingService } from './clipping-service';
-import { prService } from './pr-service';
 import { mediaService } from './media-service';
-import { brandingService } from './branding-service';
-import { EmailCampaignSend } from '@/types/email';
-import { MediaClipping } from '@/types/monitoring';
 import type { MonitoringReportData } from '@/lib/monitoring-report/types';
+import { reportDataCollector } from '@/lib/monitoring-report/core/data-collector';
+import { reportStatsCalculator } from '@/lib/monitoring-report/core/stats-calculator';
+import { timelineBuilder } from '@/lib/monitoring-report/core/timeline-builder';
 
 class MonitoringReportService {
   async collectReportData(
     campaignId: string,
     organizationId: string
   ): Promise<MonitoringReportData> {
-    const campaign = await prService.getById(campaignId);
+    // 1. Rohdaten sammeln
+    const rawData = await reportDataCollector.collect(campaignId, organizationId);
 
-    if (!campaign) {
-      throw new Error('Kampagne nicht gefunden');
-    }
+    // 2. Statistiken berechnen
+    const emailStats = reportStatsCalculator.calculateEmailStats(
+      rawData.sends,
+      rawData.clippings
+    );
+    const clippingStats = reportStatsCalculator.calculateClippingStats(rawData.clippings);
 
-    const [sends, clippings, branding] = await Promise.all([
-      emailCampaignService.getSends(campaignId, { organizationId }),
-      clippingService.getByCampaignId(campaignId, { organizationId }),
-      brandingService.getBrandingSettings(organizationId).catch(() => null)
-    ]);
+    // 3. Timeline aufbauen
+    const timeline = timelineBuilder.buildTimeline(rawData.clippings);
 
-    const emailStats = this.calculateEmailStats(sends, clippings);
-    const clippingStats = this.calculateClippingStats(clippings);
-    const timeline = this.calculateTimeline(clippings);
-
-    const sentAt = campaign.sentAt?.toDate() || new Date();
+    // 4. Report-Daten zusammenführen
     const now = new Date();
 
     return {
       campaignId,
       organizationId,
-      reportTitle: campaign.title || 'Monitoring Report',
+      reportTitle: rawData.campaignTitle,
       reportPeriod: {
-        start: sentAt,
+        start: rawData.sentAt,
         end: now
       },
-      branding,
+      branding: rawData.branding,
       emailStats,
       clippingStats,
       timeline,
-      clippings,
-      sends
+      clippings: rawData.clippings,
+      sends: rawData.sends
     };
   }
 
-  private calculateEmailStats(sends: EmailCampaignSend[], clippings: MediaClipping[]) {
-    const total = sends.length;
-    const delivered = sends.filter(s =>
-      s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked'
-    ).length;
-    const opened = sends.filter(s =>
-      s.status === 'opened' || s.status === 'clicked'
-    ).length;
-    const clicked = sends.filter(s => s.status === 'clicked').length;
-    const bounced = sends.filter(s => s.status === 'bounced').length;
-
-    // Conversion-Rate: Sends mit Clipping-Referenz
-    const withClippings = sends.filter(s => s.clippingId).length;
-
-    return {
-      totalSent: total,
-      delivered,
-      opened,
-      clicked,
-      bounced,
-      openRate: total > 0 ? Math.round((opened / total) * 100) : 0,
-      clickRate: opened > 0 ? Math.round((clicked / opened) * 100) : 0,
-      ctr: total > 0 ? Math.round((clicked / total) * 100) : 0,
-      conversionRate: opened > 0 ? Math.round((withClippings / opened) * 100) : 0
-    };
-  }
-
-  private calculateClippingStats(clippings: MediaClipping[]) {
-    const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
-    const totalAVE = clippings.reduce((sum, c) => sum + (c.ave || 0), 0);
-    const totalClippings = clippings.length;
-
-    // Durchschnitts-Reichweite
-    const avgReach = totalClippings > 0 ? Math.round(totalReach / totalClippings) : 0;
-
-    const sentimentDistribution = {
-      positive: clippings.filter(c => c.sentiment === 'positive').length,
-      neutral: clippings.filter(c => c.sentiment === 'neutral').length,
-      negative: clippings.filter(c => c.sentiment === 'negative').length
-    };
-
-    const outletStats = clippings.reduce((acc, clipping) => {
-      const outlet = clipping.outletName || 'Unbekannt';
-      if (!acc[outlet]) {
-        acc[outlet] = { name: outlet, reach: 0, clippingsCount: 0 };
-      }
-      acc[outlet].reach += clipping.reach || 0;
-      acc[outlet].clippingsCount += 1;
-      return acc;
-    }, {} as Record<string, { name: string; reach: number; clippingsCount: number }>);
-
-    const topOutlets = Object.values(outletStats)
-      .sort((a, b) => b.reach - a.reach)
-      .slice(0, 5);
-
-    // Medientyp-Verteilung
-    const outletTypeStats = clippings.reduce((acc, clipping) => {
-      const type = clipping.outletType || 'Unbekannt';
-      if (!acc[type]) {
-        acc[type] = { type, count: 0, reach: 0, percentage: 0 };
-      }
-      acc[type].count += 1;
-      acc[type].reach += clipping.reach || 0;
-      return acc;
-    }, {} as Record<string, { type: string; count: number; reach: number; percentage: number }>);
-
-    // Prozent-Anteile berechnen
-    const outletTypeDistribution = Object.values(outletTypeStats).map(stat => ({
-      ...stat,
-      percentage: totalClippings > 0 ? Math.round((stat.count / totalClippings) * 100) : 0
-    })).sort((a, b) => b.count - a.count);
-
-    return {
-      totalClippings,
-      totalReach,
-      totalAVE,
-      avgReach,
-      sentimentDistribution,
-      topOutlets,
-      outletTypeDistribution
-    };
-  }
-
-  private calculateTimeline(clippings: MediaClipping[]) {
-    const groupedByDate = clippings.reduce((acc, clipping) => {
-      if (!clipping.publishedAt || !clipping.publishedAt.toDate) return acc;
-
-      const date = clipping.publishedAt.toDate().toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-
-      if (!acc[date]) {
-        acc[date] = { date, clippings: 0, reach: 0 };
-      }
-
-      acc[date].clippings += 1;
-      acc[date].reach += clipping.reach || 0;
-
-      return acc;
-    }, {} as Record<string, { date: string; clippings: number; reach: number }>);
-
-    return Object.values(groupedByDate).sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
-  }
-
- async generateReportHTML(reportData: MonitoringReportData): Promise<string> {
+  async generateReportHTML(reportData: MonitoringReportData): Promise<string> {
   const sentimentPercentages = {
     positive: reportData.clippingStats.totalClippings > 0
       ? Math.round((reportData.clippingStats.sentimentDistribution.positive / reportData.clippingStats.totalClippings) * 100)
