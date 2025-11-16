@@ -430,7 +430,27 @@ export class EmailSenderService {
     };
 
     // Senden via SendGrid
-    await sgMail.send(msg);
+    const sendResult = await sgMail.send(msg);
+
+    // Email-Tracking: Erstelle email_campaign_send Dokument für SendGrid-Webhook
+    try {
+      const messageId = sendResult[0]?.headers?.['x-message-id'] || undefined;
+      await adminDb.collection('email_campaign_sends').add({
+        campaignId: preparedData.campaign.id,
+        organizationId: preparedData.campaign.organizationId,
+        recipientEmail: recipient.email,
+        recipientName: `${recipient.firstName} ${recipient.lastName}`,
+        status: 'sent',
+        messageId: messageId,
+        sentAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log(`✅ Email-Tracking-Dokument erstellt für ${recipient.email}`);
+    } catch (trackingError) {
+      console.error('⚠️ Fehler beim Erstellen des Tracking-Dokuments:', trackingError);
+      // Nicht blockierend - Email wurde bereits versendet
+    }
   }
 
   /**

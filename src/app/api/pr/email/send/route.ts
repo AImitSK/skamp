@@ -88,6 +88,22 @@ export async function POST(request: NextRequest) {
         draft.content.body // Email-Body aus Draft (nicht Campaign!)
       );
 
+      // 5. MONITORING: Erstelle Campaign-Monitoring-Tracker (falls aktiviert)
+      try {
+        const campaign = preparedData.campaign;
+        if (campaign.monitoringConfig?.isEnabled) {
+          const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
+          const trackerId = await campaignMonitoringService.createTrackerForCampaign(
+            campaignId,
+            organizationId
+          );
+          console.log(`✅ Monitoring Tracker created: ${trackerId}`);
+        }
+      } catch (monitoringError) {
+        console.error('⚠️ Fehler beim Erstellen des Monitoring Trackers:', monitoringError);
+        // Nicht blockierend - Email wurde bereits erfolgreich versendet
+      }
+
       const response: SendEmailResponse = {
         success: result.failureCount === 0,
         result: {
