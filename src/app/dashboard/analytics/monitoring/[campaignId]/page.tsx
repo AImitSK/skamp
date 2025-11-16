@@ -24,6 +24,7 @@ import { monitoringReportService } from '@/lib/firebase/monitoring-report-servic
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
 
 export default function MonitoringDetailPage() {
@@ -49,8 +50,6 @@ export default function MonitoringDetailPage() {
   const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pdfToDelete, setPdfToDelete] = useState<any>(null);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -162,12 +161,10 @@ export default function MonitoringDetailPage() {
 
       window.open(result.pdfUrl, '_blank');
       loadAnalysisPDFs();
-      setSuccessMessage('PDF-Report erfolgreich generiert!');
-      setShowSuccessDialog(true);
+      toastService.success('PDF-Report erfolgreich generiert');
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
-      setSuccessMessage('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
-      setShowSuccessDialog(true);
+      toastService.error('PDF-Export fehlgeschlagen');
     } finally {
       setExportingPDF(false);
     }
@@ -187,14 +184,12 @@ export default function MonitoringDetailPage() {
       await loadAnalysisPDFs();
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      setSuccessMessage('PDF erfolgreich gelöscht');
-      setShowSuccessDialog(true);
+      toastService.success('PDF erfolgreich gelöscht');
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      setSuccessMessage('Fehler beim Löschen des PDFs');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Löschen des PDFs');
     }
   };
 
@@ -210,9 +205,10 @@ export default function MonitoringDetailPage() {
 
       const fileName = `Monitoring_${campaign?.title || 'Export'}_${new Date().toISOString().split('T')[0]}.xlsx`;
       monitoringExcelExport.downloadExcel(blob, fileName);
+      toastService.success('Excel-Export erfolgreich heruntergeladen');
     } catch (error) {
       console.error('Excel-Export fehlgeschlagen:', error);
-      alert('Excel-Export fehlgeschlagen. Bitte versuche es erneut.');
+      toastService.error('Excel-Export fehlgeschlagen');
     } finally {
       setExportingExcel(false);
     }
@@ -230,15 +226,13 @@ export default function MonitoringDetailPage() {
         }
       );
 
-      setSuccessMessage('Vorschlag erfolgreich übernommen und als Clipping gespeichert');
-      setShowSuccessDialog(true);
+      toastService.success('Vorschlag erfolgreich als Clipping gespeichert');
 
       // Reload data
       await loadData();
     } catch (error) {
       console.error('Fehler beim Bestätigen:', error);
-      setSuccessMessage('Fehler beim Übernehmen des Vorschlags');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Übernehmen des Vorschlags');
     }
   };
 
@@ -260,15 +254,13 @@ export default function MonitoringDetailPage() {
         }
       );
 
-      setSuccessMessage('Vorschlag als Spam markiert und Pattern erstellt');
-      setShowSuccessDialog(true);
+      toastService.success('Vorschlag als Spam markiert');
 
       // Reload data
       await loadData();
     } catch (error) {
       console.error('Fehler beim Spam-Markieren:', error);
-      setSuccessMessage('Fehler beim Markieren als Spam');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Markieren als Spam');
     }
   };
 
@@ -504,21 +496,6 @@ export default function MonitoringDetailPage() {
           </Button>
           <Button color="red" onClick={confirmDeletePDF}>
             Löschen
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Success Dialog */}
-      <Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
-        <DialogTitle>
-          {successMessage.includes('fehlgeschlagen') || successMessage.includes('Fehler') ? 'Fehler' : 'Erfolg'}
-        </DialogTitle>
-        <DialogBody>
-          <Text>{successMessage}</Text>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowSuccessDialog(false)}>
-            OK
           </Button>
         </DialogActions>
       </Dialog>
