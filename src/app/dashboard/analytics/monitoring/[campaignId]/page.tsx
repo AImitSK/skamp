@@ -20,10 +20,11 @@ import { EmailCampaignSend } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
-import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { toastService } from '@/lib/utils/toast';
+import { usePDFReportGenerator } from '@/lib/hooks/useMonitoringReport';
 import Link from 'next/link';
 
 export default function MonitoringDetailPage() {
@@ -36,21 +37,21 @@ export default function MonitoringDetailPage() {
   const campaignId = params.campaignId as string;
   const tabParam = searchParams.get('tab') as 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions' | null;
 
+  // React Query Hook für PDF-Export
+  const pdfGenerator = usePDFReportGenerator();
+
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [sends, setSends] = useState<EmailCampaignSend[]>([]);
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
   const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>(tabParam || 'dashboard');
-  const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
   const [loadingPDFs, setLoadingPDFs] = useState(false);
   const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pdfToDelete, setPdfToDelete] = useState<any>(null);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -149,28 +150,17 @@ export default function MonitoringDetailPage() {
     loadData();
   };
 
-  const handlePDFExport = async () => {
+  const handlePDFExport = () => {
     if (!user || !currentOrganization?.id) return;
 
-    try {
-      setExportingPDF(true);
-      const result = await monitoringReportService.generatePDFReport(
-        campaignId,
-        currentOrganization.id,
-        user.uid
-      );
+    pdfGenerator.mutate({
+      campaignId,
+      organizationId: currentOrganization.id,
+      userId: user.uid
+    });
 
-      window.open(result.pdfUrl, '_blank');
-      loadAnalysisPDFs();
-      setSuccessMessage('PDF-Report erfolgreich generiert!');
-      setShowSuccessDialog(true);
-    } catch (error) {
-      console.error('PDF-Export fehlgeschlagen:', error);
-      setSuccessMessage('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
-      setShowSuccessDialog(true);
-    } finally {
-      setExportingPDF(false);
-    }
+    // Reload PDFs list after successful generation (via Hook's onSuccess)
+    loadAnalysisPDFs();
   };
 
   const handleDeletePDF = async (pdf: any) => {
@@ -187,14 +177,12 @@ export default function MonitoringDetailPage() {
       await loadAnalysisPDFs();
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      setSuccessMessage('PDF erfolgreich gelöscht');
-      setShowSuccessDialog(true);
+      toastService.success('PDF erfolgreich gelöscht');
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      setSuccessMessage('Fehler beim Löschen des PDFs');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Löschen des PDFs');
     }
   };
 
@@ -210,9 +198,10 @@ export default function MonitoringDetailPage() {
 
       const fileName = `Monitoring_${campaign?.title || 'Export'}_${new Date().toISOString().split('T')[0]}.xlsx`;
       monitoringExcelExport.downloadExcel(blob, fileName);
+      toastService.success('Excel-Export erfolgreich heruntergeladen');
     } catch (error) {
       console.error('Excel-Export fehlgeschlagen:', error);
-      alert('Excel-Export fehlgeschlagen. Bitte versuche es erneut.');
+      toastService.error('Excel-Export fehlgeschlagen');
     } finally {
       setExportingExcel(false);
     }
@@ -230,15 +219,13 @@ export default function MonitoringDetailPage() {
         }
       );
 
-      setSuccessMessage('Vorschlag erfolgreich übernommen und als Clipping gespeichert');
-      setShowSuccessDialog(true);
+      toastService.success('Vorschlag erfolgreich als Clipping gespeichert');
 
       // Reload data
       await loadData();
     } catch (error) {
       console.error('Fehler beim Bestätigen:', error);
-      setSuccessMessage('Fehler beim Übernehmen des Vorschlags');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Übernehmen des Vorschlags');
     }
   };
 
@@ -260,15 +247,13 @@ export default function MonitoringDetailPage() {
         }
       );
 
-      setSuccessMessage('Vorschlag als Spam markiert und Pattern erstellt');
-      setShowSuccessDialog(true);
+      toastService.success('Vorschlag als Spam markiert');
 
       // Reload data
       await loadData();
     } catch (error) {
       console.error('Fehler beim Spam-Markieren:', error);
-      setSuccessMessage('Fehler beim Markieren als Spam');
-      setShowSuccessDialog(true);
+      toastService.error('Fehler beim Markieren als Spam');
     }
   };
 
@@ -311,10 +296,10 @@ export default function MonitoringDetailPage() {
             <Button
               onClick={handlePDFExport}
               color="secondary"
-              disabled={exportingPDF}
+              disabled={pdfGenerator.isPending}
             >
               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-              {exportingPDF ? 'Generiere PDF...' : 'PDF-Report'}
+              {pdfGenerator.isPending ? 'Generiere PDF...' : 'PDF-Report'}
             </Button>
             <Button
               onClick={handleExcelExport}
@@ -504,21 +489,6 @@ export default function MonitoringDetailPage() {
           </Button>
           <Button color="red" onClick={confirmDeletePDF}>
             Löschen
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Success Dialog */}
-      <Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
-        <DialogTitle>
-          {successMessage.includes('fehlgeschlagen') || successMessage.includes('Fehler') ? 'Fehler' : 'Erfolg'}
-        </DialogTitle>
-        <DialogBody>
-          <Text>{successMessage}</Text>
-        </DialogBody>
-        <DialogActions>
-          <Button onClick={() => setShowSuccessDialog(false)}>
-            OK
           </Button>
         </DialogActions>
       </Dialog>

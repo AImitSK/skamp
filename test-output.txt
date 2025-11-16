@@ -1,0 +1,124 @@
+
+> skamp@0.1.0 test:e2e
+> playwright test team-invitation.spec.ts --reporter=line --workers=1
+
+
+Running 25 tests using 1 worker
+
+[1A[2K[1/25] [chromium] › e2e\team-invitation.spec.ts:60:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte zum Team-Settings navigieren können
+[1A[2K[chromium] › e2e\team-invitation.spec.ts:60:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte zum Team-Settings navigieren können
+[dotenv@17.2.3] injecting env (39) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+
+[1A[2K🔧 Initializing Firebase Admin SDK...
+
+
+[1A[2K🔍 Environment check: {
+  hasServiceAccount: [33mtrue[39m,
+  hasProjectId: [33mtrue[39m,
+  hasStorageBucket: [33mtrue[39m,
+  appsLength: [33m0[39m
+}
+
+
+[1A[2K✅ Firebase Admin SDK initialized successfully
+
+
+[1A[2K🧹 Cleanup für newuser-e2e@test.com wird gestartet...
+
+
+[1A[2Kℹ️  Keine team_members Einträge gefunden
+
+
+[1A[2Kℹ️  Kein Firebase Auth User gefunden
+✅ Cleanup für newuser-e2e@test.com abgeschlossen
+
+
+[1A[2K[2/25] [chromium] › e2e\team-invitation.spec.ts:71:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte Einladungs-Dialog öffnen können
+[1A[2K[3/25] [chromium] › e2e\team-invitation.spec.ts:85:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte Einladungs-Formular ausfüllen und absenden
+[1A[2K[chromium] › e2e\team-invitation.spec.ts:85:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte Einladungs-Formular ausfüllen und absenden
+BROWSER: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER: Image with src "http://localhost:3000/logo_skamp.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+
+[1A[2KBROWSER: ./src/lib/firebase/media-service.ts
+Attempted import error: 'updateFolderClientInheritance' is not exported from './media-folders-service' (imported as 'foldersService').
+
+[1A[2KBROWSER: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KBROWSER: ./src/lib/firebase/media-service.ts
+Attempted import error: 'updateFolderClientInheritance' is not exported from './media-folders-service' (imported as 'foldersService').
+
+[1A[2KBROWSER: Image with src "http://localhost:3000/logo_skamp.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+
+[1A[2KBROWSER: 👥 Loading team members for organization: kqUJumpKKVPQIY87GP1cgO0VaKC3
+
+[1A[2KBROWSER: 👥 Loading team members for organization: kqUJumpKKVPQIY87GP1cgO0VaKC3
+
+[1A[2K[4/25] [chromium] › e2e\team-invitation.spec.ts:118:9 › Team Invitation E2E Flow › 1. Admin lädt neuen User ein › sollte eingeladenen User in der Liste sehen
+[1A[2K[5/25] [chromium] › e2e\team-invitation.spec.ts:132:9 › Team Invitation E2E Flow › 2. Einladungslink Validierung › sollte Einladungslink aus Firestore laden
+[1A[2K[chromium] › e2e\team-invitation.spec.ts:132:9 › Team Invitation E2E Flow › 2. Einladungslink Validierung › sollte Einladungslink aus Firestore laden
+🔗 Invitation Link: https://www.celeropress.com/invite/RtsbepIPJLxtiDmeyleS9mnfGrvdkjf0?id=XEpXN43pZXdg0V1X3XMb
+
+[1A[2K📧 Email: newuser-e2e@test.com
+
+[1A[2K🏢 Organization: kqUJumpKKVPQIY87GP1cgO0VaKC3
+
+[1A[2K[6/25] [chromium] › e2e\team-invitation.spec.ts:158:9 › Team Invitation E2E Flow › 2. Einladungslink Validierung › sollte Einladungs-Seite laden
+[1A[2K[7/25] [chromium] › e2e\team-invitation.spec.ts:168:9 › Team Invitation E2E Flow › 2. Einladungslink Validierung › sollte Einladungs-Details anzeigen
+[1A[2K[8/25] [chromium] › e2e\team-invitation.spec.ts:184:9 › Team Invitation E2E Flow › 3. Neuer Account erstellen › sollte Account-Erstellungs-Formular anzeigen
+[1A[2K[9/25] [chromium] › e2e\team-invitation.spec.ts:194:9 › Team Invitation E2E Flow › 3. Neuer Account erstellen › sollte Validierungen durchführen
+[1A[2K[10/25] [chromium] › e2e\team-invitation.spec.ts:209:9 › Team Invitation E2E Flow › 3. Neuer Account erstellen › sollte Passwort-Match prüfen
+[1A[2K[11/25] [chromium] › e2e\team-invitation.spec.ts:226:9 › Team Invitation E2E Flow › 3. Neuer Account erstellen › sollte Account erfolgreich erstellen und zum Dashboard weiterleiten
+[1A[2K[12/25] [chromium] › e2e\team-invitation.spec.ts:249:9 › Team Invitation E2E Flow › 4. Bestehender Account Login › sollte "Bereits Account?" Option anzeigen
+[1A[2K  1) [chromium] › e2e\team-invitation.spec.ts:249:9 › Team Invitation E2E Flow › 4. Bestehender Account Login › sollte "Bereits Account?" Option anzeigen 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=/bereits.*account|bestehend.*account/i')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=/bereits.*account|bestehend.*account/i')[22m
+
+
+      256 |       // Suche nach Login-Option
+      257 |       const loginLink = page.locator('text=/bereits.*account|bestehend.*account/i');
+    > 258 |       await expect(loginLink).toBeVisible();
+          |                               ^
+      259 |     });
+      260 |
+      261 |     test('sollte zu Login-Formular wechseln', async ({ page }) => {
+        at C:\Users\StefanKühne\Desktop\Projekte\skamp\e2e\team-invitation.spec.ts:258:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\team-invitation-Team-Invit-464e1-its-Account-Option-anzeigen-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\team-invitation-Team-Invit-464e1-its-Account-Option-anzeigen-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\team-invitation-Team-Invit-464e1-its-Account-Option-anzeigen-chromium\error-context.md
+
+
+[1A[2K[13/25] [chromium] › e2e\team-invitation.spec.ts:261:9 › Team Invitation E2E Flow › 4. Bestehender Account Login › sollte zu Login-Formular wechseln
+[1A[2K[14/25] [chromium] › e2e\team-invitation.spec.ts:273:9 › Team Invitation E2E Flow › 4. Bestehender Account Login › sollte mit bestehendem Account anmelden
+[1A[2K[15/25] [chromium] › e2e\team-invitation.spec.ts:292:9 › Team Invitation E2E Flow › 5. Fehlerbehandlung › sollte ungültigen Token ablehnen
+[1A[2K[16/25] [chromium] › e2e\team-invitation.spec.ts:302:9 › Team Invitation E2E Flow › 5. Fehlerbehandlung › sollte abgelaufene Einladung ablehnen
+[1A[2K[17/25] [chromium] › e2e\team-invitation.spec.ts:313:9 › Team Invitation E2E Flow › 5. Fehlerbehandlung › sollte bereits genutzte Einladung ablehnen
+[1A[2K[18/25] [chromium] › e2e\team-invitation.spec.ts:324:9 › Team Invitation E2E Flow › 5. Fehlerbehandlung › sollte fehlende Parameter erkennen
+[1A[2K[19/25] [chromium] › e2e\team-invitation.spec.ts:340:9 › Team Invitation E2E Flow › 6. Permissions & Security › sollte unauthentifizierten Zugriff auf Einladung erlauben
+[1A[2K[20/25] [chromium] › e2e\team-invitation.spec.ts:352:9 › Team Invitation E2E Flow › 6. Permissions & Security › sollte falschen User abweisen
+[1A[2K[21/25] [chromium] › e2e\team-invitation.spec.ts:367:9 › Team Invitation E2E Flow › 6. Permissions & Security › sollte Abmelde-Option bei falschem User anbieten
+[1A[2K[22/25] [chromium] › e2e\team-invitation.spec.ts:378:9 › Team Invitation E2E Flow › 7. Team-Member Status Prüfung › sollte neues Mitglied als "active" anzeigen
+[1A[2K[23/25] [chromium] › e2e\team-invitation.spec.ts:391:9 › Team Invitation E2E Flow › 7. Team-Member Status Prüfung › sollte joinedAt Timestamp haben
+[1A[2K[24/25] [chromium] › e2e\team-invitation.spec.ts:407:9 › Team Invitation E2E Flow › 8. Responsive Design › sollte auf Mobile responsive sein
+[1A[2K[25/25] [chromium] › e2e\team-invitation.spec.ts:419:9 › Team Invitation E2E Flow › 8. Responsive Design › sollte auf Tablet responsive sein
+[1A[2K  1 failed
+    [chromium] › e2e\team-invitation.spec.ts:249:9 › Team Invitation E2E Flow › 4. Bestehender Account Login › sollte "Bereits Account?" Option anzeigen 
+  13 did not run
+  11 passed (39.5s)

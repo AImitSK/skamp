@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthContextProvider } from "@/context/AuthContext";
 import { OrganizationProvider } from "@/context/OrganizationContext";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { Toaster } from "@/lib/utils/toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
             </OrganizationProvider>
           </AuthContextProvider>
         </QueryProvider>
+        <Toaster />
       </body>
     </html>
   );
