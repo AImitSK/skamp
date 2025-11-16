@@ -260,40 +260,39 @@ class MonitoringReportService {
 
     /* HEADER WITH BRANDING */
     .report-header {
-      border-bottom: 1px solid var(--border);
       padding-bottom: 24px;
       margin-bottom: 32px;
     }
 
     .header-branding {
       display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .header-content {
+      flex: 1;
     }
 
     .logo {
       max-width: 200px;
       max-height: 80px;
       object-fit: contain;
-    }
-
-    .company-info h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .company-tagline {
-      font-size: 13px;
-      color: var(--text-secondary);
+      margin-left: 16px;
     }
 
     .report-title {
       font-size: 24px;
       font-weight: 600;
       color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .company-name {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-secondary);
       margin-bottom: 8px;
     }
 
@@ -320,8 +319,6 @@ class MonitoringReportService {
       font-weight: 600;
       color: #374151;
       margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
     }
 
     /* KPI GRID */
@@ -424,32 +421,17 @@ class MonitoringReportService {
     .footer {
       margin-top: 48px;
       padding-top: 20px;
-      border-top: 1px solid var(--border);
       font-size: 12px;
       color: var(--text-secondary);
-    }
-
-    .footer-contact {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-bottom: 16px;
-    }
-
-    .footer-column strong {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--text-primary);
-    }
-
-    .footer-column p {
-      margin-bottom: 2px;
+      text-align: center;
     }
 
     .footer-copyright {
-      text-align: center;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .footer-contact {
+      font-size: 11px;
     }
 
     /* PRINT STYLES */
@@ -476,28 +458,17 @@ class MonitoringReportService {
 <body>
   <!-- HEADER WITH BRANDING -->
   <div class="report-header">
-    ${reportData.branding && reportData.branding.logoUrl ? `
     <div class="header-branding">
-      <img src="${reportData.branding.logoUrl}" alt="${reportData.branding.companyName}" class="logo" />
-      <div class="company-info">
-        <h3>${reportData.branding.companyName}</h3>
-        <p class="company-tagline">PR-Monitoring Report</p>
+      <div class="header-content">
+        <h1 class="report-title">PR-Monitoring Report</h1>
+        ${reportData.branding?.companyName ? `<p class="company-name">${reportData.branding.companyName}</p>` : ''}
+        <div class="report-meta">
+          <span>Zeitraum: ${reportData.reportPeriod.start.toLocaleDateString('de-DE')} - ${reportData.reportPeriod.end.toLocaleDateString('de-DE')}</span>
+          <span class="separator">•</span>
+          <span>Generiert am: ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
       </div>
-    </div>
-    ` : reportData.branding?.companyName ? `
-    <div class="header-branding">
-      <div class="company-info">
-        <h3>${reportData.branding.companyName}</h3>
-        <p class="company-tagline">PR-Monitoring Report</p>
-      </div>
-    </div>
-    ` : ''}
-
-    <h1 class="report-title">${reportData.reportTitle}</h1>
-    <div class="report-meta">
-      <span>Zeitraum: ${reportData.reportPeriod.start.toLocaleDateString('de-DE')} - ${reportData.reportPeriod.end.toLocaleDateString('de-DE')}</span>
-      <span class="separator">•</span>
-      <span>Generiert am: ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+      ${reportData.branding?.logoUrl ? `<img src="${reportData.branding.logoUrl}" alt="${reportData.branding.companyName}" class="logo" />` : ''}
     </div>
   </div>
 
@@ -530,7 +501,6 @@ class MonitoringReportService {
       <div class="kpi-card">
         <div class="kpi-label">Conversion-Rate</div>
         <div class="kpi-value">${reportData.emailStats.conversionRate}%</div>
-        <div class="kpi-description">Öffnungen → Veröffentlichungen</div>
       </div>
     </div>
   </div>
@@ -558,7 +528,6 @@ class MonitoringReportService {
       <div class="kpi-card">
         <div class="kpi-label">Click-Through-Rate</div>
         <div class="kpi-value">${reportData.emailStats.ctr}%</div>
-        <div class="kpi-description">${reportData.emailStats.clicked} von ${reportData.emailStats.totalSent} E-Mails</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Bounced</div>
@@ -680,28 +649,17 @@ class MonitoringReportService {
   <!-- FOOTER WITH BRANDING -->
   <div class="footer">
     ${reportData.branding ? `
-    <div class="footer-contact">
-      <div class="footer-column">
-        <strong>${reportData.branding.companyName}</strong>
-        ${reportData.branding.address?.street ? `<p>${reportData.branding.address.street}</p>` : ''}
-        ${reportData.branding.address?.postalCode && reportData.branding.address?.city ? `<p>${reportData.branding.address.postalCode} ${reportData.branding.address.city}</p>` : ''}
-        ${reportData.branding.address?.country ? `<p>${reportData.branding.address.country}</p>` : ''}
-      </div>
-      <div class="footer-column">
-        ${reportData.branding.phone ? `<p>Tel: ${reportData.branding.phone}</p>` : ''}
-        ${reportData.branding.email ? `<p>E-Mail: ${reportData.branding.email}</p>` : ''}
-        ${reportData.branding.website ? `<p>Web: ${reportData.branding.website}</p>` : ''}
-      </div>
-    </div>
     ${reportData.branding.showCopyright ? `
     <div class="footer-copyright">
       <p>© ${currentYear} ${reportData.branding.companyName} - Alle Rechte vorbehalten</p>
     </div>
     ` : ''}
+    <div class="footer-contact">
+      <p>${reportData.branding.companyName}${reportData.branding.phone ? ` · Tel: ${reportData.branding.phone}` : ''}${reportData.branding.website ? ` · ${reportData.branding.website}` : ''}</p>
+    </div>
     ` : `
     <div class="footer-copyright">
       <p>Generiert mit CeleroPress</p>
-      <p>Organisation ID: ${reportData.organizationId}</p>
     </div>
     `}
   </div>
