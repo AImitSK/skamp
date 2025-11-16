@@ -14,7 +14,13 @@
       "Bash(node cleanup-console.js:*)",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run test:e2e:*)"
+      "Bash(npm run test:e2e:*)",
+      "Bash(Get-Process -Name node -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 5)",
+      "Bash(tee:*)",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 100)",
+      "Bash(git checkout:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

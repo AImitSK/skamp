@@ -1,0 +1,14 @@
+
+> skamp@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+uncaughtException [Error: EPERM: operation not permitted, open 'C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\trace'] {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'open',
+  path: 'C:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\.next\\trace'
+}

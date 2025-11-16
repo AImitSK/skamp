@@ -211,7 +211,7 @@ class MonitoringReportService {
     });
   }
 
- async generateReportHTML(reportData: MonitoringReportData): string {
+ async generateReportHTML(reportData: MonitoringReportData): Promise<string> {
   const sentimentPercentages = {
     positive: reportData.clippingStats.totalClippings > 0
       ? Math.round((reportData.clippingStats.sentimentDistribution.positive / reportData.clippingStats.totalClippings) * 100)
