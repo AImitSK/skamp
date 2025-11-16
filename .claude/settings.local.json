@@ -20,7 +20,8 @@
       "Bash(tee:*)",
       "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -First 100)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
