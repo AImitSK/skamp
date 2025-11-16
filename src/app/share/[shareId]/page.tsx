@@ -321,37 +321,38 @@ export default function SharePage() {
     <div className="min-h-screen bg-zinc-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                {shareLink?.type === 'campaign' && (
-                  <NewspaperIcon className="h-6 w-6 text-primary" />
-                )}
-                <Heading level={1} className="text-2xl font-semibold text-zinc-900">
-                  {shareLink?.title}
-                </Heading>
-              </div>
-              {shareLink?.description && (
-                <Text className="mt-2 text-sm text-zinc-600">{shareLink.description}</Text>
-              )}
-              <div className="mt-3 flex items-center text-sm text-zinc-500">
-                <span>
-                  {getContentTypeDisplay()} • {mediaItems.length} {mediaItems.length === 1 ? 'Element' : 'Elemente'}
-                </span>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          {/* Logo - zentriert, oben */}
+          <div className="flex justify-center mb-4">
+            <div className="flex flex-col items-center">
+              <img
+                src="/logo_skamp.svg"
+                alt="CeleroPress"
+                className="h-6 sm:h-8 w-auto"
+              />
+              <div className="text-xs text-zinc-500 mt-1">Medien-Freigabe</div>
             </div>
+          </div>
 
-            {/* CeleroPress Logo */}
-            <div className="flex-shrink-0 ml-6">
-              <div className="flex flex-col items-end">
-                <img
-                  src="/logo_skamp.svg"
-                  alt="CeleroPress"
-                  className="h-10 w-auto"
-                />
-                <div className="text-xs text-zinc-500 mt-1">Medien-Freigabe</div>
-              </div>
+          {/* Titel und Beschreibung - volle Breite */}
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+              {shareLink?.type === 'campaign' && (
+                <NewspaperIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              )}
+              <Heading level={1} className="text-lg sm:text-xl md:text-2xl font-semibold text-zinc-900 text-center">
+                {shareLink?.title}
+              </Heading>
+            </div>
+            {shareLink?.description && (
+              <Text className="mt-2 text-sm text-zinc-600 text-center max-w-3xl mx-auto">
+                {shareLink.description}
+              </Text>
+            )}
+            <div className="mt-3 flex items-center justify-center text-sm text-zinc-500">
+              <span>
+                {getContentTypeDisplay()} • {mediaItems.length} {mediaItems.length === 1 ? 'Element' : 'Elemente'}
+              </span>
             </div>
           </div>
         </div>
