@@ -8,6 +8,7 @@ import { timelineBuilder } from '@/lib/monitoring-report/core/timeline-builder';
 import { generateReportHTML as generateHTMLTemplate } from '@/lib/monitoring-report/templates/report-template';
 import { htmlGenerator } from '@/lib/monitoring-report/generators/html-generator';
 import { pdfGenerator } from '@/lib/monitoring-report/generators/pdf-generator';
+import { downloadHandler } from '@/lib/monitoring-report/delivery/download-handler';
 
 class MonitoringReportService {
   async collectReportData(
@@ -83,91 +84,13 @@ class MonitoringReportService {
       // 4. Client-Upload (falls benötigt)
       if (result.needsClientUpload && result.pdfBase64) {
         const pdfFile = pdfGenerator.base64ToFile(result.pdfBase64, fileName);
-
-        const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
-        const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
-
-        let uploadResult: any;
-
-        if (campaignData?.projectId && campaignData?.clientId) {
-          const allFolders = await mediaService.getAllFoldersForOrganization(organizationId);
-
-          let projectName = 'Monitoring';
-          try {
-            if (campaignData.projectId) {
-              const projectDoc = await getDoc(doc(db, 'projects', campaignData.projectId));
-              if (projectDoc.exists()) {
-                const project = projectDoc.data();
-                if (project?.title) {
-                  projectName = project.title;
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('Projekt-Daten konnten nicht geladen werden:', error);
-          }
-
-          const projectFolder = allFolders.find(folder =>
-            folder.name.includes('P-') && folder.name.includes(projectName)
-          );
-
-          if (projectFolder) {
-            let targetFolder = allFolders.find(folder =>
-              folder.parentFolderId === projectFolder.id && folder.name === 'Analysen'
-            );
-
-            if (!targetFolder) {
-              targetFolder = allFolders.find(folder =>
-                folder.parentFolderId === projectFolder.id && folder.name === 'Pressemeldungen'
-              );
-            }
-
-            const targetFolderId = targetFolder?.id || projectFolder.id;
-
-            if (targetFolderId) {
-              // ✨ skipLimitCheck=true: PDF-Reporting darf nicht durch Storage-Limits blockiert werden
-              const asset = await mediaService.uploadClientMedia(
-                pdfFile,
-                organizationId,
-                campaignData.clientId,
-                targetFolderId,
-                undefined,
-                { userId },
-                true // skipLimitCheck - keine Storage-Limits für PDF-Reporting
-              );
-
-              return {
-                pdfUrl: asset.downloadUrl,
-                fileSize: pdfFile.size
-              };
-            } else {
-              throw new Error('Zielordner nicht gefunden');
-            }
-          } else {
-            throw new Error('Projekt-Ordner nicht gefunden');
-          }
-        } else {
-          // ✨ skipLimitCheck=true: PDF-Reporting darf nicht durch Storage-Limits blockiert werden
-          const asset = await mediaService.uploadMedia(
-            pdfFile,
-            organizationId,
-            undefined,
-            undefined,
-            3,
-            { userId },
-            true // skipLimitCheck - keine Storage-Limits für PDF-Reporting
-          );
-
-          return {
-            pdfUrl: asset.downloadUrl,
-            fileSize: pdfFile.size
-          };
-        }
+        return downloadHandler.upload(pdfFile, campaignId, organizationId, userId);
       }
 
+      // 5. Direkter Download-URL (Server-Upload)
       return {
-        pdfUrl: result.pdfUrl,
-        fileSize: result.fileSize
+        pdfUrl: result.pdfUrl || '',
+        fileSize: 0
       };
     } catch (error) {
       throw new Error(`PDF-Report-Generierung fehlgeschlagen: ${error}`);
