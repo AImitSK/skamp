@@ -25,6 +25,7 @@ export function generateReportHTML(reportData: MonitoringReportData): string {
   ${generatePerformanceOverview(reportData)}
   ${generateEmailPerformance(reportData)}
   ${generateSentimentAnalysis(reportData, sentimentPercentages)}
+  ${generateTimeline(reportData)}
   ${generateOutletTypeDistribution(reportData)}
   ${generateTopOutlets(reportData)}
   ${generateAllClippings(reportData)}
@@ -176,6 +177,71 @@ function generateSentimentAnalysis(
       <div class="kpi-card">
         <div class="kpi-label">Negativ</div>
         <div class="kpi-value danger">${reportData.clippingStats.sentimentDistribution.negative} (${percentages.negative}%)</div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/**
+ * Generiert Timeline Section
+ */
+function generateTimeline(reportData: MonitoringReportData): string {
+  if (!reportData.timeline || reportData.timeline.length === 0) {
+    return '';
+  }
+
+  // Maximale Reichweite für Balken-Skalierung
+  const maxReach = Math.max(...reportData.timeline.map(t => t.reach));
+
+  return `
+  <!-- TIMELINE -->
+  <div class="section">
+    <h2 class="section-title">Veröffentlichungs-Timeline</h2>
+    <div class="timeline-container">
+      <table class="timeline-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Datum</th>
+            <th style="width: 15%;">Artikel</th>
+            <th style="width: 20%;">Reichweite</th>
+            <th style="width: 40%;">Visualisierung</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${reportData.timeline.map(item => {
+            const barWidth = maxReach > 0 ? Math.round((item.reach / maxReach) * 100) : 0;
+            return `
+            <tr>
+              <td><strong>${item.date}</strong></td>
+              <td class="text-center">${item.clippings}</td>
+              <td>${item.reach.toLocaleString('de-DE')}</td>
+              <td>
+                <div class="timeline-bar-container">
+                  <div class="timeline-bar" style="width: ${barWidth}%;">
+                    <span class="timeline-bar-label">${barWidth}%</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <div class="timeline-summary">
+        <div class="timeline-stat">
+          <span class="timeline-stat-label">Gesamt Artikel:</span>
+          <span class="timeline-stat-value">${reportData.timeline.reduce((sum, t) => sum + t.clippings, 0)}</span>
+        </div>
+        <div class="timeline-stat">
+          <span class="timeline-stat-label">Gesamt Reichweite:</span>
+          <span class="timeline-stat-value">${reportData.timeline.reduce((sum, t) => sum + t.reach, 0).toLocaleString('de-DE')}</span>
+        </div>
+        <div class="timeline-stat">
+          <span class="timeline-stat-label">Aktivste Tag:</span>
+          <span class="timeline-stat-value">${reportData.timeline.reduce((max, t) => t.clippings > max.clippings ? t : max, reportData.timeline[0]).date} (${reportData.timeline.reduce((max, t) => t.clippings > max.clippings ? t : max, reportData.timeline[0]).clippings} Artikel)</span>
+        </div>
       </div>
     </div>
   </div>

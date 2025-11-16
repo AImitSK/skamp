@@ -197,6 +197,89 @@ export function generateCSS(): string {
     }
 
     /* FOOTER */
+    /* TIMELINE STYLES */
+    .timeline-container {
+      margin-top: 16px;
+    }
+
+    .timeline-table {
+      width: 100%;
+    }
+
+    .timeline-table th {
+      text-align: left;
+      padding: 12px 8px;
+      background-color: var(--bg-light);
+      border-bottom: 2px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .timeline-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .timeline-bar-container {
+      background-color: var(--bg-light);
+      border-radius: 4px;
+      height: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-bar {
+      background: linear-gradient(90deg, var(--primary), #0080ff);
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      min-width: 30px;
+      transition: width 0.3s ease;
+    }
+
+    .timeline-bar-label {
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .timeline-summary {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 24px;
+      padding: 16px;
+      background-color: var(--bg-light);
+      border-radius: 8px;
+      gap: 16px;
+    }
+
+    .timeline-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .timeline-stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .timeline-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
     .footer {
       margin-top: 48px;
       padding-top: 20px;
