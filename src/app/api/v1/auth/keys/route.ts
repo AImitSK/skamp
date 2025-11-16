@@ -14,12 +14,16 @@ const mockApiKeys = new Map<string, any[]>();
 
 function getMockAPIKeys(organizationId: string) {
   if (!mockApiKeys.has(organizationId)) {
-    // Initialisiere mit 5 Mock-API-Keys (passend zu "Aktive API Keys: 5")
+    // Generiere organization-spezifische Mock-Keys
+    const orgPrefix = organizationId.substring(0, 8);
+    const orgHash = organizationId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+    // Jede Organization bekommt unterschiedliche Mock-Daten
     mockApiKeys.set(organizationId, [
       {
-        id: 'key_production_1',
-        name: 'Production CRM Integration',
-        keyPreview: 'cp_live_abc123...',
+        id: `key_${orgPrefix}_prod`,
+        name: `CRM Integration (Org: ${orgPrefix})`,
+        keyPreview: `cp_live_${orgPrefix}...`,
         permissions: ['contacts:read', 'contacts:write', 'companies:read'],
         isActive: true,
         rateLimit: {
@@ -27,16 +31,16 @@ function getMockAPIKeys(organizationId: string) {
           requestsPerMinute: 60
         },
         usage: {
-          totalRequests: 15420,
-          requestsThisHour: 45,
-          requestsToday: 520
+          totalRequests: 10000 + (orgHash % 10000),
+          requestsThisHour: 20 + (orgHash % 50),
+          requestsToday: 300 + (orgHash % 500)
         },
         createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
-        id: 'key_salesforce_1',
-        name: 'Salesforce Sync',
-        keyPreview: 'cp_live_def456...',
+        id: `key_${orgPrefix}_sf`,
+        name: `Salesforce Sync (Org: ${orgPrefix})`,
+        keyPreview: `cp_live_${orgPrefix}_sf...`,
         permissions: ['contacts:read', 'companies:read', 'companies:write'],
         isActive: true,
         rateLimit: {
@@ -44,16 +48,16 @@ function getMockAPIKeys(organizationId: string) {
           requestsPerMinute: 30
         },
         usage: {
-          totalRequests: 8934,
-          requestsThisHour: 12,
-          requestsToday: 234
+          totalRequests: 8000 + (orgHash % 5000),
+          requestsThisHour: 10 + (orgHash % 20),
+          requestsToday: 200 + (orgHash % 300)
         },
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
-        id: 'key_hubspot_1',
-        name: 'HubSpot Integration',
-        keyPreview: 'cp_live_ghi789...',
+        id: `key_${orgPrefix}_hub`,
+        name: `HubSpot Integration (Org: ${orgPrefix})`,
+        keyPreview: `cp_live_${orgPrefix}_hub...`,
         permissions: ['contacts:read', 'publications:read'],
         isActive: true,
         rateLimit: {
@@ -61,16 +65,16 @@ function getMockAPIKeys(organizationId: string) {
           requestsPerMinute: 20
         },
         usage: {
-          totalRequests: 3421,
-          requestsThisHour: 8,
-          requestsToday: 89
+          totalRequests: 3000 + (orgHash % 3000),
+          requestsThisHour: 5 + (orgHash % 15),
+          requestsToday: 80 + (orgHash % 100)
         },
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
-        id: 'key_webhook_1',
-        name: 'Webhook Processor',
-        keyPreview: 'cp_live_jkl012...',
+        id: `key_${orgPrefix}_webhook`,
+        name: `Webhook Processor (Org: ${orgPrefix})`,
+        keyPreview: `cp_live_${orgPrefix}_wh...`,
         permissions: ['webhooks:read', 'webhooks:write'],
         isActive: true,
         rateLimit: {
@@ -78,16 +82,16 @@ function getMockAPIKeys(organizationId: string) {
           requestsPerMinute: 100
         },
         usage: {
-          totalRequests: 25678,
-          requestsThisHour: 67,
-          requestsToday: 890
+          totalRequests: 20000 + (orgHash % 15000),
+          requestsThisHour: 50 + (orgHash % 70),
+          requestsToday: 700 + (orgHash % 500)
         },
         createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
       },
       {
-        id: 'key_test_1',
-        name: 'Development Testing',
-        keyPreview: 'cp_test_mno345...',
+        id: `key_${orgPrefix}_test`,
+        name: `Development Testing (Org: ${orgPrefix})`,
+        keyPreview: `cp_test_${orgPrefix}...`,
         permissions: ['contacts:read'],
         isActive: false,
         rateLimit: {
@@ -95,7 +99,7 @@ function getMockAPIKeys(organizationId: string) {
           requestsPerMinute: 10
         },
         usage: {
-          totalRequests: 156,
+          totalRequests: 100 + (orgHash % 200),
           requestsThisHour: 0,
           requestsToday: 0
         },
