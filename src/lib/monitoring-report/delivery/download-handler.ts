@@ -72,7 +72,7 @@ export class DownloadHandler {
     }
 
     // Ziel-Ordner finden (Analysen oder Pressemeldungen)
-    const targetFolderId = this.findTargetFolder(allFolders, projectFolder.id);
+    const targetFolderId = this.findTargetFolder(allFolders, projectFolder.id || '');
 
     if (!targetFolderId) {
       throw new Error('Zielordner nicht gefunden');
