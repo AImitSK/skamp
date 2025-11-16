@@ -1,10 +1,59 @@
 # PDF-Report Service Refactoring - Implementierungsplan
 
-**Version:** 1.0
+**Version:** 1.1
 **Erstellt:** 2025-11-16
+**Aktualisiert:** 2025-11-16
 **Modul:** Monitoring PDF-Report Service
 **Phase:** 0.1 (Shared Components)
-**Status:** ⏳ PLANUNG
+**Status:** 🚀 IN PROGRESS
+**Branch:** `feature/pdf-report-design-improvements` (wird weiterverwendet)
+
+---
+
+## ✅ BEREITS ERLEDIGT (Session 2025-11-16)
+
+**Was wurde bereits gemacht:**
+
+### Design-Improvements (Phase 1-3)
+- ✅ **Branding Integration** (Phase 1)
+  - BrandingSettings aus Firestore laden
+  - Logo im Header (max 200x80px)
+  - Firmenname + Tagline
+  - Kontaktdaten im Footer mit Copyright
+
+- ✅ **Design-Überarbeitung** (Phase 2)
+  - Emojis komplett entfernt
+  - Typografie angepasst (H1: 24px, KPI: 20px, Section: 18px)
+  - Farbschema: Grautöne statt Gelb, Primary nur für Akzente
+  - KPI-Descriptions entfernt für kompakteres Design
+  - Header umstrukturiert (PR-Monitoring Report groß, Firmenname klein, Logo rechtsbündig)
+  - Alle Trennlinien entfernt
+  - Footer vereinfacht und zentriert
+
+- ✅ **Neue Metriken** (Phase 3)
+  - CTR (Click-Through-Rate): clicked / totalSent
+  - Conversion-Rate: withClippings / opened
+  - Ø Reichweite: totalReach / totalClippings
+  - Medientyp-Verteilung: Online, Print, Radio, TV mit Prozent-Anteilen
+
+### Toast-Integration
+- ✅ **Toast-Provider** im Root Layout (`src/app/layout.tsx`)
+- ✅ **Toast-Meldungen** im Monitoring
+  - PDF-Export: Success/Error Toasts
+  - Excel-Export: Success/Error Toasts
+  - PDF-Löschen: Success/Error Toasts
+  - Auto-Funde: Success/Error Toasts (Bestätigen, Spam markieren)
+  - Alte Dialogs/Alerts entfernt (-23 Zeilen Code)
+
+**Commits auf Branch:**
+- 7 Commits bereits gepusht
+- Dokumentiert in `PDF_REPORT_IMPROVEMENTS_SUMMARY.md`
+
+**Aktueller Stand:**
+- `monitoring-report-service.ts`: ~670 Zeilen (war 703, noch nicht modularisiert)
+- HTML-Template: Komplett überarbeitet, aber noch inline
+- Design: ✅ Fertig und professionell
+- Toast: ✅ Integriert in Monitoring-Seite
 
 ---
 
@@ -298,30 +347,32 @@ export function useScheduledReportGenerator() {
 
 ## 🚀 Die 8 Phasen
 
-### Phase 0: Vorbereitung & Setup
+### Phase 0: Vorbereitung & Setup ✅ ERLEDIGT
 
 **Dauer:** 30 Minuten
+**Status:** ✅ KOMPLETT
 
 #### Aufgaben
 
-- [ ] Feature-Branch erstellen
+- [x] Feature-Branch verwenden (bereits existiert)
   ```bash
-  git checkout -b feature/pdf-report-service-refactoring
+  # Branch: feature/pdf-report-design-improvements
+  # HINWEIS: Wird weiterverwendet für Refactoring
   ```
 
-- [ ] Backup erstellen
+- [x] Backup erstellen
   ```bash
   cp src/lib/firebase/monitoring-report-service.ts \
      src/lib/firebase/monitoring-report-service.backup.ts
   ```
 
-- [ ] Ist-Zustand dokumentieren
+- [x] Ist-Zustand dokumentieren
   ```bash
   wc -l src/lib/firebase/monitoring-report-service.ts
-  # Output: 703 Zeilen
+  # Output: ~670 Zeilen (war 703, durch Design-Improvements reduziert)
   ```
 
-- [ ] Verzeichnis-Struktur anlegen
+- [x] Verzeichnis-Struktur anlegen
   ```bash
   mkdir -p src/lib/monitoring-report/{core,templates,generators,delivery,config}
   mkdir -p src/lib/monitoring-report/templates/charts
@@ -329,19 +380,20 @@ export function useScheduledReportGenerator() {
 
 #### Deliverable
 
-- [x] Feature-Branch: `feature/pdf-report-service-refactoring`
+- [x] Feature-Branch: `feature/pdf-report-design-improvements` (wird weiterverwendet)
 - [x] Backup: `monitoring-report-service.backup.ts`
 - [x] Neue Ordnerstruktur angelegt
+- [x] IST-Zustand: ~670 Zeilen (Design-Improvements bereits integriert)
 
 **Commit:**
 ```bash
 git add .
 git commit -m "chore: Phase 0 - Setup für PDF-Report Service Refactoring
 
-- Feature-Branch erstellt
-- Backup angelegt
+- Backup erstellt
 - Ordnerstruktur vorbereitet
-- IST-Zustand: 703 Zeilen monolithischer Service
+- IST-Zustand: ~670 Zeilen (Design bereits optimiert)
+- Branch: feature/pdf-report-design-improvements (weiterverwendet)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
