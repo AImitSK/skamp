@@ -7,58 +7,7 @@ import { mediaService } from './media-service';
 import { brandingService } from './branding-service';
 import { EmailCampaignSend } from '@/types/email';
 import { MediaClipping } from '@/types/monitoring';
-import { BrandingSettings } from '@/types/branding';
-
-interface MonitoringReportData {
-  campaignId: string;
-  organizationId: string;
-  reportTitle: string;
-  reportPeriod: {
-    start: Date;
-    end: Date;
-  };
-  branding: BrandingSettings | null;
-  emailStats: {
-    totalSent: number;
-    delivered: number;
-    opened: number;
-    clicked: number;
-    bounced: number;
-    openRate: number;
-    clickRate: number;
-    ctr: number; // Click-Through-Rate (clicked / totalSent)
-    conversionRate: number; // Öffnungen → Clippings
-  };
-  clippingStats: {
-    totalClippings: number;
-    totalReach: number;
-    totalAVE: number;
-    avgReach: number; // Durchschnitts-Reichweite pro Clipping
-    sentimentDistribution: {
-      positive: number;
-      neutral: number;
-      negative: number;
-    };
-    topOutlets: Array<{
-      name: string;
-      reach: number;
-      clippingsCount: number;
-    }>;
-    outletTypeDistribution: Array<{
-      type: string;
-      count: number;
-      reach: number;
-      percentage: number;
-    }>;
-  };
-  timeline: Array<{
-    date: string;
-    clippings: number;
-    reach: number;
-  }>;
-  clippings: MediaClipping[];
-  sends: EmailCampaignSend[];
-}
+import type { MonitoringReportData } from '@/lib/monitoring-report/types';
 
 class MonitoringReportService {
   async collectReportData(
