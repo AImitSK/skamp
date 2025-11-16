@@ -145,6 +145,24 @@ async function processScheduledEmails() {
         );
         console.log(`✅ [${doc.id}] Email-Versand abgeschlossen: ${result.successCount} erfolgreich, ${result.failureCount} fehlgeschlagen`);
 
+        // MONITORING: Erstelle Campaign-Monitoring-Tracker (falls aktiviert)
+        if (result.successCount > 0) {
+          try {
+            const campaign = preparedData.campaign;
+            if (campaign.monitoringConfig?.isEnabled) {
+              const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
+              const trackerId = await campaignMonitoringService.createTrackerForCampaign(
+                scheduledEmail.campaignId,
+                scheduledEmail.organizationId
+              );
+              console.log(`✅ [${doc.id}] Monitoring Tracker created: ${trackerId}`);
+            }
+          } catch (monitoringError) {
+            console.error(`⚠️ [${doc.id}] Fehler beim Erstellen des Monitoring Trackers:`, monitoringError);
+            // Nicht blockierend - Email wurde bereits erfolgreich versendet
+          }
+        }
+
         // Status aktualisieren
         await doc.ref.update({
           status: result.failureCount === 0 ? 'sent' : 'failed',
