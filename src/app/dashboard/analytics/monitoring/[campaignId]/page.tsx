@@ -20,11 +20,11 @@ import { EmailCampaignSend } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
-import { monitoringReportService } from '@/lib/firebase/monitoring-report-service';
 import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { toastService } from '@/lib/utils/toast';
+import { usePDFReportGenerator } from '@/lib/hooks/useMonitoringReport';
 import Link from 'next/link';
 
 export default function MonitoringDetailPage() {
@@ -37,13 +37,15 @@ export default function MonitoringDetailPage() {
   const campaignId = params.campaignId as string;
   const tabParam = searchParams.get('tab') as 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions' | null;
 
+  // React Query Hook für PDF-Export
+  const pdfGenerator = usePDFReportGenerator();
+
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [sends, setSends] = useState<EmailCampaignSend[]>([]);
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
   const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>(tabParam || 'dashboard');
-  const [exportingPDF, setExportingPDF] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
   const [loadingPDFs, setLoadingPDFs] = useState(false);
@@ -148,26 +150,17 @@ export default function MonitoringDetailPage() {
     loadData();
   };
 
-  const handlePDFExport = async () => {
+  const handlePDFExport = () => {
     if (!user || !currentOrganization?.id) return;
 
-    try {
-      setExportingPDF(true);
-      const result = await monitoringReportService.generatePDFReport(
-        campaignId,
-        currentOrganization.id,
-        user.uid
-      );
+    pdfGenerator.mutate({
+      campaignId,
+      organizationId: currentOrganization.id,
+      userId: user.uid
+    });
 
-      window.open(result.pdfUrl, '_blank');
-      loadAnalysisPDFs();
-      toastService.success('PDF-Report erfolgreich generiert');
-    } catch (error) {
-      console.error('PDF-Export fehlgeschlagen:', error);
-      toastService.error('PDF-Export fehlgeschlagen');
-    } finally {
-      setExportingPDF(false);
-    }
+    // Reload PDFs list after successful generation (via Hook's onSuccess)
+    loadAnalysisPDFs();
   };
 
   const handleDeletePDF = async (pdf: any) => {
@@ -303,10 +296,10 @@ export default function MonitoringDetailPage() {
             <Button
               onClick={handlePDFExport}
               color="secondary"
-              disabled={exportingPDF}
+              disabled={pdfGenerator.isPending}
             >
               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-              {exportingPDF ? 'Generiere PDF...' : 'PDF-Report'}
+              {pdfGenerator.isPending ? 'Generiere PDF...' : 'PDF-Report'}
             </Button>
             <Button
               onClick={handleExcelExport}
