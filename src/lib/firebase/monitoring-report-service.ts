@@ -6,6 +6,8 @@ import { reportDataCollector } from '@/lib/monitoring-report/core/data-collector
 import { reportStatsCalculator } from '@/lib/monitoring-report/core/stats-calculator';
 import { timelineBuilder } from '@/lib/monitoring-report/core/timeline-builder';
 import { generateReportHTML as generateHTMLTemplate } from '@/lib/monitoring-report/templates/report-template';
+import { htmlGenerator } from '@/lib/monitoring-report/generators/html-generator';
+import { pdfGenerator } from '@/lib/monitoring-report/generators/pdf-generator';
 
 class MonitoringReportService {
   async collectReportData(
@@ -55,58 +57,32 @@ class MonitoringReportService {
     userId: string
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
+      // 1. Daten sammeln
       const reportData = await this.collectReportData(campaignId, organizationId);
-      const reportHtml = await this.generateReportHTML(reportData);
 
-      const fileName = `Monitoring_Report_${campaignId}_${Date.now()}.pdf`;
+      // 2. HTML generieren
+      const reportHtml = await htmlGenerator.generate(reportData);
 
-      const apiRequest = {
-        campaignId: campaignId,
+      // 3. PDF generieren
+      const fileName = pdfGenerator.generateFileName(campaignId);
+      const result = await pdfGenerator.generate(reportHtml, {
+        campaignId,
         organizationId,
-        mainContent: reportHtml,
-        clientName: reportData.reportTitle,
         userId,
         html: reportHtml,
         title: `Monitoring Report: ${reportData.reportTitle}`,
         fileName,
-        boilerplateSections: [],
         options: {
-          format: 'A4' as const,
-          orientation: 'portrait' as const,
+          format: 'A4',
+          orientation: 'portrait',
           printBackground: true,
-          waitUntil: 'networkidle0' as const
+          waitUntil: 'networkidle0'
         }
-      };
-
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiRequest)
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PDF-API Fehler ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(`PDF-Generation fehlgeschlagen: ${result.error}`);
-      }
-
+      // 4. Client-Upload (falls benötigt)
       if (result.needsClientUpload && result.pdfBase64) {
-        const cleanBase64 = result.pdfBase64.replace(/[^A-Za-z0-9+/=]/g, '');
-        const byteCharacters = atob(cleanBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-
-        const byteArray = new Uint8Array(byteNumbers);
-        const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
-        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const pdfFile = pdfGenerator.base64ToFile(result.pdfBase64, fileName);
 
         const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
         const campaignData = campaignDoc?.exists() ? campaignDoc.data() : null;
