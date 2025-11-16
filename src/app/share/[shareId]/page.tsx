@@ -338,7 +338,7 @@ export default function SharePage() {
           <div className="w-full">
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
               {shareLink?.type === 'campaign' && (
-                <NewspaperIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <NewspaperIcon className="hidden sm:block h-6 w-6 text-primary flex-shrink-0" />
               )}
               <Heading level={1} className="text-lg sm:text-xl md:text-2xl font-semibold text-zinc-900 text-center">
                 {shareLink?.title}
