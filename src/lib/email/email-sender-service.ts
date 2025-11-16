@@ -312,17 +312,64 @@ export class EmailSenderService {
     // 1. Empfänger aus Listen laden
     for (const listId of recipients.listIds) {
       try {
-        const listDoc = await adminDb.collection('distribution_lists').doc(listId).get();
+        console.log(`📋 Lade Liste: ${listId}`);
 
+        // Versuche erst in distribution_lists (Master Listen)
+        let listDoc = await adminDb.collection('distribution_lists').doc(listId).get();
+        let listData = listDoc.exists ? listDoc.data() : null;
+
+        // Falls nicht gefunden, versuche in project_distribution_lists (Custom Listen)
         if (!listDoc.exists) {
+          console.log(`🔍 Nicht in distribution_lists gefunden, versuche project_distribution_lists...`);
+          listDoc = await adminDb.collection('project_distribution_lists').doc(listId).get();
+          listData = listDoc.exists ? listDoc.data() : null;
+        }
+
+        if (!listData) {
+          console.warn(`⚠️ Liste ${listId} nicht gefunden in beiden Collections`);
           continue;
         }
 
-        const listData = listDoc.data();
-        if (listData && listData.contacts && Array.isArray(listData.contacts)) {
+        console.log(`✅ Liste ${listId} gefunden, Typ: ${listData.type || 'master'}`);
+
+        // Master Listen haben ein "contacts" Array mit vollständigen Objekten
+        if (listData.contacts && Array.isArray(listData.contacts)) {
+          console.log(`📧 Füge ${listData.contacts.length} Kontakte aus contacts-Array hinzu`);
           allRecipients.push(...listData.contacts);
         }
+        // Custom Listen haben ein "contactIds" Array - müssen wir laden
+        else if (listData.contactIds && Array.isArray(listData.contactIds)) {
+          console.log(`🔍 Lade ${listData.contactIds.length} Kontakte via contactIds...`);
+          for (const contactId of listData.contactIds) {
+            try {
+              const contactDoc = await adminDb.collection('contacts_enhanced').doc(contactId).get();
+              if (contactDoc.exists) {
+                const contactData = contactDoc.data();
+                // Konvertiere ContactEnhanced zu Recipient Format
+                const primaryEmail = contactData?.emails?.find((e: any) => e.isPrimary)?.email ||
+                                   contactData?.emails?.[0]?.email;
+
+                if (primaryEmail) {
+                  allRecipients.push({
+                    id: contactDoc.id,
+                    email: primaryEmail,
+                    firstName: contactData?.name?.firstName || '',
+                    lastName: contactData?.name?.lastName || '',
+                    salutation: contactData?.salutation,
+                    title: contactData?.title,
+                    companyName: contactData?.companyName
+                  });
+                }
+              }
+            } catch (contactError) {
+              console.error(`❌ Fehler beim Laden von Kontakt ${contactId}:`, contactError);
+            }
+          }
+        } else {
+          console.warn(`⚠️ Liste ${listId} hat weder contacts noch contactIds`);
+        }
       } catch (error) {
+        console.error(`❌ Fehler beim Laden von Liste ${listId}:`, error);
         // Fehler beim Laden einer Liste - überspringen
       }
     }
