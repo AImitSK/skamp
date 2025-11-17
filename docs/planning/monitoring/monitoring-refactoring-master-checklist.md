@@ -130,9 +130,8 @@ Refactoring des gesamten Analytics/Monitoring-Bereichs:
 | **monitoring-report-service** | `src/lib/firebase/monitoring-report-service.ts` | 703 | ⚠️ SEHR GROSS - PDF-Report Generator |
 | **campaign-monitoring-service** | `src/lib/firebase/campaign-monitoring-service.ts` | 468 | Stats-Aggregation, Helpers |
 | **monitoring-suggestion-service** | `src/lib/firebase/monitoring-suggestion-service.ts` | 236 | Auto-Funde CRUD |
-| **monitoring-excel-export** | `src/lib/exports/monitoring-excel-export.ts` | 186 | Excel-Export |
 
-**Gesamt LOC Services:** 1.593 Zeilen
+**Gesamt LOC Services:** 1.407 Zeilen
 
 **Probleme:**
 - ⚠️ monitoring-report-service zu groß (703 Zeilen)
@@ -199,75 +198,79 @@ Quality Check: ✅ READY FOR MERGE
 
 ---
 
-### 0.2 Excel-Export Utility (WICHTIG!)
+### 0.2 MarkPublishedModal & EditClippingModal (SHARED MODALS)
 
-**Problem:** MITTEL (186 Zeilen)
-**Entry Point:** `src/lib/exports/monitoring-excel-export.ts`
-**LOC:** 186 Zeilen
-**Aufwand:** S (Small) - 1-2 Tage
-**Verwendet in:** Monitoring Detail Page (alle Tabs)
-
-**Probleme identifiziert:**
-- Standalone Utility (gut strukturiert)
-- Könnte generischer sein (für andere Module)
-
-**Refactoring-Ziele:**
-- [ ] Generischen Export-Service erstellen
-  - Wiederverwendbar für andere Module (CRM, Projects, etc.)
-- [ ] Custom Hook erstellen
-  - useExcelExport.ts (React Query Mutation)
-- [ ] TypeScript Types verbessern
-- [ ] Tests schreiben
-
-**Tracking:**
-- [ ] **Plan erstellen:** `docs/planning/monitoring/shared/excel-export-refactoring.md`
-- [ ] **Implementierung durchführen**
-- [ ] **Merged to Main**
-
-**Ergebnis-Zusammenfassung:**
-```
-⏳ AUSSTEHEND
-```
-
----
-
-### 0.3 MarkPublishedModal (SHARED MODAL)
-
-**Problem:** GROSS (393 Zeilen)
-**Entry Point:** `src/components/monitoring/MarkPublishedModal.tsx`
-**LOC:** 393 Zeilen
+**Problem:** MITTEL (655 Zeilen gesamt)
+**Entry Point:** `src/components/monitoring/MarkPublishedModal.tsx`, `EditClippingModal.tsx`
+**LOC:** 655 Zeilen → 608 Zeilen (nach Toast+Design)
 **Aufwand:** M (Medium) - 2-3 Tage
 **Verwendet in:** RecipientTrackingList (Empfänger Tab)
 
-**Probleme identifiziert:**
-- Multi-Step Form inline
-- Publication-Selector inline
-- Komplexe State-Logik
+**Probleme identifiziert (behoben):**
+- ~~Kein Toast-System~~ ✅ BEHOBEN (17. Nov 2025)
+- ~~Modal zu schmal~~ ✅ BEHOBEN (17. Nov 2025)
+- ~~Felder 1-spaltig~~ ✅ BEHOBEN (17. Nov 2025)
+- ~~Notizen-Feld~~ ✅ ENTFERNT (17. Nov 2025)
+- ❌ Keine React Query Mutations
+- ❌ Keine Performance-Optimierungen
+- ❌ Keine Tests
 
 **Refactoring-Ziele:**
-- [ ] Modularisierung
-  - StepIndicator.tsx
-  - PublicationSearchStep.tsx
-  - ClippingDetailsStep.tsx
-  - ReviewStep.tsx
-- [ ] Custom Hook
-  - useMarkPublished.ts (React Query Mutation)
+- [x] ✅ Toast-Integration (17. Nov 2025)
+  - toastService import hinzugefügt
+  - Success-Toast implementiert
+  - Error-Toast statt Error-Dialog
+  - Error-State und Error-Dialog entfernt
+- [x] ✅ Design-Verbesserungen (17. Nov 2025)
+  - Modal breiter (size="3xl")
+  - Felder 2-spaltig (3 Gruppen)
+  - Notizen-Feld entfernt
+- [ ] React Query Mutations
+  - useMarkAsPublished.ts
+  - useUpdateClipping.ts
 - [ ] Performance-Optimierung
-- [ ] Tests schreiben
+  - useCallback, useMemo
+- [ ] Tests schreiben (>80% Coverage)
+- [ ] Dokumentation (750+ Zeilen)
 
 **Tracking:**
-- [ ] **Plan erstellen:** `docs/planning/monitoring/shared/mark-published-modal-refactoring.md`
-- [ ] **Implementierung durchführen**
-- [ ] **Merged to Main**
+- [x] ✅ **Plan erstellt:** `docs/planning/monitoring/shared/mark-published-modal-refactoring.md`
+- [ ] **Implementierung durchführen** (Phase 0.5-3)
+- [ ] **Tests & Docs** (Phase 4-5, via Agents)
+- [ ] **Quality Gate** (Phase 6.5, via Agent)
+- [ ] **Merged to Main** (Phase 7)
 
 **Ergebnis-Zusammenfassung:**
 ```
-⏳ AUSSTEHEND
+🚧 IN ARBEIT (17. Nov 2025)
+
+Bereits abgeschlossen (Phase 0):
+✅ Toast-Integration (17. Nov)
+  - Code-Reduktion: -47 Zeilen (-7.2%)
+  - Success & Error Toasts
+  - Error-Dialog entfernt
+
+✅ Design-Verbesserungen (17. Nov)
+  - Modal breiter (size="3xl")
+  - 2-spaltige Felder
+  - Notizen entfernt
+
+Code-Metriken:
+- Vorher: 655 Zeilen (393 + 262)
+- Jetzt: 608 Zeilen (368 + 240)
+- Gesamt: -47 Zeilen (-7.2%)
+- Ziel: ~550 Zeilen (-16%)
+
+Nächste Schritte:
+1. Phase 0.5: Pre-Refactoring Cleanup
+2. Phase 1: React Query Mutations
+3. Phase 3: Performance-Optimierung
+4-7: Testing, Docs, Quality Gate, Merge
 ```
 
 ---
 
-## 🟡 PHASE 1: HAUPTSEITE & TAB-STRUKTUR
+## 🟡 PHASE 1: HAUPTSEITEN & TAB-STRUKTUR
 
 > **Blockiert:** Alle Tab-Refactorings hängen davon ab
 
@@ -282,10 +285,6 @@ Quality Check: ✅ READY FOR MERGE
 - [ ] **React Query Integration**
   - useMonitoringCampaigns.ts (Query Hook)
   - useCampaignStats.ts (Stats-Berechnung)
-
-- [ ] **Toast-Service Migration**
-  - Alert-State entfernen (falls vorhanden)
-  - toastService verwenden
 
 - [ ] **Performance-Optimierung**
   - useCallback für Handler
@@ -336,7 +335,6 @@ Quality Check: ✅ READY FOR MERGE
 - [ ] **Custom Hooks**
   - useMonitoringData.ts (React Query - Campaign, Sends, Clippings, Suggestions)
   - usePDFExport.ts (React Query Mutation)
-  - useExcelExport.ts (React Query Mutation)
   - useAnalysisPDFs.ts (React Query - PDF-Liste)
 
 - [ ] **Code-Reduktion Ziel:** 526 → ~250 Zeilen (-52%)
@@ -384,6 +382,7 @@ Quality Check: ✅ READY FOR MERGE
   - useClippingStats.ts (Stats-Aggregation)
 
 - [ ] Integration mit MonitoringContext
+- [ ] Performance-Optimierung (React.memo, useMemo)
 
 **Tracking:**
 - [ ] **Plan erstellen:** `docs/planning/monitoring/tabs/analytics-tab-refactoring.md`
@@ -411,9 +410,8 @@ Quality Check: ✅ READY FOR MERGE
 - Status-Distribution Charts
 
 **Refactoring-Ziele:**
-- [ ] Minor Refactoring (falls nötig)
-  - React Query Integration (via MonitoringContext)
-  - Performance-Optimierung (React.memo, useMemo)
+- [ ] React Query Integration (via MonitoringContext)
+- [ ] Performance-Optimierung (React.memo, useMemo)
 
 **Tracking:**
 - [ ] **Plan erstellen:** `docs/planning/monitoring/tabs/performance-tab-refactoring.md`
@@ -434,7 +432,7 @@ Quality Check: ✅ READY FOR MERGE
 **LOC:** 363 Zeilen
 **Aufwand:** M (Medium) - 2-3 Tage
 **Abhängigkeiten:**
-- 0.3 MarkPublishedModal ✅ (Shared Modal)
+- 0.2 MarkPublishedModal (Shared Modal)
 
 **Besonderheiten:**
 - Recipient-Tabelle (Sends-Liste)
@@ -450,7 +448,7 @@ Quality Check: ✅ READY FOR MERGE
 
 - [ ] Custom Hooks
   - useRecipientFilters.ts (Filter-Logik)
-  - useMarkPublished.ts (aus Phase 0.3)
+  - useMarkPublished.ts (aus Phase 0.2)
 
 - [ ] Integration mit MonitoringContext
 
@@ -481,10 +479,9 @@ Quality Check: ✅ READY FOR MERGE
 - Reach/AVE Display
 
 **Refactoring-Ziele:**
-- [ ] Minor Refactoring
-  - React Query Integration (via MonitoringContext)
-  - Performance-Optimierung
-  - Filter-Logik in Hook extrahieren (useClippingFilters.ts)
+- [ ] React Query Integration (via MonitoringContext)
+- [ ] Performance-Optimierung (React.memo, useMemo)
+- [ ] Filter-Logik in Hook extrahieren (useClippingFilters.ts)
 
 **Tracking:**
 - [ ] **Plan erstellen:** `docs/planning/monitoring/tabs/clippings-tab-refactoring.md`
@@ -541,18 +538,19 @@ Quality Check: ✅ READY FOR MERGE
 
 | Phase | Module | Pläne | Implementiert | Merged | Fortschritt |
 |-------|--------|-------|---------------|--------|-------------|
-| Phase 0: Shared Components | 3 | 1/3 | 1/3 | 1/3 | 33% 🚧 |
+| Phase 0: Shared Components | 2 | 1/2 | 1/2 | 1/2 | 50% 🚧 |
 | Phase 1: Hauptseiten | 2 | 0/2 | 0/2 | 0/2 | 0% ⏳ |
 | Phase 2: Tab-Module | 5 | 0/5 | 0/5 | 0/5 | 0% ⏳ |
-| **GESAMT** | **10** | **1/10** | **1/10** | **1/10** | **10%** |
+| **GESAMT** | **9** | **1/9** | **1/9** | **1/9** | **11%** |
 
 ### Aufwands-Verteilung
 
-- **L (Large):** 2 Module (PDF-Report Service, Monitoring Detail Page) - ~3-4 Tage/Modul
+- **L (Large):** 2 Module (PDF-Report Service ✅, Monitoring Detail Page) - ~3-4 Tage/Modul
 - **M (Medium):** 4 Module (MarkPublishedModal, Analytics Tab, Recipients Tab, Suggestions Tab) - ~2-3 Tage/Modul
-- **S (Small):** 4 Module (Excel-Export, Overview Page, Performance Tab, Clippings Tab) - ~1-2 Tage/Modul
+- **S (Small):** 3 Module (Overview Page, Performance Tab, Clippings Tab) - ~1-2 Tage/Modul
 
-**Geschätzter Gesamt-Aufwand:** 18-28 Tage (~4-6 Wochen)
+**Geschätzter Gesamt-Aufwand:** 16-26 Tage (~3-5 Wochen)
+**Verbleibend:** 12-22 Tage (~2-4 Wochen)
 
 ---
 
@@ -560,16 +558,15 @@ Quality Check: ✅ READY FOR MERGE
 
 ### Optimale Reihenfolge (Abhängigkeiten beachten):
 
-1. **Phase 0.1** → PDF-Report Service (blockiert Analytics Tab!)
-2. **Phase 0.2** → Excel-Export Utility (blockiert alle Tabs!)
-3. **Phase 0.3** → MarkPublishedModal (blockiert Recipients Tab!)
-4. **Phase 1.1** → Monitoring Overview Page (Foundation)
-5. **Phase 1.2** → Monitoring Detail Page (Foundation, MonitoringContext)
-6. **Phase 2.1** → Analytics Tab (P1 - Hauptfunktion)
-7. **Phase 2.2** → E-Mail Performance Tab (P1 - Reporting)
-8. **Phase 2.3** → Recipients Tab (P1 - Workflow)
-9. **Phase 2.4** → Clipping-Archiv Tab (P2 - Archiv)
-10. **Phase 2.5** → Auto-Funde Tab (P2 - KI-Feature)
+1. ~~**Phase 0.1** → PDF-Report Service (blockiert Analytics Tab!)~~ ✅ **ABGESCHLOSSEN**
+2. **Phase 0.2** → MarkPublishedModal (blockiert Recipients Tab!)
+3. **Phase 1.1** → Monitoring Overview Page (Foundation)
+4. **Phase 1.2** → Monitoring Detail Page (Foundation, MonitoringContext)
+5. **Phase 2.1** → Analytics Tab (P1 - Hauptfunktion)
+6. **Phase 2.2** → E-Mail Performance Tab (P1 - Reporting)
+7. **Phase 2.3** → Recipients Tab (P1 - Workflow)
+8. **Phase 2.4** → Clipping-Archiv Tab (P2 - Archiv)
+9. **Phase 2.5** → Auto-Funde Tab (P2 - KI-Feature)
 
 ---
 
@@ -579,8 +576,7 @@ Quality Check: ✅ READY FOR MERGE
 docs/planning/monitoring/
 ├── monitoring-refactoring-master-checklist.md    # DIESE DATEI
 ├── shared/
-│   ├── pdf-report-refactoring.md
-│   ├── excel-export-refactoring.md
+│   ├── pdf-report-refactoring.md                # ✅ ABGESCHLOSSEN
 │   └── mark-published-modal-refactoring.md
 ├── tabs/
 │   ├── analytics-tab-refactoring.md
@@ -626,9 +622,8 @@ docs/planning/monitoring/
 ## 💡 HINWEISE
 
 ### Code-Duplication vermeiden
-- **PDF-Report Service:** In Analytics Tab verwendet → Phase 0.1 ZUERST!
-- **Excel-Export:** In allen Tabs verwendet → Phase 0.2 ZUERST!
-- **MarkPublishedModal:** In Recipients Tab → Phase 0.3 ZUERST!
+- **PDF-Report Service:** In Analytics Tab verwendet → Phase 0.1 ✅ ERLEDIGT!
+- **MarkPublishedModal:** In Recipients Tab → Phase 0.2 (nächster Schritt)
 
 ### Design System
 - Alle Module müssen `docs/design-system/DESIGN_SYSTEM.md` einhalten
@@ -657,17 +652,13 @@ docs/planning/monitoring/
 
 ### Zu erledigen:
 
-1. **IST-Zustand final reviewen**
-   - Größte Komponenten priorisieren
-   - Abhängigkeiten klären
+1. ~~**Phase 0.1** → PDF-Report Service Refactoring (KRITISCH!)~~ ✅ **ABGESCHLOSSEN**
+2. **Phase 0.2** → MarkPublishedModal Refactoring ⬅️ **NÄCHSTER SCHRITT**
+3. **Phase 1.1** → Monitoring Overview Page
+4. **Phase 1.2** → Monitoring Detail Foundation (MonitoringContext!)
+5. **Phase 2.1-2.5** → Tab-Module Refactorings
 
-2. **Phase 0.1** → PDF-Report Service Refactoring (KRITISCH!)
-3. **Phase 0.2** → Excel-Export Refactoring
-4. **Phase 0.3** → MarkPublishedModal Refactoring
-5. **Phase 1.1** → Monitoring Overview Page
-6. **Phase 1.2** → Monitoring Detail Foundation (MonitoringContext!)
-
-**Status:** ⏳ PLANUNG - Ready to Start! 🚀
+**Status:** 🚧 IN ARBEIT - 11% abgeschlossen (1/9 Module)
 
 ---
 
@@ -688,8 +679,7 @@ docs/planning/monitoring/
    - Sollte trotzdem als Shared Component behandelt werden (Phase 0)
 
 4. **Services-Heavy** ⚠️
-   - PDF-Report Service: 703 Zeilen (größte Komponente!)
-   - Excel-Export: 186 Zeilen
+   - ~~PDF-Report Service: 703 Zeilen~~ ✅ Refactored → 204 Zeilen (-76%)
    - Monitoring-Suggestion Service: 236 Zeilen
    - Campaign-Monitoring Service: 468 Zeilen
 
@@ -743,10 +733,18 @@ Vom erfolgreichen Projekt-Monitoring-Refactoring übernehmen:
 **Maintainer:** CeleroPress Team
 
 **Changelog:**
+- 2025-11-17: 🔥 Excel-Export komplett entfernt
+  - Excel-Export-Feature nicht mehr benötigt (User-Entscheidung)
+  - Datei gelöscht: `src/lib/exports/monitoring-excel-export.ts` (186 Zeilen)
+  - Alle Verwendungen entfernt aus Monitoring Detail Page
+  - Module reduziert: 10 → 9
+  - Aufwand reduziert: 18-28 Tage → 16-26 Tage
+  - Phase 0.2 entfernt, Phase 0.3 → 0.2 (MarkPublishedModal)
+
 - 2025-11-16: ✅ Master-Checklist erstellt basierend auf Codebase-Analyse
   - IST-Zustand analysiert (4.000+ Zeilen Code)
   - 10 Module identifiziert (3 Shared, 2 Pages, 5 Tabs)
   - Aufwand geschätzt: 18-28 Tage (~4-6 Wochen)
   - Prioritäten definiert (P1/P2)
   - Tab-Routing bereits vorhanden (✅ Vorteil!)
-  - Größte Probleme: PDF-Report Service (703 Zeilen), MarkPublishedModal (393 Zeilen), MonitoringDashboard (393 Zeilen)
+  - Größte Probleme: ~~PDF-Report Service (703 Zeilen)~~ ✅, MarkPublishedModal (393 Zeilen), MonitoringDashboard (393 Zeilen)

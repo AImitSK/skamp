@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, TableCellsIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
@@ -20,7 +20,6 @@ import { EmailCampaignSend } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
 import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
-import { monitoringExcelExport } from '@/lib/exports/monitoring-excel-export';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { toastService } from '@/lib/utils/toast';
@@ -46,7 +45,6 @@ export default function MonitoringDetailPage() {
   const [clippings, setClippings] = useState<MediaClipping[]>([]);
   const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>(tabParam || 'dashboard');
-  const [exportingExcel, setExportingExcel] = useState(false);
   const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
   const [loadingPDFs, setLoadingPDFs] = useState(false);
   const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
@@ -186,27 +184,6 @@ export default function MonitoringDetailPage() {
     }
   };
 
-  const handleExcelExport = async () => {
-    if (!currentOrganization?.id) return;
-
-    try {
-      setExportingExcel(true);
-      const blob = await monitoringExcelExport.generateExcel(
-        campaignId,
-        currentOrganization.id
-      );
-
-      const fileName = `Monitoring_${campaign?.title || 'Export'}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      monitoringExcelExport.downloadExcel(blob, fileName);
-      toastService.success('Excel-Export erfolgreich heruntergeladen');
-    } catch (error) {
-      console.error('Excel-Export fehlgeschlagen:', error);
-      toastService.error('Excel-Export fehlgeschlagen');
-    } finally {
-      setExportingExcel(false);
-    }
-  };
-
   const handleConfirmSuggestion = async (suggestion: MonitoringSuggestion) => {
     if (!user?.uid || !currentOrganization?.id) return;
 
@@ -292,24 +269,14 @@ export default function MonitoringDetailPage() {
               </Text>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handlePDFExport}
-              color="secondary"
-              disabled={pdfGenerator.isPending}
-            >
-              <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-              {pdfGenerator.isPending ? 'Generiere PDF...' : 'PDF-Report'}
-            </Button>
-            <Button
-              onClick={handleExcelExport}
-              color="secondary"
-              disabled={exportingExcel}
-            >
-              <TableCellsIcon className="h-4 w-4 mr-2" />
-              {exportingExcel ? 'Exportiere...' : 'Excel-Export'}
-            </Button>
-          </div>
+          <Button
+            onClick={handlePDFExport}
+            color="secondary"
+            disabled={pdfGenerator.isPending}
+          >
+            <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+            {pdfGenerator.isPending ? 'Generiere PDF...' : 'PDF-Report'}
+          </Button>
         </div>
       </div>
 
