@@ -15,6 +15,7 @@ import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
+import { toastService } from '@/lib/utils/toast';
 
 interface EditClippingModalProps {
   send: EmailCampaignSend;
@@ -28,7 +29,6 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
   const { currentOrganization } = useOrganization();
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     articleUrl: clipping.url || '',
     articleTitle: clipping.title || '',
@@ -37,7 +37,6 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
     reach: clipping.reach?.toString() || '',
     sentiment: clipping.sentiment,
     sentimentScore: clipping.sentimentScore || aveSettingsService.getSentimentScoreFromLabel(clipping.sentiment),
-    publicationNotes: clipping.sentimentNotes || '',
     publishedAt: clipping.publishedAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
   });
 
@@ -66,10 +65,6 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
         clippingData.reach = parseInt(formData.reach);
       }
 
-      if (formData.publicationNotes) {
-        clippingData.sentimentNotes = formData.publicationNotes;
-      }
-
       await clippingService.update(clipping.id, clippingData, {
         organizationId: currentOrganization.id
       });
@@ -91,26 +86,21 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
         updateData.reach = parseInt(formData.reach);
       }
 
-      if (formData.publicationNotes) {
-        updateData.publicationNotes = formData.publicationNotes;
-      }
-
       await updateDoc(sendRef, updateData);
 
+      toastService.success('Veröffentlichung erfolgreich aktualisiert');
       onSuccess();
     } catch (error) {
       console.error('Fehler beim Aktualisieren:', error);
-      setError(error instanceof Error ? error.message : 'Fehler beim Speichern');
-      setLoading(false);
+      toastService.error(error instanceof Error ? error.message : 'Fehler beim Speichern');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Dialog open={true} onClose={onClose}>
-        <DialogTitle>Veröffentlichung bearbeiten</DialogTitle>
+    <Dialog open={true} onClose={onClose} size="3xl">
+      <DialogTitle>Veröffentlichung bearbeiten</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogBody>
             <div className="space-y-4">
@@ -122,68 +112,77 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                 />
               </Field>
 
-              <Field>
-                <Label>Artikel-URL *</Label>
-                <Input
-                  type="url"
-                  value={formData.articleUrl}
-                  onChange={(e) => setFormData({ ...formData, articleUrl: e.target.value })}
-                  placeholder="https://..."
-                  required
-                />
-              </Field>
+              {/* Artikel-URL und Titel - 2-spaltig */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label>Artikel-URL *</Label>
+                  <Input
+                    type="url"
+                    value={formData.articleUrl}
+                    onChange={(e) => setFormData({ ...formData, articleUrl: e.target.value })}
+                    placeholder="https://..."
+                    required
+                  />
+                </Field>
 
-              <Field>
-                <Label>Artikel-Titel</Label>
-                <Input
-                  type="text"
-                  value={formData.articleTitle}
-                  onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
-                  placeholder="Optional"
-                />
-              </Field>
+                <Field>
+                  <Label>Artikel-Titel</Label>
+                  <Input
+                    type="text"
+                    value={formData.articleTitle}
+                    onChange={(e) => setFormData({ ...formData, articleTitle: e.target.value })}
+                    placeholder="Optional"
+                  />
+                </Field>
+              </div>
 
-              <Field>
-                <Label>Medium/Outlet</Label>
-                <Input
-                  type="text"
-                  value={formData.outletName}
-                  onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
-                  placeholder="z.B. Süddeutsche Zeitung"
-                />
-              </Field>
+              {/* Medium/Outlet und Medientyp - 2-spaltig */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label>Medium/Outlet</Label>
+                  <Input
+                    type="text"
+                    value={formData.outletName}
+                    onChange={(e) => setFormData({ ...formData, outletName: e.target.value })}
+                    placeholder="z.B. Süddeutsche Zeitung"
+                  />
+                </Field>
 
-              <Field>
-                <Label>Medientyp</Label>
-                <Select
-                  value={formData.outletType}
-                  onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
-                >
-                  <option value="print">📰 Print (Zeitung/Magazin)</option>
-                  <option value="online">💻 Online</option>
-                  <option value="broadcast">📺 Broadcast (TV/Radio)</option>
-                  <option value="blog">✍️ Blog</option>
-                </Select>
-              </Field>
+                <Field>
+                  <Label>Medientyp</Label>
+                  <Select
+                    value={formData.outletType}
+                    onChange={(e) => setFormData({ ...formData, outletType: e.target.value as any })}
+                  >
+                    <option value="print">📰 Print (Zeitung/Magazin)</option>
+                    <option value="online">💻 Online</option>
+                    <option value="broadcast">📺 Broadcast (TV/Radio)</option>
+                    <option value="blog">✍️ Blog</option>
+                  </Select>
+                </Field>
+              </div>
 
-              <Field>
-                <Label>Veröffentlichungsdatum</Label>
-                <Input
-                  type="date"
-                  value={formData.publishedAt}
-                  onChange={(e) => setFormData({ ...formData, publishedAt: e.target.value })}
-                />
-              </Field>
+              {/* Veröffentlichungsdatum und Reichweite - 2-spaltig */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label>Veröffentlichungsdatum</Label>
+                  <Input
+                    type="date"
+                    value={formData.publishedAt}
+                    onChange={(e) => setFormData({ ...formData, publishedAt: e.target.value })}
+                  />
+                </Field>
 
-              <Field>
-                <Label>Reichweite (optional)</Label>
-                <Input
-                  type="number"
-                  value={formData.reach}
-                  onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
-                  placeholder="z.B. 2500000"
-                />
-              </Field>
+                <Field>
+                  <Label>Reichweite (optional)</Label>
+                  <Input
+                    type="number"
+                    value={formData.reach}
+                    onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
+                    placeholder="z.B. 2500000"
+                  />
+                </Field>
+              </div>
 
               <Field>
                 <Label>Sentiment</Label>
@@ -225,39 +224,18 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                   </div>
                 </div>
               </Field>
-
-              <Field>
-                <Label>Notizen (optional)</Label>
-                <Textarea
-                  value={formData.publicationNotes}
-                  onChange={(e) => setFormData({ ...formData, publicationNotes: e.target.value })}
-                  placeholder="Zusätzliche Informationen..."
-                  rows={3}
-                />
-              </Field>
             </div>
           </DialogBody>
 
-          <DialogActions>
-            <Button plain onClick={onClose} disabled={loading}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : 'Änderungen speichern'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      <Dialog open={!!error} onClose={() => setError('')}>
-        <DialogTitle>Fehler</DialogTitle>
-        <DialogBody>
-          <p className="text-sm text-gray-600">{error}</p>
-        </DialogBody>
         <DialogActions>
-          <Button onClick={() => setError('')}>OK</Button>
+          <Button plain onClick={onClose} disabled={loading}>
+            Abbrechen
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Speichern...' : 'Änderungen speichern'}
+          </Button>
         </DialogActions>
-      </Dialog>
-    </>
+      </form>
+    </Dialog>
   );
 }
