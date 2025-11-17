@@ -288,6 +288,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
                       setFormData({ ...formData, sentimentScore: score, sentiment });
                     }}
+                    aria-label="Sentiment-Score"
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
