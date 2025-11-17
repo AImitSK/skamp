@@ -90,6 +90,7 @@ export default function MonitoringDetailPage() {
       setSuggestions(suggestionsData);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
+      toastService.error('Fehler beim Laden der Kampagne');
     } finally {
       setLoading(false);
     }
@@ -139,6 +140,7 @@ export default function MonitoringDetailPage() {
       }
     } catch (error) {
       console.error('Fehler beim Laden der Analyse-PDFs:', error);
+      toastService.error('Fehler beim Laden der PDFs');
     } finally {
       setLoadingPDFs(false);
     }
