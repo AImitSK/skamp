@@ -333,6 +333,8 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         { organizationId: organizationId, userId: userId } // FIXED: organizationId im Context
       );
       await loadTags();
+      // Invalidate React Query cache so new tag appears immediately in companies table
+      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
       return tagId;
     } catch (error) {
       throw error;
