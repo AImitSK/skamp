@@ -1,66 +1,51 @@
 /**
- * CRM Tags Migration Script
+ * CRM Tags Migration Script (Client SDK Version)
  *
- * Migriert Tags, die mit userId statt organizationId gespeichert wurden.
- *
- * Problem:
- * - Alte Tags haben userId als organizationId
- * - Neue Tags haben korrekte organizationId
- *
- * Lösung:
- * - Analysiere alle Tags in der 'tags' Collection
- * - Identifiziere Tags mit userId als organizationId
- * - Migriere zu korrekter organizationId
+ * Nutzt die Firebase Client SDK (bereits in der App konfiguriert).
+ * Keine Service Account JSON-Datei erforderlich!
  *
  * Usage:
- *   npx tsx scripts/migrate-crm-tags.ts
+ *   npx tsx scripts/migrate-crm-tags-client.ts
  */
 
-import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  Timestamp,
+  serverTimestamp
+} from 'firebase/firestore';
 import * as readline from 'readline';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-// Firebase Admin initialisieren
-let adminApp: App;
-let db: FirebaseFirestore.Firestore;
+// Lade .env.local
+dotenv.config({ path: path.join(process.cwd(), '.env.local') });
 
-try {
-  if (getApps().length === 0) {
-    // Option 1: Service Account JSON-Datei
-    try {
-      const serviceAccount = require('../firebase-service-account.json');
-      adminApp = initializeApp({
-        credential: cert(serviceAccount)
-      });
-      console.log('✅ Firebase Admin initialisiert mit Service Account JSON\n');
-    } catch (jsonError) {
-      // Option 2: Application Default Credentials (für lokale Entwicklung)
-      console.log('⚠️  firebase-service-account.json nicht gefunden');
-      console.log('   Versuche Application Default Credentials...\n');
+// Firebase Config (aus .env oder direkt)
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
 
-      const { applicationDefault } = await import('firebase-admin/app');
-      adminApp = initializeApp({
-        credential: applicationDefault()
-      });
-      console.log('✅ Firebase Admin initialisiert mit Application Default Credentials\n');
-    }
-  } else {
-    adminApp = getApps()[0];
-  }
-
-  db = getFirestore(adminApp);
-} catch (error) {
-  console.error('\n❌ Fehler beim Initialisieren von Firebase Admin:\n');
-  console.error('Mögliche Lösungen:\n');
-  console.error('1. Service Account Key herunterladen:');
-  console.error('   Firebase Console → Project Settings → Service Accounts');
-  console.error('   → Generate New Private Key');
-  console.error('   → Als "firebase-service-account.json" im Projekt-Root speichern\n');
-  console.error('2. Oder: gcloud auth application-default login\n');
-  process.exit(1);
+// Firebase initialisieren
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
 }
 
-// Readline Interface für User Input
+const db = getFirestore(app);
+
+// Readline Interface
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -76,8 +61,8 @@ interface TagDocument {
   color: string;
   organizationId: string;
   createdBy?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: any;
+  updatedAt?: any;
   contactCount?: number;
   companyCount?: number;
 }
@@ -90,36 +75,30 @@ interface MigrationPlan {
 }
 
 /**
- * Analysiert alle Tags und identifiziert Migrations-Kandidaten
+ * Analysiert alle Tags
  */
 async function analyzeTags(): Promise<MigrationPlan[]> {
   console.log('🔍 Analysiere Tags in Firestore...\n');
 
-  const tagsSnapshot = await db.collection('tags').get();
+  const tagsSnapshot = await getDocs(collection(db, 'tags'));
   const plans: MigrationPlan[] = [];
 
   console.log(`📊 Gefunden: ${tagsSnapshot.size} Tags\n`);
 
-  for (const doc of tagsSnapshot.docs) {
-    const tag = { id: doc.id, ...doc.data() } as TagDocument;
+  tagsSnapshot.forEach((docSnap) => {
+    const tag = { id: docSnap.id, ...docSnap.data() } as TagDocument;
     const orgId = tag.organizationId;
 
     // Prüfe ob organizationId aussieht wie eine userId
-    // userId-Format: alphanumerisch, oft länger, keine org_ Präfix
-    // organizationId-Format: beginnt meist mit "org_" oder ist strukturiert
-
     const looksLikeUserId = orgId &&
       !orgId.startsWith('org_') &&
       !orgId.startsWith('organization_') &&
-      orgId.length > 20; // User IDs von Firebase sind typischerweise 28 Zeichen
+      orgId.length > 20;
 
     if (looksLikeUserId) {
-      // Versuche die richtige Organization zu finden
-      // Option 1: Prüfe ob es einen User mit dieser ID gibt
       let suggestedOrgId: string | null = null;
       let reason = 'userId als organizationId gefunden';
 
-      // Prüfe ob createdBy existiert und unterschiedlich ist
       if (tag.createdBy && tag.createdBy !== orgId) {
         suggestedOrgId = tag.createdBy;
         reason = 'createdBy unterscheidet sich von organizationId (userId)';
@@ -132,13 +111,13 @@ async function analyzeTags(): Promise<MigrationPlan[]> {
         reason
       });
     }
-  }
+  });
 
   return plans;
 }
 
 /**
- * Zeigt Migrations-Plan an
+ * Zeigt Migrations-Plan
  */
 function displayMigrationPlan(plans: MigrationPlan[]): void {
   console.log('\n📋 Migrations-Plan:\n');
@@ -167,7 +146,7 @@ function displayMigrationPlan(plans: MigrationPlan[]): void {
 }
 
 /**
- * Führt die Migration durch
+ * Führt Migration durch
  */
 async function migrateTags(plans: MigrationPlan[], targetOrgId: string): Promise<void> {
   console.log(`\n🚀 Starte Migration zu organizationId: ${targetOrgId}\n`);
@@ -179,12 +158,12 @@ async function migrateTags(plans: MigrationPlan[], targetOrgId: string): Promise
     try {
       console.log(`   Migriere: "${plan.tag.name}" (${plan.tag.id})...`);
 
-      await db.collection('tags').doc(plan.tag.id).update({
+      const tagRef = doc(db, 'tags', plan.tag.id);
+      await updateDoc(tagRef, {
         organizationId: targetOrgId,
-        updatedAt: Timestamp.now(),
-        // Speichere alte organizationId für Audit
+        updatedAt: serverTimestamp(),
         _migratedFrom: plan.currentOrgId,
-        _migratedAt: Timestamp.now()
+        _migratedAt: serverTimestamp()
       });
 
       successCount++;
@@ -208,8 +187,18 @@ async function migrateTags(plans: MigrationPlan[], targetOrgId: string): Promise
  */
 async function main() {
   console.log('\n' + '═'.repeat(80));
-  console.log('🏷️  CRM Tags Migration Script');
+  console.log('🏷️  CRM Tags Migration Script (Client SDK)');
   console.log('═'.repeat(80) + '\n');
+
+  // Check Firebase Config
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.error('❌ Firebase Config nicht gefunden!\n');
+    console.error('Bitte .env.local Datei mit NEXT_PUBLIC_FIREBASE_* Variablen erstellen.\n');
+    rl.close();
+    process.exit(1);
+  }
+
+  console.log(`🔥 Firebase Project: ${firebaseConfig.projectId}\n`);
 
   try {
     // Schritt 1: Analysiere Tags
@@ -221,7 +210,7 @@ async function main() {
       process.exit(0);
     }
 
-    // Schritt 2: User Input für Ziel-Organization
+    // Schritt 2: User Input
     console.log('\n📝 Bitte gib die Ziel-organizationId ein:');
     console.log('   (Die organizationId, zu der die Tags migriert werden sollen)\n');
 
@@ -243,14 +232,17 @@ async function main() {
       process.exit(0);
     }
 
-    // Schritt 4: Migration durchführen
+    // Schritt 4: Migration
     await migrateTags(plans, targetOrgId.trim());
 
     console.log('\n✅ Fertig! Die Tags sollten jetzt in der CRM-Tabelle sichtbar sein.\n');
 
   } catch (error) {
     console.error('\n❌ Fehler:', error);
-    console.error('\nStack:', error instanceof Error ? error.stack : 'N/A');
+    if (error instanceof Error) {
+      console.error('Message:', error.message);
+      console.error('Stack:', error.stack);
+    }
   } finally {
     rl.close();
     process.exit(0);
