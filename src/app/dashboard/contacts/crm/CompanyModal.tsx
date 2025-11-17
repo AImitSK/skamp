@@ -227,9 +227,9 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   const [loadingLibraryData, setLoadingLibraryData] = useState(false);
 
   const loadTags = useCallback(async () => {
-    if (!userId) return;
+    if (!organizationId) return; // FIXED: organizationId check statt userId
     try {
-      const userTags = await tagsEnhancedService.getAll(userId);
+      const userTags = await tagsEnhancedService.getAll(organizationId); // FIXED: organizationId statt userId
       setTags(userTags.map(tag => ({
         ...tag,
         userId: userId
@@ -237,7 +237,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
     } catch (error) {
       // Silent error handling
     }
-  }, [userId]);
+  }, [organizationId, userId]); // FIXED: organizationId in dependencies
 
   const loadCompanies = useCallback(async () => {
     if (!organizationId) return;
@@ -325,12 +325,12 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
       const tagId = await tagsEnhancedService.create(
-        { 
-          name, 
+        {
+          name,
           color,
-          organizationId: userId // organizationId hinzugefügt
+          organizationId: organizationId // FIXED: organizationId statt userId verwenden
         },
-        { organizationId: userId, userId: userId }
+        { organizationId: organizationId, userId: userId } // FIXED: organizationId im Context
       );
       await loadTags();
       return tagId;
