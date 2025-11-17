@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChartBarIcon, EyeIcon, ExclamationCircleIcon, EnvelopeIcon, NewspaperIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, EyeIcon, ExclamationCircleIcon, EnvelopeIcon, NewspaperIcon, EllipsisVerticalIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { SearchInput } from '@/components/ui/search-input';
 import { useRouter } from 'next/navigation';
@@ -27,6 +27,8 @@ export default function MonitoringPage() {
   const [filteredCampaigns, setFilteredCampaigns] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     loadCampaigns();
@@ -34,6 +36,7 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     filterCampaigns();
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [campaigns, searchTerm, projectFilter]);
 
   const loadCampaigns = async () => {
@@ -105,6 +108,14 @@ export default function MonitoringPage() {
     setFilteredCampaigns(filtered);
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+  const paginatedCampaigns = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredCampaigns.slice(startIndex, endIndex);
+  }, [filteredCampaigns, currentPage, itemsPerPage]);
+
   const getBounceRateColor = (rate: number) => {
     if (rate > 10) return 'text-red-600';
     if (rate > 5) return 'text-orange-600';
@@ -166,7 +177,7 @@ export default function MonitoringPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredCampaigns.map((campaign) => {
+              {paginatedCampaigns.map((campaign) => {
                 const openRate = campaign.stats.total > 0
                   ? Math.round((campaign.stats.opened / campaign.stats.total) * 100)
                   : 0;
@@ -243,6 +254,37 @@ export default function MonitoringPage() {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Text className="text-sm text-gray-600">
+                  Seite {currentPage} von {totalPages} ({filteredCampaigns.length} Kampagnen)
+                </Text>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  plain
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                  Zurück
+                </Button>
+                <Button
+                  plain
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className="flex items-center gap-1"
+                >
+                  Weiter
+                  <ChevronRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
