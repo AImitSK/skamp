@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,6 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
   const { currentOrganization } = useOrganization();
   const updateClipping = useUpdateClipping();
 
-  const [calculatedAVE, setCalculatedAVE] = useState(0);
   const [formData, setFormData] = useState<UpdateClippingFormData>({
     articleUrl: clipping.url || '',
     articleTitle: clipping.title || '',
@@ -41,18 +40,18 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
   });
 
   // Berechne AVE bei Änderungen
-  useEffect(() => {
+  const calculatedAVE = useMemo(() => {
     if (formData.reach && formData.sentiment) {
-      const ave = calculateAVE(
+      return calculateAVE(
         parseInt(formData.reach),
         formData.sentiment,
         formData.outletType
       );
-      setCalculatedAVE(ave);
     }
+    return 0;
   }, [formData.reach, formData.sentiment, formData.outletType]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !currentOrganization || !clipping.id || !send.id) return;
 
@@ -68,7 +67,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
     } catch (error) {
       // Error already handled by mutation
     }
-  };
+  }, [user, currentOrganization, clipping.id, send.id, send.recipientName, formData, updateClipping, onSuccess]);
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,6 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
   const [selectedPublication, setSelectedPublication] = useState<MatchedPublication | null>(null);
   const [lookupData, setLookupData] = useState<PublicationLookupResult | null>(null);
-  const [calculatedAVE, setCalculatedAVE] = useState(0);
   const [formData, setFormData] = useState<MarkAsPublishedFormData>({
     articleUrl: '',
     articleTitle: '',
@@ -47,19 +46,19 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
   });
 
   // Berechne AVE bei Änderungen
-  useEffect(() => {
+  const calculatedAVE = useMemo(() => {
     if (formData.reach && formData.sentiment) {
-      const ave = calculateAVE(
+      return calculateAVE(
         parseInt(formData.reach),
         formData.sentiment,
         formData.outletType
       );
-      setCalculatedAVE(ave);
     }
+    return 0;
   }, [formData.reach, formData.sentiment, formData.outletType]);
 
   // Handle Publication Selection
-  const handlePublicationSelect = (publication: MatchedPublication | null) => {
+  const handlePublicationSelect = useCallback((publication: MatchedPublication | null) => {
     setSelectedPublication(publication);
 
     if (publication) {
@@ -72,14 +71,14 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         reach: reach ? reach.toString() : prev.reach
       }));
     }
-  };
+  }, []);
 
   // Handle Lookup Data Load
-  const handleDataLoad = (data: PublicationLookupResult) => {
+  const handleDataLoad = useCallback((data: PublicationLookupResult) => {
     setLookupData(data);
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !currentOrganization || !send.id) return;
 
@@ -96,7 +95,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
     } catch (error) {
       // Error already handled by mutation
     }
-  };
+  }, [user, currentOrganization, send.id, send.recipientName, campaignId, formData, markAsPublished, onSuccess]);
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
