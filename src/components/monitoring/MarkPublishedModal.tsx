@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,6 @@ import { Text } from '@/components/ui/text';
 import { EmailCampaignSend } from '@/types/email';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
-import { clippingService } from '@/lib/firebase/clipping-service';
 import { PublicationSelector } from './PublicationSelector';
 import {
   type MatchedPublication,
@@ -21,7 +18,7 @@ import {
   getReachFromPublication,
   calculateAVE
 } from '@/lib/utils/publication-matcher';
-import { toastService } from '@/lib/utils/toast';
+import { useMarkAsPublished, type MarkAsPublishedFormData } from '@/lib/hooks/useMonitoringMutations';
 
 interface MarkPublishedModalProps {
   send: EmailCampaignSend;
@@ -33,36 +30,35 @@ interface MarkPublishedModalProps {
 export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: MarkPublishedModalProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const markAsPublished = useMarkAsPublished();
 
-  const [loading, setLoading] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState<MatchedPublication | null>(null);
   const [lookupData, setLookupData] = useState<PublicationLookupResult | null>(null);
-  const [calculatedAVE, setCalculatedAVE] = useState(0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<MarkAsPublishedFormData>({
     articleUrl: '',
     articleTitle: '',
     outletName: '',
-    outletType: 'online' as 'print' | 'online' | 'broadcast' | 'blog',
+    outletType: 'online',
     reach: '',
-    sentiment: 'neutral' as 'positive' | 'neutral' | 'negative',
+    sentiment: 'neutral',
     sentimentScore: 0,
     publishedAt: new Date().toISOString().split('T')[0]
   });
 
   // Berechne AVE bei Änderungen
-  useEffect(() => {
+  const calculatedAVE = useMemo(() => {
     if (formData.reach && formData.sentiment) {
-      const ave = calculateAVE(
+      return calculateAVE(
         parseInt(formData.reach),
         formData.sentiment,
         formData.outletType
       );
-      setCalculatedAVE(ave);
     }
+    return 0;
   }, [formData.reach, formData.sentiment, formData.outletType]);
 
   // Handle Publication Selection
-  const handlePublicationSelect = (publication: MatchedPublication | null) => {
+  const handlePublicationSelect = useCallback((publication: MatchedPublication | null) => {
     setSelectedPublication(publication);
 
     if (publication) {
@@ -75,91 +71,31 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
         reach: reach ? reach.toString() : prev.reach
       }));
     }
-  };
+  }, []);
 
   // Handle Lookup Data Load
-  const handleDataLoad = (data: PublicationLookupResult) => {
+  const handleDataLoad = useCallback((data: PublicationLookupResult) => {
     setLookupData(data);
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !currentOrganization) return;
-
-    setLoading(true);
+    if (!user || !currentOrganization || !send.id) return;
 
     try {
-      const publishedDate = new Date(formData.publishedAt);
-      const publishedTimestamp = Timestamp.fromDate(publishedDate);
-
-      // BUGFIX: Lade Kampagne um projectId zu ermitteln
-      const { prService } = await import('@/lib/firebase/pr-service');
-      const campaign = await prService.getById(campaignId);
-
-      const clippingData: any = {
+      await markAsPublished.mutateAsync({
         organizationId: currentOrganization.id,
         campaignId,
-        emailSendId: send.id,
-        title: formData.articleTitle || `Artikel von ${send.recipientName}`,
-        url: formData.articleUrl,
-        publishedAt: publishedTimestamp,
-        outletName: formData.outletName || 'Unbekannt',
-        outletType: formData.outletType,
-        sentiment: formData.sentiment,
-        detectionMethod: 'manual',
-        detectedAt: Timestamp.now(),
-        createdBy: user.uid,
-        verifiedBy: user.uid,
-        verifiedAt: Timestamp.now()
-      };
-
-      // BUGFIX: Setze projectId wenn Kampagne zu einem Projekt gehört
-      if (campaign?.projectId) {
-        clippingData.projectId = campaign.projectId;
-      }
-
-      if (formData.reach) {
-        clippingData.reach = parseInt(formData.reach);
-      }
-
-      clippingData.sentimentScore = formData.sentimentScore;
-
-      const clippingId = await clippingService.create(clippingData, { organizationId: currentOrganization.id });
-
-      const sendRef = doc(db, 'email_campaign_sends', send.id!);
-      const updateData: any = {
-        publishedStatus: 'published',
-        publishedAt: publishedTimestamp,
-        clippingId,
-        articleUrl: formData.articleUrl,
-        sentiment: formData.sentiment,
-        manuallyMarkedPublished: true,
-        markedPublishedBy: user.uid,
-        markedPublishedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-
-      if (formData.articleTitle) {
-        updateData.articleTitle = formData.articleTitle;
-      }
-
-      if (formData.reach) {
-        updateData.reach = parseInt(formData.reach);
-      }
-
-      updateData.sentimentScore = formData.sentimentScore;
-
-      await updateDoc(sendRef, updateData);
-
-      toastService.success('Erfolgreich als veröffentlicht markiert');
+        sendId: send.id,
+        userId: user.uid,
+        recipientName: send.recipientName,
+        formData
+      });
       onSuccess();
     } catch (error) {
-      console.error('Fehler beim Markieren als veröffentlicht:', error);
-      toastService.error(error instanceof Error ? error.message : 'Fehler beim Speichern');
-    } finally {
-      setLoading(false);
+      // Error already handled by mutation
     }
-  };
+  }, [user, currentOrganization, send.id, send.recipientName, campaignId, formData, markAsPublished, onSuccess]);
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
@@ -339,7 +275,20 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                     max="1"
                     step="0.1"
                     value={formData.sentimentScore}
-                    onChange={(e) => setFormData({ ...formData, sentimentScore: parseFloat(e.target.value) })}
+                    onChange={(e) => {
+                      const score = parseFloat(e.target.value);
+                      let sentiment: 'positive' | 'neutral' | 'negative' = 'neutral';
+
+                      // Automatische Sentiment-Auswahl basierend auf Score
+                      if (score > 0.3) {
+                        sentiment = 'positive';
+                      } else if (score < -0.3) {
+                        sentiment = 'negative';
+                      }
+
+                      setFormData({ ...formData, sentimentScore: score, sentiment });
+                    }}
+                    aria-label="Sentiment-Score"
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
@@ -356,11 +305,11 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
           </DialogBody>
 
         <DialogActions>
-          <Button plain onClick={onClose} disabled={loading}>
+          <Button plain onClick={onClose} disabled={markAsPublished.isPending}>
             Abbrechen
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Speichern...' : 'Speichern'}
+          <Button type="submit" disabled={markAsPublished.isPending}>
+            {markAsPublished.isPending ? 'Speichern...' : 'Speichern'}
           </Button>
         </DialogActions>
       </form>

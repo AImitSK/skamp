@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Text } from '@/components/ui/text';
 import { EmailCampaignSend } from '@/types/email';
 import { MediaClipping } from '@/types/monitoring';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
-import { clippingService } from '@/lib/firebase/clipping-service';
 import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
-import { toastService } from '@/lib/utils/toast';
+import { calculateAVE } from '@/lib/utils/publication-matcher';
+import { useUpdateClipping, type UpdateClippingFormData } from '@/lib/hooks/useMonitoringMutations';
 
 interface EditClippingModalProps {
   send: EmailCampaignSend;
@@ -27,9 +26,9 @@ interface EditClippingModalProps {
 export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditClippingModalProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const updateClipping = useUpdateClipping();
 
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UpdateClippingFormData>({
     articleUrl: clipping.url || '',
     articleTitle: clipping.title || '',
     outletName: clipping.outletName || '',
@@ -40,63 +39,35 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
     publishedAt: clipping.publishedAt?.toDate?.()?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !currentOrganization || !clipping.id) return;
+  // Berechne AVE bei Änderungen
+  const calculatedAVE = useMemo(() => {
+    if (formData.reach && formData.sentiment) {
+      return calculateAVE(
+        parseInt(formData.reach),
+        formData.sentiment,
+        formData.outletType
+      );
+    }
+    return 0;
+  }, [formData.reach, formData.sentiment, formData.outletType]);
 
-    setLoading(true);
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !currentOrganization || !clipping.id || !send.id) return;
 
     try {
-      const publishedDate = new Date(formData.publishedAt);
-      const publishedTimestamp = Timestamp.fromDate(publishedDate);
-
-      const clippingData: any = {
-        title: formData.articleTitle || `Artikel von ${send.recipientName}`,
-        url: formData.articleUrl,
-        publishedAt: publishedTimestamp,
-        outletName: formData.outletName || 'Unbekannt',
-        outletType: formData.outletType,
-        sentiment: formData.sentiment,
-        sentimentScore: formData.sentimentScore,
-        updatedAt: serverTimestamp()
-      };
-
-      if (formData.reach) {
-        clippingData.reach = parseInt(formData.reach);
-      }
-
-      await clippingService.update(clipping.id, clippingData, {
-        organizationId: currentOrganization.id
+      await updateClipping.mutateAsync({
+        organizationId: currentOrganization.id,
+        clippingId: clipping.id,
+        sendId: send.id,
+        recipientName: send.recipientName,
+        formData
       });
-
-      const sendRef = doc(db, 'email_campaign_sends', send.id!);
-      const updateData: any = {
-        publishedAt: publishedTimestamp,
-        articleUrl: formData.articleUrl,
-        sentiment: formData.sentiment,
-        sentimentScore: formData.sentimentScore,
-        updatedAt: serverTimestamp()
-      };
-
-      if (formData.articleTitle) {
-        updateData.articleTitle = formData.articleTitle;
-      }
-
-      if (formData.reach) {
-        updateData.reach = parseInt(formData.reach);
-      }
-
-      await updateDoc(sendRef, updateData);
-
-      toastService.success('Veröffentlichung erfolgreich aktualisiert');
       onSuccess();
     } catch (error) {
-      console.error('Fehler beim Aktualisieren:', error);
-      toastService.error(error instanceof Error ? error.message : 'Fehler beim Speichern');
-    } finally {
-      setLoading(false);
+      // Error already handled by mutation
     }
-  };
+  }, [user, currentOrganization, clipping.id, send.id, send.recipientName, formData, updateClipping, onSuccess]);
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
@@ -184,23 +155,40 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                 </Field>
               </div>
 
-              <Field>
-                <Label>Sentiment</Label>
-                <Select
-                  value={formData.sentiment}
-                  onChange={(e) => {
-                    const sentiment = e.target.value as 'positive' | 'neutral' | 'negative';
-                    let score = 0;
-                    if (sentiment === 'positive') score = 0.7;
-                    if (sentiment === 'negative') score = -0.7;
-                    setFormData({ ...formData, sentiment, sentimentScore: score });
-                  }}
-                >
-                  <option value="positive">😊 Positiv</option>
-                  <option value="neutral">😐 Neutral</option>
-                  <option value="negative">😞 Negativ</option>
-                </Select>
-              </Field>
+              {/* Sentiment & AVE Preview */}
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label>Sentiment</Label>
+                  <Select
+                    value={formData.sentiment}
+                    onChange={(e) => {
+                      const sentiment = e.target.value as 'positive' | 'neutral' | 'negative';
+                      let score = 0;
+                      if (sentiment === 'positive') score = 0.7;
+                      if (sentiment === 'negative') score = -0.7;
+                      setFormData({ ...formData, sentiment, sentimentScore: score });
+                    }}
+                  >
+                    <option value="positive">😊 Positiv</option>
+                    <option value="neutral">😐 Neutral</option>
+                    <option value="negative">😞 Negativ</option>
+                  </Select>
+                </Field>
+
+                {formData.reach && (
+                  <Field>
+                    <Label>Voraussichtlicher AVE</Label>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <Text className="text-2xl font-bold text-gray-900">
+                        {calculatedAVE.toLocaleString('de-DE')} €
+                      </Text>
+                      <Text className="text-xs text-gray-500">
+                        Basierend auf {parseInt(formData.reach).toLocaleString('de-DE')} Reichweite
+                      </Text>
+                    </div>
+                  </Field>
+                )}
+              </div>
 
               <Field>
                 <Label>Sentiment-Score (optional)</Label>
@@ -211,7 +199,20 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                     max="1"
                     step="0.1"
                     value={formData.sentimentScore}
-                    onChange={(e) => setFormData({ ...formData, sentimentScore: parseFloat(e.target.value) })}
+                    onChange={(e) => {
+                      const score = parseFloat(e.target.value);
+                      let sentiment: 'positive' | 'neutral' | 'negative' = 'neutral';
+
+                      // Automatische Sentiment-Auswahl basierend auf Score
+                      if (score > 0.3) {
+                        sentiment = 'positive';
+                      } else if (score < -0.3) {
+                        sentiment = 'negative';
+                      }
+
+                      setFormData({ ...formData, sentimentScore: score, sentiment });
+                    }}
+                    aria-label="Sentiment-Score"
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #22c55e 100%)`
@@ -228,11 +229,11 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
           </DialogBody>
 
         <DialogActions>
-          <Button plain onClick={onClose} disabled={loading}>
+          <Button plain onClick={onClose} disabled={updateClipping.isPending}>
             Abbrechen
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Speichern...' : 'Änderungen speichern'}
+          <Button type="submit" disabled={updateClipping.isPending}>
+            {updateClipping.isPending ? 'Speichern...' : 'Änderungen speichern'}
           </Button>
         </DialogActions>
       </form>
