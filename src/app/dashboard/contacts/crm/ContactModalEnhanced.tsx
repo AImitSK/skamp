@@ -256,14 +256,16 @@ export default function ContactModalEnhanced({
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
       const tagId = await tagsEnhancedService.create(
-        { 
-          name, 
+        {
+          name,
           color,
           organizationId: organizationId
         },
         { organizationId: organizationId, userId: userId }
       );
       await loadTags();
+      // Invalidate React Query cache so new tag appears immediately in contacts table
+      queryClient.invalidateQueries({ queryKey: ['tags', organizationId] });
       return tagId;
     } catch (error) {
       throw error;
