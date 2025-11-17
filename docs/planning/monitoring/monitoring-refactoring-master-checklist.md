@@ -200,20 +200,20 @@ Quality Check: ✅ READY FOR MERGE
 
 ### 0.2 MarkPublishedModal & EditClippingModal (SHARED MODALS)
 
-**Problem:** MITTEL (655 Zeilen gesamt)
+**Problem:** MITTEL (655 Zeilen gesamt) ✅ GELÖST
 **Entry Point:** `src/components/monitoring/MarkPublishedModal.tsx`, `EditClippingModal.tsx`
-**LOC:** 655 Zeilen → 608 Zeilen (nach Toast+Design)
-**Aufwand:** M (Medium) - 2-3 Tage
+**LOC:** 655 Zeilen → 541 Zeilen (-17% Code-Reduktion)
+**Aufwand:** M (Medium) - 2-3 Tage ✅ ABGESCHLOSSEN
 **Verwendet in:** RecipientTrackingList (Empfänger Tab)
 
-**Probleme identifiziert (behoben):**
+**Probleme identifiziert (alle behoben):**
 - ~~Kein Toast-System~~ ✅ BEHOBEN (17. Nov 2025)
 - ~~Modal zu schmal~~ ✅ BEHOBEN (17. Nov 2025)
 - ~~Felder 1-spaltig~~ ✅ BEHOBEN (17. Nov 2025)
 - ~~Notizen-Feld~~ ✅ ENTFERNT (17. Nov 2025)
-- ❌ Keine React Query Mutations
-- ❌ Keine Performance-Optimierungen
-- ❌ Keine Tests
+- ~~Keine React Query Mutations~~ ✅ BEHOBEN (17. Nov 2025)
+- ~~Keine Performance-Optimierungen~~ ✅ BEHOBEN (17. Nov 2025)
+- ~~Keine Tests~~ ✅ BEHOBEN (17. Nov 2025)
 
 **Refactoring-Ziele:**
 - [x] ✅ Toast-Integration (17. Nov 2025)
@@ -225,47 +225,70 @@ Quality Check: ✅ READY FOR MERGE
   - Modal breiter (size="3xl")
   - Felder 2-spaltig (3 Gruppen)
   - Notizen-Feld entfernt
-- [ ] React Query Mutations
-  - useMarkAsPublished.ts
-  - useUpdateClipping.ts
-- [ ] Performance-Optimierung
-  - useCallback, useMemo
-- [ ] Tests schreiben (>80% Coverage)
-- [ ] Dokumentation (750+ Zeilen)
+- [x] ✅ React Query Mutations (17. Nov 2025)
+  - useMonitoringMutations.ts (235 Zeilen) erstellt
+  - useMarkAsPublished() Mutation (-73 Zeilen inline Firebase)
+  - useUpdateClipping() Mutation (-41 Zeilen inline Firebase)
+- [x] ✅ Performance-Optimierung (17. Nov 2025)
+  - useCallback für alle Handler
+  - useMemo für calculatedAVE
+  - Dependency Arrays korrekt
+- [x] ✅ Tests schreiben (17. Nov 2025)
+  - 76 Tests (100% passing)
+  - Coverage >90% (95% + 91.66%)
+- [x] ✅ Dokumentation (17. Nov 2025)
+  - 4,197 Zeilen erstellt
+  - 5 ADRs erstellt
 
 **Tracking:**
 - [x] ✅ **Plan erstellt:** `docs/planning/monitoring/shared/mark-published-modal-refactoring.md`
-- [ ] **Implementierung durchführen** (Phase 0.5-3)
-- [ ] **Tests & Docs** (Phase 4-5, via Agents)
-- [ ] **Quality Gate** (Phase 6.5, via Agent)
-- [ ] **Merged to Main** (Phase 7)
+- [x] ✅ **Implementierung durchgeführt** (Phase 0.5-3)
+- [x] ✅ **Tests & Docs** (Phase 4-5, via Agents)
+- [x] ✅ **Quality Gate** (Phase 6.5, via Agent - GO)
+- [x] ✅ **Merged to Main** (Phase 7) - 17. November 2025
 
 **Ergebnis-Zusammenfassung:**
 ```
-🚧 IN ARBEIT (17. Nov 2025)
+✅ ABGESCHLOSSEN (17. November 2025)
 
-Bereits abgeschlossen (Phase 0):
-✅ Toast-Integration (17. Nov)
-  - Code-Reduktion: -47 Zeilen (-7.2%)
-  - Success & Error Toasts
-  - Error-Dialog entfernt
+Metriken:
+- Code-Reduktion: 655 → 541 Zeilen (-17%)
+  - MarkPublishedModal: 393 → 311 Zeilen (-21%)
+  - EditClippingModal: 262 → 230 Zeilen (-12%)
+- Inline Firebase Code entfernt: -114 Zeilen
+- Hook erstellt: useMonitoringMutations.ts (235 Zeilen)
+- Tests: 76/76 passed (100%)
+- Coverage: >90% (MarkPublished 95%, EditClipping 91.66%)
+- Dokumentation: 4,197 Zeilen + 5 ADRs
 
-✅ Design-Verbesserungen (17. Nov)
-  - Modal breiter (size="3xl")
-  - 2-spaltige Felder
-  - Notizen entfernt
+Code-Qualität:
+- ESLint: 0 Errors, 0 Warnings ✅
+- TypeScript: 0 Errors (refactored files) ✅
+- Console-Cleanup: ✅ Production-ready
+- Design System: ✅ Fully compliant
 
-Code-Metriken:
-- Vorher: 655 Zeilen (393 + 262)
-- Jetzt: 608 Zeilen (368 + 240)
-- Gesamt: -47 Zeilen (-7.2%)
-- Ziel: ~550 Zeilen (-16%)
+Phasen abgeschlossen:
+✅ Phase 0.5: Pre-Refactoring Cleanup
+✅ Phase 1: React Query Integration
+✅ Phase 3: Performance-Optimierung
+✅ Phase 4: Testing (76 Tests via refactoring-test Agent)
+✅ Phase 5: Dokumentation (4,197 Zeilen via refactoring-dokumentation Agent)
+✅ Phase 6: Production-Ready Code Quality
+✅ Phase 6.5: Quality Gate Check (GO via refactoring-quality-check Agent)
+✅ Phase 7: Merged to Main (Commit: 22696581)
 
-Nächste Schritte:
-1. Phase 0.5: Pre-Refactoring Cleanup
-2. Phase 1: React Query Mutations
-3. Phase 3: Performance-Optimierung
-4-7: Testing, Docs, Quality Gate, Merge
+Features implementiert:
+✅ Bidirektionale Sentiment-Synchronisation (Select ↔ Slider)
+✅ AVE-Berechnung in beiden Modals mit Live-Update
+✅ aria-label für Accessibility
+✅ Query Invalidation für Cache-Updates
+✅ Multi-Tenancy Support (organizationId)
+
+Quality Gate Check: ✅ GO FOR MERGE
+- Alle 76 Tests bestehen
+- Keine TypeScript-Errors in refactored files
+- Feature-Branch gepushed
+- Code ist production-ready
 ```
 
 ---
@@ -538,19 +561,20 @@ Nächste Schritte:
 
 | Phase | Module | Pläne | Implementiert | Merged | Fortschritt |
 |-------|--------|-------|---------------|--------|-------------|
-| Phase 0: Shared Components | 2 | 1/2 | 1/2 | 1/2 | 50% 🚧 |
+| Phase 0: Shared Components | 2 | 2/2 | 2/2 | 2/2 | 100% ✅ |
 | Phase 1: Hauptseiten | 2 | 0/2 | 0/2 | 0/2 | 0% ⏳ |
 | Phase 2: Tab-Module | 5 | 0/5 | 0/5 | 0/5 | 0% ⏳ |
-| **GESAMT** | **9** | **1/9** | **1/9** | **1/9** | **11%** |
+| **GESAMT** | **9** | **2/9** | **2/9** | **2/9** | **22%** |
 
 ### Aufwands-Verteilung
 
-- **L (Large):** 2 Module (PDF-Report Service ✅, Monitoring Detail Page) - ~3-4 Tage/Modul
-- **M (Medium):** 4 Module (MarkPublishedModal, Analytics Tab, Recipients Tab, Suggestions Tab) - ~2-3 Tage/Modul
+- **L (Large):** 2 Module (~~PDF-Report Service~~ ✅, Monitoring Detail Page) - ~3-4 Tage/Modul
+- **M (Medium):** 4 Module (~~MarkPublishedModal~~ ✅, Analytics Tab, Recipients Tab, Suggestions Tab) - ~2-3 Tage/Modul
 - **S (Small):** 3 Module (Overview Page, Performance Tab, Clippings Tab) - ~1-2 Tage/Modul
 
 **Geschätzter Gesamt-Aufwand:** 16-26 Tage (~3-5 Wochen)
-**Verbleibend:** 12-22 Tage (~2-4 Wochen)
+**Abgeschlossen:** 5-7 Tage (Phase 0.1 + 0.2)
+**Verbleibend:** 11-19 Tage (~2-4 Wochen)
 
 ---
 
@@ -558,9 +582,9 @@ Nächste Schritte:
 
 ### Optimale Reihenfolge (Abhängigkeiten beachten):
 
-1. ~~**Phase 0.1** → PDF-Report Service (blockiert Analytics Tab!)~~ ✅ **ABGESCHLOSSEN**
-2. **Phase 0.2** → MarkPublishedModal (blockiert Recipients Tab!)
-3. **Phase 1.1** → Monitoring Overview Page (Foundation)
+1. ~~**Phase 0.1** → PDF-Report Service (blockiert Analytics Tab!)~~ ✅ **ABGESCHLOSSEN (16. Nov 2025)**
+2. ~~**Phase 0.2** → MarkPublishedModal & EditClippingModal (blockiert Recipients Tab!)~~ ✅ **ABGESCHLOSSEN (17. Nov 2025)**
+3. **Phase 1.1** → Monitoring Overview Page (Foundation) ⬅️ **NÄCHSTER SCHRITT**
 4. **Phase 1.2** → Monitoring Detail Page (Foundation, MonitoringContext)
 5. **Phase 2.1** → Analytics Tab (P1 - Hauptfunktion)
 6. **Phase 2.2** → E-Mail Performance Tab (P1 - Reporting)
@@ -652,13 +676,13 @@ docs/planning/monitoring/
 
 ### Zu erledigen:
 
-1. ~~**Phase 0.1** → PDF-Report Service Refactoring (KRITISCH!)~~ ✅ **ABGESCHLOSSEN**
-2. **Phase 0.2** → MarkPublishedModal Refactoring ⬅️ **NÄCHSTER SCHRITT**
-3. **Phase 1.1** → Monitoring Overview Page
+1. ~~**Phase 0.1** → PDF-Report Service Refactoring (KRITISCH!)~~ ✅ **ABGESCHLOSSEN (16. Nov)**
+2. ~~**Phase 0.2** → MarkPublishedModal Refactoring~~ ✅ **ABGESCHLOSSEN (17. Nov)**
+3. **Phase 1.1** → Monitoring Overview Page ⬅️ **NÄCHSTER SCHRITT**
 4. **Phase 1.2** → Monitoring Detail Foundation (MonitoringContext!)
 5. **Phase 2.1-2.5** → Tab-Module Refactorings
 
-**Status:** 🚧 IN ARBEIT - 11% abgeschlossen (1/9 Module)
+**Status:** 🚧 IN ARBEIT - 22% abgeschlossen (2/9 Module - Phase 0 Complete ✅)
 
 ---
 
@@ -729,11 +753,23 @@ Vom erfolgreichen Projekt-Monitoring-Refactoring übernehmen:
 
 ---
 
-**Zuletzt aktualisiert:** 2025-11-16
+**Zuletzt aktualisiert:** 2025-11-17
 **Maintainer:** CeleroPress Team
 
 **Changelog:**
-- 2025-11-17: 🔥 Excel-Export komplett entfernt
+- 2025-11-17 (17:00): ✅ Phase 0.2 ABGESCHLOSSEN - MarkPublishedModal & EditClippingModal
+  - React Query Integration komplett (useMonitoringMutations.ts Hook erstellt)
+  - Alle 7 Phasen durchgeführt (0.5, 1, 3, 4, 5, 6, 6.5, 7)
+  - Code-Reduktion: 655 → 541 Zeilen (-17%)
+  - 76 Tests erstellt (100% passing, >90% coverage)
+  - 4,197 Zeilen Dokumentation + 5 ADRs
+  - Quality Gate: GO (via refactoring-quality-check Agent)
+  - Merged to Main (Commit: 22696581)
+  - **Phase 0 jetzt zu 100% abgeschlossen! ✅**
+  - Fortschritt: 11% → 22% (2/9 Module)
+  - Verbleibender Aufwand: 11-19 Tage
+
+- 2025-11-17 (vormittags): 🔥 Excel-Export komplett entfernt
   - Excel-Export-Feature nicht mehr benötigt (User-Entscheidung)
   - Datei gelöscht: `src/lib/exports/monitoring-excel-export.ts` (186 Zeilen)
   - Alle Verwendungen entfernt aus Monitoring Detail Page
@@ -747,4 +783,4 @@ Vom erfolgreichen Projekt-Monitoring-Refactoring übernehmen:
   - Aufwand geschätzt: 18-28 Tage (~4-6 Wochen)
   - Prioritäten definiert (P1/P2)
   - Tab-Routing bereits vorhanden (✅ Vorteil!)
-  - Größte Probleme: ~~PDF-Report Service (703 Zeilen)~~ ✅, MarkPublishedModal (393 Zeilen), MonitoringDashboard (393 Zeilen)
+  - Größte Probleme: ~~PDF-Report Service (703 Zeilen)~~ ✅, ~~MarkPublishedModal (393 Zeilen)~~ ✅, MonitoringDashboard (393 Zeilen)
