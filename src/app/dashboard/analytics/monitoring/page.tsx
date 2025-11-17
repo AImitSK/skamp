@@ -6,7 +6,6 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChartBarIcon, EyeIcon, ExclamationCircleIcon, EnvelopeIcon, NewspaperIcon, EllipsisVerticalIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -26,7 +25,6 @@ export default function MonitoringPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [filteredCampaigns, setFilteredCampaigns] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [projectFilter, setProjectFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -37,7 +35,7 @@ export default function MonitoringPage() {
   useEffect(() => {
     filterCampaigns();
     setCurrentPage(1); // Reset to page 1 when filters change
-  }, [campaigns, searchTerm, projectFilter]);
+  }, [campaigns, searchTerm]);
 
   const loadCampaigns = async () => {
     if (!currentOrganization?.id) return;
@@ -97,14 +95,6 @@ export default function MonitoringPage() {
       );
     }
 
-    if (projectFilter !== 'all') {
-      if (projectFilter === 'none') {
-        filtered = filtered.filter(c => !c.projectId);
-      } else {
-        filtered = filtered.filter(c => c.projectId === projectFilter);
-      }
-    }
-
     setFilteredCampaigns(filtered);
   };
 
@@ -140,22 +130,12 @@ export default function MonitoringPage() {
         <Text>Überwache alle versendeten Pressemeldungen und deren Performance (E-Mail Tracking & Clippings)</Text>
       </div>
 
-      <div className="flex gap-2 items-center">
+      <div>
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Kampagnen durchsuchen..."
-          className="flex-1"
         />
-        <div className="w-48">
-          <Select
-            value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-          >
-            <option value="all">Alle Projekte</option>
-            <option value="none">Ohne Projekt</option>
-          </Select>
-        </div>
       </div>
 
       {filteredCampaigns.length === 0 ? (
@@ -170,7 +150,6 @@ export default function MonitoringPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kampagne</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Projekt</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versendet</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th>
@@ -207,13 +186,6 @@ export default function MonitoringPage() {
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {campaign.projectId ? (
-                        <Badge color="blue">Projekt</Badge>
-                      ) : (
-                        <Text className="text-gray-500">-</Text>
-                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Text className="text-gray-600">
