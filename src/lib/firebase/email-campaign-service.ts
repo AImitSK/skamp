@@ -57,13 +57,11 @@ export const emailCampaignService = {
     },
     previewContactEmail?: string
   ): Promise<{ html: string; text: string; subject: string; recipient: any }> {
-    
-    console.log('🔍 Generating preview for campaign:', campaign.title);
-    
+
     try {
       // 1. Kontakte aus der Verteilerliste laden
       const contacts = await this.getCampaignContacts(campaign);
-      
+
       if (contacts.length === 0) {
         throw new Error('Die Verteilerliste enthält keine Kontakte');
       }
@@ -79,8 +77,6 @@ export const emailCampaignService = {
       if (!previewContact) {
         throw new Error('Keine Kontakte für Vorschau verfügbar');
       }
-      
-      console.log('👤 Using preview contact:', getContactDisplayName(previewContact));
 
       // 3. Preview über Email Service generieren - ANPASSUNG NÖTIG im emailService
       // Für jetzt erstellen wir ein kompatibles Objekt
@@ -92,9 +88,7 @@ export const emailCampaignService = {
       };
 
       const preview = emailService.generatePreview(contactForPreview as any, emailContent, senderInfo, undefined, campaign.keyVisual);
-      
-      console.log('✅ Preview generated successfully');
-      
+
       return preview;
       
     } catch (error) {
@@ -124,24 +118,18 @@ export const emailCampaignService = {
     }>
   ): Promise<{ success: number; failed: number; messageIds: string[] }> {
 
-    console.log('🚀 Starting PR campaign send:', campaign.title);
-
     // PHASE A - Task 1.1: Garantiere dass campaign.organizationId gesetzt ist
     if (!campaign.organizationId) {
       console.warn('⚠️ Campaign missing organizationId, using userId as fallback');
       campaign.organizationId = campaign.userId;
     }
-    
+
     try {
       // 1. Kontakte aus der Verteilerliste(n) laden
       const contacts = await this.getCampaignContacts(campaign);
-      
-      console.log('📋 Found', contacts.length, 'contacts in distribution list(s)');
-      
+
       // NEU: Manuelle Empfänger zu ContactEnhanced konvertieren und hinzufügen
       if (manualRecipients && manualRecipients.length > 0) {
-        console.log('➕ Adding', manualRecipients.length, 'manual recipients');
-        
         const manualContacts: ContactEnhanced[] = manualRecipients.map((recipient, index) => ({
           id: `manual-${Date.now()}-${index}`,
           organizationId: campaign.organizationId || campaign.userId, // Use organizationId if available
@@ -160,30 +148,26 @@ export const emailCampaignService = {
           createdAt: serverTimestamp() as any,
           updatedAt: serverTimestamp() as any
         }));
-        
+
         // Füge manuelle Kontakte zur Liste hinzu
         contacts.push(...manualContacts);
-        console.log('📊 Total contacts after adding manual:', contacts.length);
       }
-      
+
       if (contacts.length === 0) {
         throw new Error('Keine Kontakte in der Verteilerliste gefunden');
       }
 
       // 2. Nur Kontakte mit E-Mail-Adressen
       const contactsWithEmail = contacts.filter(contact => getPrimaryEmail(contact));
-      
+
       if (contactsWithEmail.length === 0) {
         throw new Error('Keine Kontakte mit E-Mail-Adressen gefunden');
       }
 
-      console.log('✉️ Prepared', contactsWithEmail.length, 'email recipients (including manual)');
-
       // 3. Media Share Link erstellen falls Medien angehängt sind
       let mediaShareUrl: string | undefined;
-      
+
       if (campaign.attachedAssets && campaign.attachedAssets.length > 0) {
-        console.log('📎 Creating media share link for', campaign.attachedAssets.length, 'assets');
         
         try {
           // Sammle alle Asset-IDs
@@ -216,8 +200,7 @@ export const emailCampaignService = {
           // KORRIGIERT: Verwende getBaseUrl() mit Fallback
           const baseUrl = getBaseUrl();
           mediaShareUrl = `${baseUrl}/share/${shareLink.shareId}`;
-          console.log('✅ Media share link created:', mediaShareUrl);
-          
+
         } catch (error) {
           console.error('⚠️ Could not create media share link:', error);
           // Fortsetzung ohne Media-Link
@@ -235,7 +218,6 @@ export const emailCampaignService = {
         position: contact.position
       }));
 
-      console.log('📤 Sending emails via API...');
       const sendResult = await emailService.sendPRCampaign(
         campaign,
         emailContent,
@@ -268,11 +250,10 @@ export const emailCampaignService = {
         if (mediaShareUrl) {
           updateData.assetShareUrl = mediaShareUrl;
         }
-        
+
+
         await updateDoc(doc(db, 'pr_campaigns', campaign.id!), updateData);
       }
-
-      console.log('✅ Campaign send completed:', sendResult.summary);
 
       return {
         success: sendResult.summary.success,
@@ -309,7 +290,6 @@ export const emailCampaignService = {
             bouncedEmail: 'Systemfehler beim Versand'
           }
         });
-        console.log('📬 Benachrichtigung gesendet: Kampagnen-Versand fehlgeschlagen');
       } catch (notificationError) {
         console.error('Fehler beim Senden der Fehler-Benachrichtigung:', notificationError);
       }
@@ -326,8 +306,6 @@ export const emailCampaignService = {
     campaignId: string,
     options?: { organizationId?: string }
   ): Promise<EmailCampaignSend[]> {
-    console.log('📊 getSends called with campaignId:', campaignId);
-
     try {
       const { query, where, orderBy, getDocs, or } = await import('firebase/firestore');
 
@@ -352,11 +330,7 @@ export const emailCampaignService = {
           send.organizationId === options.organizationId ||
           send.userId === options.organizationId
         );
-        console.log(`📊 Filtered to ${sends.length} sends for organization:`, options.organizationId);
       }
-
-      console.log(`📊 Found ${sends.length} sends for campaign:`, campaignId);
-      console.log('📊 Sends data:', sends);
 
       return sends;
     } catch (error) {
@@ -369,8 +343,6 @@ export const emailCampaignService = {
    * Hilfsfunktion: Kontakte aus den Verteilerlisten einer Kampagne laden
    */
   async getCampaignContacts(campaign: PRCampaign): Promise<ContactEnhanced[]> {
-    console.log('📋 Loading contacts for campaign:', campaign.title);
-
     try {
       const allContacts: ContactEnhanced[] = [];
       const contactIds = new Set<string>(); // Für Deduplizierung
@@ -381,26 +353,23 @@ export const emailCampaignService = {
 
       // Wenn keine Listen vorhanden sind, gebe leeres Array zurück
       if (listIds.length === 0 || (listIds.length === 1 && !listIds[0])) {
-        console.log('📋 No distribution lists found, returning empty array');
         return [];
       }
 
       for (const listId of listIds) {
         if (!listId) continue; // Skip empty/undefined list IDs
-        console.log('📋 Loading list:', listId);
-        
+
         // Lade die Verteilerliste
         const list = await listsService.getById(listId);
-        
+
         if (!list) {
           console.warn('⚠️ List not found:', listId);
           continue;
         }
-        
+
         // Verwende getContacts - gibt jetzt ContactEnhanced[] zurück
         const contacts = await listsService.getContacts(list);
-        console.log('👥 Found', contacts.length, 'contacts in list:', list.name);
-        
+
         // Füge nur neue Kontakte hinzu (Deduplizierung)
         for (const contact of contacts) {
           if (!contactIds.has(contact.id!)) {
@@ -409,8 +378,7 @@ export const emailCampaignService = {
           }
         }
       }
-      
-      console.log('📊 Total unique contacts:', allContacts.length);
+
       return allContacts;
       
     } catch (error) {
@@ -429,13 +397,6 @@ export const emailCampaignService = {
     userId: string,
     organizationId?: string // NEU: organizationId als optionaler Parameter
   ): Promise<void> {
-    console.log('💾 saveSendResults called:', {
-      campaignId,
-      contactsCount: contacts.length,
-      resultsCount: sendResult.results?.length,
-      userId
-    });
-
     const batch = writeBatch(db);
 
     // Mapping zwischen E-Mail und Kontakt erstellen
@@ -447,13 +408,8 @@ export const emailCampaignService = {
       }
     }
 
-    console.log('💾 Contact map size:', contactMap.size);
-    console.log('💾 Send results:', sendResult.results);
-
     for (const result of sendResult.results) {
-      console.log('💾 Processing result:', result);
       const contact = contactMap.get(result.email);
-      console.log('💾 Found contact for', result.email, ':', !!contact);
       if (contact) {
         const sendDoc = doc(collection(db, 'email_campaign_sends'));
 
@@ -482,14 +438,12 @@ export const emailCampaignService = {
         }
 
         batch.set(sendDoc, sendData);
-        console.log('💾 Added send to batch for:', result.email);
       } else {
         console.warn('⚠️ No contact found for email:', result.email);
       }
     }
 
     await batch.commit();
-    console.log('✅ Batch committed successfully');
   },
 
 };
