@@ -22,7 +22,7 @@ function createWrapper() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
     },
   });
@@ -39,13 +39,18 @@ function createWrapper() {
 const mockAVESettings: AVESettings = {
   id: 'test-ave-settings',
   organizationId: 'org-123',
-  userId: 'user-456',
-  rates: {
+  factors: {
     print: 5.0,
     online: 3.0,
-    radio: 4.0,
-    tv: 7.0,
+    broadcast: 4.0,
+    blog: 7.0,
   },
+  sentimentMultipliers: {
+    positive: 1.2,
+    neutral: 1.0,
+    negative: 0.8,
+  },
+  updatedBy: 'user-123',
   createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
   updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any,
 };
@@ -53,17 +58,19 @@ const mockAVESettings: AVESettings = {
 // Mock Clipping
 const mockClipping: MediaClipping = {
   id: 'clip-123',
-  publicationId: 'pub-123',
   organizationId: 'org-123',
   title: 'Test Article',
-  content: 'Test content',
   url: 'https://example.com',
   outletName: 'Test Outlet',
   outletType: 'online',
   reach: 10000,
   sentiment: 'positive',
   publishedAt: { seconds: 1234567890, nanoseconds: 0, toDate: () => new Date(1234567890 * 1000) } as any,
+  detectionMethod: 'manual',
+  detectedAt: { seconds: 1234567890, nanoseconds: 0 } as any,
+  createdBy: 'user-123',
   createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
+  updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any,
 };
 
 describe('useAVECalculation Hook', () => {

@@ -40,7 +40,7 @@ function createWrapper() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
     },
   });
@@ -60,31 +60,35 @@ const createTimestamp = (date: Date) => ({
 const mockClippings: MediaClipping[] = [
   {
     id: 'clip-1',
-    publicationId: 'pub-1',
     organizationId: 'org-123',
     title: 'Article 1',
-    content: 'Content 1',
     url: 'https://example.com/1',
     outletName: 'Outlet A',
     outletType: 'online',
     reach: 10000,
     sentiment: 'positive',
     publishedAt: createTimestamp(new Date('2025-01-15')) as any,
+    detectionMethod: 'manual',
+    detectedAt: createTimestamp(new Date('2025-01-15')) as any,
+    createdBy: 'user-123',
     createdAt: createTimestamp(new Date('2025-01-15')) as any,
+    updatedAt: createTimestamp(new Date('2025-01-15')) as any,
   },
   {
     id: 'clip-2',
-    publicationId: 'pub-1',
     organizationId: 'org-123',
     title: 'Article 2',
-    content: 'Content 2',
     url: 'https://example.com/2',
     outletName: 'Outlet B',
     outletType: 'print',
     reach: 50000,
     sentiment: 'neutral',
     publishedAt: createTimestamp(new Date('2025-01-15')) as any,
+    detectionMethod: 'manual',
+    detectedAt: createTimestamp(new Date('2025-01-15')) as any,
+    createdBy: 'user-123',
     createdAt: createTimestamp(new Date('2025-01-15')) as any,
+    updatedAt: createTimestamp(new Date('2025-01-15')) as any,
   },
 ];
 
@@ -92,8 +96,9 @@ const mockSends: EmailCampaignSend[] = [
   {
     id: 'send-1',
     campaignId: 'camp-1',
-    recipientId: 'rec-1',
     recipientEmail: 'test1@example.com',
+    recipientName: 'Test User 1',
+    userId: 'user-1',
     status: 'opened',
     clippingId: 'clip-1',
     createdAt: createTimestamp(new Date('2025-01-15')) as any,
@@ -101,8 +106,9 @@ const mockSends: EmailCampaignSend[] = [
   {
     id: 'send-2',
     campaignId: 'camp-1',
-    recipientId: 'rec-2',
     recipientEmail: 'test2@example.com',
+    recipientName: 'Test User 2',
+    userId: 'user-2',
     status: 'sent',
     createdAt: createTimestamp(new Date('2025-01-15')) as any,
   },
@@ -111,8 +117,9 @@ const mockSends: EmailCampaignSend[] = [
 const mockAVESettings = {
   id: 'ave-123',
   organizationId: 'org-123',
-  userId: 'user-123',
-  rates: { print: 5.0, online: 3.0, radio: 4.0, tv: 7.0 },
+  factors: { print: 5.0, online: 3.0, broadcast: 4.0, blog: 7.0 },
+  sentimentMultipliers: { positive: 1.2, neutral: 1.0, negative: 0.8 },
+  updatedBy: 'user-123',
   createdAt: createTimestamp(new Date()) as any,
   updatedAt: createTimestamp(new Date()) as any,
 };
@@ -124,15 +131,21 @@ describe('MonitoringDashboard Component', () => {
     // Default Mocks
     mockUseOrganization.mockReturnValue({
       currentOrganization: { id: 'org-123', name: 'Test Org' } as any,
-      setCurrentOrganization: jest.fn(),
+      organizations: [],
+      loading: false,
+      switchOrganization: jest.fn(),
+      isOwner: true,
+      isAdmin: true,
+      userRole: 'owner',
     });
 
     mockUseAuth.mockReturnValue({
       user: { uid: 'user-123' } as any,
       loading: false,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-    });
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+    } as any);
 
     mockAveSettingsService.getOrCreate.mockResolvedValue(mockAVESettings);
     mockAveSettingsService.calculateAVE.mockReturnValue(500);
@@ -248,8 +261,13 @@ describe('MonitoringDashboard Component', () => {
   describe('Context Dependencies', () => {
     it('should handle missing organization gracefully', async () => {
       mockUseOrganization.mockReturnValue({
-        currentOrganization: undefined,
-        setCurrentOrganization: jest.fn(),
+        currentOrganization: null,
+        organizations: [],
+        loading: false,
+        switchOrganization: jest.fn(),
+        isOwner: false,
+        isAdmin: false,
+        userRole: null,
       });
 
       render(<MonitoringDashboard clippings={mockClippings} sends={mockSends} />, {
@@ -265,9 +283,10 @@ describe('MonitoringDashboard Component', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-      });
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+      } as any);
 
       render(<MonitoringDashboard clippings={mockClippings} sends={mockSends} />, {
         wrapper: createWrapper(),
