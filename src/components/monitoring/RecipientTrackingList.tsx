@@ -29,6 +29,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
+import { toastService } from '@/lib/utils/toast';
 
 interface RecipientTrackingListProps {
   sends: EmailCampaignSend[];
@@ -72,7 +73,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
         setEditingClipping(clipping);
       }
     } catch (error) {
-      console.error('Fehler beim Laden des Clippings:', error);
+      toastService.error('Clipping konnte nicht geladen werden');
     }
   };
 
@@ -104,9 +105,10 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
       });
 
       setDeletingSend(null);
+      toastService.success('Veröffentlichung wurde gelöscht');
       onSendUpdated();
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      toastService.error('Veröffentlichung konnte nicht gelöscht werden');
     } finally {
       setLoading(false);
     }

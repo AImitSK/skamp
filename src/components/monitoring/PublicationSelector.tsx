@@ -12,6 +12,7 @@ import {
   type PublicationLookupResult
 } from '@/lib/utils/publication-matcher';
 import { CheckCircleIcon, BuildingOfficeIcon, UserIcon } from '@heroicons/react/24/outline';
+import { toastService } from '@/lib/utils/toast';
 
 interface PublicationSelectorProps {
   recipientEmail: string;
@@ -51,7 +52,7 @@ export function PublicationSelector({
           onPublicationSelect(data.publications[0]);
         }
       } catch (error) {
-        console.error('Fehler beim Publication Lookup:', error);
+        toastService.error('Medium konnte nicht gefunden werden');
       } finally {
         setLoading(false);
       }

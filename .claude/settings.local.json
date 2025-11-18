@@ -22,7 +22,13 @@
       "Bash(Select-Object -First 100)",
       "Bash(git checkout:*)",
       "Bash(git push:*)",
-      "Bash(npx replace-in-file:*)"
+      "Bash(npx replace-in-file:*)",
+      "Bash(Get-ChildItem -Path src/components/monitoring/analytics -Recurse -File -ErrorAction SilentlyContinue)",
+      "Bash(Measure-Object -Line)",
+      "Bash(Select-Object -ExpandProperty Lines)",
+      "Bash(cp:*)",
+      "Bash(Select-String -Pattern \"@tanstack/react-query|recharts\")",
+      "Bash(Select-Object -First 2)"
     ]
   },
   "enableAllProjectMcpServers": true,
