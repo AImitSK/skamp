@@ -28,7 +28,8 @@
       "Bash(Select-Object -ExpandProperty Lines)",
       "Bash(cp:*)",
       "Bash(Select-String -Pattern \"@tanstack/react-query|recharts\")",
-      "Bash(Select-Object -First 2)"
+      "Bash(Select-Object -First 2)",
+      "Bash(npx eslint:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
