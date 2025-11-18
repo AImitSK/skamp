@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Heading, Subheading } from '@/components/ui/heading';
+import { Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, DocumentArrowDownIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
@@ -20,9 +20,13 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { toastService } from '@/lib/utils/toast';
 import Link from 'next/link';
 import { MonitoringProvider, useMonitoring } from './context/MonitoringContext';
+import { MonitoringHeader } from './components/MonitoringHeader';
+import { PDFExportButton } from './components/PDFExportButton';
+import { TabNavigation } from './components/TabNavigation';
+import { LoadingState } from './components/LoadingState';
+import { ErrorState } from './components/ErrorState';
 
 function MonitoringContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -40,8 +44,6 @@ function MonitoringContent() {
     isLoadingData,
     error,
     reloadData,
-    handlePDFExport: contextPDFExport,
-    isPDFGenerating,
     analysisPDFs,
     analysenFolderLink,
     handleDeletePDF: contextDeletePDF,
@@ -62,11 +64,6 @@ function MonitoringContent() {
   // Handler
   const handleSendUpdated = () => {
     reloadData();
-  };
-
-  const handlePDFExportClick = () => {
-    if (!user) return;
-    contextPDFExport(user.uid);
   };
 
   const handleDeletePDF = async (pdf: any) => {
@@ -133,26 +130,10 @@ function MonitoringContent() {
   };
 
   // Loading State
-  if (isLoadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <Text className="ml-3">Lade Monitoring-Daten...</Text>
-      </div>
-    );
-  }
+  if (isLoadingData) return <LoadingState />;
 
   // Error State
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <Text className="text-red-500">Fehler beim Laden: {error.message}</Text>
-        <Button onClick={() => reloadData()} className="mt-4">
-          Erneut versuchen
-        </Button>
-      </div>
-    );
-  }
+  if (error) return <ErrorState error={error} onRetry={reloadData} />;
 
   // Not Found State
   if (!campaign) {
@@ -165,102 +146,22 @@ function MonitoringContent() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/analytics/monitoring">
-              <Button plain className="p-2">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div>
-              <Heading>Monitoring: {campaign.title}</Heading>
-              <Text className="text-gray-600">
-                Versendet am {campaign.sentAt ? new Date(campaign.sentAt.toDate()).toLocaleDateString('de-DE') : 'N/A'}
-              </Text>
-            </div>
-          </div>
-          <Button
-            onClick={handlePDFExportClick}
-            color="secondary"
-            disabled={isPDFGenerating}
-          >
-            <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-            {isPDFGenerating ? 'Generiere PDF...' : 'PDF-Report'}
-          </Button>
-        </div>
+      {/* Header mit PDF-Export Button */}
+      <div className="flex items-center justify-between mb-6">
+        <MonitoringHeader />
+        <PDFExportButton />
       </div>
 
-      {/* Tab Navigation in white box */}
+      {/* Tab Navigation + Content */}
       <div className="bg-white rounded-lg border border-gray-200">
+        {/* Tab Navigation */}
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
-            <div className="flex space-x-6">
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'dashboard'
-                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ChartBarIcon className="w-4 h-4 mr-2" />
-                Analytics
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('performance')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'performance'
-                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <ChartBarIcon className="w-4 h-4 mr-2" />
-                E-Mail Performance
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('recipients')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'recipients'
-                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <DocumentTextIcon className="w-4 h-4 mr-2" />
-                Empfänger & Veröffentlichungen
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('clippings')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'clippings'
-                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <NewspaperIcon className="w-4 h-4 mr-2" />
-                Clipping-Archiv ({clippings.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('suggestions')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'suggestions'
-                    ? 'text-[#005fab] border-b-2 border-[#005fab]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                Auto-Funde ({suggestions.filter(s => s.status === 'pending').length})
-              </button>
-            </div>
+            <TabNavigation activeTab={activeTab} onChange={setActiveTab} />
           </div>
         </div>
 
+        {/* Tab Content */}
         <div className="p-6">
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
