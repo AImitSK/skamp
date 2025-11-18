@@ -24,7 +24,7 @@ interface MonitoringContextValue {
   error: Error | null;
 
   // Actions
-  reloadData: () => Promise<void>;
+  reloadData: () => void;
 
   // PDF Export
   handlePDFExport: (userId: string) => Promise<void>;

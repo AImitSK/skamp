@@ -271,7 +271,7 @@ function MonitoringContent() {
           <Button plain onClick={() => setShowDeleteDialog(false)}>
             Abbrechen
           </Button>
-          <Button color="red" onClick={confirmDeletePDF}>
+          <Button onClick={confirmDeletePDF}>
             Löschen
           </Button>
         </DialogActions>
