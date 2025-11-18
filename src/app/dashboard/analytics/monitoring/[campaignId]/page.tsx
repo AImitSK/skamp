@@ -8,159 +8,65 @@ import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon, DocumentTextIcon, ChartBarIcon, NewspaperIcon, DocumentArrowDownIcon, EllipsisVerticalIcon, TrashIcon, PaperAirplaneIcon, LinkIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
-import { prService } from '@/lib/firebase/pr-service';
-import { clippingService } from '@/lib/firebase/clipping-service';
 import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
 import { EmailPerformanceStats } from '@/components/monitoring/EmailPerformanceStats';
 import { RecipientTrackingList } from '@/components/monitoring/RecipientTrackingList';
 import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
 import { MonitoringSuggestionsTable } from '@/components/monitoring/MonitoringSuggestionsTable';
-import { EmailCampaignSend } from '@/types/email';
-import { PRCampaign } from '@/types/pr';
-import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
+import { MonitoringSuggestion } from '@/types/monitoring';
 import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { toastService } from '@/lib/utils/toast';
-import { usePDFReportGenerator } from '@/lib/hooks/useMonitoringReport';
 import Link from 'next/link';
+import { MonitoringProvider, useMonitoring } from './context/MonitoringContext';
 
-export default function MonitoringDetailPage() {
-  const params = useParams();
+function MonitoringContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-
+  const params = useParams();
   const campaignId = params.campaignId as string;
+
   const tabParam = searchParams.get('tab') as 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions' | null;
 
-  // React Query Hook für PDF-Export
-  const pdfGenerator = usePDFReportGenerator();
+  // Context-Daten
+  const {
+    campaign,
+    sends,
+    clippings,
+    suggestions,
+    isLoadingData,
+    error,
+    reloadData,
+    handlePDFExport: contextPDFExport,
+    isPDFGenerating,
+    analysisPDFs,
+    analysenFolderLink,
+    handleDeletePDF: contextDeletePDF,
+  } = useMonitoring();
 
-  const [loading, setLoading] = useState(true);
-  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
-  const [sends, setSends] = useState<EmailCampaignSend[]>([]);
-  const [clippings, setClippings] = useState<MediaClipping[]>([]);
-  const [suggestions, setSuggestions] = useState<MonitoringSuggestion[]>([]);
+  // Lokaler State
   const [activeTab, setActiveTab] = useState<'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions'>(tabParam || 'dashboard');
-  const [analysisPDFs, setAnalysisPDFs] = useState<any[]>([]);
-  const [loadingPDFs, setLoadingPDFs] = useState(false);
-  const [analysenFolderLink, setAnalysenFolderLink] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pdfToDelete, setPdfToDelete] = useState<any>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [campaignId, currentOrganization?.id]);
-
+  // Tab-Sync mit URL
   useEffect(() => {
     if (tabParam) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
 
-  useEffect(() => {
-    if (activeTab === 'dashboard' && campaign && currentOrganization?.id) {
-      loadAnalysisPDFs();
-    }
-  }, [activeTab, campaign, currentOrganization?.id]);
-
-  const loadData = async () => {
-    if (!currentOrganization?.id) return;
-
-    try {
-      setLoading(true);
-
-      const [campaignData, sendsData, clippingsData, suggestionsData] = await Promise.all([
-        prService.getById(campaignId),
-        emailCampaignService.getSends(campaignId, {
-          organizationId: currentOrganization.id
-        }),
-        clippingService.getByCampaignId(campaignId, {
-          organizationId: currentOrganization.id
-        }),
-        monitoringSuggestionService.getByCampaignId(campaignId, currentOrganization.id)
-      ]);
-
-      setCampaign(campaignData);
-      setSends(sendsData);
-      setClippings(clippingsData);
-      setSuggestions(suggestionsData);
-    } catch (error) {
-      console.error('Fehler beim Laden:', error);
-      toastService.error('Fehler beim Laden der Kampagne');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAnalysisPDFs = async () => {
-    if (!currentOrganization?.id || !campaign) return;
-
-    try {
-      setLoadingPDFs(true);
-
-      const projectId = campaign.projectId;
-      if (!projectId) {
-        setAnalysisPDFs([]);
-        return;
-      }
-
-      const { projectService } = await import('@/lib/firebase/project-service');
-      const { mediaService } = await import('@/lib/firebase/media-service');
-
-      const folderStructure = await projectService.getProjectFolderStructure(projectId, {
-        organizationId: currentOrganization.id
-      });
-
-      if (!folderStructure?.subfolders) {
-        setAnalysisPDFs([]);
-        return;
-      }
-
-      const analysenFolder = folderStructure.subfolders.find((f: any) => f.name === 'Analysen');
-
-      if (analysenFolder) {
-        const assets = await mediaService.getMediaAssets(
-          currentOrganization.id,
-          analysenFolder.id
-        );
-
-        const campaignPDFs = assets.filter(asset =>
-          asset.fileType === 'application/pdf'
-        );
-
-        setAnalysisPDFs(campaignPDFs);
-
-        setAnalysenFolderLink(
-          `/dashboard/projects/${projectId}?tab=daten&folder=${analysenFolder.id}`
-        );
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Analyse-PDFs:', error);
-      toastService.error('Fehler beim Laden der PDFs');
-    } finally {
-      setLoadingPDFs(false);
-    }
-  };
-
+  // Handler
   const handleSendUpdated = () => {
-    loadData();
+    reloadData();
   };
 
-  const handlePDFExport = () => {
-    if (!user || !currentOrganization?.id) return;
-
-    pdfGenerator.mutate({
-      campaignId,
-      organizationId: currentOrganization.id,
-      userId: user.uid
-    });
-
-    // Reload PDFs list after successful generation (via Hook's onSuccess)
-    loadAnalysisPDFs();
+  const handlePDFExportClick = () => {
+    if (!user) return;
+    contextPDFExport(user.uid);
   };
 
   const handleDeletePDF = async (pdf: any) => {
@@ -169,20 +75,16 @@ export default function MonitoringDetailPage() {
   };
 
   const confirmDeletePDF = async () => {
-    if (!currentOrganization?.id || !pdfToDelete) return;
+    if (!pdfToDelete) return;
 
     try {
-      const { mediaService } = await import('@/lib/firebase/media-service');
-      await mediaService.deleteMediaAsset(pdfToDelete);
-      await loadAnalysisPDFs();
+      await contextDeletePDF(pdfToDelete);
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      toastService.success('PDF erfolgreich gelöscht');
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       setShowDeleteDialog(false);
       setPdfToDelete(null);
-      toastService.error('Fehler beim Löschen des PDFs');
     }
   };
 
@@ -190,7 +92,7 @@ export default function MonitoringDetailPage() {
     if (!user?.uid || !currentOrganization?.id) return;
 
     try {
-      const clippingId = await monitoringSuggestionService.confirmSuggestion(
+      await monitoringSuggestionService.confirmSuggestion(
         suggestion.id!,
         {
           userId: user.uid,
@@ -199,9 +101,7 @@ export default function MonitoringDetailPage() {
       );
 
       toastService.success('Vorschlag erfolgreich als Clipping gespeichert');
-
-      // Reload data
-      await loadData();
+      await reloadData();
     } catch (error) {
       console.error('Fehler beim Bestätigen:', error);
       toastService.error('Fehler beim Übernehmen des Vorschlags');
@@ -212,8 +112,6 @@ export default function MonitoringDetailPage() {
     if (!user?.uid || !currentOrganization?.id) return;
 
     try {
-      // Optional: Pattern-Dialog könnte hier geöffnet werden
-      // Für jetzt: Automatisch URL-Domain Pattern erstellen
       await monitoringSuggestionService.markAsSpam(
         suggestion.id!,
         {
@@ -227,16 +125,15 @@ export default function MonitoringDetailPage() {
       );
 
       toastService.success('Vorschlag als Spam markiert');
-
-      // Reload data
-      await loadData();
+      await reloadData();
     } catch (error) {
       console.error('Fehler beim Spam-Markieren:', error);
       toastService.error('Fehler beim Markieren als Spam');
     }
   };
 
-  if (loading) {
+  // Loading State
+  if (isLoadingData) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -245,6 +142,19 @@ export default function MonitoringDetailPage() {
     );
   }
 
+  // Error State
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <Text className="text-red-500">Fehler beim Laden: {error.message}</Text>
+        <Button onClick={() => reloadData()} className="mt-4">
+          Erneut versuchen
+        </Button>
+      </div>
+    );
+  }
+
+  // Not Found State
   if (!campaign) {
     return (
       <div className="text-center py-12">
@@ -272,12 +182,12 @@ export default function MonitoringDetailPage() {
             </div>
           </div>
           <Button
-            onClick={handlePDFExport}
+            onClick={handlePDFExportClick}
             color="secondary"
-            disabled={pdfGenerator.isPending}
+            disabled={isPDFGenerating}
           >
             <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-            {pdfGenerator.isPending ? 'Generiere PDF...' : 'PDF-Report'}
+            {isPDFGenerating ? 'Generiere PDF...' : 'PDF-Report'}
           </Button>
         </div>
       </div>
@@ -438,7 +348,7 @@ export default function MonitoringDetailPage() {
               suggestions={suggestions}
               onConfirm={handleConfirmSuggestion}
               onMarkSpam={handleMarkSpam}
-              loading={loading}
+              loading={isLoadingData}
             />
           )}
         </div>
@@ -462,5 +372,25 @@ export default function MonitoringDetailPage() {
         </DialogActions>
       </Dialog>
     </div>
+  );
+}
+
+export default function MonitoringDetailPage() {
+  const params = useParams();
+  const { currentOrganization } = useOrganization();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions' | null;
+
+  const campaignId = params.campaignId as string;
+  const activeTab = tabParam || 'dashboard';
+
+  return (
+    <MonitoringProvider
+      campaignId={campaignId}
+      organizationId={currentOrganization?.id || ''}
+      activeTab={activeTab}
+    >
+      <MonitoringContent />
+    </MonitoringProvider>
   );
 }
