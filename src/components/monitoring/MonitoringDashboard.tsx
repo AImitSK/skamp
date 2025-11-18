@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { MediaClipping } from '@/types/monitoring';
 import { EmailCampaignSend } from '@/types/email';
 import { Text } from '@/components/ui/text';
@@ -33,8 +33,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
-import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
-import { AVESettings } from '@/types/monitoring';
+import { useAVECalculation } from '@/lib/hooks/useAVECalculation';
+import { useClippingStats } from '@/lib/hooks/useClippingStats';
 
 interface MonitoringDashboardProps {
   clippings: MediaClipping[];
@@ -61,110 +61,21 @@ const CHART_COLORS = [
 export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardProps) {
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
-  const [aveSettings, setAVESettings] = useState<AVESettings | null>(null);
 
-  useEffect(() => {
-    if (currentOrganization?.id && user?.uid) {
-      aveSettingsService.getOrCreate(currentOrganization.id, user.uid)
-        .then(setAVESettings)
-        .catch(console.error);
-    }
-  }, [currentOrganization?.id, user?.uid]);
+  // React Query Hook für AVE-Berechnung
+  const { calculateAVE } = useAVECalculation(
+    currentOrganization?.id,
+    user?.uid
+  );
 
-  const calculateAVE = (clipping: MediaClipping): number => {
-    if (clipping.ave) return clipping.ave;
-    if (!aveSettings) return 0;
-    return aveSettingsService.calculateAVE(clipping, aveSettings);
-  };
+  // Hook für Stats-Aggregation
+  const stats = useClippingStats(clippings, sends);
 
-  const timelineData = useMemo(() => {
-    const groupedByDate = clippings.reduce((acc, clipping) => {
-      if (!clipping.publishedAt || !clipping.publishedAt.toDate) return acc;
-
-      const date = clipping.publishedAt.toDate().toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: 'short'
-      });
-
-      if (!acc[date]) {
-        acc[date] = { date, clippings: 0, reach: 0 };
-      }
-
-      acc[date].clippings += 1;
-      acc[date].reach += clipping.reach || 0;
-
-      return acc;
-    }, {} as Record<string, { date: string; clippings: number; reach: number }>);
-
-    return Object.values(groupedByDate).sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
-  }, [clippings]);
-
-  const outletDistribution = useMemo(() => {
-    const distribution = clippings.reduce((acc, clipping) => {
-      const type = clipping.outletType || 'Unbekannt';
-      if (!acc[type]) {
-        acc[type] = { name: type, count: 0, reach: 0 };
-      }
-      acc[type].count += 1;
-      acc[type].reach += clipping.reach || 0;
-      return acc;
-    }, {} as Record<string, { name: string; count: number; reach: number }>);
-
-    return Object.values(distribution);
-  }, [clippings]);
-
-  const topOutlets = useMemo(() => {
-    const outletStats = clippings.reduce((acc, clipping) => {
-      const outlet = clipping.outletName || 'Unbekannt';
-      if (!acc[outlet]) {
-        acc[outlet] = { name: outlet, reach: 0, count: 0 };
-      }
-      acc[outlet].reach += clipping.reach || 0;
-      acc[outlet].count += 1;
-      return acc;
-    }, {} as Record<string, { name: string; reach: number; count: number }>);
-
-    return Object.values(outletStats)
-      .sort((a, b) => b.reach - a.reach)
-      .slice(0, 5);
-  }, [clippings]);
-
-  const sentimentData = useMemo(() => {
-    const counts = {
-      positive: clippings.filter(c => c.sentiment === 'positive').length,
-      neutral: clippings.filter(c => c.sentiment === 'neutral').length,
-      negative: clippings.filter(c => c.sentiment === 'negative').length
-    };
-
-    return [
-      { name: 'Positiv', value: counts.positive, color: BRAND_COLORS.success },
-      { name: 'Neutral', value: counts.neutral, color: BRAND_COLORS.gray },
-      { name: 'Negativ', value: counts.negative, color: BRAND_COLORS.danger }
-    ].filter(item => item.value > 0);
-  }, [clippings]);
-
-  const emailStats = useMemo(() => {
-    const total = sends.length;
-    const opened = sends.filter(s => s.status === 'opened' || s.status === 'clicked').length;
-    const clicked = sends.filter(s => s.status === 'clicked').length;
-    const withClippings = sends.filter(s => s.clippingId).length;
-
-    return {
-      total,
-      opened,
-      clicked,
-      withClippings,
-      openRate: total > 0 ? Math.round((opened / total) * 100) : 0,
-      conversionRate: opened > 0 ? Math.round((withClippings / opened) * 100) : 0
-    };
-  }, [sends]);
-
-  const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
-  const totalAVE = clippings.reduce((sum, c) => sum + calculateAVE(c), 0);
+  // Gesamt-AVE mit Memoization
+  const totalAVE = useMemo(
+    () => clippings.reduce((sum, c) => sum + calculateAVE(c), 0),
+    [clippings, calculateAVE]
+  );
 
   if (clippings.length === 0 && sends.length === 0) {
     return (
@@ -200,7 +111,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               <Text className="text-sm text-gray-600">Gesamtreichweite</Text>
             </div>
             <div className="text-2xl font-semibold text-gray-900">
-              {totalReach.toLocaleString('de-DE')}
+              {stats.totalReach.toLocaleString('de-DE')}
             </div>
           </div>
 
@@ -222,7 +133,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               <Text className="text-sm text-gray-600">Öffnungsrate</Text>
             </div>
             <div className="text-2xl font-semibold text-gray-900">
-              {emailStats.openRate}%
+              {stats.emailStats.openRate}%
             </div>
           </div>
 
@@ -235,7 +146,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               <Text className="text-sm text-gray-600">Conversion</Text>
             </div>
             <div className="text-2xl font-semibold text-gray-900">
-              {emailStats.conversionRate}%
+              {stats.emailStats.conversionRate}%
             </div>
             <Text className="text-xs text-gray-500 mt-1">
               Öffnungen → Clippings
@@ -244,14 +155,14 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
         </div>
       </div>
 
-      {timelineData.length > 0 && (
+      {stats.timelineData.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <ArrowTrendingUpIcon className="h-5 w-5 text-[#005fab]" />
             <Subheading>Veröffentlichungen über Zeit</Subheading>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={timelineData}>
+            <LineChart data={stats.timelineData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="date"
@@ -300,7 +211,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {outletDistribution.length > 0 && (
+        {stats.outletDistribution.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <NewspaperIcon className="h-5 w-5 text-[#005fab]" />
@@ -309,7 +220,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={outletDistribution}
+                  data={stats.outletDistribution}
                   dataKey="count"
                   nameKey="name"
                   cx="50%"
@@ -318,7 +229,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
                   outerRadius={80}
                   paddingAngle={2}
                 >
-                  {outletDistribution.map((entry, index) => (
+                  {stats.outletDistribution.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={CHART_COLORS[index % CHART_COLORS.length]}
@@ -335,7 +246,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {outletDistribution.map((item, idx) => (
+              {stats.outletDistribution.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}></div>
                   <Text className="text-sm text-gray-600">{item.name}: {item.count}</Text>
@@ -345,7 +256,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
           </div>
         )}
 
-        {sentimentData.length > 0 && (
+        {stats.sentimentData.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#005fab]" />
@@ -354,7 +265,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={sentimentData}
+                  data={stats.sentimentData}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -363,7 +274,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
                   outerRadius={80}
                   paddingAngle={2}
                 >
-                  {sentimentData.map((entry, index) => (
+                  {stats.sentimentData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -377,7 +288,7 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {sentimentData.map((item, idx) => (
+              {stats.sentimentData.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }}></div>
                   <Text className="text-sm text-gray-600">{item.name}: {item.value}</Text>
@@ -388,14 +299,14 @@ export function MonitoringDashboard({ clippings, sends }: MonitoringDashboardPro
         )}
       </div>
 
-      {topOutlets.length > 0 && (
+      {stats.topOutlets.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <TrophyIcon className="h-5 w-5 text-[#005fab]" />
             <Subheading>Top 5 Medien nach Reichweite</Subheading>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topOutlets} layout="vertical">
+            <BarChart data={stats.topOutlets} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 type="number"
