@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { ChartBarIcon, DocumentTextIcon, NewspaperIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useMonitoring } from '../context/MonitoringContext';
 
@@ -17,7 +18,7 @@ interface Props {
   onChange: (tab: TabId) => void;
 }
 
-export function TabNavigation({ activeTab, onChange }: Props) {
+export const TabNavigation = memo(function TabNavigation({ activeTab, onChange }: Props) {
   const { clippings, suggestions } = useMonitoring();
 
   const tabs: Tab[] = [
@@ -53,4 +54,4 @@ export function TabNavigation({ activeTab, onChange }: Props) {
       ))}
     </div>
   );
-}
+});

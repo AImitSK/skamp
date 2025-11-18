@@ -1,11 +1,12 @@
 'use client';
 
+import { memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { useMonitoring } from '../context/MonitoringContext';
 import { useAuth } from '@/context/AuthContext';
 
-export function PDFExportButton() {
+export const PDFExportButton = memo(function PDFExportButton() {
   const { user } = useAuth();
   const { handlePDFExport, isPDFGenerating } = useMonitoring();
 
@@ -24,4 +25,4 @@ export function PDFExportButton() {
       {isPDFGenerating ? 'Generiere PDF...' : 'PDF-Report'}
     </Button>
   );
-}
+});

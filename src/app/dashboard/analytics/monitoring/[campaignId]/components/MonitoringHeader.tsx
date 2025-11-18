@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -7,7 +8,7 @@ import { ArrowLeftIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outlin
 import { useMonitoring } from '../context/MonitoringContext';
 import { useRouter } from 'next/navigation';
 
-export function MonitoringHeader() {
+export const MonitoringHeader = memo(function MonitoringHeader() {
   const router = useRouter();
   const { campaign, isPDFGenerating } = useMonitoring();
 
@@ -34,4 +35,4 @@ export function MonitoringHeader() {
       </div>
     </div>
   );
-}
+});

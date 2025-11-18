@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -61,17 +61,21 @@ function MonitoringContent() {
     }
   }, [tabParam]);
 
-  // Handler
-  const handleSendUpdated = () => {
+  // Handler mit useCallback
+  const handleSendUpdated = useCallback(() => {
     reloadData();
-  };
+  }, [reloadData]);
 
-  const handleDeletePDF = async (pdf: any) => {
+  const handleTabChange = useCallback((tab: 'dashboard' | 'performance' | 'recipients' | 'clippings' | 'suggestions') => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleDeletePDF = useCallback(async (pdf: any) => {
     setPdfToDelete(pdf);
     setShowDeleteDialog(true);
-  };
+  }, []);
 
-  const confirmDeletePDF = async () => {
+  const confirmDeletePDF = useCallback(async () => {
     if (!pdfToDelete) return;
 
     try {
@@ -83,9 +87,9 @@ function MonitoringContent() {
       setShowDeleteDialog(false);
       setPdfToDelete(null);
     }
-  };
+  }, [pdfToDelete, contextDeletePDF]);
 
-  const handleConfirmSuggestion = async (suggestion: MonitoringSuggestion) => {
+  const handleConfirmSuggestion = useCallback(async (suggestion: MonitoringSuggestion) => {
     if (!user?.uid || !currentOrganization?.id) return;
 
     try {
@@ -103,9 +107,9 @@ function MonitoringContent() {
       console.error('Fehler beim Bestätigen:', error);
       toastService.error('Fehler beim Übernehmen des Vorschlags');
     }
-  };
+  }, [user?.uid, currentOrganization?.id, reloadData]);
 
-  const handleMarkSpam = async (suggestion: MonitoringSuggestion) => {
+  const handleMarkSpam = useCallback(async (suggestion: MonitoringSuggestion) => {
     if (!user?.uid || !currentOrganization?.id) return;
 
     try {
@@ -127,7 +131,7 @@ function MonitoringContent() {
       console.error('Fehler beim Spam-Markieren:', error);
       toastService.error('Fehler beim Markieren als Spam');
     }
-  };
+  }, [user?.uid, currentOrganization?.id, reloadData]);
 
   // Loading State
   if (isLoadingData) return <LoadingState />;
@@ -157,7 +161,7 @@ function MonitoringContent() {
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
-            <TabNavigation activeTab={activeTab} onChange={setActiveTab} />
+            <TabNavigation activeTab={activeTab} onChange={handleTabChange} />
           </div>
         </div>
 
