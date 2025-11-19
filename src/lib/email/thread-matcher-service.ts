@@ -61,6 +61,7 @@ export class ThreadMatcherService {
       };
 
     } catch (error) {
+      console.error('❌ Thread matcher error:', error);
       return {
         success: false
       };
