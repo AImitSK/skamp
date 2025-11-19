@@ -52,11 +52,13 @@ export async function uploadEmailAttachment(
       }
     });
 
-    // Mache File öffentlich lesbar (für Download)
-    await fileRef.makePublic();
+    // Generiere Signed URL (gültig für 7 Tage)
+    const [signedUrl] = await fileRef.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 Tage
+    });
 
-    // Generiere Download-URL
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+    const publicUrl = signedUrl;
 
     // Erstelle EmailAttachment-Objekt
     const attachment: EmailAttachment = {
