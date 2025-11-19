@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
         headers: formData.get('headers'),
         envelope: formData.get('envelope'),
         attachments: formData.get('attachments'),
+        attachmentInfo: formData.get('attachment-info'),
+        formData: formData, // Für Attachment-Extraktion
         // SendGrid-spezifische Felder
         spam_score: formData.get('spam_score'),
         spam_report: formData.get('spam_report'),
@@ -115,18 +117,45 @@ export async function POST(request: NextRequest) {
     const emailAccountId = mailboxInfo.emailAccountId || 'system-inbox'; // Fallback
     const userId = mailboxInfo.userId || '';
 
+    // 4. Attachments verarbeiten (wenn vorhanden)
+    let processedAttachments: any[] = [];
+    let processedHtmlContent = body.html;
+
+    if (body.attachmentInfo && body.formData) {
+      try {
+        const { extractAttachmentsFromFormData, replaceInlineImageCIDs } = await import('@/lib/email/email-attachments-service');
+
+        // Extrahiere und uploade Attachments
+        processedAttachments = await extractAttachmentsFromFormData(
+          body.formData,
+          organizationId,
+          messageId
+        );
+
+        // Ersetze CID-Links in HTML mit echten URLs
+        if (processedHtmlContent && processedAttachments.length > 0) {
+          processedHtmlContent = replaceInlineImageCIDs(processedHtmlContent, processedAttachments);
+        }
+
+        console.log(`[Inbound Webhook] Processed ${processedAttachments.length} attachments`);
+      } catch (attachmentError: any) {
+        console.error('[Inbound Webhook] Attachment processing failed:', attachmentError);
+        // Weiter ohne Attachments - Email soll trotzdem verarbeitet werden
+      }
+    }
+
     const result = await inboundEmailProcessorService.processIncomingEmail({
       messageId,
       from: body.from,
       to: body.to,
       subject: body.subject || '(Kein Betreff)',
       textContent: body.text,
-      htmlContent: body.html,
+      htmlContent: processedHtmlContent,
       headers,
       receivedAt: new Date(),
       inReplyTo,
       references,
-      attachments: body.attachments ? parseInt(body.attachments as string) : 0,
+      attachments: processedAttachments, // Array von EmailAttachment-Objekten
       // Inbox Context
       projectId: threadParams.projectId,
       domainId: threadParams.domainId,

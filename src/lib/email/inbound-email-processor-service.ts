@@ -30,7 +30,7 @@ export interface IncomingEmailData {
   references?: string | null; // Komma-separierte Liste
 
   // Attachments
-  attachments?: number; // Anzahl der Anhänge
+  attachments?: any[]; // Array von EmailAttachment-Objekten
 
   // Inbox Context (aus redirect-handler)
   projectId: string | null;
@@ -112,7 +112,8 @@ class InboundEmailProcessorService {
         mailboxType: emailData.mailboxType,
         redirectMetadata: emailData.redirectMetadata,
         labels: emailData.labels,
-        hasAttachments: (emailData.attachments || 0) > 0,
+        hasAttachments: Array.isArray(emailData.attachments) && emailData.attachments.length > 0,
+        attachments: emailData.attachments || [],
         inReplyTo: emailData.inReplyTo,
         references: this.parseReferences(emailData.references)
       });

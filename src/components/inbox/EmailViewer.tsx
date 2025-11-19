@@ -23,7 +23,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationCircleIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
@@ -362,16 +363,28 @@ export function EmailViewer({
                   </p>
                   <div className="space-y-2">
                     {email.attachments.map((attachment) => (
-                      <div 
+                      <a
                         key={attachment.id}
-                        className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                        href={attachment.url}
+                        download={attachment.filename}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-2 p-3 border rounded-lg hover:bg-gray-50 hover:border-[#005fab] transition-colors group"
                       >
-                        <PaperClipIcon className="h-5 w-5 text-gray-400" />
-                        <span className="text-sm text-gray-700">{attachment.filename}</span>
-                        <span className="text-xs text-gray-500">
-                          ({Math.round(attachment.size / 1024)} KB)
-                        </span>
-                      </div>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <PaperClipIcon className="h-5 w-5 text-gray-400 group-hover:text-[#005fab] flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-700 group-hover:text-[#005fab] truncate">
+                              {attachment.filename}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {Math.round(attachment.size / 1024)} KB
+                              {attachment.inline && ' • Inline'}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowDownTrayIcon className="h-5 w-5 text-gray-400 group-hover:text-[#005fab] flex-shrink-0" />
+                      </a>
                     ))}
                   </div>
                 </div>
