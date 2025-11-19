@@ -1,44 +1,11 @@
 // src/lib/email/thread-matcher-service.ts
-// Am Anfang der thread-matcher-service.ts, ersetze die imports:
-
-import { 
-  collection, 
-  doc,
-  getDoc,
-  getDocs, 
-  addDoc, 
-  updateDoc,
-  query, 
-  where, 
-  orderBy,
-  limit,
-  serverTimestamp,
-  Timestamp,
-  increment,
-  getFirestore
-} from 'firebase/firestore';
-import { initializeApp, getApps } from 'firebase/app';
-import { 
+import {
   EmailThread,
   EmailAddressInfo,
   EmailMessage
 } from '@/types/email-enhanced';
-
-// Firebase-Konfiguration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-// Initialisiere Firebase App wenn noch nicht geschehen
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-
-// Firestore Instanz
-const db = getFirestore(app);
+import { adminDb } from '@/lib/firebase/admin-init';
+import type { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 interface ThreadMatchingCriteria {
   messageId: string;
@@ -123,13 +90,11 @@ export class ThreadMatcherService {
       }
 
       // Suche nach E-Mails mit diesen Message-IDs
-      const messagesQuery = query(
-        collection(db, 'email_messages'),
-        where('organizationId', '==', criteria.organizationId),
-        where('messageId', 'in', messageIdsToFind.slice(0, 10)) // Firestore limit
-      );
-
-      const messagesSnapshot = await getDocs(messagesQuery);
+      const messagesSnapshot = await adminDb
+        .collection('email_messages')
+        .where('organizationId', '==', criteria.organizationId)
+        .where('messageId', 'in', messageIdsToFind.slice(0, 10)) // Firestore limit
+        .get();
       
       if (!messagesSnapshot.empty) {
         // Thread-ID aus der ersten gefundenen Nachricht
@@ -168,15 +133,13 @@ export class ThreadMatcherService {
 
       // Suche nach Threads mit ähnlichem Subject
       // Hinweis: Firestore unterstützt kein LIKE, daher exakte Übereinstimmung
-      const threadsQuery = query(
-        collection(db, this.collectionName),
-        where('organizationId', '==', criteria.organizationId),
-        where('subject', '==', normalizedSubject),
-        orderBy('lastMessageAt', 'desc'),
-        limit(5)
-      );
-
-      const threadsSnapshot = await getDocs(threadsQuery);
+      const threadsSnapshot = await adminDb
+        .collection(this.collectionName)
+        .where('organizationId', '==', criteria.organizationId)
+        .where('subject', '==', normalizedSubject)
+        .orderBy('lastMessageAt', 'desc')
+        .limit(5)
+        .get();
       
       if (!threadsSnapshot.empty) {
         // Prüfe Teilnehmer für besseres Matching
@@ -196,15 +159,13 @@ export class ThreadMatcherService {
       }
 
       // Alternative: Suche mit Original-Subject (mit Re:, etc.)
-      const alternativeQuery = query(
-        collection(db, this.collectionName),
-        where('organizationId', '==', criteria.organizationId),
-        where('subject', '==', criteria.subject),
-        orderBy('lastMessageAt', 'desc'),
-        limit(1)
-      );
-
-      const altSnapshot = await getDocs(alternativeQuery);
+      const altSnapshot = await adminDb
+        .collection(this.collectionName)
+        .where('organizationId', '==', criteria.organizationId)
+        .where('subject', '==', criteria.subject)
+        .orderBy('lastMessageAt', 'desc')
+        .limit(1)
+        .get();
       if (!altSnapshot.empty) {
         const thread = { ...altSnapshot.docs[0].data(), id: altSnapshot.docs[0].id } as EmailThread;
         return {
@@ -233,12 +194,12 @@ export class ThreadMatcherService {
       const threadData: Omit<EmailThread, 'id'> = {
         subject: criteria.subject,
         participants,
-        lastMessageAt: serverTimestamp() as Timestamp,
+        lastMessageAt: adminDb.FieldValue.serverTimestamp() as any,
         
         organizationId: criteria.organizationId,
         userId: '', // Wird später durch Email Address userId gesetzt
-        createdAt: serverTimestamp() as Timestamp,
-        updatedAt: serverTimestamp() as Timestamp,
+        createdAt: adminDb.FieldValue.serverTimestamp() as any,
+        updatedAt: adminDb.FieldValue.serverTimestamp() as any,
         
         contactIds: [], // TODO: Contact-Verknüpfung implementieren
         
@@ -251,10 +212,9 @@ export class ThreadMatcherService {
         priority: 'normal'
       };
 
-      const docRef = await addDoc(
-        collection(db, this.collectionName),
-        threadData
-      );
+      const docRef = await adminDb
+        .collection(this.collectionName)
+        .add(threadData);
 
       return { ...threadData, id: docRef.id } as EmailThread;
     } catch (error) {
@@ -279,13 +239,16 @@ export class ThreadMatcherService {
         this.extractParticipants(criteria)
       );
 
-      await updateDoc(doc(db, this.collectionName, threadId), {
-        lastMessageAt: serverTimestamp(),
-        messageCount: increment(1),
-        unreadCount: increment(1),
-        participants: updatedParticipants,
-        updatedAt: serverTimestamp()
-      });
+      await adminDb
+        .collection(this.collectionName)
+        .doc(threadId)
+        .update({
+          lastMessageAt: adminDb.FieldValue.serverTimestamp(),
+          messageCount: adminDb.FieldValue.increment(1),
+          unreadCount: adminDb.FieldValue.increment(1),
+          participants: updatedParticipants,
+          updatedAt: adminDb.FieldValue.serverTimestamp()
+        });
     } catch (error) {
     }
   }
@@ -295,10 +258,12 @@ export class ThreadMatcherService {
    */
   async getThread(threadId: string): Promise<EmailThread | null> {
     try {
-      const docRef = doc(db, this.collectionName, threadId);
-      const docSnap = await getDoc(docRef);
-      
-      if (!docSnap.exists()) {
+      const docSnap = await adminDb
+        .collection(this.collectionName)
+        .doc(threadId)
+        .get();
+
+      if (!docSnap.exists) {
         return null;
       }
 
