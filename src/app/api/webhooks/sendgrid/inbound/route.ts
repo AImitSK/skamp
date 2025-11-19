@@ -116,10 +116,39 @@ export async function POST(request: NextRequest) {
       attachments: []
     };
 
-    // Process attachments if present
-    const attachments = await processAttachments(formData, parsedEmail);
-    if (attachments.length > 0) {
-      emailData.attachments = attachments;
+    // Process attachments if present (mit Storage-Upload)
+    let processedAttachments: EmailAttachment[] = [];
+    if (parsedEmail['attachment-info']) {
+      try {
+        // Bestimme organizationId aus to-Adresse (für Storage-Path)
+        // Für jetzt: Extrahiere aus erster to-Adresse oder nutze Default
+        const orgId = toAddresses[0]?.email.split('@')[0] || 'default';
+
+        const { extractAttachmentsFromFormData } = await import('@/lib/email/email-attachments-service');
+        processedAttachments = await extractAttachmentsFromFormData(
+          formData,
+          orgId, // Wird später durch richtige orgId ersetzt
+          emailData.messageId
+        );
+
+        console.log(`📎 Processed ${processedAttachments.length} attachments`);
+      } catch (attachmentError) {
+        console.error('❌ Attachment processing failed:', attachmentError);
+        // Fallback zu alter Methode ohne Upload
+        processedAttachments = await processAttachments(formData, parsedEmail);
+      }
+    } else {
+      processedAttachments = await processAttachments(formData, parsedEmail);
+    }
+
+    if (processedAttachments.length > 0) {
+      emailData.attachments = processedAttachments;
+
+      // Ersetze CID-Links in HTML mit echten URLs
+      if (emailData.htmlContent && processedAttachments.some(a => a.inline && a.contentId)) {
+        const { replaceInlineImageCIDs } = await import('@/lib/email/email-attachments-service');
+        emailData.htmlContent = replaceInlineImageCIDs(emailData.htmlContent, processedAttachments);
+      }
     }
 
     // Process the email through our flexible pipeline
