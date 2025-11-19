@@ -76,8 +76,8 @@ export async function flexibleEmailProcessor(
     // Use the stable thread matcher service
 
     // 1. Organisation über empfangende E-Mail-Adresse ermitteln
-    const { organizationId, emailAccountId } = await resolveOrganization(emailData.to);
-    
+    const { organizationId, emailAccountId, domainId, projectId } = await resolveOrganization(emailData.to);
+
     if (!organizationId || !emailAccountId) {
       console.log('⚠️ No organization found for email addresses:', emailData.to.map(addr => addr.email));
       return {
@@ -89,7 +89,7 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    console.log('📍 Organization resolved:', { organizationId, emailAccountId });
+    console.log('📍 Organization resolved:', { organizationId, emailAccountId, domainId, projectId });
 
     // 2. Thread-Matching durchführen
     const threadResult = await threadMatcherService.findOrCreateThread({
@@ -99,7 +99,9 @@ export async function flexibleEmailProcessor(
       subject: emailData.subject,
       from: emailData.from,
       to: emailData.to,
-      organizationId
+      organizationId,
+      ...(domainId && { domainId }),
+      ...(projectId && { projectId })
     });
 
     if (!threadResult.success || !threadResult.thread?.id) {
@@ -160,21 +162,25 @@ export async function flexibleEmailProcessor(
       organizationId,
       emailAccountId,
       userId: 'system', // Wird später durch Assignment geändert
-      
+
+      // Mailbox-Zuordnung (neue Inbox-Struktur)
+      ...(domainId && { domainId }),
+      ...(projectId && { projectId }),
+
       // Adressen
       from: emailData.from,
       to: emailData.to,
-      
+
       // Inhalt
       subject: emailData.subject,
       textContent: emailData.textContent || '',
       htmlContent: emailData.htmlContent,
       snippet: generateSnippet(emailData.textContent || emailData.htmlContent || ''),
-      
+
       // Threading
       ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
       references: emailData.references || [],
-      
+
       // Metadaten
       receivedAt: new Date() as any, // Server-Timestamp wird vom Service gesetzt
       isRead: false,
@@ -184,10 +190,10 @@ export async function flexibleEmailProcessor(
       folder: 'inbox',
       importance: 'normal',
       labels: [],
-      
+
       // Attachments
       attachments: emailData.attachments || [],
-      
+
       // Spam-Info
       spamScore: emailData.spamScore,
       spamReport: emailData.spamReport
@@ -223,30 +229,86 @@ export async function flexibleEmailProcessor(
  */
 async function resolveOrganization(
   toAddresses: EmailAddressInfo[]
-): Promise<{ organizationId?: string; emailAccountId?: string }> {
+): Promise<{ organizationId?: string; emailAccountId?: string; domainId?: string; projectId?: string }> {
   for (const address of toAddresses) {
     try {
       console.log('🔍 Resolving organization for:', address.email);
-      
-      // 1. Exakte E-Mail-Adresse suchen
+
+      // 1. Suche in Domain-Mailboxen (neue Inbox-Struktur)
+      const domainMailboxQuery = query(
+        collection(serverDb, 'inbox_domain_mailboxes'),
+        where('inboxAddress', '==', address.email.toLowerCase()),
+        where('status', '==', 'active')
+      );
+
+      const domainMailboxSnapshot = await getDocs(domainMailboxQuery);
+
+      if (!domainMailboxSnapshot.empty) {
+        const doc = domainMailboxSnapshot.docs[0];
+        const data = doc.data();
+
+        console.log('📬 Found domain mailbox:', {
+          id: doc.id,
+          inboxAddress: data.inboxAddress,
+          domain: data.domain,
+          organizationId: data.organizationId,
+          domainId: data.domainId
+        });
+
+        return {
+          organizationId: data.organizationId,
+          emailAccountId: doc.id,
+          domainId: data.domainId
+        };
+      }
+
+      // 2. Suche in Projekt-Mailboxen (neue Inbox-Struktur)
+      const projectMailboxQuery = query(
+        collection(serverDb, 'inbox_project_mailboxes'),
+        where('inboxAddress', '==', address.email.toLowerCase()),
+        where('status', 'in', ['active', 'completed'])
+      );
+
+      const projectMailboxSnapshot = await getDocs(projectMailboxQuery);
+
+      if (!projectMailboxSnapshot.empty) {
+        const doc = projectMailboxSnapshot.docs[0];
+        const data = doc.data();
+
+        console.log('📂 Found project mailbox:', {
+          id: doc.id,
+          inboxAddress: data.inboxAddress,
+          projectName: data.projectName,
+          organizationId: data.organizationId,
+          projectId: data.projectId
+        });
+
+        return {
+          organizationId: data.organizationId,
+          emailAccountId: doc.id,
+          projectId: data.projectId
+        };
+      }
+
+      // 3. Fallback: Exakte E-Mail-Adresse in email_addresses (alte Struktur)
       const exactQuery = query(
         collection(serverDb, 'email_addresses'),
         where('email', '==', address.email),
         where('isActive', '==', true)
       );
-      
+
       const exactSnapshot = await getDocs(exactQuery);
-      
+
       if (!exactSnapshot.empty) {
         const doc = exactSnapshot.docs[0];
         const data = doc.data();
-        
-        console.log('📧 Found exact email address:', {
+
+        console.log('📧 Found exact email address (legacy):', {
           id: doc.id,
           email: data.email,
           organizationId: data.organizationId
         });
-        
+
         return {
           organizationId: data.organizationId,
           emailAccountId: doc.id
