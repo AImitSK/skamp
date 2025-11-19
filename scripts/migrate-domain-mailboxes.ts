@@ -64,13 +64,23 @@ async function migrateDomainMailboxes() {
   console.log('🚀 Starte Migration: Domain-Postfächer erstellen\n');
 
   try {
-    // 1. Alle Domains laden
-    console.log('📥 Lade alle Domains aus email_domains...');
-    const domainsSnapshot = await getDocs(collection(db, 'email_domains'));
-    const domains: EmailDomain[] = domainsSnapshot.docs.map(doc => ({
+    // 1. Alle Domains laden (prüfe beide Collections)
+    console.log('📥 Lade Domains aus email_domains_enhanced...');
+    let domainsSnapshot = await getDocs(collection(db, 'email_domains_enhanced'));
+    let domains: EmailDomain[] = domainsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as EmailDomain));
+
+    // Fallback zu email_domains falls enhanced leer ist
+    if (domains.length === 0) {
+      console.log('⚠️  email_domains_enhanced ist leer, versuche email_domains...');
+      domainsSnapshot = await getDocs(collection(db, 'email_domains'));
+      domains = domainsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as EmailDomain));
+    }
 
     console.log(`✅ ${domains.length} Domains gefunden\n`);
 
