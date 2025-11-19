@@ -5,7 +5,8 @@ import {
   EmailMessage
 } from '@/types/email-enhanced';
 import { adminDb } from '@/lib/firebase/admin-init';
-import type { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
+import type { Timestamp } from 'firebase-admin/firestore';
 
 interface ThreadMatchingCriteria {
   messageId: string;
@@ -197,12 +198,12 @@ export class ThreadMatcherService {
       const threadData: Omit<EmailThread, 'id'> = {
         subject: criteria.subject,
         participants,
-        lastMessageAt: adminDb.FieldValue.serverTimestamp() as any,
-        
+        lastMessageAt: FieldValue.serverTimestamp() as any,
+
         organizationId: criteria.organizationId,
         userId: '', // Wird später durch Email Address userId gesetzt
-        createdAt: adminDb.FieldValue.serverTimestamp() as any,
-        updatedAt: adminDb.FieldValue.serverTimestamp() as any,
+        createdAt: FieldValue.serverTimestamp() as any,
+        updatedAt: FieldValue.serverTimestamp() as any,
         
         contactIds: [], // TODO: Contact-Verknüpfung implementieren
         
@@ -246,11 +247,11 @@ export class ThreadMatcherService {
         .collection(this.collectionName)
         .doc(threadId)
         .update({
-          lastMessageAt: adminDb.FieldValue.serverTimestamp(),
-          messageCount: adminDb.FieldValue.increment(1),
-          unreadCount: adminDb.FieldValue.increment(1),
+          lastMessageAt: FieldValue.serverTimestamp(),
+          messageCount: FieldValue.increment(1),
+          unreadCount: FieldValue.increment(1),
           participants: updatedParticipants,
-          updatedAt: adminDb.FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         });
     } catch (error) {
       console.error('❌ updateThreadActivity error:', error);
