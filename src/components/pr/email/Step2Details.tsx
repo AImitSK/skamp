@@ -166,6 +166,71 @@ export default function Step2Details({
           )}
         </div>
 
+        {/* Inbox-Einstellungen */}
+        <div className="border rounded-lg p-6 bg-blue-50">
+          <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+            <EnvelopeIcon className="h-5 w-5 text-gray-500" />
+            Antworten-Verwaltung
+            <InfoTooltip content="Entscheide, wo Antworten auf deine Kampagne landen sollen." />
+          </h3>
+
+          <div className="space-y-3">
+            {/* Option 1: System-Inbox (Standard) */}
+            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-white hover:bg-blue-50 transition-colors border border-blue-200">
+              <input
+                type="radio"
+                name="inboxMode"
+                checked={metadata.useSystemInbox !== false}
+                onChange={() => onMetadataChange({ useSystemInbox: true })}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-sm flex items-center gap-2">
+                  CeleroPress Inbox verwenden
+                  <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Empfohlen</span>
+                </div>
+                <ul className="text-xs text-gray-600 mt-1 space-y-1">
+                  <li>✓ Antworten landen in der CeleroPress Inbox</li>
+                  <li>✓ Team-Zusammenarbeit möglich</li>
+                  <li>✓ Projekt-Tracking aktiv</li>
+                  <li>✓ Automatische Archivierung</li>
+                </ul>
+              </div>
+            </label>
+
+            {/* Option 2: Eigene Mail-Software */}
+            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-white hover:bg-gray-50 transition-colors border border-gray-200">
+              <input
+                type="radio"
+                name="inboxMode"
+                checked={metadata.useSystemInbox === false}
+                onChange={() => onMetadataChange({ useSystemInbox: false })}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-sm">
+                  Eigene Mail-Software verwenden
+                </div>
+                <ul className="text-xs text-gray-600 mt-1 space-y-1">
+                  <li>• Antworten landen in deinem Postfach</li>
+                  <li>• Du arbeitest mit Outlook/Thunderbird/etc.</li>
+                  <li>• Kein Projekt-Tracking in CeleroPress</li>
+                </ul>
+              </div>
+            </label>
+          </div>
+
+          {/* Info: Reply-To Vorschau */}
+          {metadata.useSystemInbox === false && (
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Hinweis:</strong> Antworten gehen direkt an die Absender-Adresse.
+                Es erfolgt kein Tracking in der CeleroPress Inbox.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* E-Mail Metadaten */}
         <div className="border rounded-lg p-6 bg-gray-50">
           <h3 className="text-base font-semibold mb-4 flex items-center gap-2">

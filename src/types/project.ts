@@ -239,6 +239,19 @@ export interface Project {
     };
     avgResponseTime?: number; // in Stunden
   };
+
+  // ========================================
+  // INBOX-INTEGRATION
+  // ========================================
+
+  // Domain-Verknüpfung für Email-System
+  domainId?: string; // Referenz zu email_domains_enhanced
+
+  // Email-Adresse für Projekt-Kommunikation
+  emailAddressId?: string; // Referenz zu email_addresses
+
+  // Inbox-Modus
+  useSystemInbox?: boolean; // true = CeleroPress Inbox, false = eigene Mail-Software (Default: true)
 }
 
 export type ProjectStatus = 

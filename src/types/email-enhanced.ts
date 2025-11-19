@@ -24,6 +24,7 @@ export interface EmailAddress extends BaseEntity {
   displayName: string; // "Pressestelle ABC GmbH"
   isActive: boolean;
   isDefault: boolean;
+  isSharedDomain?: boolean; // Email auf shared domain (z.B. celeropress.com)
   
   // Erweitert: E-Mail-Aliasing
   aliasType?: 'specific' | 'catch-all' | 'pattern';
@@ -209,10 +210,24 @@ export interface EmailMessage extends BaseEntity {
   // ============================================
   // PLAN 7/9: PROJEKT-INTEGRATION
   // ============================================
-  
+
   // NEU: Projekt-Zuordnung
   projectId?: string;
   projectStage?: import('./project').PipelineStage; // Pipeline-Phase zum Zeitpunkt des E-Mail-Empfangs
+
+  // ============================================
+  // INBOX-SYSTEM INTEGRATION
+  // ============================================
+
+  // Domain & Postfach-Zuordnung
+  domainId?: string;            // Immer vorhanden bei Inbox-Messages
+  mailboxType?: 'domain' | 'project'; // Typ des Postfachs
+
+  // Redirect-Metadata (bei umgeleiteten Messages)
+  redirectMetadata?: {
+    originalProjectId?: string;
+    originalProjectName?: string;
+  };
   
   // ERWEITERT: Mehr Verknüpfungen
   approvalId?: string;          // Falls E-Mail aus Freigabe-Prozess
@@ -318,11 +333,28 @@ export interface EmailThread extends BaseEntity {
   // ============================================
   // PLAN 7/9: PROJEKT-INTEGRATION
   // ============================================
-  
+
   // NEU: Projekt-Verknüpfung
   projectId?: string;
   projectTitle?: string;        // Denormalisiert für Performance
   projectStage?: import('./project').PipelineStage; // Aktueller Pipeline-Status
+
+  // ============================================
+  // INBOX-SYSTEM INTEGRATION
+  // ============================================
+
+  // Domain & Postfach-Zuordnung
+  domainId?: string;            // Immer vorhanden bei Inbox-Threads
+  mailboxType?: 'domain' | 'project'; // Typ des Postfachs
+
+  // Redirect-Metadata (bei umgeleiteten Threads von archivierten Projekten)
+  redirectMetadata?: {
+    originalProjectId?: string;
+    originalProjectName?: string;
+    archivedAt?: Timestamp;
+    redirectedAt?: Timestamp;
+    redirectReason?: 'project_archived' | 'manual';
+  };
   
   // NEU: Projekt-Kontext
   projectContext?: {

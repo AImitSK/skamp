@@ -75,6 +75,7 @@ export interface EmailDraft {
   metadata: {
     subject: string;
     preheader: string; // Vorschautext
+    useSystemInbox?: boolean; // true = CeleroPress Inbox, false = eigene Mail-Software (Default: true)
   };
   
   // Stufe 3: Versand-Optionen

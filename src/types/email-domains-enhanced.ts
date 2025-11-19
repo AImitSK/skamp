@@ -94,6 +94,8 @@ export interface EmailDomainEnhanced extends BaseEntity {
   
   // Configuration
   isDefault?: boolean; // Is this the default sending domain?
+  isShared?: boolean; // Shared domain across organizations (e.g., celeropress.com)
+  inboxEnabled?: boolean; // Enable inbox functionality for this domain (default: true)
   allowedSenders?: string[]; // Email addresses allowed to send from this domain
   
   // Usage Statistics
