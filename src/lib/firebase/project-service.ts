@@ -65,7 +65,7 @@ export const projectService = {
 
       // Automatische Projekt-Postfach-Erstellung
       try {
-        const inboxAddress = `${docRef.id}@inbox.sk-online-marketing.de`;
+        const inboxAddress = `${docRef.id}@inbox.sk-online-marketing.de`.toLowerCase();
 
         await addDoc(collection(db, 'inbox_project_mailboxes'), {
           organizationId: projectData.organizationId,
