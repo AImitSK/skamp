@@ -54,27 +54,50 @@ export function AIInsightsPanel({
 
   const performAnalysis = async () => {
     if (!email.textContent && !email.htmlContent) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
+      // Bereinige und kürze Content für AI-Analyse
+      let content = email.textContent || email.htmlContent || '';
+
+      // Entferne HTML-Tags, eingebettete Bilder und CSS wenn HTML-Content
+      if (!email.textContent && email.htmlContent) {
+        content = email.htmlContent
+          .replace(/<img[^>]*>/gi, '[Bild]') // Ersetze Bilder
+          .replace(/<style[^>]*>.*?<\/style>/gis, '') // Entferne CSS
+          .replace(/<script[^>]*>.*?<\/script>/gis, '') // Entferne Scripts
+          .replace(/<[^>]+>/g, ' ') // Entferne alle HTML-Tags
+          .replace(/\s+/g, ' ') // Normalisiere Whitespace
+          .trim();
+      }
+
+      // Kürze auf maximal 18000 Zeichen (Puffer für Context)
+      if (content.length > 18000) {
+        content = content.substring(0, 18000) + '... [gekürzt]';
+      }
+
       const result = await firebaseAIService.fullEmailAnalysis(
-        email.textContent || email.htmlContent || '',
+        content,
         thread.subject,
         email.from.email,
         context
       );
-      
+
+      // Null-Check für result
+      if (!result) {
+        throw new Error('Keine Analyse-Ergebnisse erhalten');
+      }
+
       setAnalysis(result);
-      
+
       // Auto-apply insights if confidence is high
-      if (result.priority.confidence > 0.8 && onPriorityChange) {
+      if (result.priority?.confidence > 0.8 && onPriorityChange) {
         onPriorityChange(result.priority.priority);
       }
-      
+
     } catch (err: any) {
-      console.error('AI Analysis failed:', err);
       setError(err.message || 'Analyse fehlgeschlagen');
     } finally {
       setLoading(false);
@@ -115,7 +138,7 @@ export function AIInsightsPanel({
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-purple-600" />
             <span className="text-sm font-medium text-purple-700">KI-Analyse</span>
-            {analysis && (
+            {analysis?.sentiment && analysis?.priority && (
               <div className="flex items-center gap-1">
                 <Badge color="green" className="text-xs">
                   {Math.round(analysis.sentiment.confidence * 100)}%
