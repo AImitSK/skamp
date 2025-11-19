@@ -26,19 +26,52 @@ export async function POST(request: NextRequest) {
     } else if (contentType.includes('multipart/form-data') || contentType.includes('application/x-www-form-urlencoded')) {
       // SendGrid sendet als form-data
       const formData = await request.formData();
+
+      // Charsets parsen für korrekte Dekodierung
+      let charsets: any = {};
+      try {
+        const charsetsStr = formData.get('charsets');
+        if (charsetsStr && typeof charsetsStr === 'string') {
+          charsets = JSON.parse(charsetsStr);
+        }
+      } catch (e) {
+        console.error('Failed to parse charsets:', e);
+      }
+
+      // Funktion zum Dekodieren von Text basierend auf Charset
+      const decodeText = (text: string | null, charset?: string): string | null => {
+        if (!text) return text;
+
+        // Wenn charset UTF-8 ist oder nicht angegeben, direkt zurückgeben
+        if (!charset || charset.toLowerCase() === 'utf-8') {
+          return text;
+        }
+
+        // Für andere Charsets versuchen zu dekodieren
+        try {
+          // TextDecoder für verschiedene Charsets
+          const decoder = new TextDecoder(charset);
+          const encoder = new TextEncoder();
+          return decoder.decode(encoder.encode(text));
+        } catch (e) {
+          console.warn(`Failed to decode with charset ${charset}, using original text`);
+          return text;
+        }
+      };
+
       body = {
         to: formData.get('to'),
         from: formData.get('from'),
-        subject: formData.get('subject'),
-        text: formData.get('text'),
-        html: formData.get('html'),
+        subject: decodeText(formData.get('subject') as string, charsets.subject),
+        text: decodeText(formData.get('text') as string, charsets.text),
+        html: decodeText(formData.get('html') as string, charsets.html),
         headers: formData.get('headers'),
         envelope: formData.get('envelope'),
         attachments: formData.get('attachments'),
         // SendGrid-spezifische Felder
         spam_score: formData.get('spam_score'),
         spam_report: formData.get('spam_report'),
-        charsets: formData.get('charsets'),
+        charsets: charsets,
         SPF: formData.get('SPF'),
         DKIM: formData.get('DKIM')
       };
