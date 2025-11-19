@@ -16,6 +16,8 @@ interface ThreadMatchingCriteria {
   from: EmailAddressInfo;
   to: EmailAddressInfo[];
   organizationId: string;
+  domainId?: string;
+  projectId?: string;
 }
 
 interface ThreadMatchResult {
@@ -204,12 +206,16 @@ export class ThreadMatcherService {
         userId: '', // Wird später durch Email Address userId gesetzt
         createdAt: FieldValue.serverTimestamp() as any,
         updatedAt: FieldValue.serverTimestamp() as any,
-        
+
+        // Mailbox-Zuordnung (neue Inbox-Struktur)
+        ...(criteria.domainId && { domainId: criteria.domainId }),
+        ...(criteria.projectId && { projectId: criteria.projectId }),
+
         contactIds: [], // TODO: Contact-Verknüpfung implementieren
-        
+
         messageCount: 1, // Erste Nachricht
         unreadCount: 1, // Erste Nachricht ist ungelesen
-        
+
         threadingStrategy: 'headers',
         confidence: 100,
         status: 'active',
