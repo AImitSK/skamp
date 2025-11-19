@@ -75,21 +75,32 @@ export async function POST(request: NextRequest) {
     // Parse envelope for accurate recipient info
     const envelope = parsedEmail.envelope ? JSON.parse(parsedEmail.envelope) as ParsedEnvelope : null;
     
+    // Truncate Content wenn zu groß (Firestore Limit: 1MB pro Feld)
+    const MAX_CONTENT_SIZE = 900000; // 900KB (Puffer für Metadaten)
+
+    const truncateContent = (content: string | undefined, maxSize: number): string => {
+      if (!content) return '';
+      if (content.length <= maxSize) return content;
+
+      const truncated = content.substring(0, maxSize);
+      return truncated + '\n\n[... Inhalt gekürzt - zu groß für Speicherung ...]';
+    };
+
     // Create email message data
     const emailData: IncomingEmailData = {
       // Headers - mit Fallback wenn headers undefined
       messageId: parsedEmail.headers ? extractMessageId(parsedEmail.headers) : generateMessageId(),
       inReplyTo: parsedEmail.headers ? extractHeader(parsedEmail.headers, 'In-Reply-To') || undefined : undefined,
       references: parsedEmail.headers ? (extractHeader(parsedEmail.headers, 'References')?.split(/\s+/) || []) : [],
-      
+
       // Addresses
       from: fromAddress,
       to: toAddresses,
-      
-      // Content
+
+      // Content (truncated)
       subject: parsedEmail.subject || '(Kein Betreff)',
-      textContent: parsedEmail.text || '',
-      htmlContent: parsedEmail.html || '',
+      textContent: truncateContent(parsedEmail.text, MAX_CONTENT_SIZE),
+      htmlContent: truncateContent(parsedEmail.html, MAX_CONTENT_SIZE),
       
       // Metadata
       spamScore: parsedEmail.spam_score ? parseFloat(parsedEmail.spam_score) : undefined,
