@@ -259,12 +259,6 @@ async function resolveOrganization(
         const doc = exactSnapshot.docs[0];
         const data = doc.data();
 
-        :', {
-          id: doc.id,
-          email: data.email,
-          organizationId: data.organizationId
-        });
-
         return {
           organizationId: data.organizationId,
           emailAccountId: doc.id
