@@ -94,14 +94,25 @@ class InboundEmailProcessorService {
       }
 
       // 3. Erstelle Message
+      // Truncate Text/HTML wenn zu groß (Firestore Limit: 1MB pro Feld)
+      const MAX_CONTENT_SIZE = 900000; // 900KB (Puffer für Metadaten)
+
+      const truncateContent = (content: string | undefined, maxSize: number): string => {
+        if (!content) return '';
+        if (content.length <= maxSize) return content;
+
+        const truncated = content.substring(0, maxSize);
+        return truncated + '\n\n[... Inhalt gekürzt - zu groß für Speicherung ...]';
+      };
+
       const message = await this.createMessage({
         threadId: threadResult.threadId,
         messageId: emailData.messageId,
         from: fromInfo,
         to: [toInfo],
         subject: emailData.subject,
-        textContent: emailData.textContent || '',
-        htmlContent: emailData.htmlContent,
+        textContent: truncateContent(emailData.textContent, MAX_CONTENT_SIZE),
+        htmlContent: truncateContent(emailData.htmlContent, MAX_CONTENT_SIZE),
         headers: emailData.headers,
         receivedAt: Timestamp.fromDate(emailData.receivedAt),
         organizationId,
