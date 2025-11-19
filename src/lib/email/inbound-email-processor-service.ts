@@ -119,6 +119,14 @@ class InboundEmailProcessorService {
 
       console.log(`[InboundProcessor] Created message ${message.id} in thread ${threadResult.threadId}`);
 
+      // 4. Update Mailbox-Statistiken
+      await this.updateMailboxStats(
+        emailData.domainId,
+        emailData.projectId,
+        emailData.mailboxType,
+        threadResult.isNew || false
+      );
+
       return {
         success: true,
         threadId: threadResult.threadId,
@@ -540,6 +548,66 @@ class InboundEmailProcessorService {
     }
 
     return false;
+  }
+
+  /**
+   * Aktualisiert Mailbox-Statistiken
+   */
+  private async updateMailboxStats(
+    domainId: string | null,
+    projectId: string | null,
+    mailboxType: 'domain' | 'project',
+    isNewThread: boolean
+  ): Promise<void> {
+    try {
+      if (mailboxType === 'domain' && domainId) {
+        // Update Domain Mailbox
+        const mailboxRef = adminDb.collection('inbox_domain_mailboxes').doc(domainId);
+        const mailboxDoc = await mailboxRef.get();
+        const mailboxData = mailboxDoc.data();
+
+        const updates: any = {
+          unreadCount: (mailboxData?.unreadCount || 0) + 1,
+          updatedAt: Timestamp.now()
+        };
+
+        if (isNewThread) {
+          updates.threadCount = (mailboxData?.threadCount || 0) + 1;
+        }
+
+        await mailboxRef.update(updates);
+        console.log(`[InboundProcessor] Updated domain mailbox stats: ${domainId}`);
+
+      } else if (mailboxType === 'project' && projectId) {
+        // Update Project Mailbox
+        const mailboxQuery = await adminDb
+          .collection('inbox_project_mailboxes')
+          .where('projectId', '==', projectId)
+          .limit(1)
+          .get();
+
+        if (!mailboxQuery.empty) {
+          const mailboxRef = mailboxQuery.docs[0].ref;
+          const mailboxData = mailboxQuery.docs[0].data();
+
+          const updates: any = {
+            unreadCount: (mailboxData?.unreadCount || 0) + 1,
+            updatedAt: Timestamp.now()
+          };
+
+          if (isNewThread) {
+            updates.threadCount = (mailboxData?.threadCount || 0) + 1;
+          }
+
+          await mailboxRef.update(updates);
+          console.log(`[InboundProcessor] Updated project mailbox stats: ${projectId}`);
+        }
+      }
+
+    } catch (error) {
+      console.error('[InboundProcessor] Error updating mailbox stats:', error);
+      // Nicht blockierend - Email wurde bereits verarbeitet
+    }
   }
 
   /**
