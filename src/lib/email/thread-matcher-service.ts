@@ -116,6 +116,7 @@ export class ThreadMatcherService {
 
       return { success: false };
     } catch (error) {
+      console.error('❌ matchByHeaders error:', error);
       return { success: false };
     }
   }
@@ -180,6 +181,7 @@ export class ThreadMatcherService {
 
       return { success: false };
     } catch (error) {
+      console.error('❌ matchBySubject error:', error);
       return { success: false };
     }
   }
@@ -251,6 +253,7 @@ export class ThreadMatcherService {
           updatedAt: adminDb.FieldValue.serverTimestamp()
         });
     } catch (error) {
+      console.error('❌ updateThreadActivity error:', error);
     }
   }
 
@@ -270,6 +273,7 @@ export class ThreadMatcherService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailThread;
     } catch (error) {
+      console.error('❌ getThread error:', error);
       return null;
     }
   }
