@@ -6,8 +6,6 @@ import { EmailThread } from '@/types/inbox-enhanced';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { StatusManager } from '@/components/inbox/StatusManager';
-import { Avatar } from '@/components/ui/avatar';
-import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 import { 
   ChevronDoubleRightIcon,
@@ -16,7 +14,7 @@ import {
   CheckIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 
 interface EmailListProps {
@@ -38,7 +36,6 @@ export function EmailList({
   onAssign,
   organizationId
 }: EmailListProps) {
-  const { getAvatarUrl, getInitials } = useAuth();
   
   // NEU: State für Team-Mitglieder
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -136,18 +133,15 @@ export function EmailList({
     return teamMembers.find(m => m.userId === assignedTo) || null;
   };
   
-  // NEU: Hilfsfunktion für TeamMember-Avatar (Multi-Tenancy)
-  const getTeamMemberAvatar = (member: TeamMember): string => {
-    if (member.photoUrl) {
-      // Echtes Avatar verfügbar (Multi-Tenancy Avatar-System)
-      return member.photoUrl;
-    }
-    
-    // Fallback zu generiertem Avatar
-    const displayName = member.displayName || 'Admin';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
+  // NEU: Generiere Initialen für Avatar
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
-  
   
   // NEU: Generiere Avatar-Farbe basierend auf Name
   const getAvatarColor = (name: string): string => {
@@ -212,15 +206,15 @@ export function EmailList({
           >
             <div className="flex items-start gap-3">
               {/* Avatar */}
-              <Avatar
-                className="w-10 h-10 flex-shrink-0"
-                src={null} // E-Mail-Absender haben kein Profilbild
-                initials={primaryParticipant.name 
+              <div className={clsx(
+                "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0",
+                isSelected ? "bg-[#005fab]" : "bg-gray-400"
+              )}>
+                {primaryParticipant.name 
                   ? primaryParticipant.name.charAt(0).toUpperCase()
                   : primaryParticipant.email.charAt(0).toUpperCase()
                 }
-                title={primaryParticipant.name || primaryParticipant.email}
-              />
+              </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
@@ -236,12 +230,15 @@ export function EmailList({
                     {/* NEU: Zugewiesenes Team-Mitglied */}
                     {assignedMember && (
                       <div className="flex items-center">
-                        <Avatar
-                          className="w-6 h-6"
-                          src={getTeamMemberAvatar(assignedMember)}
-                          initials={assignedMember.displayName ? assignedMember.displayName.charAt(0).toUpperCase() : 'A'}
+                        <div 
+                          className={clsx(
+                            "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
+                            getAvatarColor(assignedMember.displayName)
+                          )}
                           title={`Zugewiesen an ${assignedMember.displayName}`}
-                        />
+                        >
+                          {getInitials(assignedMember.displayName)}
+                        </div>
                       </div>
                     )}
                     
@@ -328,12 +325,14 @@ export function EmailList({
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center">
-                                  <Avatar
-                                    className="w-6 h-6 mr-2"
-                                    src={getTeamMemberAvatar(member)}
-                                    initials={member.displayName ? member.displayName.charAt(0).toUpperCase() : 'A'}
-                                    title={member.displayName}
-                                  />
+                                  <div 
+                                    className={clsx(
+                                      "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2",
+                                      getAvatarColor(member.displayName)
+                                    )}
+                                  >
+                                    {getInitials(member.displayName)}
+                                  </div>
                                   <span>{member.displayName}</span>
                                 </div>
                                 {assignedMember?.userId === member.userId && (
