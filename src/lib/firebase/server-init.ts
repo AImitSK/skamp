@@ -1,5 +1,6 @@
 // src/lib/firebase/server-init.ts
-// KEIN ADMIN SDK - nur Client SDK auch für Server!
+// Client SDK für Server-Side Rendering (SSR) und Client-Komponenten
+// Für Backend-APIs und Webhooks siehe admin-init.ts
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
