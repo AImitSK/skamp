@@ -46,10 +46,6 @@ export async function flexibleEmailProcessor(
   emailData: IncomingEmailData
 ): Promise<ProcessingResult> {
   try {
-    ,
-      subject: emailData.subject
-    });
-
     // Grundlegende Validierung
     if (!emailData.from?.email || !emailData.to?.length || !emailData.subject) {
       return {
