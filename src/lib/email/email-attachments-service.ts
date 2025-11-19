@@ -33,6 +33,13 @@ export async function uploadEmailAttachment(
   // Bereinige messageId für Storage-Path (entferne @, <, >, etc.)
   const cleanMessageId = messageId.replace(/[^a-zA-Z0-9-]/g, '_');
 
+  console.log('📎 Upload attachment:', {
+    originalMessageId: messageId,
+    cleanMessageId,
+    originalFilename: filename,
+    cleanFilename
+  });
+
   // Storage-Path: Integration mit Media-System für Storage-Tracking
   const storagePath = `organizations/${organizationId}/media/email-attachments/${cleanMessageId}/${timestamp}_${cleanFilename}`;
 

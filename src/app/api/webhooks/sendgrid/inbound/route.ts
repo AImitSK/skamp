@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
     console.log('📧 Processing email:', {
       from: parsedEmail.from,
       to: parsedEmail.to,
-      subject: parsedEmail.subject
+      subject: parsedEmail.subject,
+      subjectPreview: parsedEmail.subject?.substring(0, 50)
     });
     
     // Extract email addresses
@@ -202,27 +203,70 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       const charsetsStr = formData.get('charsets');
       if (charsetsStr && typeof charsetsStr === 'string') {
         charsets = JSON.parse(charsetsStr);
+        console.log('📝 SendGrid charsets:', charsets);
       }
     } catch (e) {
       console.error('Failed to parse charsets:', e);
     }
 
-    // Helper function to decode text based on charset
+    // Helper function to decode text with proper charset handling
     const decodeText = (text: string | null, charset?: string): string | null => {
       if (!text) return text;
 
-      // If charset is UTF-8 or not specified, return directly
-      if (!charset || charset.toLowerCase() === 'utf-8') {
-        return text;
-      }
-
-      // Try to decode with specified charset
       try {
-        const decoder = new TextDecoder(charset);
-        const encoder = new TextEncoder();
-        return decoder.decode(encoder.encode(text));
+        // 1. Decode MIME Encoded-Words (=?charset?encoding?text?=)
+        let decoded = text.replace(
+          /=\?([^?]+)\?([BbQq])\?([^?]+)\?=/g,
+          (match, mimeCharset, encoding, encodedText) => {
+            try {
+              if (encoding.toUpperCase() === 'B') {
+                // Base64 encoding
+                return Buffer.from(encodedText, 'base64').toString('utf8');
+              } else if (encoding.toUpperCase() === 'Q') {
+                // Quoted-Printable encoding
+                const qpDecoded = encodedText
+                  .replace(/_/g, ' ')
+                  .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+                    String.fromCharCode(parseInt(hex, 16))
+                  );
+                return qpDecoded;
+              }
+            } catch (e) {
+              console.warn('Failed to decode MIME word:', e);
+            }
+            return match;
+          }
+        );
+
+        // 2. Decode Quoted-Printable sequences
+        decoded = decoded.replace(
+          /=([0-9A-Fa-f]{2})/g,
+          (_, hex) => String.fromCharCode(parseInt(hex, 16))
+        );
+
+        // 3. Fix double-encoding issue (UTF-8 bytes interpreted as Latin-1)
+        // Check if text contains replacement characters or mojibake patterns
+        if (decoded.includes('ï¿½') || decoded.includes('Ã¼') || decoded.includes('Ã¤') || decoded.includes('Ã¶')) {
+          try {
+            // Try to fix by encoding as Latin-1 and decoding as UTF-8
+            const bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; i++) {
+              bytes[i] = decoded.charCodeAt(i) & 0xFF;
+            }
+            const fixed = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+            if (!fixed.includes('�')) {
+              decoded = fixed;
+            }
+          } catch (e) {
+            console.warn('Failed to fix double-encoding:', e);
+          }
+        }
+
+        console.log('🔤 Decoded text:', { original: text.substring(0, 50), decoded: decoded.substring(0, 50), charset });
+        return decoded;
+
       } catch (e) {
-        console.warn(`Failed to decode with charset ${charset}, using original text`);
+        console.warn(`Failed to decode text with charset ${charset}:`, e);
         return text;
       }
     };
