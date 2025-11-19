@@ -214,8 +214,34 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       if (!text) return text;
 
       try {
-        // 1. Decode MIME Encoded-Words (=?charset?encoding?text?=)
-        let decoded = text.replace(
+        let decoded = text;
+
+        // 1. Handle ISO-8859-1/Latin-1 charset explicitly
+        if (charset && (charset.toLowerCase() === 'iso-8859-1' || charset.toLowerCase() === 'latin1')) {
+          try {
+            // The text was sent as ISO-8859-1 bytes but may have been misinterpreted
+            // Try to reconstruct the original bytes and decode properly
+            const bytes = Buffer.from(text, 'binary');
+            decoded = bytes.toString('utf8');
+
+            // If that creates more problems, try alternative: treat string as ISO-8859-1 bytes
+            if (decoded.includes('�')) {
+              const altBytes = new Uint8Array(text.length);
+              for (let i = 0; i < text.length; i++) {
+                altBytes[i] = text.charCodeAt(i) & 0xFF;
+              }
+              const altDecoded = new TextDecoder('iso-8859-1').decode(altBytes);
+              if (!altDecoded.includes('�') || altDecoded.includes('ü') || altDecoded.includes('ä') || altDecoded.includes('ö')) {
+                decoded = altDecoded;
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to decode ISO-8859-1:', e);
+          }
+        }
+
+        // 2. Decode MIME Encoded-Words (=?charset?encoding?text?=)
+        decoded = decoded.replace(
           /=\?([^?]+)\?([BbQq])\?([^?]+)\?=/g,
           (match, mimeCharset, encoding, encodedText) => {
             try {
@@ -238,13 +264,13 @@ function parseFormData(formData: FormData): ParsedEmail | null {
           }
         );
 
-        // 2. Decode Quoted-Printable sequences
+        // 3. Decode Quoted-Printable sequences
         decoded = decoded.replace(
           /=([0-9A-Fa-f]{2})/g,
           (_, hex) => String.fromCharCode(parseInt(hex, 16))
         );
 
-        // 3. Fix double-encoding issue (UTF-8 bytes interpreted as Latin-1)
+        // 4. Fix double-encoding issue (UTF-8 bytes interpreted as Latin-1)
         // Check if text contains replacement characters or mojibake patterns
         if (decoded.includes('ï¿½') || decoded.includes('Ã¼') || decoded.includes('Ã¤') || decoded.includes('Ã¶')) {
           try {
@@ -262,7 +288,12 @@ function parseFormData(formData: FormData): ParsedEmail | null {
           }
         }
 
-        console.log('🔤 Decoded text:', { original: text.substring(0, 50), decoded: decoded.substring(0, 50), charset });
+        console.log('🔤 Decoded text:', {
+          original: text.substring(0, 50),
+          decoded: decoded.substring(0, 50),
+          charset,
+          hasUmlauts: decoded.includes('ü') || decoded.includes('ä') || decoded.includes('ö') || decoded.includes('ß')
+        });
         return decoded;
 
       } catch (e) {
