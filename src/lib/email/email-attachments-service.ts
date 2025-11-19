@@ -60,7 +60,7 @@ export async function uploadEmailAttachment(
 
     const publicUrl = signedUrl;
 
-    // Erstelle EmailAttachment-Objekt
+    // Erstelle EmailAttachment-Objekt (nur definierte Werte)
     const attachment: EmailAttachment = {
       id: nanoid(),
       filename: filename,
@@ -68,7 +68,7 @@ export async function uploadEmailAttachment(
       size: file.length,
       url: publicUrl,
       inline: inline || false,
-      contentId: contentId
+      ...(contentId && { contentId }) // Nur wenn definiert
     };
 
     return attachment;
