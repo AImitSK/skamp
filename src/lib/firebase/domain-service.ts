@@ -75,7 +75,33 @@ class DomainService {
         updatedAt: serverTimestamp()
       });
 
-      return docRef.id;
+      const domainId = docRef.id;
+
+      // Erstelle automatisch ein Domain-Postfach für diese Domain
+      try {
+        const inboxAddress = `${data.domain}@inbox.sk-online-marketing.de`;
+
+        await addDoc(collection(db, 'inbox_domain_mailboxes'), {
+          organizationId: data.organizationId,
+          domainId: domainId,
+          domain: data.domain,
+          inboxAddress: inboxAddress,
+          status: 'active',
+          unreadCount: 0,
+          threadCount: 0,
+          isDefault: false, // Kann später manuell gesetzt werden
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: data.userId
+        });
+
+        console.log(`[DomainService] Domain-Postfach erstellt: ${inboxAddress}`);
+      } catch (error) {
+        console.error('[DomainService] Error creating domain mailbox:', error);
+        // Fehler nicht werfen - Domain wurde trotzdem erstellt
+      }
+
+      return domainId;
     } catch (error: any) {
       console.error('Error creating domain:', error);
       throw error;
