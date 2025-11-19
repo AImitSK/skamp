@@ -6,7 +6,6 @@ import { EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import clsx from 'clsx';
 import { 
   CheckCircleIcon,
@@ -181,13 +180,22 @@ export function StatusManager({
 
   const handleStatusChange = async (status: ThreadStatus) => {
     if (updating) return;
-    
+
     try {
       setUpdating(true);
-      
-      await threadMatcherService.updateThreadStatus(thread.id!, status);
+
+      // Update via API route (Server-Side with Admin SDK)
+      const response = await fetch('/api/threads/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId: thread.id, status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update thread status');
+      }
+
       onStatusChange?.(thread.id!, status);
-      
       console.log('✅ Thread status updated successfully');
     } catch (error) {
       console.error('Error updating thread status:', error);
@@ -199,13 +207,22 @@ export function StatusManager({
 
   const handlePriorityChange = async (priority: ThreadPriority) => {
     if (updating) return;
-    
+
     try {
       setUpdating(true);
-      
-      await threadMatcherService.updateThreadPriority(thread.id!, priority);
+
+      // Update via API route (Server-Side with Admin SDK)
+      const response = await fetch('/api/threads/update-priority', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId: thread.id, priority })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update thread priority');
+      }
+
       onStatusChange?.(thread.id!, thread.status as ThreadStatus, priority);
-      
       console.log('✅ Thread priority updated successfully');
     } catch (error) {
       console.error('Error updating thread priority:', error);
