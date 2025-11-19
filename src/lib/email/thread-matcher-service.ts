@@ -336,17 +336,23 @@ export class ThreadMatcherService {
 
   private extractParticipants(criteria: ThreadMatchingCriteria): EmailAddressInfo[] {
     const participantMap = new Map<string, EmailAddressInfo>();
-    
-    // From
-    participantMap.set(criteria.from.email, criteria.from);
-    
-    // To
+
+    // From - ensure name is never undefined
+    participantMap.set(criteria.from.email, {
+      email: criteria.from.email,
+      name: criteria.from.name || ''
+    });
+
+    // To - ensure name is never undefined
     criteria.to.forEach(addr => {
       if (!participantMap.has(addr.email)) {
-        participantMap.set(addr.email, addr);
+        participantMap.set(addr.email, {
+          email: addr.email,
+          name: addr.name || ''
+        });
       }
     });
-    
+
     return Array.from(participantMap.values());
   }
 
@@ -355,19 +361,25 @@ export class ThreadMatcherService {
     newParticipants: EmailAddressInfo[]
   ): EmailAddressInfo[] {
     const participantMap = new Map<string, EmailAddressInfo>();
-    
-    // Existierende Teilnehmer
-    existing.forEach(p => participantMap.set(p.email, p));
-    
+
+    // Existierende Teilnehmer - ensure name is never undefined
+    existing.forEach(p => participantMap.set(p.email, {
+      email: p.email,
+      name: p.name || ''
+    }));
+
     // Neue Teilnehmer hinzufügen/aktualisieren
     newParticipants.forEach(p => {
       const existing = participantMap.get(p.email);
       if (!existing || !existing.name && p.name) {
         // Überschreibe wenn neuer Eintrag einen Namen hat
-        participantMap.set(p.email, p);
+        participantMap.set(p.email, {
+          email: p.email,
+          name: p.name || ''
+        });
       }
     });
-    
+
     return Array.from(participantMap.values());
   }
 
