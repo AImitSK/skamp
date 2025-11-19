@@ -46,9 +46,7 @@ export async function flexibleEmailProcessor(
   emailData: IncomingEmailData
 ): Promise<ProcessingResult> {
   try {
-    console.log('📧 Processing incoming email:', {
-      from: emailData.from.email,
-      to: emailData.to.map(addr => addr.email),
+    ,
       subject: emailData.subject
     });
 
@@ -77,7 +75,7 @@ export async function flexibleEmailProcessor(
     const { organizationId, emailAccountId, domainId, projectId } = await resolveOrganization(emailData.to);
 
     if (!organizationId || !emailAccountId) {
-      console.log('⚠️ No organization found for email addresses:', emailData.to.map(addr => addr.email));
+      );
       return {
         success: true,
         routingDecision: {
@@ -86,8 +84,6 @@ export async function flexibleEmailProcessor(
         }
       };
     }
-
-    console.log('📍 Organization resolved:', { organizationId, emailAccountId, domainId, projectId });
 
     // 2. Thread-Matching durchführen
     const threadResult = await threadMatcherService.findOrCreateThread({
@@ -110,12 +106,8 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    console.log('🧵 Thread matched:', { threadId: threadResult.thread.id, isNew: threadResult.isNew });
-
     // ========== DUPLIKAT-CHECK ==========
     const messageId = emailData.messageId || generateMessageId();
-    console.log('🔍 Checking for duplicate email:', messageId);
-
     // Suche nach existierender E-Mail mit dieser Message-ID
     const existingSnapshot = await adminDb
       .collection('email_messages')
@@ -125,16 +117,9 @@ export async function flexibleEmailProcessor(
 
     if (!existingSnapshot.empty) {
       const existingEmail = existingSnapshot.docs[0].data();
-      console.log('⚠️ Duplicate email detected:', {
-        messageId,
-        existingFolder: existingEmail.folder,
-        existingId: existingSnapshot.docs[0].id
-      });
-      
       // Wenn im Trash, nicht neu erstellen
       if (existingEmail.folder === 'trash') {
-        console.log('📧 Email is in trash, skipping recreation');
-      }
+        }
       
       return {
         success: true,
@@ -148,8 +133,6 @@ export async function flexibleEmailProcessor(
         }
       };
     }
-
-    console.log('✅ No duplicate found, processing new email');
 
     // 3. E-Mail-Nachricht erstellen
     const emailMessage: any = {
@@ -206,8 +189,6 @@ export async function flexibleEmailProcessor(
     // 4. In Firestore speichern mit Admin SDK
     const docRef = await adminDb.collection('email_messages').add(emailMessage);
 
-    console.log('✅ Email message saved:', docRef.id);
-
     return {
       success: true,
       emailId: docRef.id,
@@ -236,8 +217,6 @@ async function resolveOrganization(
 ): Promise<{ organizationId?: string; emailAccountId?: string; domainId?: string; projectId?: string }> {
   for (const address of toAddresses) {
     try {
-      console.log('🔍 Resolving organization for:', address.email);
-
       // 1. Suche in Domain-Mailboxen (neue Inbox-Struktur)
       const domainMailboxSnapshot = await adminDb
         .collection('inbox_domain_mailboxes')
@@ -248,14 +227,6 @@ async function resolveOrganization(
       if (!domainMailboxSnapshot.empty) {
         const doc = domainMailboxSnapshot.docs[0];
         const data = doc.data();
-
-        console.log('📬 Found domain mailbox:', {
-          id: doc.id,
-          inboxAddress: data.inboxAddress,
-          domain: data.domain,
-          organizationId: data.organizationId,
-          domainId: data.domainId
-        });
 
         return {
           organizationId: data.organizationId,
@@ -275,14 +246,6 @@ async function resolveOrganization(
         const doc = projectMailboxSnapshot.docs[0];
         const data = doc.data();
 
-        console.log('📂 Found project mailbox:', {
-          id: doc.id,
-          inboxAddress: data.inboxAddress,
-          projectName: data.projectName,
-          organizationId: data.organizationId,
-          projectId: data.projectId
-        });
-
         return {
           organizationId: data.organizationId,
           emailAccountId: doc.id,
@@ -301,7 +264,7 @@ async function resolveOrganization(
         const doc = exactSnapshot.docs[0];
         const data = doc.data();
 
-        console.log('📧 Found exact email address (legacy):', {
+        :', {
           id: doc.id,
           email: data.email,
           organizationId: data.organizationId
@@ -318,8 +281,6 @@ async function resolveOrganization(
       if (fullDomain) {
         // Versuche verschiedene Domain-Varianten (inkl. übergeordnete Domains)
         const domainVariants = getDomainVariants(fullDomain);
-        console.log('🌐 Trying domain-based lookup for:', { fullDomain, variants: domainVariants });
-
         const domainSnapshot = await adminDb
           .collection('email_addresses')
           .where('isActive', '==', true)
@@ -331,14 +292,6 @@ async function resolveOrganization(
           
           // Prüfe exakte Domain oder übergeordnete Domain
           if (domainVariants.includes(emailDomain) || emailDomain === fullDomain) {
-            console.log('📧 Found domain-based match:', {
-              id: doc.id,
-              email: data.email,
-              emailDomain: emailDomain,
-              matchedAgainst: fullDomain,
-              organizationId: data.organizationId
-            });
-            
             return {
               organizationId: data.organizationId,
               emailAccountId: doc.id
@@ -352,7 +305,6 @@ async function resolveOrganization(
     }
   }
 
-  console.log('⚠️ No organization found for any of the addresses');
   return {};
 }
 

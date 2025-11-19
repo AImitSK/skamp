@@ -80,8 +80,7 @@ export const projectService = {
           createdBy: projectData.userId
         });
 
-        console.log(`[ProjectService] Projekt-Postfach erstellt: ${inboxAddress}`);
-      } catch (mailboxError) {
+        } catch (mailboxError) {
         console.error('[ProjectService] Error creating project mailbox:', mailboxError);
         // Fehler nicht werfen - Projekt wurde trotzdem erstellt
       }
@@ -1756,13 +1755,6 @@ export const projectService = {
   ): Promise<ValidationResult> {
     const errors: Record<string, string> = {};
     
-    console.log(`=== PROJECT VALIDATION DEBUG ===`);
-    console.log(`Step: ${step}`);
-    console.log(`Data title: "${data.title}"`);
-    console.log(`Data clientId: "${data.clientId}"`);
-    console.log(`Data priority: "${data.priority}"`);
-    console.log(`Data assignedTeamMembers:`, data.assignedTeamMembers);
-
     try {
       switch (step) {
         case 1: // Basis-Informationen
@@ -1813,9 +1805,6 @@ export const projectService = {
         isValid: Object.keys(errors).length === 0,
         errors
       };
-      
-      console.log(`Validation result:`, result);
-      console.log(`=== END PROJECT VALIDATION DEBUG ===`);
       
       return result;
     } catch (error: any) {

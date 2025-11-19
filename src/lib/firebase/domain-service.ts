@@ -95,8 +95,7 @@ class DomainService {
           createdBy: data.userId
         });
 
-        console.log(`[DomainService] Domain-Postfach erstellt: ${inboxAddress}`);
-      } catch (error) {
+        } catch (error) {
         console.error('[DomainService] Error creating domain mailbox:', error);
         // Fehler nicht werfen - Domain wurde trotzdem erstellt
       }

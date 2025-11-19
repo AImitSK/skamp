@@ -247,10 +247,6 @@ export default function InboxPage() {
 
 
   const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
-    console.log('🎯 Setting up MAILBOX listeners:', {
-      folderType: selectedFolderType,
-      folderId: selectedTeamMemberId
-    });
 
     // 1. Basis-Query für Threads (OHNE orderBy, um Index-Fehler zu vermeiden)
     let threadsQuery = query(
@@ -268,31 +264,19 @@ export default function InboxPage() {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
-        console.log('📋 Total threads from Firestore:', threadsData.length);
-        console.log('🎯 Filter config:', {
-          selectedFolderType,
-          selectedTeamMemberId
-        });
-
         // Domain-Postfach: Filtere nach domainId
         if (selectedFolderType === 'general' && selectedTeamMemberId) {
-          const beforeFilter = threadsData.length;
           threadsData = threadsData.filter(thread => {
             const domainId = (thread as any).domainId;
-            console.log('🔍 Thread domainId:', domainId, 'Expected:', selectedTeamMemberId, 'Match:', domainId === selectedTeamMemberId);
             return domainId === selectedTeamMemberId;
           });
-          console.log(`📊 Domain filter: ${beforeFilter} → ${threadsData.length} threads`);
         }
         // Projekt-Postfach: Filtere nach projectId
         else if (selectedFolderType === 'team' && selectedTeamMemberId) {
-          const beforeFilter = threadsData.length;
           threadsData = threadsData.filter(thread => {
             const projectId = (thread as any).projectId;
-            console.log('🔍 Thread projectId:', projectId, 'Expected:', selectedTeamMemberId, 'Match:', projectId === selectedTeamMemberId);
             return projectId === selectedTeamMemberId;
           });
-          console.log(`📊 Project filter: ${beforeFilter} → ${threadsData.length} threads`);
         }
 
         // Client-seitig nach lastMessageAt sortieren
@@ -301,8 +285,6 @@ export default function InboxPage() {
           const bTime = b.lastMessageAt?.toMillis?.() || 0;
           return bTime - aTime;
         });
-
-        console.log('✅ Final threads count:', threadsData.length);
 
         setThreads(threadsData);
         setLoading(false);
@@ -534,15 +516,12 @@ export default function InboxPage() {
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
-    console.log('🔍 handleThreadSelect called for thread:', thread.id, thread);
     setSelectedThread(thread);
     setSelectedEmail(null); // Reset selected email when switching threads
 
     try {
       // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
-
-      console.log('📨 Loading messages for thread:', thread.id);
 
       // Load all messages in thread
       const messagesQuery = query(
@@ -556,8 +535,6 @@ export default function InboxPage() {
         threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
       });
 
-      console.log('📬 Loaded messages:', threadMessages.length);
-
       // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
         setEmails(prevEmails => {
@@ -569,8 +546,6 @@ export default function InboxPage() {
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
         setSelectedEmail(latestEmail);
-
-        console.log('✅ Selected email:', latestEmail.id);
 
         // Mark thread as read
         if (thread.unreadCount && thread.unreadCount > 0) {
@@ -757,7 +732,6 @@ export default function InboxPage() {
 
   // Handle folder selection from sidebar
   const handleFolderSelect = (type: 'general' | 'team', id?: string, emailAddress?: string) => {
-    console.log('📁 Folder selected:', { type, id, emailAddress });
     setSelectedFolderType(type);
     setSelectedTeamMemberId(id);
     setSelectedMailboxEmail(emailAddress);
@@ -796,8 +770,6 @@ export default function InboxPage() {
     if (selectedMailboxEmail) {
       try {
         await navigator.clipboard.writeText(selectedMailboxEmail);
-        // Optional: Toast notification
-        console.log('📋 Email copied:', selectedMailboxEmail);
       } catch (err) {
         console.error('Failed to copy:', err);
       }

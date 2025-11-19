@@ -17,8 +17,6 @@ import { redirectHandlerService } from '@/lib/email/redirect-handler-service';
  */
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Inbound Webhook] Received email from SendGrid');
-
     // 1. Parse Request Body (SendGrid sendet als form-data oder JSON)
     const contentType = request.headers.get('content-type') || '';
     let body: any;
@@ -56,18 +54,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Inbound Webhook] Email to: ${body.to}`);
-    console.log(`[Inbound Webhook] Email from: ${body.from}`);
-    console.log(`[Inbound Webhook] Subject: ${body.subject}`);
-
     // 2. Reply-To parsen
     const parsedReplyTo = await replyToParserService.parse(body.to);
-    console.log(`[Inbound Webhook] Parsed type: ${parsedReplyTo.type}`);
-
     // 3. Redirect-Handling (Archivierte Projekte)
     const threadParams = await redirectHandlerService.handleIncomingEmail(parsedReplyTo);
-    console.log(`[Inbound Webhook] Thread params:`, threadParams);
-
     // 4. Thread & Message erstellen
     const { inboundEmailProcessorService } = await import('@/lib/email/inbound-email-processor-service');
 
@@ -119,8 +109,6 @@ export async function POST(request: NextRequest) {
         error: result.error
       }, { status: 200 });
     }
-
-    console.log(`[Inbound Webhook] Created thread ${result.threadId}, message ${result.messageId}`);
 
     // 5. Success Response für SendGrid
     return NextResponse.json({

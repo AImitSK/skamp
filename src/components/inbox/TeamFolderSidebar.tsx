@@ -63,13 +63,11 @@ export function TeamFolderSidebar({
       // Wähle das erste Domain-Postfach aus (falls vorhanden)
       if (domainMailboxes.length > 0) {
         const firstMailbox = domainMailboxes[0];
-        console.log('📬 Auto-selecting first domain mailbox:', firstMailbox.domain);
         onFolderSelect('general', firstMailbox.domainId, firstMailbox.inboxAddress);
       }
       // Falls keine Domain-Postfächer, wähle das erste Projekt-Postfach
       else if (projectMailboxes.length > 0) {
         const firstMailbox = projectMailboxes[0];
-        console.log('📂 Auto-selecting first project mailbox:', firstMailbox.projectName);
         onFolderSelect('team', firstMailbox.projectId, firstMailbox.inboxAddress);
       }
     }
@@ -80,8 +78,6 @@ export function TeamFolderSidebar({
 
     try {
       setLoading(true);
-
-      console.log('📬 [TeamFolderSidebar] Loading mailboxes for org:', organizationId);
 
       // Domain Mailboxes laden (OHNE orderBy für Index-Kompatibilität)
       const domainQuery = query(
@@ -95,9 +91,6 @@ export function TeamFolderSidebar({
         id: doc.id,
         ...doc.data()
       } as DomainMailbox));
-
-      console.log('📨 [TeamFolderSidebar] Domain mailboxes loaded:', domains.length);
-      domains.forEach(d => console.log('  - Domain:', d.domain, 'ID:', d.id, 'domainId:', d.domainId));
 
       setDomainMailboxes(domains);
 
@@ -114,14 +107,10 @@ export function TeamFolderSidebar({
         ...doc.data()
       } as ProjectMailbox));
 
-      console.log('📂 [TeamFolderSidebar] Project mailboxes loaded:', projects.length);
-      projects.forEach(p => console.log('  - Project:', p.projectName, 'ID:', p.id, 'projectId:', p.projectId));
-
       setProjectMailboxes(projects);
 
     } catch (error) {
       console.error('[TeamFolderSidebar] Error loading mailboxes:', error);
-      console.error('[TeamFolderSidebar] Error details:', error instanceof Error ? error.message : error);
     } finally {
       setLoading(false);
     }
