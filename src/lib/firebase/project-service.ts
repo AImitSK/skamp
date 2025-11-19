@@ -62,7 +62,30 @@ export const projectService = {
         console.error('Fehler bei automatischer Ordner-Erstellung:', folderError);
         // Projekt-Erstellung nicht scheitern lassen wegen Ordner-Fehler
       }
-      
+
+      // Automatische Projekt-Postfach-Erstellung
+      try {
+        const inboxAddress = `${docRef.id}@inbox.sk-online-marketing.de`;
+
+        await addDoc(collection(db, 'inbox_project_mailboxes'), {
+          organizationId: projectData.organizationId,
+          projectId: docRef.id,
+          projectName: projectData.title,
+          inboxAddress: inboxAddress,
+          status: 'active',
+          unreadCount: 0,
+          threadCount: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: projectData.userId
+        });
+
+        console.log(`[ProjectService] Projekt-Postfach erstellt: ${inboxAddress}`);
+      } catch (mailboxError) {
+        console.error('[ProjectService] Error creating project mailbox:', mailboxError);
+        // Fehler nicht werfen - Projekt wurde trotzdem erstellt
+      }
+
       return docRef.id;
     } catch (error) {
       throw error;

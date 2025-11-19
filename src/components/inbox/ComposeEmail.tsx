@@ -9,12 +9,9 @@ import { Field, Label } from '@/components/ui/fieldset';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { EmailMessage } from '@/types/inbox-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
-import { emailMessageService } from '@/lib/email/email-message-service';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { Select } from '@/components/ui/select';
-import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { EmailSignature } from '@/types/email-enhanced';
 
@@ -321,7 +318,14 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           replyTo: replyToAddress,
           // Thread-ID und Campaign-ID für korrekte Zuordnung
           threadId: replyToEmail?.threadId,
-          campaignId: replyToEmail?.campaignId
+          campaignId: replyToEmail?.campaignId,
+          // Zusätzliche Daten für Server-Side Thread-Erstellung und Speicherung
+          organizationId,
+          userId: user?.uid || organizationId,
+          signatureId: selectedSignatureId || undefined,
+          mode,
+          domainId: replyToEmail?.domainId,
+          projectId: replyToEmail?.projectId
         }),
       });
 
@@ -333,80 +337,17 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       const result = await response.json();
       console.log('📧 Email sent successfully:', result);
 
-      // Create or find thread (only for replies, not for new emails)
-      let threadId = replyToEmail?.threadId;
-      
-      if (!threadId && mode !== 'new') {
-        // Only create threads for replies/forwards, NOT for new emails
-        const threadResult = await threadMatcherService.findOrCreateThread({
-          messageId: result.messageId,
-          subject,
-          from: fromData,
-          to: toAddresses,
-          organizationId,
-          inReplyTo: mode === 'reply' ? replyToEmail?.messageId : null,
-          references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : []
-        });
-        
-        threadId = threadResult.thread?.id || '';
-        console.log('📨 Thread created/found for reply:', threadId);
-      } else if (mode === 'new') {
-        // For new emails, generate a unique threadId but don't create a thread in Firestore
-        threadId = `sent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        console.log('📤 Generated threadId for sent email (no thread created):', threadId);
-      }
-
-      // Save sent email to database
-      const emailMessageData: any = {
-        messageId: result.messageId,
-        threadId: threadId || `thread_${Date.now()}`,
-        from: fromData,
-        to: toAddresses,
-        subject,
-        textContent: emailData.textContent,
-        htmlContent: emailData.htmlContent,
-        signatureId: selectedSignatureId || undefined,
-        snippet: emailData.textContent.substring(0, 150),
-        folder: 'sent' as const,
-        isRead: true,
-        isStarred: false,
-        isArchived: false,
-        isDraft: false,
-        labels: [],
-        importance: 'normal' as const,
-        emailAccountId: selectedEmailAddressId,
-        organizationId,
-        userId: organizationId,
-        receivedAt: serverTimestamp() as Timestamp,
-        sentAt: serverTimestamp() as Timestamp,
-        attachments: []
-      };
-
-      // Nur hinzufügen wenn nicht undefined oder leer
-      if (ccAddresses.length > 0) {
-        emailMessageData.cc = ccAddresses;
-      }
-      if (bccAddresses.length > 0) {
-        emailMessageData.bcc = bccAddresses;
-      }
-      
-      // Optionale Felder für Reply/Forward
-      if (mode === 'reply' && replyToEmail) {
-        emailMessageData.inReplyTo = replyToEmail.messageId;
-        emailMessageData.references = [replyToEmail.messageId];
-      }
-      
-      // Headers als leeres Objekt
-      emailMessageData.headers = {};
-
-      console.log('💾 Saving sent email to database (sent folder only):', emailMessageData);
-      await emailMessageService.create(emailMessageData);
-      console.log('✅ Sent email saved successfully in sent folder');
+      // Thread-Erstellung und E-Mail-Speicherung erfolgt jetzt in der API
+      console.log('✅ Thread and email saved by API:', {
+        threadId: result.threadId,
+        messageId: result.messageId
+      });
 
       // Call parent onSend callback
       onSend({
         success: true,
-        messageId: result.messageId
+        messageId: result.messageId,
+        threadId: result.threadId
       });
 
       // Close dialog

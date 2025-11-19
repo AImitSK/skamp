@@ -8,34 +8,32 @@
  * Ausführen mit: npx tsx scripts/migrate-domain-mailboxes.ts
  */
 
-import { initializeApp, getApps } from 'firebase/app';
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  where,
-  serverTimestamp,
-  Timestamp
-} from 'firebase/firestore';
+import * as admin from 'firebase-admin';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
+// Lade Environment-Variablen aus .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-// Initialize Firebase
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
+// Firebase Admin SDK initialisieren
+if (!admin.apps.length) {
+  // Verwende Service Account aus Umgebungsvariable
+  const serviceAccountJson = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT;
+
+  if (!serviceAccountJson) {
+    throw new Error('FIREBASE_ADMIN_SERVICE_ACCOUNT Umgebungsvariable nicht gefunden');
+  }
+
+  const serviceAccount = JSON.parse(serviceAccountJson);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+
+  console.log('✅ Firebase Admin SDK erfolgreich initialisiert\n');
 }
 
-const db = getFirestore();
+const db = admin.firestore();
 
 interface EmailDomain {
   id: string;
@@ -53,8 +51,8 @@ interface DomainMailbox {
   status: 'active' | 'inactive';
   unreadCount: number;
   threadCount: number;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: admin.firestore.FieldValue;
+  updatedAt: admin.firestore.FieldValue;
   createdBy: string;
   isDefault?: boolean;
   isShared?: boolean;
@@ -66,7 +64,7 @@ async function migrateDomainMailboxes() {
   try {
     // 1. Alle Domains laden (prüfe beide Collections)
     console.log('📥 Lade Domains aus email_domains_enhanced...');
-    let domainsSnapshot = await getDocs(collection(db, 'email_domains_enhanced'));
+    let domainsSnapshot = await db.collection('email_domains_enhanced').get();
     let domains: EmailDomain[] = domainsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -75,7 +73,7 @@ async function migrateDomainMailboxes() {
     // Fallback zu email_domains falls enhanced leer ist
     if (domains.length === 0) {
       console.log('⚠️  email_domains_enhanced ist leer, versuche email_domains...');
-      domainsSnapshot = await getDocs(collection(db, 'email_domains'));
+      domainsSnapshot = await db.collection('email_domains').get();
       domains = domainsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -84,9 +82,14 @@ async function migrateDomainMailboxes() {
 
     console.log(`✅ ${domains.length} Domains gefunden\n`);
 
+    if (domains.length === 0) {
+      console.log('⚠️  Keine Domains gefunden. Migration wird übersprungen.');
+      process.exit(0);
+    }
+
     // 2. Bestehende Mailboxen laden
     console.log('📥 Lade bestehende Domain-Postfächer...');
-    const mailboxesSnapshot = await getDocs(collection(db, 'inbox_domain_mailboxes'));
+    const mailboxesSnapshot = await db.collection('inbox_domain_mailboxes').get();
     const existingMailboxes = new Set(
       mailboxesSnapshot.docs.map(doc => doc.data().domainId)
     );
@@ -118,8 +121,8 @@ async function migrateDomainMailboxes() {
           status: domain.status === 'verified' ? 'active' : 'inactive',
           unreadCount: 0,
           threadCount: 0,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           createdBy: 'system-migration'
         };
 
@@ -129,7 +132,7 @@ async function migrateDomainMailboxes() {
           mailboxData.isShared = true;
         }
 
-        await addDoc(collection(db, 'inbox_domain_mailboxes'), mailboxData);
+        await db.collection('inbox_domain_mailboxes').add(mailboxData);
 
         console.log(`✅ Erstellt: ${domain.domain} → ${inboxAddress}`);
         created++;

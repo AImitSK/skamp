@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sgMail from '@sendgrid/mail';
 import { nanoid } from 'nanoid';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
+import { adminDb } from '@/lib/firebase/admin-init';
+import type { EmailMessage } from '@/types/email-enhanced';
 
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
@@ -21,8 +24,14 @@ export async function POST(request: NextRequest) {
       replyToMessageId,
       attachments,
       replyTo, // NEU: Reply-To Adresse direkt aus Request
-      threadId,
-      campaignId
+      threadId: existingThreadId, // Thread-ID bei Replies
+      campaignId,
+      organizationId,
+      userId,
+      signatureId,
+      mode, // 'new' | 'reply' | 'forward'
+      domainId,
+      projectId
     } = await request.json();
 
     // Validate required fields
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
       customArgs: {
         emailAddressId,
         messageId,
-        threadId, // Für Thread-Zuordnung
+        threadId: existingThreadId, // Für Thread-Zuordnung
         campaignId // Für Kampagnen-Zuordnung
       },
       headers: {
@@ -113,16 +122,105 @@ export async function POST(request: NextRequest) {
 
     try {
       const [response] = await sgMail.send(msg);
-      
+
       console.log('✅ Email sent successfully:', {
         statusCode: response.statusCode,
         messageId,
         replyTo: msg.replyTo.email
       });
 
+      // ========== THREAD-ERSTELLUNG UND E-MAIL-SPEICHERUNG ==========
+      let finalThreadId = existingThreadId;
+
+      // Thread erstellen/finden (nur für Replies/Forwards, NICHT für neue E-Mails)
+      if (!finalThreadId && mode !== 'new' && organizationId) {
+        console.log('🧵 Creating/finding thread for reply/forward...');
+        const threadResult = await threadMatcherService.findOrCreateThread({
+          messageId,
+          subject,
+          from,
+          to,
+          organizationId,
+          inReplyTo: mode === 'reply' ? replyToMessageId : null,
+          references: mode === 'reply' && replyToMessageId ? [replyToMessageId] : [],
+          ...(domainId && { domainId }),
+          ...(projectId && { projectId })
+        });
+
+        finalThreadId = threadResult.thread?.id || '';
+        console.log('✅ Thread created/found:', finalThreadId);
+      } else if (mode === 'new') {
+        // Für neue E-Mails: Temporäre threadId generieren (kein Thread in Firestore)
+        finalThreadId = `sent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log('📤 Generated temporary threadId for new email:', finalThreadId);
+      }
+
+      // E-Mail in Firestore speichern (sent folder)
+      if (organizationId && emailAddressId) {
+        console.log('💾 Saving sent email to Firestore...');
+
+        const emailMessageData: any = {
+          messageId,
+          threadId: finalThreadId || `thread_${Date.now()}`,
+          from,
+          to,
+          subject,
+          textContent: textContent || htmlContent.replace(/<[^>]*>/g, ''),
+          htmlContent,
+          snippet: (textContent || htmlContent.replace(/<[^>]*>/g, '')).substring(0, 150),
+          folder: 'sent',
+          isRead: true,
+          isStarred: false,
+          isArchived: false,
+          isDraft: false,
+          labels: [],
+          importance: 'normal',
+          emailAccountId,
+          organizationId,
+          userId: userId || organizationId,
+          receivedAt: adminDb.FieldValue.serverTimestamp(),
+          sentAt: adminDb.FieldValue.serverTimestamp(),
+          attachments: attachments || [],
+          headers: {},
+          ...(domainId && { domainId }),
+          ...(projectId && { projectId })
+        };
+
+        // Optional: signatureId
+        if (signatureId) {
+          emailMessageData.signatureId = signatureId;
+        }
+
+        // Optional: cc
+        if (cc && cc.length > 0) {
+          emailMessageData.cc = cc;
+        }
+
+        // Optional: bcc
+        if (bcc && bcc.length > 0) {
+          emailMessageData.bcc = bcc;
+        }
+
+        // Optional: Reply headers
+        if (mode === 'reply' && replyToMessageId) {
+          emailMessageData.inReplyTo = replyToMessageId;
+          emailMessageData.references = [replyToMessageId];
+        }
+
+        // Optional: campaignId
+        if (campaignId) {
+          emailMessageData.campaignId = campaignId;
+        }
+
+        // In Firestore speichern
+        const docRef = await adminDb.collection('email_messages').add(emailMessageData);
+        console.log('✅ Sent email saved to Firestore:', docRef.id);
+      }
+
       return NextResponse.json({
         success: true,
         messageId,
+        threadId: finalThreadId,
         sendGridMessageId: response.headers['x-message-id'],
         replyTo: msg.replyTo.email // Return für Debugging
       });

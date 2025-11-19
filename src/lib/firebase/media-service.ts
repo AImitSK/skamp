@@ -38,7 +38,7 @@ export const mediaService = {
   createFolder: foldersService.createFolder,
   getFolders: foldersService.getFolders,
   getFolder: foldersService.getFolder,
-  updateFolderClientInheritance: foldersService.updateFolderClientInheritance,
+  // updateFolderClientInheritance: foldersService.updateFolderClientInheritance, // DISABLED: Function not implemented
   getAllFoldersForOrganization: foldersService.getAllFoldersForOrganization,
   getAllFoldersForUser: foldersService.getAllFoldersForUser,
   updateFolder: foldersService.updateFolder,
