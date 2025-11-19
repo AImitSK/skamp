@@ -15,13 +15,14 @@ import { db } from '@/lib/firebase/client-init';
 interface TeamFolderSidebarProps {
   selectedFolderId?: string;
   selectedFolderType: 'general' | 'team';
-  onFolderSelect: (type: 'general' | 'team', id?: string) => void;
+  onFolderSelect: (type: 'general' | 'team', id?: string, emailAddress?: string) => void;
   unreadCounts: Record<string, number>;
   organizationId: string;
 }
 
 interface DomainMailbox {
   id: string;
+  domainId: string;
   domain: string;
   inboxAddress: string;
   unreadCount: number;
@@ -56,18 +57,37 @@ export function TeamFolderSidebar({
     loadMailboxes();
   }, [organizationId]);
 
+  // Auto-select first mailbox when loaded
+  useEffect(() => {
+    if (!loading && !selectedFolderId) {
+      // Wähle das erste Domain-Postfach aus (falls vorhanden)
+      if (domainMailboxes.length > 0) {
+        const firstMailbox = domainMailboxes[0];
+        console.log('📬 Auto-selecting first domain mailbox:', firstMailbox.domain);
+        onFolderSelect('general', firstMailbox.domainId, firstMailbox.inboxAddress);
+      }
+      // Falls keine Domain-Postfächer, wähle das erste Projekt-Postfach
+      else if (projectMailboxes.length > 0) {
+        const firstMailbox = projectMailboxes[0];
+        console.log('📂 Auto-selecting first project mailbox:', firstMailbox.projectName);
+        onFolderSelect('team', firstMailbox.projectId, firstMailbox.inboxAddress);
+      }
+    }
+  }, [loading, domainMailboxes, projectMailboxes, selectedFolderId, onFolderSelect]);
+
   const loadMailboxes = async () => {
     if (!organizationId) return;
 
     try {
       setLoading(true);
 
-      // Domain Mailboxes laden
+      console.log('📬 [TeamFolderSidebar] Loading mailboxes for org:', organizationId);
+
+      // Domain Mailboxes laden (OHNE orderBy für Index-Kompatibilität)
       const domainQuery = query(
         collection(db, 'inbox_domain_mailboxes'),
         where('organizationId', '==', organizationId),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'asc')
+        where('status', '==', 'active')
       );
 
       const domainSnapshot = await getDocs(domainQuery);
@@ -76,14 +96,16 @@ export function TeamFolderSidebar({
         ...doc.data()
       } as DomainMailbox));
 
+      console.log('📨 [TeamFolderSidebar] Domain mailboxes loaded:', domains.length);
+      domains.forEach(d => console.log('  - Domain:', d.domain, 'ID:', d.id, 'domainId:', d.domainId));
+
       setDomainMailboxes(domains);
 
-      // Project Mailboxes laden
+      // Project Mailboxes laden (OHNE orderBy für Index-Kompatibilität)
       const projectQuery = query(
         collection(db, 'inbox_project_mailboxes'),
         where('organizationId', '==', organizationId),
-        where('status', 'in', ['active', 'completed']),
-        orderBy('createdAt', 'desc')
+        where('status', 'in', ['active', 'completed'])
       );
 
       const projectSnapshot = await getDocs(projectQuery);
@@ -92,10 +114,14 @@ export function TeamFolderSidebar({
         ...doc.data()
       } as ProjectMailbox));
 
+      console.log('📂 [TeamFolderSidebar] Project mailboxes loaded:', projects.length);
+      projects.forEach(p => console.log('  - Project:', p.projectName, 'ID:', p.id, 'projectId:', p.projectId));
+
       setProjectMailboxes(projects);
 
     } catch (error) {
       console.error('[TeamFolderSidebar] Error loading mailboxes:', error);
+      console.error('[TeamFolderSidebar] Error details:', error instanceof Error ? error.message : error);
     } finally {
       setLoading(false);
     }
@@ -124,7 +150,7 @@ export function TeamFolderSidebar({
     <div className="w-80 border-r bg-gray-50 flex flex-col">
       {/* Header mit Suche */}
       <div className="p-4 border-b bg-white">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Postfächer</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Posteingang</h3>
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -158,39 +184,37 @@ export function TeamFolderSidebar({
               {filteredDomains.map(mailbox => (
                 <button
                   key={mailbox.id}
-                  onClick={() => onFolderSelect('general', mailbox.id)}
+                  onClick={() => onFolderSelect('general', mailbox.domainId, mailbox.inboxAddress)}
                   className={clsx(
-                    'w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
-                    selectedFolderId === mailbox.id && selectedFolderType === 'general'
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                    selectedFolderId === mailbox.domainId && selectedFolderType === 'general'
                       ? 'bg-[#005fab] text-white'
                       : 'text-gray-700 hover:bg-gray-200'
                   )}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <InboxIcon className="h-4 w-4 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate text-left">
-                        {mailbox.domain}
-                      </div>
+                  <InboxIcon className="h-4 w-4 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate text-left flex items-center gap-2">
+                      <span className="truncate">{mailbox.domain}</span>
                       {mailbox.isDefault && (
-                        <div className={clsx(
-                          'text-xs truncate text-left',
-                          selectedFolderId === mailbox.id && selectedFolderType === 'general'
+                        <span className={clsx(
+                          'text-xs flex-shrink-0',
+                          selectedFolderId === mailbox.domainId && selectedFolderType === 'general'
                             ? 'text-white/70'
                             : 'text-gray-500'
                         )}>
-                          Standard
-                        </div>
+                          (Standard)
+                        </span>
                       )}
                     </div>
                   </div>
 
                   {mailbox.unreadCount > 0 && (
                     <Badge
-                      color={selectedFolderId === mailbox.id && selectedFolderType === 'general' ? 'zinc' : 'blue'}
+                      color={selectedFolderId === mailbox.domainId && selectedFolderType === 'general' ? 'zinc' : 'blue'}
                       className={clsx(
                         'whitespace-nowrap flex-shrink-0 ml-auto',
-                        selectedFolderId === mailbox.id && selectedFolderType === 'general'
+                        selectedFolderId === mailbox.domainId && selectedFolderType === 'general'
                           ? 'bg-white/20 text-white'
                           : ''
                       )}
@@ -220,37 +244,27 @@ export function TeamFolderSidebar({
                 {filteredProjects.map(mailbox => (
                   <button
                     key={mailbox.id}
-                    onClick={() => onFolderSelect('team', mailbox.id)}
+                    onClick={() => onFolderSelect('team', mailbox.projectId, mailbox.inboxAddress)}
                     className={clsx(
-                      'w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
-                      selectedFolderId === mailbox.id && selectedFolderType === 'team'
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                      selectedFolderId === mailbox.projectId && selectedFolderType === 'team'
                         ? 'bg-[#005fab] text-white'
                         : 'text-gray-700 hover:bg-gray-200'
                     )}
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <FolderIcon className="h-4 w-4 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate text-left">
-                          {mailbox.projectName}
-                        </div>
-                        <div className={clsx(
-                          'text-xs truncate text-left capitalize',
-                          selectedFolderId === mailbox.id && selectedFolderType === 'team'
-                            ? 'text-white/70'
-                            : 'text-gray-500'
-                        )}>
-                          {mailbox.status}
-                        </div>
+                    <FolderIcon className="h-4 w-4 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate text-left">
+                        {mailbox.projectName}
                       </div>
                     </div>
 
                     {mailbox.unreadCount > 0 && (
                       <Badge
-                        color={selectedFolderId === mailbox.id && selectedFolderType === 'team' ? 'zinc' : 'blue'}
+                        color={selectedFolderId === mailbox.projectId && selectedFolderType === 'team' ? 'zinc' : 'blue'}
                         className={clsx(
                           'whitespace-nowrap flex-shrink-0 ml-auto',
-                          selectedFolderId === mailbox.id && selectedFolderType === 'team'
+                          selectedFolderId === mailbox.projectId && selectedFolderType === 'team'
                             ? 'bg-white/20 text-white'
                             : ''
                         )}

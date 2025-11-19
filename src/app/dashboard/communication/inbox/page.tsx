@@ -17,8 +17,6 @@ import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
-import { teamMemberService } from '@/lib/firebase/organization-service';
-import { notificationService } from '@/lib/email/notification-service-enhanced';
 import { 
   onSnapshot,
   collection,
@@ -81,11 +79,8 @@ export default function InboxPage() {
   // State für Team-Ordner-Organisation
   const [selectedFolderType, setSelectedFolderType] = useState<'general' | 'team'>('general');
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | undefined>();
+  const [selectedMailboxEmail, setSelectedMailboxEmail] = useState<string | undefined>();
   // Entfernt: customerCampaignMatcher (nicht mehr benötigt für Team-System)
-  
-  // NEU: State für Team-Features
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [loadingTeam, setLoadingTeam] = useState(true);
   
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
@@ -133,83 +128,6 @@ export default function InboxPage() {
       // Entfernt: setCustomerCampaignMatcher(matcher);
     }
   }, [organizationId]);
-
-  // Load team members with fallback
-  useEffect(() => {
-    const loadTeamMembers = async () => {
-      if (!organizationId) return;
-      
-      setLoadingTeam(true);
-      try {
-
-        const members = await teamMemberService.getByOrganization(organizationId);
-        
-        if (members.length === 0) {
-          // Fallback: Create mock team members for development
-
-          const mockMembers = [
-            {
-              id: '1',
-              userId: user?.uid || '',
-              displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
-              email: user?.email || 'user@example.com',
-              role: 'owner',
-              status: 'active'
-            },
-            {
-              id: '2',
-              userId: 'mock-team-member-1',
-              displayName: 'Max Mustermann',
-              email: 'max@example.com',
-              role: 'admin',
-              status: 'active'
-            },
-            {
-              id: '3',
-              userId: 'mock-team-member-2',
-              displayName: 'Anna Schmidt',
-              email: 'anna@example.com',
-              role: 'member',
-              status: 'active'
-            }
-          ];
-          setTeamMembers(mockMembers);
-          setDebugInfo(prev => ({
-            ...prev,
-            teamMembers: mockMembers,
-            teamError: 'Using mock data - no organization found'
-          }));
-        } else {
-          setTeamMembers(members);
-          setDebugInfo(prev => ({
-            ...prev,
-            teamMembers: members
-          }));
-        }
-      } catch (error) {
-
-        // Fallback bei Fehler
-        const fallbackMember = {
-          id: '1',
-          userId: user?.uid || '',
-          displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
-          email: user?.email || 'user@example.com',
-          role: 'owner',
-          status: 'active'
-        };
-        setTeamMembers([fallbackMember]);
-        setDebugInfo(prev => ({
-          ...prev,
-          teamMembers: [fallbackMember],
-          teamError: error instanceof Error ? error.message : 'Unknown error'
-        }));
-      } finally {
-        setLoadingTeam(false);
-      }
-    };
-
-    loadTeamMembers();
-  }, [organizationId, user]);
 
   // Resolve deferred threads when component mounts
   useEffect(() => {
@@ -329,52 +247,66 @@ export default function InboxPage() {
 
 
   const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
-    console.log('🎯 Setting up TEAM FOLDER listeners:', {
+    console.log('🎯 Setting up MAILBOX listeners:', {
       folderType: selectedFolderType,
-      teamMemberId: selectedTeamMemberId
+      folderId: selectedTeamMemberId
     });
 
-    // 1. Basis-Query für Threads
+    // 1. Basis-Query für Threads (OHNE orderBy, um Index-Fehler zu vermeiden)
     let threadsQuery = query(
       collection(db, 'email_threads'),
       where('organizationId', '==', organizationId),
-      orderBy('lastMessageAt', 'desc'),
       limit(100)
     );
-
-    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
-    // da assignedToUserId noch nicht in allen bestehenden Threads vorhanden ist
 
     const threadsUnsubscribe = onSnapshot(
       threadsQuery,
       async (snapshot) => {
-
         let threadsData: EmailThread[] = [];
-        
+
         snapshot.forEach((doc) => {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
-        // Für "general" folder: Filtere alle Threads ohne Team-Zuweisung
-        // UND schließe gesendete E-Mail Threads aus (sent_ prefix)
-        if (selectedFolderType === 'general') {
+        console.log('📋 Total threads from Firestore:', threadsData.length);
+        console.log('🎯 Filter config:', {
+          selectedFolderType,
+          selectedTeamMemberId
+        });
+
+        // Domain-Postfach: Filtere nach domainId
+        if (selectedFolderType === 'general' && selectedTeamMemberId) {
+          const beforeFilter = threadsData.length;
           threadsData = threadsData.filter(thread => {
-            const assignedTo = (thread as any).assignedToUserId || (thread as any).assignedTo;
-            return !assignedTo && !(thread.id && thread.id.startsWith('sent_'));
+            const domainId = (thread as any).domainId;
+            console.log('🔍 Thread domainId:', domainId, 'Expected:', selectedTeamMemberId, 'Match:', domainId === selectedTeamMemberId);
+            return domainId === selectedTeamMemberId;
           });
-        } else {
-          // Auch in anderen Ordnern gesendete Threads ausschließen
-          threadsData = threadsData.filter(thread => 
-            !(thread.id && thread.id.startsWith('sent_'))
-          );
+          console.log(`📊 Domain filter: ${beforeFilter} → ${threadsData.length} threads`);
         }
-        
+        // Projekt-Postfach: Filtere nach projectId
+        else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+          const beforeFilter = threadsData.length;
+          threadsData = threadsData.filter(thread => {
+            const projectId = (thread as any).projectId;
+            console.log('🔍 Thread projectId:', projectId, 'Expected:', selectedTeamMemberId, 'Match:', projectId === selectedTeamMemberId);
+            return projectId === selectedTeamMemberId;
+          });
+          console.log(`📊 Project filter: ${beforeFilter} → ${threadsData.length} threads`);
+        }
+
+        // Client-seitig nach lastMessageAt sortieren
+        threadsData.sort((a, b) => {
+          const aTime = a.lastMessageAt?.toMillis?.() || 0;
+          const bTime = b.lastMessageAt?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
+
+        console.log('✅ Final threads count:', threadsData.length);
 
         setThreads(threadsData);
-        
-        // Update unread counts
-        await updateTeamUnreadCounts(threadsData);
-        
+        setLoading(false);
+
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
           threadCount: threadsData.length,
@@ -382,60 +314,50 @@ export default function InboxPage() {
         }));
       },
       (error) => {
-
+        console.error('Thread load error:', error);
         setError('Fehler beim Laden der E-Mail-Threads');
+        setLoading(false);
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
           threadError: error.message
         }));
       }
     );
-    
+
     unsubscribes.push(threadsUnsubscribe);
 
-    // 2. Listen to messages
+    // 2. Messages Query (OHNE orderBy)
     let messagesQuery = query(
       collection(db, 'email_messages'),
       where('organizationId', '==', organizationId),
-      where('folder', '==', 'inbox'), // Nur Inbox-Nachrichten für Kunden/Kampagnen
-      orderBy('receivedAt', 'desc'),
       limit(100)
     );
-
-    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
-    // da assignedToUserId noch nicht in allen bestehenden Messages vorhanden ist
 
     const messagesUnsubscribe = onSnapshot(
       messagesQuery,
       async (snapshot) => {
-
         let messagesData: EmailMessage[] = [];
-        
+
         snapshot.forEach((doc) => {
           messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
         });
 
-        // Client-seitige Filterung für Team-Ordner
-        if (selectedFolderType === 'general') {
-          // Allgemeine Anfragen: Nachrichten ohne Team-Zuweisung
+        // Filtere nach Postfach-Typ
+        if (selectedFolderType === 'general' && selectedTeamMemberId) {
           messagesData = messagesData.filter(msg => {
-            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
-            return !assignedTo;
+            const domainId = (msg as any).domainId;
+            return domainId === selectedTeamMemberId;
           });
         } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
-          // Team-Ordner: Nur Nachrichten für dieses Team-Mitglied
           messagesData = messagesData.filter(msg => {
-            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
-            return assignedTo === selectedTeamMemberId;
+            const projectId = (msg as any).projectId;
+            return projectId === selectedTeamMemberId;
           });
         }
 
-        // Keine automatische Zuordnung mehr nötig im Team-System
-        // E-Mails werden manuell über die UI zugewiesen
-        
         setEmails(messagesData);
         setLoading(false);
-        
+
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
           messageCount: messagesData.length,
@@ -443,7 +365,7 @@ export default function InboxPage() {
         }));
       },
       (error) => {
-
+        console.error('Messages load error:', error);
         setError('Fehler beim Laden der E-Mails');
         setLoading(false);
         setDebugInfo((prev: DebugInfo) => ({
@@ -452,7 +374,7 @@ export default function InboxPage() {
         }));
       }
     );
-    
+
     unsubscribes.push(messagesUnsubscribe);
   };
 
@@ -612,28 +534,30 @@ export default function InboxPage() {
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
-
+    console.log('🔍 handleThreadSelect called for thread:', thread.id, thread);
     setSelectedThread(thread);
     setSelectedEmail(null); // Reset selected email when switching threads
-    
+
     try {
       // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
-      
+
+      console.log('📨 Loading messages for thread:', thread.id);
+
       // Load all messages in thread
       const messagesQuery = query(
         collection(db, 'email_messages'),
         where('threadId', '==', thread.id!),
         orderBy('receivedAt', 'asc')
       );
-      
+
       const snapshot = await getDocs(messagesQuery);
       snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
         threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
       });
-      
 
-      
+      console.log('📬 Loaded messages:', threadMessages.length);
+
       // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
         setEmails(prevEmails => {
@@ -641,16 +565,17 @@ export default function InboxPage() {
           const otherMessages = prevEmails.filter(email => email.threadId !== thread.id);
           return [...otherMessages, ...threadMessages];
         });
-        
+
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
         setSelectedEmail(latestEmail);
 
-        
+        console.log('✅ Selected email:', latestEmail.id);
+
         // Mark thread as read
         if (thread.unreadCount && thread.unreadCount > 0) {
           await threadMatcherService.markThreadAsRead(thread.id!);
-          
+
           // Mark all unread messages in thread as read
           for (const message of threadMessages) {
             if (!message.isRead && message.id) {
@@ -660,11 +585,14 @@ export default function InboxPage() {
         }
       } else {
         // No messages found for thread
+        console.warn('⚠️ No messages found for thread:', thread.id);
         setSelectedEmail(null);
       }
     } catch (error) {
-
-      setError('Fehler beim Laden der Thread-Nachrichten');
+      console.error('❌ Error loading thread messages:', error);
+      console.error('Thread ID:', thread.id);
+      console.error('Error details:', error instanceof Error ? error.message : error);
+      setError('Fehler beim Laden der Thread-Nachrichten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'));
     }
   };
 
@@ -791,65 +719,7 @@ export default function InboxPage() {
     }
   };
 
-  // NEU: Handle thread assignment
-  const handleThreadAssign = async (threadId: string, userId: string | null) => {
-    try {
-      // Optimistic update - sofort lokale Thread-Liste aktualisieren
-      setThreads(prevThreads => 
-        prevThreads.map(thread => 
-          thread.id === threadId 
-            ? { ...thread, assignedTo: userId } as any
-            : thread
-        )
-      );
-
-      // Update selected thread if it's the one being assigned
-      if (selectedThread?.id === threadId) {
-        setSelectedThread(prev => prev ? { ...prev, assignedTo: userId } as any : prev);
-      }
-
-      const assignedBy = user?.uid || '';
-      const assignedByName = user?.displayName || user?.email || 'Unbekannt';
-      
-      // Update thread assignment in database
-      await threadMatcherService.assignThread(threadId, userId, assignedBy);
-      
-      // Send notification if assigning to someone
-      if (userId && userId !== user?.uid) {
-        const thread = threads.find(t => t.id === threadId);
-        if (thread) {
-          await notificationService.sendAssignmentNotification(
-            { ...thread, assignedTo: userId } as any,
-            userId,
-            assignedBy,
-            assignedByName,
-            organizationId
-          );
-        }
-      }
-      
-
-    } catch (error) {
-
-      
-      // Rollback optimistic update bei Fehler
-      setThreads(prevThreads => 
-        prevThreads.map(thread => 
-          thread.id === threadId 
-            ? { ...thread, assignedTo: (thread as any).assignedTo } // Zurück zum ursprünglichen Wert
-            : thread
-        )
-      );
-      
-      if (selectedThread?.id === threadId) {
-        setSelectedThread(prev => prev ? { ...prev, assignedTo: (prev as any).assignedTo } : prev);
-      }
-      
-      alert('Fehler beim Zuweisen des Threads');
-    }
-  };
-
-  // NEU: Handle thread status change
+  // Handle thread status change
   const handleThreadStatusChange = async (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived' | undefined) => {
     if (!status) return;
     
@@ -860,20 +730,7 @@ export default function InboxPage() {
       
       // Update thread status
       await threadMatcherService.updateThreadStatus(threadId, status);
-      
-      // Send notification if thread is assigned to someone else
-      if (thread) {
-        await notificationService.sendStatusChangeNotification(
-          thread,
-          status,
-          changedBy,
-          changedByName,
-          organizationId
-        );
-      }
-      
 
-      
       // Bei Archivierung: Thread aus der Liste entfernen
       if (status === 'archived') {
         setSelectedThread(null);
@@ -885,10 +742,10 @@ export default function InboxPage() {
     }
   };
 
-  // NEU: Handle thread priority change
+  // Handle thread priority change
   const handleThreadPriorityChange = async (priority: 'low' | 'normal' | 'high' | 'urgent') => {
     if (!selectedThread) return;
-    
+
     try {
       await threadMatcherService.updateThreadPriority(selectedThread.id!, priority);
 
@@ -898,36 +755,12 @@ export default function InboxPage() {
     }
   };
 
-  // NEU: Handle thread category change (AI-based assignment)
-  const handleThreadCategoryChange = async (category: string, assignee?: string) => {
-    if (!selectedThread) return;
-    
-    try {
-      // If AI suggests an assignee, try to find matching team member
-      if (assignee) {
-        const matchingMember = teamMembers.find(member => 
-          member.displayName.toLowerCase().includes(assignee.toLowerCase()) ||
-          member.email.toLowerCase().includes(assignee.toLowerCase())
-        );
-        
-        if (matchingMember) {
-          await handleThreadAssign(selectedThread.id!, matchingMember.userId);
-        }
-      }
-      
-      // Store category in thread metadata (could be extended)
-
-      
-    } catch (error) {
-
-    }
-  };
-
   // Handle folder selection from sidebar
-  const handleFolderSelect = (type: 'general' | 'team', id?: string) => {
-
+  const handleFolderSelect = (type: 'general' | 'team', id?: string, emailAddress?: string) => {
+    console.log('📁 Folder selected:', { type, id, emailAddress });
     setSelectedFolderType(type);
-    setSelectedTeamMemberId(type === 'team' ? id : undefined);
+    setSelectedTeamMemberId(id);
+    setSelectedMailboxEmail(emailAddress);
     setSelectedThread(null);
     setSelectedEmail(null);
   };
@@ -935,28 +768,13 @@ export default function InboxPage() {
 
   // Filter threads based on folder selection and search
   const filteredThreads = threads.filter(thread => {
-    // Erstens: Filter nach Ordner-Auswahl
-    const assignedTo = (thread as any).assignedTo || (thread as any).assignedToUserId;
-    
-    if (selectedFolderType === 'general') {
-      // General: Zeige nur Threads ohne Zuweisung
-      if (assignedTo) {
-        return false;
-      }
-    } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
-      // Team: Zeige nur Threads, die diesem Team-Mitglied zugewiesen sind
-      if (assignedTo !== selectedTeamMemberId) {
-        return false;
-      }
-    }
-    
-    // Zweitens: Filter nach Suchbegriff
+    // Filter nach Suchbegriff
     if (!searchQuery) return true;
-    
+
     const searchLower = searchQuery.toLowerCase();
     return (
       thread.subject.toLowerCase().includes(searchLower) ||
-      thread.participants.some(p => 
+      thread.participants.some(p =>
         p.email.toLowerCase().includes(searchLower) ||
         p.name?.toLowerCase().includes(searchLower)
       )
@@ -973,14 +791,17 @@ export default function InboxPage() {
         })
     : [];
 
-  // Get folder display name
-  const getFolderDisplayName = () => {
-    if (selectedFolderType === 'general') return 'Allgemeine Anfragen';
-    if (selectedFolderType === 'team' && selectedTeamMemberId) {
-      const member = teamMembers.find(m => m.userId === selectedTeamMemberId);
-      return member?.displayName || 'Team-Mitglied';
+  // Copy email to clipboard
+  const copyEmailToClipboard = async () => {
+    if (selectedMailboxEmail) {
+      try {
+        await navigator.clipboard.writeText(selectedMailboxEmail);
+        // Optional: Toast notification
+        console.log('📋 Email copied:', selectedMailboxEmail);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
     }
-    return 'E-Mails';
   };
 
   // Show empty state if no email addresses configured
@@ -1171,14 +992,34 @@ export default function InboxPage() {
           <div className="w-96 border-r bg-gray-50 flex flex-col">
           {/* Folder Header */}
           <div className="px-4 py-2 border-b bg-gray-100 flex items-center justify-between">
-            <h3 className="font-medium text-sm text-gray-700">
-              {getFolderDisplayName()}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {selectedMailboxEmail ? (
+                <button
+                  onClick={copyEmailToClipboard}
+                  className="flex items-center gap-2 min-w-0 group"
+                  title="Klicken zum Kopieren"
+                >
+                  <span className="font-medium text-sm text-gray-700 truncate group-hover:text-[#005fab]">
+                    {selectedMailboxEmail}
+                  </span>
+                  <svg
+                    className="h-4 w-4 text-gray-400 group-hover:text-[#005fab] flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              ) : (
+                <h3 className="font-medium text-sm text-gray-700">E-Mails</h3>
+              )}
               {filteredThreads.length > 0 && (
-                <span className="text-gray-500 font-normal ml-2">
+                <span className="text-gray-500 font-normal text-sm flex-shrink-0">
                   ({filteredThreads.length})
                 </span>
               )}
-            </h3>
+            </div>
             {resolvingThreads && (
               <div className="flex items-center text-xs text-gray-500">
                 <ArrowPathIcon className="h-4 w-4 animate-spin mr-1" />
@@ -1214,8 +1055,6 @@ export default function InboxPage() {
             onThreadSelect={handleThreadSelect}
             loading={loading || resolvingThreads}
             onStar={handleStar}
-            onAssign={handleThreadAssign}
-            organizationId={organizationId}
           />
           </div>
         )}
@@ -1233,11 +1072,8 @@ export default function InboxPage() {
               onDelete={handleDelete}
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}
-              onAssignmentChange={handleThreadAssign}
               onPriorityChange={handleThreadPriorityChange}
-              onCategoryChange={handleThreadCategoryChange}
               organizationId={organizationId}
-              teamMembers={teamMembers}
               showAI={true}
             />
           ) : (

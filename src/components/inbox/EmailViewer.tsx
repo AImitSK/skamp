@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/context/AuthContext';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
-import { TeamAssignmentUI } from '@/components/inbox/TeamAssignmentUI';
 import { StatusManager } from '@/components/inbox/StatusManager';
 import { AIInsightsPanel } from '@/components/inbox/AIInsightsPanel';
 import { AIResponseSuggestions } from '@/components/inbox/AIResponseSuggestions';
@@ -41,16 +40,8 @@ interface EmailViewerProps {
   onStar: (emailId: string, starred: boolean) => void;
   onMarkAsRead?: (emailId: string) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
-  onAssignmentChange?: (threadId: string, assignedTo: string | null) => void;
   onPriorityChange?: (priority: 'low' | 'normal' | 'high' | 'urgent') => void;
-  onCategoryChange?: (category: string, assignee?: string) => void;
   organizationId: string;
-  teamMembers?: Array<{
-    id: string;
-    userId: string;
-    displayName: string;
-    email: string;
-  }>;
   showAI?: boolean;
 }
 
@@ -159,11 +150,8 @@ export function EmailViewer({
   onStar,
   onMarkAsRead,
   onStatusChange,
-  onAssignmentChange,
   onPriorityChange,
-  onCategoryChange,
   organizationId,
-  teamMembers,
   showAI = true
 }: EmailViewerProps) {
   const { getAvatarUrl, getInitials } = useAuth();
@@ -244,14 +232,6 @@ export function EmailViewer({
               showTimers={false}
             />
           </div>
-
-          {/* Team Assignment Dropdown */}
-          <TeamAssignmentUI
-            thread={thread}
-            organizationId={organizationId}
-            onAssignmentChange={onAssignmentChange}
-            compact={true}
-          />
 
           {/* Action Icons */}
           <div className="flex items-center gap-1">
@@ -445,7 +425,6 @@ export function EmailViewer({
           threadId={thread.id!}
           emailId={selectedEmail?.id}
           organizationId={organizationId}
-          teamMembers={teamMembers}
         />
       </div>
     </div>

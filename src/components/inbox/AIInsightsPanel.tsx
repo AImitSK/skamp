@@ -29,16 +29,14 @@ interface AIInsightsPanelProps {
     campaignContext?: string;
   };
   onPriorityChange?: (priority: 'low' | 'normal' | 'high' | 'urgent') => void;
-  onCategoryChange?: (category: string, assignee?: string) => void;
   collapsed?: boolean;
 }
 
-export function AIInsightsPanel({ 
-  email, 
-  thread, 
+export function AIInsightsPanel({
+  email,
+  thread,
   context,
   onPriorityChange,
-  onCategoryChange,
   collapsed = false
 }: AIInsightsPanelProps) {
   const [analysis, setAnalysis] = useState<any>(null);
@@ -73,10 +71,6 @@ export function AIInsightsPanel({
       // Auto-apply insights if confidence is high
       if (result.priority.confidence > 0.8 && onPriorityChange) {
         onPriorityChange(result.priority.priority);
-      }
-      
-      if (result.category.confidence > 0.9 && onCategoryChange) {
-        onCategoryChange(result.category.category, result.category.suggestedAssignee);
       }
       
     } catch (err: any) {
