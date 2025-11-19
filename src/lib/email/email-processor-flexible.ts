@@ -3,8 +3,8 @@ import { EmailAddressInfo, EmailAttachment, EmailMessage } from '@/types/email-e
 import { EmailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { nanoid } from 'nanoid';
-import { serverDb } from '@/lib/firebase/server-init';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin-init';
+import type { Firestore } from 'firebase-admin/firestore';
 
 export interface IncomingEmailData {
   to: EmailAddressInfo[];
@@ -119,13 +119,11 @@ export async function flexibleEmailProcessor(
     console.log('🔍 Checking for duplicate email:', messageId);
 
     // Suche nach existierender E-Mail mit dieser Message-ID
-    const existingEmailQuery = query(
-      collection(serverDb, 'email_messages'),
-      where('messageId', '==', messageId),
-      where('organizationId', '==', organizationId)
-    );
-
-    const existingSnapshot = await getDocs(existingEmailQuery);
+    const existingSnapshot = await adminDb
+      .collection('email_messages')
+      .where('messageId', '==', messageId)
+      .where('organizationId', '==', organizationId)
+      .get();
 
     if (!existingSnapshot.empty) {
       const existingEmail = existingSnapshot.docs[0].data();
@@ -235,13 +233,11 @@ async function resolveOrganization(
       console.log('🔍 Resolving organization for:', address.email);
 
       // 1. Suche in Domain-Mailboxen (neue Inbox-Struktur)
-      const domainMailboxQuery = query(
-        collection(serverDb, 'inbox_domain_mailboxes'),
-        where('inboxAddress', '==', address.email.toLowerCase()),
-        where('status', '==', 'active')
-      );
-
-      const domainMailboxSnapshot = await getDocs(domainMailboxQuery);
+      const domainMailboxSnapshot = await adminDb
+        .collection('inbox_domain_mailboxes')
+        .where('inboxAddress', '==', address.email.toLowerCase())
+        .where('status', '==', 'active')
+        .get();
 
       if (!domainMailboxSnapshot.empty) {
         const doc = domainMailboxSnapshot.docs[0];
@@ -263,13 +259,11 @@ async function resolveOrganization(
       }
 
       // 2. Suche in Projekt-Mailboxen (neue Inbox-Struktur)
-      const projectMailboxQuery = query(
-        collection(serverDb, 'inbox_project_mailboxes'),
-        where('inboxAddress', '==', address.email.toLowerCase()),
-        where('status', 'in', ['active', 'completed'])
-      );
-
-      const projectMailboxSnapshot = await getDocs(projectMailboxQuery);
+      const projectMailboxSnapshot = await adminDb
+        .collection('inbox_project_mailboxes')
+        .where('inboxAddress', '==', address.email.toLowerCase())
+        .where('status', 'in', ['active', 'completed'])
+        .get();
 
       if (!projectMailboxSnapshot.empty) {
         const doc = projectMailboxSnapshot.docs[0];
@@ -291,13 +285,11 @@ async function resolveOrganization(
       }
 
       // 3. Fallback: Exakte E-Mail-Adresse in email_addresses (alte Struktur)
-      const exactQuery = query(
-        collection(serverDb, 'email_addresses'),
-        where('email', '==', address.email),
-        where('isActive', '==', true)
-      );
-
-      const exactSnapshot = await getDocs(exactQuery);
+      const exactSnapshot = await adminDb
+        .collection('email_addresses')
+        .where('email', '==', address.email)
+        .where('isActive', '==', true)
+        .get();
 
       if (!exactSnapshot.empty) {
         const doc = exactSnapshot.docs[0];
@@ -321,14 +313,12 @@ async function resolveOrganization(
         // Versuche verschiedene Domain-Varianten (inkl. übergeordnete Domains)
         const domainVariants = getDomainVariants(fullDomain);
         console.log('🌐 Trying domain-based lookup for:', { fullDomain, variants: domainVariants });
-        
-        const domainQuery = query(
-          collection(serverDb, 'email_addresses'),
-          where('isActive', '==', true)
-        );
-        
-        const domainSnapshot = await getDocs(domainQuery);
-        
+
+        const domainSnapshot = await adminDb
+          .collection('email_addresses')
+          .where('isActive', '==', true)
+          .get();
+
         for (const doc of domainSnapshot.docs) {
           const data = doc.data();
           const emailDomain = data.email.split('@')[1];
