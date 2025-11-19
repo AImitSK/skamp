@@ -71,7 +71,6 @@ export async function flexibleEmailProcessor(
     const { organizationId, emailAccountId, domainId, projectId } = await resolveOrganization(emailData.to);
 
     if (!organizationId || !emailAccountId) {
-      );
       return {
         success: true,
         routingDecision: {
