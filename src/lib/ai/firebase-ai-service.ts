@@ -204,11 +204,22 @@ export class FirebaseAIService {
    */
   async analyzeEmail(request: EmailAnalysisRequest): Promise<EmailAnalysisResponse> {
     try {
+      // Get Firebase Auth token
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(this.emailAnalysisUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(request)
       });
 
