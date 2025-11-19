@@ -69,56 +69,66 @@ export async function POST(request: NextRequest) {
     console.log(`[Inbound Webhook] Thread params:`, threadParams);
 
     // 4. Thread & Message erstellen
-    // HINWEIS: Diese Logic wird später vom thread-matcher-service übernommen
-    // Für jetzt loggen wir nur was passieren würde
+    const { inboundEmailProcessorService } = await import('@/lib/email/inbound-email-processor-service');
 
-    console.log('[Inbound Webhook] Would create thread with params:', {
+    // Parse Headers für Threading
+    const headers = parseHeaders(body.headers);
+    const messageId = headers['Message-ID'] || `inbound-${Date.now()}@inbox.sk-online-marketing.de`;
+    const inReplyTo = headers['In-Reply-To'] || null;
+    const references = headers['References'] || null;
+
+    // Extrahiere organizationId und emailAccountId aus domainId
+    const mailboxInfo = await getMailboxInfo(threadParams.domainId);
+
+    if (!mailboxInfo) {
+      console.error('[Inbound Webhook] Mailbox not found for domainId:', threadParams.domainId);
+      return NextResponse.json({
+        success: false,
+        error: 'Mailbox configuration not found'
+      }, { status: 200 });
+    }
+
+    const organizationId = mailboxInfo.organizationId;
+    const emailAccountId = mailboxInfo.emailAccountId || 'system-inbox'; // Fallback
+
+    const result = await inboundEmailProcessorService.processIncomingEmail({
+      messageId,
+      from: body.from,
+      to: body.to,
+      subject: body.subject || '(Kein Betreff)',
+      textContent: body.text,
+      htmlContent: body.html,
+      headers,
+      receivedAt: new Date(),
+      inReplyTo,
+      references,
+      attachments: body.attachments ? parseInt(body.attachments as string) : 0,
+      // Inbox Context
       projectId: threadParams.projectId,
       domainId: threadParams.domainId,
       mailboxType: threadParams.mailboxType,
       labels: threadParams.labels,
       redirectMetadata: threadParams.redirectMetadata
-    });
+    }, organizationId, emailAccountId);
 
-    console.log('[Inbound Webhook] Would create message:', {
-      from: body.from,
-      to: body.to,
-      subject: body.subject,
-      textContent: body.text?.substring(0, 100) + '...',
-      hasHtml: !!body.html,
-      hasAttachments: !!body.attachments
-    });
+    if (!result.success) {
+      console.error('[Inbound Webhook] Processing failed:', result.error);
+      return NextResponse.json({
+        success: false,
+        error: result.error
+      }, { status: 200 });
+    }
 
-    // TODO: Integration mit thread-matcher-service
-    // const thread = await threadMatcherService.findOrCreateThread({
-    //   messageId: body.headers?.['Message-ID'],
-    //   subject: body.subject,
-    //   from: body.from,
-    //   to: body.to,
-    //   inReplyTo: body.headers?.['In-Reply-To'],
-    //   references: body.headers?.['References'],
-    //   ...threadParams
-    // });
-
-    // TODO: Integration mit email-message-service
-    // const message = await emailMessageService.create({
-    //   threadId: thread.id,
-    //   from: parseEmailAddress(body.from),
-    //   to: [parseEmailAddress(body.to)],
-    //   subject: body.subject,
-    //   textContent: body.text,
-    //   htmlContent: body.html,
-    //   headers: parseHeaders(body.headers),
-    //   receivedAt: new Date(),
-    //   folder: 'inbox',
-    //   isRead: false,
-    //   ...threadParams
-    // });
+    console.log(`[Inbound Webhook] Created thread ${result.threadId}, message ${result.messageId}`);
 
     // 5. Success Response für SendGrid
     return NextResponse.json({
       success: true,
       message: 'Email processed successfully',
+      data: {
+        threadId: result.threadId,
+        messageId: result.messageId
+      },
       debug: {
         parsedType: parsedReplyTo.type,
         mailboxType: threadParams.mailboxType,
@@ -206,5 +216,38 @@ function parseHeaders(headersString: string | null): Record<string, string> {
   } catch (error) {
     console.error('[Inbound Webhook] Error parsing headers:', error);
     return {};
+  }
+}
+
+/**
+ * Helper: Holt Mailbox-Informationen aus Firestore
+ */
+async function getMailboxInfo(domainId: string | null): Promise<{ organizationId: string; emailAccountId?: string } | null> {
+  if (!domainId) return null;
+
+  try {
+    const { adminDb } = await import('@/lib/firebase/admin-init');
+
+    // Suche Domain Mailbox
+    const mailboxDoc = await adminDb
+      .collection('inbox_domain_mailboxes')
+      .doc(domainId)
+      .get();
+
+    if (!mailboxDoc.exists) {
+      console.warn(`[getMailboxInfo] Domain mailbox not found: ${domainId}`);
+      return null;
+    }
+
+    const mailbox = mailboxDoc.data();
+
+    return {
+      organizationId: mailbox?.organizationId,
+      emailAccountId: mailbox?.emailAccountId
+    };
+
+  } catch (error) {
+    console.error('[getMailboxInfo] Error loading mailbox:', error);
+    return null;
   }
 }
