@@ -165,14 +165,20 @@ export async function flexibleEmailProcessor(
       ...(domainId && { domainId }),
       ...(projectId && { projectId }),
 
-      // Adressen
-      from: emailData.from,
-      to: emailData.to,
+      // Adressen - ensure name is never undefined
+      from: {
+        email: emailData.from.email,
+        name: emailData.from.name || ''
+      },
+      to: emailData.to.map(addr => ({
+        email: addr.email,
+        name: addr.name || ''
+      })),
 
       // Inhalt
       subject: emailData.subject,
       textContent: emailData.textContent || '',
-      htmlContent: emailData.htmlContent,
+      htmlContent: emailData.htmlContent || '',
       snippet: generateSnippet(emailData.textContent || emailData.htmlContent || ''),
 
       // Threading
@@ -192,9 +198,9 @@ export async function flexibleEmailProcessor(
       // Attachments
       attachments: emailData.attachments || [],
 
-      // Spam-Info
-      spamScore: emailData.spamScore,
-      spamReport: emailData.spamReport
+      // Spam-Info - only add if defined
+      ...(emailData.spamScore !== undefined && { spamScore: emailData.spamScore }),
+      ...(emailData.spamReport && { spamReport: emailData.spamReport })
     };
 
     // 4. In Firestore speichern
