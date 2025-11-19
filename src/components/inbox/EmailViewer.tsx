@@ -293,7 +293,6 @@ export function EmailViewer({
                 campaignContext: thread.subject
               }}
               onPriorityChange={onPriorityChange}
-              onCategoryChange={onCategoryChange}
               collapsed={true}
             />
           </div>
