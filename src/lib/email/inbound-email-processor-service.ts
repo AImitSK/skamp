@@ -63,7 +63,8 @@ class InboundEmailProcessorService {
   async processIncomingEmail(
     emailData: IncomingEmailData,
     organizationId: string,
-    emailAccountId: string
+    emailAccountId: string,
+    userId: string
   ): Promise<ProcessedEmailResult> {
     try {
       console.log('[InboundProcessor] Processing email:', emailData.subject);
@@ -79,6 +80,7 @@ class InboundEmailProcessorService {
         from: fromInfo,
         to: [toInfo],
         organizationId,
+        userId,
         inReplyTo: emailData.inReplyTo,
         references: this.parseReferences(emailData.references),
         projectId: emailData.projectId,
@@ -104,6 +106,7 @@ class InboundEmailProcessorService {
         receivedAt: Timestamp.fromDate(emailData.receivedAt),
         organizationId,
         emailAccountId,
+        userId,
         projectId: emailData.projectId,
         domainId: emailData.domainId,
         mailboxType: emailData.mailboxType,
@@ -140,6 +143,7 @@ class InboundEmailProcessorService {
     from: EmailAddressInfo;
     to: EmailAddressInfo[];
     organizationId: string;
+    userId: string;
     inReplyTo?: string | null;
     references?: string[];
     projectId: string | null;
@@ -276,6 +280,7 @@ class InboundEmailProcessorService {
     from: EmailAddressInfo;
     to: EmailAddressInfo[];
     organizationId: string;
+    userId: string;
     projectId: string | null;
     domainId: string | null;
     mailboxType: 'domain' | 'project';
@@ -289,7 +294,7 @@ class InboundEmailProcessorService {
       participants,
       lastMessageAt: now,
       organizationId: criteria.organizationId,
-      userId: '', // TODO: Lookup from email account
+      userId: criteria.userId,
       createdAt: now,
       updatedAt: now,
       contactIds: [],
@@ -372,6 +377,7 @@ class InboundEmailProcessorService {
     receivedAt: Timestamp;
     organizationId: string;
     emailAccountId: string;
+    userId: string;
     projectId: string | null;
     domainId: string | null;
     mailboxType: 'domain' | 'project';
@@ -396,7 +402,7 @@ class InboundEmailProcessorService {
       sentAt: data.receivedAt, // Eingehende Mails: sentAt = receivedAt
       organizationId: data.organizationId,
       emailAccountId: data.emailAccountId,
-      userId: '', // TODO: Lookup from email account
+      userId: data.userId,
       createdAt: now,
       updatedAt: now,
       folder: 'inbox',

@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     const organizationId = mailboxInfo.organizationId;
     const emailAccountId = mailboxInfo.emailAccountId || 'system-inbox'; // Fallback
+    const userId = mailboxInfo.userId || '';
 
     const result = await inboundEmailProcessorService.processIncomingEmail({
       messageId,
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
       mailboxType: threadParams.mailboxType,
       labels: threadParams.labels,
       redirectMetadata: threadParams.redirectMetadata
-    }, organizationId, emailAccountId);
+    }, organizationId, emailAccountId, userId);
 
     if (!result.success) {
       console.error('[Inbound Webhook] Processing failed:', result.error);
@@ -243,7 +244,8 @@ async function getMailboxInfo(domainId: string | null): Promise<{ organizationId
 
     return {
       organizationId: mailbox?.organizationId,
-      emailAccountId: mailbox?.emailAccountId
+      emailAccountId: mailbox?.emailAccountId,
+      userId: mailbox?.userId
     };
 
   } catch (error) {
