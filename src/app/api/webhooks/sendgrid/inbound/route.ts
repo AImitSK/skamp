@@ -118,6 +118,13 @@ export async function POST(request: NextRequest) {
 
     // Process attachments if present (mit Storage-Upload)
     let processedAttachments: EmailAttachment[] = [];
+
+    console.log('🔍 Attachment check:', {
+      hasAttachmentInfo: !!parsedEmail['attachment-info'],
+      attachmentCount: parsedEmail.attachments,
+      formDataKeys: Array.from(formData.keys())
+    });
+
     if (parsedEmail['attachment-info']) {
       try {
         // Bestimme organizationId aus to-Adresse (für Storage-Path)
