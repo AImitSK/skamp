@@ -79,7 +79,7 @@ class DomainService {
 
       // Erstelle automatisch ein Domain-Postfach für diese Domain
       try {
-        const inboxAddress = `${data.domain}@inbox.sk-online-marketing.de`;
+        const inboxAddress = `${data.domain}@inbox.sk-online-marketing.de`.toLowerCase();
 
         await addDoc(collection(db, 'inbox_domain_mailboxes'), {
           organizationId: data.organizationId,
