@@ -30,8 +30,11 @@ export async function uploadEmailAttachment(
   const cleanFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
   const timestamp = Date.now();
 
+  // Bereinige messageId für Storage-Path (entferne @, <, >, etc.)
+  const cleanMessageId = messageId.replace(/[^a-zA-Z0-9-]/g, '_');
+
   // Storage-Path: Integration mit Media-System für Storage-Tracking
-  const storagePath = `organizations/${organizationId}/media/email-attachments/${messageId}/${timestamp}_${cleanFilename}`;
+  const storagePath = `organizations/${organizationId}/media/email-attachments/${cleanMessageId}/${timestamp}_${cleanFilename}`;
 
   try {
     // Upload zu Firebase Storage (Admin SDK)

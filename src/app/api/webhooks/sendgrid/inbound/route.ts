@@ -196,12 +196,56 @@ export async function POST(request: NextRequest) {
  */
 function parseFormData(formData: FormData): ParsedEmail | null {
   try {
+    // Parse charsets first (for proper text decoding)
+    let charsets: any = {};
+    try {
+      const charsetsStr = formData.get('charsets');
+      if (charsetsStr && typeof charsetsStr === 'string') {
+        charsets = JSON.parse(charsetsStr);
+      }
+    } catch (e) {
+      console.error('Failed to parse charsets:', e);
+    }
+
+    // Helper function to decode text based on charset
+    const decodeText = (text: string | null, charset?: string): string | null => {
+      if (!text) return text;
+
+      // If charset is UTF-8 or not specified, return directly
+      if (!charset || charset.toLowerCase() === 'utf-8') {
+        return text;
+      }
+
+      // Try to decode with specified charset
+      try {
+        const decoder = new TextDecoder(charset);
+        const encoder = new TextEncoder();
+        return decoder.decode(encoder.encode(text));
+      } catch (e) {
+        console.warn(`Failed to decode with charset ${charset}, using original text`);
+        return text;
+      }
+    };
+
     const email: any = {};
-    
+
     // Iterate through all form fields
     for (const [key, value] of formData.entries()) {
       if (typeof value === 'string') {
-        email[key] = value;
+        // Decode text fields with proper charset
+        if (key === 'subject') {
+          email[key] = decodeText(value, charsets.subject);
+        } else if (key === 'text') {
+          email[key] = decodeText(value, charsets.text);
+        } else if (key === 'html') {
+          email[key] = decodeText(value, charsets.html);
+        } else if (key === 'from') {
+          email[key] = decodeText(value, charsets.from);
+        } else if (key === 'to') {
+          email[key] = decodeText(value, charsets.to);
+        } else {
+          email[key] = value;
+        }
       }
     }
     
