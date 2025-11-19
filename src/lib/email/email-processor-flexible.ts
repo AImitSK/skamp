@@ -1,9 +1,9 @@
 // src/lib/email/email-processor-flexible.ts
 import { EmailAddressInfo, EmailAttachment, EmailMessage } from '@/types/email-enhanced';
-import { EmailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { nanoid } from 'nanoid';
 import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 
 export interface IncomingEmailData {
@@ -71,8 +71,6 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    // Services initialisieren
-    const emailMessageService = new EmailMessageService();
     // Use the stable thread matcher service
 
     // 1. Organisation über empfangende E-Mail-Adresse ermitteln
@@ -154,7 +152,7 @@ export async function flexibleEmailProcessor(
     console.log('✅ No duplicate found, processing new email');
 
     // 3. E-Mail-Nachricht erstellen
-    const emailMessage: Partial<EmailMessage> = {
+    const emailMessage: any = {
       messageId: messageId, // Verwende die bereits geprüfte ID
       threadId: threadResult.thread.id,
       organizationId,
@@ -186,7 +184,9 @@ export async function flexibleEmailProcessor(
       references: emailData.references || [],
 
       // Metadaten
-      receivedAt: new Date() as any, // Server-Timestamp wird vom Service gesetzt
+      receivedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       isRead: false,
       isStarred: false,
       isArchived: false,
@@ -203,14 +203,14 @@ export async function flexibleEmailProcessor(
       ...(emailData.spamReport && { spamReport: emailData.spamReport })
     };
 
-    // 4. In Firestore speichern
-    const savedMessage = await emailMessageService.create(emailMessage);
-    
-    console.log('✅ Email message saved:', savedMessage.id);
+    // 4. In Firestore speichern mit Admin SDK
+    const docRef = await adminDb.collection('email_messages').add(emailMessage);
+
+    console.log('✅ Email message saved:', docRef.id);
 
     return {
       success: true,
-      emailId: savedMessage.id,
+      emailId: docRef.id,
       threadId: threadResult.thread.id,
       organizationId,
       routingDecision: {
