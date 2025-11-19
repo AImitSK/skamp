@@ -444,16 +444,19 @@ export class EmailSenderService {
     const senderEmail = emailAddress.email;
     const senderName = emailAddress.displayName || emailAddress.domain || undefined;
 
-    // REPLY-TO: Generiere Reply-To Adresse (inline statt emailAddressService wegen Server-Kontext)
-    const prefix = emailAddress.localPart?.substring(0, 10).replace(/[^a-z0-9]/gi, '') || 'email';
-    const shortOrgId = preparedData.campaign.organizationId.substring(0, 8);
-    const shortEmailId = emailAddress.id!.substring(0, 8);
-    const replyToAddress = `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
+    // REPLY-TO: Generiere Reply-To Adresse via replyToGeneratorService
+    const { replyToGeneratorService } = await import('./reply-to-generator-service');
+    const replyToAddress = await replyToGeneratorService.generateReplyTo(
+      preparedData.campaign.projectId,
+      emailAddress,
+      metadata.useSystemInbox !== false // Default: true
+    );
 
     console.log('🔍 Sender-Info:', {
       from: senderEmail,
       fromName: senderName,
-      replyTo: replyToAddress
+      replyTo: replyToAddress,
+      useSystemInbox: metadata.useSystemInbox !== false
     });
 
     // SendGrid Mail Objekt

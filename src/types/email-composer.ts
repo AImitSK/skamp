@@ -77,7 +77,7 @@ export interface EmailDraft {
     preheader: string; // Vorschautext
     useSystemInbox?: boolean; // true = CeleroPress Inbox, false = eigene Mail-Software (Default: true)
   };
-  
+
   // Stufe 3: Versand-Optionen
   scheduling?: {
     sendAt?: Date;
@@ -92,6 +92,12 @@ export interface EmailDraft {
   updatedAt: Timestamp;
   lastModifiedStep?: ComposerStep;
 }
+
+/**
+ * Email Metadata Type Alias
+ * Extrahiert aus EmailDraft['metadata'] für einfachere Verwendung
+ */
+export type EmailMetadata = EmailDraft['metadata'];
 
 /**
  * Manuell hinzugefügter Empfänger

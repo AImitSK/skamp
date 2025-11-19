@@ -93,6 +93,20 @@ export const organizationService = {
 
       console.log(`✅ Created owner ${ownerId} for organization ${organizationId}`);
 
+      // 3. Default-Email erstellen (celeropress.com)
+      try {
+        const { defaultEmailService } = await import('../email/default-email-service');
+        const emailId = await defaultEmailService.createDefaultEmailForOrganization(
+          organizationId,
+          data.name,
+          data.ownerId
+        );
+        console.log(`✅ Created default email ${emailId} for organization ${organizationId}`);
+      } catch (emailError) {
+        console.error('⚠️ Error creating default email:', emailError);
+        // Nicht blockierend - Organization wurde bereits erstellt
+      }
+
       return organizationId;
     } catch (error) {
       console.error('Error creating organization:', error);
