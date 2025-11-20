@@ -717,43 +717,43 @@ export default function InboxPage() {
       {/* Toolbar / Funktionsbar */}
       <div className="border-b bg-gray-50 px-4 py-5 mt-4">
         <div className="flex items-center justify-between gap-4">
-          {/* Left side - Toggle Buttons, Search, New Email & Refresh */}
-          <div className="flex items-center gap-3 flex-1">
-            {/* Toggle Buttons */}
-            <div className="flex items-center gap-1">
-              {/* Organization Sidebar Toggle */}
-              <Button
-                plain
-                onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
-                className="p-2"
-                title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
-              >
-                <FolderIcon className="h-5 w-5 text-gray-400" />
-                {organizationSidebarCollapsed ? (
-                  <ChevronRightIcon className="h-3 w-3 text-gray-400" />
-                ) : (
-                  <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
-                )}
-              </Button>
-              
-              {/* Thread List Sidebar Toggle */}
-              <Button
-                plain
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-2"
-                title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
-              >
-                <ListBulletIcon className="h-5 w-5 text-gray-400" />
-                {sidebarCollapsed ? (
-                  <ChevronRightIcon className="h-3 w-3 text-gray-400" />
-                ) : (
-                  <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
-                )}
-              </Button>
-            </div>
+          {/* Left side - Toggle Buttons */}
+          <div className="flex items-center gap-1">
+            {/* Organization Sidebar Toggle */}
+            <Button
+              plain
+              onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
+              className="p-2"
+              title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
+            >
+              <FolderIcon className="h-5 w-5 text-gray-400" />
+              {organizationSidebarCollapsed ? (
+                <ChevronRightIcon className="h-3 w-3 text-gray-400" />
+              ) : (
+                <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
+              )}
+            </Button>
 
+            {/* Thread List Sidebar Toggle */}
+            <Button
+              plain
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2"
+              title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
+            >
+              <ListBulletIcon className="h-5 w-5 text-gray-400" />
+              {sidebarCollapsed ? (
+                <ChevronRightIcon className="h-3 w-3 text-gray-400" />
+              ) : (
+                <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
+              )}
+            </Button>
+          </div>
+
+          {/* Right side - Search, New Email & Refresh */}
+          <div className="flex items-center gap-3 flex-1 justify-end">
             {/* Search */}
-            <div className="relative flex-1 max-w-lg">
+            <div className="relative w-full max-w-lg">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -768,7 +768,7 @@ export default function InboxPage() {
             </div>
 
             {/* New Email Button */}
-            <Button 
+            <Button
               onClick={() => {
                 setComposeMode('new');
                 setReplyToEmail(null);
@@ -779,7 +779,7 @@ export default function InboxPage() {
               <PencilSquareIcon className="h-4 w-4 mr-2" />
               <span className="whitespace-nowrap">Neue E-Mail</span>
             </Button>
-            
+
             {/* Refresh Button */}
             <Button
               plain
@@ -790,11 +790,6 @@ export default function InboxPage() {
             >
               <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
-          </div>
-
-          {/* Right side - Actions */}
-          <div className="flex items-center gap-2">
-            {/* Alle Icons entfernt - nicht mehr benötigt */}
           </div>
         </div>
       </div>
