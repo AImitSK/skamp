@@ -9,6 +9,7 @@ import { EmailAddressInfo, EmailAttachment } from '@/types/email-enhanced';
 interface ParsedEmail {
   headers?: string;
   to: string;
+  cc?: string;
   from: string;
   subject: string;
   text?: string;
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     // Extract email addresses
     const fromAddress = parseEmailAddress(parsedEmail.from);
     const toAddresses = parseToAddresses(parsedEmail);
+    const ccAddresses = parseCcAddresses(parsedEmail);
     
     // Parse envelope for accurate recipient info
     const envelope = parsedEmail.envelope ? JSON.parse(parsedEmail.envelope) as ParsedEnvelope : null;
@@ -97,6 +99,7 @@ export async function POST(request: NextRequest) {
       // Addresses
       from: fromAddress,
       to: toAddresses,
+      cc: ccAddresses.length > 0 ? ccAddresses : undefined,
 
       // Content (truncated)
       subject: parsedEmail.subject || '(Kein Betreff)',
@@ -382,6 +385,8 @@ function parseFormData(formData: FormData): ParsedEmail | null {
           email[key] = decodeText(value, charsets.from);
         } else if (key === 'to') {
           email[key] = decodeText(value, charsets.to);
+        } else if (key === 'cc') {
+          email[key] = decodeText(value, charsets.cc);
         } else {
           email[key] = value;
         }
@@ -591,6 +596,27 @@ function parseToAddresses(parsedEmail: ParsedEmail): EmailAddressInfo[] {
     }
   }
   
+  return addresses;
+}
+
+/**
+ * Parse all CC addresses
+ */
+function parseCcAddresses(parsedEmail: ParsedEmail): EmailAddressInfo[] {
+  const addresses: EmailAddressInfo[] = [];
+  const seen = new Set<string>();
+
+  // Parse CC field
+  if (parsedEmail.cc) {
+    const ccAddresses = parsedEmail.cc.split(',').map(addr => parseEmailAddress(addr.trim()));
+    ccAddresses.forEach(addr => {
+      if (addr.email && !seen.has(addr.email)) {
+        addresses.push(addr);
+        seen.add(addr.email);
+      }
+    });
+  }
+
   return addresses;
 }
 
