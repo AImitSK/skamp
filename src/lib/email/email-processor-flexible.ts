@@ -36,11 +36,30 @@ export interface ProcessingResult {
     reason: string;
     targetFolder?: string;
   };
+  // NEU: Multi-Mailbox Support
+  mailboxCount?: number;
+  mailboxResults?: Array<{
+    mailboxId: string;
+    mailboxType: 'domain' | 'project';
+    threadId: string;
+    emailId: string;
+  }>;
+}
+
+interface MailboxInfo {
+  organizationId: string;
+  emailAccountId: string;
+  domainId?: string;
+  projectId?: string;
+  mailboxType: 'domain' | 'project' | 'legacy';
+  inboxAddress: string;
 }
 
 /**
  * Flexible Email Processor für eingehende E-Mails
  * Verarbeitet E-Mails von verschiedenen Quellen (SendGrid, etc.)
+ *
+ * NEU: Multi-Mailbox Support - Email wird in ALLEN matching Postfächern gespeichert
  */
 export async function flexibleEmailProcessor(
   emailData: IncomingEmailData
@@ -65,12 +84,11 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    // Use the stable thread matcher service
+    // 1. ALLE Mailboxen ermitteln (nicht nur die erste!)
+    const allMailboxes = await resolveAllMailboxes(emailData.to);
 
-    // 1. Organisation über empfangende E-Mail-Adresse ermitteln
-    const { organizationId, emailAccountId, domainId, projectId } = await resolveOrganization(emailData.to);
-
-    if (!organizationId || !emailAccountId) {
+    if (allMailboxes.length === 0) {
+      console.log('📭 No matching mailboxes found for:', emailData.to.map(t => t.email));
       return {
         success: true,
         routingDecision: {
@@ -80,118 +98,143 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    // 2. Thread-Matching durchführen
-    const threadResult = await threadMatcherService.findOrCreateThread({
-      messageId: emailData.messageId || generateMessageId(),
-      ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
-      references: emailData.references || [],
-      subject: emailData.subject,
-      from: emailData.from,
-      to: emailData.to,
-      organizationId,
-      ...(domainId && { domainId }),
-      ...(projectId && { projectId })
-    });
+    console.log(`📬 Found ${allMailboxes.length} matching mailbox(es):`,
+      allMailboxes.map(m => ({
+        type: m.mailboxType,
+        inbox: m.inboxAddress,
+        org: m.organizationId
+      }))
+    );
 
-    if (!threadResult.success || !threadResult.thread?.id) {
-      console.error('❌ Thread matching failed:', threadResult);
+    // 2. Email in ALLEN gefundenen Mailboxen verarbeiten
+    const messageId = emailData.messageId || generateMessageId();
+    const mailboxResults: Array<{
+      mailboxId: string;
+      mailboxType: 'domain' | 'project';
+      threadId: string;
+      emailId: string;
+    }> = [];
+
+    for (const mailbox of allMailboxes) {
+      try {
+        // Duplikat-Check für diese spezifische Mailbox
+        const isDuplicate = await checkDuplicate(messageId, mailbox.organizationId, mailbox.projectId, mailbox.domainId);
+
+        if (isDuplicate) {
+          console.log(`⏭️  Skipping duplicate for mailbox ${mailbox.inboxAddress}`);
+          continue;
+        }
+
+        // Thread-Matching für diese Mailbox
+        const threadResult = await threadMatcherService.findOrCreateThread({
+          messageId,
+          ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
+          references: emailData.references || [],
+          subject: emailData.subject,
+          from: emailData.from,
+          to: emailData.to,
+          organizationId: mailbox.organizationId,
+          ...(mailbox.domainId && { domainId: mailbox.domainId }),
+          ...(mailbox.projectId && { projectId: mailbox.projectId })
+        });
+
+        if (!threadResult.success || !threadResult.thread?.id) {
+          console.error('❌ Thread matching failed for mailbox:', mailbox.inboxAddress);
+          continue;
+        }
+
+        // E-Mail-Nachricht erstellen
+        const emailMessage: any = {
+          messageId,
+          threadId: threadResult.thread.id,
+          organizationId: mailbox.organizationId,
+          emailAccountId: mailbox.emailAccountId,
+          userId: 'system',
+
+          // Mailbox-Zuordnung
+          ...(mailbox.domainId && { domainId: mailbox.domainId }),
+          ...(mailbox.projectId && { projectId: mailbox.projectId }),
+          mailboxType: mailbox.mailboxType,
+
+          // Adressen
+          from: {
+            email: emailData.from.email,
+            name: emailData.from.name || ''
+          },
+          to: emailData.to.map(addr => ({
+            email: addr.email,
+            name: addr.name || ''
+          })),
+
+          // Inhalt
+          subject: emailData.subject,
+          textContent: emailData.textContent || '',
+          htmlContent: emailData.htmlContent || '',
+          snippet: generateSnippet(emailData.textContent || emailData.htmlContent || ''),
+
+          // Threading
+          ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
+          references: emailData.references || [],
+
+          // Metadaten
+          receivedAt: FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          isRead: false,
+          isStarred: false,
+          isArchived: false,
+          isDraft: false,
+          folder: 'inbox',
+          importance: 'normal',
+          labels: [],
+
+          // Attachments
+          attachments: emailData.attachments || [],
+
+          // Spam-Info
+          ...(emailData.spamScore !== undefined && { spamScore: emailData.spamScore }),
+          ...(emailData.spamReport && { spamReport: emailData.spamReport })
+        };
+
+        // In Firestore speichern
+        const docRef = await adminDb.collection('email_messages').add(emailMessage);
+
+        console.log(`✅ Email saved to mailbox ${mailbox.inboxAddress} (${mailbox.mailboxType})`);
+
+        mailboxResults.push({
+          mailboxId: mailbox.emailAccountId,
+          mailboxType: mailbox.mailboxType as 'domain' | 'project',
+          threadId: threadResult.thread.id,
+          emailId: docRef.id
+        });
+
+      } catch (mailboxError) {
+        console.error(`❌ Failed to process email for mailbox ${mailbox.inboxAddress}:`, mailboxError);
+        // Continue mit nächster Mailbox
+      }
+    }
+
+    // Mindestens eine Mailbox erfolgreich?
+    if (mailboxResults.length === 0) {
       return {
         success: false,
-        error: 'Thread matching failed'
+        error: 'Failed to save email to any mailbox'
       };
     }
 
-    // ========== DUPLIKAT-CHECK ==========
-    const messageId = emailData.messageId || generateMessageId();
-    // Suche nach existierender E-Mail mit dieser Message-ID
-    const existingSnapshot = await adminDb
-      .collection('email_messages')
-      .where('messageId', '==', messageId)
-      .where('organizationId', '==', organizationId)
-      .get();
-
-    if (!existingSnapshot.empty) {
-      const existingEmail = existingSnapshot.docs[0].data();
-      // Wenn im Trash, nicht neu erstellen
-      if (existingEmail.folder === 'trash') {
-        }
-      
-      return {
-        success: true,
-        emailId: existingSnapshot.docs[0].id,
-        threadId: existingEmail.threadId,
-        organizationId,
-        routingDecision: {
-          action: 'reject',
-          reason: `Duplicate email - already in ${existingEmail.folder}`,
-          targetFolder: existingEmail.folder
-        }
-      };
-    }
-
-    // 3. E-Mail-Nachricht erstellen
-    const emailMessage: any = {
-      messageId: messageId, // Verwende die bereits geprüfte ID
-      threadId: threadResult.thread.id,
-      organizationId,
-      emailAccountId,
-      userId: 'system', // Wird später durch Assignment geändert
-
-      // Mailbox-Zuordnung (neue Inbox-Struktur)
-      ...(domainId && { domainId }),
-      ...(projectId && { projectId }),
-
-      // Adressen - ensure name is never undefined
-      from: {
-        email: emailData.from.email,
-        name: emailData.from.name || ''
-      },
-      to: emailData.to.map(addr => ({
-        email: addr.email,
-        name: addr.name || ''
-      })),
-
-      // Inhalt
-      subject: emailData.subject,
-      textContent: emailData.textContent || '',
-      htmlContent: emailData.htmlContent || '',
-      snippet: generateSnippet(emailData.textContent || emailData.htmlContent || ''),
-
-      // Threading
-      ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
-      references: emailData.references || [],
-
-      // Metadaten
-      receivedAt: FieldValue.serverTimestamp(),
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      isRead: false,
-      isStarred: false,
-      isArchived: false,
-      isDraft: false,
-      folder: 'inbox',
-      importance: 'normal',
-      labels: [],
-
-      // Attachments
-      attachments: emailData.attachments || [],
-
-      // Spam-Info - only add if defined
-      ...(emailData.spamScore !== undefined && { spamScore: emailData.spamScore }),
-      ...(emailData.spamReport && { spamReport: emailData.spamReport })
-    };
-
-    // 4. In Firestore speichern mit Admin SDK
-    const docRef = await adminDb.collection('email_messages').add(emailMessage);
+    // Erste Mailbox als primäre für Rückgabe verwenden
+    const primary = mailboxResults[0];
 
     return {
       success: true,
-      emailId: docRef.id,
-      threadId: threadResult.thread.id,
-      organizationId,
+      emailId: primary.emailId,
+      threadId: primary.threadId,
+      organizationId: allMailboxes[0].organizationId,
+      mailboxCount: mailboxResults.length,
+      mailboxResults,
       routingDecision: {
         action: 'inbox',
-        reason: 'Successfully processed and stored in inbox'
+        reason: `Successfully processed and stored in ${mailboxResults.length} mailbox(es)`
       }
     };
 
@@ -205,47 +248,64 @@ export async function flexibleEmailProcessor(
 }
 
 /**
- * Ermittelt die Organisation anhand der empfangenden E-Mail-Adressen
+ * NEU: Ermittelt ALLE Mailboxen für die TO-Adressen
+ * (statt nur die erste wie bisher)
  */
-async function resolveOrganization(
+async function resolveAllMailboxes(
   toAddresses: EmailAddressInfo[]
-): Promise<{ organizationId?: string; emailAccountId?: string; domainId?: string; projectId?: string }> {
+): Promise<MailboxInfo[]> {
+  const mailboxes: MailboxInfo[] = [];
+  const seen = new Set<string>(); // Deduplizierung
+
   for (const address of toAddresses) {
     try {
-      // 1. Suche in Domain-Mailboxen (neue Inbox-Struktur)
+      const emailLower = address.email.toLowerCase();
+
+      // 1. Suche in Domain-Mailboxen
       const domainMailboxSnapshot = await adminDb
         .collection('inbox_domain_mailboxes')
-        .where('inboxAddress', '==', address.email.toLowerCase())
+        .where('inboxAddress', '==', emailLower)
         .where('status', '==', 'active')
         .get();
 
-      if (!domainMailboxSnapshot.empty) {
-        const doc = domainMailboxSnapshot.docs[0];
+      for (const doc of domainMailboxSnapshot.docs) {
         const data = doc.data();
+        const key = `domain-${data.organizationId}-${data.domainId}`;
 
-        return {
-          organizationId: data.organizationId,
-          emailAccountId: doc.id,
-          domainId: data.domainId
-        };
+        if (!seen.has(key)) {
+          mailboxes.push({
+            organizationId: data.organizationId,
+            emailAccountId: doc.id,
+            domainId: data.domainId,
+            mailboxType: 'domain',
+            inboxAddress: emailLower
+          });
+          seen.add(key);
+        }
       }
 
-      // 2. Suche in Projekt-Mailboxen (neue Inbox-Struktur)
+      // 2. Suche in Projekt-Mailboxen
       const projectMailboxSnapshot = await adminDb
         .collection('inbox_project_mailboxes')
-        .where('inboxAddress', '==', address.email.toLowerCase())
+        .where('inboxAddress', '==', emailLower)
         .where('status', 'in', ['active', 'completed'])
         .get();
 
-      if (!projectMailboxSnapshot.empty) {
-        const doc = projectMailboxSnapshot.docs[0];
+      for (const doc of projectMailboxSnapshot.docs) {
         const data = doc.data();
+        const key = `project-${data.organizationId}-${data.projectId}`;
 
-        return {
-          organizationId: data.organizationId,
-          emailAccountId: doc.id,
-          projectId: data.projectId
-        };
+        if (!seen.has(key)) {
+          mailboxes.push({
+            organizationId: data.organizationId,
+            emailAccountId: doc.id,
+            projectId: data.projectId,
+            domainId: data.domainId, // Projekte haben auch domainId
+            mailboxType: 'project',
+            inboxAddress: emailLower
+          });
+          seen.add(key);
+        }
       }
 
       // 3. Fallback: Exakte E-Mail-Adresse in email_addresses (alte Struktur)
@@ -255,20 +315,24 @@ async function resolveOrganization(
         .where('isActive', '==', true)
         .get();
 
-      if (!exactSnapshot.empty) {
-        const doc = exactSnapshot.docs[0];
+      for (const doc of exactSnapshot.docs) {
         const data = doc.data();
+        const key = `legacy-${data.organizationId}-${doc.id}`;
 
-        return {
-          organizationId: data.organizationId,
-          emailAccountId: doc.id
-        };
+        if (!seen.has(key)) {
+          mailboxes.push({
+            organizationId: data.organizationId,
+            emailAccountId: doc.id,
+            mailboxType: 'legacy',
+            inboxAddress: address.email
+          });
+          seen.add(key);
+        }
       }
-      
-      // 2. Fallback: Suche nach Domain (für Catch-All/Alias-E-Mails)
+
+      // 4. Fallback: Domain-basierte Suche (Catch-All)
       const fullDomain = address.email.split('@')[1];
       if (fullDomain) {
-        // Versuche verschiedene Domain-Varianten (inkl. übergeordnete Domains)
         const domainVariants = getDomainVariants(fullDomain);
         const domainSnapshot = await adminDb
           .collection('email_addresses')
@@ -278,39 +342,68 @@ async function resolveOrganization(
         for (const doc of domainSnapshot.docs) {
           const data = doc.data();
           const emailDomain = data.email.split('@')[1];
-          
-          // Prüfe exakte Domain oder übergeordnete Domain
+
           if (domainVariants.includes(emailDomain) || emailDomain === fullDomain) {
-            return {
-              organizationId: data.organizationId,
-              emailAccountId: doc.id
-            };
+            const key = `legacy-catchall-${data.organizationId}-${doc.id}`;
+
+            if (!seen.has(key)) {
+              mailboxes.push({
+                organizationId: data.organizationId,
+                emailAccountId: doc.id,
+                mailboxType: 'legacy',
+                inboxAddress: address.email
+              });
+              seen.add(key);
+            }
           }
         }
       }
-      
+
     } catch (error) {
-      console.error('Error resolving organization for', address.email, error);
+      console.error('Error resolving mailboxes for', address.email, error);
     }
   }
 
-  return {};
+  return mailboxes;
+}
+
+/**
+ * Prüft ob Email bereits in dieser Mailbox existiert
+ */
+async function checkDuplicate(
+  messageId: string,
+  organizationId: string,
+  projectId?: string,
+  domainId?: string
+): Promise<boolean> {
+  let query = adminDb
+    .collection('email_messages')
+    .where('messageId', '==', messageId)
+    .where('organizationId', '==', organizationId);
+
+  // Spezifische Mailbox-Prüfung
+  if (projectId) {
+    query = query.where('projectId', '==', projectId);
+  } else if (domainId) {
+    query = query.where('domainId', '==', domainId);
+  }
+
+  const snapshot = await query.get();
+  return !snapshot.empty;
 }
 
 /**
  * Generiert Domain-Varianten für Catch-All Matching
- * Beispiel: inbox.sk-online-marketing.de -> [sk-online-marketing.de, online-marketing.de, marketing.de]
  */
 function getDomainVariants(domain: string): string[] {
   const parts = domain.split('.');
   const variants: string[] = [];
-  
-  // Generiere übergeordnete Domains
+
   for (let i = 1; i < parts.length - 1; i++) {
     const variant = parts.slice(i).join('.');
     variants.push(variant);
   }
-  
+
   return variants;
 }
 
@@ -326,17 +419,13 @@ function generateMessageId(): string {
  */
 function generateSnippet(content: string, maxLength: number = 150): string {
   if (!content) return '';
-  
-  // HTML-Tags entfernen falls vorhanden
+
   const textContent = content.replace(/<[^>]*>/g, '');
-  
-  // Whitespace normalisieren
   const normalized = textContent.replace(/\s+/g, ' ').trim();
-  
-  // Kürzen
+
   if (normalized.length <= maxLength) {
     return normalized;
   }
-  
+
   return normalized.substring(0, maxLength - 3) + '...';
 }
