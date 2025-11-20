@@ -4,14 +4,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
-import { NotificationBell } from '@/components/inbox/NotificationBell';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
@@ -34,17 +31,13 @@ import {
   doc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
-import { 
+import {
   PencilSquareIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   InboxIcon,
   ExclamationTriangleIcon,
-  BugAntIcon,
-  PlusIcon,
   ArrowPathIcon,
-  Squares2X2Icon,
-  Cog6ToothIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FolderIcon,
@@ -69,7 +62,6 @@ export default function InboxPage() {
   const [replyToEmail, setReplyToEmail] = useState<EmailMessage | null>(null);
   const [hasEmailAddresses, setHasEmailAddresses] = useState(false);
   const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [resolvingThreads, setResolvingThreads] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,29 +76,6 @@ export default function InboxPage() {
   
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
-  
-  // Debug Info Type
-  interface DebugInfo {
-    emailAddresses?: any[];
-    hasEmailAddresses?: boolean;
-    emailAddressError?: any;
-    listenersSetup?: boolean;
-    organizationId?: string;
-    selectedFolderType?: string;
-    selectedTeamMemberId?: string;
-    threadCount?: number;
-    threads?: EmailThread[];
-    threadError?: string;
-    messageCount?: number;
-    messages?: EmailMessage[];
-    messageError?: string;
-    setupError?: string;
-    deferredThreadsResolved?: number;
-    teamMembers?: any[];
-    teamError?: string;
-  }
-  
-  const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -141,13 +110,6 @@ export default function InboxPage() {
       
       try {
         const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
-
-        
-        setDebugInfo(prev => ({
-          ...prev,
-          deferredThreadsResolved: resolvedCount
-        }));
-        
         threadsResolvedRef.current = true;
       } catch (error) {
 
@@ -175,19 +137,8 @@ export default function InboxPage() {
 
         setEmailAddresses(addresses);
         setHasEmailAddresses(addresses.length > 0);
-        
-        // Update debug info
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          emailAddresses: addresses,
-          hasEmailAddresses: addresses.length > 0
-        }));
       } catch (error) {
-
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          emailAddressError: error
-        }));
+        console.error('Error loading email addresses:', error);
       }
     };
 
@@ -200,15 +151,6 @@ export default function InboxPage() {
       setLoading(false);
       return;
     }
-
-
-    setDebugInfo((prev: DebugInfo) => ({
-      ...prev,
-      listenersSetup: true,
-      organizationId,
-      selectedFolderType,
-      selectedTeamMemberId
-    }));
 
     // Clean up previous listeners
     unsubscribes.forEach(unsubscribe => unsubscribe());
@@ -235,13 +177,9 @@ export default function InboxPage() {
       setupTeamFolderListeners(unsubscribes);
 
     } catch (error: any) {
-
+      console.error('Setup error:', error);
       setError('Fehler beim Einrichten der Echtzeit-Updates');
       setLoading(false);
-      setDebugInfo((prev: DebugInfo) => ({
-        ...prev,
-        setupError: error.message
-      }));
     }
   };
 
@@ -288,21 +226,11 @@ export default function InboxPage() {
 
         setThreads(threadsData);
         setLoading(false);
-
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadCount: threadsData.length,
-          threads: threadsData
-        }));
       },
       (error) => {
         console.error('Thread load error:', error);
         setError('Fehler beim Laden der E-Mail-Threads');
         setLoading(false);
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadError: error.message
-        }));
       }
     );
 
@@ -339,21 +267,11 @@ export default function InboxPage() {
 
         setEmails(messagesData);
         setLoading(false);
-
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageCount: messagesData.length,
-          messages: messagesData
-        }));
       },
       (error) => {
         console.error('Messages load error:', error);
         setError('Fehler beim Laden der E-Mails');
         setLoading(false);
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageError: error.message
-        }));
       }
     );
 
@@ -408,13 +326,8 @@ export default function InboxPage() {
     try {
       const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
       alert(`${resolvedCount} Threads wurden erstellt!`);
-      
-      setDebugInfo(prev => ({
-        ...prev,
-        deferredThreadsResolved: resolvedCount
-      }));
     } catch (error) {
-
+      console.error('Error resolving threads:', error);
       alert('Fehler beim Erstellen der Threads');
     } finally {
       setResolvingThreads(false);
@@ -881,67 +794,7 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-            {/* Notifications */}
-            <NotificationBell
-              onNotificationClick={(notification) => {
-                // Navigate to thread when notification is clicked
-                if (notification.threadId) {
-                  const thread = threads.find(t => t.id === notification.threadId);
-                  if (thread) {
-                    handleThreadSelect(thread);
-                  }
-                }
-              }}
-            />
-            
-            
-            <Button
-              plain
-              className="p-2"
-              title="Ansichtsoptionen"
-            >
-              <Squares2X2Icon className="h-5 w-5 text-gray-400" />
-            </Button>
-            
-            <Button
-              plain
-              className="p-2"
-              title="Einstellungen"
-            >
-              <Cog6ToothIcon className="h-5 w-5 text-gray-400" />
-            </Button>
-
-            {/* Debug controls for development */}
-            {process.env.NODE_ENV === 'development' && (
-              <>
-                <div className="border-l mx-2 h-6" />
-                <Button
-                  plain
-                  onClick={createTestEmail}
-                  className="text-xs p-1"
-                  title="Test-E-Mail erstellen"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  plain
-                  onClick={handleResolveThreads}
-                  className="text-xs p-1"
-                  title="Threads manuell erstellen"
-                  disabled={resolvingThreads}
-                >
-                  <ArrowPathIcon className={`h-4 w-4 ${resolvingThreads ? 'animate-spin' : ''}`} />
-                </Button>
-                <Button
-                  plain
-                  onClick={() => setShowDebug(!showDebug)}
-                  className="text-xs p-1"
-                  title="Debug-Info anzeigen"
-                >
-                  <BugAntIcon className="h-4 w-4" />
-                </Button>
-              </>
-            )}
+            {/* Alle Icons entfernt - nicht mehr benötigt */}
           </div>
         </div>
       </div>
@@ -1000,16 +853,6 @@ export default function InboxPage() {
             )}
           </div>
 
-          {/* Debug Info */}
-          {showDebug && (
-            <div className="p-4 bg-yellow-50 border-b border-yellow-200 text-xs">
-              <h4 className="font-bold mb-2">Debug Info:</h4>
-              <pre className="whitespace-pre-wrap overflow-x-auto">
-                {JSON.stringify(debugInfo, null, 2)}
-              </pre>
-            </div>
-          )}
-
           {/* Error State */}
           {error && (
             <div className="p-4 bg-red-50 border-b border-red-200">
@@ -1056,26 +899,10 @@ export default function InboxPage() {
                   {loading ? 'E-Mails werden geladen...' : 'Keine E-Mail ausgewählt'}
                 </p>
                 <p className="text-sm mt-1">
-                  {!loading && threads.length === 0 
-                    ? 'Keine E-Mails in diesem Ordner' 
+                  {!loading && threads.length === 0
+                    ? 'Keine E-Mails in diesem Ordner'
                     : 'Wählen Sie eine Konversation aus der Liste'}
                 </p>
-                {!loading && threads.length === 0 && hasEmailAddresses && (
-                  <div className="mt-6">
-                    <p className="text-xs text-gray-400 mb-3">
-                      Warten Sie auf eingehende E-Mails oder senden Sie eine Test-E-Mail
-                    </p>
-                    {process.env.NODE_ENV === 'development' && (
-                      <Button 
-                        onClick={createTestEmail}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-700"
-                      >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Test-E-Mail erstellen
-                      </Button>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )}
