@@ -654,10 +654,10 @@ export default function EmailSettingsPage() {
                         {/* Team */}
                         <div className="w-[20%]">
                           <div className="flex -space-x-2">
-                            {address.assignedUserIds.slice(0, 3).map((userId: string) => {
+                            {(address.assignedUserIds || []).slice(0, 3).map((userId: string) => {
                               const member = teamMembers.find(m => m.userId === userId);
                               if (!member) return null;
-                              
+
                               // Generiere Initialen als Fallback
                               const initials = member.displayName
                                 .split(' ')
@@ -665,7 +665,7 @@ export default function EmailSettingsPage() {
                                 .join('')
                                 .toUpperCase()
                                 .slice(0, 2);
-                              
+
                               return (
                                 <Avatar
                                   key={userId}
@@ -676,12 +676,12 @@ export default function EmailSettingsPage() {
                                 />
                               );
                             })}
-                            {address.assignedUserIds.length > 3 && (
+                            {(address.assignedUserIds || []).length > 3 && (
                               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
-                                +{address.assignedUserIds.length - 3}
+                                +{(address.assignedUserIds || []).length - 3}
                               </div>
                             )}
-                            {address.assignedUserIds.length === 0 && (
+                            {(address.assignedUserIds || []).length === 0 && (
                               <span className="text-gray-400 text-sm">Nicht zugewiesen</span>
                             )}
                           </div>
