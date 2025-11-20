@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
           isDraft: false,
           labels: [],
           importance: 'normal',
-          emailAccountId,
+          emailAccountId: emailAddressId, // FIX: emailAddressId aus Request verwenden
           organizationId,
           userId: userId || organizationId,
           receivedAt: adminDb.FieldValue.serverTimestamp(),
