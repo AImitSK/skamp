@@ -161,8 +161,10 @@ export async function flexibleEmailProcessor(
           userId: 'system',
 
           // Mailbox-Zuordnung
+          // WICHTIG: Domain-Mailbox-Emails dürfen NUR domainId haben (KEIN projectId!)
+          // Project-Mailbox-Emails haben BEIDE (projectId + domainId)
+          ...(mailbox.mailboxType === 'project' && mailbox.projectId && { projectId: mailbox.projectId }),
           ...(mailbox.domainId && { domainId: mailbox.domainId }),
-          ...(mailbox.projectId && { projectId: mailbox.projectId }),
           mailboxType: mailbox.mailboxType,
 
           // Adressen
