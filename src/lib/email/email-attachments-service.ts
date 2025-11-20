@@ -33,11 +33,17 @@ export async function uploadEmailAttachment(
   // Bereinige messageId für Storage-Path (entferne @, <, >, etc.)
   const cleanMessageId = messageId.replace(/[^a-zA-Z0-9-]/g, '_');
 
+  // Bereinige Content-ID (entferne < > falls vorhanden)
+  const cleanContentId = contentId ? contentId.replace(/^<|>$/g, '') : undefined;
+
   console.log('📎 Upload attachment:', {
     originalMessageId: messageId,
     cleanMessageId,
     originalFilename: filename,
-    cleanFilename
+    cleanFilename,
+    contentId: contentId,
+    cleanContentId: cleanContentId,
+    inline: inline
   });
 
   // Storage-Path: Integration mit Media-System für Storage-Tracking
@@ -58,7 +64,7 @@ export async function uploadEmailAttachment(
         uploadedAt: new Date().toISOString(),
         isEmailAttachment: 'true',
         ...(inline && { inline: 'true' }),
-        ...(contentId && { contentId })
+        ...(cleanContentId && { contentId: cleanContentId })
       }
     });
 
@@ -78,7 +84,7 @@ export async function uploadEmailAttachment(
       size: file.length,
       url: publicUrl,
       inline: inline || false,
-      ...(contentId && { contentId }) // Nur wenn definiert
+      ...(cleanContentId && { contentId: cleanContentId }) // Bereinigt, nur wenn definiert
     };
 
     return attachment;
@@ -191,6 +197,10 @@ export async function extractAttachmentsFromFormData(
 /**
  * Ersetzt CID-Links in HTML mit echten URLs
  * Beispiel: <img src="cid:abc123"> -> <img src="https://storage.googleapis.com/...">
+ *
+ * WICHTIG: Content-IDs können mit/ohne < > kommen:
+ * - Outlook: <abc123@outlook.com>
+ * - Gmail: abc123@gmail.com
  */
 export function replaceInlineImageCIDs(
   htmlContent: string,
@@ -206,10 +216,32 @@ export function replaceInlineImageCIDs(
   const inlineImages = attachments.filter(a => a.inline && a.contentId);
 
   for (const image of inlineImages) {
-    // Ersetze cid:xxx mit echter URL
-    const cidPattern = new RegExp(`cid:${image.contentId}`, 'gi');
-    updatedHtml = updatedHtml.replace(cidPattern, image.url || '');
+    if (!image.contentId || !image.url) continue;
+
+    // Bereinige Content-ID (entferne < > falls vorhanden)
+    const cleanCid = image.contentId.replace(/^<|>$/g, '');
+
+    // Ersetze BEIDE Varianten: mit und ohne < >
+    // Outlook: src="cid:abc123" oder src="cid:<abc123>"
+    const patterns = [
+      new RegExp(`cid:${escapeRegex(cleanCid)}`, 'gi'),
+      new RegExp(`cid:<${escapeRegex(cleanCid)}>`, 'gi'),
+      new RegExp(`cid:${escapeRegex(image.contentId)}`, 'gi'), // Original
+    ];
+
+    for (const pattern of patterns) {
+      updatedHtml = updatedHtml.replace(pattern, image.url);
+    }
+
+    console.log(`[replaceInlineImageCIDs] Replaced CID ${cleanCid} with URL`);
   }
 
   return updatedHtml;
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

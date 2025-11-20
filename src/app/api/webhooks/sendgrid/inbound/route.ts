@@ -193,6 +193,38 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * Windows-1252 Decoder (häufig bei Outlook)
+ */
+function decodeWindows1252(bytes: Uint8Array): string {
+  // Windows-1252 Mapping für Bytes 0x80-0x9F
+  const win1252Map: { [key: number]: string } = {
+    0x80: '€', 0x82: '‚', 0x83: 'ƒ', 0x84: '„', 0x85: '…', 0x86: '†', 0x87: '‡',
+    0x88: 'ˆ', 0x89: '‰', 0x8A: 'Š', 0x8B: '‹', 0x8C: 'Œ', 0x8E: 'Ž',
+    0x91: ''', 0x92: ''', 0x93: '"', 0x94: '"', 0x95: '•', 0x96: '–', 0x97: '—',
+    0x98: '˜', 0x99: '™', 0x9A: 'š', 0x9B: '›', 0x9C: 'œ', 0x9E: 'ž', 0x9F: 'Ÿ'
+  };
+
+  let result = '';
+  for (let i = 0; i < bytes.length; i++) {
+    const byte = bytes[i];
+    if (byte >= 0x80 && byte <= 0x9F && win1252Map[byte]) {
+      result += win1252Map[byte];
+    } else {
+      result += String.fromCharCode(byte);
+    }
+  }
+  return result;
+}
+
+/**
+ * Zählt deutsche Sonderzeichen (für Encoding-Erkennung)
+ */
+function countGermanChars(text: string): number {
+  const matches = text.match(/[äöüßÄÖÜ]/g);
+  return matches ? matches.length : 0;
+}
+
+/**
  * Parse FormData from SendGrid
  */
 function parseFormData(formData: FormData): ParsedEmail | null {
@@ -217,24 +249,56 @@ function parseFormData(formData: FormData): ParsedEmail | null {
         let decoded = text;
 
         // 1. Handle ISO-8859-1/Latin-1 charset explicitly
+        // Outlook oft sends Windows-1252 als ISO-8859-1 deklariert
         if (charset && (charset.toLowerCase() === 'iso-8859-1' || charset.toLowerCase() === 'latin1')) {
           try {
-            // The text was sent as ISO-8859-1 bytes but may have been misinterpreted
-            // Try to reconstruct the original bytes and decode properly
-            const bytes = Buffer.from(text, 'binary');
-            decoded = bytes.toString('utf8');
-
-            // If that creates more problems, try alternative: treat string as ISO-8859-1 bytes
-            if (decoded.includes('�')) {
-              const altBytes = new Uint8Array(text.length);
-              for (let i = 0; i < text.length; i++) {
-                altBytes[i] = text.charCodeAt(i) & 0xFF;
-              }
-              const altDecoded = new TextDecoder('iso-8859-1').decode(altBytes);
-              if (!altDecoded.includes('�') || altDecoded.includes('ü') || altDecoded.includes('ä') || altDecoded.includes('ö')) {
-                decoded = altDecoded;
-              }
+            // Konvertiere String zu Byte-Array (jedes Zeichen = 1 Byte)
+            const bytes = new Uint8Array(text.length);
+            for (let i = 0; i < text.length; i++) {
+              bytes[i] = text.charCodeAt(i) & 0xFF;
             }
+
+            // Versuche verschiedene Decodierungen
+            let bestDecoded = text;
+            let bestScore = 0;
+
+            // Versuch 1: UTF-8 (falls fälschlicherweise als ISO-8859-1 markiert)
+            try {
+              const utf8Decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+              const score = countGermanChars(utf8Decoded);
+              if (score > bestScore || (score === bestScore && !utf8Decoded.includes('�'))) {
+                bestDecoded = utf8Decoded;
+                bestScore = score;
+              }
+            } catch (e) {
+              // UTF-8 decode failed, continue
+            }
+
+            // Versuch 2: Windows-1252 (sehr häufig bei Outlook)
+            try {
+              const win1252Decoded = decodeWindows1252(bytes);
+              const score = countGermanChars(win1252Decoded);
+              if (score > bestScore) {
+                bestDecoded = win1252Decoded;
+                bestScore = score;
+              }
+            } catch (e) {
+              // Windows-1252 decode failed
+            }
+
+            // Versuch 3: ISO-8859-1 (echtes Latin-1)
+            try {
+              const latin1Decoded = new TextDecoder('iso-8859-1').decode(bytes);
+              const score = countGermanChars(latin1Decoded);
+              if (score > bestScore) {
+                bestDecoded = latin1Decoded;
+                bestScore = score;
+              }
+            } catch (e) {
+              // ISO-8859-1 decode failed
+            }
+
+            decoded = bestDecoded;
           } catch (e) {
             console.warn('Failed to decode ISO-8859-1:', e);
           }
