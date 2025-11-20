@@ -8,6 +8,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 
 export interface IncomingEmailData {
   to: EmailAddressInfo[];
+  cc?: EmailAddressInfo[]; // CC-Empfänger
   from: EmailAddressInfo;
   subject: string;
   textContent?: string;
@@ -85,7 +86,15 @@ export async function flexibleEmailProcessor(
     }
 
     // 1. ALLE Mailboxen ermitteln (nicht nur die erste!)
-    const allMailboxes = await resolveAllMailboxes(emailData.to);
+    // Kombiniere TO + CC Empfänger für Multi-Mailbox Routing
+    const allRecipients = [
+      ...emailData.to,
+      ...(emailData.cc || [])
+    ];
+
+    console.log('📮 All recipients (TO + CC):', allRecipients.map(r => r.email));
+
+    const allMailboxes = await resolveAllMailboxes(allRecipients);
 
     if (allMailboxes.length === 0) {
       console.log('📭 No matching mailboxes found for:', emailData.to.map(t => t.email));
