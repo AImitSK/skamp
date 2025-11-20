@@ -29,7 +29,8 @@
       "Bash(cp:*)",
       "Bash(Select-String -Pattern \"@tanstack/react-query|recharts\")",
       "Bash(Select-Object -First 2)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(vercel logs:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

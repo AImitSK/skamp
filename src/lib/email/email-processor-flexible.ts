@@ -377,6 +377,13 @@ async function checkDuplicate(
   projectId?: string,
   domainId?: string
 ): Promise<boolean> {
+  console.log('🔍 Duplikat-Check START:', {
+    messageId,
+    organizationId,
+    projectId: projectId || 'none',
+    domainId: domainId || 'none'
+  });
+
   let query = adminDb
     .collection('email_messages')
     .where('messageId', '==', messageId)
@@ -384,13 +391,32 @@ async function checkDuplicate(
 
   // Spezifische Mailbox-Prüfung
   if (projectId) {
+    console.log('🔍 Query mit projectId:', projectId);
     query = query.where('projectId', '==', projectId);
   } else if (domainId) {
+    console.log('🔍 Query mit domainId:', domainId);
     query = query.where('domainId', '==', domainId);
+  } else {
+    console.log('🔍 Query OHNE projectId/domainId (Legacy)');
   }
 
   const snapshot = await query.get();
-  return !snapshot.empty;
+  const isDuplicate = !snapshot.empty;
+
+  console.log('🔍 Duplikat-Check ERGEBNIS:', {
+    isDuplicate,
+    foundCount: snapshot.size,
+    foundDocs: snapshot.docs.map(d => ({
+      id: d.id,
+      messageId: d.data().messageId,
+      projectId: d.data().projectId,
+      domainId: d.data().domainId,
+      subject: d.data().subject,
+      createdAt: d.data().createdAt?.toDate?.()
+    }))
+  });
+
+  return isDuplicate;
 }
 
 /**
