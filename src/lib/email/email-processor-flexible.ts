@@ -331,8 +331,9 @@ async function resolveAllMailboxes(
       }
 
       // 4. Fallback: Domain-basierte Suche (Catch-All)
+      // NUR wenn noch KEIN Postfach gefunden wurde!
       const fullDomain = address.email.split('@')[1];
-      if (fullDomain) {
+      if (fullDomain && mailboxes.length === 0) {
         const domainVariants = getDomainVariants(fullDomain);
         const domainSnapshot = await adminDb
           .collection('email_addresses')
