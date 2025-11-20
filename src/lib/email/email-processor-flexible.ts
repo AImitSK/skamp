@@ -410,12 +410,27 @@ async function checkDuplicate(
   }
 
   const snapshot = await query.get();
-  const isDuplicate = !snapshot.empty;
+
+  // WICHTIG: Zusätzliche Filterung für Domain-Mailboxen
+  // Eine Domain-Mailbox-Email darf KEIN projectId haben!
+  let relevantDocs = snapshot.docs;
+  if (!projectId && domainId) {
+    console.log('🔍 Domain-Mailbox: Filtere Emails MIT projectId raus');
+    relevantDocs = snapshot.docs.filter(doc => {
+      const data = doc.data();
+      const hasProjectId = !!data.projectId;
+      console.log(`   Doc ${doc.id}: projectId=${data.projectId || 'none'} → ${hasProjectId ? 'SKIP' : 'KEEP'}`);
+      return !hasProjectId;
+    });
+  }
+
+  const isDuplicate = relevantDocs.length > 0;
 
   console.log('🔍 Duplikat-Check ERGEBNIS:', {
     isDuplicate,
-    foundCount: snapshot.size,
-    foundDocs: snapshot.docs.map(d => ({
+    totalFound: snapshot.size,
+    relevantFound: relevantDocs.length,
+    relevantDocs: relevantDocs.map(d => ({
       id: d.id,
       messageId: d.data().messageId,
       projectId: d.data().projectId,
