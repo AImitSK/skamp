@@ -254,11 +254,14 @@ export default function InboxPage() {
 
         // Filtere nach Postfach-Typ
         if (selectedFolderType === 'general' && selectedTeamMemberId) {
+          // Domain-Mailbox: NUR Emails die KEIN projectId haben!
           messagesData = messagesData.filter(msg => {
             const domainId = (msg as any).domainId;
-            return domainId === selectedTeamMemberId;
+            const projectId = (msg as any).projectId;
+            return domainId === selectedTeamMemberId && !projectId;
           });
         } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+          // Project-Mailbox: NUR Emails die ein projectId haben
           messagesData = messagesData.filter(msg => {
             const projectId = (msg as any).projectId;
             return projectId === selectedTeamMemberId;

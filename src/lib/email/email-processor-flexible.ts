@@ -6,6 +6,9 @@ import { adminDb } from '@/lib/firebase/admin-init';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 
+// In-Memory Lock für parallele Webhook-Calls mit derselben messageId
+const processingLocks = new Map<string, Promise<ProcessingResult>>();
+
 export interface IncomingEmailData {
   to: EmailAddressInfo[];
   cc?: EmailAddressInfo[]; // CC-Empfänger
@@ -65,32 +68,44 @@ interface MailboxInfo {
 export async function flexibleEmailProcessor(
   emailData: IncomingEmailData
 ): Promise<ProcessingResult> {
-  try {
-    // Grundlegende Validierung
-    if (!emailData.from?.email || !emailData.to?.length || !emailData.subject) {
-      return {
-        success: false,
-        error: 'Invalid email data: missing required fields'
-      };
-    }
+  // Generate or extract messageId early for locking
+  const messageId = emailData.messageId || generateMessageId();
 
-    // Spam-Check
-    if (emailData.spamScore && emailData.spamScore > 5) {
-      return {
-        success: true,
-        routingDecision: {
-          action: 'archive',
-          reason: `High spam score: ${emailData.spamScore}`
-        }
-      };
-    }
+  // 🔒 RACE-CONDITION SCHUTZ: Prüfe ob diese Email bereits verarbeitet wird
+  const existingLock = processingLocks.get(messageId);
+  if (existingLock) {
+    console.log(`🔒 Email ${messageId} wird bereits verarbeitet - warte auf Ergebnis...`);
+    return await existingLock;
+  }
 
-    // 1. ALLE Mailboxen ermitteln (nicht nur die erste!)
-    // Kombiniere TO + CC Empfänger für Multi-Mailbox Routing
-    const allRecipients = [
-      ...emailData.to,
-      ...(emailData.cc || [])
-    ];
+  // Erstelle neuen Lock für diese messageId
+  const processingPromise = (async (): Promise<ProcessingResult> => {
+    try {
+      // Grundlegende Validierung
+      if (!emailData.from?.email || !emailData.to?.length || !emailData.subject) {
+        return {
+          success: false,
+          error: 'Invalid email data: missing required fields'
+        };
+      }
+
+      // Spam-Check
+      if (emailData.spamScore && emailData.spamScore > 5) {
+        return {
+          success: true,
+          routingDecision: {
+            action: 'archive',
+            reason: `High spam score: ${emailData.spamScore}`
+          }
+        };
+      }
+
+      // 1. ALLE Mailboxen ermitteln (nicht nur die erste!)
+      // Kombiniere TO + CC Empfänger für Multi-Mailbox Routing
+      const allRecipients = [
+        ...emailData.to,
+        ...(emailData.cc || [])
+      ];
 
     console.log('📮 All recipients (TO + CC):', allRecipients.map(r => r.email));
 
@@ -116,7 +131,7 @@ export async function flexibleEmailProcessor(
     );
 
     // 2. Email in ALLEN gefundenen Mailboxen verarbeiten
-    const messageId = emailData.messageId || generateMessageId();
+    // messageId wurde bereits oben generiert/extrahiert für Locking
     const mailboxResults: Array<{
       mailboxId: string;
       mailboxType: 'domain' | 'project';
@@ -249,12 +264,26 @@ export async function flexibleEmailProcessor(
       }
     };
 
-  } catch (error) {
-    console.error('❌ Email processing failed:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown processing error'
-    };
+    } catch (error) {
+      console.error('❌ Email processing failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown processing error'
+      };
+    }
+  })();
+
+  // Lock für diese messageId setzen
+  processingLocks.set(messageId, processingPromise);
+
+  try {
+    // Warte auf Ergebnis
+    const result = await processingPromise;
+    return result;
+  } finally {
+    // Lock entfernen nach Completion (egal ob Erfolg oder Fehler)
+    processingLocks.delete(messageId);
+    console.log(`🔓 Lock für ${messageId} entfernt`);
   }
 }
 
