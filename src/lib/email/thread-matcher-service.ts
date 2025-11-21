@@ -346,6 +346,27 @@ export class ThreadMatcherService {
   }
 
   /**
+   * Ändert die Priorität eines Threads
+   */
+  async updateThreadPriority(
+    threadId: string,
+    priority: EmailThread['priority']
+  ): Promise<void> {
+    try {
+      await adminDb
+        .collection(this.collectionName)
+        .doc(threadId)
+        .update({
+          priority,
+          updatedAt: FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+      console.error('❌ updateThreadPriority error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Markiert Thread als gelesen
    */
   async markThreadAsRead(threadId: string): Promise<void> {
