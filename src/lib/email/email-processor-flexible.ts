@@ -78,26 +78,41 @@ export async function flexibleEmailProcessor(
     return await existingLock;
   }
 
-  // Erstelle neuen Lock für diese messageId
-  const processingPromise = (async (): Promise<ProcessingResult> => {
+  // Erstelle Processing-Promise und setze Lock SOFORT (vor jeglicher Verarbeitung!)
+  let resolveProcessing: (result: ProcessingResult) => void;
+  let rejectProcessing: (error: any) => void;
+
+  const processingPromise = new Promise<ProcessingResult>((resolve, reject) => {
+    resolveProcessing = resolve;
+    rejectProcessing = reject;
+  });
+
+  // Lock SOFORT setzen, damit parallele Webhooks warten müssen
+  processingLocks.set(messageId, processingPromise);
+  console.log(`🔒 Lock für ${messageId} gesetzt`);
+
+  // Jetzt erst die eigentliche Verarbeitung starten
+  (async (): Promise<void> => {
     try {
       // Grundlegende Validierung
       if (!emailData.from?.email || !emailData.to?.length || !emailData.subject) {
-        return {
+        resolveProcessing({
           success: false,
           error: 'Invalid email data: missing required fields'
-        };
+        });
+        return;
       }
 
       // Spam-Check
       if (emailData.spamScore && emailData.spamScore > 5) {
-        return {
+        resolveProcessing({
           success: true,
           routingDecision: {
             action: 'archive',
             reason: `High spam score: ${emailData.spamScore}`
           }
-        };
+        });
+        return;
       }
 
       // 1. ALLE Mailboxen ermitteln (nicht nur die erste!)
@@ -113,13 +128,14 @@ export async function flexibleEmailProcessor(
 
     if (allMailboxes.length === 0) {
       console.log('📭 No matching mailboxes found for:', emailData.to.map(t => t.email));
-      return {
+      resolveProcessing({
         success: true,
         routingDecision: {
           action: 'archive',
           reason: 'No matching organization found'
         }
-      };
+      });
+      return;
     }
 
     console.log(`📬 Found ${allMailboxes.length} matching mailbox(es):`,
@@ -242,16 +258,17 @@ export async function flexibleEmailProcessor(
 
     // Mindestens eine Mailbox erfolgreich?
     if (mailboxResults.length === 0) {
-      return {
+      resolveProcessing({
         success: false,
         error: 'Failed to save email to any mailbox'
-      };
+      });
+      return;
     }
 
     // Erste Mailbox als primäre für Rückgabe verwenden
     const primary = mailboxResults[0];
 
-    return {
+    resolveProcessing({
       success: true,
       emailId: primary.emailId,
       threadId: primary.threadId,
@@ -262,29 +279,20 @@ export async function flexibleEmailProcessor(
         action: 'inbox',
         reason: `Successfully processed and stored in ${mailboxResults.length} mailbox(es)`
       }
-    };
+    });
 
     } catch (error) {
       console.error('❌ Email processing failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown processing error'
-      };
+      rejectProcessing(error);
+    } finally {
+      // Lock entfernen nach Completion (egal ob Erfolg oder Fehler)
+      processingLocks.delete(messageId);
+      console.log(`🔓 Lock für ${messageId} entfernt`);
     }
   })();
 
-  // Lock für diese messageId setzen
-  processingLocks.set(messageId, processingPromise);
-
-  try {
-    // Warte auf Ergebnis
-    const result = await processingPromise;
-    return result;
-  } finally {
-    // Lock entfernen nach Completion (egal ob Erfolg oder Fehler)
-    processingLocks.delete(messageId);
-    console.log(`🔓 Lock für ${messageId} entfernt`);
-  }
+  // Warte auf das Ergebnis
+  return processingPromise;
 }
 
 /**

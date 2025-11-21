@@ -28,7 +28,8 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   deleteDoc,
-  doc
+  doc,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import {
@@ -606,8 +607,17 @@ export default function InboxPage() {
   const handleStar = async (emailId: string, starred: boolean) => {
     try {
       await emailMessageService.toggleStar(emailId);
-    } catch (error) {
 
+      // Update thread isStarred wenn mindestens eine Email im Thread starred ist
+      if (selectedThread?.id) {
+        const threadRef = doc(db, 'email_threads', selectedThread.id);
+        await updateDoc(threadRef, {
+          isStarred: starred,
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling star:', error);
     }
   };
 
@@ -673,8 +683,12 @@ export default function InboxPage() {
   });
 
   // Get emails for selected thread
-  const threadEmails = selectedThread 
+  const threadEmails = selectedThread
     ? emails.filter(e => e.threadId === selectedThread.id)
+        // Dedupliziere nach messageId (falls Backend-Duplikate existieren)
+        .filter((email, index, self) =>
+          index === self.findIndex(e => e.messageId === email.messageId)
+        )
         .sort((a, b) => {
           const aTime = a.receivedAt?.toDate?.()?.getTime() || 0;
           const bTime = b.receivedAt?.toDate?.()?.getTime() || 0;

@@ -14,11 +14,8 @@ import { de } from 'date-fns/locale/de';
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
-  ArchiveBoxIcon,
   TrashIcon,
-  EllipsisVerticalIcon,
   PaperClipIcon,
-  ArrowPathIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
@@ -32,7 +29,6 @@ interface EmailViewerProps {
   selectedEmail: EmailMessage | null;
   onReply: (email: EmailMessage) => void;
   onForward: (email: EmailMessage) => void;
-  onArchive: (emailId: string) => void;
   onDelete: (emailId: string) => void;
   onStar: (emailId: string, starred: boolean) => void;
   onMarkAsRead?: (emailId: string) => void;
@@ -142,7 +138,6 @@ export function EmailViewer({
   selectedEmail,
   onReply,
   onForward,
-  onArchive,
   onDelete,
   onStar,
   onMarkAsRead,
@@ -209,13 +204,6 @@ export function EmailViewer({
               title="Markieren"
             >
               <StarIconSolid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onArchive(latestEmail.id!)}
-              className="p-1.5 rounded hover:bg-gray-100 text-gray-400"
-              title="Archivieren"
-            >
-              <ArchiveBoxIcon className="h-4 w-4" />
             </button>
             <button
               onClick={() => onDelete(latestEmail.id!)}
