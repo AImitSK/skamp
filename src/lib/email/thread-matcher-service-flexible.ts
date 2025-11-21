@@ -431,25 +431,30 @@ export class FlexibleThreadMatcherService {
         normalizedSubject: normalizedSubject || 'kein-betreff',
         participants: participants,
         lastMessageAt: serverTimestamp() as Timestamp,
-        
+
         organizationId: criteria.organizationId,
         userId: '', // Wird später durch Email Address userId gesetzt
         createdAt: serverTimestamp() as Timestamp,
         updatedAt: serverTimestamp() as Timestamp,
-        
+
         contactIds: [], // TODO: Contact-Verknüpfung implementieren
-        
+
         threadingStrategy: 'headers',
         confidence: 100,
         status: 'active',
         priority: 'normal',
-        
+
         // Wenn es ein deferred Thread war, markieren
         wasDeferred: !!threadId,
-        
-        // PLAN 7/9: Projekt-Kontext hinzufügen falls vorhanden
+
+        // WICHTIG: Mailbox-Kontext speichern für separate Threads
+        // Project-Mailbox: NUR projectId (domainId wird auch gesetzt aber projectId ist primär)
+        // Domain-Mailbox: NUR domainId (KEIN projectId!)
+        ...(criteria.projectId && { projectId: criteria.projectId }),
+        ...(criteria.domainId && { domainId: criteria.domainId }),
+
+        // PLAN 7/9: Projekt-Kontext hinzufügen falls vorhanden (zusätzliche Metadaten)
         ...(projectContext && {
-          projectId: projectContext.projectId,
           projectTitle: projectContext.projectTitle,
           contextType: projectContext.contextType as any,
           projectContext: {

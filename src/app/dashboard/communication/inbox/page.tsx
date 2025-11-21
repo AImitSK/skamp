@@ -235,23 +235,27 @@ export default function InboxPage() {
         console.log('🔍 [DEBUG] Gefilterte Threads:', threadsData.length);
 
         // Berechne unreadCounts für ALLE Mailboxen (nicht nur gefilterte)
+        // Zähle Threads mit ungelesenen Nachrichten (nicht die Summe der Messages!)
         const counts: Record<string, number> = {};
         snapshot.forEach((doc) => {
           const thread = doc.data() as EmailThread;
-          const unreadCount = thread.unreadCount || 0;
+          const hasUnread = (thread.unreadCount || 0) > 0;
 
-          // Project-Mailbox
-          if ((thread as any).projectId) {
-            const projectId = (thread as any).projectId;
-            counts[projectId] = (counts[projectId] || 0) + unreadCount;
-          }
-          // Domain-Mailbox (nur wenn KEIN projectId)
-          else if ((thread as any).domainId) {
-            const domainId = (thread as any).domainId;
-            counts[domainId] = (counts[domainId] || 0) + unreadCount;
+          // Nur Threads mit ungelesenen Nachrichten zählen
+          if (hasUnread) {
+            // Project-Mailbox
+            if ((thread as any).projectId) {
+              const projectId = (thread as any).projectId;
+              counts[projectId] = (counts[projectId] || 0) + 1;
+            }
+            // Domain-Mailbox (nur wenn KEIN projectId)
+            else if ((thread as any).domainId) {
+              const domainId = (thread as any).domainId;
+              counts[domainId] = (counts[domainId] || 0) + 1;
+            }
           }
         });
-        console.log('🔍 [DEBUG] Berechnete unreadCounts:', counts);
+        console.log('🔍 [DEBUG] Berechnete unreadCounts (Threads mit neuen Nachrichten):', counts);
         setUnreadCounts(counts);
 
         // Client-seitig nach lastMessageAt sortieren
