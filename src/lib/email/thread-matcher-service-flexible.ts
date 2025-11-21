@@ -200,23 +200,32 @@ export class FlexibleThreadMatcherService {
   private generateThreadId(criteria: ThreadMatchingCriteria): string {
     // Normalisiere Subject für konsistente IDs
     const normalizedSubject = this.normalizeSubject(criteria.subject);
-    
+
     // Sortiere Teilnehmer-Emails für konsistente IDs
     const participantEmails = [
       criteria.from.email,
       ...criteria.to.map(t => t.email)
     ].sort().join(',');
-    
-    // Erstelle einen Hash aus Subject und Teilnehmern
-    const hashInput = `${normalizedSubject}|${participantEmails}|${criteria.organizationId}`;
-    
+
+    // WICHTIG: Mailbox-Kontext in Thread-ID einbauen für separate Threads
+    // Project-Mailbox: threadId enthält projectId
+    // Domain-Mailbox: threadId enthält domainId (ohne projectId)
+    const mailboxContext = criteria.projectId
+      ? `project:${criteria.projectId}`
+      : criteria.domainId
+        ? `domain:${criteria.domainId}`
+        : 'legacy';
+
+    // Erstelle einen Hash aus Subject, Teilnehmern UND Mailbox-Kontext
+    const hashInput = `${normalizedSubject}|${participantEmails}|${criteria.organizationId}|${mailboxContext}`;
+
     // Vereinfachter Hash (in Produktion würde man einen echten Hash verwenden)
     const hash = hashInput
       .split('')
       .reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
       .toString(36)
       .replace('-', '');
-    
+
     return `thread_${hash}_${nanoid(8)}`;
   }
 
@@ -302,20 +311,38 @@ export class FlexibleThreadMatcherService {
       );
 
       const messagesSnapshot = await getDocs(messagesQuery);
-      
+
       if (!messagesSnapshot.empty) {
-        // Thread-ID aus der ersten gefundenen Nachricht
-        const message = messagesSnapshot.docs[0].data() as EmailMessage;
-        if (message.threadId) {
-          const thread = await this.getThread(message.threadId);
-          if (thread) {
-            return {
-              success: true,
-              thread,
-              isNew: false,
-              confidence: 100,
-              strategy: 'headers'
-            };
+        // Filtere nach Mailbox-Kontext (Project vs Domain)
+        // NUR Threads aus derselben Mailbox matchen!
+        const matchingMessages = messagesSnapshot.docs.filter(doc => {
+          const message = doc.data() as EmailMessage;
+
+          // Project-Mailbox: Muss gleiches projectId haben
+          if (criteria.projectId) {
+            return message.projectId === criteria.projectId;
+          }
+          // Domain-Mailbox: Muss gleiches domainId haben UND KEIN projectId
+          else if (criteria.domainId) {
+            return message.domainId === criteria.domainId && !message.projectId;
+          }
+          // Legacy: Irgendeine Message
+          return true;
+        });
+
+        if (matchingMessages.length > 0) {
+          const message = matchingMessages[0].data() as EmailMessage;
+          if (message.threadId) {
+            const thread = await this.getThread(message.threadId);
+            if (thread) {
+              return {
+                success: true,
+                thread,
+                isNew: false,
+                confidence: 100,
+                strategy: 'headers'
+              };
+            }
           }
         }
       }
@@ -352,13 +379,20 @@ export class FlexibleThreadMatcherService {
       );
 
       const threadsSnapshot = await getDocs(threadsQuery);
-      
+
       if (!threadsSnapshot.empty) {
-        // Prüfe Teilnehmer für besseres Matching
+        // Prüfe Teilnehmer UND Mailbox-Kontext für besseres Matching
         for (const doc of threadsSnapshot.docs) {
           const thread = { ...doc.data(), id: doc.id } as EmailThread;
-          
-          if (this.participantsMatch(thread.participants, criteria)) {
+
+          // Mailbox-Kontext muss übereinstimmen!
+          const mailboxMatches = criteria.projectId
+            ? (thread as any).projectId === criteria.projectId
+            : criteria.domainId
+              ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
+              : true;
+
+          if (mailboxMatches && this.participantsMatch(thread.participants, criteria)) {
             return {
               success: true,
               thread,

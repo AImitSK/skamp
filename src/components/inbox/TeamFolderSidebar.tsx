@@ -198,7 +198,7 @@ export function TeamFolderSidebar({
                     </div>
                   </div>
 
-                  {mailbox.unreadCount > 0 && (
+                  {(unreadCounts[mailbox.domainId] || 0) > 0 && (
                     <Badge
                       color={selectedFolderId === mailbox.domainId && selectedFolderType === 'general' ? 'zinc' : 'blue'}
                       className={clsx(
@@ -208,7 +208,7 @@ export function TeamFolderSidebar({
                           : ''
                       )}
                     >
-                      {mailbox.unreadCount}
+                      {unreadCounts[mailbox.domainId] || 0}
                     </Badge>
                   )}
                 </button>
@@ -248,7 +248,7 @@ export function TeamFolderSidebar({
                       </div>
                     </div>
 
-                    {mailbox.unreadCount > 0 && (
+                    {(unreadCounts[mailbox.projectId] || 0) > 0 && (
                       <Badge
                         color={selectedFolderId === mailbox.projectId && selectedFolderType === 'team' ? 'zinc' : 'blue'}
                         className={clsx(
@@ -258,7 +258,7 @@ export function TeamFolderSidebar({
                             : ''
                         )}
                       >
-                        {mailbox.unreadCount}
+                        {unreadCounts[mailbox.projectId] || 0}
                       </Badge>
                     )}
                   </button>
