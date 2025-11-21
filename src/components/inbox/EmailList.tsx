@@ -78,13 +78,7 @@ export function EmailList({
 
   // Empty state
   if (threads.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
-        <div className="text-center">
-          <p className="text-sm">Keine E-Mails in diesem Ordner</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Thread list

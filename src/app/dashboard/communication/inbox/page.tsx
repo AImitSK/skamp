@@ -754,23 +754,22 @@ export default function InboxPage() {
             </Button>
           </div>
 
-          {/* Right side - Search, New Email & Refresh */}
-          <div className="flex items-center gap-3 flex-1 justify-end">
-            {/* Search */}
-            <div className="relative w-full max-w-lg">
+          {/* Search */}
+          <div className="relative w-full max-w-lg">
+            <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="E-Mails durchsuchen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
-                <FunnelIcon className="h-5 w-5 text-gray-400" />
-              </button>
             </div>
+          </div>
 
+          {/* Right side - New Email & Refresh */}
+          <div className="flex items-center gap-3 ml-auto">
             {/* New Email Button */}
             <Button
               onClick={() => {

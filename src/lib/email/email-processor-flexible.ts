@@ -424,51 +424,55 @@ async function checkDuplicate(
     domainId: domainId || 'none'
   });
 
-  let query = adminDb
+  // NEUE LOGIK: Prüfe ob diese messageId bereits in IRGENDEINER Mailbox dieser Org existiert
+  // Wenn ja, ist es ein Duplikat von einem parallelen Webhook
+  const query = adminDb
     .collection('email_messages')
     .where('messageId', '==', messageId)
     .where('organizationId', '==', organizationId);
 
-  // Spezifische Mailbox-Prüfung
-  if (projectId) {
-    console.log('🔍 Query mit projectId:', projectId);
-    query = query.where('projectId', '==', projectId);
-  } else if (domainId) {
-    console.log('🔍 Query mit domainId:', domainId);
-    query = query.where('domainId', '==', domainId);
-  } else {
-    console.log('🔍 Query OHNE projectId/domainId (Legacy)');
-  }
-
   const snapshot = await query.get();
 
-  // WICHTIG: Zusätzliche Filterung für Domain-Mailboxen
-  // Eine Domain-Mailbox-Email darf KEIN projectId haben!
-  let relevantDocs = snapshot.docs;
-  if (!projectId && domainId) {
-    console.log('🔍 Domain-Mailbox: Filtere Emails MIT projectId raus');
-    relevantDocs = snapshot.docs.filter(doc => {
-      const data = doc.data();
-      const hasProjectId = !!data.projectId;
-      console.log(`   Doc ${doc.id}: projectId=${data.projectId || 'none'} → ${hasProjectId ? 'SKIP' : 'KEEP'}`);
-      return !hasProjectId;
-    });
+  if (snapshot.empty) {
+    console.log('🔍 Duplikat-Check ERGEBNIS: Keine Email gefunden → OK');
+    return false;
   }
 
-  const isDuplicate = relevantDocs.length > 0;
+  // Email(s) mit dieser messageId existieren bereits
+  // Prüfe ob unsere spezifische Mailbox-Kombination schon existiert
+  const existingDocs = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      projectId: data.projectId || null,
+      domainId: data.domainId || null,
+      mailboxType: data.mailboxType,
+      subject: data.subject
+    };
+  });
+
+  console.log('🔍 Gefundene Emails mit dieser messageId:', existingDocs);
+
+  // Prüfe ob EXAKT diese Mailbox-Kombination schon existiert
+  const exactMatch = existingDocs.find(doc => {
+    if (projectId) {
+      // Project-Mailbox: Muss exakt dieses projectId haben
+      return doc.projectId === projectId && doc.mailboxType === 'project';
+    } else if (domainId) {
+      // Domain-Mailbox: Muss exakt dieses domainId haben UND KEIN projectId
+      return doc.domainId === domainId && !doc.projectId && doc.mailboxType === 'domain';
+    } else {
+      // Legacy: Irgendeine Email mit dieser messageId
+      return true;
+    }
+  });
+
+  const isDuplicate = !!exactMatch;
 
   console.log('🔍 Duplikat-Check ERGEBNIS:', {
     isDuplicate,
     totalFound: snapshot.size,
-    relevantFound: relevantDocs.length,
-    relevantDocs: relevantDocs.map(d => ({
-      id: d.id,
-      messageId: d.data().messageId,
-      projectId: d.data().projectId,
-      domainId: d.data().domainId,
-      subject: d.data().subject,
-      createdAt: d.data().createdAt?.toDate?.()
-    }))
+    exactMatch: exactMatch || 'none'
   });
 
   return isDuplicate;
