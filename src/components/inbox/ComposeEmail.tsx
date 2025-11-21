@@ -6,7 +6,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, Label } from '@/components/ui/fieldset';
-import { RichTextEditor } from '@/components/RichTextEditor';
+import EmailEditor from '@/components/pr/email/EmailEditor';
 import { EmailMessage } from '@/types/inbox-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
@@ -478,9 +478,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
 
             <Field>
               <Label>Nachricht</Label>
-              <RichTextEditor
+              <EmailEditor
                 content={content}
                 onChange={setContent}
+                placeholder="Ihre Nachricht..."
+                minHeight="300px"
               />
               {selectedSignatureId && (
                 <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
