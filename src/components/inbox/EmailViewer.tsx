@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/context/AuthContext';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
-import { StatusManager } from '@/components/inbox/StatusManager';
 import { AIInsightsPanel } from '@/components/inbox/AIInsightsPanel';
 import { AIResponseSuggestions } from '@/components/inbox/AIResponseSuggestions';
 import format from 'date-fns/format';
@@ -20,9 +19,6 @@ import {
   StarIcon,
   EllipsisVerticalIcon,
   PaperClipIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationCircleIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
@@ -175,63 +171,16 @@ export function EmailViewer({
 
   const latestEmail = emails[emails.length - 1];
 
-  // Status-Konfiguration
-  const statusConfig = {
-    active: {
-      label: 'Aktiv',
-      icon: ExclamationCircleIcon,
-      color: 'blue',
-      bgClass: 'bg-blue-50',
-      textClass: 'text-blue-700',
-      borderClass: 'border-blue-200'
-    },
-    waiting: {
-      label: 'Wartet auf Antwort',
-      icon: ClockIcon,
-      color: 'yellow',
-      bgClass: 'bg-yellow-50',
-      textClass: 'text-yellow-700',
-      borderClass: 'border-yellow-200'
-    },
-    resolved: {
-      label: 'Abgeschlossen',
-      icon: CheckCircleIcon,
-      color: 'green',
-      bgClass: 'bg-green-50',
-      textClass: 'text-green-700',
-      borderClass: 'border-green-200'
-    },
-    archived: {
-      label: 'Archiviert',
-      icon: ArchiveBoxIcon,
-      color: 'gray',
-      bgClass: 'bg-gray-50',
-      textClass: 'text-gray-700',
-      borderClass: 'border-gray-200'
-    }
-  };
-
-  const currentStatus = thread.status || 'active';
-  const statusInfo = statusConfig[currentStatus];
-  const StatusIcon = statusInfo.icon;
-
   return (
     <div className="flex-1 flex flex-col bg-white h-full overflow-hidden">
       {/* Compact Header - Single Line */}
       <div className="border-b px-4 py-2 flex-shrink-0">
         <div className="flex items-center gap-3">
-          {/* Subject & Status */}
-          <div className="flex-1 flex items-center gap-2 min-w-0">
+          {/* Subject */}
+          <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 truncate">
               {thread.subject}
             </h2>
-            <StatusManager
-              thread={thread}
-              onStatusChange={onStatusChange}
-              compact={true}
-              showSLA={true}
-              showTimers={false}
-            />
           </div>
 
           {/* Action Icons */}

@@ -202,11 +202,12 @@ export default function InboxPage() {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
-        // Domain-Postfach: Filtere nach domainId
+        // Domain-Postfach: Filtere nach domainId UND !projectId
         if (selectedFolderType === 'general' && selectedTeamMemberId) {
           threadsData = threadsData.filter(thread => {
             const domainId = (thread as any).domainId;
-            return domainId === selectedTeamMemberId;
+            const projectId = (thread as any).projectId;
+            return domainId === selectedTeamMemberId && !projectId;
           });
         }
         // Projekt-Postfach: Filtere nach projectId

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/client-init';
 import { collection, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { EmailThread } from '@/types/email-enhanced';
-import { EnvelopeIcon, EnvelopeOpenIcon, UserIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -125,29 +124,8 @@ export default function ThreadList({
             } ${thread.unreadCount > 0 ? 'bg-white font-medium' : 'bg-gray-50/50 font-normal'}`}
           >
             <div className="flex items-start gap-3">
-              {/* Unread Indicator */}
-              <div className="flex-shrink-0 pt-1">
-                {thread.unreadCount > 0 ? (
-                  <EnvelopeIcon className="h-5 w-5 text-blue-600" />
-                ) : (
-                  <EnvelopeOpenIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
-
               {/* Thread Content */}
               <div className="flex-1 min-w-0">
-                {/* Participants */}
-                <div className="flex items-center gap-2 mb-1">
-                  <UserIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm truncate">
-                    {thread.participants
-                      .map(p => p.name || p.email)
-                      .slice(0, 3)
-                      .join(', ')}
-                    {thread.participants.length > 3 && ` +${thread.participants.length - 3}`}
-                  </span>
-                </div>
-
                 {/* Subject */}
                 <div className={`text-base mb-1 truncate ${
                   thread.unreadCount > 0 ? 'font-semibold text-gray-900' : 'text-gray-700'
@@ -178,15 +156,6 @@ export default function ThreadList({
                   </div>
                 )}
               </div>
-
-              {/* Unread Count Badge */}
-              {thread.unreadCount > 0 && (
-                <div className="flex-shrink-0">
-                  <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-medium bg-blue-600 text-white rounded-full">
-                    {thread.unreadCount}
-                  </span>
-                </div>
-              )}
             </div>
           </button>
         ))}
