@@ -46,8 +46,9 @@ export function ComposeEmail({
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [signatures, setSignatures] = useState<EmailSignature[]>([]);
   const [selectedSignatureId, setSelectedSignatureId] = useState<string>('');
-  const [signaturePosition, setSignaturePosition] = useState<'above' | 'below'>('below');
   const [loadingSignatures, setLoadingSignatures] = useState(true);
+  // Signatur Position immer "below" (unter der Nachricht)
+  const signaturePosition = 'below';
 
   // Gmail-style CC/BCC toggle
   const [showCc, setShowCc] = useState(false);
@@ -184,12 +185,9 @@ export function ComposeEmail({
 <div class="signature" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
   ${signature.content || ''}
 </div>`;
-    
-    if (signaturePosition === 'above') {
-      return signatureHtml + '<br>' + baseContent;
-    } else {
-      return baseContent + signatureHtml;
-    }
+
+    // Signatur wird immer unter der Nachricht eingefügt
+    return baseContent + signatureHtml;
   };
 
   // Initialize fields based on mode
@@ -252,7 +250,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       // For new emails, start with empty content (signature will be added on send)
       setContent('');
     }
-  }, [mode, replyToEmail, emailAddresses, signaturePosition]);
+  }, [mode, replyToEmail, emailAddresses]);
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
@@ -475,19 +473,6 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                 </Select>
               </Field>
             </div>
-            
-            {selectedSignatureId && (
-              <Field>
-                <Label>Signatur-Position</Label>
-                <Select
-                  value={signaturePosition}
-                  onChange={(e) => setSignaturePosition(e.target.value as 'above' | 'below')}
-                >
-                  <option value="below">Unter der Nachricht</option>
-                  <option value="above">Über der Nachricht</option>
-                </Select>
-              </Field>
-            )}
 
             {/* An-Feld mit CC/BCC Links (Gmail-Style) */}
             <div className="relative">
@@ -609,11 +594,8 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
 
               {selectedSignatureId && (
                 <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Signatur-Vorschau:</span>
-                    <span className="text-xs text-gray-500">
-                      Position: {signaturePosition === 'above' ? 'Oben' : 'Unten'}
-                    </span>
+                  <div className="mb-2">
+                    <span className="text-sm font-medium text-gray-700">Signatur-Vorschau (wird unter der Nachricht eingefügt):</span>
                   </div>
                   <div className="text-sm text-gray-600 border-t pt-2">
                     {(() => {
