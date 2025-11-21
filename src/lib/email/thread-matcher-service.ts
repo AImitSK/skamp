@@ -122,11 +122,6 @@ export class ThreadMatcherService {
           if (message.threadId) {
             const thread = await this.getThread(message.threadId);
             if (thread) {
-              console.log('✅ [ADMIN-SDK] Found existing thread via headers:', {
-                threadId: thread.id,
-                projectId: (thread as any).projectId,
-                domainId: (thread as any).domainId
-              });
               return {
                 success: true,
                 thread,
@@ -182,21 +177,7 @@ export class ThreadMatcherService {
               ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
               : true;
 
-          console.log('🔍 [ADMIN-SDK] Checking thread match:', {
-            threadId: thread.id,
-            threadProjectId: (thread as any).projectId,
-            threadDomainId: (thread as any).domainId,
-            criteriaProjectId: criteria.projectId,
-            criteriaDomainId: criteria.domainId,
-            mailboxMatches
-          });
-
           if (mailboxMatches && this.participantsMatch(thread.participants, criteria)) {
-            console.log('✅ [ADMIN-SDK] Found existing thread via subject:', {
-              threadId: thread.id,
-              projectId: (thread as any).projectId,
-              domainId: (thread as any).domainId
-            });
             return {
               success: true,
               thread,
@@ -228,11 +209,6 @@ export class ThreadMatcherService {
               ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
               : true;
 
-          console.log('🔍 [ADMIN-SDK] Checking alternative subject match:', {
-            threadId: thread.id,
-            mailboxMatches
-          });
-
           if (mailboxMatches) {
             return {
               success: true,
@@ -257,12 +233,6 @@ export class ThreadMatcherService {
    */
   private async createThread(criteria: ThreadMatchingCriteria): Promise<EmailThread> {
     try {
-      console.log('➕ [ADMIN-SDK] Creating new thread:', {
-        subject: criteria.subject,
-        projectId: criteria.projectId,
-        domainId: criteria.domainId
-      });
-
       // Sammle alle Teilnehmer
       const participants = this.extractParticipants(criteria);
 
@@ -294,12 +264,6 @@ export class ThreadMatcherService {
       const docRef = await adminDb
         .collection(this.collectionName)
         .add(threadData);
-
-      console.log('✅ [ADMIN-SDK] Thread created:', {
-        threadId: docRef.id,
-        projectId: criteria.projectId,
-        domainId: criteria.domainId
-      });
 
       return { ...threadData, id: docRef.id } as EmailThread;
     } catch (error) {
