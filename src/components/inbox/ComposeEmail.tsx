@@ -445,83 +445,73 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
               </Field>
             )}
 
-            {/* An-Feld mit CC/BCC Links */}
-            <Field>
-              <div className="flex items-center justify-between mb-1">
-                <Label>An</Label>
-                <div className="flex items-center gap-3">
-                  {!showCc && (
-                    <button
-                      type="button"
-                      onClick={() => setShowCc(true)}
-                      className="text-sm text-[#005fab] hover:underline"
-                    >
-                      Cc
-                    </button>
-                  )}
-                  {!showBcc && (
-                    <button
-                      type="button"
-                      onClick={() => setShowBcc(true)}
-                      className="text-sm text-[#005fab] hover:underline"
-                    >
-                      Bcc
-                    </button>
-                  )}
-                </div>
-              </div>
+            {/* An-Feld mit CC/BCC Links (Gmail-Style) */}
+            <div className="relative">
               <Input
                 type="email"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                placeholder="empfaenger@beispiel.de"
+                placeholder="An"
                 required
+                className="pr-24"
               />
-            </Field>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                {!showCc && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCc(true)}
+                    className="text-sm text-gray-600 hover:text-[#005fab] hover:underline"
+                  >
+                    Cc
+                  </button>
+                )}
+                {!showBcc && (
+                  <button
+                    type="button"
+                    onClick={() => setShowBcc(true)}
+                    className="text-sm text-gray-600 hover:text-[#005fab] hover:underline"
+                  >
+                    Bcc
+                  </button>
+                )}
+              </div>
+            </div>
 
             {/* CC Feld (conditional) */}
             {showCc && (
-              <Field>
-                <Label>CC</Label>
-                <Input
-                  type="email"
-                  value={cc}
-                  onChange={(e) => setCc(e.target.value)}
-                  placeholder="Kopie an..."
-                />
-              </Field>
+              <Input
+                type="email"
+                value={cc}
+                onChange={(e) => setCc(e.target.value)}
+                placeholder="Cc"
+              />
             )}
 
             {/* BCC Feld (conditional) */}
             {showBcc && (
-              <Field>
-                <Label>BCC</Label>
-                <Input
-                  type="email"
-                  value={bcc}
-                  onChange={(e) => setBcc(e.target.value)}
-                  placeholder="Blindkopie an..."
-                />
-              </Field>
+              <Input
+                type="email"
+                value={bcc}
+                onChange={(e) => setBcc(e.target.value)}
+                placeholder="Bcc"
+              />
             )}
 
-            <Field>
-              <Label>Betreff</Label>
-              <Input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Betreff eingeben..."
-                required
-              />
-            </Field>
+            {/* Betreff */}
+            <Input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Betreff"
+              required
+            />
 
-            <Field>
-              <Label>Nachricht</Label>
+            {/* Nachricht - kein Label für kompakteres Design */}
+            <div>
               <EmailEditor
                 content={content}
                 onChange={setContent}
-                placeholder="Ihre Nachricht..."
+                placeholder="Nachricht"
                 minHeight="300px"
               />
               {selectedSignatureId && (
@@ -549,7 +539,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                   </div>
                 </div>
               )}
-            </Field>
+            </div>
           </div>
         </div>
 
