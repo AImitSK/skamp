@@ -391,7 +391,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
             {/* From selector */}
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label>Von</Label>
+                <Label>Absender Email</Label>
                 <Select
                   value={selectedEmailAddressId}
                   onChange={(e) => setSelectedEmailAddressId(e.target.value)}
