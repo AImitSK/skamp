@@ -691,18 +691,6 @@ export default function InboxPage() {
     }
   };
 
-  // Handle thread priority change
-  const handleThreadPriorityChange = async (priority: 'low' | 'normal' | 'high' | 'urgent') => {
-    if (!selectedThread) return;
-
-    try {
-      await threadMatcherService.updateThreadPriority(selectedThread.id!, priority);
-
-    } catch (error) {
-
-      alert('Fehler beim Ändern der Thread-Priorität');
-    }
-  };
 
   // Handle folder selection from sidebar
   const handleFolderSelect = (type: 'general' | 'team', id?: string, emailAddress?: string) => {
@@ -946,9 +934,7 @@ export default function InboxPage() {
               onDelete={handleDelete}
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}
-              onPriorityChange={handleThreadPriorityChange}
               organizationId={organizationId}
-              showAI={true}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">

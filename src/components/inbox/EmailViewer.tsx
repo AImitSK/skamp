@@ -7,8 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/context/AuthContext';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
-import { AIInsightsPanel } from '@/components/inbox/AIInsightsPanel';
-import { AIResponseSuggestions } from '@/components/inbox/AIResponseSuggestions';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 import {
@@ -33,9 +31,7 @@ interface EmailViewerProps {
   onStar: (emailId: string, starred: boolean) => void;
   onMarkAsRead?: (emailId: string) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
-  onPriorityChange?: (priority: 'low' | 'normal' | 'high' | 'urgent') => void;
   organizationId: string;
-  showAI?: boolean;
 }
 
 interface EmailContentRendererProps {
@@ -142,9 +138,7 @@ export function EmailViewer({
   onStar,
   onMarkAsRead,
   onStatusChange,
-  onPriorityChange,
-  organizationId,
-  showAI = true
+  organizationId
 }: EmailViewerProps) {
   const { getAvatarUrl, getInitials } = useAuth();
   
@@ -218,24 +212,6 @@ export function EmailViewer({
 
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {/* AI Features - Before Messages for better workflow */}
-        {showAI && selectedEmail && (
-          <div className="border-b border-gray-200 p-4 space-y-4 bg-blue-50/30">
-            {/* AI Insights */}
-            <AIInsightsPanel
-              email={selectedEmail}
-              thread={thread}
-              context={{
-                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
-                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
-                campaignContext: thread.subject
-              }}
-              onPriorityChange={onPriorityChange}
-              collapsed={true}
-            />
-          </div>
-        )}
-
         {/* Email Thread */}
         <div>
           {emails.map((email, index) => (
