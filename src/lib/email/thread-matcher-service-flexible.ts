@@ -116,8 +116,13 @@ export class FlexibleThreadMatcherService {
   private async serverSideThreadMatching(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
     // Generiere eine deterministische Thread-ID basierend auf Subject und Teilnehmern
     const threadId = this.generateThreadId(criteria);
-    
-    
+
+    console.log('🔍 [SERVER-SIDE] generateThreadId:', {
+      threadId,
+      projectId: criteria.projectId,
+      domainId: criteria.domainId
+    });
+
     return {
       success: true,
       threadId,
@@ -166,8 +171,14 @@ export class FlexibleThreadMatcherService {
 
     // 3. Prüfe ob es bereits einen "deferred" Thread mit dieser ID gibt
     const deferredThreadId = this.generateThreadId(criteria);
+    console.log('🔍 [CLIENT-SIDE] generateThreadId:', {
+      deferredThreadId,
+      projectId: criteria.projectId,
+      domainId: criteria.domainId
+    });
     const existingThread = await this.checkDeferredThread(deferredThreadId, criteria);
     if (existingThread) {
+      console.log('✅ [CLIENT-SIDE] Existing thread found:', existingThread.id);
       // Projekt-Kontext anreichern falls gefunden
       if (projectContext && projectContext.confidence > 0.5) {
         await this.enrichThreadWithProject(existingThread.id!, projectContext);
@@ -181,6 +192,7 @@ export class FlexibleThreadMatcherService {
         projectContext
       };
     }
+    console.log('➕ [CLIENT-SIDE] Creating new thread with ID:', deferredThreadId);
 
     // 4. Neuen Thread erstellen
     const newThread = await this.createThread(criteria, deferredThreadId, projectContext);
