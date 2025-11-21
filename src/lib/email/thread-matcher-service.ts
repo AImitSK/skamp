@@ -182,6 +182,15 @@ export class ThreadMatcherService {
               ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
               : true;
 
+          console.log('🔍 [ADMIN-SDK] Checking thread match:', {
+            threadId: thread.id,
+            threadProjectId: (thread as any).projectId,
+            threadDomainId: (thread as any).domainId,
+            criteriaProjectId: criteria.projectId,
+            criteriaDomainId: criteria.domainId,
+            mailboxMatches
+          });
+
           if (mailboxMatches && this.participantsMatch(thread.participants, criteria)) {
             console.log('✅ [ADMIN-SDK] Found existing thread via subject:', {
               threadId: thread.id,
