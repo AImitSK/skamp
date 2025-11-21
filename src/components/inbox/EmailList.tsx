@@ -2,13 +2,7 @@
 "use client";
 
 import { EmailThread } from '@/types/inbox-enhanced';
-import { Badge } from '@/components/ui/badge';
-import { StatusManager } from '@/components/inbox/StatusManager';
 import clsx from 'clsx';
-import {
-  ChevronDoubleRightIcon,
-  UserGroupIcon
-} from '@heroicons/react/24/outline';
 
 interface EmailListProps {
   threads: EmailThread[];
@@ -108,75 +102,31 @@ export function EmailList({
             className={clsx(
               "border-b border-gray-200 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors relative",
               isSelected && "bg-blue-50 hover:bg-blue-50",
-              hasUnread && "bg-white"
+              hasUnread && "bg-white",
+              thread.isStarred && "bg-yellow-50"
             )}
           >
-            <div className="flex items-start gap-3">
-              {/* Avatar */}
-              <div className={clsx(
-                "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0",
-                isSelected ? "bg-[#005fab]" : "bg-gray-400"
-              )}>
-                {primaryParticipant.name 
-                  ? primaryParticipant.name.charAt(0).toUpperCase()
-                  : primaryParticipant.email.charAt(0).toUpperCase()
-                }
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {/* Header row */}
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className={clsx(
-                    "text-sm truncate flex-1 mr-2",
-                    hasUnread ? "font-semibold text-gray-900" : "font-normal text-gray-700"
-                  )}>
-                    {primaryParticipant.name || primaryParticipant.email}
-                  </h4>
-                  <span className="text-xs text-gray-500 flex-shrink-0">
-                    {formatTime(thread.lastMessageAt)}
-                  </span>
-                </div>
-
-                {/* Subject */}
-                <p className={clsx(
-                  "text-sm truncate mb-1",
-                  hasUnread ? "font-medium text-gray-900" : "text-gray-700"
+            <div className="flex-1 min-w-0">
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-1">
+                <h4 className={clsx(
+                  "text-sm truncate flex-1 mr-2",
+                  hasUnread ? "font-semibold text-gray-900" : "font-normal text-gray-700"
                 )}>
-                  {thread.subject}
-                </p>
-
-                {/* Badges row */}
-                <div className="flex items-center gap-2 mt-1">
-                  {hasUnread && (
-                    <Badge color="blue" className="text-xs">
-                      {thread.unreadCount} neu
-                    </Badge>
-                  )}
-                  
-                  {thread.messageCount > 1 && (
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <ChevronDoubleRightIcon className="h-3 w-3" />
-                      {thread.messageCount}
-                    </span>
-                  )}
-                  
-                  {thread.participants.length > 2 && (
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <UserGroupIcon className="h-3 w-3" />
-                      {thread.participants.length}
-                    </span>
-                  )}
-                  
-                  {/* Enhanced Status & Priority Display */}
-                  <StatusManager
-                    thread={thread}
-                    compact={true}
-                    showSLA={false}
-                    showTimers={false}
-                  />
-                </div>
+                  {primaryParticipant.name || primaryParticipant.email}
+                </h4>
+                <span className="text-xs text-gray-500 flex-shrink-0">
+                  {formatTime(thread.lastMessageAt)}
+                </span>
               </div>
+
+              {/* Subject */}
+              <p className={clsx(
+                "text-sm truncate",
+                hasUnread ? "font-medium text-gray-900" : "text-gray-700"
+              )}>
+                {thread.subject}
+              </p>
             </div>
           </div>
         );

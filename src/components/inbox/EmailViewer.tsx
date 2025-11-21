@@ -16,12 +16,12 @@ import {
   ArrowUturnRightIcon,
   ArchiveBoxIcon,
   TrashIcon,
-  StarIcon,
   EllipsisVerticalIcon,
   PaperClipIcon,
   ArrowPathIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { useEffect, useRef } from 'react';
@@ -204,11 +204,11 @@ export function EmailViewer({
               onClick={() => onStar(latestEmail.id!, !latestEmail.isStarred)}
               className={clsx(
                 'p-1.5 rounded hover:bg-gray-100',
-                latestEmail.isStarred ? 'text-yellow-400' : 'text-gray-400'
+                latestEmail.isStarred ? 'text-yellow-500' : 'text-gray-400'
               )}
               title="Markieren"
             >
-              <StarIcon className="h-4 w-4" />
+              <StarIconSolid className="h-4 w-4" />
             </button>
             <button
               onClick={() => onArchive(latestEmail.id!)}
