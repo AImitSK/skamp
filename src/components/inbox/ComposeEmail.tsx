@@ -45,6 +45,19 @@ export function ComposeEmail({
   const [signaturePosition, setSignaturePosition] = useState<'above' | 'below'>('below');
   const [loadingSignatures, setLoadingSignatures] = useState(true);
 
+  // Gmail-style CC/BCC toggle
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+
+  // Auto-show CC/BCC fields if values are set
+  useEffect(() => {
+    if (cc && !showCc) setShowCc(true);
+  }, [cc, showCc]);
+
+  useEffect(() => {
+    if (bcc && !showBcc) setShowBcc(true);
+  }, [bcc, showBcc]);
+
   // Load email addresses and signatures
   useEffect(() => {
     const loadEmailData = async () => {
@@ -432,8 +445,31 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
               </Field>
             )}
 
+            {/* An-Feld mit CC/BCC Links */}
             <Field>
-              <Label>An</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label>An</Label>
+                <div className="flex items-center gap-3">
+                  {!showCc && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCc(true)}
+                      className="text-sm text-[#005fab] hover:underline"
+                    >
+                      Cc
+                    </button>
+                  )}
+                  {!showBcc && (
+                    <button
+                      type="button"
+                      onClick={() => setShowBcc(true)}
+                      className="text-sm text-[#005fab] hover:underline"
+                    >
+                      Bcc
+                    </button>
+                  )}
+                </div>
+              </div>
               <Input
                 type="email"
                 value={to}
@@ -443,7 +479,8 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
               />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* CC Feld (conditional) */}
+            {showCc && (
               <Field>
                 <Label>CC</Label>
                 <Input
@@ -453,7 +490,10 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                   placeholder="Kopie an..."
                 />
               </Field>
+            )}
 
+            {/* BCC Feld (conditional) */}
+            {showBcc && (
               <Field>
                 <Label>BCC</Label>
                 <Input
@@ -463,7 +503,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                   placeholder="Blindkopie an..."
                 />
               </Field>
-            </div>
+            )}
 
             <Field>
               <Label>Betreff</Label>
