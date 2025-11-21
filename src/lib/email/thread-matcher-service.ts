@@ -214,17 +214,35 @@ export class ThreadMatcherService {
         .where('organizationId', '==', criteria.organizationId)
         .where('subject', '==', criteria.subject)
         .orderBy('lastMessageAt', 'desc')
-        .limit(1)
+        .limit(5)  // Erhöht um mehrere Threads zu prüfen
         .get();
+
       if (!altSnapshot.empty) {
-        const thread = { ...altSnapshot.docs[0].data(), id: altSnapshot.docs[0].id } as EmailThread;
-        return {
-          success: true,
-          thread,
-          isNew: false,
-          confidence: 75,
-          strategy: 'subject'
-        };
+        // Prüfe auch hier den Mailbox-Kontext!
+        for (const doc of altSnapshot.docs) {
+          const thread = { ...doc.data(), id: doc.id } as EmailThread;
+
+          const mailboxMatches = criteria.projectId
+            ? (thread as any).projectId === criteria.projectId
+            : criteria.domainId
+              ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
+              : true;
+
+          console.log('🔍 [ADMIN-SDK] Checking alternative subject match:', {
+            threadId: thread.id,
+            mailboxMatches
+          });
+
+          if (mailboxMatches) {
+            return {
+              success: true,
+              thread,
+              isNew: false,
+              confidence: 75,
+              strategy: 'subject'
+            };
+          }
+        }
       }
 
       return { success: false };
