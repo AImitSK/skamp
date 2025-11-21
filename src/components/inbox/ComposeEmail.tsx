@@ -535,27 +535,6 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
               required
             />
 
-            {/* Projekt-Auswahl für Anhänge */}
-            <Field>
-              <Label>Projekt für Anhänge</Label>
-              <Select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                disabled={loadingProjects}
-              >
-                <option value="">Kein Projekt ausgewählt</option>
-                {loadingProjects ? (
-                  <option>Lade Projekte...</option>
-                ) : (
-                  projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.title || project.name}
-                    </option>
-                  ))
-                )}
-              </Select>
-            </Field>
-
             {/* Nachricht - kein Label für kompakteres Design */}
             <div>
               <EmailEditor
@@ -652,21 +631,63 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         </div>
       </div>
 
-      {/* Asset Selector Modal */}
+      {/* Asset Selector Modal mit Projekt-Auswahl */}
       {showAssetModal && (
-        <AssetSelectorModal
-          isOpen={showAssetModal}
-          onClose={() => setShowAssetModal(false)}
-          clientId={organizationId}
-          organizationId={organizationId}
-          legacyUserId={user?.uid}
-          selectedProjectId={selectedProjectId}
-          onAssetsSelected={(assets) => {
-            setAttachments([...attachments, ...assets]);
-            setShowAssetModal(false);
-          }}
-          selectionMode="multiple"
-        />
+        <Dialog open={showAssetModal} onClose={() => setShowAssetModal(false)} size="5xl">
+          <div className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-3">Anhänge auswählen</h3>
+
+              {/* Projekt-Dropdown */}
+              <Field>
+                <Label>Projekt</Label>
+                <Select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  disabled={loadingProjects}
+                >
+                  <option value="">Bitte Projekt auswählen...</option>
+                  {loadingProjects ? (
+                    <option>Lade Projekte...</option>
+                  ) : (
+                    projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.title || project.name}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </Field>
+
+              {!selectedProjectId && (
+                <p className="mt-2 text-sm text-amber-600">
+                  Bitte wählen Sie ein Projekt aus, um Medien zu durchsuchen und hochzuladen.
+                </p>
+              )}
+            </div>
+
+            {selectedProjectId && (
+              <AssetSelectorModal
+                isOpen={true}
+                onClose={() => {
+                  setShowAssetModal(false);
+                  setSelectedProjectId('');
+                }}
+                clientId={organizationId}
+                organizationId={organizationId}
+                legacyUserId={user?.uid}
+                selectedProjectId={selectedProjectId}
+                selectedProjectName={projects.find(p => p.id === selectedProjectId)?.title || projects.find(p => p.id === selectedProjectId)?.name}
+                onAssetsSelected={(assets) => {
+                  setAttachments([...attachments, ...assets]);
+                  setShowAssetModal(false);
+                  setSelectedProjectId('');
+                }}
+                selectionMode="multiple"
+              />
+            )}
+          </div>
+        </Dialog>
       )}
     </Dialog>
   );
