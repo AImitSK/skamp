@@ -203,21 +203,56 @@ export default function InboxPage() {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
+        console.log('🔍 [DEBUG] Alle geladenen Threads:', threadsData.map(t => ({
+          id: t.id,
+          subject: t.subject,
+          projectId: (t as any).projectId,
+          domainId: (t as any).domainId
+        })));
+
         // Domain-Postfach: Filtere nach domainId UND !projectId
         if (selectedFolderType === 'general' && selectedTeamMemberId) {
+          console.log('🔍 [DEBUG] Domain-Filter aktiv für:', selectedTeamMemberId);
           threadsData = threadsData.filter(thread => {
             const domainId = (thread as any).domainId;
             const projectId = (thread as any).projectId;
-            return domainId === selectedTeamMemberId && !projectId;
+            const matches = domainId === selectedTeamMemberId && !projectId;
+            console.log('🔍 [DEBUG] Thread:', thread.subject, '- domainId:', domainId, 'projectId:', projectId, 'matches:', matches);
+            return matches;
           });
         }
         // Projekt-Postfach: Filtere nach projectId
         else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+          console.log('🔍 [DEBUG] Project-Filter aktiv für:', selectedTeamMemberId);
           threadsData = threadsData.filter(thread => {
             const projectId = (thread as any).projectId;
-            return projectId === selectedTeamMemberId;
+            const matches = projectId === selectedTeamMemberId;
+            console.log('🔍 [DEBUG] Thread:', thread.subject, '- projectId:', projectId, 'matches:', matches);
+            return matches;
           });
         }
+
+        console.log('🔍 [DEBUG] Gefilterte Threads:', threadsData.length);
+
+        // Berechne unreadCounts für ALLE Mailboxen (nicht nur gefilterte)
+        const counts: Record<string, number> = {};
+        snapshot.forEach((doc) => {
+          const thread = doc.data() as EmailThread;
+          const unreadCount = thread.unreadCount || 0;
+
+          // Project-Mailbox
+          if ((thread as any).projectId) {
+            const projectId = (thread as any).projectId;
+            counts[projectId] = (counts[projectId] || 0) + unreadCount;
+          }
+          // Domain-Mailbox (nur wenn KEIN projectId)
+          else if ((thread as any).domainId) {
+            const domainId = (thread as any).domainId;
+            counts[domainId] = (counts[domainId] || 0) + unreadCount;
+          }
+        });
+        console.log('🔍 [DEBUG] Berechnete unreadCounts:', counts);
+        setUnreadCounts(counts);
 
         // Client-seitig nach lastMessageAt sortieren
         threadsData.sort((a, b) => {
