@@ -277,11 +277,10 @@ export default function InboxPage() {
 
     unsubscribes.push(threadsUnsubscribe);
 
-    // 2. Messages Query (OHNE orderBy, nur inbox/sent/drafts - nicht trash)
+    // 2. Messages Query (filter trash client-side to avoid index)
     let messagesQuery = query(
       collection(db, 'email_messages'),
       where('organizationId', '==', organizationId),
-      where('folder', 'in', ['inbox', 'sent', 'drafts']),
       limit(100)
     );
 
@@ -291,7 +290,11 @@ export default function InboxPage() {
         let messagesData: EmailMessage[] = [];
 
         snapshot.forEach((doc) => {
-          messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+          const message = { ...doc.data(), id: doc.id } as EmailMessage;
+          // Filter out trash messages client-side
+          if (message.folder !== 'trash') {
+            messagesData.push(message);
+          }
         });
 
         // Filtere nach Postfach-Typ
@@ -481,17 +484,20 @@ export default function InboxPage() {
       // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
 
-      // Load all messages in thread (exclude trash)
+      // Load all messages in thread (filter trash client-side to avoid index)
       const messagesQuery = query(
         collection(db, 'email_messages'),
         where('threadId', '==', thread.id!),
-        where('folder', 'in', ['inbox', 'sent', 'drafts']),
         orderBy('receivedAt', 'asc')
       );
 
       const snapshot = await getDocs(messagesQuery);
       snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
+        const message = { ...doc.data(), id: doc.id } as EmailMessage;
+        // Filter out trash messages client-side
+        if (message.folder !== 'trash') {
+          threadMessages.push(message);
+        }
       });
 
       // Update the global emails state with thread messages
