@@ -277,10 +277,11 @@ export default function InboxPage() {
 
     unsubscribes.push(threadsUnsubscribe);
 
-    // 2. Messages Query (OHNE orderBy)
+    // 2. Messages Query (OHNE orderBy, nur inbox/sent/drafts - nicht trash)
     let messagesQuery = query(
       collection(db, 'email_messages'),
       where('organizationId', '==', organizationId),
+      where('folder', 'in', ['inbox', 'sent', 'drafts']),
       limit(100)
     );
 
@@ -480,10 +481,11 @@ export default function InboxPage() {
       // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
 
-      // Load all messages in thread
+      // Load all messages in thread (exclude trash)
       const messagesQuery = query(
         collection(db, 'email_messages'),
         where('threadId', '==', thread.id!),
+        where('folder', 'in', ['inbox', 'sent', 'drafts']),
         orderBy('receivedAt', 'asc')
       );
 
