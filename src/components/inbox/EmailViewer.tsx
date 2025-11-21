@@ -319,32 +319,6 @@ export function EmailViewer({
         ))}
         </div>
 
-        {/* AI Response Suggestions - After Messages */}
-        {showAI && selectedEmail && (
-          <div className="border-t border-gray-200 p-4 bg-green-50/30">
-            <AIResponseSuggestions
-              email={selectedEmail}
-              thread={thread}
-              onUseSuggestion={(responseText) => {
-                // Create a synthetic email object for reply
-                const replyEmail = {
-                  ...selectedEmail,
-                  textContent: responseText,
-                  htmlContent: responseText
-                };
-                onReply(replyEmail);
-              }}
-              context={{
-                customerName: thread.participants[0]?.name,
-                customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
-                companyInfo: organizationId,
-                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
-              }}
-              collapsed={true}
-            />
-          </div>
-        )}
-
         {/* Internal Notes */}
         <InternalNotes
           threadId={thread.id!}
