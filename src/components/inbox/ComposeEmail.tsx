@@ -417,7 +417,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
 
   return (
     <Dialog open={true} onClose={onClose} className="sm:max-w-4xl">
-      <div className="flex flex-col h-[80vh]">
+      <div className="flex flex-col h-[70vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-semibold">
