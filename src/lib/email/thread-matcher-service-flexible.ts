@@ -226,7 +226,9 @@ export class FlexibleThreadMatcherService {
       .toString(36)
       .replace('-', '');
 
-    return `thread_${hash}_${nanoid(8)}`;
+    // WICHTIG: Kein nanoid mehr - muss deterministisch sein!
+    // Jede Mailbox bekommt immer die gleiche Thread-ID für die gleichen Kriterien
+    return `thread_${hash}`;
   }
 
   /**
