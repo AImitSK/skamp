@@ -101,18 +101,40 @@ export class ThreadMatcherService {
         .get();
       
       if (!messagesSnapshot.empty) {
-        // Thread-ID aus der ersten gefundenen Nachricht
-        const message = messagesSnapshot.docs[0].data() as EmailMessage;
-        if (message.threadId) {
-          const thread = await this.getThread(message.threadId);
-          if (thread) {
-            return {
-              success: true,
-              thread,
-              isNew: false,
-              confidence: 100,
-              strategy: 'headers'
-            };
+        // Filter messages by mailbox context
+        const matchingMessages = messagesSnapshot.docs.filter(doc => {
+          const message = doc.data() as EmailMessage;
+
+          // Project-Mailbox: Muss gleiches projectId haben
+          if (criteria.projectId) {
+            return message.projectId === criteria.projectId;
+          }
+          // Domain-Mailbox: Muss gleiches domainId haben UND KEIN projectId
+          else if (criteria.domainId) {
+            return message.domainId === criteria.domainId && !message.projectId;
+          }
+          return true;
+        });
+
+        if (matchingMessages.length > 0) {
+          // Thread-ID aus der ersten gefundenen Nachricht
+          const message = matchingMessages[0].data() as EmailMessage;
+          if (message.threadId) {
+            const thread = await this.getThread(message.threadId);
+            if (thread) {
+              console.log('✅ [ADMIN-SDK] Found existing thread via headers:', {
+                threadId: thread.id,
+                projectId: (thread as any).projectId,
+                domainId: (thread as any).domainId
+              });
+              return {
+                success: true,
+                thread,
+                isNew: false,
+                confidence: 100,
+                strategy: 'headers'
+              };
+            }
           }
         }
       }
@@ -147,11 +169,25 @@ export class ThreadMatcherService {
         .get();
       
       if (!threadsSnapshot.empty) {
-        // Prüfe Teilnehmer für besseres Matching
+        // Prüfe Teilnehmer UND Mailbox-Kontext für besseres Matching
         for (const doc of threadsSnapshot.docs) {
           const thread = { ...doc.data(), id: doc.id } as EmailThread;
-          
-          if (this.participantsMatch(thread.participants, criteria)) {
+
+          // Mailbox-Kontext muss übereinstimmen!
+          // Project-Mailbox: Muss gleiches projectId haben
+          // Domain-Mailbox: Muss gleiches domainId haben UND KEIN projectId
+          const mailboxMatches = criteria.projectId
+            ? (thread as any).projectId === criteria.projectId
+            : criteria.domainId
+              ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
+              : true;
+
+          if (mailboxMatches && this.participantsMatch(thread.participants, criteria)) {
+            console.log('✅ [ADMIN-SDK] Found existing thread via subject:', {
+              threadId: thread.id,
+              projectId: (thread as any).projectId,
+              domainId: (thread as any).domainId
+            });
             return {
               success: true,
               thread,
@@ -194,9 +230,15 @@ export class ThreadMatcherService {
    */
   private async createThread(criteria: ThreadMatchingCriteria): Promise<EmailThread> {
     try {
+      console.log('➕ [ADMIN-SDK] Creating new thread:', {
+        subject: criteria.subject,
+        projectId: criteria.projectId,
+        domainId: criteria.domainId
+      });
+
       // Sammle alle Teilnehmer
       const participants = this.extractParticipants(criteria);
-      
+
       const threadData: Omit<EmailThread, 'id'> = {
         subject: criteria.subject,
         participants,
@@ -225,6 +267,12 @@ export class ThreadMatcherService {
       const docRef = await adminDb
         .collection(this.collectionName)
         .add(threadData);
+
+      console.log('✅ [ADMIN-SDK] Thread created:', {
+        threadId: docRef.id,
+        projectId: criteria.projectId,
+        domainId: criteria.domainId
+      });
 
       return { ...threadData, id: docRef.id } as EmailThread;
     } catch (error) {

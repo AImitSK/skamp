@@ -1,6 +1,8 @@
 // src/lib/email/email-processor-flexible.ts
 import { EmailAddressInfo, EmailAttachment, EmailMessage } from '@/types/email-enhanced';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service';
+// WICHTIG: Verwende threadMatcherService (isServerSide: false) auch auf dem Server,
+// weil wir Threads SOFORT in Firestore erstellen müssen (nicht deferred)!
+import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { nanoid } from 'nanoid';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { FieldValue } from 'firebase-admin/firestore';
