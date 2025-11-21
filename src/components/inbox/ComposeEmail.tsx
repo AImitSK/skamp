@@ -14,6 +14,10 @@ import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24
 import { Select } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { EmailSignature } from '@/types/email-enhanced';
+import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
+import { CampaignAssetAttachment } from '@/types/pr';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 interface ComposeEmailProps {
   organizationId: string;
@@ -48,6 +52,40 @@ export function ComposeEmail({
   // Gmail-style CC/BCC toggle
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<CampaignAssetAttachment[]>([]);
+  const [showAssetModal, setShowAssetModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+
+  // Load projects for attachment selector
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (!organizationId) return;
+
+      setLoadingProjects(true);
+      try {
+        const projectsQuery = query(
+          collection(db, 'projects'),
+          where('organizationId', '==', organizationId)
+        );
+        const snapshot = await getDocs(projectsQuery);
+        const projectsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    loadProjects();
+  }, [organizationId]);
 
   // Auto-show CC/BCC fields if values are set
   useEffect(() => {
@@ -338,7 +376,13 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           signatureId: selectedSignatureId || undefined,
           mode,
           domainId: replyToEmail?.domainId,
-          projectId: replyToEmail?.projectId
+          projectId: replyToEmail?.projectId,
+          // Attachments
+          attachments: attachments.map(att => ({
+            filename: att.name,
+            path: att.downloadUrl,
+            contentType: att.mimeType || 'application/octet-stream'
+          }))
         }),
       });
 
@@ -506,6 +550,27 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
               required
             />
 
+            {/* Projekt-Auswahl für Anhänge */}
+            <Field>
+              <Label>Projekt für Anhänge</Label>
+              <Select
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                disabled={loadingProjects}
+              >
+                <option value="">Kein Projekt ausgewählt</option>
+                {loadingProjects ? (
+                  <option>Lade Projekte...</option>
+                ) : (
+                  projects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.title || project.name}
+                    </option>
+                  ))
+                )}
+              </Select>
+            </Field>
+
             {/* Nachricht - kein Label für kompakteres Design */}
             <div>
               <EmailEditor
@@ -514,6 +579,34 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                 placeholder="Nachricht"
                 minHeight="300px"
               />
+
+              {/* Attachments Liste */}
+              {attachments.length > 0 && (
+                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Anhänge:</span>
+                    <span className="text-xs text-gray-500">{attachments.length} Datei{attachments.length !== 1 ? 'en' : ''}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 truncate">{attachment.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
+                          className="text-gray-400 hover:text-red-500 flex-shrink-0 ml-2"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {selectedSignatureId && (
                 <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
@@ -546,9 +639,19 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-200 rounded-lg text-gray-600">
+            <button
+              type="button"
+              onClick={() => setShowAssetModal(true)}
+              className="p-2 hover:bg-gray-200 rounded-lg text-gray-600"
+              title="Anhänge hinzufügen"
+            >
               <PaperClipIcon className="h-5 w-5" />
             </button>
+            {attachments.length > 0 && (
+              <span className="text-sm text-gray-600">
+                {attachments.length} Anhang{attachments.length !== 1 ? 'e' : ''}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -566,6 +669,23 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           </div>
         </div>
       </div>
+
+      {/* Asset Selector Modal */}
+      {showAssetModal && (
+        <AssetSelectorModal
+          isOpen={showAssetModal}
+          onClose={() => setShowAssetModal(false)}
+          clientId={organizationId}
+          organizationId={organizationId}
+          legacyUserId={user?.uid}
+          selectedProjectId={selectedProjectId}
+          onAssetsSelected={(assets) => {
+            setAttachments([...attachments, ...assets]);
+            setShowAssetModal(false);
+          }}
+          selectionMode="multiple"
+        />
+      )}
     </Dialog>
   );
 }
