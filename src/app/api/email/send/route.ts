@@ -111,6 +111,42 @@ export async function POST(request: NextRequest) {
       msg.headers['References'] = `<${replyToMessageId}>`;
     }
 
+    // Add attachments if present (download from URL and convert to base64)
+    if (attachments && attachments.length > 0) {
+      console.log('📎 Processing attachments:', attachments.length);
+
+      const processedAttachments = await Promise.all(
+        attachments.map(async (att: any) => {
+          try {
+            // Download file from URL
+            const response = await fetch(att.path);
+            if (!response.ok) {
+              console.error(`Failed to download attachment: ${att.filename}`);
+              return null;
+            }
+
+            // Convert to base64
+            const buffer = await response.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+
+            return {
+              filename: att.filename,
+              content: base64,
+              type: att.contentType,
+              disposition: 'attachment'
+            };
+          } catch (error) {
+            console.error(`Error processing attachment ${att.filename}:`, error);
+            return null;
+          }
+        })
+      );
+
+      // Filter out failed attachments
+      msg.attachments = processedAttachments.filter(Boolean);
+      console.log('✅ Processed attachments:', msg.attachments.length);
+    }
+
     // Send email
     console.log('📧 Sending email via SendGrid:', {
       to: msg.to,
