@@ -79,7 +79,9 @@ export default function EmailEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      if (onChange) {
+        onChange(editor.getHTML());
+      }
     },
     editorProps: {
       attributes: {
@@ -87,7 +89,7 @@ export default function EmailEditor({
       }
     },
     immediatelyRender: false // SSR-Fix für TipTap
-  });
+  }, [onChange]); // FIX: onChange in dependencies
 
   // Update editor content when prop changes
   useEffect(() => {
