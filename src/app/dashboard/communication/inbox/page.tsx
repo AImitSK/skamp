@@ -985,6 +985,7 @@ export default function InboxPage() {
           organizationId={organizationId}
           mode={composeMode}
           replyToEmail={replyToEmail}
+          currentMailboxEmail={selectedMailboxEmail}
           onClose={() => {
             setShowCompose(false);
             setReplyToEmail(null);

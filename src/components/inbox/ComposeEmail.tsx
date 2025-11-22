@@ -22,6 +22,7 @@ interface ComposeEmailProps {
   organizationId: string;
   mode: 'new' | 'reply' | 'forward';
   replyToEmail?: EmailMessage | null;
+  currentMailboxEmail?: string;
   onClose: () => void;
   onSend: (data: any) => void;
 }
@@ -30,6 +31,7 @@ export function ComposeEmail({
   organizationId,
   mode,
   replyToEmail,
+  currentMailboxEmail,
   onClose,
   onSend
 }: ComposeEmailProps) {
@@ -256,58 +258,26 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         name: fromAddress.displayName || ''
       };
 
-      // WICHTIG: Generiere Reply-To für ALLE E-Mails (für Inbound Parse)
+      // WICHTIG: Generiere Reply-To basierend auf aktueller Mailbox
+      // Die Antwort muss IMMER in die aktuell geöffnete Mailbox zurückkommen
       let replyToAddress: string | undefined;
-      
-      // Debug-Logging
-      console.log('🔍 Debug Reply-To Generation:', {
-        selectedEmailAddressId,
-        fromAddress,
-        organizationId,
-        mode
-      });
-      
-      // Hole die kurze ID der E-Mail-Adresse für die Reply-To
-      if (!selectedEmailAddressId || !fromAddress) {
-        console.error('❌ Missing required data for Reply-To generation');
-        toastService.error('Fehler: Keine E-Mail-Adresse ausgewählt');
-        setSending(false);
-        return;
-      }
-      
-      const shortEmailAddressId = selectedEmailAddressId.substring(0, 8).toLowerCase();
-      const domain = fromAddress.email.split('@')[1];
-      const localPart = fromAddress.email.split('@')[0];
-      
-      console.log('📝 Reply-To components:', {
-        shortEmailAddressId,
-        domain,
-        localPart,
-        fullOrganizationId: organizationId,
-        shortOrganizationId: organizationId.toLowerCase()
-      });
-      
-      if (mode === 'reply' && replyToEmail?.replyTo?.email) {
-        // Prüfe ob die ursprüngliche E-Mail eine PR-Kampagnen Reply-To hatte
-        const originalReplyTo = replyToEmail.replyTo.email;
-        const replyToPattern = /^(.+)-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)@inbox\.(.+)$/;
-        const match = originalReplyTo.match(replyToPattern);
-        
-        if (match) {
-          // Es ist eine PR-Kampagne! Verwende das gleiche Format
-          const [, prefix, userId, campaignId, ] = match;
-          // Verwende die echte E-Mail-Adress-ID statt einer zufälligen
-          replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
-          console.log('🎯 Generated PR campaign reply-to:', replyToAddress);
-        } else {
-          // Normale Antwort - verwende E-Mail-Adress-ID
-          replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
-          console.log('📧 Generated standard reply-to:', replyToAddress);
-        }
-      } else if (mode === 'new' || mode === 'forward') {
-        // NEUE E-Mail oder Weiterleitung - verwende E-Mail-Adress-ID
+
+      // NEUE LOGIK: Reply-To basiert auf currentMailboxEmail (nicht auf Absender-Adresse!)
+      if (currentMailboxEmail) {
+        // Verwende die aktuelle Mailbox-Adresse direkt
+        replyToAddress = currentMailboxEmail;
+        console.log('📬 Using current mailbox as reply-to:', replyToAddress);
+      } else if (replyToEmail?.replyTo?.email) {
+        // Fallback: Verwende die Reply-To der ursprünglichen Email
+        replyToAddress = replyToEmail.replyTo.email;
+        console.log('🔁 Using original reply-to:', replyToAddress);
+      } else {
+        // Letzter Fallback: Generiere Reply-To basierend auf Absender
+        const shortEmailAddressId = selectedEmailAddressId.substring(0, 8).toLowerCase();
+        const domain = fromAddress.email.split('@')[1];
+        const localPart = fromAddress.email.split('@')[0];
         replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
-        console.log('📮 Generated new email reply-to:', replyToAddress);
+        console.log('⚠️ Fallback: Generated reply-to from sender:', replyToAddress);
       }
 
       // Merge signature with content before sending
