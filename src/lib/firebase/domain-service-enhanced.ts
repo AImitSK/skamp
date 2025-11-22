@@ -350,7 +350,37 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
       }
     });
 
-    return this.create(domainData, context);
+    // Create domain
+    const domainId = await this.create(domainData, context);
+
+    // WICHTIG: Erstelle automatisch eine Domain-Mailbox für diese Domain
+    try {
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('./client-init');
+
+      const inboxAddress = `${data.domain.toLowerCase()}@inbox.sk-online-marketing.de`;
+
+      await addDoc(collection(db, 'inbox_domain_mailboxes'), {
+        organizationId: context.organizationId,
+        domainId: domainId,
+        domain: data.domain.toLowerCase(),
+        inboxAddress: inboxAddress,
+        status: 'active',
+        unreadCount: 0,
+        threadCount: 0,
+        isDefault: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: context.userId
+      });
+
+      console.log('✅ Domain-Mailbox erstellt:', inboxAddress);
+    } catch (error) {
+      console.error('❌ Fehler beim Erstellen der Domain-Mailbox:', error);
+      // Fehler nicht werfen - Domain wurde trotzdem erstellt
+    }
+
+    return domainId;
   }
 
   /**
