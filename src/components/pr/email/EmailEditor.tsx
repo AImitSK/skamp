@@ -166,15 +166,15 @@ export default function EmailEditor({
       });
 
       // Upload Logo in signatures/ Ordner
+      // uploadMedia(file, organizationId, folderId?, onProgress?, retryCount?, context?, skipLimitCheck?)
       const asset = await mediaService.uploadMedia(
         file,
         organizationId,
-        'signature-logo',
-        {
-          folder: 'signatures',
-          tags: ['signature', 'logo'],
-          description: 'Logo für E-Mail-Signatur'
-        }
+        undefined, // folderId - nicht verwendet für Signatur-Logos
+        undefined, // onProgress - kein Progress-Tracking nötig
+        3, // retryCount
+        { userId: organizationId }, // context
+        false // skipLimitCheck
       );
 
       // Füge Bild an Cursor-Position ein
