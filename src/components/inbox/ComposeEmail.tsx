@@ -687,6 +687,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                   setShowAssetModal(false);
                   setSelectedProjectId('');
                 }}
+                onUploadSuccess={() => {
+                  console.log('✅ Asset uploaded successfully');
+                }}
                 selectionMode="multiple"
               />
             )}
