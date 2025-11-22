@@ -964,7 +964,8 @@ export default function InboxPage() {
             setShowCompose(false);
             setReplyToEmail(null);
           }}
-          onSend={() => {
+          onSend={(data) => {
+            console.log('✅ Email sent:', data);
             setShowCompose(false);
             setReplyToEmail(null);
             // New email will appear automatically through real-time listener
