@@ -4,6 +4,7 @@ import sgMail from '@sendgrid/mail';
 import { nanoid } from 'nanoid';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { EmailMessage } from '@/types/email-enhanced';
 
 // Initialize SendGrid
@@ -118,10 +119,20 @@ export async function POST(request: NextRequest) {
       const processedAttachments = await Promise.all(
         attachments.map(async (att: any) => {
           try {
+            // Validate attachment data
+            if (!att.path || !att.filename) {
+              console.error('❌ Invalid attachment data:', {
+                hasPath: !!att.path,
+                hasFilename: !!att.filename,
+                attachment: att
+              });
+              return null;
+            }
+
             // Download file from URL
             const response = await fetch(att.path);
             if (!response.ok) {
-              console.error(`Failed to download attachment: ${att.filename}`);
+              console.error(`❌ Failed to download attachment: ${att.filename} (${response.status})`);
               return null;
             }
 
@@ -132,11 +143,11 @@ export async function POST(request: NextRequest) {
             return {
               filename: att.filename,
               content: base64,
-              type: att.contentType,
+              type: att.contentType || 'application/octet-stream',
               disposition: 'attachment'
             };
           } catch (error) {
-            console.error(`Error processing attachment ${att.filename}:`, error);
+            console.error(`❌ Error processing attachment ${att?.filename || 'unknown'}:`, error);
             return null;
           }
         })
@@ -214,8 +225,8 @@ export async function POST(request: NextRequest) {
           emailAccountId: emailAddressId, // FIX: emailAddressId aus Request verwenden
           organizationId,
           userId: userId || organizationId,
-          receivedAt: adminDb.FieldValue.serverTimestamp(),
-          sentAt: adminDb.FieldValue.serverTimestamp(),
+          receivedAt: FieldValue.serverTimestamp(),
+          sentAt: FieldValue.serverTimestamp(),
           attachments: attachments || [],
           headers: {},
           ...(domainId && { domainId }),

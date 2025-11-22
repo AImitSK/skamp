@@ -377,9 +377,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           projectId: replyToEmail?.projectId,
           // Attachments
           attachments: attachments.map(att => ({
-            filename: att.name,
-            path: att.downloadUrl,
-            contentType: att.mimeType || 'application/octet-stream'
+            filename: att.metadata?.fileName || 'attachment',
+            path: att.metadata?.thumbnailUrl || '',
+            contentType: att.metadata?.fileType || 'application/octet-stream'
           }))
         }),
       });
@@ -556,7 +556,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                       <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                         <div className="flex items-center gap-2 min-w-0">
                           <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 truncate">{attachment.name}</span>
+                          <span className="text-sm text-gray-700 truncate">{attachment.metadata?.fileName || 'Unbekannte Datei'}</span>
                         </div>
                         <button
                           type="button"
