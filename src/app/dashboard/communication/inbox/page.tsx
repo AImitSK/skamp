@@ -44,6 +44,7 @@ import {
   FolderIcon,
   ListBulletIcon
 } from '@heroicons/react/20/solid';
+import { toastService } from '@/lib/utils/toast';
 
 export default function InboxPage() {
   const { user } = useAuth();
@@ -179,6 +180,7 @@ export default function InboxPage() {
 
     } catch (error: any) {
       console.error('Setup error:', error);
+      toastService.error('Fehler beim Einrichten der Echtzeit-Updates');
       setError('Fehler beim Einrichten der Echtzeit-Updates');
       setLoading(false);
     }
@@ -270,6 +272,7 @@ export default function InboxPage() {
       },
       (error) => {
         console.error('Thread load error:', error);
+        toastService.error('Fehler beim Laden der E-Mail-Threads');
         setError('Fehler beim Laden der E-Mail-Threads');
         setLoading(false);
       }
@@ -318,6 +321,7 @@ export default function InboxPage() {
       },
       (error) => {
         console.error('Messages load error:', error);
+        toastService.error('Fehler beim Laden der E-Mails');
         setError('Fehler beim Laden der E-Mails');
         setLoading(false);
       }
@@ -373,10 +377,10 @@ export default function InboxPage() {
     setResolvingThreads(true);
     try {
       const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
-      alert(`${resolvedCount} Threads wurden erstellt!`);
+      toastService.success(`${resolvedCount} Threads wurden erstellt`);
     } catch (error) {
       console.error('Error resolving threads:', error);
-      alert('Fehler beim Erstellen der Threads');
+      toastService.error('Fehler beim Erstellen der Threads');
     } finally {
       setResolvingThreads(false);
     }
@@ -401,7 +405,7 @@ export default function InboxPage() {
   // Create test email for development
   const createTestEmail = async () => {
     if (!emailAddresses.length) {
-      alert('Keine E-Mail-Adressen konfiguriert!');
+      toastService.error('Keine E-Mail-Adressen konfiguriert');
       return;
     }
 
@@ -468,10 +472,10 @@ export default function InboxPage() {
       const testMessage = await emailMessageService.create(testMessageData);
 
 
-      alert(`Test-E-Mail wurde erstellt!`);
+      toastService.success('Test-E-Mail wurde erstellt');
     } catch (error: any) {
 
-      alert(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
+      toastService.error(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
     }
   };
 
@@ -532,7 +536,9 @@ export default function InboxPage() {
       console.error('❌ Error loading thread messages:', error);
       console.error('Thread ID:', thread.id);
       console.error('Error details:', error instanceof Error ? error.message : error);
-      setError('Fehler beim Laden der Thread-Nachrichten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'));
+      const errorMsg = 'Fehler beim Laden der Thread-Nachrichten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
+      toastService.error(errorMsg);
+      setError(errorMsg);
     }
   };
 
@@ -580,11 +586,11 @@ export default function InboxPage() {
           setSelectedEmail(nextEmail);
         }
       }
-      
+
 
     } catch (error) {
-
-      alert('Fehler beim Archivieren der E-Mail');
+      console.error('Archive error:', error);
+      toastService.error('Fehler beim Archivieren der E-Mail');
     } finally {
       setActionLoading(false);
     }
@@ -641,11 +647,11 @@ export default function InboxPage() {
           setSelectedEmail(nextEmail);
         }
       }
-      
+
 
     } catch (error) {
-
-      alert('Fehler beim Löschen der E-Mail');
+      console.error('Delete error:', error);
+      toastService.error('Fehler beim Löschen der E-Mail');
     } finally {
       setActionLoading(false);
     }
@@ -686,8 +692,8 @@ export default function InboxPage() {
         setSelectedEmail(null);
       }
     } catch (error) {
-
-      alert('Fehler beim Ändern des Thread-Status');
+      console.error('Status change error:', error);
+      toastService.error('Fehler beim Ändern des Thread-Status');
     }
   };
 

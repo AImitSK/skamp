@@ -18,6 +18,7 @@ import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
 import { CampaignAssetAttachment } from '@/types/pr';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
+import { toastService } from '@/lib/utils/toast';
 
 interface ComposeEmailProps {
   organizationId: string;
@@ -398,6 +399,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         messageId: result.messageId
       });
 
+      // Success Toast
+      toastService.success('E-Mail erfolgreich versendet');
+
       // Call parent onSend callback
       onSend({
         success: true,
@@ -409,7 +413,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       onClose();
     } catch (error) {
       console.error('Failed to send email:', error);
-      alert(`Fehler beim Senden der E-Mail: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      toastService.error(`Fehler beim Senden: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setSending(false);
     }
