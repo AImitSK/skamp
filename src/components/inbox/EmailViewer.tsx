@@ -20,6 +20,7 @@ import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { useEffect, useRef } from 'react';
+import { toastService } from '@/lib/utils/toast';
 
 interface EmailViewerProps {
   thread: EmailThread;

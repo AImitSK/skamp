@@ -24,6 +24,7 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import format from 'date-fns/format';
+import { toastService } from '@/lib/utils/toast';
 
 interface InternalNote {
   id?: string;
@@ -183,9 +184,10 @@ export function InternalNotes({
       }
       
       setNewNote('');
+      toastService.success('Notiz gespeichert');
     } catch (error) {
       console.error('Error adding note:', error);
-      alert('Fehler beim Speichern der Notiz');
+      toastService.error('Fehler beim Speichern der Notiz');
     }
   };
 

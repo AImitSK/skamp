@@ -567,7 +567,10 @@ export default function InboxPage() {
       const currentEmailId = selectedEmail?.id;
       
       await emailMessageService.archive(emailId);
-      
+
+      // Success Toast
+      toastService.success('E-Mail archiviert');
+
       // Wenn die archivierte E-Mail die ausgewählte war
       if (currentEmailId === emailId) {
         setSelectedEmail(null);
@@ -609,7 +612,10 @@ export default function InboxPage() {
       
       // Lösche die E-Mail
       await emailMessageService.delete(emailId);
-      
+
+      // Success Toast
+      toastService.success('E-Mail gelöscht');
+
       // Wenn die gelöschte E-Mail die ausgewählte war
       if (currentEmailId === emailId) {
 
@@ -661,6 +667,9 @@ export default function InboxPage() {
     try {
       await emailMessageService.toggleStar(emailId);
 
+      // Success Toast (kurz und kompakt)
+      toastService.success(starred ? 'Markiert' : 'Markierung entfernt');
+
       // Update thread isStarred wenn mindestens eine Email im Thread starred ist
       if (selectedThread?.id) {
         const threadRef = doc(db, 'email_threads', selectedThread.id);
@@ -671,6 +680,7 @@ export default function InboxPage() {
       }
     } catch (error) {
       console.error('Error toggling star:', error);
+      toastService.error('Fehler beim Markieren');
     }
   };
 
@@ -685,6 +695,15 @@ export default function InboxPage() {
       
       // Update thread status
       await threadMatcherService.updateThreadStatus(threadId, status);
+
+      // Success Toast
+      const statusLabels = {
+        active: 'Aktiv',
+        waiting: 'Wartend',
+        resolved: 'Gelöst',
+        archived: 'Archiviert'
+      };
+      toastService.success(`Status geändert: ${statusLabels[status]}`);
 
       // Bei Archivierung: Thread aus der Liste entfernen
       if (status === 'archived') {

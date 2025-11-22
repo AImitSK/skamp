@@ -255,7 +255,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
-      alert('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse');
+      toastService.error('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse');
       return;
     }
 
@@ -302,7 +302,8 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       // Hole die kurze ID der E-Mail-Adresse für die Reply-To
       if (!selectedEmailAddressId || !fromAddress) {
         console.error('❌ Missing required data for Reply-To generation');
-        alert('Fehler: Keine E-Mail-Adresse ausgewählt');
+        toastService.error('Fehler: Keine E-Mail-Adresse ausgewählt');
+        setSending(false);
         return;
       }
       

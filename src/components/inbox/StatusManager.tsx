@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import clsx from 'clsx';
+import { toastService } from '@/lib/utils/toast';
 import { 
   CheckCircleIcon,
   ClockIcon,
@@ -197,9 +198,10 @@ export function StatusManager({
 
       onStatusChange?.(thread.id!, status);
       console.log('✅ Thread status updated successfully');
+      toastService.success('Status erfolgreich geändert');
     } catch (error) {
       console.error('Error updating thread status:', error);
-      alert('Fehler beim Ändern des Status');
+      toastService.error('Fehler beim Ändern des Status');
     } finally {
       setUpdating(false);
     }
@@ -224,9 +226,10 @@ export function StatusManager({
 
       onStatusChange?.(thread.id!, thread.status as ThreadStatus, priority);
       console.log('✅ Thread priority updated successfully');
+      toastService.success('Priorität erfolgreich geändert');
     } catch (error) {
       console.error('Error updating thread priority:', error);
-      alert('Fehler beim Ändern der Priorität');
+      toastService.error('Fehler beim Ändern der Priorität');
     } finally {
       setUpdating(false);
     }
