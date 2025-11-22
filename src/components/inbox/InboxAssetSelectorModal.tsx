@@ -51,7 +51,7 @@ export function InboxAssetSelectorModal({
 
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [selectedAssets, setSelectedAssets] = useState<Map<string, MediaAsset>>(new Map());
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -104,6 +104,7 @@ export function InboxAssetSelectorModal({
       setBreadcrumbs([]);
       setCurrentFolderId(null);
       setProjectRootFolderId(null);
+      setSelectedAssets(new Map()); // Reset Auswahl
     }
   }, [selectedProjectId]);
 
@@ -182,58 +183,42 @@ export function InboxAssetSelectorModal({
     loadFolder(item.id, newBreadcrumbs);
   };
 
-  const handleItemToggle = (itemId: string, checked: boolean) => {
-    const newSelection = new Set(selectedItems);
+  const handleAssetToggle = (asset: MediaAsset, checked: boolean) => {
+    const newSelection = new Map(selectedAssets);
 
     if (checked) {
-      newSelection.add(itemId);
+      newSelection.set(asset.id!, asset);
     } else {
-      newSelection.delete(itemId);
+      newSelection.delete(asset.id!);
     }
 
-    setSelectedItems(newSelection);
+    setSelectedAssets(newSelection);
   };
 
   const handleConfirm = () => {
     const attachments: CampaignAssetAttachment[] = [];
 
-    // Process selected assets
-    assets.forEach(asset => {
-      if (selectedItems.has(asset.id!)) {
-        attachments.push({
-          id: `asset-${asset.id}`,
-          type: 'asset',
-          assetId: asset.id,
-          metadata: {
-            fileName: asset.fileName,
-            fileType: asset.fileType,
-            description: asset.description || '',
-            thumbnailUrl: asset.downloadUrl
-          },
-          attachedAt: serverTimestamp() as any,
-          attachedBy: organizationId
-        });
-      }
-    });
-
-    // Process selected folders
-    folders.forEach(folder => {
-      if (selectedItems.has(folder.id!)) {
-        attachments.push({
-          id: `folder-${folder.id}`,
-          type: 'folder',
-          folderId: folder.id,
-          metadata: {
-            folderName: folder.name,
-            description: folder.description || ''
-          },
-          attachedAt: serverTimestamp() as any,
-          attachedBy: organizationId
-        });
-      }
+    // Process all selected assets from Map
+    selectedAssets.forEach(asset => {
+      attachments.push({
+        id: `asset-${asset.id}`,
+        type: 'asset',
+        assetId: asset.id,
+        metadata: {
+          fileName: asset.fileName,
+          fileType: asset.fileType,
+          description: asset.description || '',
+          thumbnailUrl: asset.downloadUrl
+        },
+        attachedAt: serverTimestamp() as any,
+        attachedBy: organizationId
+      });
     });
 
     onAssetsSelected(attachments);
+
+    // Reset und schließen
+    setSelectedAssets(new Map());
     onClose();
   };
 
@@ -260,18 +245,7 @@ export function InboxAssetSelectorModal({
     <>
       <Dialog open={isOpen} onClose={onClose} size="5xl">
         <DialogTitle className="px-6 py-4 border-b">
-          <div className="flex items-center justify-between">
-            <span>Anhänge auswählen</span>
-            {selectedProjectId && currentFolderId && (
-              <Button
-                onClick={() => setShowUploadModal(true)}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2"
-              >
-                <CloudArrowUpIcon className="h-4 w-4 mr-2" />
-                Datei hochladen
-              </Button>
-            )}
-          </div>
+          <span>Anhänge auswählen</span>
         </DialogTitle>
 
         <DialogBody className="px-6 py-4">
@@ -298,21 +272,33 @@ export function InboxAssetSelectorModal({
             </Field>
           </div>
 
-          {/* Breadcrumb Navigation */}
+          {/* Breadcrumb Navigation + Upload Button */}
           {breadcrumbs.length > 0 && (
-            <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
-              {breadcrumbs.map((crumb, index) => (
-                <div key={crumb.id || 'home'} className="flex items-center gap-2">
-                  {index > 0 && <ChevronRightIcon className="h-4 w-4" />}
-                  <button
-                    onClick={() => handleBreadcrumbClick(index)}
-                    className="hover:text-[#005fab] flex items-center gap-1"
-                  >
-                    {index === 0 && <HomeIcon className="h-4 w-4" />}
-                    {crumb.name}
-                  </button>
-                </div>
-              ))}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                {breadcrumbs.map((crumb, index) => (
+                  <div key={crumb.id || 'home'} className="flex items-center gap-2">
+                    {index > 0 && <ChevronRightIcon className="h-4 w-4" />}
+                    <button
+                      onClick={() => handleBreadcrumbClick(index)}
+                      className="hover:text-[#005fab] flex items-center gap-1"
+                    >
+                      {index === 0 && <HomeIcon className="h-4 w-4" />}
+                      {crumb.name}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {selectedProjectId && currentFolderId && (
+                <Button
+                  onClick={() => setShowUploadModal(true)}
+                  className="bg-[#005fab] hover:bg-[#004a8c] text-white px-3 py-1.5 text-sm"
+                >
+                  <CloudArrowUpIcon className="h-4 w-4 mr-1.5" />
+                  Hochladen
+                </Button>
+              )}
             </div>
           )}
 
@@ -339,18 +325,13 @@ export function InboxAssetSelectorModal({
                 </div>
               ) : (
                 <div className="border rounded-lg max-h-96 overflow-y-auto">
-                  {/* Folders */}
+                  {/* Folders - Einfachklick zum Öffnen, keine Checkbox */}
                   {filteredFolders.map(folder => (
                     <div
                       key={folder.id}
-                      className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0 cursor-pointer"
-                      onDoubleClick={() => handleFolderClick(folder)}
+                      className="flex items-center gap-3 p-3 hover:bg-blue-50 border-b last:border-b-0 cursor-pointer transition-colors"
+                      onClick={() => handleFolderClick(folder)}
                     >
-                      <Checkbox
-                        checked={selectedItems.has(folder.id!)}
-                        onChange={(checked) => handleItemToggle(folder.id!, checked)}
-                        className="shrink-0"
-                      />
                       <FolderIcon className="h-10 w-10 text-[#005fab] shrink-0" />
                       <div className="flex-1 min-w-0">
                         <Text className="font-medium truncate">{folder.name}</Text>
@@ -358,7 +339,7 @@ export function InboxAssetSelectorModal({
                           <Text className="text-sm text-gray-500 truncate">{folder.description}</Text>
                         )}
                       </div>
-                      <Text className="text-xs text-gray-400">Doppelklick zum Öffnen</Text>
+                      <ChevronRightIcon className="h-5 w-5 text-gray-400 shrink-0" />
                     </div>
                   ))}
 
@@ -369,8 +350,8 @@ export function InboxAssetSelectorModal({
                       className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0"
                     >
                       <Checkbox
-                        checked={selectedItems.has(asset.id!)}
-                        onChange={(checked) => handleItemToggle(asset.id!, checked)}
+                        checked={selectedAssets.has(asset.id!)}
+                        onChange={(checked) => handleAssetToggle(asset, checked)}
                         className="shrink-0"
                       />
                       {asset.fileType?.startsWith('image/') ? (
@@ -414,10 +395,10 @@ export function InboxAssetSelectorModal({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={selectedItems.size === 0}
+            disabled={selectedAssets.size === 0}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white"
           >
-            {selectedItems.size} Anhänge übernehmen
+            {selectedAssets.size} {selectedAssets.size === 1 ? 'Anhang' : 'Anhänge'} übernehmen
           </Button>
         </DialogActions>
       </Dialog>
