@@ -14,10 +14,8 @@ import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24
 import { Select } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { EmailSignature } from '@/types/email-enhanced';
-import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
+import { InboxAssetSelectorModal } from '@/components/inbox/InboxAssetSelectorModal';
 import { CampaignAssetAttachment } from '@/types/pr';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
 import { toastService } from '@/lib/utils/toast';
 
 interface ComposeEmailProps {
@@ -58,36 +56,6 @@ export function ComposeEmail({
   // Attachments state
   const [attachments, setAttachments] = useState<CampaignAssetAttachment[]>([]);
   const [showAssetModal, setShowAssetModal] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-
-  // Load projects for attachment selector
-  useEffect(() => {
-    const loadProjects = async () => {
-      if (!organizationId) return;
-
-      setLoadingProjects(true);
-      try {
-        const projectsQuery = query(
-          collection(db, 'projects'),
-          where('organizationId', '==', organizationId)
-        );
-        const snapshot = await getDocs(projectsQuery);
-        const projectsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setProjects(projectsData);
-      } catch (error) {
-        console.error('Error loading projects:', error);
-      } finally {
-        setLoadingProjects(false);
-      }
-    };
-
-    loadProjects();
-  }, [organizationId]);
 
   // Auto-show CC/BCC fields if values are set
   useEffect(() => {
@@ -636,66 +604,18 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         </div>
       </div>
 
-      {/* Asset Selector Modal mit Projekt-Auswahl */}
+      {/* Neues Inbox Asset Selector Modal */}
       {showAssetModal && (
-        <Dialog open={showAssetModal} onClose={() => setShowAssetModal(false)} size="5xl">
-          <div className="p-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-3">Anhänge auswählen</h3>
-
-              {/* Projekt-Dropdown */}
-              <Field>
-                <Label>Projekt</Label>
-                <Select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  disabled={loadingProjects}
-                >
-                  <option value="">Bitte Projekt auswählen...</option>
-                  {loadingProjects ? (
-                    <option>Lade Projekte...</option>
-                  ) : (
-                    projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.title || project.name}
-                      </option>
-                    ))
-                  )}
-                </Select>
-              </Field>
-
-              {!selectedProjectId && (
-                <p className="mt-2 text-sm text-amber-600">
-                  Bitte wählen Sie ein Projekt aus, um Medien zu durchsuchen und hochzuladen.
-                </p>
-              )}
-            </div>
-
-            {selectedProjectId && (
-              <AssetSelectorModal
-                isOpen={true}
-                onClose={() => {
-                  setShowAssetModal(false);
-                  setSelectedProjectId('');
-                }}
-                clientId={organizationId}
-                organizationId={organizationId}
-                legacyUserId={user?.uid}
-                selectedProjectId={selectedProjectId}
-                selectedProjectName={projects.find(p => p.id === selectedProjectId)?.title || projects.find(p => p.id === selectedProjectId)?.name}
-                onAssetsSelected={(assets) => {
-                  setAttachments([...attachments, ...assets]);
-                  setShowAssetModal(false);
-                  setSelectedProjectId('');
-                }}
-                onUploadSuccess={() => {
-                  console.log('✅ Asset uploaded successfully');
-                }}
-                selectionMode="multiple"
-              />
-            )}
-          </div>
-        </Dialog>
+        <InboxAssetSelectorModal
+          isOpen={showAssetModal}
+          onClose={() => setShowAssetModal(false)}
+          organizationId={organizationId}
+          userId={user?.uid}
+          onAssetsSelected={(assets) => {
+            setAttachments([...attachments, ...assets]);
+            setShowAssetModal(false);
+          }}
+        />
       )}
     </Dialog>
   );
