@@ -252,6 +252,20 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         name: ''
       })) : [];
 
+      // Validierung: Prüfe auf Duplikate zwischen TO, CC und BCC
+      const allRecipients = [
+        ...toAddresses.map(r => r.email.toLowerCase()),
+        ...ccAddresses.map(r => r.email.toLowerCase()),
+        ...bccAddresses.map(r => r.email.toLowerCase())
+      ];
+
+      const uniqueRecipients = new Set(allRecipients);
+      if (allRecipients.length !== uniqueRecipients.size) {
+        toastService.error('Empfänger-Adressen dürfen nicht in TO, CC und BCC doppelt vorkommen');
+        setSending(false);
+        return;
+      }
+
       // Prepare email data - nur EmailAddressInfo konforme Felder
       const fromData = {
         email: fromAddress.email,
@@ -326,7 +340,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to send email');
+        // Extrahiere bessere Fehlermeldung aus SendGrid Error
+        const errorMessage = error.error || error.message || 'Failed to send email';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
