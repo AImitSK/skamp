@@ -47,12 +47,18 @@ export async function POST(request: NextRequest) {
           return text;
         }
 
-        // Für andere Charsets versuchen zu dekodieren
+        // Für andere Charsets: Text kommt als falscher UTF-8 String
+        // Wir müssen ihn zurück in Bytes konvertieren und richtig dekodieren
         try {
-          // TextDecoder für verschiedene Charsets
+          // Konvertiere String zurück in Bytes (Latin-1 codiert)
+          const bytes = new Uint8Array(text.length);
+          for (let i = 0; i < text.length; i++) {
+            bytes[i] = text.charCodeAt(i) & 0xFF;
+          }
+
+          // Dekodiere mit richtigem Charset
           const decoder = new TextDecoder(charset);
-          const encoder = new TextEncoder();
-          return decoder.decode(encoder.encode(text));
+          return decoder.decode(bytes);
         } catch (e) {
           console.warn(`Failed to decode with charset ${charset}, using original text`);
           return text;
