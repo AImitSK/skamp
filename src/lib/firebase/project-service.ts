@@ -41,17 +41,43 @@ export const projectService = {
    */
   async create(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
+      // Wenn keine emailAddressId angegeben, versuche Default-Email zu finden
+      let finalProjectData = { ...projectData };
+
+      if (!projectData.emailAddressId) {
+        try {
+          const defaultEmailQuery = query(
+            collection(db, 'email_addresses'),
+            where('organizationId', '==', projectData.organizationId),
+            where('isDefault', '==', true),
+            limit(1)
+          );
+          const defaultEmailSnapshot = await getDocs(defaultEmailQuery);
+
+          if (!defaultEmailSnapshot.empty) {
+            const defaultEmail = defaultEmailSnapshot.docs[0];
+            finalProjectData.emailAddressId = defaultEmail.id;
+            console.log(`[ProjectService] Auto-assigned default email: ${defaultEmail.data().email}`);
+          } else {
+            console.warn('[ProjectService] No default email found for organization');
+          }
+        } catch (emailError) {
+          console.error('[ProjectService] Error finding default email:', emailError);
+          // Nicht blockierend - Projekt kann auch ohne Email erstellt werden
+        }
+      }
+
       const dataToSave = {
-        ...projectData,
+        ...finalProjectData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
-      
+
       // Firebase-kompatible Bereinigung von undefined-Werten
       const cleanedData = this.cleanUndefinedValues(dataToSave);
-      
+
       const docRef = await addDoc(collection(db, 'projects'), cleanedData);
-      
+
       // Automatische Ordner-Erstellung für das neue Projekt
       try {
         await this.createProjectFolderStructure(docRef.id, projectData.organizationId, {
