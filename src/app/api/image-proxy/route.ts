@@ -9,6 +9,7 @@ import { adminStorage } from '@/lib/firebase/admin-init';
  * - googleusercontent.com (Gmail Signaturen, Avatare)
  * - gravatar.com (Gravatar Avatare)
  * - firebasestorage.googleapis.com (Firebase Storage)
+ * - ct.sendgrid.net (SendGrid Tracking Pixels)
  */
 
 const ALLOWED_DOMAINS = [
@@ -17,6 +18,7 @@ const ALLOWED_DOMAINS = [
   'firebasestorage.googleapis.com',
   'storage.googleapis.com',
   'gstatic.com',
+  'ct.sendgrid.net', // SendGrid Tracking Pixels
 ];
 
 export async function GET(request: NextRequest) {

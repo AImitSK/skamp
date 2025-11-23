@@ -274,7 +274,12 @@ export async function POST(request: NextRequest) {
 
     } catch (sendError: any) {
       console.error('❌ SendGrid error:', sendError);
-      
+
+      // Log vollständige SendGrid Response für Debugging
+      if (sendError.response?.body) {
+        console.error('📄 SendGrid Response Body:', JSON.stringify(sendError.response.body, null, 2));
+      }
+
       // Extract error message
       let errorMessage = 'Failed to send email';
       if (sendError.response?.body?.errors?.[0]?.message) {

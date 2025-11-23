@@ -435,10 +435,12 @@ async function checkDuplicate(
 
   // NEUE LOGIK: Prüfe ob diese messageId bereits in IRGENDEINER Mailbox dieser Org existiert
   // Wenn ja, ist es ein Duplikat von einem parallelen Webhook
+  // WICHTIG: Nur 'inbox' Folder prüfen, NICHT 'sent' (sonst werden eigene Replies als Duplikat erkannt)
   const query = adminDb
     .collection('email_messages')
     .where('messageId', '==', messageId)
-    .where('organizationId', '==', organizationId);
+    .where('organizationId', '==', organizationId)
+    .where('folder', '==', 'inbox'); // ✅ Nur eingehende Emails prüfen
 
   const snapshot = await query.get();
 
