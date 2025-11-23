@@ -90,7 +90,7 @@ class ReplyToGeneratorService {
 
       const project = projectDoc.data();
       const localPart = emailAddress.localPart || 'email';
-      const inboxAddress = `${localPart}-${projectId}@${this.INBOX_DOMAIN}`;
+      const inboxAddress = `${localPart}-${projectId}@${this.INBOX_DOMAIN}`.toLowerCase();
 
       // Erstelle Projekt-Postfach
       const mailboxData = {
