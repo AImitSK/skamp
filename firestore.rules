@@ -382,6 +382,90 @@ service cloud.firestore {
     }
 
     // ========================================
+    // EMAIL DOMAINS & ADDRESSES
+    // ========================================
+
+    // Email Domains Enhanced - Org-isoliert
+    match /email_domains_enhanced/{domainId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Addresses - Org-isoliert
+    match /email_addresses/{addressId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Signatures - Org-isoliert
+    match /email_signatures/{signatureId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Inbox Domain Mailboxes - Org-isoliert
+    match /inbox_domain_mailboxes/{mailboxId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Inbox Project Mailboxes - Org-isoliert
+    match /inbox_project_mailboxes/{mailboxId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Threads - Org-isoliert
+    match /email_threads/{threadId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Messages - Org-isoliert
+    match /email_messages/{messageId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Email Notes (Internal Notes) - Org-isoliert
+    match /email_notes/{noteId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // ========================================
     // TEAM MEMBERS (Team-Management)
     // ========================================
 
