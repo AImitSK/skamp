@@ -1,5 +1,6 @@
 // src/app/api/image-proxy/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { adminStorage } from '@/lib/firebase/admin-init';
 
 /**
  * Image Proxy für externe Bilder in E-Mails
@@ -46,7 +47,57 @@ export async function GET(request: NextRequest) {
 
     console.info(`[image-proxy] Proxying image from: ${url.hostname}`);
 
-    // Bild vom externen Server laden
+    // Spezialbehandlung für Firebase Storage URLs
+    if (url.hostname.includes('firebasestorage.googleapis.com') || url.hostname.includes('storage.googleapis.com')) {
+      try {
+        // Extrahiere den Pfad aus der Firebase Storage URL
+        // Format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media
+        const pathMatch = imageUrl.match(/\/o\/([^?]+)/);
+        if (pathMatch) {
+          const encodedPath = pathMatch[1];
+          const filePath = decodeURIComponent(encodedPath);
+
+          console.info(`[image-proxy] Firebase Storage path: ${filePath}`);
+
+          // Hole die Datei direkt aus Firebase Storage mit Admin SDK
+          const bucket = adminStorage.bucket();
+          const file = bucket.file(filePath);
+
+          // Prüfe ob Datei existiert
+          const [exists] = await file.exists();
+          if (!exists) {
+            console.error(`[image-proxy] File not found in Firebase Storage: ${filePath}`);
+            return NextResponse.json(
+              { error: 'File not found in Firebase Storage' },
+              { status: 404 }
+            );
+          }
+
+          // Lade Datei-Inhalt
+          const [buffer] = await file.download();
+          const [metadata] = await file.getMetadata();
+          const contentType = metadata.contentType || 'image/jpeg';
+
+          console.info(`[image-proxy] Successfully loaded from Firebase Storage: ${filePath}`);
+
+          return new NextResponse(buffer, {
+            status: 200,
+            headers: {
+              'Content-Type': contentType,
+              'Cache-Control': 'public, max-age=86400, immutable',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET',
+              'Access-Control-Allow-Headers': 'Content-Type',
+            },
+          });
+        }
+      } catch (storageError) {
+        console.error('[image-proxy] Firebase Storage error:', storageError);
+        // Fallback zu normalem fetch
+      }
+    }
+
+    // Bild vom externen Server laden (Fallback)
     const response = await fetch(imageUrl, {
       headers: {
         'User-Agent': 'CeleroPress-Image-Proxy/1.0',
