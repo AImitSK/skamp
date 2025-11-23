@@ -621,14 +621,18 @@ export class EmailAddressService {
         const data = doc.data() as EmailAddress;
         
         // Erweiterte Berechtigungsprüfung für Multi-Tenancy
-        const hasAccess = 
+        const hasAccess =
+          // Für alle verfügbar (z.B. Default-Emails)
+          data.availableToAll === true ||
           // Explizite Leserechte
           data.permissions?.read?.includes(userId) ||
+          // Zugewiesen an User
+          data.assignedUserIds?.includes(userId) ||
           // Ersteller der E-Mail-Adresse
           data.userId === userId ||
           // Owner/Admin der Organisation sehen alle E-Mails
           (userRole && (userRole === 'owner' || userRole === 'admin'));
-          
+
         if (hasAccess) {
           emailAddresses.push({ ...data, id: doc.id });
         }
