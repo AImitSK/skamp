@@ -1,0 +1,766 @@
+
+> skamp@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 26.6s
+
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+Module not found: Can't resolve 'country-flag-icons/react/3x2' in 'C:\Users\StefanKühne\Desktop\Projekte\skamp\src\app\dashboard\contacts\crm\components\shared'
+
+Import trace for requested module:
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+./src/app/dashboard/contacts/crm/components/shared/index.ts
+./src/app/dashboard/contacts/crm/companies/page.tsx
+
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+Module not found: Can't resolve 'country-flag-icons/react/3x2' in 'C:\Users\StefanKühne\Desktop\Projekte\skamp\src\app\dashboard\contacts\crm\components\shared'
+
+Import trace for requested module:
+./src/app/dashboard/contacts/crm/components/shared/FlagIcon.tsx
+./src/app/dashboard/contacts/crm/components/shared/index.ts
+./src/app/dashboard/contacts/crm/companies/page.tsx
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+Importing defineLive from the root import is deprecated and will be removed in next-sanity v11. Please change "import {defineLive} from 'next-sanity'" to "import {definveLive} from 'next-sanity/live'"
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+Route loaded, emailAddressService: j { collectionName: 'email_addresses' }
+✅ Firebase Admin SDK initialized successfully
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+✅ Firebase Admin SDK initialized successfully
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Initializing Firebase services...
+Firebase services initialized successfully
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+DB instance type: object
+DB instance valid: true
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Initializing Firebase services...
+Firebase services initialized successfully
+DB instance type: object
+DB instance valid: true
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Initializing Firebase services...
+Firebase services initialized successfully
+DB instance type: object
+DB instance valid: true
+Firebase initialization error: Error [FirebaseError]: Firebase: No Firebase App '[DEFAULT]' has been created - call initializeApp() first (app/no-app).
+    at y (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3720.js:1:4931)
+    at 41379 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\export\route.js:1:8013)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 47616 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\7616.js:1:422)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 36671 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\export\route.js:1:1371)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\export\route.js:1:10098)
+    at c.X (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:2210)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\export\route.js:1:10038) {
+  code: 'app/no-app',
+  customData: [Object]
+}
+Production/Vercel environment - cannot continue without Firebase
+Firebase nicht verfügbar, verwende Mock-Service
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Firebase initialization error: Error [FirebaseError]: Firebase: No Firebase App '[DEFAULT]' has been created - call initializeApp() first (app/no-app).
+    at y (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3720.js:1:4931)
+    at 41379 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3571.js:1:12497)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 47616 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\7616.js:1:422)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 74611 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:1:1851)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:10:17155)
+    at c.X (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:2210)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:10:17055) {
+  code: 'app/no-app',
+  customData: [Object]
+}
+Production/Vercel environment - cannot continue without Firebase
+Firebase nicht verfügbar, verwende Mock-Service
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Firebase initialization error: Error [FirebaseError]: Firebase: No Firebase App '[DEFAULT]' has been created - call initializeApp() first (app/no-app).
+    at y (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3720.js:1:4931)
+    at 41379 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3571.js:1:12497)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 33571 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\chunks\3571.js:1:427)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at 74611 (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:1:1862)
+    at c (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:143)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:10:17155)
+    at c.X (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\webpack-runtime.js:1:2210)
+    at <unknown> (C:\Users\StefanKühne\Desktop\Projekte\skamp\.next\server\app\api\v1\graphql\route.js:10:17055) {
+  code: 'app/no-app',
+  customData: [Object]
+}
+Production/Vercel environment - cannot continue without Firebase
+Firebase nicht verfügbar, verwende Mock-Service
+Importing defineLive from the root import is deprecated and will be removed in next-sanity v11. Please change "import {defineLive} from 'next-sanity'" to "import {definveLive} from 'next-sanity/live'"
+Importing defineLive from the root import is deprecated and will be removed in next-sanity v11. Please change "import {defineLive} from 'next-sanity'" to "import {definveLive} from 'next-sanity/live'"
+   Generating static pages (0/194) ...
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Initializing Firebase services...
+Firebase services initialized successfully
+DB instance type: object
+DB instance valid: true
+=== FIREBASE INIT DEBUG ===
+DB object: object
+Firebase Config: {
+  apiKey: '***SET***',
+  authDomain: '***SET***',
+  projectId: '***SET***',
+  storageBucket: '***SET***',
+  messagingSenderId: '***SET***',
+  appId: '***SET***'
+}
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+=== FIREBASE BUILD-SAFE-INIT DEBUG ===
+Runtime config loaded: apiKey: ***SET***, authDomain: ***SET***, projectId: ***SET***, storageBucket: ***SET***, messagingSenderId: ***SET***, appId: ***SET***
+=== FIREBASE INIT DEBUG ===
+Config loaded, attempting to initialize...
+Using existing Firebase app
+Initializing Firebase services...
+Firebase services initialized successfully
+DB instance type: object
+DB instance valid: true
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+   Generating static pages (48/194) 
+   Generating static pages (96/194) 
+Importing defineLive from the root import is deprecated and will be removed in next-sanity v11. Please change "import {defineLive} from 'next-sanity'" to "import {definveLive} from 'next-sanity/live'"
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+   Generating static pages (145/194) 
+Importing defineLive from the root import is deprecated and will be removed in next-sanity v11. Please change "import {defineLive} from 'next-sanity'" to "import {definveLive} from 'next-sanity/live'"
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+🗄️ Template-Cache initialisiert: { maxSize: 50, ttl: 900000, cleanupInterval: 180000 }
+Route loaded, emailAddressService: j { collectionName: 'email_addresses' }
+🔧 Initializing Firebase Admin SDK...
+🔍 Environment check: {
+  hasServiceAccount: true,
+  hasProjectId: true,
+  hasStorageBucket: true,
+  appsLength: 0
+}
+✅ Firebase Admin SDK initialized successfully
+ ✓ Generating static pages (194/194)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                                        Size  First Load JS
+┌ ○ /                                                                           41.8 kB         270 kB
+├ ○ /_not-found                                                                    1 kB         104 kB
+├ ƒ /api/admin/crawler-control                                                    382 B         104 kB
+├ ƒ /api/admin/crawler-status                                                     382 B         104 kB
+├ ƒ /api/admin/fix-my-org                                                         382 B         104 kB
+├ ƒ /api/admin/fix-pdf-timestamps                                                 566 B         237 kB
+├ ƒ /api/admin/fix-subscriptions                                                  382 B         104 kB
+├ ƒ /api/admin/migrate-domain                                                     382 B         104 kB
+├ ƒ /api/admin/monitoring-stats                                                   382 B         104 kB
+├ ƒ /api/admin/set-service-user-claims                                            382 B         104 kB
+├ ƒ /api/admin/sync-team-counts                                                   382 B         104 kB
+├ ƒ /api/admin/sync-usage                                                         382 B         104 kB
+├ ƒ /api/ai/analyze-keyword-seo                                                   382 B         104 kB
+├ ƒ /api/ai/custom-instruction                                                    382 B         104 kB
+├ ƒ /api/ai/email-analysis                                                        382 B         104 kB
+├ ƒ /api/ai/email-insights                                                        382 B         104 kB
+├ ƒ /api/ai/email-response                                                        382 B         104 kB
+├ ƒ /api/ai/email-response-suggestions                                            382 B         104 kB
+├ ƒ /api/ai/generate                                                              382 B         104 kB
+├ ƒ /api/ai/generate-headlines                                                    382 B         104 kB
+├ ƒ /api/ai/generate-structured                                                   382 B         104 kB
+├ ƒ /api/ai/health                                                                382 B         104 kB
+├ ƒ /api/ai/keywords                                                              382 B         104 kB
+├ ƒ /api/ai/merge-variants                                                        382 B         104 kB
+├ ƒ /api/ai/templates                                                             382 B         104 kB
+├ ƒ /api/ai/test-structured                                                       382 B         104 kB
+├ ƒ /api/ai/text-transform                                                        382 B         104 kB
+├ ƒ /api/cleanup/company-references                                               382 B         104 kB
+├ ƒ /api/cron/check-notifications                                                 382 B         104 kB
+├ ƒ /api/cron/cleanup-pending-signups                                             382 B         104 kB
+├ ƒ /api/cron/monitoring-crawler                                                  382 B         104 kB
+├ ƒ /api/cron/process-webhooks                                                    382 B         104 kB
+├ ƒ /api/debug/env                                                                382 B         104 kB
+├ ƒ /api/debug/matching-settings                                                  382 B         104 kB
+├ ƒ /api/debug/test-auto-import                                                  2.6 kB         244 kB
+├ ƒ /api/dev/create-logs                                                          382 B         104 kB
+├ ƒ /api/email/addresses                                                          608 B         237 kB
+├ ƒ /api/email/addresses/[id]                                                     608 B         237 kB
+├ ƒ /api/email/addresses/[id]/routing-rules                                       608 B         237 kB
+├ ƒ /api/email/addresses/[id]/routing-rules/[ruleId]                              608 B         237 kB
+├ ƒ /api/email/addresses/[id]/stats                                               608 B         237 kB
+├ ƒ /api/email/domains                                                            382 B         104 kB
+├ ƒ /api/email/domains/[id]                                                       382 B         104 kB
+├ ƒ /api/email/domains/check-dns                                                  382 B         104 kB
+├ ƒ /api/email/domains/detect-provider                                            382 B         104 kB
+├ ƒ /api/email/domains/test-inbox                                                 382 B         104 kB
+├ ƒ /api/email/domains/test-status/[id]                                           566 B         237 kB
+├ ƒ /api/email/domains/verify                                                     382 B         104 kB
+├ ƒ /api/email/drafts/[id]                                                        382 B         104 kB
+├ ƒ /api/email/inbound                                                            608 B         237 kB
+├ ƒ /api/email/schedule                                                           382 B         104 kB
+├ ƒ /api/email/schedule/test-firestore                                            382 B         104 kB
+├ ƒ /api/email/send                                                               382 B         104 kB
+├ ƒ /api/email/send-approval                                                      589 B         237 kB
+├ ƒ /api/email/test                                                               608 B         237 kB
+├ ƒ /api/email/test-create                                                        382 B         104 kB
+├ ƒ /api/generate-pdf                                                             382 B         104 kB
+├ ƒ /api/image-proxy                                                              382 B         104 kB
+├ ƒ /api/matching/auto-import                                                     382 B         104 kB
+├ ƒ /api/matching/cleanup                                                         382 B         104 kB
+├ ƒ /api/matching/scan                                                            382 B         104 kB
+├ ƒ /api/matching/seed                                                            382 B         104 kB
+├ ƒ /api/matching/seed-realistic                                                  382 B         104 kB
+├ ƒ /api/media/share/[shareId]                                                    382 B         104 kB
+├ ƒ /api/media/share/[shareId]/assets                                             382 B         104 kB
+├ ƒ /api/media/share/create                                                       382 B         104 kB
+├ ƒ /api/media/share/validate                                                     382 B         104 kB
+├ ƒ /api/migrate-campaign-assets                                                  382 B         104 kB
+├ ƒ /api/migrate-campaign-assets-v2                                               589 B         237 kB
+├ ƒ /api/pr/email/cron                                                            589 B         237 kB
+├ ƒ /api/pr/email/send                                                            589 B         237 kB
+├ ƒ /api/promo-code/apply                                                         382 B         104 kB
+├ ƒ /api/proxy-firebase-image                                                     382 B         104 kB
+├ ƒ /api/rss-detect                                                               382 B         104 kB
+├ ƒ /api/sendgrid/send-approval-email                                             608 B         237 kB
+├ ƒ /api/sendgrid/send-pr-campaign                                                608 B         237 kB
+├ ƒ /api/sendgrid/webhook                                                         382 B         104 kB
+├ ƒ /api/signup/create-checkout-session                                           382 B         104 kB
+├ ƒ /api/signup/create-pending                                                    382 B         104 kB
+├ ƒ /api/stripe/webhooks                                                          382 B         104 kB
+├ ƒ /api/subscription/cancel                                                      382 B         104 kB
+├ ƒ /api/subscription/change-plan                                                 382 B         104 kB
+├ ƒ /api/subscription/create-checkout                                             382 B         104 kB
+├ ƒ /api/subscription/current                                                     382 B         104 kB
+├ ƒ /api/subscription/customer-portal                                             382 B         104 kB
+├ ƒ /api/subscription/details                                                     382 B         104 kB
+├ ƒ /api/subscription/organization                                                382 B         104 kB
+├ ƒ /api/subscription/reactivate                                                  382 B         104 kB
+├ ƒ /api/super-admin/organizations                                                382 B         104 kB
+├ ƒ /api/super-admin/organizations/[id]/change-tier                               382 B         104 kB
+├ ƒ /api/super-admin/organizations/[id]/extend-promo                              382 B         104 kB
+├ ƒ /api/super-admin/organizations/[id]/notes                                     382 B         104 kB
+├ ƒ /api/super-admin/promo-codes                                                  382 B         104 kB
+├ ƒ /api/team/accept-invitation                                                   382 B         104 kB
+├ ƒ /api/team/invite                                                              382 B         104 kB
+├ ƒ /api/team/process-invitations                                                 382 B         104 kB
+├ ƒ /api/templates                                                                382 B         104 kB
+├ ƒ /api/templates/set-default                                                    382 B         104 kB
+├ ƒ /api/threads/update-priority                                                  382 B         104 kB
+├ ƒ /api/threads/update-status                                                    382 B         104 kB
+├ ƒ /api/usage/check-contacts-limit                                               382 B         104 kB
+├ ƒ /api/v1/auth/keys                                                             382 B         104 kB
+├ ƒ /api/v1/auth/keys/[keyId]                                                     382 B         104 kB
+├ ƒ /api/v1/auth/test                                                             382 B         104 kB
+├ ƒ /api/v1/companies                                                             382 B         104 kB
+├ ƒ /api/v1/companies/[companyId]                                                 382 B         104 kB
+├ ƒ /api/v1/contacts                                                              589 B         237 kB
+├ ƒ /api/v1/contacts/[contactId]                                                  589 B         237 kB
+├ ƒ /api/v1/export                                                                382 B         104 kB
+├ ƒ /api/v1/export/[jobId]                                                        382 B         104 kB
+├ ƒ /api/v1/graphql                                                               589 B         237 kB
+├ ƒ /api/v1/import                                                                382 B         104 kB
+├ ƒ /api/v1/import/[jobId]                                                        382 B         104 kB
+├ ƒ /api/v1/media-assets                                                          608 B         237 kB
+├ ƒ /api/v1/media-kits                                                            608 B         237 kB
+├ ƒ /api/v1/media-kits/[mediaKitId]/share                                         608 B         237 kB
+├ ƒ /api/v1/messages                                                              382 B         104 kB
+├ ƒ /api/v1/messages/[messageId]                                                  382 B         104 kB
+├ ƒ /api/v1/pdf-templates                                                         382 B         104 kB
+├ ƒ /api/v1/pdf-templates/preview                                                 382 B         104 kB
+├ ƒ /api/v1/pdf-templates/upload                                                2.23 kB         105 kB
+├ ƒ /api/v1/publications                                                          608 B         237 kB
+├ ƒ /api/v1/publications/[publicationId]                                          608 B         237 kB
+├ ƒ /api/v1/publications/statistics                                               608 B         237 kB
+├ ƒ /api/v1/search                                                                589 B         237 kB
+├ ƒ /api/v1/search/suggestions                                                    589 B         237 kB
+├ ƒ /api/v1/webhooks                                                              382 B         104 kB
+├ ƒ /api/v1/webhooks/[webhookId]                                                  382 B         104 kB
+├ ƒ /api/v1/webhooks/[webhookId]/deliveries                                       382 B         104 kB
+├ ƒ /api/v1/webhooks/[webhookId]/test                                             382 B         104 kB
+├ ƒ /api/v1/websocket                                                             382 B         104 kB
+├ ƒ /api/v1/websocket/connect                                                     382 B         104 kB
+├ ƒ /api/v1/websocket/events                                                      382 B         104 kB
+├ ƒ /api/v1/websocket/subscriptions                                               382 B         104 kB
+├ ƒ /api/webhooks/sendgrid/inbound                                                382 B         104 kB
+├ ƒ /blog                                                                       1.88 kB         290 kB
+├ ƒ /blog/[slug]                                                                1.88 kB         290 kB
+├ ƒ /blog/feed.xml                                                                329 B         163 kB
+├ ○ /company                                                                    3.12 kB         231 kB
+├ ○ /dashboard                                                                  15.5 kB         440 kB
+├ ○ /dashboard/academy/documentation                                            5.12 kB         112 kB
+├ ○ /dashboard/academy/documentation/erste-schritte                               235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/admin/abrechnung                    235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/admin/api                           235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/admin/profil                        235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/admin/vertrag                       235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/bibliothek/publikationen            235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/bibliothek/werbemittel              235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/crm                                 235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen    235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/branding              235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/domains               235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/email                 235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/import-export         235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/einstellungen/team                  235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/kommunikation/benachrichtigungen    235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/kommunikation/inbox                 235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/kontakte/personen                   235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/kontakte/unternehmen                235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/kontakte/verteilerlisten            235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/pr-tools/freigaben                  235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/pr-tools/kalender                   235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/pr-tools/kampagnen                  235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/pr-tools/mediathek                  235 B         107 kB
+├ ○ /dashboard/academy/documentation/handbuch/pr-tools/textbausteine              235 B         107 kB
+├ ○ /dashboard/academy/documentation/willkommen                                   890 B         115 kB
+├ ○ /dashboard/admin/api                                                        10.2 kB         278 kB
+├ ○ /dashboard/admin/billing                                                    14.6 kB         295 kB
+├ ○ /dashboard/admin/fix-timestamps                                             4.94 kB         253 kB
+├ ○ /dashboard/admin/integrations                                               2.79 kB         113 kB
+├ ○ /dashboard/admin/profile                                                    24.2 kB         298 kB
+├ ○ /dashboard/admin/test-notification-debug                                     4.7 kB         256 kB
+├ ○ /dashboard/admin/test-notifications                                         11.9 kB         258 kB
+├ ○ /dashboard/analytics/monitoring                                             4.33 kB         343 kB
+├ ƒ /dashboard/analytics/monitoring/[campaignId]                                26.7 kB         520 kB
+├ ○ /dashboard/communication/inbox                                              38.5 kB         451 kB
+├ ○ /dashboard/communication/notifications                                      6.85 kB         261 kB
+├ ○ /dashboard/contacts/crm                                                       615 B         104 kB
+├ ○ /dashboard/contacts/crm/companies                                           5.89 kB         445 kB
+├ ƒ /dashboard/contacts/crm/companies/[companyId]                               13.8 kB         387 kB
+├ ○ /dashboard/contacts/crm/contacts                                            6.87 kB         442 kB
+├ ƒ /dashboard/contacts/crm/contacts/[contactId]                                14.2 kB         386 kB
+├ ○ /dashboard/contacts/lists                                                   10.7 kB         375 kB
+├ ƒ /dashboard/contacts/lists/[listId]                                          13.8 kB         358 kB
+├ ○ /dashboard/developer                                                        6.47 kB         246 kB
+├ ○ /dashboard/developer/analytics                                              11.9 kB         363 kB
+├ ○ /dashboard/developer/docs                                                   8.98 kB         249 kB
+├ ○ /dashboard/developer/examples                                               11.9 kB         251 kB
+├ ○ /dashboard/developer/sdks                                                   7.82 kB         247 kB
+├ ○ /dashboard/library/boilerplates                                               17 kB         500 kB
+├ ○ /dashboard/library/editors                                                  28.8 kB         332 kB
+├ ○ /dashboard/library/media                                                    20.3 kB         341 kB
+├ ○ /dashboard/library/publications                                             12.9 kB         425 kB
+├ ƒ /dashboard/library/publications/[publicationId]                             8.12 kB         387 kB
+├ ƒ /dashboard/pr-tools/approvals/[shareId]                                     19.2 kB         322 kB
+├ ƒ /dashboard/pr-tools/campaigns/campaigns/[campaignId]                          22 kB         518 kB
+├ ƒ /dashboard/pr-tools/campaigns/campaigns/[campaignId]/analytics              13.4 kB         299 kB
+├ ƒ /dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]                   23.7 kB         569 kB
+├ ○ /dashboard/pr-tools/campaigns/campaigns/new                                 13.2 kB         648 kB
+├ ○ /dashboard/projects                                                         39.4 kB         372 kB
+├ ƒ /dashboard/projects/[projectId]                                              102 kB         776 kB
+├ ○ /dashboard/settings/branding                                                12.8 kB         277 kB
+├ ○ /dashboard/settings/domain                                                  16.1 kB         293 kB
+├ ○ /dashboard/settings/email                                                   22.6 kB         447 kB
+├ ○ /dashboard/settings/import-export                                           7.48 kB         263 kB
+├ ○ /dashboard/settings/monitoring                                                10 kB         262 kB
+├ ○ /dashboard/settings/notifications                                           10.7 kB         265 kB
+├ ○ /dashboard/settings/spam-blocklist                                            10 kB         286 kB
+├ ○ /dashboard/settings/team                                                    11.3 kB         317 kB
+├ ○ /dashboard/settings/templates                                               16.2 kB         312 kB
+├ ƒ /dashboard/strategy-documents/[documentId]                                  24.4 kB         380 kB
+├ ○ /dashboard/subscription/success                                              1.3 kB         108 kB
+├ ○ /dashboard/super-admin/accounts                                             7.08 kB         253 kB
+├ ○ /dashboard/super-admin/matching/analytics                                    5.6 kB         263 kB
+├ ○ /dashboard/super-admin/matching/candidates                                    15 kB         325 kB
+├ ○ /dashboard/super-admin/monitoring                                           10.4 kB         143 kB
+├ ○ /dashboard/super-admin/organizations                                        9.16 kB         255 kB
+├ ○ /dashboard/super-admin/settings                                             10.7 kB         288 kB
+├ ○ /freigabe-nicht-mehr-verfuegbar                                               890 B         115 kB
+├ ƒ /freigabe/[shareId]                                                         23.3 kB         332 kB
+├ ƒ /invite/[token]                                                             12.1 kB         255 kB
+├ ○ /login                                                                      4.96 kB         262 kB
+├ ƒ /pricing                                                                    1.74 kB         230 kB
+├ ƒ /share/[shareId]                                                            9.03 kB         275 kB
+├ ○ /signup                                                                      3.4 kB         260 kB
+├ ○ /signup/cancel                                                               2.4 kB         114 kB
+├ ○ /signup/success                                                             2.08 kB         114 kB
+├ ○ /studio/[[...tool]]                                                         1.44 MB        1.67 MB
+├ ○ /test/library/publications                                                  4.29 kB         115 kB
+└ ○ /test/scheduled-emails                                                      4.31 kB         240 kB
++ First Load JS shared by all                                                    103 kB
+  ├ chunks/1255-14ce32957943d6d7.js                                             45.4 kB
+  ├ chunks/4bd1b696-182b6b13bdad92e3.js                                         54.2 kB
+  └ other shared chunks (total)                                                 3.55 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

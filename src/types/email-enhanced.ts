@@ -63,9 +63,10 @@ export interface EmailAddress extends BaseEntity {
   
   // Team-Zuweisungen (für Agenturen)
   assignedUserIds: string[]; // Team-Mitglieder
+  availableToAll?: boolean; // Wenn true, ist Email für ALLE Teammitglieder verfügbar (z.B. Default-Email)
   clientId?: string; // Wenn kundenspezifisch
   clientName?: string; // "Kunde ABC GmbH"
-  
+
   // Berechtigungen
   permissions: {
     read: string[]; // User IDs die lesen dürfen
@@ -508,6 +509,7 @@ export interface EmailAddressFormData {
   isActive: boolean;
   inboxEnabled: boolean;
   assignedUserIds: string[];
+  availableToAll?: boolean; // NEU: Für alle Teammitglieder verfügbar
   clientName: string;
   aiEnabled: boolean;
   autoSuggest: boolean;

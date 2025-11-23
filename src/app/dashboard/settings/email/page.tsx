@@ -654,35 +654,44 @@ export default function EmailSettingsPage() {
                         {/* Team */}
                         <div className="w-[20%]">
                           <div className="flex -space-x-2">
-                            {(address.assignedUserIds || []).slice(0, 3).map((userId: string) => {
-                              const member = teamMembers.find(m => m.userId === userId);
-                              if (!member) return null;
+                            {address.availableToAll ? (
+                              <Badge color="sky" className="whitespace-nowrap">
+                                <UserGroupIcon className="size-4 mr-1" />
+                                Für alle verfügbar
+                              </Badge>
+                            ) : (
+                              <>
+                                {(address.assignedUserIds || []).slice(0, 3).map((userId: string) => {
+                                  const member = teamMembers.find(m => m.userId === userId);
+                                  if (!member) return null;
 
-                              // Generiere Initialen als Fallback
-                              const initials = member.displayName
-                                .split(' ')
-                                .map(n => n[0])
-                                .join('')
-                                .toUpperCase()
-                                .slice(0, 2);
+                                  // Generiere Initialen als Fallback
+                                  const initials = member.displayName
+                                    .split(' ')
+                                    .map(n => n[0])
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 2);
 
-                              return (
-                                <Avatar
-                                  key={userId}
-                                  className="size-8 ring-2 ring-white"
-                                  src={member.photoUrl}
-                                  initials={initials}
-                                  title={member.displayName}
-                                />
-                              );
-                            })}
-                            {(address.assignedUserIds || []).length > 3 && (
-                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
-                                +{(address.assignedUserIds || []).length - 3}
-                              </div>
-                            )}
-                            {(address.assignedUserIds || []).length === 0 && (
-                              <span className="text-gray-400 text-sm">Nicht zugewiesen</span>
+                                  return (
+                                    <Avatar
+                                      key={userId}
+                                      className="size-8 ring-2 ring-white"
+                                      src={member.photoUrl}
+                                      initials={initials}
+                                      title={member.displayName}
+                                    />
+                                  );
+                                })}
+                                {(address.assignedUserIds || []).length > 3 && (
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                                    +{(address.assignedUserIds || []).length - 3}
+                                  </div>
+                                )}
+                                {(address.assignedUserIds || []).length === 0 && (
+                                  <span className="text-gray-400 text-sm">Nicht zugewiesen</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -903,41 +912,68 @@ export default function EmailSettingsPage() {
             {/* Team Assignment */}
             <div>
               <Subheading>Team-Zuweisungen</Subheading>
-              {loadingTeam ? (
-                <div className="mt-4 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
-                </div>
-              ) : teamMembers.length === 0 ? (
-                <div className="mt-4 text-sm text-gray-500">
-                  Keine Team-Mitglieder vorhanden. 
-                  <a
-                    href="/dashboard/settings/team"
-                    className="text-[#005fab] hover:underline ml-1"
-                  >
-                    Team verwalten
-                  </a>
-                </div>
-              ) : (
-                <CheckboxGroup className="mt-4 space-y-2">
-                  {teamMembers.map(member => (
-                    <CheckboxField key={member.userId}>
-                      <Checkbox
-                        checked={formData.assignedUserIds.includes(member.userId)}
-                        onChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData,
-                              assignedUserIds: [...formData.assignedUserIds, member.userId]
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              assignedUserIds: formData.assignedUserIds.filter(id => id !== member.userId)
-                            });
-                          }
-                        }}
-                      />
-                      <Label>
+
+              {/* availableToAll Checkbox */}
+              <div className="mt-4">
+                <CheckboxField>
+                  <Checkbox
+                    checked={formData.availableToAll || false}
+                    onChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        availableToAll: checked,
+                        assignedUserIds: checked ? [] : formData.assignedUserIds
+                      });
+                    }}
+                  />
+                  <Label>
+                    <UserGroupIcon className="size-4 inline mr-1" />
+                    Für alle Teammitglieder verfügbar
+                  </Label>
+                </CheckboxField>
+                <Text className="mt-1 text-sm text-gray-500">
+                  Wenn aktiviert, kann jedes Teammitglied diese Email-Adresse verwenden
+                </Text>
+              </div>
+
+              {/* Individuelle Zuweisungen (nur wenn NOT availableToAll) */}
+              {!formData.availableToAll && (
+                <>
+                  {loadingTeam ? (
+                    <div className="mt-4 text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
+                    </div>
+                  ) : teamMembers.length === 0 ? (
+                    <div className="mt-4 text-sm text-gray-500">
+                      Keine Team-Mitglieder vorhanden.
+                      <a
+                        href="/dashboard/settings/team"
+                        className="text-[#005fab] hover:underline ml-1"
+                      >
+                        Team verwalten
+                      </a>
+                    </div>
+                  ) : (
+                    <CheckboxGroup className="mt-4 space-y-2">
+                      {teamMembers.map(member => (
+                        <CheckboxField key={member.userId}>
+                          <Checkbox
+                            checked={formData.assignedUserIds.includes(member.userId)}
+                            onChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  assignedUserIds: [...formData.assignedUserIds, member.userId]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  assignedUserIds: formData.assignedUserIds.filter(id => id !== member.userId)
+                                });
+                              }
+                            }}
+                          />
+                          <Label>
                         {member.displayName} ({member.email})
                         {member.role === 'owner' && (
                           <Badge color="blue" className="ml-2">Owner</Badge>
@@ -946,6 +982,8 @@ export default function EmailSettingsPage() {
                     </CheckboxField>
                   ))}
                 </CheckboxGroup>
+                  )}
+                </>
               )}
             </div>
 
