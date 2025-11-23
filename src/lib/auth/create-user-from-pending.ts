@@ -152,6 +152,58 @@ export async function createUserAndOrgFromPendingSignup(
     // Nicht kritisch, weitermachen
   }
 
+  // 6. Setup Default Domain & Email Address
+  try {
+    console.log(`[Pending Signup] Setting up default domain and email...`);
+
+    // 6.1 Erstelle celeropress.com Domain-Eintrag
+    const domainRef = await adminDb.collection('email_domains_enhanced').add({
+      organizationId: organizationId,
+      domain: 'celeropress.com',
+      status: 'verified',
+      isDefault: true,
+      verifiedAt: FieldValue.serverTimestamp(),
+      emailsSent: 0,
+      canDelete: false,  // System-Domain, kann nicht gelöscht werden
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdBy: userId
+    });
+
+    const domainId = domainRef.id;
+    console.log(`[Pending Signup] Created default domain: celeropress.com (${domainId})`);
+
+    // 6.2 Erstelle Default Email-Adresse
+    const shortOrgId = organizationId.toLowerCase().substring(0, 8);
+    const defaultEmail = `${shortOrgId}@celeropress.com`;
+
+    await adminDb.collection('email_addresses').add({
+      organizationId: organizationId,
+      domainId: domainId,
+      email: defaultEmail,
+      localPart: shortOrgId,
+      domain: 'celeropress.com',
+      displayName: pendingSignup.companyName,
+      isDefault: true,
+      isActive: true,
+      canDelete: false,  // System-Email, kann nicht gelöscht werden
+      verified: true,
+      status: 'active',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdBy: userId
+    });
+
+    console.log(`[Pending Signup] Created default email: ${defaultEmail}`);
+
+    // WICHTIG: KEINE Domain-Mailbox für celeropress.com erstellen!
+    // Domain-Mailboxes nur für benutzerdefinierte Domains
+
+  } catch (error) {
+    console.error('[Pending Signup] Failed to create default domain/email:', error);
+    // Nicht kritisch werfen - User kann später manuell anlegen
+  }
+
   return {
     userId,
     organizationId

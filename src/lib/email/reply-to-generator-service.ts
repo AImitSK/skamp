@@ -81,7 +81,7 @@ class ReplyToGeneratorService {
       }
 
       // Lade Projekt-Daten
-      const projectDoc = await adminDb.collection('pr_projects').doc(projectId).get();
+      const projectDoc = await adminDb.collection('projects').doc(projectId).get();
 
       if (!projectDoc.exists) {
         console.warn(`[ReplyToGenerator] Project not found: ${projectId}`);
@@ -96,6 +96,7 @@ class ReplyToGeneratorService {
       const mailboxData = {
         projectId,
         domainId: project?.domainId || null,
+        emailAddressId: emailAddress.id,  // Referenz zur verwendeten EmailAddress
         organizationId: project?.organizationId,
         userId: project?.userId,
         projectName: project?.title || 'Unbekanntes Projekt',

@@ -63,27 +63,9 @@ export const projectService = {
         // Projekt-Erstellung nicht scheitern lassen wegen Ordner-Fehler
       }
 
-      // Automatische Projekt-Postfach-Erstellung
-      try {
-        const inboxAddress = `${docRef.id}@inbox.sk-online-marketing.de`.toLowerCase();
-
-        await addDoc(collection(db, 'inbox_project_mailboxes'), {
-          organizationId: projectData.organizationId,
-          projectId: docRef.id,
-          projectName: projectData.title,
-          inboxAddress: inboxAddress,
-          status: 'active',
-          unreadCount: 0,
-          threadCount: 0,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          createdBy: projectData.userId
-        });
-
-        } catch (mailboxError) {
-        console.error('[ProjectService] Error creating project mailbox:', mailboxError);
-        // Fehler nicht werfen - Projekt wurde trotzdem erstellt
-      }
+      // Projekt-Postfach wird später bei Campaign-Versand erstellt
+      // (wenn EmailAddress bekannt ist)
+      console.log('[ProjectService] Project created, mailbox will be created on first campaign send');
 
       return docRef.id;
     } catch (error) {
