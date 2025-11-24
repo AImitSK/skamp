@@ -210,6 +210,12 @@ export function InternalNotes({
         organizationId
       };
 
+      console.log('💾 Saving note with user photo:', {
+        userName: noteData.userName,
+        userPhotoUrl: noteData.userPhotoUrl,
+        hasPhoto: !!noteData.userPhotoUrl
+      });
+
       await addDoc(collection(db, 'email_notes'), noteData);
       
       // Send notifications for mentions
@@ -342,7 +348,17 @@ export function InternalNotes({
               </p>
             ) : (
               <div className="space-y-3">
-                {notes.map((note) => (
+                {notes.map((note) => {
+                  // Debug: Log avatar info
+                  if (note.userPhotoUrl) {
+                    console.log('🖼️ Note Avatar:', {
+                      userName: note.userName,
+                      photoUrl: note.userPhotoUrl,
+                      noteId: note.id
+                    });
+                  }
+
+                  return (
                   <div
                     key={note.id}
                     className="bg-gray-50 p-3 rounded-lg border border-gray-200"
@@ -350,7 +366,7 @@ export function InternalNotes({
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <Avatar
-                          className="w-6 h-6"
+                          className="w-8 h-8"
                           src={note.userPhotoUrl || null}
                           initials={note.userName.charAt(0).toUpperCase()}
                           title={note.userName}
@@ -380,7 +396,8 @@ export function InternalNotes({
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
