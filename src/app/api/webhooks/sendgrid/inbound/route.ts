@@ -228,6 +228,27 @@ function countGermanChars(text: string): number {
 }
 
 /**
+ * Extrahiere Charset aus HTML meta-Tag
+ */
+function extractCharsetFromHtml(html: string): string | null {
+  if (!html) return null;
+
+  // Suche nach <meta charset="...">
+  const charsetMatch = html.match(/<meta\s+charset=["']?([^"'\s>]+)/i);
+  if (charsetMatch) {
+    return charsetMatch[1];
+  }
+
+  // Suche nach <meta http-equiv="Content-Type" content="text/html; charset=...">
+  const contentTypeMatch = html.match(/<meta\s+http-equiv=["']?Content-Type["']?\s+content=["']?[^"']*charset=([^"'\s;>]+)/i);
+  if (contentTypeMatch) {
+    return contentTypeMatch[1];
+  }
+
+  return null;
+}
+
+/**
  * Parse FormData from SendGrid
  */
 function parseFormData(formData: FormData): ParsedEmail | null {
@@ -251,9 +272,24 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       try {
         let decoded = text;
 
-        // 1. Handle ISO-8859-1/Latin-1 charset explicitly
-        // Outlook oft sends Windows-1252 als ISO-8859-1 deklariert
-        if (charset && (charset.toLowerCase() === 'iso-8859-1' || charset.toLowerCase() === 'latin1')) {
+        // Prüfe ob Text defekte UTF-8 Sequenzen enthält (�)
+        // Wenn ja, versuche andere Charsets, auch wenn keins angegeben ist
+        const hasReplacementChar = text.includes('\uFFFD') || text.includes('�');
+        const hasLikelyMojibake = text.includes('Ã¼') || text.includes('Ã¤') || text.includes('Ã¶');
+
+        if ((hasReplacementChar || hasLikelyMojibake) && !charset) {
+          console.log('⚠️ Defekte UTF-8 Sequenzen erkannt - versuche alternative Decodierung');
+          charset = 'iso-8859-1'; // Fallback für defekte Sequenzen
+        }
+
+        // 1. Handle ISO-8859-1/Latin-1/Windows-1252 charset explicitly
+        // Outlook sendet oft Windows-1252 als ISO-8859-1 deklariert
+        if (charset && (
+          charset.toLowerCase() === 'iso-8859-1' ||
+          charset.toLowerCase() === 'latin1' ||
+          charset.toLowerCase() === 'windows-1252' ||
+          charset.toLowerCase() === 'cp1252'
+        )) {
           try {
             // Konvertiere String zu Byte-Array (jedes Zeichen = 1 Byte)
             const bytes = new Uint8Array(text.length);
@@ -380,7 +416,15 @@ function parseFormData(formData: FormData): ParsedEmail | null {
         } else if (key === 'text') {
           email[key] = decodeText(value, charsets.text);
         } else if (key === 'html') {
-          email[key] = decodeText(value, charsets.html);
+          // Für HTML: Erst dekodieren, dann auch meta-Tag prüfen
+          let htmlCharset = charsets.html;
+          if (!htmlCharset && value) {
+            htmlCharset = extractCharsetFromHtml(value);
+            if (htmlCharset) {
+              console.log('📝 Charset aus HTML meta-Tag extrahiert:', htmlCharset);
+            }
+          }
+          email[key] = decodeText(value, htmlCharset);
         } else if (key === 'from') {
           email[key] = decodeText(value, charsets.from);
         } else if (key === 'to') {

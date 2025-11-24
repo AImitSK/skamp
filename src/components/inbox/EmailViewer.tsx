@@ -76,9 +76,11 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
           // Replace external images with placeholder or proxy through our server
           node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
           node.setAttribute('loading', 'lazy');
+          // Füge loading-Klasse hinzu (wird per onLoad entfernt)
+          node.setAttribute('class', 'loading');
         }
       }
-      
+
       // Make all links open in new tab for security
       if (node.tagName === 'A') {
         node.setAttribute('target', '_blank');
@@ -108,6 +110,43 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
       contentElement.addEventListener('click', handleLinkClick);
       return () => contentElement.removeEventListener('click', handleLinkClick);
     }
+  }, [htmlContent]);
+
+  // Handle image loading to remove skeleton loader
+  useEffect(() => {
+    const contentElement = contentRef.current;
+    if (!contentElement) return;
+
+    const images = contentElement.querySelectorAll('img[src*="image-proxy"]');
+
+    const handleImageLoad = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      img.classList.remove('loading');
+    };
+
+    const handleImageError = (e: Event) => {
+      const img = e.target as HTMLImageElement;
+      img.classList.remove('loading');
+      console.warn('Image failed to load:', img.src);
+    };
+
+    images.forEach((img) => {
+      // Wenn Bild bereits geladen ist, entferne loading-Klasse sofort
+      if ((img as HTMLImageElement).complete) {
+        img.classList.remove('loading');
+      } else {
+        img.addEventListener('load', handleImageLoad);
+        img.addEventListener('error', handleImageError);
+      }
+    });
+
+    // Cleanup
+    return () => {
+      images.forEach((img) => {
+        img.removeEventListener('load', handleImageLoad);
+        img.removeEventListener('error', handleImageError);
+      });
+    };
   }, [htmlContent]);
 
   if (htmlContent) {

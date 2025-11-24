@@ -203,11 +203,17 @@
   }
 }
 
-/* Loading placeholder for images */
-.email-content img[src*="image-proxy"] {
+/* Loading placeholder for images - nur während des Ladens */
+.email-content img[src*="image-proxy"].loading {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
+  min-height: 100px;
+}
+
+/* Geladene Bilder haben keinen Loader-Hintergrund */
+.email-content img[src*="image-proxy"]:not(.loading) {
+  background: none;
 }
 
 @keyframes loading {
