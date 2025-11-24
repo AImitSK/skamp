@@ -950,6 +950,7 @@ export default function InboxPage() {
         <div className="flex-1 flex flex-col min-h-0">
           {selectedThread && threadEmails.length > 0 ? (
             <EmailViewer
+              key={selectedEmail?.id || selectedThread?.id}
               thread={selectedThread}
               emails={threadEmails}
               selectedEmail={selectedEmail}
