@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { useAuth } from '@/context/AuthContext';
-import { notificationService } from '@/lib/email/notification-service-enhanced';
+import { notificationsService } from '@/lib/firebase/notifications-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import {
   ChatBubbleLeftIcon,
@@ -221,15 +221,33 @@ export function InternalNotes({
       // Send notifications for mentions
       if (mentions.length > 0) {
         const userName = user.displayName || user.email || 'Unbekannt';
-        await notificationService.sendMentionNotification(
-          threadId,
-          emailId,
-          mentions,
-          user.uid,
-          userName,
-          organizationId,
-          newNote
-        );
+        console.log('📤 Sending mention notifications to users:', mentions);
+
+        // Use the correct notifications service (not enhanced!)
+        for (const mentionedUserId of mentions) {
+          try {
+            const notificationId = await notificationsService.create({
+              userId: mentionedUserId,
+              organizationId,
+              type: 'TEAM_CHAT_MENTION', // Reuse existing type
+              title: `${userName} hat Sie erwähnt`,
+              message: `In einer Email-Notiz: "${newNote.substring(0, 100)}${newNote.length > 100 ? '...' : ''}"`,
+              linkUrl: `/dashboard/communication/inbox?threadId=${threadId}`,
+              linkType: 'email' as any,
+              linkId: threadId,
+              metadata: {
+                threadId,
+                emailId,
+                mentionedBy: user.uid,
+                mentionedByName: userName,
+                content: newNote.substring(0, 200)
+              }
+            });
+            console.log('✅ Notification created:', notificationId);
+          } catch (error) {
+            console.error('❌ Error creating notification for user:', mentionedUserId, error);
+          }
+        }
       }
       
       setNewNote('');
