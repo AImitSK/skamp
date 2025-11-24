@@ -367,14 +367,14 @@ export function InternalNotes({
             ) : (
               <div className="space-y-3">
                 {notes.map((note) => {
-                  // Debug: Log avatar info
-                  if (note.userPhotoUrl) {
-                    console.log('🖼️ Note Avatar:', {
-                      userName: note.userName,
-                      photoUrl: note.userPhotoUrl,
-                      noteId: note.id
-                    });
-                  }
+                  // Debug: Log avatar info for EVERY note
+                  console.log('🖼️ Rendering Note Avatar:', {
+                    userName: note.userName,
+                    photoUrl: note.userPhotoUrl,
+                    hasPhotoUrl: !!note.userPhotoUrl,
+                    photoUrlType: typeof note.userPhotoUrl,
+                    noteId: note.id
+                  });
 
                   return (
                   <div
@@ -385,7 +385,7 @@ export function InternalNotes({
                       <div className="flex items-center gap-2">
                         <Avatar
                           className="w-8 h-8"
-                          src={note.userPhotoUrl || null}
+                          src={note.userPhotoUrl || undefined}
                           initials={note.userName.charAt(0).toUpperCase()}
                           title={note.userName}
                         />
