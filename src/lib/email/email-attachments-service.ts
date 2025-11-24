@@ -55,7 +55,7 @@ async function getOrCreateEmailAttachmentsFolder(organizationId: string): Promis
       organizationId,
       name: 'Email-Anhänge',
       description: 'Automatisch gespeicherte Email-Anhänge',
-      createdBy: 'system',
+      createdBy: organizationId, // Verwende organizationId statt 'system' für korrekte UI-Anzeige
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       color: '#3B82F6', // Blau
