@@ -42,8 +42,54 @@ interface EmailContentRendererProps {
 /**
  * Enhanced Email Content Renderer with HTML sanitization
  */
+// Register DOMPurify hook ONCE outside component to avoid multiple registrations
+let hookRegistered = false;
+
 function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = false }: EmailContentRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Register hook only once
+  if (!hookRegistered) {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'IMG') {
+        // WICHTIG: Behalte die spezifizierte Größe aus width/height Attributen
+        const specifiedWidth = node.getAttribute('width');
+        const specifiedHeight = node.getAttribute('height');
+
+        // Entferne die HTML-Attribute (werden durch CSS ersetzt)
+        node.removeAttribute('width');
+        node.removeAttribute('height');
+
+        // Verwende die spezifizierte Breite als Basis (wie in der Email definiert)
+        if (specifiedWidth && !isNaN(Number(specifiedWidth))) {
+          const widthPx = Number(specifiedWidth);
+          // Setze width auf spezifizierten Wert, aber max-width: 100% für Responsive
+          node.setAttribute('style', `width: ${widthPx}px !important; max-width: 100% !important; height: auto !important; display: inline-block;`);
+        } else {
+          // Fallback: Keine spezifizierte Breite, verwende 100%
+          node.setAttribute('style', `max-width: 100% !important; height: auto !important; display: inline-block;`);
+        }
+
+        // Handle external images (always check, regardless of allowExternalImages for proxy)
+        const src = node.getAttribute('src');
+        if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+          // Replace external images with placeholder or proxy through our server
+          node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
+          node.setAttribute('loading', 'lazy');
+          // Füge loading-Klasse hinzu (wird per onLoad entfernt)
+          const existingClass = node.getAttribute('class') || '';
+          node.setAttribute('class', `${existingClass} loading`.trim());
+        }
+      }
+
+      // Make all links open in new tab for security
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+    hookRegistered = true;
+  }
 
   // Configure DOMPurify
   const sanitizeHtml = (html: string): string => {
@@ -65,47 +111,6 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
       // Handle external images
       SANITIZE_DOM: true
     };
-
-    // Add hook to handle external images and fix responsive images
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (node.tagName === 'IMG') {
-        // WICHTIG: Behalte die spezifizierte Größe aus width/height Attributen
-        const specifiedWidth = node.getAttribute('width');
-        const specifiedHeight = node.getAttribute('height');
-
-        // Entferne die HTML-Attribute (werden durch CSS ersetzt)
-        node.removeAttribute('width');
-        node.removeAttribute('height');
-
-        // Verwende die spezifizierte Breite als Basis (wie in der Email definiert)
-        if (specifiedWidth && !isNaN(Number(specifiedWidth))) {
-          const widthPx = Number(specifiedWidth);
-          // Setze width auf spezifizierten Wert, aber max-width: 100% für Responsive
-          node.setAttribute('style', `width: ${widthPx}px !important; max-width: 100% !important; height: auto !important; display: inline-block;`);
-        } else {
-          // Fallback: Keine spezifizierte Breite, verwende 100%
-          node.setAttribute('style', `max-width: 100% !important; height: auto !important; display: inline-block;`);
-        }
-
-        if (!allowExternalImages) {
-          const src = node.getAttribute('src');
-          if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
-            // Replace external images with placeholder or proxy through our server
-            node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
-            node.setAttribute('loading', 'lazy');
-            // Füge loading-Klasse hinzu (wird per onLoad entfernt)
-            const existingClass = node.getAttribute('class') || '';
-            node.setAttribute('class', `${existingClass} loading`.trim());
-          }
-        }
-      }
-
-      // Make all links open in new tab for security
-      if (node.tagName === 'A') {
-        node.setAttribute('target', '_blank');
-        node.setAttribute('rel', 'noopener noreferrer');
-      }
-    });
 
     return DOMPurify.sanitize(html, config);
   };
