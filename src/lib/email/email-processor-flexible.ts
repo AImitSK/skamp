@@ -311,6 +311,8 @@ async function resolveAllMailboxes(
       const emailLower = address.email.toLowerCase();
 
       // 1. Suche in Domain-Mailboxen
+      // WICHTIG: celeropress.com ist eine Default-Domain und sollte KEINE Domain-Mailboxes haben
+      // Domain-Mailboxes werden NUR für benutzerdefinierte Domains erstellt
       const domainMailboxSnapshot = await adminDb
         .collection('inbox_domain_mailboxes')
         .where('inboxAddress', '==', emailLower)
@@ -319,6 +321,14 @@ async function resolveAllMailboxes(
 
       for (const doc of domainMailboxSnapshot.docs) {
         const data = doc.data();
+
+        // ✅ FILTER: Ignoriere Domain-Mailboxes für Default-Domains (celeropress.com, sk-online-marketing.de)
+        // Diese Domains nutzen nur Projekt-Mailboxes, keine Domain-Mailboxes
+        if (emailLower.includes('celeropress.com@') || emailLower.includes('sk-online-marketing.de@')) {
+          console.log(`⏭️  Skipping default domain mailbox: ${emailLower}`);
+          continue;
+        }
+
         const key = `domain-${data.organizationId}-${data.domainId}`;
 
         if (!seen.has(key)) {

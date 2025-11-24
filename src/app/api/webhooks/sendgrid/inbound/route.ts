@@ -129,11 +129,12 @@ export async function POST(request: NextRequest) {
       formDataKeys: Array.from(formData.keys())
     });
 
+    // Bestimme organizationId aus to-Adresse (für Storage-Path)
+    // Für jetzt: Extrahiere aus erster to-Adresse oder nutze Default
+    const orgId = toAddresses[0]?.email.split('@')[0] || 'default';
+
     if (parsedEmail['attachment-info']) {
       try {
-        // Bestimme organizationId aus to-Adresse (für Storage-Path)
-        // Für jetzt: Extrahiere aus erster to-Adresse oder nutze Default
-        const orgId = toAddresses[0]?.email.split('@')[0] || 'default';
 
         const { extractAttachmentsFromFormData } = await import('@/lib/email/email-attachments-service');
         processedAttachments = await extractAttachmentsFromFormData(
