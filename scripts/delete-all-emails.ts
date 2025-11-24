@@ -4,7 +4,11 @@
 import { adminDb } from '../src/lib/firebase/admin-init';
 
 async function deleteAllEmails() {
-  const orgId = 'kqUJumpKKVPQIY87GP1cgO0VaKC3';
+  const orgId = process.argv[2] || 'kqUJumpKKVPQIY87GP1cgO0VaKC3';
+
+  if (!process.argv[2]) {
+    console.log('⚠️  Keine Organization ID angegeben, verwende Standard-ID\n');
+  }
 
   console.log('🗑️  ACHTUNG: Lösche ALLE E-Mails und Threads!\n');
   console.log(`   Organization: ${orgId}\n`);
