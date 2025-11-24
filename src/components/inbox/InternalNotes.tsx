@@ -286,61 +286,74 @@ export function InternalNotes({
     }
   };
 
-  // Format note content with highlighted mentions - Einfacherer Ansatz mit replace()
+  // Format note content with highlighted mentions - Mit Team-Member-Validierung!
   const formatNoteContent = (content: string) => {
-    // Pattern stoppt bei Satzzeichen, Leerzeichen oder Zeilenende
-    // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
+    // Greedy Regex - matched alles bis Satzzeichen/Ende
     const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
 
     // Get current user's display name for comparison
     const currentUserDisplayName = user?.displayName || user?.email || '';
 
-    // Debug: Zeige alle Matches
-    const matches = Array.from(content.matchAll(mentionRegex));
-    console.log('🔍 [Mention-Highlighting] Content:', content);
-    console.log('🔍 [Mention-Highlighting] Regex Matches:', matches.map(m => ({
-      fullMatch: m[0],
-      capturedName: m[1],
-      index: m.index
-    })));
-
-    // Verwende replace() statt split() - robuster!
+    // Verwende replace() mit Team-Member-Validierung
     let parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     let matchIndex = 0;
 
     content.replace(mentionRegex, (match, name, offset) => {
-      console.log('🔍 [Mention-Highlighting] Replace Callback:', {
-        match,
-        name,
-        offset,
-        textBefore: content.substring(lastIndex, offset)
-      });
+      console.log('🔍 [Mention] Checking:', { match, name });
 
-      // Text vor dem Match
-      if (offset > lastIndex) {
-        parts.push(content.substring(lastIndex, offset));
-      }
-
-      // Mention-Span
-      const isOwnMention = name.toLowerCase().trim() === currentUserDisplayName.toLowerCase().trim();
-      parts.push(
-        <span
-          key={`mention-${matchIndex}`}
-          className={clsx(
-            "font-medium px-1.5 py-0.5 rounded",
-            isOwnMention
-              ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
-              : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
-          )}
-        >
-          @{name}
-        </span>
+      // WICHTIG: Prüfe, ob der Name ein bekanntes Team-Member ist!
+      const member = membersForMentions.find(m =>
+        name.toLowerCase().startsWith(m.displayName.toLowerCase())
       );
 
-      lastIndex = offset + match.length;
-      matchIndex++;
-      return match; // Nicht verwendet, aber erforderlich
+      if (member) {
+        // Verwende nur den tatsächlichen Member-Namen, nicht den ganzen Match!
+        const actualName = member.displayName;
+        const actualMatch = `@${actualName}`;
+
+        console.log('✅ [Mention] Valid member found:', actualName);
+
+        // Text vor dem Match
+        if (offset > lastIndex) {
+          parts.push(content.substring(lastIndex, offset));
+        }
+
+        // Mention-Span (nur für den tatsächlichen Namen!)
+        const isOwnMention = actualName.toLowerCase() === currentUserDisplayName.toLowerCase();
+        parts.push(
+          <span
+            key={`mention-${matchIndex}`}
+            className={clsx(
+              "font-medium px-1.5 py-0.5 rounded",
+              isOwnMention
+                ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
+                : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
+            )}
+          >
+            @{actualName}
+          </span>
+        );
+
+        // Restlicher Text nach dem Mention (alles was nicht zum Namen gehört)
+        const restText = name.substring(actualName.length);
+        if (restText) {
+          parts.push(restText);
+        }
+
+        lastIndex = offset + actualMatch.length;
+        matchIndex++;
+      } else {
+        console.log('❌ [Mention] No valid member for:', name);
+        // Kein gültiger Member - Text normal ausgeben
+        if (offset > lastIndex) {
+          parts.push(content.substring(lastIndex, offset));
+        }
+        parts.push(match);
+        lastIndex = offset + match.length;
+      }
+
+      return match;
     });
 
     // Restlicher Text nach dem letzten Match
@@ -348,7 +361,6 @@ export function InternalNotes({
       parts.push(content.substring(lastIndex));
     }
 
-    console.log('🔍 [Mention-Highlighting] Final Parts:', parts);
     return parts;
   };
 
