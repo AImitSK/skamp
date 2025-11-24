@@ -17,10 +17,12 @@ import {
 import { db } from '@/lib/firebase/client-init';
 import { useAuth } from '@/context/AuthContext';
 import { notificationService } from '@/lib/email/notification-service-enhanced';
-import { 
+import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
-  AtSymbolIcon
+  AtSymbolIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import format from 'date-fns/format';
@@ -217,31 +219,15 @@ export function InternalNotes({
   const noteCount = notes.length;
 
   return (
-    <div className="border-t border-gray-200 bg-gray-50">
-      {/* Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-100 transition-colors"
+    <div className="border-t border-gray-200 bg-white shadow-lg z-10">
+      {/* Expandable Content */}
+      <div
+        className={clsx(
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          isExpanded ? "max-h-[50vh]" : "max-h-0"
+        )}
       >
-        <div className="flex items-center gap-2">
-          <ChatBubbleLeftIcon className="h-5 w-5 text-gray-400" />
-          <span className="font-medium text-sm text-gray-700">
-            Interne Notizen
-          </span>
-          {noteCount > 0 && (
-            <Badge color="zinc" className="text-xs whitespace-nowrap">
-              {noteCount}
-            </Badge>
-          )}
-        </div>
-        <span className="text-xs text-gray-500">
-          {isExpanded ? 'Einklappen' : 'Ausklappen'}
-        </span>
-      </button>
-
-      {/* Content */}
-      {isExpanded && (
-        <div className="px-6 pb-4">
+        <div className="px-6 py-4 h-[50vh] flex flex-col">
           {/* New Note Input */}
           <div className="mb-4 relative">
             <textarea
@@ -288,57 +274,91 @@ export function InternalNotes({
             </div>
           </div>
 
-          {/* Notes List */}
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
-            </div>
-          ) : notes.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              Noch keine internen Notizen vorhanden
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <div
-                  key={note.id}
-                  className="bg-white p-3 rounded-lg border border-gray-200"
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-white">
-                        {note.userName.charAt(0).toUpperCase()}
+          {/* Notes List - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
+              </div>
+            ) : notes.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Noch keine internen Notizen vorhanden
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="bg-gray-50 p-3 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-[#005fab] flex items-center justify-center text-xs font-medium text-white">
+                          {note.userName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {note.userName}
+                        </span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
-                        {note.userName}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {note.createdAt?.toDate?.() 
-                        ? format(note.createdAt.toDate(), 'dd.MM.yyyy HH:mm')
-                        : 'Gerade eben'
-                      }
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 ml-8">
-                    {formatNoteContent(note.content)}
-                  </p>
-                  {note.mentions.length > 0 && (
-                    <div className="mt-2 ml-8">
                       <span className="text-xs text-gray-500">
-                        Erwähnt: {note.mentions.map((userId) => {
-                          const member = teamMembers.find(m => m.userId === userId);
-                          return member?.displayName || 'Unbekannt';
-                        }).join(', ')}
+                        {note.createdAt?.toDate?.()
+                          ? format(note.createdAt.toDate(), 'dd.MM.yyyy HH:mm')
+                          : 'Gerade eben'
+                        }
                       </span>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <p className="text-sm text-gray-700 ml-8">
+                      {formatNoteContent(note.content)}
+                    </p>
+                    {note.mentions.length > 0 && (
+                      <div className="mt-2 ml-8">
+                        <span className="text-xs text-gray-500">
+                          Erwähnt: {note.mentions.map((userId) => {
+                            const member = teamMembers.find(m => m.userId === userId);
+                            return member?.displayName || 'Unbekannt';
+                          }).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky Header - Always Visible at Bottom */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors border-t border-gray-200"
+      >
+        <div className="flex items-center gap-2">
+          <ChatBubbleLeftIcon className="h-5 w-5 text-gray-600" />
+          <span className="font-medium text-sm text-gray-900">
+            Interne Notizen
+          </span>
+          {noteCount > 0 && (
+            <Badge color="zinc" className="text-xs whitespace-nowrap">
+              {noteCount}
+            </Badge>
           )}
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          {notes.length > 0 && (
+            <span className="text-xs text-gray-500">
+              {notes[0].userName} • {notes[0].createdAt?.toDate?.()
+                ? format(notes[0].createdAt.toDate(), 'HH:mm')
+                : 'neu'}
+            </span>
+          )}
+          {isExpanded ? (
+            <ChevronDownIcon className="h-5 w-5 text-gray-600" />
+          ) : (
+            <ChevronUpIcon className="h-5 w-5 text-gray-600" />
+          )}
+        </div>
+      </button>
     </div>
   );
 }

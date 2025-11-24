@@ -94,8 +94,9 @@ export function EmailList({
             key={thread.id}
             onClick={() => onThreadSelect(thread)}
             className={clsx(
-              "border-b border-gray-200 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors relative",
-              isSelected && "bg-blue-50 hover:bg-blue-50",
+              "border-b border-gray-200 px-4 py-3 cursor-pointer transition-colors relative",
+              "hover:bg-blue-50",
+              isSelected && "bg-blue-50 hover:bg-blue-100",
               hasUnread && "bg-white",
               thread.isStarred && "bg-yellow-50"
             )}

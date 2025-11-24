@@ -251,9 +251,9 @@ export function EmailViewer({
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 relative">
         {/* Email Thread */}
-        <div>
+        <div className="pb-4">
           {emails.map((email, index) => (
           <div 
             key={email.id}
@@ -358,14 +358,14 @@ export function EmailViewer({
           </div>
         ))}
         </div>
-
-        {/* Internal Notes */}
-        <InternalNotes
-          threadId={thread.id!}
-          emailId={selectedEmail?.id}
-          organizationId={organizationId}
-        />
       </div>
+
+      {/* Internal Notes - Sticky Bottom */}
+      <InternalNotes
+        threadId={thread.id!}
+        emailId={selectedEmail?.id}
+        organizationId={organizationId}
+      />
     </div>
   );
 }
