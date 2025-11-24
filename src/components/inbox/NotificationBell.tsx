@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -28,6 +29,7 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ onNotificationClick }: NotificationBellProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
@@ -117,16 +119,23 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
     if (!notification.isRead && notification.id) {
       await notificationService.markAsRead(notification.id);
       setUnreadCount(prev => Math.max(0, prev - 1));
-      
+
       // Update local state
-      setNotifications(prev => 
-        prev.map(n => 
+      setNotifications(prev =>
+        prev.map(n =>
           n.id === notification.id ? { ...n, isRead: true } : n
         )
       );
     }
 
-    // Call parent handler
+    // Navigate to inbox for mention notifications
+    if (notification.type === 'mention' && notification.threadId) {
+      console.log('📧 Navigating to inbox with threadId:', notification.threadId);
+      router.push(`/dashboard/communication/inbox?threadId=${notification.threadId}`);
+      return;
+    }
+
+    // Call parent handler for other notifications
     onNotificationClick?.(notification);
   };
 

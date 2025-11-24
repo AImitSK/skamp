@@ -17,6 +17,7 @@ import {
 import { db } from '@/lib/firebase/client-init';
 import { useAuth } from '@/context/AuthContext';
 import { notificationService } from '@/lib/email/notification-service-enhanced';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
@@ -66,6 +67,29 @@ export function InternalNotes({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [allTeamMembers, setAllTeamMembers] = useState<Array<{
+    id: string;
+    userId: string;
+    displayName: string;
+    email: string;
+  }>>([]);
+
+  // Load all team members from organization
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      try {
+        const members = await teamMemberService.getByOrganization(organizationId);
+        setAllTeamMembers(members);
+        console.log('📋 Loaded team members for mentions:', members.length);
+      } catch (error) {
+        console.error('Error loading team members:', error);
+      }
+    };
+
+    if (organizationId) {
+      loadTeamMembers();
+    }
+  }, [organizationId]);
 
   // Load notes in real-time
   useEffect(() => {
@@ -136,17 +160,20 @@ export function InternalNotes({
     const mentionRegex = /@(\w+(?:\s\w+)?)/g;
     const mentions = [];
     let match;
-    
+
+    // Use allTeamMembers instead of teamMembers prop
+    const membersToSearch = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
+
     while ((match = mentionRegex.exec(text)) !== null) {
       const mentionName = match[1];
-      const member = teamMembers.find(m => 
+      const member = membersToSearch.find(m =>
         m.displayName.toLowerCase() === mentionName.toLowerCase()
       );
       if (member) {
         mentions.push(member.userId);
       }
     }
-    
+
     return mentions;
   };
 
@@ -197,12 +224,25 @@ export function InternalNotes({
   const formatNoteContent = (content: string) => {
     const mentionRegex = /@(\w+(?:\s\w+)?)/g;
     const parts = content.split(mentionRegex);
-    
+
+    // Get current user's display name for comparison
+    const currentUserDisplayName = user?.displayName || user?.email || '';
+
     return parts.map((part, index) => {
       if (index % 2 === 1) {
-        // This is a mention
+        // This is a mention - check if it's the current user
+        const isOwnMention = part.toLowerCase() === currentUserDisplayName.toLowerCase();
+
         return (
-          <span key={index} className="text-[#005fab] font-medium">
+          <span
+            key={index}
+            className={clsx(
+              "font-medium px-1.5 py-0.5 rounded",
+              isOwnMention
+                ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
+                : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
+            )}
+          >
             @{part}
           </span>
         );
@@ -211,8 +251,9 @@ export function InternalNotes({
     });
   };
 
-  // Filtered team members for mentions
-  const filteredMembers = teamMembers.filter(member =>
+  // Filtered team members for mentions (use allTeamMembers)
+  const membersForMentions = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
+  const filteredMembers = membersForMentions.filter(member =>
     member.displayName.toLowerCase().includes(mentionSearch)
   );
 
@@ -314,7 +355,7 @@ export function InternalNotes({
                       <div className="mt-2 ml-8">
                         <span className="text-xs text-gray-500">
                           Erwähnt: {note.mentions.map((userId) => {
-                            const member = teamMembers.find(m => m.userId === userId);
+                            const member = membersForMentions.find(m => m.userId === userId);
                             return member?.displayName || 'Unbekannt';
                           }).join(', ')}
                         </span>
