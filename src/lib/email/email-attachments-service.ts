@@ -58,7 +58,7 @@ async function getOrCreateEmailAttachmentsFolder(organizationId: string): Promis
       createdBy: organizationId, // Verwende organizationId statt 'system' für korrekte UI-Anzeige
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
-      color: '#3B82F6', // Blau
+      color: '#005fab', // Gleiche Farbe wie Projekte/Branding
     };
 
     const docRef = await foldersRef.add(folderData);
