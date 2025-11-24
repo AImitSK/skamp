@@ -220,9 +220,10 @@ export function InternalNotes({
     const beforeAt = newNote.substring(0, lastAtIndex);
     const afterAt = newNote.substring(lastAtIndex + 1);
     const spaceIndex = afterAt.indexOf(' ');
+    // afterMention beginnt bereits mit Leerzeichen (wenn vorhanden), also kein extra Leerzeichen!
     const afterMention = spaceIndex !== -1 ? afterAt.substring(spaceIndex) : '';
 
-    setNewNote(`${beforeAt}@${member.displayName} ${afterMention}`);
+    setNewNote(`${beforeAt}@${member.displayName}${afterMention}`);
     setShowMentions(false);
 
     // Focus textarea wieder
