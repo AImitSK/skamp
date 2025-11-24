@@ -145,11 +145,12 @@ export async function POST(request: NextRequest) {
         console.log(`📎 Processed ${processedAttachments.length} attachments`);
       } catch (attachmentError) {
         console.error('❌ Attachment processing failed:', attachmentError);
-        // Fallback zu alter Methode ohne Upload
-        processedAttachments = await processAttachments(formData, parsedEmail);
+        // Fallback zu alter Methode (jetzt auch mit Upload!)
+        processedAttachments = await processAttachments(formData, parsedEmail, orgId, emailData.messageId);
       }
     } else {
-      processedAttachments = await processAttachments(formData, parsedEmail);
+      // Keine attachment-info (typisch für Domain-Emails) - nutze Legacy-Methode mit Upload
+      processedAttachments = await processAttachments(formData, parsedEmail, orgId, emailData.messageId);
     }
 
     if (processedAttachments.length > 0) {
@@ -815,13 +816,18 @@ function parseHeaders(headersString: string | undefined): Record<string, string>
 /**
  * Process attachments from form data
  */
-async function processAttachments(formData: FormData, parsedEmail: ParsedEmail): Promise<EmailAttachment[]> {
+async function processAttachments(
+  formData: FormData,
+  parsedEmail: ParsedEmail,
+  organizationId: string,
+  messageId: string
+): Promise<EmailAttachment[]> {
   const attachments: EmailAttachment[] = [];
-  
+
   if (!parsedEmail.attachments || parseInt(parsedEmail.attachments.toString()) === 0) {
     return attachments;
   }
-  
+
   // Parse attachment info
   let attachmentInfo: ParsedAttachmentInfo = {};
   if (parsedEmail['attachment-info']) {
@@ -831,31 +837,53 @@ async function processAttachments(formData: FormData, parsedEmail: ParsedEmail):
       console.error('Error parsing attachment info:', error);
     }
   }
-  
+
+  // ✅ NEU: Importiere Upload-Service
+  const { uploadEmailAttachment } = await import('@/lib/email/email-attachments-service');
+
   // Process each attachment
   const attachmentCount = parseInt(parsedEmail.attachments.toString());
   for (let i = 1; i <= attachmentCount; i++) {
     const attachmentKey = `attachment${i}`;
     const file = formData.get(attachmentKey);
-    
+
     if (file && file instanceof File) {
       const info = attachmentInfo[attachmentKey] || {};
-      
-      // For now, we'll store basic info. In production, upload to Firebase Storage
-      attachments.push({
-        id: `${Date.now()}-${i}`,
-        filename: info.filename || file.name,
-        contentType: info.type || file.type,
-        size: file.size,
-        contentId: info['content-id']
-        // url: würde nach Firebase Storage Upload gesetzt
-      });
-      
-      // TODO: Upload to Firebase Storage
-      // const url = await uploadToStorage(file, info.filename);
+
+      try {
+        // ✅ NEU: Upload zu Firebase Storage und media_assets
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const isInline = !!info['content-id'];
+
+        const attachment = await uploadEmailAttachment({
+          file: buffer,
+          filename: info.filename || file.name,
+          contentType: info.type || file.type,
+          organizationId,
+          messageId,
+          inline: isInline,
+          contentId: info['content-id']
+        });
+
+        attachments.push(attachment);
+        console.log(`📎 Uploaded attachment (legacy): ${attachment.filename} (${attachment.size} bytes)`);
+
+      } catch (uploadError: any) {
+        console.error(`❌ Failed to upload attachment ${attachmentKey}:`, uploadError);
+        // Fallback: Erstelle temporäres Attachment-Objekt ohne URL
+        attachments.push({
+          id: `${Date.now()}-${i}`,
+          filename: info.filename || file.name,
+          contentType: info.type || file.type,
+          size: file.size,
+          contentId: info['content-id']
+        });
+      }
     }
   }
-  
+
   return attachments;
 }
 
