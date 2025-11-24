@@ -286,11 +286,14 @@ export function InternalNotes({
     }
   };
 
-  // Format note content with highlighted mentions
+  // Format note content with highlighted mentions - Einfacherer Ansatz mit replace()
   const formatNoteContent = (content: string) => {
     // Pattern stoppt bei Satzzeichen, Leerzeichen oder Zeilenende
     // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
     const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
+
+    // Get current user's display name for comparison
+    const currentUserDisplayName = user?.displayName || user?.email || '';
 
     // Debug: Zeige alle Matches
     const matches = Array.from(content.matchAll(mentionRegex));
@@ -301,38 +304,52 @@ export function InternalNotes({
       index: m.index
     })));
 
-    const parts = content.split(mentionRegex);
-    console.log('🔍 [Mention-Highlighting] Split Parts:', parts);
+    // Verwende replace() statt split() - robuster!
+    let parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    let matchIndex = 0;
 
-    // Get current user's display name for comparison
-    const currentUserDisplayName = user?.displayName || user?.email || '';
+    content.replace(mentionRegex, (match, name, offset) => {
+      console.log('🔍 [Mention-Highlighting] Replace Callback:', {
+        match,
+        name,
+        offset,
+        textBefore: content.substring(lastIndex, offset)
+      });
 
-    return parts.map((part, index) => {
-      if (index % 2 === 1) {
-        // This is a mention - check if it's the current user
-        console.log('🔍 [Mention-Highlighting] Processing mention part:', {
-          part,
-          index,
-          currentUser: currentUserDisplayName
-        });
-        const isOwnMention = part.toLowerCase().trim() === currentUserDisplayName.toLowerCase().trim();
-
-        return (
-          <span
-            key={index}
-            className={clsx(
-              "font-medium px-1.5 py-0.5 rounded",
-              isOwnMention
-                ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
-                : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
-            )}
-          >
-            @{part}
-          </span>
-        );
+      // Text vor dem Match
+      if (offset > lastIndex) {
+        parts.push(content.substring(lastIndex, offset));
       }
-      return part;
+
+      // Mention-Span
+      const isOwnMention = name.toLowerCase().trim() === currentUserDisplayName.toLowerCase().trim();
+      parts.push(
+        <span
+          key={`mention-${matchIndex}`}
+          className={clsx(
+            "font-medium px-1.5 py-0.5 rounded",
+            isOwnMention
+              ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
+              : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
+          )}
+        >
+          @{name}
+        </span>
+      );
+
+      lastIndex = offset + match.length;
+      matchIndex++;
+      return match; // Nicht verwendet, aber erforderlich
     });
+
+    // Restlicher Text nach dem letzten Match
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    console.log('🔍 [Mention-Highlighting] Final Parts:', parts);
+    return parts;
   };
 
   const noteCount = notes.length;
