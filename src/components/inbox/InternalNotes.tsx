@@ -159,23 +159,34 @@ export function InternalNotes({
 
   // Extract mentions from text
   const extractMentions = (text: string): string[] => {
-    const mentionRegex = /@(\w+(?:\s\w+)?)/g;
+    // Pattern unterstützt jetzt auch Umlaute und Sonderzeichen (ä, ö, ü, ß, etc.)
+    const mentionRegex = /@([^\s@]+(?:\s+[^\s@]+)*)/g;
     const mentions = [];
     let match;
 
     // Use allTeamMembers instead of teamMembers prop
     const membersToSearch = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
 
+    console.log('🔍 Extracting mentions from text:', text);
+    console.log('📋 Available members:', membersToSearch.map(m => m.displayName).join(', '));
+
     while ((match = mentionRegex.exec(text)) !== null) {
-      const mentionName = match[1];
+      const mentionName = match[1].trim();
+      console.log('🎯 Found mention:', mentionName);
+
       const member = membersToSearch.find(m =>
-        m.displayName.toLowerCase() === mentionName.toLowerCase()
+        m.displayName.toLowerCase().trim() === mentionName.toLowerCase()
       );
+
       if (member) {
+        console.log('✅ Matched member:', member.displayName, '(userId:', member.userId + ')');
         mentions.push(member.userId);
+      } else {
+        console.warn('❌ No member found for mention:', mentionName);
       }
     }
 
+    console.log('📤 Final mentions array:', mentions);
     return mentions;
   };
 
@@ -225,7 +236,8 @@ export function InternalNotes({
 
   // Format note content with highlighted mentions
   const formatNoteContent = (content: string) => {
-    const mentionRegex = /@(\w+(?:\s\w+)?)/g;
+    // Pattern unterstützt jetzt auch Umlaute und Sonderzeichen (ä, ö, ü, ß, etc.)
+    const mentionRegex = /@([^\s@]+(?:\s+[^\s@]+)*)/g;
     const parts = content.split(mentionRegex);
 
     // Get current user's display name for comparison
@@ -234,7 +246,7 @@ export function InternalNotes({
     return parts.map((part, index) => {
       if (index % 2 === 1) {
         // This is a mention - check if it's the current user
-        const isOwnMention = part.toLowerCase() === currentUserDisplayName.toLowerCase();
+        const isOwnMention = part.toLowerCase().trim() === currentUserDisplayName.toLowerCase().trim();
 
         return (
           <span
