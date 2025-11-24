@@ -131,8 +131,17 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
     // Navigate to inbox for mention notifications
     if (notification.type === 'TEAM_CHAT_MENTION' && notification.metadata?.threadId) {
       console.log('📧 Navigating to inbox with threadId:', notification.metadata.threadId);
-      // Öffne Inbox mit richtigem Thread und Notizen-Panel geöffnet
-      router.push(`/dashboard/communication/inbox?threadId=${notification.metadata.threadId}&openNotes=true`);
+
+      const targetUrl = `/dashboard/communication/inbox?threadId=${notification.metadata.threadId}&openNotes=true`;
+
+      // Wenn wir schon auf der Inbox-Seite sind, force refresh
+      if (window.location.pathname === '/dashboard/communication/inbox') {
+        console.log('📧 Already on inbox, using window.location to force refresh');
+        window.location.href = targetUrl;
+      } else {
+        // Öffne Inbox mit richtigem Thread und Notizen-Panel geöffnet
+        router.push(targetUrl);
+      }
       return;
     }
 
