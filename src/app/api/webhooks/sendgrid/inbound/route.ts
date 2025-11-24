@@ -165,22 +165,42 @@ export async function POST(request: NextRequest) {
     // Process the email through our flexible pipeline
     const result = await flexibleEmailProcessor(emailData);
 
-    // ✅ FIX: Update media_assets mit der richtigen organizationId
+    // ✅ FIX: Update media_assets UND media_folders mit der richtigen organizationId
     if (result.success && result.organizationId && processedAttachments.length > 0) {
       try {
         const { adminDb } = await import('@/lib/firebase/admin-init');
+        const folderIdsToUpdate = new Set<string>();
 
+        // Update Assets und sammle folderId
         for (const attachment of processedAttachments) {
           const mediaAssetId = (attachment as any).mediaAssetId;
           if (mediaAssetId) {
+            // Hole Asset um folderId zu bekommen
+            const assetDoc = await adminDb.collection('media_assets').doc(mediaAssetId).get();
+            const assetData = assetDoc.data();
+
+            if (assetData?.folderId) {
+              folderIdsToUpdate.add(assetData.folderId);
+            }
+
+            // Update Asset
             await adminDb.collection('media_assets').doc(mediaAssetId).update({
               organizationId: result.organizationId
             });
             console.log(`✅ Updated media_asset ${mediaAssetId} with correct organizationId: ${result.organizationId}`);
           }
         }
+
+        // Update alle betroffenen Ordner
+        for (const folderId of folderIdsToUpdate) {
+          await adminDb.collection('media_folders').doc(folderId).update({
+            organizationId: result.organizationId,
+            createdBy: result.organizationId // Auch createdBy korrigieren
+          });
+          console.log(`✅ Updated media_folder ${folderId} with correct organizationId: ${result.organizationId}`);
+        }
       } catch (updateError: any) {
-        console.error('❌ Failed to update media_assets organizationId:', updateError);
+        console.error('❌ Failed to update media_assets/folders organizationId:', updateError);
         // Nicht werfen - Email wurde erfolgreich verarbeitet
       }
     }
