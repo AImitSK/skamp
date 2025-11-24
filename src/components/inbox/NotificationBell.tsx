@@ -308,6 +308,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
         {notifications.length > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">
             <Button
+              onClick={() => router.push('/dashboard/communication/notifications')}
               className="w-full text-center text-sm text-[#005fab] hover:text-[#004a8c]"
               plain
             >

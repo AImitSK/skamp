@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import { 
+import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   EnvelopeIcon,
@@ -12,7 +12,8 @@ import {
   ArrowDownTrayIcon,
   LinkIcon,
   ClockIcon,
-  TrashIcon
+  TrashIcon,
+  AtSymbolIcon
 } from '@heroicons/react/24/outline';
 import { Notification, NOTIFICATION_COLORS } from '@/types/notifications';
 
@@ -32,7 +33,8 @@ const iconMap = {
   TASK_OVERDUE: CalendarDaysIcon,
   MEDIA_FIRST_ACCESS: EyeIcon,
   MEDIA_DOWNLOADED: ArrowDownTrayIcon,
-  MEDIA_LINK_EXPIRED: LinkIcon
+  MEDIA_LINK_EXPIRED: LinkIcon,
+  TEAM_CHAT_MENTION: AtSymbolIcon
 };
 
 // Helper function to format relative time in German
