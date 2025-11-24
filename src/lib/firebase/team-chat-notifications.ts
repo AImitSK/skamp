@@ -139,16 +139,18 @@ export class TeamChatNotificationsService {
     mentions.forEach(mention => {
       const mentionText = mention.substring(1).trim(); // Entferne @ und Whitespace
 
-      // Suche nach exaktem Treffer des displayName
+      console.log('🔍 [extractMentions] Checking:', { mention, mentionText });
+
+      // WICHTIG: Prüfe ob der mentionText mit einem bekannten Member-Namen STARTET
+      // (weil Regex zu greedy ist und mehr matched als nur den Namen)
       let member = teamMembers.find(m =>
-        m.displayName.trim() === mentionText // Exakter Match (mit trim)
+        mentionText.toLowerCase().startsWith(m.displayName.toLowerCase())
       );
 
-      if (!member) {
-        // Fallback: Suche nach Teil-Übereinstimmungen
-        member = teamMembers.find(m =>
-          m.displayName.toLowerCase().includes(mentionText.toLowerCase())
-        );
+      if (member) {
+        console.log('✅ [extractMentions] Valid member found:', member.displayName);
+      } else {
+        console.log('❌ [extractMentions] No member found for:', mentionText);
       }
 
       if (member) {
