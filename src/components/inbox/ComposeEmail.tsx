@@ -128,17 +128,31 @@ export function ComposeEmail({
       // Keine weitere Logik nötig
 
       // Quote original message
+      // Mache Bilder im quoted content responsive
+      const quotedHtml = replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`;
+      const responsiveQuotedHtml = quotedHtml.replace(
+        /<img([^>]*)>/gi,
+        '<img$1 style="max-width: 100% !important; height: auto !important;">'
+      );
+
       const quote = `
 <br><br>
 <div style="border-left: 2px solid #ccc; padding-left: 10px; margin-left: 10px; color: #666;">
   <p>Am ${new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE')} schrieb ${replyToEmail.from.name || replyToEmail.from.email}:</p>
-  ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}
+  ${responsiveQuotedHtml}
 </div>`;
       setContent(quote);
     } else if (mode === 'forward' && replyToEmail) {
       setSubject(`Fwd: ${replyToEmail.subject.replace(/^Fwd:\s*/i, '')}`);
 
       // Forward original message
+      // Mache Bilder im forwarded content responsive
+      const forwardedHtml = replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`;
+      const responsiveForwardedHtml = forwardedHtml.replace(
+        /<img([^>]*)>/gi,
+        '<img$1 style="max-width: 100% !important; height: auto !important;">'
+      );
+
       const forward = `
 <br><br>
 ---------- Weitergeleitete Nachricht ----------<br>
@@ -147,7 +161,7 @@ Datum: ${new Date(replyToEmail.receivedAt.toDate()).toLocaleDateString('de-DE')}
 Betreff: ${replyToEmail.subject}<br>
 An: ${replyToEmail.to.map(t => `${t.name || t.email} <${t.email}>`).join(', ')}<br>
 <br>
-${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
+${responsiveForwardedHtml}`;
       setContent(forward);
     } else if (mode === 'new') {
       // For new emails, start with empty content (signature will be added on send)
