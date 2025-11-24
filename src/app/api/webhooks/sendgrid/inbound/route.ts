@@ -164,16 +164,35 @@ export async function POST(request: NextRequest) {
 
     // Process the email through our flexible pipeline
     const result = await flexibleEmailProcessor(emailData);
-    
-    
+
+    // ✅ FIX: Update media_assets mit der richtigen organizationId
+    if (result.success && result.organizationId && processedAttachments.length > 0) {
+      try {
+        const { adminDb } = await import('@/lib/firebase/admin-init');
+
+        for (const attachment of processedAttachments) {
+          const mediaAssetId = (attachment as any).mediaAssetId;
+          if (mediaAssetId) {
+            await adminDb.collection('media_assets').doc(mediaAssetId).update({
+              organizationId: result.organizationId
+            });
+            console.log(`✅ Updated media_asset ${mediaAssetId} with correct organizationId: ${result.organizationId}`);
+          }
+        }
+      } catch (updateError: any) {
+        console.error('❌ Failed to update media_assets organizationId:', updateError);
+        // Nicht werfen - Email wurde erfolgreich verarbeitet
+      }
+    }
+
     if (result.success) {
       console.log('✅ Email processed successfully:', {
         emailId: result.emailId,
         threadId: result.threadId,
         routingDecision: result.routingDecision
       });
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         emailId: result.emailId,
         threadId: result.threadId,
         routingDecision: result.routingDecision
