@@ -70,7 +70,7 @@
 /* Tables */
 .email-content table {
   border-collapse: collapse;
-  width: 100%;
+  max-width: 100%; /* Statt width: 100% - respektiert inline widths */
   margin: 1em 0;
   border: 1px solid #e5e7eb;
 }
@@ -139,13 +139,52 @@
   font-size: 0.875rem;
 }
 
-/* Fix for Outlook/Gmail specific styles */
+/* Signature tables: Remove borders, respect inline styles */
+.email-content .signature table,
+.email-content table[class*="signature"],
+.email-content table[id*="signature"] {
+  border: none;
+  margin: 0;
+}
+
+.email-content .signature table td,
+.email-content .signature table th,
+.email-content table[class*="signature"] td,
+.email-content table[class*="signature"] th,
+.email-content table[id*="signature"] td,
+.email-content table[id*="signature"] th {
+  border: none;
+  padding: 0.25em 0.5em;
+}
+
+/* Signature images: Respect original dimensions */
+.email-content .signature img,
+.email-content table[class*="signature"] img,
+.email-content table[id*="signature"] img {
+  margin: 0;
+  border-radius: 0; /* Logos sollten nicht abgerundet sein */
+}
+
+/* Fix for Outlook/Gmail specific styles - Respektiere inline styles */
 .email-content div[style*="margin: 0"] {
   margin: 0 !important;
 }
 
 .email-content table[style*="border-collapse: collapse"] {
   border-collapse: collapse !important;
+}
+
+/* Respektiere inline width/height für Tabellen (wichtig für Signaturen) */
+.email-content table[width],
+.email-content table[style*="width"] {
+  width: auto !important; /* Lasse inline widths zu */
+}
+
+.email-content td[width],
+.email-content td[style*="width"],
+.email-content th[width],
+.email-content th[style*="width"] {
+  /* Lasse cell widths wie sie sind */
 }
 
 /* Responsive adjustments */
