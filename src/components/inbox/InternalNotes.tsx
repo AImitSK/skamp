@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase/client-init';
 import { useAuth } from '@/context/AuthContext';
 import { notificationsService } from '@/lib/firebase/notifications-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
+import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
 import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
@@ -157,38 +158,10 @@ export function InternalNotes({
     setShowMentions(false);
   };
 
-  // Extract mentions from text
+  // Extract mentions from text - Verwende den gleichen Service wie Team Chat
   const extractMentions = (text: string): string[] => {
-    // Pattern stoppt bei Satzzeichen, doppelten Leerzeichen oder Zeilenende
-    // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
-    const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
-    const mentions = [];
-    let match;
-
-    // Use allTeamMembers instead of teamMembers prop
     const membersToSearch = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
-
-    console.log('🔍 Extracting mentions from text:', text);
-    console.log('📋 Available members:', membersToSearch.map(m => m.displayName).join(', '));
-
-    while ((match = mentionRegex.exec(text)) !== null) {
-      const mentionName = match[1].trim();
-      console.log('🎯 Found mention:', mentionName);
-
-      const member = membersToSearch.find(m =>
-        m.displayName.toLowerCase().trim() === mentionName.toLowerCase()
-      );
-
-      if (member) {
-        console.log('✅ Matched member:', member.displayName, '(userId:', member.userId + ')');
-        mentions.push(member.userId);
-      } else {
-        console.warn('❌ No member found for mention:', mentionName);
-      }
-    }
-
-    console.log('📤 Final mentions array:', mentions);
-    return mentions;
+    return teamChatNotificationsService.extractMentionedUserIds(text, membersToSearch);
   };
 
   // Submit note
