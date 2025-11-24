@@ -69,24 +69,23 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
     // Add hook to handle external images and fix responsive images
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       if (node.tagName === 'IMG') {
-        // WICHTIG: Überschreibe width/height mit inline-styles für responsive Bilder
-        const originalWidth = node.getAttribute('width');
-        const originalHeight = node.getAttribute('height');
+        // WICHTIG: Behalte die spezifizierte Größe aus width/height Attributen
+        const specifiedWidth = node.getAttribute('width');
+        const specifiedHeight = node.getAttribute('height');
 
-        // Entferne die HTML-Attribute
+        // Entferne die HTML-Attribute (werden durch CSS ersetzt)
         node.removeAttribute('width');
         node.removeAttribute('height');
 
-        // Berechne max-width: Verwende Original-Width, aber maximal 400px für große Bilder
-        let maxWidthPx = 400; // Default für Bilder ohne width
-        if (originalWidth && !isNaN(Number(originalWidth))) {
-          const origWidth = Number(originalWidth);
-          // Für kleine Logos (< 200px) verwende Original-Größe
-          // Für größere Bilder, begrenze auf 400px
-          maxWidthPx = origWidth < 200 ? origWidth : Math.min(origWidth, 400);
+        // Verwende die spezifizierte Breite als Basis (wie in der Email definiert)
+        if (specifiedWidth && !isNaN(Number(specifiedWidth))) {
+          const widthPx = Number(specifiedWidth);
+          // Setze width auf spezifizierten Wert, aber max-width: 100% für Responsive
+          node.setAttribute('style', `width: ${widthPx}px !important; max-width: 100% !important; height: auto !important; display: inline-block;`);
+        } else {
+          // Fallback: Keine spezifizierte Breite, verwende 100%
+          node.setAttribute('style', `max-width: 100% !important; height: auto !important; display: inline-block;`);
         }
-
-        node.setAttribute('style', `max-width: ${maxWidthPx}px !important; width: 100% !important; height: auto !important; display: inline-block;`);
 
         if (!allowExternalImages) {
           const src = node.getAttribute('src');
