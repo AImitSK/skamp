@@ -87,7 +87,6 @@ export function InternalNotes({
       try {
         const members = await teamMemberService.getByOrganization(organizationId);
         setAllTeamMembers(members);
-        console.log('📋 Loaded team members for mentions:', members.length);
       } catch (error) {
         console.error('Error loading team members:', error);
       }
@@ -245,12 +244,6 @@ export function InternalNotes({
         organizationId
       };
 
-      console.log('💾 Saving note with user photo:', {
-        userName: noteData.userName,
-        userPhotoUrl: noteData.userPhotoUrl,
-        hasPhoto: !!noteData.userPhotoUrl
-      });
-
       await addDoc(collection(db, 'email_notes'), noteData);
       
       // Send notifications for mentions
@@ -386,17 +379,7 @@ export function InternalNotes({
               </p>
             ) : (
               <div className="space-y-3">
-                {notes.map((note) => {
-                  // Debug: Log avatar info for EVERY note
-                  console.log('🖼️ Rendering Note Avatar:', {
-                    userName: note.userName,
-                    photoUrl: note.userPhotoUrl,
-                    hasPhotoUrl: !!note.userPhotoUrl,
-                    photoUrlType: typeof note.userPhotoUrl,
-                    noteId: note.id
-                  });
-
-                  return (
+                {notes.map((note) => (
                   <div
                     key={note.id}
                     className="bg-gray-50 p-3 rounded-lg border border-gray-200"
@@ -434,8 +417,7 @@ export function InternalNotes({
                       </div>
                     )}
                   </div>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>
