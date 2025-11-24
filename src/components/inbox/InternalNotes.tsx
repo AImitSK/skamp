@@ -291,7 +291,18 @@ export function InternalNotes({
     // Pattern stoppt bei Satzzeichen, Leerzeichen oder Zeilenende
     // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
     const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
+
+    // Debug: Zeige alle Matches
+    const matches = Array.from(content.matchAll(mentionRegex));
+    console.log('🔍 [Mention-Highlighting] Content:', content);
+    console.log('🔍 [Mention-Highlighting] Regex Matches:', matches.map(m => ({
+      fullMatch: m[0],
+      capturedName: m[1],
+      index: m.index
+    })));
+
     const parts = content.split(mentionRegex);
+    console.log('🔍 [Mention-Highlighting] Split Parts:', parts);
 
     // Get current user's display name for comparison
     const currentUserDisplayName = user?.displayName || user?.email || '';
@@ -299,6 +310,11 @@ export function InternalNotes({
     return parts.map((part, index) => {
       if (index % 2 === 1) {
         // This is a mention - check if it's the current user
+        console.log('🔍 [Mention-Highlighting] Processing mention part:', {
+          part,
+          index,
+          currentUser: currentUserDisplayName
+        });
         const isOwnMention = part.toLowerCase().trim() === currentUserDisplayName.toLowerCase().trim();
 
         return (
