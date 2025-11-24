@@ -4,8 +4,6 @@
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
-import { useAuth } from '@/context/AuthContext';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
@@ -180,7 +178,6 @@ export function EmailViewer({
   onStatusChange,
   organizationId
 }: EmailViewerProps) {
-  const { getAvatarUrl, getInitials } = useAuth();
   
   // Mark email as read when selected (but only if it's unread and has an ID)
   useEffect(() => {
@@ -265,34 +262,24 @@ export function EmailViewer({
             {/* Email Header */}
             <div className="px-6 py-4">
               <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  {/* Avatar */}
-                  <Avatar
-                    className="w-10 h-10"
-                    src={null} // E-Mail-Absender haben kein Profilbild
-                    initials={email.from.name ? email.from.name[0].toUpperCase() : email.from.email[0].toUpperCase()}
-                    title={email.from.name || email.from.email}
-                  />
-                  
-                  {/* Sender info */}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
-                        {email.from.name || email.from.email}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        &lt;{email.from.email}&gt;
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      an {email.to.map(t => t.name || t.email).join(', ')}
-                    </div>
+                {/* Sender info */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900">
+                      {email.from.name || email.from.email}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      &lt;{email.from.email}&gt;
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    an {email.to.map(t => t.name || t.email).join(', ')}
                   </div>
                 </div>
 
                 {/* Timestamp */}
                 <div className="text-sm text-gray-500">
-                  {email.receivedAt?.toDate?.() 
+                  {email.receivedAt?.toDate?.()
                     ? format(email.receivedAt.toDate(), 'dd. MMM yyyy, HH:mm')
                     : ''
                   }

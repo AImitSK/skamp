@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import { 
   collection, 
   query, 
@@ -37,6 +38,7 @@ interface InternalNote {
   userId: string;
   userName: string;
   userEmail: string;
+  userPhotoUrl?: string;
   mentions: string[]; // User IDs die erwähnt wurden
   createdAt: Timestamp;
   organizationId: string;
@@ -191,6 +193,7 @@ export function InternalNotes({
         userId: user.uid,
         userName: user.displayName || user.email || 'Unbekannt',
         userEmail: user.email || '',
+        userPhotoUrl: user.photoURL || undefined,
         mentions,
         createdAt: serverTimestamp() as Timestamp,
         organizationId
@@ -334,9 +337,12 @@ export function InternalNotes({
                   >
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#005fab] flex items-center justify-center text-xs font-medium text-white">
-                          {note.userName.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar
+                          className="w-6 h-6"
+                          src={note.userPhotoUrl || null}
+                          initials={note.userName.charAt(0).toUpperCase()}
+                          title={note.userName}
+                        />
                         <span className="text-sm font-medium text-gray-900">
                           {note.userName}
                         </span>
