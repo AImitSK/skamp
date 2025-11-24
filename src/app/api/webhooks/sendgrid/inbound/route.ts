@@ -165,42 +165,85 @@ export async function POST(request: NextRequest) {
     // Process the email through our flexible pipeline
     const result = await flexibleEmailProcessor(emailData);
 
-    // ✅ FIX: Update media_assets UND media_folders mit der richtigen organizationId
+    // ✅ FIX: Konsolidiere Email-Anhänge in einen einzigen korrekten Ordner
     if (result.success && result.organizationId && processedAttachments.length > 0) {
       try {
         const { adminDb } = await import('@/lib/firebase/admin-init');
-        const folderIdsToUpdate = new Set<string>();
 
-        // Update Assets und sammle folderId
+        // 1. Finde oder erstelle den KORREKTEN Email-Anhänge Ordner
+        const foldersRef = adminDb.collection('media_folders');
+        const correctFolderQuery = foldersRef
+          .where('organizationId', '==', result.organizationId)
+          .where('name', '==', 'Email-Anhänge')
+          .limit(1);
+
+        const folderSnap = await correctFolderQuery.get();
+        let correctFolderId: string;
+
+        if (!folderSnap.empty) {
+          correctFolderId = folderSnap.docs[0].id;
+          console.log(`✅ Using existing Email-Anhänge folder: ${correctFolderId}`);
+        } else {
+          // Erstelle korrekten Ordner falls nicht vorhanden
+          const { FieldValue } = await import('firebase-admin/firestore');
+          const newFolderRef = await foldersRef.add({
+            organizationId: result.organizationId,
+            name: 'Email-Anhänge',
+            description: 'Automatisch gespeicherte Email-Anhänge',
+            createdBy: result.organizationId,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            color: '#005fab',
+          });
+          correctFolderId = newFolderRef.id;
+          console.log(`✅ Created new Email-Anhänge folder: ${correctFolderId}`);
+        }
+
+        // 2. Sammle falsche Ordner IDs
+        const wrongFolderIds = new Set<string>();
+
+        // 3. Update alle Assets: organizationId + verschiebe zu korrektem Ordner
         for (const attachment of processedAttachments) {
           const mediaAssetId = (attachment as any).mediaAssetId;
           if (mediaAssetId) {
-            // Hole Asset um folderId zu bekommen
+            // Hole Asset um alte folderId zu bekommen
             const assetDoc = await adminDb.collection('media_assets').doc(mediaAssetId).get();
             const assetData = assetDoc.data();
 
-            if (assetData?.folderId) {
-              folderIdsToUpdate.add(assetData.folderId);
+            if (assetData?.folderId && assetData.folderId !== correctFolderId) {
+              wrongFolderIds.add(assetData.folderId);
             }
 
-            // Update Asset
+            // Update Asset: organizationId UND folderId
             await adminDb.collection('media_assets').doc(mediaAssetId).update({
-              organizationId: result.organizationId
+              organizationId: result.organizationId,
+              folderId: correctFolderId
             });
-            console.log(`✅ Updated media_asset ${mediaAssetId} with correct organizationId: ${result.organizationId}`);
+            console.log(`✅ Updated media_asset ${mediaAssetId}: orgId=${result.organizationId}, folderId=${correctFolderId}`);
           }
         }
 
-        // Update alle betroffenen Ordner
-        for (const folderId of folderIdsToUpdate) {
-          await adminDb.collection('media_folders').doc(folderId).update({
-            organizationId: result.organizationId,
-            createdBy: result.organizationId // Auch createdBy korrigieren
-          });
-          console.log(`✅ Updated media_folder ${folderId} with correct organizationId: ${result.organizationId}`);
+        // 4. Lösche falsche Ordner (nur wenn leer)
+        for (const wrongFolderId of wrongFolderIds) {
+          try {
+            // Prüfe ob Ordner noch Assets hat
+            const assetsInFolder = await adminDb.collection('media_assets')
+              .where('folderId', '==', wrongFolderId)
+              .limit(1)
+              .get();
+
+            if (assetsInFolder.empty) {
+              await adminDb.collection('media_folders').doc(wrongFolderId).delete();
+              console.log(`✅ Deleted empty wrong folder: ${wrongFolderId}`);
+            } else {
+              console.log(`⚠️ Cannot delete folder ${wrongFolderId} - still has assets`);
+            }
+          } catch (deleteError: any) {
+            console.error(`❌ Failed to delete folder ${wrongFolderId}:`, deleteError);
+          }
         }
       } catch (updateError: any) {
-        console.error('❌ Failed to update media_assets/folders organizationId:', updateError);
+        console.error('❌ Failed to consolidate email attachments:', updateError);
         // Nicht werfen - Email wurde erfolgreich verarbeitet
       }
     }
