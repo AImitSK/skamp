@@ -125,8 +125,9 @@ export class TeamChatNotificationsService {
     messageContent: string,
     teamMembers: TeamMember[]
   ): string[] {
-    // Pattern für vollständige Namen mit Leerzeichen
-    const mentionPattern = /@([\w\s]+?)(?=\s{2,}|$|[,.!?]|\n)/g;
+    // Pattern für vollständige Namen mit Leerzeichen und Umlauten (ä, ö, ü, ß)
+    // Stoppt bei Satzzeichen, doppelten Leerzeichen oder Zeilenende
+    const mentionPattern = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$|\n)/g;
     const mentions = messageContent.match(mentionPattern);
 
     if (!mentions) {

@@ -1,7 +1,7 @@
 // src/components/inbox/InternalNotes.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
@@ -20,6 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import { notificationsService } from '@/lib/firebase/notifications-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { teamChatNotificationsService } from '@/lib/firebase/team-chat-notifications';
+import { MentionDropdown } from '@/components/projects/communication/MentionDropdown';
 import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
@@ -69,7 +70,10 @@ export function InternalNotes({
   const [loading, setLoading] = useState(true);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionDropdownPosition, setMentionDropdownPosition] = useState({ top: 0, left: 0 });
   const [isExpanded, setIsExpanded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [allTeamMembers, setAllTeamMembers] = useState<Array<{
     id: string;
     userId: string;
@@ -124,27 +128,81 @@ export function InternalNotes({
     return () => unsubscribe();
   }, [threadId, organizationId]);
 
-  // Handle @mentions
-  const handleNoteChange = (value: string) => {
+  // Handle @mentions - Wie im Team Chat
+  const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+
     setNewNote(value);
-    
-    // Check for @ symbol
-    const lastAtIndex = value.lastIndexOf('@');
-    if (lastAtIndex !== -1) {
-      const textAfterAt = value.substring(lastAtIndex + 1);
-      const spaceIndex = textAfterAt.indexOf(' ');
-      
-      if (spaceIndex === -1) {
-        // Still typing the mention
-        setMentionSearch(textAfterAt.toLowerCase());
-        setShowMentions(true);
-      } else {
-        setShowMentions(false);
+
+    // Prüfe auf @-Mention
+    const beforeCursor = value.substring(0, cursorPos);
+    const mentionMatch = beforeCursor.match(/@([\w\s]*)$/);
+
+    if (mentionMatch) {
+      const searchTerm = mentionMatch[1];
+      setMentionSearch(searchTerm);
+      setSelectedMentionIndex(0);
+
+      // Berechne Position des Dropdowns
+      if (textareaRef.current) {
+        const rect = textareaRef.current.getBoundingClientRect();
+        const lines = beforeCursor.split('\n');
+        const currentLine = lines[lines.length - 1];
+        const charWidth = 8; // Geschätzte Zeichen-Breite
+
+        setMentionDropdownPosition({
+          top: rect.top - 200, // Über der Textarea
+          left: rect.left + (currentLine.length * charWidth)
+        });
       }
+
+      setShowMentions(true);
     } else {
       setShowMentions(false);
     }
-  };
+  }, []);
+
+  // Filtered team members for mentions (use allTeamMembers)
+  const membersForMentions = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
+
+  // Keyboard-Navigation für Mention-Dropdown
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentions) {
+      const filteredMembers = membersForMentions.filter(member =>
+        member.displayName.toLowerCase().includes(mentionSearch.toLowerCase()) ||
+        member.email.toLowerCase().includes(mentionSearch.toLowerCase())
+      );
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev =>
+          prev < filteredMembers.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev =>
+          prev > 0 ? prev - 1 : filteredMembers.length - 1
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredMembers[selectedMentionIndex]) {
+          insertMention(filteredMembers[selectedMentionIndex]);
+        }
+        return;
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentions(false);
+        return;
+      }
+    }
+
+    // Normale Enter-Behandlung (Shift+Enter für neue Zeile)
+    if (e.key === 'Enter' && !e.shiftKey && !showMentions) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }, [showMentions, mentionSearch, selectedMentionIndex, membersForMentions]);
 
   // Insert mention
   const insertMention = (member: any) => {
@@ -153,9 +211,12 @@ export function InternalNotes({
     const afterAt = newNote.substring(lastAtIndex + 1);
     const spaceIndex = afterAt.indexOf(' ');
     const afterMention = spaceIndex !== -1 ? afterAt.substring(spaceIndex) : '';
-    
+
     setNewNote(`${beforeAt}@${member.displayName} ${afterMention}`);
     setShowMentions(false);
+
+    // Focus textarea wieder
+    textareaRef.current?.focus();
   };
 
   // Extract mentions from text - Verwende den gleichen Service wie Team Chat
@@ -265,12 +326,6 @@ export function InternalNotes({
     });
   };
 
-  // Filtered team members for mentions (use allTeamMembers)
-  const membersForMentions = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
-  const filteredMembers = membersForMentions.filter(member =>
-    member.displayName.toLowerCase().includes(mentionSearch)
-  );
-
   const noteCount = notes.length;
 
   return (
@@ -286,35 +341,25 @@ export function InternalNotes({
           {/* New Note Input */}
           <div className="mb-4 relative">
             <textarea
+              ref={textareaRef}
               value={newNote}
-              onChange={(e) => handleNoteChange(e.target.value)}
+              onChange={handleNoteChange}
+              onKeyDown={handleKeyDown}
               placeholder="Interne Notiz hinzufügen... (@Name für Erwähnung)"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent resize-none"
               rows={3}
             />
-            
-            {/* Mention Dropdown */}
-            {showMentions && filteredMembers.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                {filteredMembers.map((member) => (
-                  <button
-                    key={member.userId}
-                    onClick={() => insertMention(member)}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <AtSymbolIcon className="h-4 w-4 text-gray-400" />
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {member.displayName}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {member.email}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+
+            {/* Professional Mention Dropdown - 1:1 wie im Team Chat */}
+            <MentionDropdown
+              isVisible={showMentions}
+              position={mentionDropdownPosition}
+              searchTerm={mentionSearch}
+              teamMembers={membersForMentions}
+              selectedIndex={selectedMentionIndex}
+              onSelect={insertMention}
+              onClose={() => setShowMentions(false)}
+            />
             
             {/* Submit Button */}
             <div className="flex justify-end mt-2">
