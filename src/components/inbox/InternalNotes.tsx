@@ -159,8 +159,9 @@ export function InternalNotes({
 
   // Extract mentions from text
   const extractMentions = (text: string): string[] => {
-    // Pattern unterstützt jetzt auch Umlaute und Sonderzeichen (ä, ö, ü, ß, etc.)
-    const mentionRegex = /@([^\s@]+(?:\s+[^\s@]+)*)/g;
+    // Pattern stoppt bei Satzzeichen, doppelten Leerzeichen oder Zeilenende
+    // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
+    const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
     const mentions = [];
     let match;
 
@@ -260,8 +261,9 @@ export function InternalNotes({
 
   // Format note content with highlighted mentions
   const formatNoteContent = (content: string) => {
-    // Pattern unterstützt jetzt auch Umlaute und Sonderzeichen (ä, ö, ü, ß, etc.)
-    const mentionRegex = /@([^\s@]+(?:\s+[^\s@]+)*)/g;
+    // Pattern stoppt bei Satzzeichen, Leerzeichen oder Zeilenende
+    // Unterstützt Namen mit Umlauten (ä, ö, ü, ß, etc.)
+    const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
     const parts = content.split(mentionRegex);
 
     // Get current user's display name for comparison
