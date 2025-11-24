@@ -69,9 +69,21 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
     // Add hook to handle external images and fix responsive images
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       if (node.tagName === 'IMG') {
-        // WICHTIG: Entferne width/height Attribute für responsive Bilder
+        // WICHTIG: Überschreibe width/height mit inline-styles für responsive Bilder
+        const originalWidth = node.getAttribute('width');
+        const originalHeight = node.getAttribute('height');
+
+        // Entferne die HTML-Attribute
         node.removeAttribute('width');
         node.removeAttribute('height');
+
+        // Füge responsive inline-styles hinzu, die Original-Dimensionen als max-width verwenden
+        let maxWidth = '100%';
+        if (originalWidth && !isNaN(Number(originalWidth))) {
+          maxWidth = `min(${originalWidth}px, 100%)`;
+        }
+
+        node.setAttribute('style', `max-width: ${maxWidth} !important; height: auto !important; display: inline-block;`);
 
         if (!allowExternalImages) {
           const src = node.getAttribute('src');
@@ -80,7 +92,8 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
             node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
             node.setAttribute('loading', 'lazy');
             // Füge loading-Klasse hinzu (wird per onLoad entfernt)
-            node.setAttribute('class', 'loading');
+            const existingClass = node.getAttribute('class') || '';
+            node.setAttribute('class', `${existingClass} loading`.trim());
           }
         }
       }
