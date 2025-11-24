@@ -41,10 +41,10 @@ export function ComposeEmail({
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
 
-  // Postfächer statt Email-Adressen
-  const [mailboxes, setMailboxes] = useState<any[]>([]);
-  const [selectedMailboxId, setSelectedMailboxId] = useState<string>('');
-  const [loadingMailboxes, setLoadingMailboxes] = useState(true);
+  // Email-Adressen (Absender-Auswahl)
+  const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
+  const [selectedEmailAddressId, setSelectedEmailAddressId] = useState<string>('');
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
 
   const [signatures, setSignatures] = useState<EmailSignature[]>([]);
   const [selectedSignatureId, setSelectedSignatureId] = useState<string>('');
@@ -54,86 +54,24 @@ export function ComposeEmail({
   const [attachments, setAttachments] = useState<CampaignAssetAttachment[]>([]);
   const [showAssetModal, setShowAssetModal] = useState(false);
 
-  // Load mailboxes and signatures
+  // Load email addresses and signatures
   useEffect(() => {
-    const loadMailboxData = async () => {
+    const loadEmailData = async () => {
       try {
         if (!user?.uid) {
-          console.error('No user available for loading mailbox data');
+          console.error('No user available for loading email data');
           return;
         }
 
-        const { collection, query, where, getDocs } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/firebase-init');
+        // Load email addresses
+        const addresses = await emailAddressService.getByOrganization(organizationId, user?.uid || '');
+        console.log('📧 Loaded email addresses:', addresses);
+        setEmailAddresses(addresses);
 
-        const allMailboxes: any[] = [];
-
-        // 1. Load Domain-Mailboxes (gefiltert - keine Default-Domains)
-        const domainMailboxesRef = collection(db, 'inbox_domain_mailboxes');
-        const domainQuery = query(
-          domainMailboxesRef,
-          where('organizationId', '==', organizationId),
-          where('status', '==', 'active')
-        );
-        const domainSnapshot = await getDocs(domainQuery);
-
-        for (const doc of domainSnapshot.docs) {
-          const data = doc.data();
-          // Filter: Ignoriere Default-Domains (celeropress.com, sk-online-marketing.de)
-          if (data.inboxAddress?.includes('celeropress.com@') ||
-              data.inboxAddress?.includes('sk-online-marketing.de@')) {
-            console.log('⏭️  Skipping default domain mailbox:', data.inboxAddress);
-            continue;
-          }
-
-          allMailboxes.push({
-            id: doc.id,
-            type: 'domain',
-            label: `${data.domain} (Domain)`,
-            inboxAddress: data.inboxAddress,
-            domain: data.domain,
-            ...data
-          });
-        }
-
-        // 2. Load Projekt-Mailboxes
-        const projectMailboxesRef = collection(db, 'inbox_project_mailboxes');
-        const projectQuery = query(
-          projectMailboxesRef,
-          where('organizationId', '==', organizationId),
-          where('status', 'in', ['active', 'completed'])
-        );
-        const projectSnapshot = await getDocs(projectQuery);
-
-        for (const doc of projectSnapshot.docs) {
-          const data = doc.data();
-          allMailboxes.push({
-            id: doc.id,
-            type: 'project',
-            label: `${data.projectName} (Projekt)`,
-            inboxAddress: data.inboxAddress,
-            projectName: data.projectName,
-            ...data
-          });
-        }
-
-        console.log('📬 Loaded mailboxes:', allMailboxes);
-        setMailboxes(allMailboxes);
-
-        // Select current mailbox if available
-        if (currentMailboxEmail) {
-          const currentMailbox = allMailboxes.find(
-            mb => mb.inboxAddress?.toLowerCase() === currentMailboxEmail.toLowerCase()
-          );
-          if (currentMailbox) {
-            setSelectedMailboxId(currentMailbox.id);
-            console.log('✅ Pre-selected current mailbox:', currentMailbox.label);
-          }
-        } else {
-          // Fallback: Select first mailbox
-          if (allMailboxes.length > 0) {
-            setSelectedMailboxId(allMailboxes[0].id);
-          }
+        // Select default address
+        const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+        if (defaultAddress && defaultAddress.id) {
+          setSelectedEmailAddressId(defaultAddress.id);
         }
 
         // Load signatures
@@ -147,17 +85,17 @@ export function ComposeEmail({
           setSelectedSignatureId(defaultSignature.id!);
         }
       } catch (error) {
-        console.error('Failed to load mailbox data:', error);
+        console.error('Failed to load email data:', error);
       } finally {
-        setLoadingMailboxes(false);
+        setLoadingAddresses(false);
         setLoadingSignatures(false);
       }
     };
 
     if (user?.uid) {
-      loadMailboxData();
+      loadEmailData();
     }
-  }, [organizationId, user?.uid, currentMailboxEmail]);
+  }, [organizationId, user?.uid]);
 
 
   // Helper function to merge signature with content
@@ -218,39 +156,18 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
   }, [mode, replyToEmail]);
 
   const handleSend = async () => {
-    if (!to || !subject || !content || !selectedMailboxId) {
-      toastService.error('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie ein Postfach');
+    if (!to || !subject || !content || !selectedEmailAddressId) {
+      toastService.error('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse');
       return;
     }
 
     setSending(true);
 
     try {
-      // Get selected mailbox
-      const selectedMailbox = mailboxes.find(mb => mb.id === selectedMailboxId);
-      if (!selectedMailbox) {
-        throw new Error('Kein Postfach ausgewählt');
-      }
-
-      console.log('📬 Selected mailbox:', selectedMailbox);
-
-      // Load email address for this mailbox
-      const { emailAddressService } = await import('@/lib/email/email-address-service');
-      let fromAddress: any;
-
-      if (selectedMailbox.type === 'domain') {
-        // Domain-Postfach: Lade Default-Email-Adresse für diese Domain
-        const addresses = await emailAddressService.getByOrganization(organizationId, user?.uid || '');
-        fromAddress = addresses.find(addr => addr.domain === selectedMailbox.domain) || addresses[0];
-      } else {
-        // Projekt-Postfach: Lade Email-Adresse für dieses Projekt
-        // TODO: Projekt hat emailAddressId? Wenn nicht, nutze Default
-        const addresses = await emailAddressService.getByOrganization(organizationId, user?.uid || '');
-        fromAddress = addresses[0]; // Fallback: Erste verfügbare Adresse
-      }
-
+      // Get selected email address
+      const fromAddress = emailAddresses.find(addr => addr.id === selectedEmailAddressId);
       if (!fromAddress) {
-        throw new Error('Keine Absender-Adresse gefunden');
+        throw new Error('Keine Absender-Adresse ausgewählt');
       }
 
       console.log('📧 From address:', fromAddress.email);
@@ -267,9 +184,22 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         name: fromAddress.displayName || ''
       };
 
-      // WICHTIG: Reply-To ist die Inbox-Adresse des gewählten Postfachs
-      const replyToAddress = selectedMailbox.inboxAddress;
-      console.log('📬 Reply-To:', replyToAddress);
+      // WICHTIG: Reply-To wird AUTOMATISCH aus currentMailboxEmail gesetzt (wenn vorhanden)
+      // Das ist die Inbox-Adresse des aktuellen Postfachs
+      let replyToAddress: string | undefined;
+
+      if (currentMailboxEmail) {
+        // Verwende die aktuelle Mailbox-Adresse (automatisch!)
+        replyToAddress = currentMailboxEmail;
+        console.log('📬 Using current mailbox as reply-to (automatic):', replyToAddress);
+      } else if (replyToEmail?.replyTo?.email) {
+        // Fallback: Verwende die Reply-To der ursprünglichen Email
+        replyToAddress = replyToEmail.replyTo.email;
+        console.log('🔁 Using original reply-to:', replyToAddress);
+      } else {
+        // Letzter Fallback: Keine Reply-To (normal email)
+        console.log('⚠️ No reply-to address (normal outgoing email)');
+      }
 
       // Merge signature with content before sending
       const finalContent = mergeSignatureWithContent(content, selectedSignatureId);
@@ -282,7 +212,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         textContent: finalContent.replace(/<[^>]*>/g, ''), // Simple HTML strip
       };
 
-      // Send email via API - replyToAddress separat übergeben
+      // Send email via API - replyToAddress wird automatisch gesetzt
       const response = await fetch('/api/email/send', {
         method: 'POST',
         headers: {
@@ -290,11 +220,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         },
         body: JSON.stringify({
           ...emailData,
-          emailAddressId: fromAddress.id,
-          mailboxId: selectedMailbox.id,
-          mailboxType: selectedMailbox.type,
+          emailAddressId: selectedEmailAddressId,
           replyToMessageId: mode === 'reply' ? replyToEmail?.messageId : undefined,
-          // WICHTIG: Reply-To Adresse = Inbox-Adresse des gewählten Postfachs
+          // WICHTIG: Reply-To Adresse wird automatisch aus currentMailboxEmail gesetzt
           replyTo: replyToAddress,
           // Thread-ID und Campaign-ID für korrekte Zuordnung
           threadId: replyToEmail?.threadId,
@@ -304,8 +232,8 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           userId: user?.uid || organizationId,
           signatureId: selectedSignatureId || undefined,
           mode,
-          domainId: selectedMailbox.type === 'domain' ? selectedMailbox.domainId : replyToEmail?.domainId,
-          projectId: selectedMailbox.type === 'project' ? selectedMailbox.projectId : replyToEmail?.projectId,
+          domainId: replyToEmail?.domainId,
+          projectId: replyToEmail?.projectId,
           // Attachments
           attachments: attachments.map(att => ({
             filename: att.metadata?.fileName || 'attachment',
@@ -366,42 +294,25 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         {/* Form */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
-            {/* Mailbox selector */}
+            {/* Email address selector */}
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label>Absender-Postfach</Label>
+                <Label>Absender Email</Label>
                 <Select
-                  value={selectedMailboxId}
-                  onChange={(e) => setSelectedMailboxId(e.target.value)}
-                  disabled={loadingMailboxes || mailboxes.length === 0}
+                  value={selectedEmailAddressId}
+                  onChange={(e) => setSelectedEmailAddressId(e.target.value)}
+                  disabled={loadingAddresses || emailAddresses.length === 0}
                 >
-                  {loadingMailboxes ? (
-                    <option>Lade Postfächer...</option>
-                  ) : mailboxes.length === 0 ? (
-                    <option>Keine Postfächer verfügbar</option>
+                  {loadingAddresses ? (
+                    <option>Lade E-Mail-Adressen...</option>
+                  ) : emailAddresses.length === 0 ? (
+                    <option>Keine E-Mail-Adressen verfügbar</option>
                   ) : (
-                    <>
-                      {/* Domain-Postfächer */}
-                      {mailboxes.filter(mb => mb.type === 'domain').length > 0 && (
-                        <optgroup label="Domain-Postfächer">
-                          {mailboxes.filter(mb => mb.type === 'domain').map(mb => (
-                            <option key={mb.id} value={mb.id}>
-                              {mb.label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {/* Projekt-Postfächer */}
-                      {mailboxes.filter(mb => mb.type === 'project').length > 0 && (
-                        <optgroup label="Projekt-Postfächer">
-                          {mailboxes.filter(mb => mb.type === 'project').map(mb => (
-                            <option key={mb.id} value={mb.id}>
-                              {mb.label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </>
+                    emailAddresses.map(addr => (
+                      <option key={addr.id} value={addr.id}>
+                        {addr.displayName} &lt;{addr.email}&gt;
+                      </option>
+                    ))
                   )}
                 </Select>
               </Field>
@@ -531,7 +442,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
             </Button>
             <Button
               onClick={handleSend}
-              disabled={sending || mailboxes.length === 0}
+              disabled={sending || emailAddresses.length === 0}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <PaperAirplaneIcon className="h-4 w-4 mr-2" />
