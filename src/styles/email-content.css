@@ -176,17 +176,20 @@
   border-collapse: collapse !important;
 }
 
-/* Respektiere inline width/height für Tabellen (wichtig für Signaturen) */
+/* WICHTIG: Überschreibe feste Table-Breiten für Responsive Design */
 .email-content table[width],
 .email-content table[style*="width"] {
-  width: auto !important; /* Lasse inline widths zu */
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
+/* Überschreibe auch Cell-Breiten */
 .email-content td[width],
 .email-content td[style*="width"],
 .email-content th[width],
 .email-content th[style*="width"] {
-  /* Lasse cell widths wie sie sind */
+  width: auto !important;
+  max-width: none !important;
 }
 
 /* Responsive adjustments */
