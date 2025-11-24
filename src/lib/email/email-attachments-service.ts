@@ -1,9 +1,10 @@
 // src/lib/email/email-attachments-service.ts
 // Service für Email-Anhänge - Integration mit Media-System für Storage-Tracking
 
-import { adminStorage } from '@/lib/firebase/admin-init';
+import { adminStorage, adminDb } from '@/lib/firebase/admin-init';
 import { nanoid } from 'nanoid';
 import { EmailAttachment } from '@/types/inbox-enhanced';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export interface UploadAttachmentParams {
   file: Buffer;
@@ -13,6 +14,65 @@ export interface UploadAttachmentParams {
   messageId: string;
   inline?: boolean;
   contentId?: string;
+}
+
+/**
+ * Cache für Email-Attachments Ordner IDs pro Organization
+ * Verhindert mehrfache Firestore-Queries
+ */
+const emailAttachmentsFolderCache = new Map<string, string>();
+
+/**
+ * Holt oder erstellt den "Email-Anhänge" Ordner für eine Organization
+ * Dieser Ordner wird im Media Center angezeigt
+ */
+async function getOrCreateEmailAttachmentsFolder(organizationId: string): Promise<string> {
+  // Prüfe Cache
+  const cached = emailAttachmentsFolderCache.get(organizationId);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    // Suche nach existierendem Ordner
+    const foldersRef = adminDb.collection('media_folders');
+    const query = foldersRef
+      .where('organizationId', '==', organizationId)
+      .where('name', '==', 'Email-Anhänge')
+      .limit(1);
+
+    const snapshot = await query.get();
+
+    if (!snapshot.empty) {
+      const folderId = snapshot.docs[0].id;
+      emailAttachmentsFolderCache.set(organizationId, folderId);
+      console.log(`[EmailAttachments] Found existing folder: ${folderId}`);
+      return folderId;
+    }
+
+    // Ordner existiert nicht - erstelle ihn
+    const folderData = {
+      organizationId,
+      name: 'Email-Anhänge',
+      description: 'Automatisch gespeicherte Email-Anhänge',
+      createdBy: 'system',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      color: '#3B82F6', // Blau
+    };
+
+    const docRef = await foldersRef.add(folderData);
+    const folderId = docRef.id;
+
+    emailAttachmentsFolderCache.set(organizationId, folderId);
+    console.log(`[EmailAttachments] Created new folder: ${folderId}`);
+
+    return folderId;
+
+  } catch (error: any) {
+    console.error('[EmailAttachments] Failed to get/create folder:', error);
+    throw new Error(`Failed to create Email-Anhänge folder: ${error.message}`);
+  }
 }
 
 /**
@@ -77,8 +137,9 @@ export async function uploadEmailAttachment(
     const publicUrl = signedUrl;
 
     // Erstelle EmailAttachment-Objekt (nur definierte Werte)
+    const attachmentId = nanoid();
     const attachment: EmailAttachment = {
-      id: nanoid(),
+      id: attachmentId,
       filename: filename,
       contentType,
       size: file.length,
@@ -86,6 +147,42 @@ export async function uploadEmailAttachment(
       inline: inline || false,
       ...(cleanContentId && { contentId: cleanContentId }) // Bereinigt, nur wenn definiert
     };
+
+    // ✅ NEU: Erstelle media_assets Eintrag für Media Center Integration
+    try {
+      const folderId = await getOrCreateEmailAttachmentsFolder(organizationId);
+
+      const mediaAssetData = {
+        organizationId,
+        fileName: filename,
+        fileType: contentType,
+        storagePath,
+        downloadUrl: publicUrl,
+        folderId,
+        createdBy: 'system:email',
+        metadata: {
+          fileSize: file.length,
+          // Email-spezifische Metadaten
+          isEmailAttachment: true,
+          emailMessageId: messageId,
+          inline: inline || false,
+          ...(cleanContentId && { contentId: cleanContentId }),
+        },
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      const mediaAssetRef = await adminDb.collection('media_assets').add(mediaAssetData);
+      console.log(`[EmailAttachments] Created media_asset: ${mediaAssetRef.id} for ${filename}`);
+
+      // Speichere media_asset ID im Attachment für späteres Cleanup
+      (attachment as any).mediaAssetId = mediaAssetRef.id;
+
+    } catch (mediaError: any) {
+      // Fehler bei media_assets sollte Upload nicht blockieren
+      console.error('[EmailAttachments] Failed to create media_asset:', mediaError);
+      // Attachment wird trotzdem zurückgegeben
+    }
 
     return attachment;
 
@@ -98,21 +195,49 @@ export async function uploadEmailAttachment(
 /**
  * Löscht alle Anhänge einer Email-Message
  * Wird aufgerufen, wenn eine Email gelöscht wird
+ *
+ * ✅ NEU: Löscht auch media_assets Einträge im Media Center
  */
 export async function deleteEmailAttachments(
   organizationId: string,
   messageId: string
 ): Promise<void> {
   try {
+    // 1. Lösche Files aus Firebase Storage
     const bucket = adminStorage.bucket();
     const prefix = `organizations/${organizationId}/media/email-attachments/${messageId}/`;
 
-    // Lösche alle Files mit diesem Prefix
     await bucket.deleteFiles({
       prefix,
     });
 
-    console.log(`[EmailAttachmentsService] Deleted attachments for message ${messageId}`);
+    console.log(`[EmailAttachmentsService] Deleted storage files for message ${messageId}`);
+
+    // 2. ✅ NEU: Lösche media_assets Einträge
+    try {
+      const assetsRef = adminDb.collection('media_assets');
+      const query = assetsRef
+        .where('organizationId', '==', organizationId)
+        .where('metadata.emailMessageId', '==', messageId)
+        .where('metadata.isEmailAttachment', '==', true);
+
+      const snapshot = await query.get();
+
+      if (!snapshot.empty) {
+        const batch = adminDb.batch();
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        console.log(`[EmailAttachmentsService] Deleted ${snapshot.size} media_assets for message ${messageId}`);
+      }
+
+    } catch (mediaError: any) {
+      console.error('[EmailAttachmentsService] Failed to delete media_assets:', mediaError);
+      // Nicht werfen - Storage wurde bereits gelöscht
+    }
+
   } catch (error: any) {
     console.error('[EmailAttachmentsService] Delete failed:', error);
     // Nicht werfen - Email soll trotzdem gelöscht werden können
