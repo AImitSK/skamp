@@ -381,7 +381,8 @@ class NotificationsService {
 
       case 'TEAM_CHAT_MENTION':
         // Validiere Team-Chat Mention Kontext
-        return metadata?.projectId && metadata?.mentionedBy && metadata?.messageContent;
+        // Akzeptiert sowohl projectId (Team Chat) als auch threadId (Email Mentions)
+        return (metadata?.projectId || metadata?.threadId) && metadata?.mentionedBy;
 
       default:
         return false;
