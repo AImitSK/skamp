@@ -77,13 +77,16 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
         node.removeAttribute('width');
         node.removeAttribute('height');
 
-        // Füge responsive inline-styles hinzu, die Original-Dimensionen als max-width verwenden
-        let maxWidth = '100%';
+        // Berechne max-width: Verwende Original-Width, aber maximal 400px für große Bilder
+        let maxWidthPx = 400; // Default für Bilder ohne width
         if (originalWidth && !isNaN(Number(originalWidth))) {
-          maxWidth = `min(${originalWidth}px, 100%)`;
+          const origWidth = Number(originalWidth);
+          // Für kleine Logos (< 200px) verwende Original-Größe
+          // Für größere Bilder, begrenze auf 400px
+          maxWidthPx = origWidth < 200 ? origWidth : Math.min(origWidth, 400);
         }
 
-        node.setAttribute('style', `max-width: ${maxWidth} !important; height: auto !important; display: inline-block;`);
+        node.setAttribute('style', `max-width: ${maxWidthPx}px !important; width: 100% !important; height: auto !important; display: inline-block;`);
 
         if (!allowExternalImages) {
           const src = node.getAttribute('src');
