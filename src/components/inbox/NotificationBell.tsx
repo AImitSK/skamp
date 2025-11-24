@@ -129,9 +129,10 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
     }
 
     // Navigate to inbox for mention notifications
-    if (notification.type === 'mention' && notification.threadId) {
-      console.log('📧 Navigating to inbox with threadId:', notification.threadId);
-      router.push(`/dashboard/communication/inbox?threadId=${notification.threadId}`);
+    if (notification.type === 'TEAM_CHAT_MENTION' && notification.metadata?.threadId) {
+      console.log('📧 Navigating to inbox with threadId:', notification.metadata.threadId);
+      // Öffne Inbox mit richtigem Thread und Notizen-Panel geöffnet
+      router.push(`/dashboard/communication/inbox?threadId=${notification.metadata.threadId}&openNotes=true`);
       return;
     }
 

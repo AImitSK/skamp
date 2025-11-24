@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
@@ -65,6 +66,7 @@ export function InternalNotes({
   teamMembers = []
 }: InternalNotesProps) {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [notes, setNotes] = useState<InternalNote[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(true);
@@ -126,6 +128,15 @@ export function InternalNotes({
 
     return () => unsubscribe();
   }, [threadId, organizationId]);
+
+  // Auto-expand panel when coming from notification
+  useEffect(() => {
+    const openNotesParam = searchParams.get('openNotes');
+    if (openNotesParam === 'true' && !isExpanded) {
+      console.log('📝 Auto-opening notes panel from notification');
+      setIsExpanded(true);
+    }
+  }, [searchParams, isExpanded]);
 
   // Handle @mentions - Wie im Team Chat
   const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {

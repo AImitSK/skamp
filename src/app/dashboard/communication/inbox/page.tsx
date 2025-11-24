@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,8 @@ export default function InboxPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
-  
+  const searchParams = useSearchParams();
+
   // State
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
@@ -169,6 +171,21 @@ export default function InboxPage() {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
   }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
+
+  // Handle URL parameters for navigation from notifications
+  useEffect(() => {
+    const threadIdParam = searchParams.get('threadId');
+    const openNotesParam = searchParams.get('openNotes');
+
+    if (threadIdParam && threads.length > 0) {
+      // Find and select the thread
+      const thread = threads.find(t => t.id === threadIdParam);
+      if (thread && thread.id !== selectedThread?.id) {
+        console.log('📧 Auto-selecting thread from URL:', threadIdParam);
+        handleThreadSelect(thread);
+      }
+    }
+  }, [searchParams, threads, selectedThread?.id]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
