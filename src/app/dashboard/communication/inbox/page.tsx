@@ -205,36 +205,21 @@ export default function InboxPage() {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
-        console.log('🔍 [DEBUG] Alle geladenen Threads:', threadsData.map(t => ({
-          id: t.id,
-          subject: t.subject,
-          projectId: (t as any).projectId,
-          domainId: (t as any).domainId
-        })));
-
         // Domain-Postfach: Filtere nach domainId UND !projectId
         if (selectedFolderType === 'general' && selectedTeamMemberId) {
-          console.log('🔍 [DEBUG] Domain-Filter aktiv für:', selectedTeamMemberId);
           threadsData = threadsData.filter(thread => {
             const domainId = (thread as any).domainId;
             const projectId = (thread as any).projectId;
-            const matches = domainId === selectedTeamMemberId && !projectId;
-            console.log('🔍 [DEBUG] Thread:', thread.subject, '- domainId:', domainId, 'projectId:', projectId, 'matches:', matches);
-            return matches;
+            return domainId === selectedTeamMemberId && !projectId;
           });
         }
         // Projekt-Postfach: Filtere nach projectId
         else if (selectedFolderType === 'team' && selectedTeamMemberId) {
-          console.log('🔍 [DEBUG] Project-Filter aktiv für:', selectedTeamMemberId);
           threadsData = threadsData.filter(thread => {
             const projectId = (thread as any).projectId;
-            const matches = projectId === selectedTeamMemberId;
-            console.log('🔍 [DEBUG] Thread:', thread.subject, '- projectId:', projectId, 'matches:', matches);
-            return matches;
+            return projectId === selectedTeamMemberId;
           });
         }
-
-        console.log('🔍 [DEBUG] Gefilterte Threads:', threadsData.length);
 
         // Berechne unreadCounts für ALLE Mailboxen (nicht nur gefilterte)
         // Zähle Threads mit ungelesenen Nachrichten (nicht die Summe der Messages!)
@@ -257,7 +242,6 @@ export default function InboxPage() {
             }
           }
         });
-        console.log('🔍 [DEBUG] Berechnete unreadCounts (Threads mit neuen Nachrichten):', counts);
         setUnreadCounts(counts);
 
         // Client-seitig nach lastMessageAt sortieren
