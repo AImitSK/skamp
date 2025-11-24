@@ -66,16 +66,22 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
       SANITIZE_DOM: true
     };
 
-    // Add hook to handle external images
+    // Add hook to handle external images and fix responsive images
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (node.tagName === 'IMG' && !allowExternalImages) {
-        const src = node.getAttribute('src');
-        if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
-          // Replace external images with placeholder or proxy through our server
-          node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
-          node.setAttribute('loading', 'lazy');
-          // Füge loading-Klasse hinzu (wird per onLoad entfernt)
-          node.setAttribute('class', 'loading');
+      if (node.tagName === 'IMG') {
+        // WICHTIG: Entferne width/height Attribute für responsive Bilder
+        node.removeAttribute('width');
+        node.removeAttribute('height');
+
+        if (!allowExternalImages) {
+          const src = node.getAttribute('src');
+          if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+            // Replace external images with placeholder or proxy through our server
+            node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
+            node.setAttribute('loading', 'lazy');
+            // Füge loading-Klasse hinzu (wird per onLoad entfernt)
+            node.setAttribute('class', 'loading');
+          }
         }
       }
 
