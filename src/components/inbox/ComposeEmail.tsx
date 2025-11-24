@@ -103,15 +103,22 @@ export function ComposeEmail({
     if (!signatureId || signatures.length === 0) {
       return baseContent;
     }
-    
+
     const signature = signatures.find(sig => sig.id === signatureId);
     if (!signature) {
       return baseContent;
     }
-    
+
+    // Mache Bilder in der Signatur responsive
+    const signatureContent = signature.content || '';
+    const responsiveSignatureContent = signatureContent.replace(
+      /<img([^>]*)>/gi,
+      '<img$1 style="max-width: 100% !important; height: auto !important;">'
+    );
+
     const signatureHtml = `
 <div class="signature" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
-  ${signature.content || ''}
+  ${responsiveSignatureContent}
 </div>`;
 
     // Signatur wird immer unter der Nachricht eingefügt
