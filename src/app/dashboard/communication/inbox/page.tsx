@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,7 @@ export default function InboxPage() {
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // State
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
@@ -183,9 +184,14 @@ export default function InboxPage() {
       if (thread && thread.id !== selectedThread?.id) {
         console.log('📧 Auto-selecting thread from URL:', threadIdParam);
         handleThreadSelect(thread);
+
+        // WICHTIG: Entferne URL-Parameter nach Auto-Selection
+        // Sonst blockieren sie die manuelle Navigation in der EmailList
+        const currentPath = window.location.pathname;
+        router.replace(currentPath, { scroll: false });
       }
     }
-  }, [searchParams, threads, selectedThread?.id]);
+  }, [searchParams, threads, selectedThread?.id, router]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
