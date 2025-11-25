@@ -145,12 +145,34 @@ async function processScheduledEmails() {
         );
         console.log(`✅ [${doc.id}] Email-Versand abgeschlossen: ${result.successCount} erfolgreich, ${result.failureCount} fehlgeschlagen`);
 
-        // MONITORING: Erstelle Campaign-Monitoring-Tracker (falls aktiviert)
+        // MONITORING: Erstelle Campaign-Monitoring-Tracker (IMMER für Projekt-Kampagnen)
         if (result.successCount > 0) {
           try {
             const campaign = preparedData.campaign;
-            if (campaign.monitoringConfig?.isEnabled) {
+
+            // Prüfe ob Kampagne zu einem Projekt gehört ODER Monitoring explizit aktiviert
+            const shouldCreateTracker =
+              campaign.projectId ||                          // Projekt-Kampagne → immer monitoren
+              campaign.monitoringConfig?.isEnabled === true; // Oder explizit aktiviert
+
+            if (shouldCreateTracker) {
               const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
+              const { prService } = await import('@/lib/firebase/pr-service');
+
+              // Setze monitoringConfig falls nicht vorhanden (für Projekt-Kampagnen)
+              if (!campaign.monitoringConfig?.isEnabled && campaign.projectId) {
+                await prService.update(scheduledEmail.campaignId, {
+                  monitoringConfig: {
+                    isEnabled: true,
+                    monitoringPeriod: 30,
+                    keywords: [],  // Werden aus Company extrahiert
+                    sources: { googleNews: true, rssFeeds: [] },
+                    minMatchScore: 70
+                  }
+                });
+                console.log(`📝 [${doc.id}] MonitoringConfig automatisch gesetzt für Projekt-Kampagne`);
+              }
+
               const trackerId = await campaignMonitoringService.createTrackerForCampaign(
                 scheduledEmail.campaignId,
                 scheduledEmail.organizationId

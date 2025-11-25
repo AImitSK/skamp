@@ -55,19 +55,30 @@ class CampaignMonitoringService {
       throw new Error('Campaign not found');
     }
 
-    if (!campaign.monitoringConfig?.isEnabled) {
+    // Erlaube Tracker-Erstellung auch ohne explizites isEnabled (für Projekt-Kampagnen)
+    if (!campaign.monitoringConfig?.isEnabled && !campaign.projectId) {
       throw new Error('Monitoring not enabled for campaign');
     }
 
+    // Fallback-Config wenn keine vorhanden (für Projekt-Kampagnen)
+    const monitoringConfig = campaign.monitoringConfig || {
+      isEnabled: true,
+      monitoringPeriod: 30 as const,
+      keywords: [],
+      sources: { googleNews: true, rssFeeds: [] },
+      minMatchScore: 70
+    };
+
     // 2. Berechne End-Datum basierend auf Monitoring Period
     const startDate = Timestamp.now();
-    const endDate = this.calculateEndDate(startDate, campaign.monitoringConfig.monitoringPeriod);
+    const endDate = this.calculateEndDate(startDate, monitoringConfig.monitoringPeriod);
 
     // 3. Sammle alle Channels aus Empfängern
     const channels = await this.buildChannelsFromRecipients(campaign, organizationId);
 
     // 3b. Füge Google News Channel hinzu (kampagnen-weit, EINMAL)
-    const googleNewsChannel = this.buildGoogleNewsChannel(campaign);
+    // Keywords werden aus Company extrahiert falls nicht in monitoringConfig vorhanden
+    const googleNewsChannel = await this.buildGoogleNewsChannel(campaign, organizationId);
     if (googleNewsChannel) {
       channels.push(googleNewsChannel);
     }
@@ -200,15 +211,31 @@ class CampaignMonitoringService {
    * Erstellt Google News Channel für Kampagne
    *
    * Google News wird EINMAL pro Kampagne erstellt (nicht pro Publication)
+   * Keywords werden aus Company extrahiert falls nicht in monitoringConfig vorhanden
    */
-  private buildGoogleNewsChannel(campaign: PRCampaign): MonitoringChannel | null {
-    if (!campaign.monitoringConfig?.isEnabled) return null;
+  private async buildGoogleNewsChannel(
+    campaign: PRCampaign,
+    organizationId: string
+  ): Promise<MonitoringChannel | null> {
+    // Keywords-Fallback: Aus Company extrahieren wenn keine vorhanden
+    let keywords = campaign.monitoringConfig?.keywords || [];
 
-    const keywords = campaign.monitoringConfig.keywords || [];
-    if (keywords.length === 0) return null;
+    if (keywords.length === 0 && campaign.clientId) {
+      // Lade Company und extrahiere Keywords
+      const company = await this.getCompany(campaign.clientId, organizationId);
+      if (company) {
+        keywords = this.extractKeywordsFromCompany(company);
+        console.log(`📝 Extracted ${keywords.length} keywords from company: ${keywords.join(', ')}`);
+      }
+    }
 
-    // Baue Google News RSS URL
-    const query = keywords.join(' ');
+    if (keywords.length === 0) {
+      console.log('⚠️ No keywords available for Google News channel');
+      return null;
+    }
+
+    // Baue Google News RSS URL mit OR für bessere Ergebnisse
+    const query = keywords.join(' OR ');
     const encodedQuery = encodeURIComponent(query);
     const googleNewsUrl = `https://news.google.com/rss/search?q=${encodedQuery}&hl=de&gl=DE&ceid=DE:de`;
 
@@ -223,6 +250,78 @@ class CampaignMonitoringService {
       articlesFound: 0,
       errorCount: 0
     };
+  }
+
+  /**
+   * Lädt Company by ID
+   */
+  private async getCompany(
+    companyId: string,
+    organizationId: string
+  ): Promise<any | null> {
+    try {
+      const companyDoc = await getDoc(
+        doc(db, 'companies', companyId)
+      );
+
+      if (!companyDoc.exists()) return null;
+
+      const data = companyDoc.data();
+      if (data.organizationId !== organizationId) return null;
+
+      return { id: companyDoc.id, ...data };
+    } catch (error) {
+      console.error('Error loading company:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extrahiert Keywords aus Company-Daten
+   * Verwendet name, officialName und tradingName
+   */
+  private extractKeywordsFromCompany(company: any): string[] {
+    const keywords: string[] = [];
+    const legalForms = [
+      'GmbH', 'AG', 'KG', 'OHG', 'GbR', 'UG', 'e.V.', 'eG',
+      'Ltd.', 'Ltd', 'Inc.', 'Inc', 'LLC', 'Corp.', 'Corp',
+      'SE', 'S.A.', 'S.L.', 'B.V.', 'N.V.', 'Pty', 'PLC'
+    ];
+
+    const removeLegalForm = (name: string): string => {
+      let cleaned = name.trim();
+      for (const form of legalForms) {
+        const regex = new RegExp(`\\s*${form.replace('.', '\\.')}\\s*$`, 'i');
+        cleaned = cleaned.replace(regex, '').trim();
+      }
+      return cleaned;
+    };
+
+    // 1. name (Pflicht)
+    if (company.name) {
+      keywords.push(company.name.trim());
+      const withoutLegal = removeLegalForm(company.name);
+      if (withoutLegal !== company.name.trim() && withoutLegal.length >= 2) {
+        keywords.push(withoutLegal);
+      }
+    }
+
+    // 2. officialName (falls vorhanden und anders als name)
+    if (company.officialName && company.officialName !== company.name) {
+      keywords.push(company.officialName.trim());
+      const withoutLegal = removeLegalForm(company.officialName);
+      if (withoutLegal !== company.officialName.trim() && !keywords.includes(withoutLegal) && withoutLegal.length >= 2) {
+        keywords.push(withoutLegal);
+      }
+    }
+
+    // 3. tradingName (falls vorhanden)
+    if (company.tradingName && !keywords.includes(company.tradingName.trim())) {
+      keywords.push(company.tradingName.trim());
+    }
+
+    // Deduplizieren und filtern
+    return [...new Set(keywords)].filter(k => k.length >= 2);
   }
 
   /**

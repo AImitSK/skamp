@@ -88,11 +88,33 @@ export async function POST(request: NextRequest) {
         draft.content.body // Email-Body aus Draft (nicht Campaign!)
       );
 
-      // 5. MONITORING: Erstelle Campaign-Monitoring-Tracker (falls aktiviert)
+      // 5. MONITORING: Erstelle Campaign-Monitoring-Tracker (IMMER für Projekt-Kampagnen)
       try {
         const campaign = preparedData.campaign;
-        if (campaign.monitoringConfig?.isEnabled) {
+
+        // Prüfe ob Kampagne zu einem Projekt gehört ODER Monitoring explizit aktiviert
+        const shouldCreateTracker =
+          campaign.projectId ||                          // Projekt-Kampagne → immer monitoren
+          campaign.monitoringConfig?.isEnabled === true; // Oder explizit aktiviert
+
+        if (shouldCreateTracker) {
           const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
+          const { prService } = await import('@/lib/firebase/pr-service');
+
+          // Setze monitoringConfig falls nicht vorhanden (für Projekt-Kampagnen)
+          if (!campaign.monitoringConfig?.isEnabled && campaign.projectId) {
+            await prService.update(campaignId, {
+              monitoringConfig: {
+                isEnabled: true,
+                monitoringPeriod: 30,
+                keywords: [],  // Werden aus Company extrahiert
+                sources: { googleNews: true, rssFeeds: [] },
+                minMatchScore: 70
+              }
+            });
+            console.log(`📝 MonitoringConfig automatisch gesetzt für Projekt-Kampagne ${campaignId}`);
+          }
+
           const trackerId = await campaignMonitoringService.createTrackerForCampaign(
             campaignId,
             organizationId
