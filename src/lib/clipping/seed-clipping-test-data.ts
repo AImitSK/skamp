@@ -44,16 +44,23 @@ export async function seedClippingTestData(
     createdBy: userId
   });
 
-  // 2. Test-Projekt erstellen
+  // 2. Test-Projekt erstellen (mit allen Pflichtfeldern für Projects-Page)
   const projectRef = await addDoc(collection(db, 'projects'), {
     organizationId,
+    userId, // Pflichtfeld
     title: 'Test-Projekt: Clipping System',
     description: 'Automatisch generiertes Test-Projekt für Clipping-System Tests',
-    companyId: companyRef.id,
+    // Kunde als korrektes Objekt (nicht nur companyId)
+    customer: {
+      id: companyRef.id,
+      name: 'TechVision GmbH'
+    },
     status: 'active',
+    currentStage: 'monitoring', // Pflichtfeld - direkt in Monitoring für Tests
     linkedCampaigns: [],
     isTestData: true,
     createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(), // Pflichtfeld für orderBy Query
     createdBy: userId
   });
 
