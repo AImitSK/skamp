@@ -510,7 +510,9 @@ export default function InboxPage() {
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
+    console.log('🎯 handleThreadSelect called with thread:', thread.id);
     setSelectedThread(thread);
+    selectedThreadRef.current = thread; // Keep in ref to survive re-renders
     setSelectedEmail(null); // Reset selected email when switching threads
 
     try {
