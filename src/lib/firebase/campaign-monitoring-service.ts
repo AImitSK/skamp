@@ -132,13 +132,19 @@ class CampaignMonitoringService {
     // Keywords-Fallback: Aus Company extrahieren wenn keine vorhanden
     let keywords = campaign.monitoringConfig?.keywords || [];
 
+    console.log(`🔍 buildGoogleNewsChannel: clientId=${campaign.clientId}, existingKeywords=${keywords.length}`);
+
     if (keywords.length === 0 && campaign.clientId) {
       // Lade Company und extrahiere Keywords
       const company = await this.getCompany(campaign.clientId, organizationId);
+      console.log(`🔍 Company loaded:`, company ? { id: company.id, name: company.name, officialName: company.officialName } : 'null');
+
       if (company) {
         keywords = this.extractKeywordsFromCompany(company);
         console.log(`📝 Extracted ${keywords.length} keywords from company: ${keywords.join(', ')}`);
       }
+    } else if (keywords.length === 0 && !campaign.clientId) {
+      console.log('⚠️ No clientId on campaign - cannot extract keywords from company');
     }
 
     if (keywords.length === 0) {
