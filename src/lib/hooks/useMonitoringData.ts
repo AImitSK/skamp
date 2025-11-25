@@ -4,6 +4,7 @@ import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { monitoringSuggestionService } from '@/lib/firebase/monitoring-suggestion-service';
+import { monitoringTrackerService } from '@/lib/firebase/monitoring-tracker-service';
 
 // ===================================
 // Query Hooks
@@ -149,6 +150,90 @@ export function useRejectSuggestion() {
       // Invalidiere projektbezogene Monitoring-Queries
       queryClient.invalidateQueries({
         queryKey: ['projectMonitoring']
+      });
+    },
+  });
+}
+
+// ===================================
+// Tracker Hooks (Plan 03)
+// ===================================
+
+/**
+ * Hook: useProjectMonitoringTracker
+ * Lädt den Monitoring-Tracker für ein Projekt
+ */
+export function useProjectMonitoringTracker(
+  projectId: string | undefined,
+  organizationId: string | undefined
+) {
+  return useQuery({
+    queryKey: ['monitoringTracker', projectId, organizationId],
+    queryFn: async () => {
+      if (!projectId || !organizationId) {
+        throw new Error('ProjectId und OrganizationId erforderlich');
+      }
+
+      return await monitoringTrackerService.getTrackerForProject(projectId, {
+        organizationId
+      });
+    },
+    enabled: !!projectId && !!organizationId,
+    staleTime: 30 * 1000, // 30 Sekunden - Tracker-Status sollte aktuell sein
+  });
+}
+
+/**
+ * Hook: useToggleMonitoring
+ * Aktiviert/Deaktiviert das Monitoring für einen Tracker
+ */
+export function useToggleMonitoring() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      trackerId: string;
+      isActive: boolean;
+      organizationId: string;
+    }) => {
+      return await monitoringTrackerService.toggleMonitoring(
+        data.trackerId,
+        data.isActive,
+        { organizationId: data.organizationId }
+      );
+    },
+    onSuccess: () => {
+      // Invalidiere Tracker-Queries
+      queryClient.invalidateQueries({
+        queryKey: ['monitoringTracker']
+      });
+    },
+  });
+}
+
+/**
+ * Hook: useExtendMonitoring
+ * Verlängert den Monitoring-Zeitraum
+ */
+export function useExtendMonitoring() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      trackerId: string;
+      additionalDays: 30 | 60 | 90;
+      organizationId: string;
+    }) => {
+      return await monitoringTrackerService.extendMonitoringPeriod(
+        data.trackerId,
+        data.additionalDays,
+        { organizationId: data.organizationId }
+      );
+    },
+    onSuccess: () => {
+      // Invalidiere Tracker-Queries
+      queryClient.invalidateQueries({
+        queryKey: ['monitoringTracker']
       });
     },
   });

@@ -4,7 +4,14 @@ import { useState, useCallback, useMemo } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
-import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion } from '@/lib/hooks/useMonitoringData';
+import {
+  useProjectMonitoringData,
+  useConfirmSuggestion,
+  useRejectSuggestion,
+  useProjectMonitoringTracker,
+  useToggleMonitoring,
+  useExtendMonitoring
+} from '@/lib/hooks/useMonitoringData';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { useRouter } from 'next/navigation';
@@ -13,6 +20,7 @@ import { ClippingArchive } from '@/components/monitoring/ClippingArchive';
 import { ProjectMonitoringOverview } from '@/components/projects/monitoring/ProjectMonitoringOverview';
 import EmptyState from '@/components/projects/monitoring/EmptyState';
 import LoadingState from '@/components/projects/monitoring/LoadingState';
+import { MonitoringControlBox } from '@/components/projects/monitoring/MonitoringControlBox';
 
 interface ProjectMonitoringTabProps {
   projectId: string;
@@ -30,8 +38,15 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     projectId,
     currentOrganization?.id
   );
+  const {
+    data: tracker,
+    isLoading: trackerLoading
+  } = useProjectMonitoringTracker(projectId, currentOrganization?.id);
+
   const confirmSuggestion = useConfirmSuggestion();
   const rejectSuggestion = useRejectSuggestion();
+  const toggleMonitoring = useToggleMonitoring();
+  const extendMonitoring = useExtendMonitoring();
 
   // Daten aus Query extrahieren
   const campaigns = data?.campaigns || [];
@@ -97,6 +112,45 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     setActiveView('recipients');
   }, []);
 
+  // Tracker Handlers
+  const handleToggleMonitoring = useCallback(async (enabled: boolean) => {
+    if (!tracker?.id || !currentOrganization) {
+      toastService.error('Tracker nicht verfügbar');
+      return;
+    }
+
+    try {
+      await toggleMonitoring.mutateAsync({
+        trackerId: tracker.id,
+        isActive: enabled,
+        organizationId: currentOrganization.id
+      });
+      toastService.success(enabled ? 'Monitoring aktiviert' : 'Monitoring deaktiviert');
+    } catch (error) {
+      console.error('Fehler beim Ändern des Monitoring-Status:', error);
+      toastService.error('Fehler beim Ändern des Monitoring-Status');
+    }
+  }, [tracker?.id, currentOrganization, toggleMonitoring]);
+
+  const handleExtendMonitoring = useCallback(async (days: 30 | 60 | 90) => {
+    if (!tracker?.id || !currentOrganization) {
+      toastService.error('Tracker nicht verfügbar');
+      return;
+    }
+
+    try {
+      await extendMonitoring.mutateAsync({
+        trackerId: tracker.id,
+        additionalDays: days,
+        organizationId: currentOrganization.id
+      });
+      toastService.success(`Monitoring um ${days} Tage verlängert`);
+    } catch (error) {
+      console.error('Fehler beim Verlängern des Monitorings:', error);
+      toastService.error('Fehler beim Verlängern des Monitorings');
+    }
+  }, [tracker?.id, currentOrganization, extendMonitoring]);
+
   if (isLoading) {
     return <LoadingState message="Lade Monitoring-Daten..." />;
   }
@@ -112,6 +166,14 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Monitoring Control Box */}
+      <MonitoringControlBox
+        tracker={tracker ?? null}
+        isLoading={trackerLoading}
+        onToggle={handleToggleMonitoring}
+        onExtend={handleExtendMonitoring}
+      />
+
       {/* View Toggle - nur wenn Overview */}
       {activeView === 'overview' && (
         <ProjectMonitoringOverview
