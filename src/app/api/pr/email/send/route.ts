@@ -99,18 +99,19 @@ export async function POST(request: NextRequest) {
 
         if (shouldCreateTracker) {
           const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
-          const { prService } = await import('@/lib/firebase/pr-service');
 
           // Setze monitoringConfig falls nicht vorhanden (für Projekt-Kampagnen)
+          // Direkt mit adminDb statt prService (Client-SDK vermeiden!)
           if (!campaign.monitoringConfig?.isEnabled && campaign.projectId) {
-            await prService.update(campaignId, {
+            await adminDb.collection('pr_campaigns').doc(campaignId).update({
               monitoringConfig: {
                 isEnabled: true,
                 monitoringPeriod: 30,
                 keywords: [],  // Werden aus Company extrahiert
                 sources: { googleNews: true, rssFeeds: [] },
                 minMatchScore: 70
-              }
+              },
+              updatedAt: Timestamp.now()
             });
             console.log(`📝 MonitoringConfig automatisch gesetzt für Projekt-Kampagne ${campaignId}`);
           }
