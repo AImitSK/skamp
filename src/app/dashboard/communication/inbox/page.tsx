@@ -206,14 +206,16 @@ export default function InboxPage() {
 
   // Restore selected thread if it gets lost during thread list updates
   useEffect(() => {
+    // Nur restore wenn selectedThread null ist ABER wir einen im Ref haben
     if (selectedThreadRef.current && !selectedThread && threads.length > 0) {
       const stillExists = threads.find(t => t.id === selectedThreadRef.current?.id);
-      if (stillExists) {
+      if (stillExists && stillExists.id === selectedThreadRef.current.id) {
         console.log('🔄 Restoring selected thread after list update:', stillExists.id);
+        // Setze nur selectedThread, lade Messages nicht neu
         setSelectedThread(stillExists);
       }
     }
-  }, [threads, selectedThread]);
+  }, [threads]); // Entferne selectedThread aus Dependencies um Loop zu vermeiden
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
@@ -537,6 +539,7 @@ export default function InboxPage() {
 
       // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
+        console.log('📧 Setting emails for thread:', thread.id, 'count:', threadMessages.length);
         setEmails(prevEmails => {
           // Remove existing messages for this thread and add new ones
           const otherMessages = prevEmails.filter(email => email.threadId !== thread.id);
@@ -545,6 +548,7 @@ export default function InboxPage() {
 
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
+        console.log('📧 Setting selectedEmail:', latestEmail.id);
         setSelectedEmail(latestEmail);
 
         // Mark thread as read
