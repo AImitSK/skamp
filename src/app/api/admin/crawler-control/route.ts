@@ -1,32 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { crawlerControlService } from '@/lib/firebase-admin/crawler-control-service';
 import { monitoringStatsService } from '@/lib/firebase-admin/monitoring-stats-service';
-
-// TODO: Implement proper auth check
-function isSuperAdmin(userId: string): boolean {
-  // Temporär: Alle erlaubt
-  // TODO: Checke gegen Super Admin Liste
-  return true;
-}
+import { verifyAdminRequest } from '@/lib/firebase-admin/super-admin-service';
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Auth Check implementieren
-    // const user = await verifyAuth(request);
-    // if (!isSuperAdmin(user.uid)) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    // Auth-Prüfung
+    const authResult = await verifyAdminRequest(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     const body = await request.json();
     const { action, payload } = body;
 
     switch (action) {
       case 'pause':
-        await crawlerControlService.pauseCronJob('temp_user_id', payload.reason);
+        await crawlerControlService.pauseCronJob(authResult.userId!, payload.reason);
         return NextResponse.json({ success: true });
 
       case 'resume':
-        await crawlerControlService.resumeCronJob('temp_user_id');
+        await crawlerControlService.resumeCronJob(authResult.userId!);
         // Cache leeren nach Resume
         monitoringStatsService.clearCache();
         return NextResponse.json({ success: true });

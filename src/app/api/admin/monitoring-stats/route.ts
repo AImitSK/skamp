@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { monitoringStatsService } from '@/lib/firebase-admin/monitoring-stats-service';
 import { crawlerErrorLogService } from '@/lib/firebase-admin/crawler-error-log-service';
-
-// TODO: Implement proper auth check
-function isSuperAdmin(userId: string): boolean {
-  // Temporär: Alle erlaubt
-  // TODO: Checke gegen Super Admin Liste
-  return true;
-}
+import { verifyAdminRequest } from '@/lib/firebase-admin/super-admin-service';
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Auth Check implementieren
-    // const user = await verifyAuth(request);
-    // if (!isSuperAdmin(user.uid)) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    // Auth-Prüfung
+    const authResult = await verifyAdminRequest(request);
+    if (!authResult.isValid) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     // Parallel laden für bessere Performance
     const [systemStats, organizationStats, channelHealth, errorLogs] = await Promise.all([
