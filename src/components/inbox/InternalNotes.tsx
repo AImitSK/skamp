@@ -133,7 +133,6 @@ export function InternalNotes({
   useEffect(() => {
     const openNotesParam = searchParams.get('openNotes');
     if (openNotesParam === 'true' && !isExpanded) {
-      console.log('📝 Auto-opening notes panel from notification');
       setIsExpanded(true);
     }
   }, [searchParams, isExpanded]);
@@ -266,15 +265,13 @@ export function InternalNotes({
       // Send notifications for mentions
       if (mentions.length > 0) {
         const userName = user.displayName || user.email || 'Unbekannt';
-        console.log('📤 Sending mention notifications to users:', mentions);
 
-        // Use the correct notifications service (not enhanced!)
         for (const mentionedUserId of mentions) {
           try {
-            const notificationId = await notificationsService.create({
+            await notificationsService.create({
               userId: mentionedUserId,
               organizationId,
-              type: 'TEAM_CHAT_MENTION', // Reuse existing type
+              type: 'TEAM_CHAT_MENTION',
               title: `${userName} hat Sie erwähnt`,
               message: `In einer Email-Notiz: "${newNote.substring(0, 100)}${newNote.length > 100 ? '...' : ''}"`,
               linkUrl: `/dashboard/communication/inbox?threadId=${threadId}`,
@@ -288,9 +285,8 @@ export function InternalNotes({
                 content: newNote.substring(0, 200)
               }
             });
-            console.log('✅ Notification created:', notificationId);
           } catch (error) {
-            console.error('❌ Error creating notification for user:', mentionedUserId, error);
+            console.error('Fehler beim Erstellen der Benachrichtigung:', error);
           }
         }
       }
@@ -317,26 +313,18 @@ export function InternalNotes({
     let matchIndex = 0;
 
     content.replace(mentionRegex, (match, name, offset) => {
-      console.log('🔍 [Mention] Checking:', { match, name });
-
-      // WICHTIG: Prüfe, ob der Name ein bekanntes Team-Member ist!
       const member = membersForMentions.find(m =>
         name.toLowerCase().startsWith(m.displayName.toLowerCase())
       );
 
       if (member) {
-        // Verwende nur den tatsächlichen Member-Namen, nicht den ganzen Match!
         const actualName = member.displayName;
         const actualMatch = `@${actualName}`;
 
-        console.log('✅ [Mention] Valid member found:', actualName);
-
-        // Text vor dem Match
         if (offset > lastIndex) {
           parts.push(content.substring(lastIndex, offset));
         }
 
-        // Mention-Span (nur für den tatsächlichen Namen!)
         const isOwnMention = actualName.toLowerCase() === currentUserDisplayName.toLowerCase();
         parts.push(
           <span
@@ -344,15 +332,14 @@ export function InternalNotes({
             className={clsx(
               "font-medium px-1.5 py-0.5 rounded",
               isOwnMention
-                ? "bg-yellow-100 text-yellow-800" // Eigene Mentions - gelb
-                : "bg-blue-100 text-blue-800"      // Andere Mentions - blau
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-blue-100 text-blue-800"
             )}
           >
             @{actualName}
           </span>
         );
 
-        // Restlicher Text nach dem Mention (alles was nicht zum Namen gehört)
         const restText = name.substring(actualName.length);
         if (restText) {
           parts.push(restText);
@@ -361,8 +348,6 @@ export function InternalNotes({
         lastIndex = offset + actualMatch.length;
         matchIndex++;
       } else {
-        console.log('❌ [Mention] No valid member for:', name);
-        // Kein gültiger Member - Text normal ausgeben
         if (offset > lastIndex) {
           parts.push(content.substring(lastIndex, offset));
         }

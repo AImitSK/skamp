@@ -87,6 +87,9 @@ export default function InboxPage() {
 
   // Ref to track selected thread (prevents loss during thread list updates)
   const selectedThreadRef = useRef<EmailThread | null>(null);
+
+  // Ref to block restore effect during URL navigation
+  const blockRestoreRef = useRef(false);
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -183,49 +186,40 @@ export default function InboxPage() {
   useEffect(() => {
     const threadIdParam = searchParams.get('threadId');
 
-    console.log('🔍 URL Navigation Effect:', {
-      threadIdParam,
-      threadsCount: threads.length,
-      hasAutoSelected: hasAutoSelectedFromUrlRef.current
-    });
-
-    // Läuft NUR EINMAL beim ersten Laden mit threadId Parameter
     if (threadIdParam && threads.length > 0 && !hasAutoSelectedFromUrlRef.current) {
       const thread = threads.find(t => t.id === threadIdParam);
-      console.log('🔍 Thread gefunden?', thread ? 'JA' : 'NEIN', thread?.id);
 
       if (thread) {
-        console.log('✅ Auto-selecting thread from URL:', threadIdParam);
         hasAutoSelectedFromUrlRef.current = true;
+        blockRestoreRef.current = true;
         handleThreadSelect(thread);
-      } else {
-        console.warn('❌ Thread nicht gefunden in Liste:', threadIdParam);
+
+        setTimeout(() => {
+          blockRestoreRef.current = false;
+        }, 500);
       }
     }
   }, [searchParams, threads]);
 
   // Restore selected thread if it gets lost during thread list updates
   useEffect(() => {
-    // Nur restore wenn selectedThread null ist ABER wir einen im Ref haben
-    // UND wenn emails bereits geladen sind (sonst würden wir sie überschreiben)
+    if (blockRestoreRef.current) {
+      return;
+    }
+
     if (selectedThreadRef.current && !selectedThread && threads.length > 0) {
       const stillExists = threads.find(t => t.id === selectedThreadRef.current?.id);
-      // Prüfe ob wir bereits emails für diesen Thread haben
       const hasEmails = emails.some(email => email.threadId === selectedThreadRef.current?.id);
 
       if (stillExists && stillExists.id === selectedThreadRef.current.id) {
         if (hasEmails) {
-          console.log('🔄 Restoring selected thread (emails already loaded):', stillExists.id);
-          // Emails sind bereits da, setze nur Thread zurück
           setSelectedThread(stillExists);
         } else {
-          console.log('🔄 Restoring selected thread (need to reload emails):', stillExists.id);
-          // Keine Emails, lade neu via handleThreadSelect
           handleThreadSelect(stillExists);
         }
       }
     }
-  }, [threads, emails]); // emails als Dependency um zu wissen wann sie geladen sind
+  }, [threads, emails]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
@@ -522,7 +516,6 @@ export default function InboxPage() {
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
-    console.log('🎯 handleThreadSelect called with thread:', thread.id);
     setSelectedThread(thread);
     selectedThreadRef.current = thread; // Keep in ref to survive re-renders
     setSelectedEmail(null); // Reset selected email when switching threads
@@ -549,16 +542,12 @@ export default function InboxPage() {
 
       // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
-        console.log('📧 Setting emails for thread:', thread.id, 'count:', threadMessages.length);
         setEmails(prevEmails => {
-          // Remove existing messages for this thread and add new ones
           const otherMessages = prevEmails.filter(email => email.threadId !== thread.id);
           return [...otherMessages, ...threadMessages];
         });
 
-        // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
-        console.log('📧 Setting selectedEmail:', latestEmail.id);
         setSelectedEmail(latestEmail);
 
         // Mark thread as read
@@ -573,14 +562,10 @@ export default function InboxPage() {
           }
         }
       } else {
-        // No messages found for thread
-        console.warn('⚠️ No messages found for thread:', thread.id);
         setSelectedEmail(null);
       }
     } catch (error) {
-      console.error('❌ Error loading thread messages:', error);
-      console.error('Thread ID:', thread.id);
-      console.error('Error details:', error instanceof Error ? error.message : error);
+      console.error('Fehler beim Laden der Thread-Nachrichten:', error);
       const errorMsg = 'Fehler beim Laden der Thread-Nachrichten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
       toastService.error(errorMsg);
       setError(errorMsg);
@@ -1036,14 +1021,12 @@ export default function InboxPage() {
             setShowCompose(false);
             setReplyToEmail(null);
           }}
-          onSend={(data) => {
-            console.log('✅ Email sent:', data);
+          onSend={() => {
             setShowCompose(false);
             setReplyToEmail(null);
-            // New email will appear automatically through real-time listener
           }}
         />
       )}
     </div>
   );
-}// rebuild
+}
