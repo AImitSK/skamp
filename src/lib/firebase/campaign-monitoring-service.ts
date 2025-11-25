@@ -21,11 +21,10 @@ import {
   MonitoringChannel
 } from '@/types/monitoring';
 import { PRCampaign } from '@/types/pr';
-import { Publication } from '@/types/library';
-import { handleRecipientLookup } from '@/lib/utils/publication-matcher';
-import { isMonitoringEnabled } from '@/lib/utils/publication-helpers';
-import { publicationService } from './library-service';
-import { prService } from './pr-service';
+
+// HINWEIS: Keine Client-SDK Services importieren! Diese lösen den Client-SDK Import aus.
+// Stattdessen direkt mit adminDb arbeiten.
+// Für RSS-Feed-Logik siehe Plan 02.
 
 class CampaignMonitoringService {
   private collectionName = 'campaign_monitoring_trackers';
@@ -39,12 +38,14 @@ class CampaignMonitoringService {
     campaignId: string,
     organizationId: string
   ): Promise<string> {
-    // 1. Lade Kampagne
-    const campaign = await prService.getById(campaignId);
+    // 1. Lade Kampagne (direkt mit Admin SDK)
+    const campaignDoc = await adminDb.collection('pr_campaigns').doc(campaignId).get();
 
-    if (!campaign) {
+    if (!campaignDoc.exists) {
       throw new Error('Campaign not found');
     }
+
+    const campaign = { id: campaignDoc.id, ...campaignDoc.data() } as PRCampaign;
 
     // Erlaube Tracker-Erstellung auch ohne explizites isEnabled (für Projekt-Kampagnen)
     if (!campaign.monitoringConfig?.isEnabled && !campaign.projectId) {
@@ -101,98 +102,22 @@ class CampaignMonitoringService {
 
   /**
    * Baut Channel-Liste aus Kampagnen-Empfängern
+   *
+   * HINWEIS: RSS-Feed-Extraktion aus Publications ist deaktiviert, da dies
+   * Client-SDK Dependencies erfordert. Nur Google News Channel wird erstellt.
+   * TODO: Für Plan 02 RSS-Feed-Logik mit Admin SDK implementieren.
    */
   private async buildChannelsFromRecipients(
     campaign: PRCampaign,
     organizationId: string
   ): Promise<MonitoringChannel[]> {
-    const channels: MonitoringChannel[] = [];
-    const seenPublicationIds = new Set<string>();
-
-    // 1. Lade alle Email-Sends der Kampagne
-    const sendsSnapshot = await adminDb
-      .collection('email_campaign_sends')
-      .where('campaignId', '==', campaign.id)
-      .where('status', '==', 'sent')
-      .get();
-
-    console.log(`📧 Processing ${sendsSnapshot.size} email sends...`);
-
-    // 2. Für jeden Empfänger: Lookup Publications
-    for (const sendDoc of sendsSnapshot.docs) {
-      const send = sendDoc.data();
-      const recipientEmail = send.recipientEmail;
-
-      if (!recipientEmail) continue;
-
-      try {
-        // Lookup Contact + Publications
-        const lookup = await handleRecipientLookup(
-          recipientEmail,
-          organizationId
-        );
-
-        // Für jede gefundene Publication
-        for (const matchedPub of lookup.publications) {
-          // Nur Company-Source Publications mit ID
-          if (matchedPub.source !== 'company' || !matchedPub.id) {
-            continue;
-          }
-
-          // Duplicate Check
-          if (seenPublicationIds.has(matchedPub.id)) {
-            continue;
-          }
-
-          seenPublicationIds.add(matchedPub.id);
-
-          // Lade vollständige Publication-Daten
-          const publication = await publicationService.getById(matchedPub.id, organizationId);
-
-          if (!publication || !isMonitoringEnabled(publication)) {
-            continue;
-          }
-
-          // Erstelle Channels aus Publication.monitoringConfig
-          const pubChannels = this.buildChannelsFromPublication(publication);
-          channels.push(...pubChannels);
-        }
-      } catch (error) {
-        console.error(`Error processing recipient ${recipientEmail}:`, error);
-        // Continue mit nächstem Empfänger
-      }
-    }
-
-    return channels;
+    // Vorerst leer - RSS Feeds werden in Plan 02 implementiert
+    // Google News Channel wird separat in buildGoogleNewsChannel() erstellt
+    console.log(`📧 RSS-Feed-Extraktion übersprungen (wird in Plan 02 implementiert)`);
+    return [];
   }
 
-  /**
-   * Erstellt Monitoring Channels aus einer Publication
-   */
-  private buildChannelsFromPublication(pub: Publication): MonitoringChannel[] {
-    const channels: MonitoringChannel[] = [];
-
-    if (!pub.monitoringConfig || !pub.id) return channels;
-
-    const config = pub.monitoringConfig;
-
-    // RSS Feeds
-    for (const feedUrl of config.rssFeedUrls || []) {
-      channels.push({
-        id: this.generateChannelId('rss', pub.id, feedUrl),
-        type: 'rss_feed',
-        publicationId: pub.id,
-        publicationName: pub.title,
-        url: feedUrl,
-        isActive: true,
-        wasFound: false,
-        articlesFound: 0,
-        errorCount: 0
-      });
-    }
-
-    return channels;
-  }
+  // buildChannelsFromPublication() wurde deaktiviert - wird in Plan 02 mit Admin SDK neu implementiert
 
   /**
    * Erstellt Google News Channel für Kampagne
