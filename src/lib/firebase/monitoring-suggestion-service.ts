@@ -93,7 +93,7 @@ class MonitoringSuggestionService {
     }
 
     // Erstelle Clipping aus Suggestion
-    const clippingData = {
+    const clippingData: Record<string, any> = {
       organizationId: suggestion.organizationId,
       campaignId: suggestion.campaignId,
       projectId: campaign.projectId,
@@ -107,10 +107,16 @@ class MonitoringSuggestionService {
       detectedAt: suggestion.createdAt,
       createdBy: context.userId,
       verifiedBy: context.userId,
-      verifiedAt: Timestamp.now(),
-      excerpt: suggestion.articleExcerpt,
-      imageUrl: suggestion.articleImage
+      verifiedAt: Timestamp.now()
     };
+
+    // Nur definierte optionale Felder hinzufügen (Firestore akzeptiert kein undefined)
+    if (suggestion.articleExcerpt) {
+      clippingData.excerpt = suggestion.articleExcerpt;
+    }
+    if (suggestion.articleImage) {
+      clippingData.imageUrl = suggestion.articleImage;
+    }
 
     const clippingId = await clippingService.create(
       clippingData,
