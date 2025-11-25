@@ -82,8 +82,8 @@ export default function InboxPage() {
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
 
-  // Ref to track if we've auto-selected from URL (to avoid infinite loops)
-  const autoSelectedFromUrlRef = useRef(false);
+  // Ref to track last auto-selected threadId from URL (to avoid infinite loops)
+  const lastAutoSelectedThreadIdRef = useRef<string | null>(null);
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -180,12 +180,13 @@ export default function InboxPage() {
   useEffect(() => {
     const threadIdParam = searchParams.get('threadId');
 
-    if (threadIdParam && threads.length > 0 && !autoSelectedFromUrlRef.current) {
+    // Nur ausführen wenn threadId existiert, threads geladen sind, UND es eine NEUE threadId ist
+    if (threadIdParam && threads.length > 0 && threadIdParam !== lastAutoSelectedThreadIdRef.current) {
       // Find and select the thread
       const thread = threads.find(t => t.id === threadIdParam);
       if (thread) {
         console.log('📧 Auto-selecting thread from URL:', threadIdParam);
-        autoSelectedFromUrlRef.current = true; // Verhindere erneute Auto-Selection
+        lastAutoSelectedThreadIdRef.current = threadIdParam; // Merke die threadId
 
         handleThreadSelect(thread);
 
@@ -194,6 +195,8 @@ export default function InboxPage() {
         setTimeout(() => {
           const currentPath = window.location.pathname;
           router.replace(currentPath, { scroll: false });
+          // Setze Ref zurück damit neue Links funktionieren
+          lastAutoSelectedThreadIdRef.current = null;
         }, 500); // Kurze Verzögerung damit handleThreadSelect fertig wird
       }
     }
