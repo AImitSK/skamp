@@ -3,35 +3,18 @@
  *
  * Plan 04: Auth-Prüfung für Admin-API-Endpoints
  * Zentrale Logik für Super-Admin Authentifizierung
+ *
+ * LOGIK: Alle Mitglieder der Super-Admin Organization sind Super-Admins
+ * (basiert auf info@sk-online-marketing.de's Organisation)
  */
 
 import { getAuth } from 'firebase-admin/auth';
 import { NextRequest } from 'next/server';
 import '@/lib/firebase/admin-init';
+import { isSuperAdmin } from '@/lib/api/super-admin-check';
 
-// Super-Admin E-Mail-Liste
-// Diese E-Mails haben Zugriff auf Admin-APIs
-const SUPER_ADMIN_EMAILS = [
-  'admin@celeropress.com',
-  'skuehne@posteo.de',
-  // Weitere E-Mails hier hinzufügen
-];
-
-/**
- * Prüft ob ein User Super-Admin ist
- */
-export async function isSuperAdmin(userId: string): Promise<boolean> {
-  try {
-    const auth = getAuth();
-    const user = await auth.getUser(userId);
-
-    // Prüfe ob E-Mail in der Liste ist
-    return SUPER_ADMIN_EMAILS.includes(user.email || '');
-  } catch (error) {
-    console.error('[SuperAdmin] Check failed:', error);
-    return false;
-  }
-}
+// Re-export für Kompatibilität
+export { isSuperAdmin };
 
 /**
  * Verifiziert einen Admin-Request und gibt User-ID zurück
@@ -53,6 +36,7 @@ export async function verifyAdminRequest(request: NextRequest): Promise<{
     const auth = getAuth();
     const decodedToken = await auth.verifyIdToken(token);
 
+    // Nutze bestehende Super-Admin Logik (Organisation-basiert)
     const isSuperAdminUser = await isSuperAdmin(decodedToken.uid);
 
     if (!isSuperAdminUser) {
