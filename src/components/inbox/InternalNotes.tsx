@@ -242,7 +242,8 @@ export function InternalNotes({
 
     try {
       const mentions = extractMentions(newNote);
-      
+
+      // Basis-Daten ohne optionale Felder
       const noteData: Omit<InternalNote, 'id'> = {
         threadId,
         emailId,
@@ -250,11 +251,15 @@ export function InternalNotes({
         userId: user.uid,
         userName: user.displayName || user.email || 'Unbekannt',
         userEmail: user.email || '',
-        userPhotoUrl: user.photoURL || undefined,
         mentions,
         createdAt: serverTimestamp() as Timestamp,
         organizationId
       };
+
+      // Nur userPhotoUrl hinzufügen, wenn es existiert (Firestore akzeptiert kein undefined)
+      if (user.photoURL) {
+        noteData.userPhotoUrl = user.photoURL;
+      }
 
       await addDoc(collection(db, 'email_notes'), noteData);
       

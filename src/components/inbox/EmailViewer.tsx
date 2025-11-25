@@ -54,20 +54,22 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
       if (node.tagName === 'IMG') {
         // WICHTIG: Behalte die spezifizierte Größe aus width/height Attributen
         const specifiedWidth = node.getAttribute('width');
-        const specifiedHeight = node.getAttribute('height');
 
-        // Entferne die HTML-Attribute (werden durch CSS ersetzt)
-        node.removeAttribute('width');
-        node.removeAttribute('height');
+        // Verwende node.style statt setAttribute um existierende Styles zu behalten
+        const imgElement = node as HTMLImageElement;
 
-        // Verwende die spezifizierte Breite als Basis (wie in der Email definiert)
         if (specifiedWidth && !isNaN(Number(specifiedWidth))) {
           const widthPx = Number(specifiedWidth);
           // Setze width auf spezifizierten Wert, aber max-width: 100% für Responsive
-          node.setAttribute('style', `width: ${widthPx}px !important; max-width: 100% !important; height: auto !important; display: inline-block;`);
+          imgElement.style.setProperty('width', `${widthPx}px`, 'important');
+          imgElement.style.setProperty('max-width', '100%', 'important');
+          imgElement.style.setProperty('height', 'auto', 'important');
+          imgElement.style.display = 'inline-block';
         } else {
           // Fallback: Keine spezifizierte Breite, verwende 100%
-          node.setAttribute('style', `max-width: 100% !important; height: auto !important; display: inline-block;`);
+          imgElement.style.setProperty('max-width', '100%', 'important');
+          imgElement.style.setProperty('height', 'auto', 'important');
+          imgElement.style.display = 'inline-block';
         }
 
         // Handle external images (always check, regardless of allowExternalImages for proxy)
