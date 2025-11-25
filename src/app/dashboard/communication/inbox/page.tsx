@@ -84,6 +84,9 @@ export default function InboxPage() {
 
   // Ref to track if we've auto-selected from URL (runs only ONCE)
   const hasAutoSelectedFromUrlRef = useRef(false);
+
+  // Ref to track selected thread (prevents loss during thread list updates)
+  const selectedThreadRef = useRef<EmailThread | null>(null);
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -200,6 +203,17 @@ export default function InboxPage() {
       }
     }
   }, [searchParams, threads]);
+
+  // Restore selected thread if it gets lost during thread list updates
+  useEffect(() => {
+    if (selectedThreadRef.current && !selectedThread && threads.length > 0) {
+      const stillExists = threads.find(t => t.id === selectedThreadRef.current?.id);
+      if (stillExists) {
+        console.log('🔄 Restoring selected thread after list update:', stillExists.id);
+        setSelectedThread(stillExists);
+      }
+    }
+  }, [threads, selectedThread]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
