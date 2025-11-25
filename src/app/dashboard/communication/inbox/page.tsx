@@ -81,6 +81,9 @@ export default function InboxPage() {
   
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
+
+  // Ref to track if we've auto-selected from URL (to avoid infinite loops)
+  const autoSelectedFromUrlRef = useRef(false);
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -176,22 +179,25 @@ export default function InboxPage() {
   // Handle URL parameters for navigation from notifications
   useEffect(() => {
     const threadIdParam = searchParams.get('threadId');
-    const openNotesParam = searchParams.get('openNotes');
 
-    if (threadIdParam && threads.length > 0) {
+    if (threadIdParam && threads.length > 0 && !autoSelectedFromUrlRef.current) {
       // Find and select the thread
       const thread = threads.find(t => t.id === threadIdParam);
-      if (thread && thread.id !== selectedThread?.id) {
+      if (thread) {
         console.log('📧 Auto-selecting thread from URL:', threadIdParam);
+        autoSelectedFromUrlRef.current = true; // Verhindere erneute Auto-Selection
+
         handleThreadSelect(thread);
 
-        // WICHTIG: Entferne URL-Parameter nach Auto-Selection
-        // Sonst blockieren sie die manuelle Navigation in der EmailList
-        const currentPath = window.location.pathname;
-        router.replace(currentPath, { scroll: false });
+        // WICHTIG: Entferne URL-Parameter NACH Thread-Selection (mit Verzögerung)
+        // Dies verhindert, dass manuelle Navigation blockiert wird
+        setTimeout(() => {
+          const currentPath = window.location.pathname;
+          router.replace(currentPath, { scroll: false });
+        }, 500); // Kurze Verzögerung damit handleThreadSelect fertig wird
       }
     }
-  }, [searchParams, threads, selectedThread?.id, router]);
+  }, [searchParams, threads, router]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
