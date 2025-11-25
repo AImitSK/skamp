@@ -541,26 +541,9 @@ export default function NewPRCampaignPage() {
         }
       }
 
-      // ✅ MONITORING INTEGRATION: Erstelle Monitoring Tracker wenn aktiviert
-      if (result.campaignId) {
-        try {
-          // Lade gespeicherte Kampagne um monitoringConfig zu prüfen
-          const savedCampaign = await prService.getById(result.campaignId);
+      // HINWEIS: Monitoring Tracker wird automatisch beim Email-Versand erstellt
+      // Siehe: /api/pr/email/send und /api/pr/email/cron
 
-          if (savedCampaign?.monitoringConfig?.isEnabled) {
-            const { campaignMonitoringService } = await import('@/lib/firebase/campaign-monitoring-service');
-            const trackerId = await campaignMonitoringService.createTrackerForCampaign(
-              result.campaignId,
-              currentOrganization!.id
-            );
-            console.log(`✅ Monitoring Tracker created: ${trackerId}`);
-          }
-        } catch (error) {
-          console.error('Fehler beim Erstellen des Monitoring Trackers:', error);
-          // Nicht blockierend - Kampagne wurde bereits erfolgreich gespeichert
-        }
-      }
-      
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
         setSuccessMessage(

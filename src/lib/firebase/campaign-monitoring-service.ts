@@ -10,21 +10,12 @@
  * 4. Erstellt Google News Channel (kampagnen-weit)
  * 5. Täglicher Crawler nutzt aktive Tracker
  * 6. Channels werden nach Fund deaktiviert (Ressourcen-Schonung)
+ *
+ * WICHTIG: Verwendet Admin SDK da Service ausschließlich aus API Routes aufgerufen wird
  */
 
-import {
-  collection,
-  doc,
-  query,
-  where,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  serverTimestamp,
-  Timestamp
-} from 'firebase/firestore';
-import { db } from './config';
+import { adminDb } from './admin-init';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import {
   CampaignMonitoringTracker,
   MonitoringChannel
@@ -84,7 +75,8 @@ class CampaignMonitoringService {
     }
 
     // 4. Erstelle Tracker
-    const trackerData: Omit<CampaignMonitoringTracker, 'id'> = {
+    // Type-Casts notwendig da Admin SDK Timestamp vs Client SDK Timestamp in types/monitoring.ts
+    const trackerData = {
       organizationId,
       campaignId,
       startDate,
@@ -95,14 +87,11 @@ class CampaignMonitoringService {
       totalAutoConfirmed: 0,
       totalManuallyAdded: 0,
       totalSpamMarked: 0,
-      createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     };
 
-    const docRef = await addDoc(
-      collection(db, this.collectionName),
-      trackerData
-    );
+    const docRef = await adminDb.collection(this.collectionName).add(trackerData);
 
     console.log(`✅ Monitoring Tracker created for campaign ${campaignId}: ${docRef.id}`);
     console.log(`📊 Channels: ${channels.length} (${channels.filter(c => c.type === 'rss_feed').length} RSS + ${channels.filter(c => c.type === 'google_news').length} Google News)`);
@@ -121,13 +110,11 @@ class CampaignMonitoringService {
     const seenPublicationIds = new Set<string>();
 
     // 1. Lade alle Email-Sends der Kampagne
-    const sendsQuery = query(
-      collection(db, 'email_campaign_sends'),
-      where('campaignId', '==', campaign.id),
-      where('status', '==', 'sent')
-    );
-
-    const sendsSnapshot = await getDocs(sendsQuery);
+    const sendsSnapshot = await adminDb
+      .collection('email_campaign_sends')
+      .where('campaignId', '==', campaign.id)
+      .where('status', '==', 'sent')
+      .get();
 
     console.log(`📧 Processing ${sendsSnapshot.size} email sends...`);
 
@@ -260,14 +247,12 @@ class CampaignMonitoringService {
     organizationId: string
   ): Promise<any | null> {
     try {
-      const companyDoc = await getDoc(
-        doc(db, 'companies', companyId)
-      );
+      const companyDoc = await adminDb.collection('companies').doc(companyId).get();
 
-      if (!companyDoc.exists()) return null;
+      if (!companyDoc.exists) return null;
 
       const data = companyDoc.data();
-      if (data.organizationId !== organizationId) return null;
+      if (!data || data.organizationId !== organizationId) return null;
 
       return { id: companyDoc.id, ...data };
     } catch (error) {
@@ -348,19 +333,17 @@ class CampaignMonitoringService {
    * Lädt Tracker für Kampagne
    */
   async getTrackerByCampaignId(campaignId: string): Promise<CampaignMonitoringTracker | null> {
-    const q = query(
-      collection(db, this.collectionName),
-      where('campaignId', '==', campaignId)
-    );
-
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb
+      .collection(this.collectionName)
+      .where('campaignId', '==', campaignId)
+      .get();
 
     if (snapshot.empty) return null;
 
-    const doc = snapshot.docs[0];
+    const docSnap = snapshot.docs[0];
     return {
-      id: doc.id,
-      ...doc.data()
+      id: docSnap.id,
+      ...docSnap.data()
     } as CampaignMonitoringTracker;
   }
 
@@ -390,9 +373,9 @@ class CampaignMonitoringService {
       return ch;
     });
 
-    await updateDoc(doc(db, this.collectionName, trackerId), {
+    await adminDb.collection(this.collectionName).doc(trackerId).update({
       channels: updatedChannels,
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     console.log(`✅ Channel ${channelId} marked as found and deactivated`);
@@ -402,10 +385,9 @@ class CampaignMonitoringService {
    * Lädt Tracker by ID
    */
   async getById(id: string): Promise<CampaignMonitoringTracker | null> {
-    const docRef = doc(db, this.collectionName, id);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await adminDb.collection(this.collectionName).doc(id).get();
 
-    if (!docSnap.exists()) return null;
+    if (!docSnap.exists) return null;
 
     return {
       id: docSnap.id,
@@ -419,17 +401,15 @@ class CampaignMonitoringService {
   async getActiveTrackers(): Promise<CampaignMonitoringTracker[]> {
     const now = Timestamp.now();
 
-    const q = query(
-      collection(db, this.collectionName),
-      where('isActive', '==', true),
-      where('endDate', '>', now)
-    );
+    const snapshot = await adminDb
+      .collection(this.collectionName)
+      .where('isActive', '==', true)
+      .where('endDate', '>', now)
+      .get();
 
-    const snapshot = await getDocs(q);
-
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
+    return snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
     })) as CampaignMonitoringTracker[];
   }
 
@@ -439,20 +419,18 @@ class CampaignMonitoringService {
   async deactivateExpiredTrackers(): Promise<number> {
     const now = Timestamp.now();
 
-    const q = query(
-      collection(db, this.collectionName),
-      where('isActive', '==', true),
-      where('endDate', '<=', now)
-    );
-
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb
+      .collection(this.collectionName)
+      .where('isActive', '==', true)
+      .where('endDate', '<=', now)
+      .get();
 
     let deactivated = 0;
 
     for (const docSnap of snapshot.docs) {
-      await updateDoc(doc(db, this.collectionName, docSnap.id), {
+      await adminDb.collection(this.collectionName).doc(docSnap.id).update({
         isActive: false,
-        updatedAt: serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       });
       deactivated++;
     }
@@ -476,9 +454,9 @@ class CampaignMonitoringService {
       totalSpamMarked?: number;
     }
   ): Promise<void> {
-    await updateDoc(doc(db, this.collectionName, trackerId), {
+    await adminDb.collection(this.collectionName).doc(trackerId).update({
       ...stats,
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
   }
 
@@ -505,9 +483,9 @@ class CampaignMonitoringService {
       return ch;
     });
 
-    await updateDoc(doc(db, this.collectionName, trackerId), {
+    await adminDb.collection(this.collectionName).doc(trackerId).update({
       channels: updatedChannels,
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
   }
 
@@ -537,9 +515,9 @@ class CampaignMonitoringService {
       return ch;
     });
 
-    await updateDoc(doc(db, this.collectionName, trackerId), {
+    await adminDb.collection(this.collectionName).doc(trackerId).update({
       channels: updatedChannels,
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
   }
 
