@@ -5,6 +5,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuth } from './AuthContext';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { TeamMember } from '@/types/international';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 interface Organization {
   id: string;
@@ -81,7 +83,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
             
             if (retryMemberships.length > 0) {
               console.log('Mitgliedschaften gefunden! Verwende diese.');
-              processMemberships(retryMemberships);
+              await processMemberships(retryMemberships);
               return;
             }
           }
@@ -96,7 +98,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         setOrganizations([]);
         setCurrentOrganization(null);
       } else {
-        processMemberships(memberships);
+        await processMemberships(memberships);
       }
     } catch (error) {
       console.error('Error loading organizations:', error);
@@ -105,16 +107,33 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const processMemberships = (memberships: TeamMember[]) => {
-    // Konvertiere Mitgliedschaften zu Organisationen
-    const orgs = memberships
-      .filter(m => m.status === 'active')
-      .map(m => ({
-        id: m.organizationId,
-        name: m.organizationId === m.userId ? 'Meine Organisation' : `Team ${m.organizationId}`,
-        role: m.role
-      }));
-    
+  const processMemberships = async (memberships: TeamMember[]) => {
+    // Konvertiere Mitgliedschaften zu Organisationen mit echten Namen aus Firestore
+    const activeMemberships = memberships.filter(m => m.status === 'active');
+
+    // Lade echte Org-Namen aus organizations Collection
+    const orgs = await Promise.all(
+      activeMemberships.map(async (m) => {
+        let orgName = m.organizationId === m.userId ? 'Meine Organisation' : `Team ${m.organizationId}`;
+
+        // Versuche den echten Namen aus der organizations Collection zu laden
+        try {
+          const orgDoc = await getDoc(doc(db, 'organizations', m.organizationId));
+          if (orgDoc.exists() && orgDoc.data().name) {
+            orgName = orgDoc.data().name;
+          }
+        } catch (error) {
+          // Fallback auf generischen Namen bei Fehler
+        }
+
+        return {
+          id: m.organizationId,
+          name: orgName,
+          role: m.role
+        };
+      })
+    );
+
     setOrganizations(orgs);
     
     // Wähle die erste Organisation oder die aus dem URL-Parameter

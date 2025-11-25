@@ -31,7 +31,9 @@
       "Bash(Select-Object -First 2)",
       "Bash(npx eslint:*)",
       "Bash(vercel logs:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(node check-firestore.js:*)",
+      "Bash(node fix-org-roles.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
