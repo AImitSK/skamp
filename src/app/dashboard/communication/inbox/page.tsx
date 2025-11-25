@@ -187,20 +187,11 @@ export default function InboxPage() {
       if (thread) {
         console.log('📧 Auto-selecting thread from URL:', threadIdParam);
         lastAutoSelectedThreadIdRef.current = threadIdParam; // Merke die threadId
-
         handleThreadSelect(thread);
-
-        // WICHTIG: Entferne URL-Parameter NACH Thread-Selection (mit Verzögerung)
-        // Dies verhindert, dass manuelle Navigation blockiert wird
-        setTimeout(() => {
-          const currentPath = window.location.pathname;
-          router.replace(currentPath, { scroll: false });
-          // Setze Ref zurück damit neue Links funktionieren
-          lastAutoSelectedThreadIdRef.current = null;
-        }, 500); // Kurze Verzögerung damit handleThreadSelect fertig wird
+        // URL-Parameter bleiben! Werden nur bei manueller Navigation entfernt (siehe handleThreadSelect)
       }
     }
-  }, [searchParams, threads, router]);
+  }, [searchParams, threads]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
@@ -499,6 +490,15 @@ export default function InboxPage() {
   const handleThreadSelect = async (thread: EmailThread) => {
     setSelectedThread(thread);
     setSelectedEmail(null); // Reset selected email when switching threads
+
+    // Wenn URL-Parameter existieren UND der User manuell einen ANDEREN Thread wählt
+    // → bereinige URL-Parameter um manuelle Navigation zu ermöglichen
+    const urlThreadId = searchParams.get('threadId');
+    if (urlThreadId && urlThreadId !== thread.id && lastAutoSelectedThreadIdRef.current) {
+      console.log('🧹 Manual thread selection detected, cleaning URL parameters');
+      router.replace(window.location.pathname, { scroll: false });
+      lastAutoSelectedThreadIdRef.current = null;
+    }
 
     try {
       // Load all messages for this thread
