@@ -8,8 +8,10 @@ import {
   CampaignMonitoringTracker,
   MonitoringSuggestion,
   MonitoringSource,
-  SpamPattern
+  SpamPattern,
+  AutoConfirmResult
 } from '@/types/monitoring';
+import { determineConfidence } from '@/lib/firebase-admin/keyword-extraction-service';
 
 /**
  * Lädt alle aktiven Tracker
@@ -239,22 +241,24 @@ export async function findExistingSuggestion(
 
 /**
  * Aktualisiert existierende Suggestion mit neuer Source
+ * 🆕 Plan 02: Verwendet neue Auto-Confirm Logik basierend auf Firmennamen
  */
 export async function updateSuggestionWithNewSource(
   suggestionId: string,
   existing: MonitoringSuggestion,
-  newSource: MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date },
-  minMatchScore: number
+  newSource: MonitoringSource & { articleUrl: string; articleTitle: string; articleExcerpt?: string; publishedAt?: Date; autoConfirmResult?: AutoConfirmResult },
+  shouldAutoConfirm: boolean,
+  autoConfirmResult?: AutoConfirmResult
 ): Promise<{ updated: boolean; autoConfirmed: boolean }> {
   try {
     const updatedSources = [...existing.sources, newSource];
     const avgScore = updatedSources.reduce((sum, s) => sum + s.matchScore, 0) / updatedSources.length;
     const highestScore = Math.max(...updatedSources.map(s => s.matchScore));
 
-    const confidence = calculateConfidence(updatedSources.length, avgScore, highestScore);
-    const shouldAutoConfirm = shouldAutoConfirmSuggestion(updatedSources.length, avgScore, highestScore, minMatchScore);
+    // 🆕 Plan 02: Confidence basiert auf neuer Logik
+    const confidence = determineConfidence(autoConfirmResult);
 
-    await adminDb.collection('monitoring_suggestions').doc(suggestionId).update({
+    const updateData: Record<string, unknown> = {
       sources: updatedSources,
       avgMatchScore: avgScore,
       highestMatchScore: highestScore,
@@ -262,7 +266,17 @@ export async function updateSuggestionWithNewSource(
       autoConfirmed: shouldAutoConfirm,
       status: shouldAutoConfirm ? 'auto_confirmed' : existing.status,
       updatedAt: new Date()
-    });
+    };
+
+    // 🆕 Plan 02: Speichere Auto-Confirm Analyse-Daten
+    if (autoConfirmResult) {
+      updateData.autoConfirmReason = autoConfirmResult.reason;
+      updateData.companyMatchInTitle = autoConfirmResult.companyMatch.inTitle;
+      updateData.matchedCompanyKeyword = autoConfirmResult.companyMatch.matchedKeyword;
+      updateData.seoScore = autoConfirmResult.seoScore;
+    }
+
+    await adminDb.collection('monitoring_suggestions').doc(suggestionId).update(updateData);
 
     return {
       updated: true,
@@ -276,6 +290,7 @@ export async function updateSuggestionWithNewSource(
 
 /**
  * Erstellt neue Suggestion
+ * @deprecated Plan 02: Verwende createSuggestionWithAutoConfirm() stattdessen
  */
 export async function createSuggestion(
   tracker: CampaignMonitoringTracker,
@@ -305,6 +320,70 @@ export async function createSuggestion(
     };
 
     const docRef = await adminDb.collection('monitoring_suggestions').add(suggestionData);
+
+    return {
+      created: true,
+      suggestionId: docRef.id,
+      autoConfirmed: shouldAutoConfirm
+    };
+  } catch (error) {
+    console.error('❌ Error creating suggestion:', error);
+    return { created: false, autoConfirmed: false };
+  }
+}
+
+/**
+ * Erstellt Suggestion mit neuer Auto-Confirm Logik
+ * 🆕 Plan 02: Basiert auf Firmennamen-Matching
+ */
+export async function createSuggestionWithAutoConfirm(
+  tracker: CampaignMonitoringTracker,
+  source: MonitoringSource & {
+    articleUrl: string;
+    articleTitle: string;
+    articleExcerpt?: string;
+    publishedAt?: Date;
+    autoConfirmResult?: AutoConfirmResult;
+  },
+  normalizedUrl: string,
+  shouldAutoConfirm: boolean,
+  autoConfirmResult?: AutoConfirmResult
+): Promise<{ created: boolean; suggestionId?: string; autoConfirmed: boolean }> {
+  try {
+    // Confidence basiert auf neuer Logik
+    const confidence = determineConfidence(autoConfirmResult);
+
+    const suggestionData: Record<string, unknown> = {
+      organizationId: tracker.organizationId,
+      campaignId: tracker.campaignId,
+      articleUrl: source.articleUrl,
+      normalizedUrl,
+      articleTitle: source.articleTitle,
+      articleExcerpt: source.articleExcerpt,
+      sources: [source],
+      avgMatchScore: source.matchScore,
+      highestMatchScore: source.matchScore,
+      confidence,
+      autoConfirmed: shouldAutoConfirm,
+      status: shouldAutoConfirm ? 'auto_confirmed' : 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // 🆕 Plan 02: Speichere Auto-Confirm Analyse-Daten
+    if (autoConfirmResult) {
+      suggestionData.autoConfirmReason = autoConfirmResult.reason;
+      suggestionData.companyMatchInTitle = autoConfirmResult.companyMatch.inTitle;
+      suggestionData.matchedCompanyKeyword = autoConfirmResult.companyMatch.matchedKeyword;
+      suggestionData.seoScore = autoConfirmResult.seoScore;
+    }
+
+    const docRef = await adminDb.collection('monitoring_suggestions').add(suggestionData);
+
+    console.log(`📝 Suggestion created: ${docRef.id} (${shouldAutoConfirm ? 'AUTO-CONFIRM' : 'PENDING'})`);
+    if (autoConfirmResult) {
+      console.log(`   Reason: ${autoConfirmResult.reason}, Company in title: ${autoConfirmResult.companyMatch.inTitle}`);
+    }
 
     return {
       created: true,
@@ -473,6 +552,7 @@ export async function deactivateExpiredTrackers(): Promise<number> {
 
 /**
  * Berechnet Confidence Level
+ * @deprecated Plan 02: Verwende determineConfidence() aus keyword-extraction-service.ts
  */
 function calculateConfidence(
   sourceCount: number,
@@ -487,6 +567,7 @@ function calculateConfidence(
 
 /**
  * Entscheidet ob Auto-Confirm
+ * @deprecated Plan 02: Verwende checkAutoConfirm() aus keyword-extraction-service.ts
  */
 function shouldAutoConfirmSuggestion(
   sourceCount: number,

@@ -92,6 +92,12 @@ export interface MonitoringSuggestion {
   autoConfirmed: boolean; // Wurde automatisch bestätigt?
   autoConfirmedAt?: Timestamp;
 
+  // 🆕 Plan 02: Auto-Confirm Analyse-Daten (Firmenname-basiert)
+  autoConfirmReason?: 'company_in_title' | 'company_plus_seo' | 'company_only' | 'no_company_match';
+  companyMatchInTitle?: boolean;
+  matchedCompanyKeyword?: string | null;
+  seoScore?: number;
+
   // Status
   status: 'pending' | 'confirmed' | 'auto_confirmed' | 'spam'; // 🆕 'auto_confirmed' + 'spam'
   reviewedBy?: string;
@@ -340,4 +346,42 @@ export interface SpamPattern {
   createdBy: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+// ========================================
+// Plan 02: Auto-Confirm Types (Firmenname-basiert)
+// ========================================
+
+/**
+ * Ergebnis der Auto-Confirm Prüfung
+ *
+ * Die neue Logik basiert auf Firmennamen-Matching:
+ * - Firmenname im Titel = Auto-Confirm
+ * - Firmenname im Content + hoher SEO-Score = Auto-Confirm
+ * - Firmenname im Content allein = Manuelle Prüfung
+ * - Kein Firmenname = Kein Match (wird nicht aufgenommen)
+ */
+export interface AutoConfirmResult {
+  shouldConfirm: boolean;
+  reason: 'company_in_title' | 'company_plus_seo' | 'company_only' | 'no_company_match';
+  companyMatch: {
+    found: boolean;
+    inTitle: boolean;
+    matchedKeyword: string | null;
+  };
+  seoScore: number;
+}
+
+/**
+ * Company Keywords für Monitoring
+ *
+ * Extrahiert aus Company-Daten (CRM):
+ * - name: Anzeigename
+ * - officialName: Handelsregistername
+ * - tradingName: Handelsname/DBA
+ */
+export interface CompanyKeywords {
+  all: string[];           // Alle Varianten für Suche
+  primary: string;         // Haupt-Firmenname
+  variants: string[];      // Weitere Varianten
 }
