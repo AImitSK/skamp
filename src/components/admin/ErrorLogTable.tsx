@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
-import { Timestamp } from 'firebase-admin/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toDate } from '@/lib/utils/timestamp-utils';
 
 interface ErrorLog {
   id: string;
-  timestamp: Timestamp;
+  timestamp: any;
   type: 'rss_feed_error' | 'crawler_error' | 'channel_error';
   organizationId?: string;
   campaignId?: string;
@@ -60,10 +60,10 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
             <TableRow key={log.id}>
               <TableCell>
                 <Text className="text-sm">
-                  {formatDistanceToNow(log.timestamp.toDate(), {
-                    addSuffix: true,
-                    locale: de
-                  })}
+                  {(() => {
+                    const date = toDate(log.timestamp);
+                    return date ? formatDistanceToNow(date, { addSuffix: true, locale: de }) : '-';
+                  })()}
                 </Text>
               </TableCell>
               <TableCell>
@@ -99,7 +99,10 @@ export function ErrorLogTable({ logs }: ErrorLogTableProps) {
             <div>
               <Text className="text-xs text-gray-500">Zeitpunkt</Text>
               <Text className="text-sm font-medium">
-                {selectedLog.timestamp.toDate().toLocaleString('de-DE')}
+                {(() => {
+                  const date = toDate(selectedLog.timestamp);
+                  return date ? date.toLocaleString('de-DE') : '-';
+                })()}
               </Text>
             </div>
 

@@ -4,9 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { Timestamp } from 'firebase-admin/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toDate } from '@/lib/utils/timestamp-utils';
 
 interface ChannelHealthTableProps {
   channels: Array<{
@@ -16,7 +16,7 @@ interface ChannelHealthTableProps {
     publicationName: string;
     errorCount: number;
     lastError?: string;
-    lastSuccess?: Timestamp;
+    lastSuccess?: any;
     organizationId: string;
   }>;
 }
@@ -85,16 +85,16 @@ export function ChannelHealthTable({ channels }: ChannelHealthTableProps) {
               </Badge>
             </TableCell>
             <TableCell>
-              {channel.lastSuccess ? (
-                <Text className="text-sm">
-                  {formatDistanceToNow(channel.lastSuccess.toDate(), {
-                    addSuffix: true,
-                    locale: de
-                  })}
-                </Text>
-              ) : (
-                <Text className="text-sm text-gray-400">Nie</Text>
-              )}
+              {(() => {
+                const date = toDate(channel.lastSuccess);
+                return date ? (
+                  <Text className="text-sm">
+                    {formatDistanceToNow(date, { addSuffix: true, locale: de })}
+                  </Text>
+                ) : (
+                  <Text className="text-sm text-gray-400">Nie</Text>
+                );
+              })()}
             </TableCell>
             <TableCell>
               {channel.lastError ? (

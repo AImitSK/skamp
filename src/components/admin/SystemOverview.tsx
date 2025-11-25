@@ -1,8 +1,8 @@
 import { ChartBarIcon, NewspaperIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Text, Strong } from '@/components/ui/text';
-import { Timestamp } from 'firebase-admin/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toDate } from '@/lib/utils/timestamp-utils';
 
 interface SystemOverviewProps {
   stats: {
@@ -12,7 +12,7 @@ interface SystemOverviewProps {
     totalAutoConfirmed: number;
     totalPending: number;
     lastCrawlRun?: {
-      timestamp: Timestamp;
+      timestamp: any;
       duration: number;
       trackersProcessed: number;
       articlesFound: number;
@@ -94,10 +94,10 @@ export function SystemOverview({ stats }: SystemOverviewProps) {
             <div>
               <Text className="text-xs text-gray-500">Zeitpunkt</Text>
               <Text className="text-sm font-medium">
-                {formatDistanceToNow(stats.lastCrawlRun.timestamp.toDate(), {
-                  addSuffix: true,
-                  locale: de
-                })}
+                {(() => {
+                  const date = toDate(stats.lastCrawlRun.timestamp);
+                  return date ? formatDistanceToNow(date, { addSuffix: true, locale: de }) : '-';
+                })()}
               </Text>
             </div>
             <div>

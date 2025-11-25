@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { PlayIcon } from '@heroicons/react/24/outline';
-import { Timestamp } from 'firebase-admin/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toDate } from '@/lib/utils/timestamp-utils';
 
 interface OrganizationStatsTableProps {
   organizations: Array<{
@@ -16,7 +16,7 @@ interface OrganizationStatsTableProps {
     activeTrackers: number;
     articlesFound: number;
     autoConfirmedRate: number;
-    lastActivity?: Timestamp;
+    lastActivity?: any;
   }>;
   onTriggerOrgCrawl: (orgId: string) => Promise<void>;
 }
@@ -70,16 +70,19 @@ export function OrganizationStatsTable({
               </Badge>
             </TableCell>
             <TableCell>
-              {org.lastActivity ? (
-                <Text className="text-sm">
-                  {formatDistanceToNow(org.lastActivity.toDate(), {
-                    addSuffix: true,
-                    locale: de
-                  })}
-                </Text>
-              ) : (
-                <Text className="text-sm text-gray-400">-</Text>
-              )}
+              {(() => {
+                const date = toDate(org.lastActivity);
+                return date ? (
+                  <Text className="text-sm">
+                    {formatDistanceToNow(date, {
+                      addSuffix: true,
+                      locale: de
+                    })}
+                  </Text>
+                ) : (
+                  <Text className="text-sm text-gray-400">-</Text>
+                );
+              })()}
             </TableCell>
             <TableCell>
               <Button

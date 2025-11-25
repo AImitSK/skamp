@@ -8,14 +8,14 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { Field, Label } from '@/components/ui/fieldset';
 import { Textarea } from '@/components/ui/textarea';
 import { PlayIcon, BoltIcon } from '@heroicons/react/24/outline';
-import { Timestamp } from 'firebase-admin/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toDate } from '@/lib/utils/timestamp-utils';
 
 interface CrawlerControlPanelProps {
   cronJobStatus: {
     isEnabled: boolean;
-    pausedAt?: Timestamp;
+    pausedAt?: any;
     pausedBy?: string;
     reason?: string;
   };
@@ -82,10 +82,10 @@ export function CrawlerControlPanel({
         {!cronJobStatus.isEnabled && cronJobStatus.pausedBy && (
           <div className="mt-2 space-y-1">
             <Text className="text-sm text-gray-500">
-              Pausiert {cronJobStatus.pausedAt && formatDistanceToNow(cronJobStatus.pausedAt.toDate(), {
-                addSuffix: true,
-                locale: de
-              })}
+              Pausiert {(() => {
+                const date = toDate(cronJobStatus.pausedAt);
+                return date ? formatDistanceToNow(date, { addSuffix: true, locale: de }) : '';
+              })()}
             </Text>
             {cronJobStatus.reason && (
               <Text className="text-sm text-gray-600">
