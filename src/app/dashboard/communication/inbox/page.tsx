@@ -207,15 +207,25 @@ export default function InboxPage() {
   // Restore selected thread if it gets lost during thread list updates
   useEffect(() => {
     // Nur restore wenn selectedThread null ist ABER wir einen im Ref haben
+    // UND wenn emails bereits geladen sind (sonst würden wir sie überschreiben)
     if (selectedThreadRef.current && !selectedThread && threads.length > 0) {
       const stillExists = threads.find(t => t.id === selectedThreadRef.current?.id);
+      // Prüfe ob wir bereits emails für diesen Thread haben
+      const hasEmails = emails.some(email => email.threadId === selectedThreadRef.current?.id);
+
       if (stillExists && stillExists.id === selectedThreadRef.current.id) {
-        console.log('🔄 Restoring selected thread after list update:', stillExists.id);
-        // Setze nur selectedThread, lade Messages nicht neu
-        setSelectedThread(stillExists);
+        if (hasEmails) {
+          console.log('🔄 Restoring selected thread (emails already loaded):', stillExists.id);
+          // Emails sind bereits da, setze nur Thread zurück
+          setSelectedThread(stillExists);
+        } else {
+          console.log('🔄 Restoring selected thread (need to reload emails):', stillExists.id);
+          // Keine Emails, lade neu via handleThreadSelect
+          handleThreadSelect(stillExists);
+        }
       }
     }
-  }, [threads]); // Entferne selectedThread aus Dependencies um Loop zu vermeiden
+  }, [threads, emails]); // emails als Dependency um zu wissen wann sie geladen sind
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
