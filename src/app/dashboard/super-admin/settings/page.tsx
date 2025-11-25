@@ -24,7 +24,8 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  SparklesIcon
+  SparklesIcon,
+  NewspaperIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
@@ -35,6 +36,7 @@ import type { MatchingScanJob } from '@/types/matching';
 import type { AutoScanInterval } from '@/types/matching-settings';
 import MatchingTestSection from './MatchingTestSection';
 import ConflictReviewSection from './ConflictReviewSection';
+import ClippingTestSection from './ClippingTestSection';
 
 export default function SuperAdminSettingsPage() {
   const router = useRouter();
@@ -582,6 +584,21 @@ export default function SuperAdminSettingsPage() {
             </h3>
             <ConflictReviewSection />
           </div>
+        </div>
+      </div>
+
+      {/* Clipping-System Tests Section */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+          <NewspaperIcon className="size-5" />
+          Clipping-System Tests
+        </h2>
+
+        <div className="p-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            Test-Tools für Keyword-Extraktion, Match-Score Berechnung und Test-Daten Generierung.
+          </p>
+          <ClippingTestSection />
         </div>
       </div>
 
