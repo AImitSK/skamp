@@ -17,7 +17,7 @@ import {
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, memo } from 'react';
 import { toastService } from '@/lib/utils/toast';
 
 interface EmailViewerProps {
@@ -45,8 +45,10 @@ interface EmailContentRendererProps {
 // Register DOMPurify hook ONCE outside component to avoid multiple registrations
 let hookRegistered = false;
 
-function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = false }: EmailContentRendererProps) {
+// Memoized EmailContentRenderer to prevent unnecessary re-renders
+const EmailContentRenderer = memo(function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = false }: EmailContentRendererProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const processedImagesRef = useRef<Set<string>>(new Set());
 
   // Register hook only once
   if (!hookRegistered) {
@@ -78,9 +80,7 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
           // Replace external images with placeholder or proxy through our server
           node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
           node.setAttribute('loading', 'lazy');
-          // Füge loading-Klasse hinzu (wird per onLoad entfernt)
-          const existingClass = node.getAttribute('class') || '';
-          node.setAttribute('class', `${existingClass} loading`.trim());
+          // NICHT die loading-Klasse hier hinzufügen - wird im useEffect gehandhabt
         }
       }
 
@@ -138,12 +138,30 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
     }
   }, [htmlContent]);
 
-  // Handle image loading to remove skeleton loader
+  // Optimized: Memoize sanitized HTML to prevent re-processing on every render
+  const sanitizedHtml = useMemo(() => {
+    if (!htmlContent) return '';
+    return sanitizeHtml(htmlContent);
+  }, [htmlContent]);
+
+  // Optimized: Handle image loading only once per unique content
   useEffect(() => {
     const contentElement = contentRef.current;
-    if (!contentElement) return;
+    if (!contentElement || !htmlContent) return;
+
+    // Nur ausführen wenn htmlContent sich tatsächlich geändert hat
+    const contentHash = htmlContent.substring(0, 100); // Simple hash
+    if (processedImagesRef.current.has(contentHash)) {
+      return; // Bereits verarbeitet, skip
+    }
 
     const images = contentElement.querySelectorAll('img[src*="image-proxy"]');
+
+    // Keine Bilder? Nichts zu tun
+    if (images.length === 0) {
+      processedImagesRef.current.add(contentHash);
+      return;
+    }
 
     const handleImageLoad = (e: Event) => {
       const img = e.target as HTMLImageElement;
@@ -157,16 +175,24 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
     };
 
     images.forEach((img) => {
-      // Wenn Bild bereits geladen ist, entferne loading-Klasse sofort
-      if ((img as HTMLImageElement).complete) {
-        img.classList.remove('loading');
+      const imgElement = img as HTMLImageElement;
+      // Wenn Bild bereits geladen ist, keine Events nötig
+      if (imgElement.complete && imgElement.naturalWidth > 0) {
+        imgElement.classList.remove('loading');
       } else {
-        img.addEventListener('load', handleImageLoad);
-        img.addEventListener('error', handleImageError);
+        // Nur loading-Klasse hinzufügen wenn noch nicht vorhanden
+        if (!imgElement.classList.contains('loading')) {
+          imgElement.classList.add('loading');
+        }
+        imgElement.addEventListener('load', handleImageLoad, { once: true });
+        imgElement.addEventListener('error', handleImageError, { once: true });
       }
     });
 
-    // Cleanup
+    // Markiere als verarbeitet
+    processedImagesRef.current.add(contentHash);
+
+    // Cleanup - nur wenn Component unmountet
     return () => {
       images.forEach((img) => {
         img.removeEventListener('load', handleImageLoad);
@@ -175,10 +201,9 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
     };
   }, [htmlContent]);
 
-  if (htmlContent) {
-    const sanitizedHtml = sanitizeHtml(htmlContent);
+  if (htmlContent && sanitizedHtml) {
     return (
-      <div 
+      <div
         ref={contentRef}
         className="prose prose-sm max-w-none email-content"
         dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
@@ -192,9 +217,10 @@ function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = 
       {textContent}
     </div>
   );
-}
+});
 
-export function EmailViewer({
+// Memoized EmailViewer to prevent unnecessary re-renders when parent re-renders
+export const EmailViewer = memo(function EmailViewer({
   thread,
   emails,
   selectedEmail,
@@ -383,4 +409,4 @@ export function EmailViewer({
       />
     </div>
   );
-}
+});

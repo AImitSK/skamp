@@ -134,10 +134,10 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
 
       const targetUrl = `/dashboard/communication/inbox?threadId=${notification.metadata.threadId}&openNotes=true`;
 
-      // Wenn wir schon auf der Inbox-Seite sind, force refresh
+      // Wenn wir schon auf der Inbox-Seite sind, verwende replace statt full reload
       if (window.location.pathname === '/dashboard/communication/inbox') {
-        console.log('📧 Already on inbox, using window.location to force refresh');
-        window.location.href = targetUrl;
+        console.log('📧 Already on inbox, using router.replace to avoid full page reload');
+        router.replace(targetUrl);
       } else {
         // Öffne Inbox mit richtigem Thread und Notizen-Panel geöffnet
         router.push(targetUrl);
