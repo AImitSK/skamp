@@ -172,18 +172,32 @@ class CampaignMonitoringService {
 
   /**
    * Lädt Company by ID
+   * Sucht zuerst in companies_enhanced, dann Fallback auf companies
    */
   private async getCompany(
     companyId: string,
     organizationId: string
   ): Promise<any | null> {
     try {
-      const companyDoc = await adminDb.collection('companies').doc(companyId).get();
+      // Primär: companies_enhanced (neue Collection)
+      let companyDoc = await adminDb.collection('companies_enhanced').doc(companyId).get();
 
-      if (!companyDoc.exists) return null;
+      if (!companyDoc.exists) {
+        // Fallback: legacy companies Collection
+        console.log(`🔍 Company not in companies_enhanced, trying companies...`);
+        companyDoc = await adminDb.collection('companies').doc(companyId).get();
+      }
+
+      if (!companyDoc.exists) {
+        console.log(`⚠️ Company ${companyId} not found in any collection`);
+        return null;
+      }
 
       const data = companyDoc.data();
-      if (!data || data.organizationId !== organizationId) return null;
+      if (!data || data.organizationId !== organizationId) {
+        console.log(`⚠️ Company ${companyId} organizationId mismatch: ${data?.organizationId} !== ${organizationId}`);
+        return null;
+      }
 
       return { id: companyDoc.id, ...data };
     } catch (error) {
