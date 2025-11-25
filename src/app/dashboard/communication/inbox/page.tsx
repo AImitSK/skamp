@@ -82,8 +82,8 @@ export default function InboxPage() {
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
 
-  // Ref to track last auto-selected threadId from URL (to avoid infinite loops)
-  const lastAutoSelectedThreadIdRef = useRef<string | null>(null);
+  // Ref to track if we've auto-selected from URL (runs only ONCE)
+  const hasAutoSelectedFromUrlRef = useRef(false);
   
   // Real-time unread counts
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
@@ -180,15 +180,13 @@ export default function InboxPage() {
   useEffect(() => {
     const threadIdParam = searchParams.get('threadId');
 
-    // Nur ausführen wenn threadId existiert, threads geladen sind, UND es eine NEUE threadId ist
-    if (threadIdParam && threads.length > 0 && threadIdParam !== lastAutoSelectedThreadIdRef.current) {
-      // Find and select the thread
+    // Läuft NUR EINMAL beim ersten Laden mit threadId Parameter
+    if (threadIdParam && threads.length > 0 && !hasAutoSelectedFromUrlRef.current) {
       const thread = threads.find(t => t.id === threadIdParam);
       if (thread) {
         console.log('📧 Auto-selecting thread from URL:', threadIdParam);
-        lastAutoSelectedThreadIdRef.current = threadIdParam; // Merke die threadId
+        hasAutoSelectedFromUrlRef.current = true; // ✅ useEffect läuft nie wieder
         handleThreadSelect(thread);
-        // URL-Parameter bleiben! Werden nur bei manueller Navigation entfernt (siehe handleThreadSelect)
       }
     }
   }, [searchParams, threads]);
@@ -490,15 +488,6 @@ export default function InboxPage() {
   const handleThreadSelect = async (thread: EmailThread) => {
     setSelectedThread(thread);
     setSelectedEmail(null); // Reset selected email when switching threads
-
-    // Wenn URL-Parameter existieren UND der User manuell einen ANDEREN Thread wählt
-    // → bereinige URL-Parameter um manuelle Navigation zu ermöglichen
-    const urlThreadId = searchParams.get('threadId');
-    if (urlThreadId && urlThreadId !== thread.id && lastAutoSelectedThreadIdRef.current) {
-      console.log('🧹 Manual thread selection detected, cleaning URL parameters');
-      router.replace(window.location.pathname, { scroll: false });
-      lastAutoSelectedThreadIdRef.current = null;
-    }
 
     try {
       // Load all messages for this thread
