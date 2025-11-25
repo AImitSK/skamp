@@ -180,13 +180,23 @@ export default function InboxPage() {
   useEffect(() => {
     const threadIdParam = searchParams.get('threadId');
 
+    console.log('🔍 URL Navigation Effect:', {
+      threadIdParam,
+      threadsCount: threads.length,
+      hasAutoSelected: hasAutoSelectedFromUrlRef.current
+    });
+
     // Läuft NUR EINMAL beim ersten Laden mit threadId Parameter
     if (threadIdParam && threads.length > 0 && !hasAutoSelectedFromUrlRef.current) {
       const thread = threads.find(t => t.id === threadIdParam);
+      console.log('🔍 Thread gefunden?', thread ? 'JA' : 'NEIN', thread?.id);
+
       if (thread) {
-        console.log('📧 Auto-selecting thread from URL:', threadIdParam);
-        hasAutoSelectedFromUrlRef.current = true; // ✅ useEffect läuft nie wieder
+        console.log('✅ Auto-selecting thread from URL:', threadIdParam);
+        hasAutoSelectedFromUrlRef.current = true;
         handleThreadSelect(thread);
+      } else {
+        console.warn('❌ Thread nicht gefunden in Liste:', threadIdParam);
       }
     }
   }, [searchParams, threads]);
