@@ -11,8 +11,6 @@ const mockMonitoringConfig: MonitoringConfigState = {
   websiteUrl: 'https://example.com',
   rssFeedUrls: ['https://example.com/feed'],
   autoDetectRss: true,
-  checkFrequency: 'daily',
-  keywords: ['technology', 'politics'],
   totalArticlesFound: 0,
 };
 
@@ -63,7 +61,6 @@ describe('MonitoringSection', () => {
     );
 
     expect(screen.getByText('Website URL')).toBeInTheDocument();
-    expect(screen.getByText('Prüf-Frequenz')).toBeInTheDocument();
     expect(screen.getByDisplayValue('https://example.com')).toBeInTheDocument();
   });
 
@@ -122,35 +119,6 @@ describe('MonitoringSection', () => {
     expect(setMonitoringConfig).toHaveBeenCalledWith({
       ...mockMonitoringConfig,
       rssFeedUrls: [...mockMonitoringConfig.rssFeedUrls, ''],
-    });
-  });
-
-  it('sollte Keyword hinzufügen', () => {
-    const setMonitoringConfig = jest.fn();
-    const setRssDetectionStatus = jest.fn();
-    const setDetectedFeeds = jest.fn();
-    const setShowManualRssInput = jest.fn();
-
-    render(
-      <MonitoringSection
-        monitoringConfig={mockMonitoringConfig}
-        setMonitoringConfig={setMonitoringConfig}
-        rssDetectionStatus="idle"
-        setRssDetectionStatus={setRssDetectionStatus}
-        detectedFeeds={[]}
-        setDetectedFeeds={setDetectedFeeds}
-        showManualRssInput={true}
-        setShowManualRssInput={setShowManualRssInput}
-      />
-    );
-
-    // Add keyword button
-    const addButton = screen.getByText('Keyword hinzufügen');
-    fireEvent.click(addButton);
-
-    expect(setMonitoringConfig).toHaveBeenCalledWith({
-      ...mockMonitoringConfig,
-      keywords: [...mockMonitoringConfig.keywords, ''],
     });
   });
 

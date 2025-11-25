@@ -880,17 +880,6 @@ export default function PublicationDetailPage() {
                     </Badge>
                   </div>
 
-                  {publication.monitoringConfig.checkFrequency && (
-                    <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Prüffrequenz</Text>
-                      <Text className="text-sm">
-                        {publication.monitoringConfig.checkFrequency === 'daily' ? 'Täglich' :
-                         publication.monitoringConfig.checkFrequency === 'twice_daily' ? 'Zweimal täglich' :
-                         'Täglich'}
-                      </Text>
-                    </div>
-                  )}
-
                   {publication.monitoringConfig.lastChecked && (
                     <div className="flex items-center justify-between">
                       <Text className="text-sm font-medium text-zinc-500">Zuletzt geprüft</Text>

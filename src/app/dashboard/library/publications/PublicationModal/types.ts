@@ -70,13 +70,12 @@ export interface SocialMediaItem {
 }
 
 // Monitoring Config Interface
+// HINWEIS: checkFrequency und keywords wurden entfernt (Plan 01) - werden vom Crawler ignoriert
 export interface MonitoringConfigState {
   isEnabled: boolean;
   websiteUrl: string;
   rssFeedUrls: string[];
   autoDetectRss: boolean;
-  checkFrequency: 'daily' | 'twice_daily';
-  keywords: string[];
   totalArticlesFound: number;
 }
 
@@ -185,7 +184,5 @@ export const createDefaultMonitoringConfig = (): MonitoringConfigState => ({
   websiteUrl: '',
   rssFeedUrls: [],
   autoDetectRss: true,
-  checkFrequency: 'daily',
-  keywords: [],
   totalArticlesFound: 0
 });

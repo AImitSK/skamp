@@ -210,8 +210,6 @@ export function PublicationModal({
           websiteUrl: publication.monitoringConfig.websiteUrl || '',
           rssFeedUrls: savedRssFeeds,
           autoDetectRss: publication.monitoringConfig.autoDetectRss ?? true,
-          checkFrequency: publication.monitoringConfig.checkFrequency || 'daily',
-          keywords: publication.monitoringConfig.keywords || [],
           totalArticlesFound: publication.monitoringConfig.totalArticlesFound || 0
         });
 
@@ -295,8 +293,6 @@ export function PublicationModal({
           websiteUrl: monitoringConfig.websiteUrl || '',
           rssFeedUrls: monitoringConfig.rssFeedUrls.filter(url => url.trim() !== ''),
           autoDetectRss: monitoringConfig.autoDetectRss,
-          checkFrequency: monitoringConfig.checkFrequency,
-          keywords: monitoringConfig.keywords.filter(k => k.trim() !== ''),
           totalArticlesFound: monitoringConfig.totalArticlesFound || 0
         }
       };

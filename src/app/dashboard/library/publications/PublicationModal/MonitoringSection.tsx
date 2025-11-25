@@ -3,7 +3,6 @@
 
 import { memo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { MonitoringConfigState, RssDetectionStatus } from './types';
@@ -257,79 +256,6 @@ export const MonitoringSection = memo(function MonitoringSection({
               </div>
             </div>
           )}
-
-          {/* Check Frequency */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Prüf-Frequenz
-            </label>
-            <Select
-              value={monitoringConfig.checkFrequency}
-              onChange={(e) => setMonitoringConfig({
-                ...monitoringConfig,
-                checkFrequency: e.target.value as 'daily' | 'twice_daily'
-              })}
-            >
-              <option value="daily">Täglich</option>
-              <option value="twice_daily">Zweimal täglich</option>
-            </Select>
-          </div>
-
-          {/* Keywords */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-2">
-              Keywords (optional)
-            </label>
-            <div className="space-y-2">
-              {monitoringConfig.keywords.map((keyword, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={keyword}
-                    onChange={(e) => {
-                      const updated = [...monitoringConfig.keywords];
-                      updated[index] = e.target.value;
-                      setMonitoringConfig({
-                        ...monitoringConfig,
-                        keywords: updated
-                      });
-                    }}
-                    placeholder="z.B. Technologie, Politik"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    plain
-                    onClick={() => {
-                      const updated = monitoringConfig.keywords.filter((_, i) => i !== index);
-                      setMonitoringConfig({
-                        ...monitoringConfig,
-                        keywords: updated
-                      });
-                    }}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                plain
-                onClick={() => {
-                  setMonitoringConfig({
-                    ...monitoringConfig,
-                    keywords: [...monitoringConfig.keywords, '']
-                  });
-                }}
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Keyword hinzufügen
-              </Button>
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              Optionale Filter für relevante Artikel (zusätzlich zur Kampagnen-basierten Suche)
-            </p>
-          </div>
 
           {/* Statistics (read-only) */}
           {publication && monitoringConfig.totalArticlesFound > 0 && (
