@@ -10,13 +10,17 @@ import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/componen
 import {
   EyeIcon,
   CurrencyEuroIcon,
-  FaceSmileIcon,
-  FaceFrownIcon,
   EllipsisVerticalIcon,
   LinkIcon,
   CalendarIcon,
   NewspaperIcon
 } from '@heroicons/react/24/outline';
+import {
+  SentimentPositiveIcon,
+  SentimentNeutralIcon,
+  SentimentNegativeIcon,
+  SentimentIcon
+} from '@/components/ui/sentiment-icons';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
@@ -101,15 +105,15 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
               <Text className="text-sm text-gray-600">Sentiment</Text>
               <div className="flex gap-3 mt-1 items-center">
                 <span className="flex items-center gap-1 text-gray-900">
-                  <FaceSmileIcon className="h-5 w-5 text-green-600" />
+                  <SentimentPositiveIcon className="h-5 w-5" />
                   {sentimentCounts.positive}
                 </span>
                 <span className="flex items-center gap-1 text-gray-900">
-                  <div className="h-5 w-5 rounded-full bg-gray-400" />
+                  <SentimentNeutralIcon className="h-5 w-5" />
                   {sentimentCounts.neutral}
                 </span>
                 <span className="flex items-center gap-1 text-gray-900">
-                  <FaceFrownIcon className="h-5 w-5 text-red-600" />
+                  <SentimentNegativeIcon className="h-5 w-5" />
                   {sentimentCounts.negative}
                 </span>
               </div>
@@ -178,19 +182,12 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
                   </td>
                   <td className="px-6 py-4">
                     <Badge color={getSentimentColor(clipping.sentiment)}>
-                      {clipping.sentiment === 'positive' && (
-                        <span className="flex items-center gap-1">
-                          <FaceSmileIcon className="h-4 w-4" />
-                          Positiv
-                        </span>
-                      )}
-                      {clipping.sentiment === 'neutral' && 'Neutral'}
-                      {clipping.sentiment === 'negative' && (
-                        <span className="flex items-center gap-1">
-                          <FaceFrownIcon className="h-4 w-4" />
-                          Negativ
-                        </span>
-                      )}
+                      <span className="flex items-center gap-1">
+                        <SentimentIcon sentiment={clipping.sentiment} className="h-4 w-4" />
+                        {clipping.sentiment === 'positive' && 'Positiv'}
+                        {clipping.sentiment === 'neutral' && 'Neutral'}
+                        {clipping.sentiment === 'negative' && 'Negativ'}
+                      </span>
                     </Badge>
                   </td>
                   <td className="px-6 py-4">

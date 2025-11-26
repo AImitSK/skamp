@@ -10,11 +10,13 @@ import {
   ExclamationTriangleIcon,
   GlobeAltIcon,
   RssIcon,
-  SparklesIcon,
-  HandThumbUpIcon,
-  HandThumbDownIcon,
-  MinusIcon
+  SparklesIcon
 } from '@heroicons/react/24/outline';
+import {
+  SentimentPositiveIcon,
+  SentimentNeutralIcon,
+  SentimentNegativeIcon
+} from '@/components/ui/sentiment-icons';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Field, Label } from '@/components/ui/fieldset';
 import { formatDistanceToNow } from 'date-fns';
@@ -35,14 +37,12 @@ function SentimentButton({
   sentiment,
   selected,
   onClick,
-  label,
-  icon: Icon
+  label
 }: {
   sentiment: 'positive' | 'neutral' | 'negative';
   selected: boolean;
   onClick: () => void;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
 }) {
   const colors = {
     positive: selected
@@ -56,13 +56,24 @@ function SentimentButton({
       : 'bg-white border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300'
   };
 
+  const renderIcon = () => {
+    switch (sentiment) {
+      case 'positive':
+        return <SentimentPositiveIcon className="size-5" />;
+      case 'neutral':
+        return <SentimentNeutralIcon className="size-5" />;
+      case 'negative':
+        return <SentimentNegativeIcon className="size-5" />;
+    }
+  };
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2 border-2 rounded-lg transition-colors ${colors[sentiment]}`}
     >
-      <Icon className="size-5" />
+      {renderIcon()}
       <span className="font-medium">{label}</span>
     </button>
   );
@@ -444,21 +455,18 @@ export function MonitoringSuggestionsTable({
                   selected={selectedSentiment === 'positive'}
                   onClick={() => setSelectedSentiment('positive')}
                   label="Positiv"
-                  icon={HandThumbUpIcon}
                 />
                 <SentimentButton
                   sentiment="neutral"
                   selected={selectedSentiment === 'neutral'}
                   onClick={() => setSelectedSentiment('neutral')}
                   label="Neutral"
-                  icon={MinusIcon}
                 />
                 <SentimentButton
                   sentiment="negative"
                   selected={selectedSentiment === 'negative'}
                   onClick={() => setSelectedSentiment('negative')}
                   label="Negativ"
-                  icon={HandThumbDownIcon}
                 />
               </div>
             </Field>

@@ -25,10 +25,9 @@ import {
   LinkIcon,
   NewspaperIcon,
   SparklesIcon,
-  FaceSmileIcon,
-  FaceFrownIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
+import { SentimentIcon } from '@/components/ui/sentiment-icons';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
 import Link from 'next/link';
@@ -911,20 +910,10 @@ export default function DashboardHomePage() {
                           <div className="col-span-2 flex items-center gap-2">
                             {item.type === 'clipping' ? (
                               <>
-                                {(item.data as MediaClipping).sentiment === 'positive' && (
-                                  <FaceSmileIcon className="h-5 w-5 text-green-600" title="Positiv" />
-                                )}
-                                {(item.data as MediaClipping).sentiment === 'neutral' && (
-                                  <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" title="Neutral">
-                                    <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 14h8" />
-                                    <circle cx="9" cy="9.5" r="1" fill="currentColor" />
-                                    <circle cx="15" cy="9.5" r="1" fill="currentColor" />
-                                  </svg>
-                                )}
-                                {(item.data as MediaClipping).sentiment === 'negative' && (
-                                  <FaceFrownIcon className="h-5 w-5 text-red-600" title="Negativ" />
-                                )}
+                                <SentimentIcon
+                                  sentiment={(item.data as MediaClipping).sentiment}
+                                  className="h-5 w-5"
+                                />
                                 <CalendarIcon className="h-4 w-4 text-zinc-400" />
                                 <Text className="text-xs text-zinc-500">
                                   {(item.data as MediaClipping).publishedAt?.toDate?.()?.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
