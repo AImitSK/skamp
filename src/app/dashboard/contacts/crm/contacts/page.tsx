@@ -89,12 +89,26 @@ export default function ContactsPage() {
   // Filter & Pagination
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      const searchMatch =
-        contact.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.position?.toLowerCase().includes(searchTerm.toLowerCase());
-      if (!searchMatch) return false;
+      // Kompatibilität: Prüfe sowohl Top-Level als auch nested Namen (ContactEnhanced hat name.firstName)
+      const firstName = contact.firstName || (contact as any).name?.firstName || '';
+      const lastName = contact.lastName || (contact as any).name?.lastName || '';
+      const displayName = (contact as any).displayName || '';
+
+      // Bei leerem Suchbegriff: alle Kontakte anzeigen
+      if (!searchTerm.trim()) {
+        // Kontakt muss aber mindestens einen Namen haben
+        if (!firstName && !lastName && !displayName) return false;
+      } else {
+        // Suche in allen relevanten Feldern
+        const searchLower = searchTerm.toLowerCase();
+        const searchMatch =
+          firstName.toLowerCase().includes(searchLower) ||
+          lastName.toLowerCase().includes(searchLower) ||
+          displayName.toLowerCase().includes(searchLower) ||
+          contact.email?.toLowerCase().includes(searchLower) ||
+          contact.position?.toLowerCase().includes(searchLower);
+        if (!searchMatch) return false;
+      }
 
       const companyMatch = selectedCompanyIds.length === 0 ||
                           (contact.companyId && selectedCompanyIds.includes(contact.companyId));
@@ -108,6 +122,16 @@ export default function ContactsPage() {
       if (!journalistMatch) return false;
 
       return true;
+    }).sort((a, b) => {
+      // Alphabetische Sortierung nach Nachname, dann Vorname
+      const lastNameA = a.lastName || (a as any).name?.lastName || '';
+      const lastNameB = b.lastName || (b as any).name?.lastName || '';
+      const firstNameA = a.firstName || (a as any).name?.firstName || '';
+      const firstNameB = b.firstName || (b as any).name?.firstName || '';
+
+      const lastNameCompare = lastNameA.localeCompare(lastNameB, 'de');
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return firstNameA.localeCompare(firstNameB, 'de');
     });
   }, [contacts, searchTerm, selectedCompanyIds, selectedTagIds, journalistsOnly]);
 
