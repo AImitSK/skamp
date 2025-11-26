@@ -165,9 +165,11 @@ export function TeamFolderSidebar({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab]"></div>
             </div>
           ) : filteredDomains.length === 0 ? (
-            <div className="px-3 py-4 text-sm text-gray-500 text-center">
-              {searchQuery ? 'Keine Domains gefunden' : 'Noch keine Domain-Postfächer'}
-            </div>
+            searchQuery ? (
+              <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                Keine Domains gefunden
+              </div>
+            ) : null
           ) : (
             <div className="space-y-1">
               {filteredDomains.map(mailbox => (
@@ -268,13 +270,6 @@ export function TeamFolderSidebar({
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && domainMailboxes.length === 0 && projectMailboxes.length === 0 && (
-          <div className="p-4 text-center text-gray-500">
-            <InboxIcon className="h-12 w-12 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Keine Postfächer vorhanden</p>
-          </div>
-        )}
       </nav>
 
       {/* Footer Info */}

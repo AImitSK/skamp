@@ -239,6 +239,13 @@ export default function InboxPage() {
 
 
   const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
+    // Wenn kein Postfach ausgewählt ist, keine E-Mails laden
+    if (!selectedTeamMemberId) {
+      setThreads([]);
+      setEmails([]);
+      setLoading(false);
+      return;
+    }
 
     // 1. Basis-Query für Threads (OHNE orderBy, um Index-Fehler zu vermeiden)
     let threadsQuery = query(
