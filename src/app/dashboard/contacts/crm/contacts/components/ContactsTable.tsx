@@ -36,6 +36,25 @@ export interface ContactsTableProps {
  *
  * @component
  */
+/**
+ * Formatiert den Kontaktnamen als "Nachname, Vorname" (ohne Titel wie Dr.)
+ */
+function formatContactName(contact: ContactEnhanced): string {
+  const firstName = contact.name?.firstName || '';
+  const lastName = contact.name?.lastName || '';
+
+  if (lastName && firstName) {
+    return `${lastName}, ${firstName}`;
+  }
+  if (lastName) {
+    return lastName;
+  }
+  if (firstName) {
+    return firstName;
+  }
+  return contact.displayName || '(Kein Name)';
+}
+
 export function ContactsTable({
   contacts,
   selectedIds,
@@ -103,7 +122,7 @@ export function ContactsTable({
                     onClick={() => onView(contact.id!)}
                     className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
                   >
-                    {contact.displayName}
+                    {formatContactName(contact)}
                   </button>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex flex-wrap gap-1">
