@@ -332,10 +332,10 @@ export const projectService = {
   },
 
   /**
-   * Löscht ein Projekt
+   * Löscht ein Projekt und alle zugehörigen Ressourcen (Cascade-Delete)
    */
   async delete(
-    projectId: string, 
+    projectId: string,
     context: { organizationId: string }
   ): Promise<void> {
     try {
@@ -344,10 +344,50 @@ export const projectService = {
       if (!existing) {
         throw new Error('Projekt nicht gefunden oder keine Berechtigung');
       }
-      
+
+      // Cascade-Delete: Zugehöriges Projekt-Postfach löschen
+      await this.deleteProjectMailbox(projectId, context.organizationId);
+
+      // Projekt löschen
       await deleteDoc(doc(db, 'projects', projectId));
+
+      console.log(`[ProjectService] Projekt ${projectId} und zugehörige Ressourcen gelöscht`);
     } catch (error) {
+      console.error('[ProjectService] Fehler beim Löschen:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Löscht das Projekt-Postfach (Cascade-Delete Helper)
+   */
+  async deleteProjectMailbox(
+    projectId: string,
+    organizationId: string
+  ): Promise<void> {
+    try {
+      // Suche Postfach für dieses Projekt
+      const mailboxQuery = query(
+        collection(db, 'inbox_project_mailboxes'),
+        where('projectId', '==', projectId),
+        where('organizationId', '==', organizationId)
+      );
+
+      const snapshot = await getDocs(mailboxQuery);
+
+      if (snapshot.empty) {
+        console.log(`[ProjectService] Kein Postfach für Projekt ${projectId} gefunden`);
+        return;
+      }
+
+      // Lösche alle gefundenen Postfächer (sollte nur eines sein)
+      for (const mailboxDoc of snapshot.docs) {
+        await deleteDoc(doc(db, 'inbox_project_mailboxes', mailboxDoc.id));
+        console.log(`[ProjectService] Postfach ${mailboxDoc.id} für Projekt ${projectId} gelöscht`);
+      }
+    } catch (error) {
+      console.error(`[ProjectService] Fehler beim Löschen des Postfachs für Projekt ${projectId}:`, error);
+      // Fehler nicht weiterwerfen - Projekt soll trotzdem gelöscht werden können
     }
   },
 
