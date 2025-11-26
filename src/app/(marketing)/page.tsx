@@ -3,18 +3,28 @@ import { Button } from '@/components/marketing/Button'
 import { Container } from '@/components/marketing/Container'
 import { Footer } from '@/components/marketing/Footer'
 import { Gradient } from '@/components/marketing/gradient'
-import { Keyboard } from '@/components/marketing/keyboard'
 import { Link } from '@/components/marketing/link'
 import { LinkedAvatars } from '@/components/marketing/linked-avatars'
-import { LogoCloud } from '@/components/marketing/logo-cloud'
-import { LogoCluster } from '@/components/marketing/logo-cluster'
-import { LogoTimeline } from '@/components/marketing/logo-timeline'
 import { Map } from '@/components/marketing/map'
+import { MonitoringCluster } from '@/components/marketing/monitoring-cluster'
 import { Navbar } from '@/components/marketing/navbar'
 import { Screenshot } from '@/components/marketing/screenshot'
-import { Testimonials } from '@/components/marketing/Testimonials'
 import { Heading, Subheading } from '@/components/marketing/text'
 import { ChevronRightIcon } from '@heroicons/react/16/solid'
+import {
+  SparklesIcon,
+  UserGroupIcon,
+  ChartBarIcon,
+  DocumentChartBarIcon,
+  MagnifyingGlassIcon,
+  EnvelopeIcon,
+  FolderIcon,
+  NewspaperIcon,
+  ViewColumnsIcon,
+  ChatBubbleLeftRightIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -31,26 +41,29 @@ function Hero() {
         <Navbar
           banner={
             <Link
-              href="/pricing"
+              href="/demo"
               className="flex items-center gap-1 rounded-full bg-primary/35 px-3 py-0.5 text-sm/6 font-medium text-white data-hover:bg-primary/30"
             >
-              Jetzt 14 Tage kostenlos testen
+              Jetzt Onboarding buchen
               <ChevronRightIcon className="size-4" />
             </Link>
           }
         />
         <div className="pt-16 pb-24 sm:pt-24 sm:pb-32 md:pt-32 md:pb-48">
           <h1 className="font-display text-6xl/[0.9] font-medium tracking-tight text-balance text-gray-950 sm:text-8xl/[0.8] md:text-9xl/[0.8]">
-            PR-Arbeit neu gedacht.
+            Pressearbeit mit
+            <br />
+            KI Power <SparklesIcon className="inline-block size-12 sm:size-16 md:size-20 text-[#66b7a9]" />
           </h1>
-          <p className="mt-8 max-w-lg text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            CeleroPress hilft dir, deine PR-Arbeit zu optimieren und mehr zu
-            verkaufen mit KI-gestützten Email-Kampagnen.
+          <p className="mt-8 text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
+            Vom ersten Entwurf bis zur fertigen Kampagne: CeleroPress ist das richtige Tool,
+            <br />
+            das mit Ihren Ambitionen wächst. Einfach für Einsteiger, mächtig für Profis.
           </p>
           <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
-            <Button href="/signup">Jetzt starten</Button>
-            <Button variant="secondary" href="/pricing">
-              Preise ansehen
+            <Button href="/signup">Jetzt durchstarten</Button>
+            <Button variant="secondary" href="/demo">
+              Live-Demo buchen
             </Button>
           </div>
         </div>
@@ -59,130 +72,228 @@ function Hero() {
   )
 }
 
+const heroFeatures = [
+  {
+    name: 'KI-Assistent.',
+    description: 'Erstellen Sie Pressemitteilungen in Minuten statt Stunden mit unserem intelligenten Schreibassistenten.',
+    icon: SparklesIcon,
+  },
+  {
+    name: 'Kontaktmanagement.',
+    description: 'Verwalten Sie Ihre Journalisten-Kontakte zentral und versenden Sie zielgerichtete Kampagnen.',
+    icon: UserGroupIcon,
+  },
+  {
+    name: 'Media Monitoring.',
+    description: 'Behalten Sie den Überblick über alle Erwähnungen und messen Sie Ihren PR-Erfolg.',
+    icon: ChartBarIcon,
+  },
+]
+
 function FeatureSection() {
   return (
-    <div className="overflow-hidden">
-      <Container className="pb-24">
-        <Heading as="h2" className="max-w-3xl">
-          Deine gesamte PR-Kampagne auf einen Blick.
-        </Heading>
-        <Screenshot
-          width={1216}
-          height={768}
-          src="/screenshots/app.png"
-          className="mt-16 h-144 sm:h-auto sm:w-304"
-        />
-      </Container>
+    <div className="overflow-hidden bg-white py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
+          <div className="lg:ml-auto lg:pt-4 lg:pl-4">
+            <div className="lg:max-w-lg">
+              <Subheading>Alles in einer Plattform</Subheading>
+              <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl">
+                Deine gesamte PR-Kampagne auf einen Blick.
+              </p>
+              <p className="mt-6 text-lg/8 text-gray-600">
+                CeleroPress vereint alle Werkzeuge für erfolgreiche PR-Arbeit in einer Plattform. Von der Idee bis zur Veröffentlichung.
+              </p>
+              <dl className="mt-10 max-w-xl space-y-8 text-base/7 text-gray-600 lg:max-w-none">
+                {heroFeatures.map((feature) => (
+                  <div key={feature.name} className="relative pl-9">
+                    <dt className="inline font-semibold text-gray-900">
+                      <feature.icon
+                        aria-hidden="true"
+                        className="absolute top-1 left-1 size-5 text-[#66b7a9]"
+                      />
+                      {feature.name}
+                    </dt>{' '}
+                    <dd className="inline">{feature.description}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+          <div className="flex items-start justify-end lg:order-first">
+            <Screenshot
+              width={1300}
+              height={900}
+              src="/celero.JPG"
+              className="w-[48rem] max-w-none sm:w-[57rem]"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
-function BentoSection() {
-  return (
-    <Container>
-      <Subheading>Kampagnen</Subheading>
-      <Heading as="h3" className="mt-2 max-w-3xl">
-        Erreiche deine Zielgruppe effektiver.
-      </Heading>
+const allFeatures = [
+  {
+    name: 'KI-Assistent',
+    description: 'Erstellen Sie professionelle Pressemitteilungen in Minuten mit unserem KI-gestützten Schreibassistenten.',
+    icon: SparklesIcon,
+  },
+  {
+    name: 'PR-SEO-Analyse',
+    description: 'Optimieren Sie Ihre Pressemitteilungen für Suchmaschinen mit automatischer Keyword-Analyse.',
+    icon: MagnifyingGlassIcon,
+  },
+  {
+    name: 'Medienkontakt-Datenbank',
+    description: 'Verwalten Sie Journalisten, Redakteure und Medienunternehmen zentral an einem Ort.',
+    icon: UserGroupIcon,
+  },
+  {
+    name: 'E-Mail-Kampagnen',
+    description: 'Versenden Sie personalisierte Pressemitteilungen mit automatischer Anrede und Variablen.',
+    icon: EnvelopeIcon,
+  },
+  {
+    name: 'Media-Monitoring',
+    description: 'Finden Sie automatisch Veröffentlichungen durch tägliches RSS-Feed-Crawling.',
+    icon: NewspaperIcon,
+  },
+  {
+    name: 'Media-Bibliothek',
+    description: 'Verwalten Sie Bilder, Videos und Dokumente an einem zentralen Ort.',
+    icon: FolderIcon,
+  },
+  {
+    name: 'Kanban-Board',
+    description: 'Visualisieren Sie den Status Ihrer Projekte auf einem übersichtlichen Board.',
+    icon: ViewColumnsIcon,
+  },
+  {
+    name: 'Team-Chat',
+    description: 'Kommunizieren Sie in Echtzeit mit Ihrem Team direkt im Projekt-Kontext.',
+    icon: ChatBubbleLeftRightIcon,
+  },
+  {
+    name: 'Analytics & Reporting',
+    description: 'Öffnungsraten, Klickraten und alle wichtigen Kennzahlen auf einen Blick.',
+    icon: ChartBarIcon,
+  },
+  {
+    name: 'Geplanter Versand',
+    description: 'Planen Sie den Versand Ihrer Kampagnen für den optimalen Zeitpunkt.',
+    icon: ClockIcon,
+  },
+  {
+    name: 'AVE-Berechnung',
+    description: 'Berechnen Sie den Werbewert Ihrer Medienberichterstattung automatisch.',
+    icon: DocumentChartBarIcon,
+  },
+  {
+    name: 'DSGVO-konform',
+    description: 'Alle Daten werden sicher in der EU gespeichert und verarbeitet.',
+    icon: ShieldCheckIcon,
+  },
+]
 
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
-        <BentoCard
-          eyebrow="Intelligenz"
-          title="Perfekte Einblicke"
-          description="CeleroPress analysiert deine Kontakte und erstellt automatisch personalisierte Kampagnen. Kenne die Interessen, Bedürfnisse und das perfekte Timing für jeden Empfänger."
-          graphic={
-            <div className="h-80 bg-[url(/screenshots/profile.png)] bg-size-[1000px_560px] bg-position-[left_-109px_top_-112px] bg-no-repeat" />
-          }
-          fade={['bottom']}
-          className="max-lg:rounded-t-4xl lg:col-span-3 lg:rounded-tl-4xl"
-        />
-        <BentoCard
-          eyebrow="Analyse"
-          title="Verstehe deine Zielgruppe"
-          description="Mit unseren detaillierten Analysen siehst du genau, welche Inhalte bei deiner Zielgruppe ankommen und wie du deine Kampagnen optimieren kannst."
-          graphic={
-            <div className="absolute inset-0 bg-[url(/screenshots/competitors.png)] bg-size-[1100px_650px] bg-position-[left_-38px_top_-73px] bg-no-repeat" />
-          }
-          fade={['bottom']}
-          className="lg:col-span-3 lg:rounded-tr-4xl"
-        />
-        <BentoCard
-          eyebrow="Geschwindigkeit"
-          title="Für Power-User optimiert"
-          description="Mit unseren Tastatur-Shortcuts versendest du E-Mails schneller als je zuvor. Maximale Effizienz für deine PR-Arbeit."
-          graphic={
-            <div className="flex size-full pt-10 pl-10">
-              <Keyboard highlighted={['LeftCommand', 'LeftShift', 'D']} />
+function AllFeaturesSection() {
+  return (
+    <div className="bg-white py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl lg:mx-0">
+          <Subheading>Alles was Sie brauchen</Subheading>
+          <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl">
+            Das können Sie erwarten!
+          </p>
+          <p className="mt-6 text-lg/8 text-gray-600">
+            Von KI-gestützter Content-Erstellung über intelligentes Kontaktmanagement bis hin zu umfassendem Monitoring.
+          </p>
+        </div>
+        <dl className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 text-base/7 text-gray-600 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-16">
+          {allFeatures.map((feature) => (
+            <div key={feature.name} className="relative pl-9">
+              <dt className="inline font-semibold text-gray-900">
+                <feature.icon aria-hidden="true" className="absolute left-1 top-1 size-5 text-[#66b7a9]" />
+                {feature.name}
+              </dt>{' '}
+              <dd className="inline">{feature.description}</dd>
             </div>
-          }
-          className="lg:col-span-2 lg:rounded-bl-4xl"
-        />
-        <BentoCard
-          eyebrow="Integration"
-          title="Maximale Reichweite"
-          description="Importiere Kontakte aus allen gängigen Plattformen und verwalte sie zentral in CeleroPress."
-          graphic={<LogoCluster />}
-          className="lg:col-span-2"
-        />
-        <BentoCard
-          eyebrow="Global"
-          title="Weltweit verkaufen"
-          description="CeleroPress unterstützt mehrere Sprachen und Zeitzonen. Erreiche deine Kunden überall auf der Welt."
-          graphic={<Map />}
-          className="max-lg:rounded-b-4xl lg:col-span-2 lg:rounded-br-4xl"
-        />
+          ))}
+        </dl>
       </div>
-    </Container>
+    </div>
   )
 }
 
-function DarkBentoSection() {
+function MonitoringSection() {
   return (
-    <div className="mx-2 mt-2 rounded-4xl bg-gray-900 py-32">
+    <div className="bg-gray-50 py-32">
       <Container>
-        <Subheading dark>Kommunikation</Subheading>
-        <Heading as="h3" dark className="mt-2 max-w-3xl">
-          Kundenkommunikation war noch nie so einfach.
-        </Heading>
+        <div className="text-center">
+          <Subheading>Analytics & Monitoring</Subheading>
+          <Heading as="h2" className="mt-2">
+            Messen Sie, was zählt.
+          </Heading>
+        </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2">
+        <div className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Box 1 - Media Monitoring */}
           <BentoCard
             dark
-            eyebrow="KI-Assistent"
-            title="Verkaufe mit Lichtgeschwindigkeit"
-            description="Unsere KI-Chat-Assistenten analysieren deine Konversationen in Echtzeit und geben dir sofort Optimierungsvorschläge."
+            eyebrow="Echtzeit"
+            title="Media Monitoring"
+            description="Verpassen Sie keine Erwähnung. Automatisches Crawling von RSS-Feeds und News-Seiten findet Ihre Clippings."
+            graphic={<MonitoringCluster />}
+            className="sm:col-span-2 lg:col-span-2 !bg-gray-800"
+          />
+
+          {/* Box 2 - AVE-Berechnung */}
+          <BentoCard
+            dark
+            eyebrow="ROI"
+            title="AVE-Berechnung"
+            description="Der wahre Wert Ihrer PR. Berechnen Sie den Advertising Value Equivalent automatisch."
             graphic={
-              <div className="h-80 bg-[url(/screenshots/networking.png)] bg-size-[851px_344px] bg-no-repeat" />
+              <div className="h-full overflow-hidden">
+                <div className="h-full bg-[url(/ave.jpg)] bg-cover bg-center -rotate-[8deg] scale-[1.2] opacity-90 transition-transform duration-300 group-hover:scale-[1.25]" />
+              </div>
             }
-            fade={['top']}
-            className="max-lg:rounded-t-4xl lg:col-span-4 lg:rounded-tl-4xl"
+            className="lg:col-span-1 !bg-gray-800"
           />
+
+          {/* Box 3 - Reporting */}
           <BentoCard
             dark
-            eyebrow="Integrationen"
-            title="Erreiche Leads überall"
-            description="Mit tausenden Integrationen verpasst du keine Gelegenheit mehr. CeleroPress integriert sich nahtlos in deine bestehenden Tools."
-            graphic={<LogoTimeline />}
-            className="z-10 overflow-visible! lg:col-span-2 lg:rounded-tr-4xl"
+            eyebrow="Reports"
+            title="Reporting"
+            description="Vom Öffnungs-Tracking bis zum Vorstands-Report. Alle Daten auf Knopfdruck."
+            graphic={
+              <div className="flex h-full items-center justify-center">
+                <DocumentChartBarIcon className="h-20 w-20 text-white/30" />
+              </div>
+            }
+            className="lg:col-span-1 !bg-gray-800"
           />
+
+          {/* Box 4 - Auto-Clipping mit Map */}
           <BentoCard
             dark
-            eyebrow="Verteilerlisten"
-            title="Intelligentes Kontaktmanagement"
-            description="Organisiere deine Kontakte in intelligenten Verteilerlisten und versende zielgerichtete Kampagnen."
+            eyebrow="Automatisch"
+            title="Auto-Clipping"
+            description="Kein Copy-Paste mehr. Treffer werden automatisch Ihren Kampagnen zugeordnet."
+            graphic={<Map />}
+            className="lg:col-span-1 !bg-gray-800"
+          />
+
+          {/* Box 5 - E-Mail Performance */}
+          <BentoCard
+            dark
+            eyebrow="Tracking"
+            title="E-Mail Performance"
+            description="Öffnungsraten, Klicks und Bounces. Sehen Sie genau, wie Ihre Kampagnen performen."
             graphic={<LinkedAvatars />}
-            className="lg:col-span-2 lg:rounded-bl-4xl"
-          />
-          <BentoCard
-            dark
-            eyebrow="Content"
-            title="KI-gestützte Inhalte"
-            description="CeleroPress AI schreibt automatisch überzeugende E-Mails und Pressemitteilungen, die bei deiner Zielgruppe ankommen."
-            graphic={
-              <div className="h-80 bg-[url(/screenshots/engagement.png)] bg-size-[851px_344px] bg-no-repeat" />
-            }
-            fade={['top']}
-            className="max-lg:rounded-b-4xl lg:col-span-4 lg:rounded-br-4xl"
+            className="sm:col-span-2 lg:col-span-2 !bg-gray-800"
           />
         </div>
       </Container>
@@ -195,16 +306,10 @@ export default function Home() {
     <div className="overflow-hidden">
       <Hero />
       <main>
-        <Container className="mt-10">
-          <LogoCloud />
-        </Container>
-        <div className="bg-linear-to-b from-white from-50% to-gray-100 py-32">
-          <FeatureSection />
-          <BentoSection />
-        </div>
-        <DarkBentoSection />
+        <FeatureSection />
+        <MonitoringSection />
+        <AllFeaturesSection />
       </main>
-      <Testimonials />
       <Footer />
     </div>
   )

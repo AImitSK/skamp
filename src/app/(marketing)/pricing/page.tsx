@@ -2,7 +2,6 @@ import { Button } from '@/components/marketing/Button'
 import { Container } from '@/components/marketing/Container'
 import { Footer } from '@/components/marketing/Footer'
 import { Gradient } from '@/components/marketing/gradient'
-import { LogoCloud } from '@/components/marketing/logo-cloud'
 import { Navbar } from '@/components/marketing/navbar'
 import { Heading, Lead, Subheading } from '@/components/marketing/text'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
@@ -131,7 +130,6 @@ function PricingCards() {
             <PricingCard key={tierIndex} tier={tier} />
           ))}
         </div>
-        <LogoCloud className="mt-24" />
       </Container>
     </div>
   )

@@ -4,7 +4,7 @@ import { MonitoringCluster } from '@/components/marketing/monitoring-cluster'
 import { Button } from '@/components/marketing/Button'
 import { Container } from '@/components/marketing/Container'
 import { Footer } from '@/components/marketing/Footer'
-import { Gradient } from '@/components/marketing/gradient'
+import { GradientBackground } from '@/components/marketing/gradient'
 import { Map } from '@/components/marketing/map'
 import { Navbar } from '@/components/marketing/navbar'
 import { Screenshot } from '@/components/marketing/screenshot'
@@ -34,34 +34,18 @@ export const metadata: Metadata = {
 }
 
 // =============================================================================
-// 1. HERO SECTION
+// 1. HEADER SECTION
 // =============================================================================
-function Hero() {
+function Header() {
   return (
-    <div className="relative">
-      <Gradient className="absolute inset-2 bottom-0 rounded-4xl ring-1 ring-black/5 ring-inset" />
-      <Container className="relative">
-        <Navbar />
-        <div className="pt-16 pb-24 sm:pt-24 sm:pb-32 md:pt-32 md:pb-48">
-          <h1 className="font-display text-6xl/[0.9] font-medium tracking-tight text-gray-950 sm:text-8xl/[0.8] md:text-9xl/[0.8]">
-            Pressearbeit
-            <br />
-            ohne Kompromisse.
-          </h1>
-          <p className="mt-8 max-w-xl text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            Vom ersten Entwurf bis zur fertigen Kampagne: CeleroPress ist das
-            richtige Tool, das mit Ihren Ambitionen wächst. Einfach für
-            Einsteiger, mächtig für Profis.
-          </p>
-          <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
-            <Button href="/signup">Jetzt durchstarten</Button>
-            <Button variant="secondary" href="/demo">
-              Live-Demo buchen
-            </Button>
-          </div>
-        </div>
-      </Container>
-    </div>
+    <Container className="mt-16">
+      <Heading as="h1">Alle Features im Überblick.</Heading>
+      <Lead className="mt-6 max-w-3xl">
+        Von KI-gestützter Content-Erstellung über intelligentes
+        Kontaktmanagement bis hin zu umfassendem Monitoring – entdecken Sie,
+        was CeleroPress für Ihre PR-Arbeit leisten kann.
+      </Lead>
+    </Container>
   )
 }
 
@@ -70,13 +54,13 @@ function Hero() {
 // =============================================================================
 function AIContentSection() {
   return (
-    <div className="mx-2 mt-2 rounded-4xl bg-gray-900 py-32">
+    <div className="mx-2 mt-24 rounded-4xl bg-linear-115 from-[#fde68a] from-28% via-[#6ee7b7] via-70% to-[#60a5fa] sm:bg-linear-145 py-32">
       <Container>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
           {/* Text Links */}
           <div>
-            <Subheading dark>Intelligente Content-Erstellung</Subheading>
-            <Heading as="h2" dark className="mt-2">
+            <Subheading>Intelligente Content-Erstellung</Subheading>
+            <Heading as="h2" className="mt-2">
               Ihre Pressemitteilung.
               <br />
               In Minuten fertig.
@@ -85,47 +69,47 @@ function AIContentSection() {
               <br />
               perfektioniert.
             </Heading>
-            <p className="mt-6 text-lg/8 text-gray-300">
+            <p className="mt-6 text-lg/8 text-gray-700">
               Schluss mit Schreibblockaden. Nutzen Sie unsere KI als Turbo für
               schnelle News oder als strategischen Partner für komplexe Storys.
             </p>
 
             <dl className="mt-10 space-y-6">
               <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-900">
                   <SparklesIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <dt className="text-base font-semibold text-white">
+                  <dt className="text-base font-semibold text-gray-900">
                     Schnellstart
                   </dt>
-                  <dd className="mt-1 text-sm/6 text-gray-400">
+                  <dd className="mt-1 text-sm/6 text-gray-700">
                     Verwandeln Sie lose Stichpunkte in Sekundenschnelle in eine vollständige Pressemitteilung und erzielen Sie als Einsteiger sofort professionelle Ergebnisse.
                   </dd>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-900">
                   <MagnifyingGlassIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <dt className="text-base font-semibold text-white">
+                  <dt className="text-base font-semibold text-gray-900">
                     Deep Dive
                   </dt>
-                  <dd className="mt-1 text-sm/6 text-gray-400">
+                  <dd className="mt-1 text-sm/6 text-gray-700">
                     Maximieren Sie Ihre Reichweite durch fundierte SEO-Analysen und strategische Stil-Optimierungen, die speziell auf die hohen Anforderungen von Profis zugeschnitten sind.
                   </dd>
                 </div>
               </div>
               <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-900">
                   <PencilSquareIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <dt className="text-base font-semibold text-white">
+                  <dt className="text-base font-semibold text-gray-900">
                     Perfekter Stil
                   </dt>
-                  <dd className="mt-1 text-sm/6 text-gray-400">
+                  <dd className="mt-1 text-sm/6 text-gray-700">
                     Sichern Sie sich jederzeit makellose Texte durch unsere automatische Korrektur von Tonalität und Grammatik für eine durchgehend professionelle Kommunikation.
                   </dd>
                 </div>
@@ -375,15 +359,17 @@ function TeamSection() {
 // =============================================================================
 export default function Features() {
   return (
-    <div className="overflow-hidden">
-      <Hero />
-      <main>
-        <AIContentSection />
-        <CRMSection />
-        <MonitoringSection />
-        <TeamSection />
-      </main>
+    <main className="overflow-hidden">
+      <GradientBackground />
+      <Container>
+        <Navbar />
+      </Container>
+      <Header />
+      <AIContentSection />
+      <CRMSection />
+      <MonitoringSection />
+      <TeamSection />
       <Footer />
-    </div>
+    </main>
   )
 }

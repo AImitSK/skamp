@@ -7,33 +7,33 @@ export function LogoCloud({
     <div
       className={clsx(
         className,
-        'flex justify-between max-sm:mx-auto max-sm:max-w-md max-sm:flex-wrap max-sm:justify-evenly max-sm:gap-x-4 max-sm:gap-y-4',
+        'flex items-center justify-center gap-x-8 gap-y-4 flex-wrap sm:gap-x-12 lg:gap-x-16',
       )}
     >
       <img
         alt="SavvyCal"
         src="/logo-cloud/savvycal.svg"
-        className="h-9 max-sm:mx-auto sm:h-8 lg:h-12"
+        className="h-8 w-auto object-contain lg:h-10"
       />
       <img
         alt="Laravel"
         src="/logo-cloud/laravel.svg"
-        className="h-9 max-sm:mx-auto sm:h-8 lg:h-12"
+        className="h-8 w-auto object-contain lg:h-10"
       />
       <img
         alt="Tuple"
         src="/logo-cloud/tuple.svg"
-        className="h-9 max-sm:mx-auto sm:h-8 lg:h-12"
+        className="h-8 w-auto object-contain lg:h-10"
       />
       <img
         alt="Transistor"
         src="/logo-cloud/transistor.svg"
-        className="h-9 max-sm:mx-auto sm:h-8 lg:h-12"
+        className="h-8 w-auto object-contain lg:h-10"
       />
       <img
         alt="Statamic"
         src="/logo-cloud/statamic.svg"
-        className="h-9 max-sm:mx-auto sm:h-8 lg:h-12"
+        className="h-8 w-auto object-contain lg:h-10"
       />
     </div>
   )
