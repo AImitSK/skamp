@@ -90,7 +90,7 @@ export default function CompaniesPage() {
       if (!tagMatch) return false;
 
       return true;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name, 'de'));
   }, [companies, searchTerm, selectedTypes, selectedTagIds]);
 
   const paginatedCompanies = useMemo(() => {
