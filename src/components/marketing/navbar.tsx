@@ -12,6 +12,7 @@ import { Logo } from './Logo'
 import { PlusGrid, PlusGridItem, PlusGridRow } from './plus-grid'
 
 const links = [
+  { href: '/features', label: 'Features' },
   { href: '/pricing', label: 'Preise' },
   { href: '/company', label: 'Unternehmen' },
   { href: '/blog', label: 'Blog' },
