@@ -252,9 +252,11 @@ function MonitoringContent() {
             <ClippingArchive clippings={clippings} />
           )}
 
-          {activeTab === 'suggestions' && (
+          {activeTab === 'suggestions' && currentOrganization && (
             <MonitoringSuggestionsTable
               suggestions={suggestions}
+              campaignId={campaignId}
+              organizationId={currentOrganization.id}
               onConfirm={handleConfirmSuggestion}
               onMarkSpam={handleMarkSpam}
               loading={isLoadingData}

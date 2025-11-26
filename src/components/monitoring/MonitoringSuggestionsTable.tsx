@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MonitoringSuggestion, MonitoringSource } from '@/types/monitoring';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,9 +19,12 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { Field, Label } from '@/components/ui/fieldset';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { clippingService, type DuplicateCheckResult } from '@/lib/firebase/clipping-service';
 
 interface Props {
   suggestions: MonitoringSuggestion[];
+  campaignId: string;
+  organizationId: string;
   onConfirm: (suggestion: MonitoringSuggestion, sentiment: 'positive' | 'neutral' | 'negative') => Promise<void>;
   onMarkSpam: (suggestion: MonitoringSuggestion) => Promise<void>;
   loading: boolean;
@@ -67,6 +70,8 @@ function SentimentButton({
 
 export function MonitoringSuggestionsTable({
   suggestions,
+  campaignId,
+  organizationId,
   onConfirm,
   onMarkSpam,
   loading
@@ -75,10 +80,40 @@ export function MonitoringSuggestionsTable({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<MonitoringSuggestion | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<'positive' | 'neutral' | 'negative'>('neutral');
+  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
+  // Duplikat-Prüfung wenn Dialog geöffnet wird
+  useEffect(() => {
+    if (!confirmDialogOpen || !selectedSuggestion || !organizationId) {
+      setDuplicateCheck(null);
+      return;
+    }
+
+    const checkDuplicate = async () => {
+      setCheckingDuplicate(true);
+      try {
+        const result = await clippingService.checkForDuplicate(
+          selectedSuggestion.articleUrl,
+          campaignId,
+          { organizationId }
+        );
+        setDuplicateCheck(result);
+      } catch (error) {
+        console.error('Duplikat-Prüfung fehlgeschlagen:', error);
+        setDuplicateCheck(null);
+      } finally {
+        setCheckingDuplicate(false);
+      }
+    };
+
+    checkDuplicate();
+  }, [confirmDialogOpen, selectedSuggestion, campaignId, organizationId]);
 
   const openConfirmDialog = (suggestion: MonitoringSuggestion) => {
     setSelectedSuggestion(suggestion);
     setSelectedSentiment('neutral');
+    setDuplicateCheck(null);
     setConfirmDialogOpen(true);
   };
 
@@ -355,6 +390,52 @@ export function MonitoringSuggestionsTable({
               </div>
             )}
 
+            {/* Duplikat-Prüfung Status */}
+            {checkingDuplicate && (
+              <Text className="text-sm text-gray-500">Prüfe auf Duplikate...</Text>
+            )}
+
+            {/* Duplikat-Warnung */}
+            {duplicateCheck?.isDuplicate && duplicateCheck.existingClipping && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <Text className="font-medium text-amber-800">
+                      Mögliches Duplikat gefunden
+                    </Text>
+                    <Text className="text-sm text-amber-700 mt-1">
+                      Ein Clipping mit dieser URL existiert bereits:
+                    </Text>
+                    <div className="mt-2 bg-white rounded border border-amber-200 p-3">
+                      <Text className="font-medium text-gray-900">
+                        {duplicateCheck.existingClipping.title}
+                      </Text>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Text className="text-sm text-gray-600">
+                          {duplicateCheck.existingClipping.outletName}
+                        </Text>
+                        <Badge color="blue">
+                          {duplicateCheck.existingClipping.detectionMethod === 'manual'
+                            ? 'Manuell erfasst'
+                            : 'Bereits importiert'}
+                        </Badge>
+                        {duplicateCheck.existingClipping.reach && (
+                          <Text className="text-sm text-gray-500">
+                            Reichweite: {duplicateCheck.existingClipping.reach.toLocaleString('de-DE')}
+                          </Text>
+                        )}
+                      </div>
+                    </div>
+                    <Text className="text-xs text-amber-600 mt-2">
+                      Wenn Sie fortfahren, wird ein zweites Clipping erstellt.
+                      Die Reichweite wird dann doppelt gezählt.
+                    </Text>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <Field>
               <Label>Sentiment</Label>
               <div className="flex gap-3 mt-2">
@@ -390,7 +471,7 @@ export function MonitoringSuggestionsTable({
           <Button
             color="green"
             onClick={handleConfirmWithSentiment}
-            disabled={processingId !== null}
+            disabled={processingId !== null || checkingDuplicate}
           >
             Clipping erstellen
           </Button>

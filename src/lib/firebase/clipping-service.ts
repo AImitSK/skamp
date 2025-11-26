@@ -20,6 +20,50 @@ interface ServiceContext {
   userId?: string;
 }
 
+/**
+ * Duplikat-Prüfungsergebnis
+ */
+export interface DuplicateCheckResult {
+  isDuplicate: boolean;
+  existingClipping?: MediaClipping;
+  matchType?: 'exact_url' | 'normalized_url';
+}
+
+/**
+ * Normalisiert eine URL für Duplikat-Vergleich
+ * Entfernt: www., trailing slashes, query params (utm_*, ref, etc.), Protokoll-Unterschiede
+ */
+export function normalizeUrlForComparison(url: string): string {
+  try {
+    const parsed = new URL(url);
+
+    // Hostname normalisieren (www. entfernen, lowercase)
+    let hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+
+    // Pfad normalisieren (trailing slash entfernen)
+    let pathname = parsed.pathname.replace(/\/+$/, '');
+
+    // Nur relevante Query-Parameter behalten (die meisten sind Tracking)
+    // Behalte nur Parameter die Teil der Artikel-ID sein könnten
+    const keepParams = ['id', 'article', 'p', 'page', 'story'];
+    const newParams = new URLSearchParams();
+
+    parsed.searchParams.forEach((value, key) => {
+      const keyLower = key.toLowerCase();
+      if (keepParams.includes(keyLower) || keyLower.startsWith('article')) {
+        newParams.set(key, value);
+      }
+    });
+
+    const queryString = newParams.toString();
+
+    return `${hostname}${pathname}${queryString ? '?' + queryString : ''}`;
+  } catch {
+    // Falls URL ungültig, einfach lowercase und trimmen
+    return url.toLowerCase().trim();
+  }
+}
+
 export const clippingService = {
 
   async create(clipping: Omit<MediaClipping, 'id' | 'createdAt' | 'updatedAt'>, context: ServiceContext): Promise<string> {
@@ -111,6 +155,49 @@ export const clippingService = {
     const clippings = await this.getByProjectId(projectId, context);
 
     return this.calculateStats(clippings);
+  },
+
+  /**
+   * Prüft ob bereits ein Clipping mit dieser URL existiert (Duplikat-Erkennung)
+   * Sucht in der gleichen Kampagne nach exakter oder normalisierter URL-Übereinstimmung
+   */
+  async checkForDuplicate(
+    url: string,
+    campaignId: string,
+    context: ServiceContext
+  ): Promise<DuplicateCheckResult> {
+    // Lade alle Clippings der Kampagne
+    const clippings = await this.getByCampaignId(campaignId, context);
+
+    if (clippings.length === 0) {
+      return { isDuplicate: false };
+    }
+
+    const normalizedInputUrl = normalizeUrlForComparison(url);
+
+    // Suche nach Duplikat
+    for (const clipping of clippings) {
+      // Exakte URL-Übereinstimmung
+      if (clipping.url === url) {
+        return {
+          isDuplicate: true,
+          existingClipping: clipping,
+          matchType: 'exact_url'
+        };
+      }
+
+      // Normalisierte URL-Übereinstimmung
+      const normalizedClippingUrl = normalizeUrlForComparison(clipping.url);
+      if (normalizedClippingUrl === normalizedInputUrl) {
+        return {
+          isDuplicate: true,
+          existingClipping: clipping,
+          matchType: 'normalized_url'
+        };
+      }
+    }
+
+    return { isDuplicate: false };
   },
 
   calculateStats(clippings: MediaClipping[]): ClippingStats {

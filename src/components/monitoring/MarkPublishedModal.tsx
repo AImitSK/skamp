@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Field, Label } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Text } from '@/components/ui/text';
+import { Badge } from '@/components/ui/badge';
 import { EmailCampaignSend } from '@/types/email';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -19,6 +20,8 @@ import {
   calculateAVE
 } from '@/lib/utils/publication-matcher';
 import { useMarkAsPublished, type MarkAsPublishedFormData } from '@/lib/hooks/useMonitoringMutations';
+import { clippingService, type DuplicateCheckResult } from '@/lib/firebase/clipping-service';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface MarkPublishedModalProps {
   send: EmailCampaignSend;
@@ -34,6 +37,8 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
   const [selectedPublication, setSelectedPublication] = useState<MatchedPublication | null>(null);
   const [lookupData, setLookupData] = useState<PublicationLookupResult | null>(null);
+  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [formData, setFormData] = useState<MarkAsPublishedFormData>({
     articleUrl: '',
     articleTitle: '',
@@ -44,6 +49,39 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
     sentimentScore: 0,
     publishedAt: new Date().toISOString().split('T')[0]
   });
+
+  // Duplikat-Prüfung bei URL-Änderung (mit Debounce)
+  useEffect(() => {
+    if (!formData.articleUrl || !currentOrganization?.id) {
+      setDuplicateCheck(null);
+      return;
+    }
+
+    // Nur prüfen wenn URL gültig aussieht
+    if (!formData.articleUrl.startsWith('http')) {
+      setDuplicateCheck(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setCheckingDuplicate(true);
+      try {
+        const result = await clippingService.checkForDuplicate(
+          formData.articleUrl,
+          campaignId,
+          { organizationId: currentOrganization.id }
+        );
+        setDuplicateCheck(result);
+      } catch (error) {
+        console.error('Duplikat-Prüfung fehlgeschlagen:', error);
+        setDuplicateCheck(null);
+      } finally {
+        setCheckingDuplicate(false);
+      }
+    }, 500); // 500ms Debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.articleUrl, campaignId, currentOrganization?.id]);
 
   // Berechne AVE bei Änderungen
   const calculatedAVE = useMemo(() => {
@@ -125,6 +163,9 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                     placeholder="https://..."
                     required
                   />
+                  {checkingDuplicate && (
+                    <Text className="text-xs text-gray-500 mt-1">Prüfe auf Duplikate...</Text>
+                  )}
                 </Field>
 
                 <Field>
@@ -137,6 +178,55 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                   />
                 </Field>
               </div>
+
+              {/* Duplikat-Warnung */}
+              {duplicateCheck?.isDuplicate && duplicateCheck.existingClipping && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <Text className="font-medium text-amber-800">
+                        Mögliches Duplikat gefunden
+                      </Text>
+                      <Text className="text-sm text-amber-700 mt-1">
+                        Ein Clipping mit dieser URL existiert bereits:
+                      </Text>
+                      <div className="mt-2 bg-white rounded border border-amber-200 p-3">
+                        <Text className="font-medium text-gray-900">
+                          {duplicateCheck.existingClipping.title}
+                        </Text>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Text className="text-sm text-gray-600">
+                            {duplicateCheck.existingClipping.outletName}
+                          </Text>
+                          <Badge color={
+                            duplicateCheck.existingClipping.detectionMethod === 'manual'
+                              ? 'blue'
+                              : duplicateCheck.existingClipping.detectionMethod === 'rss' || duplicateCheck.existingClipping.detectionMethod === 'google_news'
+                                ? 'green'
+                                : 'zinc'
+                          }>
+                            {duplicateCheck.existingClipping.detectionMethod === 'manual'
+                              ? 'Manuell erfasst'
+                              : duplicateCheck.existingClipping.detectionMethod === 'rss' || duplicateCheck.existingClipping.detectionMethod === 'google_news'
+                                ? 'Auto-Fund'
+                                : duplicateCheck.existingClipping.detectionMethod}
+                          </Badge>
+                          {duplicateCheck.existingClipping.reach && (
+                            <Text className="text-sm text-gray-500">
+                              Reichweite: {duplicateCheck.existingClipping.reach.toLocaleString('de-DE')}
+                            </Text>
+                          )}
+                        </div>
+                      </div>
+                      <Text className="text-xs text-amber-600 mt-2">
+                        Wenn Sie fortfahren, wird ein zweites Clipping erstellt.
+                        Die Reichweite wird dann doppelt gezählt.
+                      </Text>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Medium/Outlet und Typ - 2-spaltig (nur wenn nicht automatisch gefüllt) */}
               {!selectedPublication && (
