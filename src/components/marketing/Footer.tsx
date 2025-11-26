@@ -10,19 +10,19 @@ function CallToAction() {
   return (
     <div className="relative pt-20 pb-16 text-center sm:py-24">
       <hgroup>
-        <Subheading>Jetzt starten</Subheading>
+        <Subheading>Überzeugen Sie sich selbst</Subheading>
         <p className="mt-6 text-3xl font-medium tracking-tight text-gray-950 sm:text-5xl">
-          Bereit loszulegen?
+          Sehen Sie CeleroPress
           <br />
-          Starte noch heute deine kostenlose Testphase.
+          in Aktion.
         </p>
       </hgroup>
       <p className="mx-auto mt-6 max-w-xs text-sm/6 text-gray-500">
-        Optimiere deine PR-Arbeit und erreiche mehr mit CeleroPress.
+        In 30 Minuten zeigen wir Ihnen, wie CeleroPress Ihre PR-Arbeit revolutioniert.
       </p>
       <div className="mt-6">
-        <Button className="w-full sm:w-auto" href="/signup">
-          Jetzt kostenlos testen
+        <Button className="w-full sm:w-auto" href="/demo">
+          Live-Demo buchen
         </Button>
       </div>
     </div>

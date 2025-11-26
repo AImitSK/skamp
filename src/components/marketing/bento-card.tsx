@@ -6,6 +6,7 @@ import { Subheading } from './text'
 
 export function BentoCard({
   dark = false,
+  darkText = false,
   className = '',
   eyebrow,
   title,
@@ -14,6 +15,7 @@ export function BentoCard({
   fade = [],
 }: {
   dark?: boolean
+  darkText?: boolean
   className?: string
   eyebrow: React.ReactNode
   title: React.ReactNode
@@ -21,6 +23,7 @@ export function BentoCard({
   graphic: React.ReactNode
   fade?: ('top' | 'bottom')[]
 }) {
+  const textDark = dark || darkText
   return (
     <motion.div
       initial="idle"
@@ -43,14 +46,14 @@ export function BentoCard({
           <div className="absolute inset-0 bg-linear-to-t from-white to-50% group-data-dark:from-gray-800 group-data-dark:from-[-25%]" />
         )}
       </div>
-      <div className="relative p-10">
-        <Subheading as="h3" dark={dark}>
+      <div className={clsx('relative p-10 flex-1', darkText && 'bg-gray-800')}>
+        <Subheading as="h3" dark={textDark}>
           {eyebrow}
         </Subheading>
-        <p className="mt-1 text-2xl/8 font-medium tracking-tight text-gray-950 group-data-dark:text-white">
+        <p className={clsx('mt-1 text-2xl/8 font-medium tracking-tight', textDark ? 'text-white' : 'text-gray-950')}>
           {title}
         </p>
-        <p className="mt-2 max-w-[600px] text-sm/6 text-gray-600 group-data-dark:text-gray-400">
+        <p className={clsx('mt-2 max-w-[600px] text-sm/6', textDark ? 'text-gray-400' : 'text-gray-600')}>
           {description}
         </p>
       </div>
