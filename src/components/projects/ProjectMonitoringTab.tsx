@@ -66,7 +66,10 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
     refetch();
   }, [refetch]);
 
-  const handleConfirmSuggestion = useCallback(async (suggestionId: string) => {
+  const handleConfirmSuggestion = useCallback(async (
+    suggestionId: string,
+    sentiment?: 'positive' | 'neutral' | 'negative'
+  ) => {
     if (!user || !currentOrganization) {
       toastService.error('Authentifizierung erforderlich');
       return;
@@ -76,7 +79,8 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
       await confirmSuggestion.mutateAsync({
         suggestionId,
         userId: user.uid,
-        organizationId: currentOrganization.id
+        organizationId: currentOrganization.id,
+        sentiment: sentiment || 'neutral'
       });
       toastService.success('Vorschlag bestätigt und Clipping erstellt');
     } catch (error) {

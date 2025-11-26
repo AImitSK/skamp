@@ -72,6 +72,7 @@ class MonitoringSuggestionService {
     context: {
       userId: string;
       organizationId: string;
+      sentiment?: 'positive' | 'neutral' | 'negative';
     }
   ): Promise<string> {
     const suggestion = await this.getById(suggestionId);
@@ -102,7 +103,7 @@ class MonitoringSuggestionService {
       publishedAt: suggestion.sources[0]?.foundAt || Timestamp.now(),
       outletName: suggestion.sources[0]?.sourceName || 'Unbekannt',
       outletType: 'online' as const,
-      sentiment: 'neutral' as const,
+      sentiment: context.sentiment || 'neutral' as const,
       detectionMethod: 'automated' as const,
       detectedAt: suggestion.createdAt,
       createdBy: context.userId,

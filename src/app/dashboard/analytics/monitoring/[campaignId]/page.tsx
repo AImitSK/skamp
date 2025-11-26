@@ -89,7 +89,10 @@ function MonitoringContent() {
     }
   }, [pdfToDelete, contextDeletePDF]);
 
-  const handleConfirmSuggestion = useCallback(async (suggestion: MonitoringSuggestion) => {
+  const handleConfirmSuggestion = useCallback(async (
+    suggestion: MonitoringSuggestion,
+    sentiment: 'positive' | 'neutral' | 'negative'
+  ) => {
     if (!user?.uid || !currentOrganization?.id) return;
 
     try {
@@ -97,7 +100,8 @@ function MonitoringContent() {
         suggestion.id!,
         {
           userId: user.uid,
-          organizationId: currentOrganization.id
+          organizationId: currentOrganization.id,
+          sentiment
         }
       );
 

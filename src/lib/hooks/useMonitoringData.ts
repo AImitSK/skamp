@@ -117,10 +117,16 @@ export function useConfirmSuggestion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { suggestionId: string; userId: string; organizationId: string }) => {
+    mutationFn: async (data: {
+      suggestionId: string;
+      userId: string;
+      organizationId: string;
+      sentiment?: 'positive' | 'neutral' | 'negative';
+    }) => {
       return await monitoringSuggestionService.confirmSuggestion(data.suggestionId, {
         userId: data.userId,
-        organizationId: data.organizationId
+        organizationId: data.organizationId,
+        sentiment: data.sentiment
       });
     },
     onSuccess: () => {
