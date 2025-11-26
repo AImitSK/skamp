@@ -223,9 +223,7 @@ export function ContactsTable({
                       </a>
                     ))}
                   </div>
-                ) : (
-                  <span className="text-sm text-zinc-400">—</span>
-                )}
+                ) : null}
               </div>
 
               {/* Tags */}
