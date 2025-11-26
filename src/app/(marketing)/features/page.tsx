@@ -1,475 +1,410 @@
+import { BentoCard } from '@/components/marketing/bento-card'
+import { Button } from '@/components/marketing/Button'
 import { Container } from '@/components/marketing/Container'
 import { Footer } from '@/components/marketing/Footer'
 import { Gradient } from '@/components/marketing/gradient'
 import { Navbar } from '@/components/marketing/navbar'
+import { Screenshot } from '@/components/marketing/screenshot'
 import { Heading, Lead, Subheading } from '@/components/marketing/text'
 import {
   SparklesIcon,
   MagnifyingGlassIcon,
   PencilSquareIcon,
   UserGroupIcon,
-  BuildingOffice2Icon,
-  ListBulletIcon,
-  TagIcon,
-  ArrowDownTrayIcon,
-  EnvelopeIcon,
-  CalendarDaysIcon,
-  BeakerIcon,
-  CheckBadgeIcon,
-  DocumentArrowDownIcon,
-  ArrowUturnLeftIcon,
-  RssIcon,
-  AdjustmentsHorizontalIcon,
-  BoltIcon,
-  ChartBarIcon,
-  ArchiveBoxIcon,
-  PhotoIcon,
-  CloudArrowUpIcon,
-  FolderIcon,
-  ShareIcon,
-  LockClosedIcon,
-  EyeIcon,
-  NewspaperIcon,
-  GlobeAltIcon,
-  PresentationChartLineIcon,
-  RectangleStackIcon,
-  RocketLaunchIcon,
-  ViewColumnsIcon,
-  UsersIcon,
-  LinkIcon,
-  ChatBubbleLeftRightIcon,
-  AtSymbolIcon,
-  DocumentIcon,
-  FaceSmileIcon,
-  ChartPieIcon,
-  CursorArrowRaysIcon,
-  SignalIcon,
-  UserPlusIcon,
+  ArrowPathIcon,
   ShieldCheckIcon,
-  ServerStackIcon,
-  FingerPrintIcon,
+  RssIcon,
+  CurrencyEuroIcon,
+  BoltIcon,
+  DocumentChartBarIcon,
+  PhotoIcon,
+  ViewColumnsIcon,
+  ChatBubbleLeftRightIcon,
+  LockClosedIcon,
 } from '@heroicons/react/24/outline'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Features - CeleroPress',
   description:
-    'Entdecke alle Funktionen von CeleroPress: KI-gestützte Pressemitteilungen, Medien-Monitoring, Email-Kampagnen und mehr.',
+    'PR ohne Kompromisse. Vom ersten Entwurf bis zur globalen Kampagne: CeleroPress ist das einzige Tool, das mit Ihren Ambitionen wächst.',
 }
 
-// Feature-Kategorien mit allen Features
-const featureCategories = [
-  {
-    id: 'ki',
-    name: 'KI-Funktionen',
-    description: 'Künstliche Intelligenz für effizientere PR-Arbeit',
-    color: 'indigo',
-    features: [
-      {
-        name: 'KI-Assistent für Pressemitteilungen',
-        description: 'Erstellen Sie professionelle Pressemitteilungen in Minuten mit unserem KI-gestützten Schreibassistenten.',
-        icon: SparklesIcon,
-      },
-      {
-        name: 'PR-SEO-Analyse',
-        description: 'Optimieren Sie Ihre Pressemitteilungen für Suchmaschinen mit automatischer Keyword-Analyse und SEO-Empfehlungen.',
-        icon: MagnifyingGlassIcon,
-      },
-      {
-        name: 'KI-Textbearbeitungstools',
-        description: 'Verbessern Sie Ihre Texte mit intelligenten Vorschlägen für Stil, Tonalität und Lesbarkeit.',
-        icon: PencilSquareIcon,
-      },
-    ],
-  },
-  {
-    id: 'crm',
-    name: 'Kontakt- & CRM-Management',
-    description: 'Alle Medienkontakte zentral verwalten',
-    color: 'emerald',
-    features: [
-      {
-        name: 'Medienkontakt-Datenbank',
-        description: 'Verwalten Sie Journalisten, Redakteure und Medienunternehmen zentral an einem Ort.',
-        icon: UserGroupIcon,
-      },
-      {
-        name: 'Premium-Journalisten-Datenbank',
-        description: 'Greifen Sie auf eine kuratierte Datenbank mit verifizierten Journalisten inkl. Themenschwerpunkten zu.',
-        icon: BuildingOffice2Icon,
-      },
-      {
-        name: 'Intelligente Verteilerlisten',
-        description: 'Erstellen Sie dynamische Verteiler, die sich automatisch basierend auf Ihren Filterkriterien aktualisieren.',
-        icon: ListBulletIcon,
-      },
-      {
-        name: 'Tag-System & Kategorisierung',
-        description: 'Organisieren Sie Kontakte flexibel mit benutzerdefinierten Tags und Kategorien.',
-        icon: TagIcon,
-      },
-      {
-        name: 'Import & Export',
-        description: 'Importieren Sie bestehende Kontakte per CSV und exportieren Sie Listen nach Excel.',
-        icon: ArrowDownTrayIcon,
-      },
-    ],
-  },
-  {
-    id: 'email',
-    name: 'Kampagnen & E-Mail-Versand',
-    description: 'Professionelle PR-Kampagnen versenden',
-    color: 'blue',
-    features: [
-      {
-        name: 'E-Mail-Composer mit Personalisierung',
-        description: 'Versenden Sie personalisierte Pressemitteilungen mit automatischer Anrede und individuellen Variablen.',
-        icon: EnvelopeIcon,
-      },
-      {
-        name: 'Geplanter Versand',
-        description: 'Planen Sie den Versand Ihrer Kampagnen für den optimalen Zeitpunkt.',
-        icon: CalendarDaysIcon,
-      },
-      {
-        name: 'Test-E-Mail-Funktion',
-        description: 'Prüfen Sie Ihre E-Mails vor dem Versand mit einer Testmail an sich selbst.',
-        icon: BeakerIcon,
-      },
-      {
-        name: 'Verifizierte Absender-Domains',
-        description: 'Versenden Sie E-Mails von Ihrer eigenen Domain für maximale Zustellbarkeit.',
-        icon: CheckBadgeIcon,
-      },
-      {
-        name: 'PDF-Anhang-Generierung',
-        description: 'Pressemitteilungen werden automatisch als professionelles PDF angehängt.',
-        icon: DocumentArrowDownIcon,
-      },
-      {
-        name: 'Reply-Tracking',
-        description: 'Antworten von Journalisten landen automatisch in Ihrem CRM.',
-        icon: ArrowUturnLeftIcon,
-      },
-    ],
-  },
-  {
-    id: 'monitoring',
-    name: 'Medien-Monitoring & Clipping',
-    description: 'Veröffentlichungen automatisch finden',
-    color: 'amber',
-    features: [
-      {
-        name: 'Automatisches Medien-Monitoring',
-        description: 'Finden Sie automatisch Veröffentlichungen zu Ihren Pressemitteilungen durch tägliches RSS-Feed-Crawling.',
-        icon: RssIcon,
-      },
-      {
-        name: 'Keyword-basierte Erkennung',
-        description: 'Intelligenter Abgleich Ihrer Kampagnen-Keywords mit veröffentlichten Artikeln.',
-        icon: AdjustmentsHorizontalIcon,
-      },
-      {
-        name: 'Auto-Confirm bei hoher Trefferquote',
-        description: 'Bei eindeutigen Treffern werden Clippings automatisch zugeordnet.',
-        icon: BoltIcon,
-      },
-      {
-        name: 'AVE-Berechnung',
-        description: 'Berechnen Sie den Werbewert Ihrer Medienberichterstattung (Advertising Value Equivalent).',
-        icon: ChartBarIcon,
-      },
-      {
-        name: 'Clipping-Archiv',
-        description: 'Alle gefundenen Veröffentlichungen übersichtlich dokumentiert und durchsuchbar.',
-        icon: ArchiveBoxIcon,
-      },
-    ],
-  },
-  {
-    id: 'media',
-    name: 'Media-Bibliothek & Assets',
-    description: 'Medien zentral verwalten und teilen',
-    color: 'violet',
-    features: [
-      {
-        name: 'Zentrale Medienverwaltung',
-        description: 'Verwalten Sie Bilder, Videos, Dokumente und Logos an einem zentralen Ort.',
-        icon: PhotoIcon,
-      },
-      {
-        name: 'Drag & Drop Upload',
-        description: 'Laden Sie mehrere Dateien gleichzeitig per Drag & Drop hoch.',
-        icon: CloudArrowUpIcon,
-      },
-      {
-        name: 'Ordner-Struktur',
-        description: 'Organisieren Sie Ihre Medien in beliebig verschachtelten Ordnern.',
-        icon: FolderIcon,
-      },
-      {
-        name: 'Share-Links mit Branding',
-        description: 'Teilen Sie Pressemappen mit eigenem Logo und Unternehmensfarben.',
-        icon: ShareIcon,
-      },
-      {
-        name: 'Passwort-geschützte Freigaben',
-        description: 'Schützen Sie sensible Materialien mit optionalem Passwortschutz.',
-        icon: LockClosedIcon,
-      },
-      {
-        name: 'Download-Tracking',
-        description: 'Sehen Sie, wann und wie oft Ihre geteilten Dateien heruntergeladen wurden.',
-        icon: EyeIcon,
-      },
-    ],
-  },
-  {
-    id: 'publications',
-    name: 'Publikations-Datenbank',
-    description: 'Alle Medien im Überblick',
-    color: 'rose',
-    features: [
-      {
-        name: 'Medien-Verzeichnis',
-        description: 'Übersicht aller relevanten Publikationen mit Reichweiten und Kontaktdaten.',
-        icon: NewspaperIcon,
-      },
-      {
-        name: 'Multi-Format-Support',
-        description: 'Zeitungen, Magazine, Online-Medien, TV und Radio in einer Datenbank.',
-        icon: GlobeAltIcon,
-      },
-      {
-        name: 'Metriken & Reichweiten',
-        description: 'Auflagenzahlen, Online-Traffic und Zielgruppen-Daten auf einen Blick.',
-        icon: PresentationChartLineIcon,
-      },
-      {
-        name: 'RSS-Feed-Integration',
-        description: 'Automatische Erkennung und Einbindung von RSS-Feeds für das Monitoring.',
-        icon: RectangleStackIcon,
-      },
-    ],
-  },
-  {
-    id: 'projects',
-    name: 'Projekt-Management',
-    description: 'PR-Projekte effizient steuern',
-    color: 'cyan',
-    features: [
-      {
-        name: 'Projekt-Wizard',
-        description: 'Erstellen Sie neue PR-Projekte in wenigen Schritten mit automatischer Ressourcen-Anlage.',
-        icon: RocketLaunchIcon,
-      },
-      {
-        name: 'Kanban-Board',
-        description: 'Visualisieren Sie den Status Ihrer Projekte auf einem übersichtlichen Board.',
-        icon: ViewColumnsIcon,
-      },
-      {
-        name: 'Team-Zuordnung',
-        description: 'Weisen Sie Projekte Team-Mitgliedern zu und definieren Sie Verantwortlichkeiten.',
-        icon: UsersIcon,
-      },
-      {
-        name: 'Automatische Kampagnen-Verknüpfung',
-        description: 'Neue Projekte erstellen automatisch verknüpfte PR-Kampagnen.',
-        icon: LinkIcon,
-      },
-    ],
-  },
-  {
-    id: 'communication',
-    name: 'Team-Kommunikation',
-    description: 'Zusammenarbeit in Echtzeit',
-    color: 'teal',
-    features: [
-      {
-        name: 'Projekt-Chat',
-        description: 'Kommunizieren Sie in Echtzeit mit Ihrem Team direkt im Projekt-Kontext.',
-        icon: ChatBubbleLeftRightIcon,
-      },
-      {
-        name: '@-Mentions',
-        description: 'Erwähnen Sie Team-Mitglieder und erhalten Sie Push-Benachrichtigungen.',
-        icon: AtSymbolIcon,
-      },
-      {
-        name: 'Datei-Sharing im Chat',
-        description: 'Teilen Sie Assets direkt aus der Media-Bibliothek im Chat.',
-        icon: DocumentIcon,
-      },
-      {
-        name: 'Reaktionen & Feedback',
-        description: 'Reagieren Sie auf Nachrichten mit Emojis für schnelles Feedback.',
-        icon: FaceSmileIcon,
-      },
-    ],
-  },
-  {
-    id: 'analytics',
-    name: 'Analytics & Reporting',
-    description: 'Erfolge messen und auswerten',
-    color: 'orange',
-    features: [
-      {
-        name: 'E-Mail-Performance',
-        description: 'Öffnungsraten, Klickraten und Bounce-Statistiken für jede Kampagne.',
-        icon: ChartPieIcon,
-      },
-      {
-        name: 'Kampagnen-Dashboard',
-        description: 'Alle wichtigen Kennzahlen Ihrer PR-Aktivitäten auf einen Blick.',
-        icon: CursorArrowRaysIcon,
-      },
-      {
-        name: 'Clipping-Statistiken',
-        description: 'Auswertung Ihrer Medienresonanz mit Reichweiten und Sentiment.',
-        icon: SignalIcon,
-      },
-    ],
-  },
-  {
-    id: 'security',
-    name: 'Sicherheit & Multi-Tenancy',
-    description: 'Sicher und datenschutzkonform',
-    color: 'slate',
-    features: [
-      {
-        name: 'Team-Verwaltung',
-        description: 'Laden Sie Kollegen ein und verwalten Sie Berechtigungen.',
-        icon: UserPlusIcon,
-      },
-      {
-        name: 'Rollen-System',
-        description: 'Admin, Editor und Viewer-Rollen für granulare Zugriffssteuerung.',
-        icon: ShieldCheckIcon,
-      },
-      {
-        name: 'Daten-Isolation',
-        description: 'Vollständige Trennung der Daten zwischen verschiedenen Organisationen.',
-        icon: ServerStackIcon,
-      },
-      {
-        name: 'DSGVO-konform',
-        description: 'Alle Daten werden sicher in der EU gespeichert und verarbeitet.',
-        icon: FingerPrintIcon,
-      },
-    ],
-  },
-]
-
-function Header() {
+// =============================================================================
+// 1. HERO SECTION
+// =============================================================================
+function Hero() {
   return (
-    <Container className="mt-16">
-      <Heading as="h1">Alle Funktionen im Überblick</Heading>
-      <Lead className="mt-6 max-w-3xl">
-        CeleroPress bietet alles, was Sie für erfolgreiche PR-Arbeit brauchen.
-        Von KI-gestützter Content-Erstellung bis zum automatischen Medien-Monitoring.
-      </Lead>
-    </Container>
-  )
-}
-
-function FeatureGrid({ category }: { category: typeof featureCategories[number] }) {
-  return (
-    <div className="mx-auto mt-16 max-w-7xl px-6 sm:mt-20 md:mt-24 lg:px-8">
-      <dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-10 text-base/7 text-gray-600 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
-        {category.features.map((feature) => (
-          <div key={feature.name} className="relative pl-9">
-            <dt className="inline font-semibold text-gray-900">
-              <feature.icon
-                aria-hidden="true"
-                className="absolute left-1 top-1 size-5 text-primary"
-              />
-              {feature.name}
-            </dt>{' '}
-            <dd className="inline">{feature.description}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  )
-}
-
-function FeatureSection({ category, index }: { category: typeof featureCategories[number]; index: number }) {
-  const isEven = index % 2 === 0
-
-  return (
-    <div className={`py-24 sm:py-32 ${isEven ? 'bg-white' : 'bg-gray-50'}`}>
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl sm:text-center">
-          <Subheading>{category.name}</Subheading>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-4xl sm:text-balance">
-            {category.description}
-          </p>
-        </div>
-      </div>
-      <FeatureGrid category={category} />
-    </div>
-  )
-}
-
-function HeroSection() {
-  // KI-Features als Hero-Sektion
-  const kiCategory = featureCategories[0]
-
-  return (
-    <div className="relative py-24 sm:py-32">
-      <Gradient className="absolute inset-x-2 top-0 bottom-0 rounded-4xl ring-1 ring-black/5 ring-inset" />
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl sm:text-center">
-          <Subheading>Powered by AI</Subheading>
-          <p className="mt-2 text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl sm:text-balance">
-            Künstliche Intelligenz für Ihre PR-Arbeit
-          </p>
-          <p className="mt-6 text-lg/8 text-gray-600">
-            Unsere KI-Tools helfen Ihnen, professionelle Pressemitteilungen zu erstellen,
-            SEO-Optimierungen durchzuführen und Ihre Texte zu perfektionieren.
-          </p>
-        </div>
-      </div>
-
-      {/* KI-Features Grid */}
-      <div className="relative mx-auto mt-16 max-w-7xl px-6 sm:mt-20 md:mt-24 lg:px-8">
-        <dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-10 text-base/7 text-gray-600 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
-          {kiCategory.features.map((feature) => (
-            <div key={feature.name} className="relative pl-9">
-              <dt className="inline font-semibold text-gray-900">
-                <feature.icon
-                  aria-hidden="true"
-                  className="absolute left-1 top-1 size-5 text-primary"
-                />
-                {feature.name}
-              </dt>{' '}
-              <dd className="inline">{feature.description}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </div>
-  )
-}
-
-export default function Features() {
-  // Alle Kategorien außer KI (die wird im Hero angezeigt)
-  const otherCategories = featureCategories.slice(1)
-
-  return (
-    <main className="overflow-hidden">
-      <Container>
+    <div className="relative">
+      <Gradient className="absolute inset-2 bottom-0 rounded-4xl ring-1 ring-black/5 ring-inset" />
+      <Container className="relative">
         <Navbar />
+        <div className="pt-16 pb-24 sm:pt-24 sm:pb-32 md:pt-32 md:pb-48">
+          <h1 className="font-display text-6xl/[0.9] font-medium tracking-tight text-balance text-gray-950 sm:text-8xl/[0.8] md:text-9xl/[0.8]">
+            PR ohne Kompromisse.
+          </h1>
+          <p className="mt-8 max-w-xl text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
+            Vom ersten Entwurf bis zur globalen Kampagne: CeleroPress ist das
+            einzige Tool, das mit Ihren Ambitionen wächst. Einfach für
+            Einsteiger, mächtig für Profis.
+          </p>
+          <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
+            <Button href="/signup">Kostenlos starten</Button>
+            <Button variant="secondary" href="/pricing">
+              Live-Demo buchen
+            </Button>
+          </div>
+        </div>
       </Container>
-      <Header />
-      <HeroSection />
+    </div>
+  )
+}
 
-      {otherCategories.map((category, index) => (
-        <FeatureSection key={category.id} category={category} index={index} />
-      ))}
+// =============================================================================
+// 2. KI & CONTENT SECTION (Dark, mit Screenshot)
+// =============================================================================
+function AIContentSection() {
+  return (
+    <div className="mx-2 mt-2 rounded-4xl bg-gray-900 py-32">
+      <Container>
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+          {/* Text Links */}
+          <div>
+            <Subheading dark>Intelligente Content-Erstellung</Subheading>
+            <Heading as="h2" dark className="mt-2">
+              Ihre Pressemitteilung. In Minuten fertig. Oder bis ins Detail
+              perfektioniert.
+            </Heading>
+            <p className="mt-6 text-lg/8 text-gray-300">
+              Schluss mit Schreibblockaden. Nutzen Sie unsere KI als Turbo für
+              schnelle News oder als strategischen Partner für komplexe Storys.
+            </p>
 
+            <dl className="mt-10 space-y-6">
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
+                  <SparklesIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-white">
+                    Schnellstart
+                  </dt>
+                  <dd className="mt-1 text-sm/6 text-gray-400">
+                    Generieren Sie komplette Pressemitteilungen aus Stichpunkten
+                    – perfekt für Einsteiger.
+                  </dd>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
+                  <MagnifyingGlassIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-white">
+                    Deep Dive
+                  </dt>
+                  <dd className="mt-1 text-sm/6 text-gray-400">
+                    Nutzen Sie SEO-Analysen und Stil-Optimierung für maximale
+                    Reichweite – für Profis.
+                  </dd>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary">
+                  <PencilSquareIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-white">
+                    Perfekter Stil
+                  </dt>
+                  <dd className="mt-1 text-sm/6 text-gray-400">
+                    Automatische Korrektur von Tonalität und Grammatik für
+                    professionelle Ergebnisse.
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </div>
+
+          {/* Screenshot Rechts */}
+          <div className="relative">
+            <Screenshot
+              width={1216}
+              height={768}
+              src="/screenshots/app.png"
+              className="w-full"
+            />
+          </div>
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+// =============================================================================
+// 3. CRM & DISTRIBUTION SECTION (Light, alternierend)
+// =============================================================================
+function CRMSection() {
+  return (
+    <div className="py-32">
+      <Container>
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+          {/* Screenshot Links */}
+          <div className="relative order-2 lg:order-1">
+            <Screenshot
+              width={1216}
+              height={768}
+              src="/screenshots/profile.png"
+              className="w-full"
+            />
+          </div>
+
+          {/* Text Rechts */}
+          <div className="order-1 lg:order-2">
+            <Subheading>Kontakte & Kampagnen</Subheading>
+            <Heading as="h2" className="mt-2">
+              Erreichen Sie die richtigen Journalisten. Jedes Mal.
+            </Heading>
+            <p className="mt-6 text-lg/8 text-gray-600">
+              Verwalten Sie Ihre Kontakte nicht nur – aktivieren Sie sie. Ob
+              lokaler Verteiler oder internationale Kampagne.
+            </p>
+
+            <dl className="mt-10 space-y-6">
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <UserGroupIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-gray-900">
+                    Smart
+                  </dt>
+                  <dd className="mt-1 text-sm/6 text-gray-600">
+                    Importieren Sie Kontakte per CSV oder nutzen Sie kuratierte
+                    Journalisten-Listen.
+                  </dd>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <ArrowPathIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-gray-900">Pro</dt>
+                  <dd className="mt-1 text-sm/6 text-gray-600">
+                    Dynamische Verteiler, die sich selbst aktualisieren und
+                    Reply-Tracking direkt ins CRM.
+                  </dd>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <ShieldCheckIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <dt className="text-base font-semibold text-gray-900">
+                    Sicher
+                  </dt>
+                  <dd className="mt-1 text-sm/6 text-gray-600">
+                    Verifizierte Absender-Domains für garantierte
+                    Zustellbarkeit.
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+// =============================================================================
+// 4. MONITORING & ANALYTICS BENTO GRID
+// =============================================================================
+function MonitoringSection() {
+  return (
+    <div className="bg-gray-50 py-32">
+      <Container>
+        <div className="text-center">
+          <Subheading>Analytics & Monitoring</Subheading>
+          <Heading as="h2" className="mt-2">
+            Messen Sie, was zählt.
+          </Heading>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Box 1 - Groß: Media Monitoring */}
+          <BentoCard
+            eyebrow="Echtzeit"
+            title="Media Monitoring"
+            description="Verpassen Sie keine Erwähnung. Automatisches Crawling von RSS-Feeds und News-Seiten findet Ihre Clippings."
+            graphic={
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+                <RssIcon className="h-24 w-24 text-primary/40" />
+              </div>
+            }
+            className="sm:col-span-2 lg:col-span-2 lg:row-span-2"
+          />
+
+          {/* Box 2 - AVE-Berechnung */}
+          <BentoCard
+            eyebrow="ROI"
+            title="AVE-Berechnung"
+            description="Der wahre Wert Ihrer PR. Berechnen Sie den Advertising Value Equivalent automatisch."
+            graphic={
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
+                <CurrencyEuroIcon className="h-20 w-20 text-emerald-500/40" />
+              </div>
+            }
+            className="lg:col-span-1"
+          />
+
+          {/* Box 3 - Auto-Clipping */}
+          <BentoCard
+            eyebrow="Automatisch"
+            title="Auto-Clipping"
+            description="Kein Copy-Paste mehr. Treffer werden automatisch Ihren Kampagnen zugeordnet."
+            graphic={
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-amber-500/20 to-amber-500/5">
+                <BoltIcon className="h-20 w-20 text-amber-500/40" />
+              </div>
+            }
+            className="lg:col-span-1"
+          />
+
+          {/* Box 4 - Reporting */}
+          <BentoCard
+            eyebrow="Reports"
+            title="Reporting"
+            description="Vom Öffnungs-Tracking bis zum Vorstands-Report – alle Daten auf Knopfdruck."
+            graphic={
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5">
+                <DocumentChartBarIcon className="h-20 w-20 text-violet-500/40" />
+              </div>
+            }
+            className="sm:col-span-2 lg:col-span-2"
+          />
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+// =============================================================================
+// 5. MEDIA ASSETS & TEAM (2x2 Grid)
+// =============================================================================
+function TeamSection() {
+  return (
+    <div className="py-32">
+      <Container>
+        <div className="text-center">
+          <Subheading>Zusammenarbeit</Subheading>
+          <Heading as="h2" className="mt-2">
+            Alles an einem Ort. Für das ganze Team.
+          </Heading>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2">
+          {/* Block 1: Media Hub */}
+          <div className="relative rounded-2xl border border-gray-200 bg-white p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <PhotoIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="mt-6 text-lg font-semibold text-gray-900">
+              Zentraler Asset-Speicher
+            </h3>
+            <p className="mt-2 text-sm/6 text-gray-600">
+              Bilder & Videos per Drag & Drop. Teilen Sie Pressemappen via
+              gebrandetem Link – Passwortschutz inklusive.
+            </p>
+          </div>
+
+          {/* Block 2: Projekt-Management */}
+          <div className="relative rounded-2xl border border-gray-200 bg-white p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <ViewColumnsIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="mt-6 text-lg font-semibold text-gray-900">
+              Kanban für PR
+            </h3>
+            <p className="mt-2 text-sm/6 text-gray-600">
+              Vom &quot;To-Do&quot; zum &quot;Published&quot;. Behalten Sie den
+              Status aller Kampagnen im Blick.
+            </p>
+          </div>
+
+          {/* Block 3: Kollaboration */}
+          <div className="relative rounded-2xl border border-gray-200 bg-white p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <ChatBubbleLeftRightIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="mt-6 text-lg font-semibold text-gray-900">
+              Chat & Feedback
+            </h3>
+            <p className="mt-2 text-sm/6 text-gray-600">
+              Diskutieren Sie Entwürfe direkt im Tool. @Mentions und Emojis für
+              schnelle Abstimmungen.
+            </p>
+          </div>
+
+          {/* Block 4: Sicherheit */}
+          <div className="relative rounded-2xl border border-gray-200 bg-white p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <LockClosedIcon className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="mt-6 text-lg font-semibold text-gray-900">
+              Enterprise Ready
+            </h3>
+            <p className="mt-2 text-sm/6 text-gray-600">
+              DSGVO-konform, Rollenrechte (Admin/Viewer) und strikte
+              Datentrennung zwischen Mandanten.
+            </p>
+          </div>
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+// =============================================================================
+// 6. CTA SECTION
+// =============================================================================
+function CTASection() {
+  return (
+    <div className="relative py-32">
+      <Gradient className="absolute inset-2 rounded-4xl ring-1 ring-black/5 ring-inset" />
+      <Container className="relative">
+        <div className="text-center">
+          <Heading as="h2">Bereit für bessere PR?</Heading>
+          <p className="mx-auto mt-6 max-w-xl text-lg/8 text-gray-600">
+            Starten Sie einfach und schalten Sie die Profi-Tools frei, wenn Sie
+            sie brauchen. Keine Kreditkarte erforderlich.
+          </p>
+          <div className="mt-10 flex justify-center gap-x-6">
+            <Button href="/signup">Kostenlos registrieren</Button>
+          </div>
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+// =============================================================================
+// MAIN PAGE
+// =============================================================================
+export default function Features() {
+  return (
+    <div className="overflow-hidden">
+      <Hero />
+      <main>
+        <AIContentSection />
+        <CRMSection />
+        <MonitoringSection />
+        <TeamSection />
+        <CTASection />
+      </main>
       <Footer />
-    </main>
+    </div>
   )
 }
