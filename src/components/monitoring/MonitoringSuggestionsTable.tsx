@@ -148,7 +148,6 @@ export function MonitoringSuggestionsTable({
   // Gruppiere nach Status
   const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
   const autoConfirmedSuggestions = suggestions.filter(s => s.status === 'auto_confirmed');
-  const otherSuggestions = suggestions.filter(s => !['pending', 'auto_confirmed'].includes(s.status));
 
   if (loading) {
     return (
@@ -318,55 +317,6 @@ export function MonitoringSuggestionsTable({
                             <span className="text-xs">({source.matchScore}%)</span>
                           </Badge>
                         ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(suggestion.status)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Other Suggestions (Spam, etc.) */}
-      {otherSuggestions.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Text className="font-semibold text-gray-900">
-              Weitere Vorschläge ({otherSuggestions.length})
-            </Text>
-          </div>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Artikel
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {otherSuggestions.map((suggestion) => (
-                  <tr key={suggestion.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <a
-                          href={suggestion.articleUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          {suggestion.articleTitle}
-                        </a>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDistanceToNow(suggestion.createdAt.toDate(), { locale: de, addSuffix: true })}
-                        </p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
