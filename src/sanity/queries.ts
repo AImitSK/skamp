@@ -103,7 +103,12 @@ const POST_QUERY = defineQuery(/* groq */ `*[
   categories[]->{
     title,
     "slug": slug.current,
-  }
+  },
+  tags[]->{
+    title,
+    "slug": slug.current,
+  },
+  seo
 }
 `)
 

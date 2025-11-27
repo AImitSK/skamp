@@ -13,6 +13,8 @@ import type { Metadata } from 'next'
 import { PortableText } from 'next-sanity'
 import { notFound } from 'next/navigation'
 
+import { image } from '@/sanity/image'
+
 // Revalidate alle 60 Sekunden, um Änderungen an Blog-Posts anzuzeigen
 export const revalidate = 60
 
@@ -23,7 +25,46 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   let { data: post } = await getPost((await params).slug)
 
-  return post ? { title: post.title, description: post.excerpt } : {}
+  if (!post) return {}
+
+  // SEO-Daten mit Fallbacks
+  const metaTitle = post.seo?.metaTitle || post.title
+  const metaDescription = post.seo?.metaDescription || post.excerpt
+  const ogTitle = post.seo?.ogTitle || metaTitle
+  const ogDescription = post.seo?.ogDescription || metaDescription
+  const ogImageUrl = post.seo?.ogImage
+    ? image(post.seo.ogImage).width(1200).height(630).url()
+    : post.mainImage
+    ? image(post.mainImage).width(1200).height(630).url()
+    : undefined
+
+  const keywords = post.seo?.metaKeywords?.join(', ')
+  const robots = [
+    post.seo?.noIndex ? 'noindex' : 'index',
+    post.seo?.noFollow ? 'nofollow' : 'follow',
+  ].join(', ')
+
+  return {
+    title: metaTitle,
+    description: metaDescription,
+    keywords,
+    robots,
+    authors: post.author?.name ? [{ name: post.author.name }] : undefined,
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+      type: 'article',
+      publishedTime: post.publishedAt,
+      authors: post.author?.name ? [post.author.name] : undefined,
+      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
+    },
+    twitter: {
+      card: post.seo?.twitterCard || 'summary_large_image',
+      title: ogTitle,
+      description: ogDescription,
+      images: ogImageUrl ? [ogImageUrl] : undefined,
+    },
+  }
 }
 
 export default async function BlogPost({
@@ -61,19 +102,44 @@ export default async function BlogPost({
                 </div>
               </div>
             )}
-            {Array.isArray(post.categories) && (
-              <div className="flex flex-wrap gap-2">
-                {post.categories.map((category) => (
-                  <Link
-                    key={category.slug}
-                    href={`/blog?category=${category.slug}`}
-                    className="rounded-full border border-dotted border-gray-300 bg-gray-50 px-2 text-sm/6 font-medium text-gray-500"
-                  >
-                    {category.title}
-                  </Link>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-col gap-4">
+              {Array.isArray(post.categories) && post.categories.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                    Kategorien
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {post.categories.map((category) => (
+                      <Link
+                        key={category.slug}
+                        href={`/blog?category=${category.slug}`}
+                        className="rounded-full border border-dotted border-gray-300 bg-gray-50 px-3 py-1 text-sm/6 font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        {category.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {Array.isArray(post.tags) && post.tags.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                    Tags
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag) => (
+                      <Link
+                        key={tag.slug}
+                        href={`/blog?tag=${tag.slug}`}
+                        className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        #{tag.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-gray-700">
             <div className="max-w-2xl xl:mx-auto">

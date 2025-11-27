@@ -73,8 +73,17 @@ export const postType = defineType({
     }),
     defineField({
       name: 'categories',
+      title: 'Kategorien',
       type: 'array',
       of: [{ type: 'reference', to: { type: 'category' } }],
+      description: 'Primäre Kategorien (max. 2-3 empfohlen)',
+    }),
+    defineField({
+      name: 'tags',
+      title: 'Tags',
+      type: 'array',
+      of: [{ type: 'reference', to: { type: 'tag' } }],
+      description: 'Spezifische Tags für bessere Auffindbarkeit und SEO',
     }),
     defineField({
       name: 'excerpt',
@@ -84,6 +93,99 @@ export const postType = defineType({
     defineField({
       name: 'body',
       type: 'blockContent',
+    }),
+    defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'object',
+      description: 'Suchmaschinenoptimierung - überschreibt Standard-Werte',
+      options: {
+        collapsible: true,
+        collapsed: false,
+      },
+      fields: [
+        {
+          name: 'metaTitle',
+          title: 'SEO Titel',
+          type: 'string',
+          description: 'Überschreibt den Post-Titel für Suchmaschinen (max. 60 Zeichen empfohlen)',
+          validation: (Rule) => Rule.max(60).warning('SEO-Titel sollten unter 60 Zeichen sein'),
+        },
+        {
+          name: 'metaDescription',
+          title: 'Meta-Beschreibung',
+          type: 'text',
+          rows: 3,
+          description: 'Überschreibt den Excerpt für Suchmaschinen (max. 160 Zeichen empfohlen)',
+          validation: (Rule) => Rule.max(160).warning('Meta-Beschreibungen sollten unter 160 Zeichen sein'),
+        },
+        {
+          name: 'metaKeywords',
+          title: 'Keywords/Tags',
+          type: 'array',
+          of: [{ type: 'string' }],
+          description: 'SEO-Keywords für diesen Post',
+          options: {
+            layout: 'tags',
+          },
+        },
+        {
+          name: 'ogImage',
+          title: 'Open Graph Bild',
+          type: 'image',
+          description: 'Bild für Social Media (Facebook, LinkedIn). Falls leer, wird das Haupt-Bild verwendet.',
+          options: {
+            hotspot: true,
+          },
+          fields: [
+            {
+              name: 'alt',
+              type: 'string',
+              title: 'Alternative text',
+            },
+          ],
+        },
+        {
+          name: 'ogTitle',
+          title: 'Open Graph Titel',
+          type: 'string',
+          description: 'Titel für Social Media Shares. Falls leer, wird der SEO-Titel oder Post-Titel verwendet.',
+        },
+        {
+          name: 'ogDescription',
+          title: 'Open Graph Beschreibung',
+          type: 'text',
+          rows: 2,
+          description: 'Beschreibung für Social Media Shares. Falls leer, wird Meta-Beschreibung oder Excerpt verwendet.',
+        },
+        {
+          name: 'twitterCard',
+          title: 'Twitter Card Typ',
+          type: 'string',
+          options: {
+            list: [
+              { title: 'Summary', value: 'summary' },
+              { title: 'Summary Large Image', value: 'summary_large_image' },
+            ],
+            layout: 'radio',
+          },
+          initialValue: 'summary_large_image',
+        },
+        {
+          name: 'noIndex',
+          title: 'Nicht indexieren',
+          type: 'boolean',
+          description: 'Verhindert, dass Suchmaschinen diesen Post indexieren',
+          initialValue: false,
+        },
+        {
+          name: 'noFollow',
+          title: 'Links nicht folgen',
+          type: 'boolean',
+          description: 'Verhindert, dass Suchmaschinen Links in diesem Post folgen',
+          initialValue: false,
+        },
+      ],
     }),
   ],
   preview: {
