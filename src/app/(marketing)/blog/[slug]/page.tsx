@@ -13,8 +13,6 @@ import type { Metadata } from 'next'
 import { PortableText } from 'next-sanity'
 import { notFound } from 'next/navigation'
 
-import { image } from '@/sanity/image'
-
 // Revalidate alle 60 Sekunden, um Änderungen an Blog-Posts anzuzeigen
 export const revalidate = 60
 
