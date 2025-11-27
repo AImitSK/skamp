@@ -34,7 +34,8 @@
       "Bash(curl:*)",
       "Bash(node check-firestore.js:*)",
       "Bash(node fix-org-roles.js:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:www.celeropress.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -1,10 +1,10 @@
 import { defineLive } from 'next-sanity'
 import { client } from './client'
+import { token } from './env'
 
 export const { sanityFetch, SanityLive } = defineLive({
   client,
-  // See the `next-sanity` readme to setup visual editing for interactive live preview
-  // https://github.com/sanity-io/next-sanity?tab=readme-ov-file#live-content-api
+  // Server-Token aktiviert für Live-Updates aus Sanity
+  serverToken: token,
   browserToken: false,
-  serverToken: false,
 })
