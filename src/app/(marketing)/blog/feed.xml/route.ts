@@ -3,6 +3,9 @@ import { getPostsForFeed } from '@/sanity/queries'
 import { Feed } from 'feed'
 import assert from 'node:assert'
 
+// Revalidate alle 60 Sekunden für aktuellen RSS-Feed
+export const revalidate = 60
+
 export async function GET(req: Request) {
   let siteUrl = new URL(req.url).origin
 
@@ -59,7 +62,7 @@ export async function GET(req: Request) {
     status: 200,
     headers: {
       'content-type': 'application/xml',
-      'cache-control': 's-maxage=31556952',
+      'cache-control': 's-maxage=3600, stale-while-revalidate=86400',
     },
   })
 }

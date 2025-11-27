@@ -13,6 +13,9 @@ import type { Metadata } from 'next'
 import { PortableText } from 'next-sanity'
 import { notFound } from 'next/navigation'
 
+// Revalidate alle 60 Sekunden, um Änderungen an Blog-Posts anzuzeigen
+export const revalidate = 60
+
 export async function generateMetadata({
   params,
 }: {

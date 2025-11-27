@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     'Bleib informiert mit Updates, News und Einblicken, wie du deine PR-Arbeit optimierst.',
 }
 
+// Revalidate alle 60 Sekunden, um neue Blog-Posts anzuzeigen
+export const revalidate = 60
+
 const postsPerPage = 5
 
 async function FeaturedPosts() {
