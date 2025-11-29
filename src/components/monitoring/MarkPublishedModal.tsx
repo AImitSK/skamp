@@ -250,7 +250,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                       <option value="print">📰 Print (Zeitung/Magazin)</option>
                       <option value="online">💻 Online</option>
                       <option value="broadcast">📺 Broadcast (TV/Radio)</option>
-                      <option value="blog">✍️ Blog</option>
+                      <option value="audio">🎙️ Podcast</option>
                     </Select>
                   </Field>
                 </div>
@@ -269,7 +269,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
                       <option value="print">📰 Print</option>
                       <option value="online">💻 Online</option>
                       <option value="broadcast">📺 Broadcast</option>
-                      <option value="blog">✍️ Blog</option>
+                      <option value="audio">🎙️ Podcast</option>
                     </Select>
                     {selectedPublication.source === 'company' && (
                       <Text className="text-xs text-gray-500">

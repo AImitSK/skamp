@@ -256,6 +256,17 @@ function generateOutletTypeDistribution(reportData: MonitoringReportData): strin
     return '';
   }
 
+  // Helper: Mapping von outletType zu benutzerfreundlichen Labels
+  const getOutletTypeLabel = (type: string): string => {
+    switch (type.toLowerCase()) {
+      case 'print': return 'Print';
+      case 'online': return 'Online';
+      case 'broadcast': return 'Broadcast';
+      case 'audio': return 'Podcast';
+      default: return type;
+    }
+  };
+
   return `
   <!-- MEDIENTYP-VERTEILUNG -->
   <div class="section">
@@ -272,7 +283,7 @@ function generateOutletTypeDistribution(reportData: MonitoringReportData): strin
       <tbody>
         ${reportData.clippingStats.outletTypeDistribution.map(type => `
         <tr>
-          <td><strong>${type.type}</strong></td>
+          <td><strong>${getOutletTypeLabel(type.type)}</strong></td>
           <td>${type.count}</td>
           <td>${type.reach.toLocaleString('de-DE')}</td>
           <td>${type.percentage}%</td>

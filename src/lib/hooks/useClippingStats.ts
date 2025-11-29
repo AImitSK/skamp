@@ -111,10 +111,23 @@ export function useClippingStats(
   }, [clippings]);
 
   const outletDistribution = useMemo(() => {
+    // Helper: Mapping von outletType zu benutzerfreundlichen Labels
+    const getOutletTypeLabel = (type: string): string => {
+      switch (type) {
+        case 'print': return 'Print';
+        case 'online': return 'Online';
+        case 'broadcast': return 'Broadcast';
+        case 'audio': return 'Podcast';
+        default: return type;
+      }
+    };
+
     const distribution = clippings.reduce((acc, clipping) => {
       const type = clipping.outletType || 'Unbekannt';
+      const label = getOutletTypeLabel(type);
+
       if (!acc[type]) {
-        acc[type] = { name: type, count: 0, reach: 0 };
+        acc[type] = { name: label, count: 0, reach: 0 };
       }
       acc[type].count += 1;
       acc[type].reach += clipping.reach || 0;

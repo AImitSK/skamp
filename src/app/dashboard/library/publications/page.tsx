@@ -28,6 +28,10 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   EllipsisVerticalIcon,
+  NewspaperIcon,
+  ComputerDesktopIcon,
+  TvIcon,
+  SignalIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
@@ -236,14 +240,66 @@ export default function PublicationsPage() {
     }
   };
 
-  const formatMetric = (pub: Publication): string => {
+  const formatMetric = (pub: Publication): JSX.Element | string => {
+    const metrics: JSX.Element[] = [];
+
+    // Print: Auflage
     if (pub.metrics?.print?.circulation) {
-      return `${pub.metrics.print.circulation.toLocaleString('de-DE')} Auflage`;
+      metrics.push(
+        <div key="print" className="flex items-center gap-2">
+          <NewspaperIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.print.circulation.toLocaleString('de-DE')}</span>
+        </div>
+      );
     }
-    if (pub.metrics?.online?.monthlyUniqueVisitors) {
-      return `${pub.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')} UV/Monat`;
+
+    // Online: Page Views (primär) oder Unique Visitors (Fallback)
+    if (pub.metrics?.online?.monthlyPageViews) {
+      metrics.push(
+        <div key="online" className="flex items-center gap-2">
+          <ComputerDesktopIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.online.monthlyPageViews.toLocaleString('de-DE')}</span>
+        </div>
+      );
+    } else if (pub.metrics?.online?.monthlyUniqueVisitors) {
+      metrics.push(
+        <div key="online-uv" className="flex items-center gap-2">
+          <ComputerDesktopIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')}</span>
+        </div>
+      );
     }
-    return "";
+
+    // Broadcast: Viewership
+    if (pub.metrics?.broadcast?.viewership) {
+      metrics.push(
+        <div key="broadcast" className="flex items-center gap-2">
+          <TvIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.broadcast.viewership.toLocaleString('de-DE')}</span>
+        </div>
+      );
+    }
+
+    // Audio: Downloads (primär) oder Listeners (Fallback)
+    if (pub.metrics?.audio?.monthlyDownloads) {
+      metrics.push(
+        <div key="audio" className="flex items-center gap-2">
+          <SignalIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.audio.monthlyDownloads.toLocaleString('de-DE')}</span>
+        </div>
+      );
+    } else if (pub.metrics?.audio?.monthlyListeners) {
+      metrics.push(
+        <div key="audio-listeners" className="flex items-center gap-2">
+          <SignalIcon className="h-4 w-4 text-zinc-500" />
+          <span>{pub.metrics.audio.monthlyListeners.toLocaleString('de-DE')}</span>
+        </div>
+      );
+    }
+
+    if (metrics.length === 0) return "";
+
+    return <div className="flex flex-col gap-1">{metrics}</div>;
   };
 
   if (isLoading) {

@@ -32,7 +32,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
     articleUrl: clipping.url || '',
     articleTitle: clipping.title || '',
     outletName: clipping.outletName || '',
-    outletType: clipping.outletType as 'print' | 'online' | 'broadcast' | 'blog',
+    outletType: clipping.outletType as 'print' | 'online' | 'broadcast' | 'audio',
     reach: clipping.reach?.toString() || '',
     sentiment: clipping.sentiment,
     sentimentScore: clipping.sentimentScore || aveSettingsService.getSentimentScoreFromLabel(clipping.sentiment),
@@ -128,7 +128,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
                     <option value="print">📰 Print (Zeitung/Magazin)</option>
                     <option value="online">💻 Online</option>
                     <option value="broadcast">📺 Broadcast (TV/Radio)</option>
-                    <option value="blog">✍️ Blog</option>
+                    <option value="audio">🎙️ Podcast</option>
                   </Select>
                 </Field>
               </div>

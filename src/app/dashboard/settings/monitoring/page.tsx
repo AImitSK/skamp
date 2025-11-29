@@ -24,7 +24,7 @@ export default function MonitoringSettingsPage() {
     printFactor: DEFAULT_AVE_SETTINGS.factors.print,
     onlineFactor: DEFAULT_AVE_SETTINGS.factors.online,
     broadcastFactor: DEFAULT_AVE_SETTINGS.factors.broadcast,
-    blogFactor: DEFAULT_AVE_SETTINGS.factors.blog,
+    audioFactor: DEFAULT_AVE_SETTINGS.factors.audio,
     positiveMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.positive,
     neutralMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.neutral,
     negativeMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.negative,
@@ -45,7 +45,7 @@ export default function MonitoringSettingsPage() {
         printFactor: data.factors.print,
         onlineFactor: data.factors.online,
         broadcastFactor: data.factors.broadcast,
-        blogFactor: data.factors.blog,
+        audioFactor: data.factors.audio,
         positiveMultiplier: data.sentimentMultipliers.positive,
         neutralMultiplier: data.sentimentMultipliers.neutral,
         negativeMultiplier: data.sentimentMultipliers.negative,
@@ -71,7 +71,7 @@ export default function MonitoringSettingsPage() {
             print: formData.printFactor,
             online: formData.onlineFactor,
             broadcast: formData.broadcastFactor,
-            blog: formData.blogFactor,
+            audio: formData.audioFactor,
           },
           sentimentMultipliers: {
             positive: formData.positiveMultiplier,
@@ -95,7 +95,7 @@ export default function MonitoringSettingsPage() {
       printFactor: DEFAULT_AVE_SETTINGS.factors.print,
       onlineFactor: DEFAULT_AVE_SETTINGS.factors.online,
       broadcastFactor: DEFAULT_AVE_SETTINGS.factors.broadcast,
-      blogFactor: DEFAULT_AVE_SETTINGS.factors.blog,
+      audioFactor: DEFAULT_AVE_SETTINGS.factors.audio,
       positiveMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.positive,
       neutralMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.neutral,
       negativeMultiplier: DEFAULT_AVE_SETTINGS.sentimentMultipliers.negative,
@@ -183,14 +183,14 @@ export default function MonitoringSettingsPage() {
                       </Field>
 
                       <Field>
-                        <Label>Blog (€ pro Reichweite)</Label>
-                        <Description>Faktor für Blogs und kleinere Online-Medien</Description>
+                        <Label>Audio/Podcast (€ pro Download)</Label>
+                        <Description>Faktor für Podcasts (monatliche Downloads)</Description>
                         <Input
                           type="number"
-                          step="0.1"
+                          step="0.001"
                           min="0"
-                          value={formData.blogFactor}
-                          onChange={(e) => setFormData({ ...formData, blogFactor: parseFloat(e.target.value) || 0 })}
+                          value={formData.audioFactor}
+                          onChange={(e) => setFormData({ ...formData, audioFactor: parseFloat(e.target.value) || 0 })}
                         />
                       </Field>
                     </div>
