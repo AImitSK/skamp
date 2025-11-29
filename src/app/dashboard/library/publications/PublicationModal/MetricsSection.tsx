@@ -292,6 +292,124 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           </div>
         </div>
       )}
+
+      {/* Broadcast Metriken (TV/Radio) */}
+      {formData.format === 'broadcast' && (
+        <div className="border rounded-lg p-4 space-y-4">
+          <h4 className="font-medium text-zinc-900">Broadcast-Metriken (TV/Radio)</h4>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Zuschauer/Hörer (Durchschnitt)
+              </label>
+              <Input
+                type="number"
+                value={metrics.broadcast.viewership}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  broadcast: { ...metrics.broadcast, viewership: e.target.value }
+                })}
+                placeholder="500000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Marktanteil (%)
+              </label>
+              <Input
+                type="number"
+                step="0.1"
+                value={metrics.broadcast.marketShare}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  broadcast: { ...metrics.broadcast, marketShare: e.target.value }
+                })}
+                placeholder="15.5"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Sendegebiet
+              </label>
+              <Input
+                type="text"
+                value={metrics.broadcast.broadcastArea}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  broadcast: { ...metrics.broadcast, broadcastArea: e.target.value }
+                })}
+                placeholder="z.B. National, Regional Bayern"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Metriken (Podcast) */}
+      {formData.format === 'audio' && (
+        <div className="border rounded-lg p-4 space-y-4">
+          <h4 className="font-medium text-zinc-900">Audio-Metriken (Podcast)</h4>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Monatliche Downloads
+              </label>
+              <Input
+                type="number"
+                value={metrics.audio.monthlyDownloads}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  audio: { ...metrics.audio, monthlyDownloads: e.target.value }
+                })}
+                placeholder="50000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Monatliche Hörer (optional)
+              </label>
+              <Input
+                type="number"
+                value={metrics.audio.monthlyListeners}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  audio: { ...metrics.audio, monthlyListeners: e.target.value }
+                })}
+                placeholder="25000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Anzahl Episoden
+              </label>
+              <Input
+                type="number"
+                value={metrics.audio.episodeCount}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  audio: { ...metrics.audio, episodeCount: e.target.value }
+                })}
+                placeholder="120"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Ø Episode-Länge (Minuten)
+              </label>
+              <Input
+                type="number"
+                step="0.1"
+                value={metrics.audio.avgEpisodeDuration}
+                onChange={(e) => setMetrics({
+                  ...metrics,
+                  audio: { ...metrics.audio, avgEpisodeDuration: e.target.value }
+                })}
+                placeholder="45.0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

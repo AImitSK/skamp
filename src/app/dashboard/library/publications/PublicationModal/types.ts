@@ -54,6 +54,17 @@ export interface MetricsState {
     hasPaywall: boolean;
     hasMobileApp: boolean;
   };
+  broadcast: {
+    viewership: string;
+    marketShare: string;
+    broadcastArea: string;
+  };
+  audio: {
+    monthlyDownloads: string;
+    monthlyListeners: string;
+    episodeCount: string;
+    avgEpisodeDuration: string;
+  };
 }
 
 // Identifier Interface
@@ -96,7 +107,6 @@ export const publicationTypes = [
   { value: 'tv', label: 'TV' },
   { value: 'radio', label: 'Radio' },
   { value: 'trade_journal', label: 'Fachzeitschrift' },
-  { value: 'press_agency', label: 'Nachrichtenagentur' },
   { value: 'social_media', label: 'Social Media' }
 ];
 
@@ -175,6 +185,17 @@ export const createDefaultMetrics = (): MetricsState => ({
     domainAuthority: '',
     hasPaywall: false,
     hasMobileApp: false
+  },
+  broadcast: {
+    viewership: '',
+    marketShare: '',
+    broadcastArea: ''
+  },
+  audio: {
+    monthlyDownloads: '',
+    monthlyListeners: '',
+    episodeCount: '',
+    avgEpisodeDuration: ''
   }
 });
 

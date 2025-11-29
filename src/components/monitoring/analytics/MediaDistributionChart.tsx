@@ -16,6 +16,31 @@ interface MediaDistributionChartProps {
 
 const CHART_COLORS = ['#005fab', '#3397d7', '#add8f0', '#DEDC00', '#10b981'];
 
+/**
+ * Mappt outletType zu lesbarem Label mit Icon
+ *
+ * @param outletType - Der rohe outletType aus MediaClipping ('print', 'online', etc.)
+ * @returns Formatiertes Label mit Icon (z.B. '📰 Print')
+ */
+function getOutletTypeLabel(outletType: string): string {
+  switch (outletType.toLowerCase()) {
+    case 'print':
+      return '📰 Print';
+    case 'online':
+      return '💻 Online';
+    case 'broadcast':
+      return '📺 Broadcast';
+    case 'audio':
+      return '🎧 Podcast';
+    case 'blog':
+      // Temporär für Migration - blog-Clippings sollten zu 'online' migriert werden
+      return '💻 Blog (veraltet)';
+    default:
+      // Fallback: Unbekannte Types anzeigen wie sie sind
+      return outletType;
+  }
+}
+
 export const MediaDistributionChart = React.memo(function MediaDistributionChart({
   data,
 }: MediaDistributionChartProps) {
@@ -52,6 +77,7 @@ export const MediaDistributionChart = React.memo(function MediaDistributionChart
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
             }}
+            formatter={(value, name) => [value, getOutletTypeLabel(name as string)]}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -63,7 +89,7 @@ export const MediaDistributionChart = React.memo(function MediaDistributionChart
               style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
             />
             <Text className="text-sm text-gray-600">
-              {item.name}: {item.count}
+              {getOutletTypeLabel(item.name)}: {item.count}
             </Text>
           </div>
         ))}

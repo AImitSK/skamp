@@ -197,6 +197,7 @@ export const BasicInfoSection = memo(function BasicInfoSection({
             <option value="online">Digital</option>
             <option value="both">Print & Digital</option>
             <option value="broadcast">Broadcast</option>
+            <option value="audio">Audio</option>
           </Select>
         </div>
         <div>
