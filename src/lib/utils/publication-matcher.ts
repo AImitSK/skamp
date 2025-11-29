@@ -1,14 +1,16 @@
 // src/lib/utils/publication-matcher.ts
-import { Contact, Company, Publication } from '@/types/crm';
+import { Contact, Company, Publication as CRMPublication } from '@/types/crm';
+import { Publication as LibraryPublication } from '@/types/library';
 import { contactsService, companiesService } from '@/lib/firebase/crm-service';
+import { publicationService } from '@/lib/firebase/library-service';
 
 export interface MatchedPublication {
   name: string;
   id?: string;
-  type: 'print' | 'online' | 'broadcast' | 'blog';
+  type: 'print' | 'online' | 'broadcast' | 'audio';
   reach?: number;
   circulation?: number;
-  format?: 'print' | 'online' | 'both';
+  format?: 'print' | 'online' | 'both' | 'broadcast' | 'audio';
   source: 'library' | 'company' | 'crm' | 'manual';
   focusAreas?: string[];
 }
@@ -20,7 +22,52 @@ export interface PublicationLookupResult {
 }
 
 /**
+ * Extrahiert die Reichweite aus einer Library-Publication
+ *
+ * Prioritäten:
+ * 1. Print: circulation (Auflage)
+ * 2. Online: monthlyPageViews (von Verlagen kommuniziert)
+ * 3. Online Fallback: monthlyUniqueVisitors
+ * 4. Broadcast: viewership
+ * 5. Audio: monthlyDownloads (primär) oder monthlyListeners (Fallback)
+ */
+export function getReachFromLibraryPublication(pub: LibraryPublication): number | undefined {
+  // Print: Auflage als Reichweite
+  if (pub.metrics?.print?.circulation) {
+    return pub.metrics.print.circulation;
+  }
+
+  // Online: Page Views als Reichweite (Standard, da von Verlagen kommuniziert)
+  if (pub.metrics?.online?.monthlyPageViews) {
+    return pub.metrics.online.monthlyPageViews;
+  }
+
+  // Online Fallback: Unique Visitors falls Page Views nicht verfügbar
+  if (pub.metrics?.online?.monthlyUniqueVisitors) {
+    return pub.metrics.online.monthlyUniqueVisitors;
+  }
+
+  // Broadcast: Viewership/Listeners
+  if (pub.metrics?.broadcast?.viewership) {
+    return pub.metrics.broadcast.viewership;
+  }
+
+  // Audio: Downloads (primär) oder Listeners (Fallback)
+  if (pub.metrics?.audio?.monthlyDownloads) {
+    return pub.metrics.audio.monthlyDownloads;
+  }
+
+  if (pub.metrics?.audio?.monthlyListeners) {
+    return pub.metrics.audio.monthlyListeners;
+  }
+
+  return undefined;
+}
+
+/**
  * Intelligente Publication Lookup basierend auf Email-Adresse
+ *
+ * Lädt Publications aus der Library (nicht mehr aus CRM Company.mediaInfo.publications)
  */
 export async function handleRecipientLookup(
   recipientEmail: string,
@@ -46,58 +93,85 @@ export async function handleRecipientLookup(
     // 3. Publikationen sammeln
     const matchedPublications: MatchedPublication[] = [];
 
-    // 3a. Publikationen aus Contact.mediaInfo.publications (string[])
-    if (contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0) {
-      for (const pubName of contact.mediaInfo.publications) {
-        // Versuche, die Publikation in den Company-Publications zu finden
-        let matched = false;
+    // 3a. Wenn Company ein Publisher/Medienhaus ist: Library-Publications laden
+    if (company?.id) {
+      try {
+        const libraryPubs = await publicationService.getByPublisherId(company.id, organizationId);
 
-        if (company?.mediaInfo?.publications) {
-          const companyPub = company.mediaInfo.publications.find(p =>
-            p.name.toLowerCase() === pubName.toLowerCase() ||
-            p.name.toLowerCase().includes(pubName.toLowerCase()) ||
-            pubName.toLowerCase().includes(p.name.toLowerCase())
-          );
+        for (const libPub of libraryPubs) {
+          const reach = getReachFromLibraryPublication(libPub);
+          const circulation = libPub.metrics?.print?.circulation;
 
-          if (companyPub) {
-            matchedPublications.push({
-              name: companyPub.name,
-              id: companyPub.id,
-              type: mapPublicationTypeToMonitoring(companyPub.type, companyPub.format),
-              reach: companyPub.reach,
-              circulation: companyPub.circulation,
-              format: companyPub.format,
-              source: 'company',
-              focusAreas: companyPub.focusAreas
-            });
-            matched = true;
-          }
-        }
-
-        // Fallback: Nur Name aus CRM verwenden
-        if (!matched) {
           matchedPublications.push({
-            name: pubName,
-            type: 'online', // Default
-            source: 'crm'
+            name: libPub.title,
+            id: libPub.id,
+            type: mapPublicationTypeToMonitoring(libPub.type, libPub.format),
+            reach,
+            circulation,
+            format: libPub.format,
+            source: 'library',
+            focusAreas: libPub.focusAreas
           });
         }
+      } catch (error) {
+        console.error('Fehler beim Laden der Library-Publications:', error);
       }
     }
 
-    // 3b. Falls keine Publikationen beim Kontakt: Alle Publikationen des Medienhauses anbieten
-    if (matchedPublications.length === 0 && company?.mediaInfo?.publications) {
-      for (const pub of company.mediaInfo.publications) {
-        matchedPublications.push({
-          name: pub.name,
-          id: pub.id,
-          type: mapPublicationTypeToMonitoring(pub.type, pub.format),
-          reach: pub.reach,
-          circulation: pub.circulation,
-          format: pub.format,
-          source: 'company',
-          focusAreas: pub.focusAreas
-        });
+    // 3b. FALLBACK: Legacy CRM Company.mediaInfo.publications (deprecated)
+    if (matchedPublications.length === 0) {
+      // Versuche aus Contact.mediaInfo.publications
+      if (contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0) {
+        for (const pubName of contact.mediaInfo.publications) {
+          let matched = false;
+
+          if (company?.mediaInfo?.publications) {
+            const companyPub = company.mediaInfo.publications.find(p =>
+              p.name.toLowerCase() === pubName.toLowerCase() ||
+              p.name.toLowerCase().includes(pubName.toLowerCase()) ||
+              pubName.toLowerCase().includes(p.name.toLowerCase())
+            );
+
+            if (companyPub) {
+              matchedPublications.push({
+                name: companyPub.name,
+                id: companyPub.id,
+                type: mapPublicationTypeToMonitoring(companyPub.type, companyPub.format),
+                reach: companyPub.reach,
+                circulation: companyPub.circulation,
+                format: companyPub.format,
+                source: 'company',
+                focusAreas: companyPub.focusAreas
+              });
+              matched = true;
+            }
+          }
+
+          // Nur Name aus CRM verwenden
+          if (!matched) {
+            matchedPublications.push({
+              name: pubName,
+              type: 'online', // Default
+              source: 'crm'
+            });
+          }
+        }
+      }
+
+      // Oder aus Company.mediaInfo.publications direkt
+      if (matchedPublications.length === 0 && company?.mediaInfo?.publications) {
+        for (const pub of company.mediaInfo.publications) {
+          matchedPublications.push({
+            name: pub.name,
+            id: pub.id,
+            type: mapPublicationTypeToMonitoring(pub.type, pub.format),
+            reach: pub.reach,
+            circulation: pub.circulation,
+            format: pub.format,
+            source: 'company',
+            focusAreas: pub.focusAreas
+          });
+        }
       }
     }
 
@@ -118,22 +192,25 @@ export async function handleRecipientLookup(
 }
 
 /**
- * Konvertiert Publication-Typen zu Monitoring-Typen
+ * Konvertiert Publication-Typen zu Monitoring-Typen (outletType)
+ *
+ * WICHTIG: Blog ist ein Type, kein Format → nutzt 'online' als outletType
+ * WICHTIG: Podcast → 'audio' (nicht broadcast)
  */
 export function mapPublicationTypeToMonitoring(
   libType: string,
-  format?: 'print' | 'online' | 'both'
-): 'print' | 'online' | 'broadcast' | 'blog' {
-  // Blog bleibt Blog
-  if (libType === 'blog') return 'blog';
+  format?: 'print' | 'online' | 'both' | 'audio'
+): 'print' | 'online' | 'broadcast' | 'audio' {
+  // Podcast → audio (NEU)
+  if (libType === 'podcast') return 'audio';
 
-  // TV, Radio, Podcast sind Broadcast
-  if (libType === 'tv' || libType === 'radio' || libType === 'podcast') {
+  // TV, Radio → broadcast
+  if (libType === 'tv' || libType === 'radio') {
     return 'broadcast';
   }
 
-  // Website und Newsletter sind Online
-  if (libType === 'website' || libType === 'newsletter' || libType === 'online') {
+  // Blog, Website, Newsletter → online
+  if (libType === 'blog' || libType === 'website' || libType === 'newsletter') {
     return 'online';
   }
 
@@ -142,6 +219,7 @@ export function mapPublicationTypeToMonitoring(
     if (format === 'print') return 'print';
     if (format === 'online') return 'online';
     if (format === 'both') return 'print'; // Default bei hybrid
+    if (format === 'audio') return 'audio'; // Falls Magazine auch Audio haben
   }
 
   // Fallback

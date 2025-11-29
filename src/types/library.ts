@@ -12,20 +12,19 @@ import {
 // Publikation als eigenständige Entität
 // ========================================
 
-export type PublicationType = 
-  | 'magazine' 
-  | 'newspaper' 
-  | 'website' 
-  | 'blog' 
-  | 'podcast' 
-  | 'tv' 
-  | 'radio' 
-  | 'newsletter' 
+export type PublicationType =
+  | 'magazine'
+  | 'newspaper'
+  | 'website'
+  | 'blog'
+  | 'podcast'
+  | 'tv'
+  | 'radio'
+  | 'newsletter'
   | 'trade_journal'
-  | 'press_agency'
   | 'social_media';
 
-export type PublicationFormat = 'print' | 'online' | 'both' | 'broadcast';
+export type PublicationFormat = 'print' | 'online' | 'both' | 'broadcast' | 'audio';
 
 export type PublicationFrequency = 
   | 'continuous' // 24/7 Online
@@ -136,12 +135,25 @@ export interface Publication extends BaseEntity {
       viewership?: number; // Durchschnittliche Zuschauer/Hörer
       marketShare?: number; // Prozent
       broadcastArea?: string; // "National", "Regional Bayern", etc.
-      
+
       // Sendezeiten für News/Magazine
       airTimes?: {
         day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' | 'daily' | 'weekdays';
         time: string; // "20:15"
         duration?: number; // Minuten
+      }[];
+    };
+
+    // Audio-spezifisch (Podcasts)
+    audio?: {
+      monthlyDownloads?: number; // Monatliche Downloads
+      monthlyListeners?: number; // Monatliche unique Hörer
+      episodeCount?: number; // Anzahl Episoden
+      avgEpisodeDuration?: number; // Durchschnittliche Episode-Länge in Minuten
+      platforms?: {
+        name: string; // "Spotify", "Apple Podcasts", "Google Podcasts"
+        url?: string;
+        followerCount?: number;
       }[];
     };
   };
@@ -663,7 +675,6 @@ export const PUBLICATION_TYPE_LABELS: Record<PublicationType, string> = {
   'radio': 'Radio',
   'newsletter': 'Newsletter',
   'trade_journal': 'Fachzeitschrift',
-  'press_agency': 'Nachrichtenagentur',
   'social_media': 'Social Media'
 };
 

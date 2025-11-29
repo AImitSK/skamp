@@ -16,7 +16,7 @@ export interface MediaClipping {
 
   // Medium/Outlet
   outletName: string;
-  outletType: 'print' | 'online' | 'broadcast' | 'blog';
+  outletType: 'print' | 'online' | 'broadcast' | 'audio';
   outletUrl?: string;
 
   // Inhalt
@@ -187,7 +187,7 @@ export interface ClippingStats {
     print: number;
     online: number;
     broadcast: number;
-    blog: number;
+    audio: number;
   };
   byCategory: {
     news: number;
@@ -216,7 +216,7 @@ export interface AVESettings {
     print: number;
     online: number;
     broadcast: number;
-    blog: number;
+    audio: number;
   };
 
   sentimentMultipliers: {
@@ -235,7 +235,7 @@ export const DEFAULT_AVE_SETTINGS: Omit<AVESettings, 'id' | 'organizationId' | '
     print: 3,
     online: 1,
     broadcast: 5,
-    blog: 0.5
+    audio: 0.002
   },
   sentimentMultipliers: {
     positive: 1.0,
