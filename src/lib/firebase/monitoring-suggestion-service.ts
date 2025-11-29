@@ -21,6 +21,8 @@ import {
 import { db } from './config';
 import { MonitoringSuggestion } from '@/types/monitoring';
 import { clippingService } from './clipping-service';
+import { detectOutletType } from '@/lib/utils/outlet-type-detector';
+import { publicationService } from './library-service';
 
 class MonitoringSuggestionService {
   private collectionName = 'monitoring_suggestions';
@@ -93,6 +95,25 @@ class MonitoringSuggestionService {
       throw new Error('Campaign not found');
     }
 
+    // Intelligente outletType-Erkennung basierend auf Library Publication
+    let outletType: 'print' | 'online' | 'broadcast' | 'audio' = 'online'; // Default
+
+    // Versuche Publication zu laden falls publicationId vorhanden
+    const publicationId = suggestion.sources[0]?.publicationId;
+    if (publicationId) {
+      try {
+        const publication = await publicationService.getById(
+          publicationId,
+          suggestion.organizationId
+        );
+        if (publication) {
+          outletType = detectOutletType(publication);
+        }
+      } catch (error) {
+        console.warn('Konnte Publication nicht laden, verwende Default outletType:', error);
+      }
+    }
+
     // Erstelle Clipping aus Suggestion
     const clippingData: Record<string, any> = {
       organizationId: suggestion.organizationId,
@@ -102,7 +123,7 @@ class MonitoringSuggestionService {
       url: suggestion.articleUrl,
       publishedAt: suggestion.sources[0]?.foundAt || Timestamp.now(),
       outletName: suggestion.sources[0]?.sourceName || 'Unbekannt',
-      outletType: 'online' as const,
+      outletType,
       sentiment: context.sentiment || 'neutral' as const,
       detectionMethod: 'automated' as const,
       detectedAt: suggestion.createdAt,
