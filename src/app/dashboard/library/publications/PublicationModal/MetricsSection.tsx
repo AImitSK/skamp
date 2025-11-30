@@ -81,8 +81,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Auflage
-                <span className="text-red-500">*</span>
+                Auflage *
                 <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
@@ -197,8 +196,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Monatliche Page Views
-                <span className="text-red-500">*</span>
+                Monatliche Page Views *
                 <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
@@ -307,8 +305,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Zuschauer/Hörer (Durchschnitt)
-                <span className="text-red-500">*</span>
+                Zuschauer/Hörer (Durchschnitt) *
                 <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
@@ -362,8 +359,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
-                Monatliche Downloads
-                <span className="text-red-500">*</span>
+                Monatliche Downloads *
                 <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
