@@ -988,18 +988,37 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
     if (typeof organizationIdOrEmailAddress === 'object' && organizationIdOrEmailAddress !== null) {
       const emailAddr = organizationIdOrEmailAddress as EmailAddress;
 
-      // Validierung
-      if (!emailAddr.localPart || !emailAddr.organizationId || !emailAddr.id) {
-        console.error('❌ generateReplyToAddress: Ungültiges EmailAddress-Objekt:', {
-          hasLocalPart: !!emailAddr.localPart,
+      // Extrahiere localPart aus email falls nicht direkt vorhanden
+      let localPart = emailAddr.localPart;
+      if (!localPart && emailAddr.email) {
+        localPart = emailAddr.email.split('@')[0];
+      }
+
+      // Validierung mit Fallback-Strategie
+      if (!localPart || !emailAddr.organizationId || !emailAddr.id) {
+        console.warn('⚠️ generateReplyToAddress: Unvollständiges EmailAddress-Objekt:', {
+          hasLocalPart: !!localPart,
+          hasEmail: !!emailAddr.email,
           hasOrganizationId: !!emailAddr.organizationId,
-          hasId: !!emailAddr.id
+          hasId: !!emailAddr.id,
+          email: emailAddr.email || 'N/A'
         });
-        throw new Error('Ungültiges EmailAddress-Objekt für Reply-To Generierung');
+
+        // Fallback: Generiere eine einfache Reply-To basierend auf verfügbaren Daten
+        if (emailAddr.email) {
+          const [emailLocalPart, domain] = emailAddr.email.split('@');
+          const fallbackReplyTo = `${emailLocalPart}-reply@inbox.${domain}`;
+          console.log('📧 Fallback Reply-To generiert:', fallbackReplyTo);
+          return fallbackReplyTo;
+        }
+
+        // Letzter Fallback
+        console.error('❌ generateReplyToAddress: Keine E-Mail-Adresse verfügbar');
+        return 'noreply@inbox.celeropress.com';
       }
 
       // Kurzer Prefix aus der lokalen E-Mail-Adresse
-      const prefix = emailAddr.localPart
+      const prefix = localPart
         .substring(0, 10)
         .replace(/[^a-z0-9]/gi, ''); // Nur alphanumerisch
 
