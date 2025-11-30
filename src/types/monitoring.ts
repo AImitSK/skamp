@@ -232,10 +232,10 @@ export interface AVESettings {
 
 export const DEFAULT_AVE_SETTINGS: Omit<AVESettings, 'id' | 'organizationId' | 'updatedBy' | 'updatedAt' | 'createdAt'> = {
   factors: {
-    print: 3,
-    online: 1,
-    broadcast: 5,
-    audio: 0.002
+    print: 0.003,      // 3€ pro 1000 Reichweite
+    online: 0.001,     // 1€ pro 1000 Reichweite
+    broadcast: 0.005,  // 5€ pro 1000 Reichweite
+    audio: 0.002       // 2€ pro 1000 Reichweite
   },
   sentimentMultipliers: {
     positive: 1.0,
