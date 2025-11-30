@@ -976,10 +976,50 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
   }
 
   /**
-   * Generiert eine Reply-To Adresse für eine EmailAddress ID
-   * Server-seitige Methode für email-sender-service
+   * Generiert eine Reply-To Adresse
+   *
+   * Kann auf zwei Arten aufgerufen werden:
+   * 1. Mit EmailAddress-Objekt: generateReplyToAddress(emailAddress)
+   * 2. Mit zwei Strings (async): generateReplyToAddressAsync(organizationId, emailAddressId)
    */
-  async generateReplyToAddress(organizationId: string, emailAddressId: string): Promise<string> {
+  generateReplyToAddress(emailAddress: EmailAddress): string;
+  generateReplyToAddress(organizationIdOrEmailAddress: string | EmailAddress, emailAddressId?: string): string | Promise<string> {
+    // Wenn ein EmailAddress-Objekt übergeben wurde (synchron)
+    if (typeof organizationIdOrEmailAddress === 'object' && organizationIdOrEmailAddress !== null) {
+      const emailAddr = organizationIdOrEmailAddress as EmailAddress;
+
+      // Validierung
+      if (!emailAddr.localPart || !emailAddr.organizationId || !emailAddr.id) {
+        console.error('❌ generateReplyToAddress: Ungültiges EmailAddress-Objekt:', {
+          hasLocalPart: !!emailAddr.localPart,
+          hasOrganizationId: !!emailAddr.organizationId,
+          hasId: !!emailAddr.id
+        });
+        throw new Error('Ungültiges EmailAddress-Objekt für Reply-To Generierung');
+      }
+
+      // Kurzer Prefix aus der lokalen E-Mail-Adresse
+      const prefix = emailAddr.localPart
+        .substring(0, 10)
+        .replace(/[^a-z0-9]/gi, ''); // Nur alphanumerisch
+
+      // Kurze IDs verwenden (erste 8 Zeichen)
+      const shortOrgId = emailAddr.organizationId.substring(0, 8);
+      const shortEmailId = emailAddr.id.substring(0, 8);
+
+      // Verwende sk-online-marketing.de statt celeropress.de
+      return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
+    }
+
+    // Wenn zwei Strings übergeben wurden (async, für Abwärtskompatibilität)
+    return this.generateReplyToAddressAsync(organizationIdOrEmailAddress as string, emailAddressId!);
+  }
+
+  /**
+   * Async-Version: Generiert eine Reply-To Adresse anhand von IDs
+   * Lädt die EmailAddress erst aus der Datenbank
+   */
+  async generateReplyToAddressAsync(organizationId: string, emailAddressId: string): Promise<string> {
     const emailAddress = await this.get(emailAddressId);
     if (!emailAddress) {
       throw new Error(`EmailAddress nicht gefunden: ${emailAddressId}`);

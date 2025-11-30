@@ -88,12 +88,35 @@ export async function POST(request: NextRequest) {
     }
 
     // WICHTIG: Setze Reply-To für Inbox-System
-    if (replyTo) {
+    // Validiere dass replyTo ein gültiger String ist (nicht ein leeres Objekt oder undefined)
+    if (replyTo && typeof replyTo === 'string' && replyTo.includes('@')) {
       msg.replyTo = {
         email: replyTo,
         name: from.name || from.email
       };
       console.log('📮 Setting Reply-To:', replyTo);
+    } else if (replyTo && typeof replyTo === 'object') {
+      // Falls replyTo versehentlich als Objekt übergeben wurde, logge Warnung
+      console.warn('⚠️ replyTo wurde als Objekt übergeben, nicht als String:', JSON.stringify(replyTo));
+      // Versuche E-Mail aus Objekt zu extrahieren
+      const replyToEmail = (replyTo as any).email;
+      if (replyToEmail && typeof replyToEmail === 'string' && replyToEmail.includes('@')) {
+        msg.replyTo = {
+          email: replyToEmail,
+          name: from.name || from.email
+        };
+        console.log('📮 Setting Reply-To from object:', replyToEmail);
+      } else {
+        // Fallback generieren
+        const domain = from.email.split('@')[1];
+        const localPart = from.email.split('@')[0];
+        const generatedReplyTo = `${localPart}-${nanoid(8)}@inbox.${domain}`;
+        msg.replyTo = {
+          email: generatedReplyTo,
+          name: from.name || from.email
+        };
+        console.log('⚠️ Generated fallback Reply-To (invalid object):', generatedReplyTo);
+      }
     } else {
       // Fallback: Generiere Reply-To wenn nicht vorhanden
       const domain = from.email.split('@')[1];
