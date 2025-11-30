@@ -35,7 +35,10 @@
       "Bash(node check-firestore.js:*)",
       "Bash(node fix-org-roles.js:*)",
       "Bash(ls:*)",
-      "WebFetch(domain:www.celeropress.com)"
+      "WebFetch(domain:www.celeropress.com)",
+      "WebFetch(domain:mxtoolbox.com)",
+      "Bash(npm run type-check:*)",
+      "Bash(git restore:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

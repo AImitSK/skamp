@@ -198,8 +198,14 @@ function calculateScore(result: DnsCheckResult): number {
   if (result.dkim.valid.length >= 1) score += 15;
   if (result.dkim.valid.length >= 2) score += 15;
 
-  // MX (10 Punkte)
+  // MX (10 Punkte) - Optional für Send-Only Domains
+  // Wenn SPF + DMARC + DKIM = 90 Punkte, zählt das als 100 für Send-Only
   if (result.mx.exists) score += 10;
+
+  // Bonus: Perfekte Send-Konfiguration ohne MX = 100 Punkte
+  if (score === 90 && !result.mx.exists) {
+    score = 100; // Send-Only Domain ist perfekt konfiguriert
+  }
 
   return score;
 }
@@ -226,11 +232,12 @@ function generateRecommendations(result: DnsCheckResult): string[] {
   }
 
   if (!result.mx.exists) {
-    recommendations.push('❌ KRITISCH: MX Records fehlen! Email-Empfang nicht möglich');
+    // MX nur als Info, nicht als kritischer Fehler für Send-Only Domains
+    recommendations.push('ℹ️  INFO: Keine MX Records - Email-Empfang nicht möglich (OK für Send-Only Domains)');
   }
 
-  if (recommendations.length === 0) {
-    recommendations.push('✅ Alle Email-Authentication Checks bestanden!');
+  if (recommendations.length === 0 || (recommendations.length === 1 && recommendations[0].startsWith('ℹ️'))) {
+    recommendations.push('✅ Perfekte Konfiguration für Email-Versand!');
   }
 
   return recommendations;

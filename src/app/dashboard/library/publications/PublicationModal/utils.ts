@@ -42,7 +42,7 @@ export const removeUndefined = (obj: any): any => {
 // Helper: Prepare metrics for submission
 export const prepareMetrics = (
   metrics: MetricsState,
-  format: 'print' | 'online' | 'both' | 'broadcast'
+  format: 'print' | 'online' | 'both' | 'broadcast' | 'audio'
 ): any => {
   const preparedMetrics: any = {
     frequency: metrics.frequency
@@ -144,6 +144,51 @@ export const prepareMetrics = (
       }
       if (metrics.online.domainAuthority) {
         preparedMetrics.online.domainAuthority = parseInt(metrics.online.domainAuthority);
+      }
+    }
+  }
+
+  // Broadcast-Metriken hinzufügen, wenn Format broadcast
+  if (format === 'broadcast') {
+    // Prüfe ob IRGENDEIN Broadcast-Feld ausgefüllt ist
+    const hasBroadcastData = metrics.broadcast.viewership || metrics.broadcast.marketShare ||
+      metrics.broadcast.broadcastArea;
+
+    if (hasBroadcastData) {
+      preparedMetrics.broadcast = {};
+
+      if (metrics.broadcast.viewership) {
+        preparedMetrics.broadcast.viewership = parseInt(metrics.broadcast.viewership);
+      }
+      if (metrics.broadcast.marketShare) {
+        preparedMetrics.broadcast.marketShare = parseFloat(metrics.broadcast.marketShare);
+      }
+      if (metrics.broadcast.broadcastArea) {
+        preparedMetrics.broadcast.broadcastArea = metrics.broadcast.broadcastArea;
+      }
+    }
+  }
+
+  // Audio-Metriken hinzufügen, wenn Format audio
+  if (format === 'audio') {
+    // Prüfe ob IRGENDEIN Audio-Feld ausgefüllt ist
+    const hasAudioData = metrics.audio.monthlyDownloads || metrics.audio.monthlyListeners ||
+      metrics.audio.episodeCount || metrics.audio.avgEpisodeDuration;
+
+    if (hasAudioData) {
+      preparedMetrics.audio = {};
+
+      if (metrics.audio.monthlyDownloads) {
+        preparedMetrics.audio.monthlyDownloads = parseInt(metrics.audio.monthlyDownloads);
+      }
+      if (metrics.audio.monthlyListeners) {
+        preparedMetrics.audio.monthlyListeners = parseInt(metrics.audio.monthlyListeners);
+      }
+      if (metrics.audio.episodeCount) {
+        preparedMetrics.audio.episodeCount = parseInt(metrics.audio.episodeCount);
+      }
+      if (metrics.audio.avgEpisodeDuration) {
+        preparedMetrics.audio.avgEpisodeDuration = parseFloat(metrics.audio.avgEpisodeDuration);
       }
     }
   }
