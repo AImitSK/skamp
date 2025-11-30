@@ -245,45 +245,57 @@ export function getReachFromPublication(pub: MatchedPublication): number | undef
 
 /**
  * Berechnet den geschätzten AVE (Advertising Value Equivalent)
+ *
+ * WICHTIG: Diese Funktion verwendet NICHT die AVE-Settings aus der Datenbank!
+ * Sie wird nur für die Live-Vorschau im MarkPublishedModal verwendet.
+ *
+ * Für die echte AVE-Berechnung nach dem Speichern wird
+ * aveSettingsService.calculateAVE() verwendet, welche die Settings lädt.
+ *
+ * @deprecated Diese Funktion sollte durch aveSettingsService.calculateAVE() ersetzt werden
  */
 export function calculateAVE(
   reach: number,
   sentiment: 'positive' | 'neutral' | 'negative',
-  outletType: 'print' | 'online' | 'broadcast' | 'blog'
+  outletType: 'print' | 'online' | 'broadcast' | 'blog' | 'audio'
 ): number {
-  // Basis-CPM (Cost per Mille) nach Medientyp
-  let baseCPM = 0;
+  // FALLBACK-Faktoren für Live-Vorschau (sollten mit DEFAULT_AVE_SETTINGS übereinstimmen)
+  let factor = 0;
   switch (outletType) {
     case 'print':
-      baseCPM = 35; // 35€ pro 1000 Leser
+      factor = 0.003; // 3€ pro 1000 Reichweite
       break;
     case 'broadcast':
-      baseCPM = 25; // 25€ pro 1000 Zuschauer/Hörer
+      factor = 0.005; // 5€ pro 1000 Reichweite
       break;
     case 'online':
-      baseCPM = 15; // 15€ pro 1000 Besucher
+      factor = 0.001; // 1€ pro 1000 Reichweite
       break;
     case 'blog':
-      baseCPM = 10; // 10€ pro 1000 Leser
+      // DEPRECATED: blog sollte nicht mehr verwendet werden
+      factor = 0.001; // Fallback: wie online
+      break;
+    case 'audio':
+      factor = 0.002; // 2€ pro 1000 Reichweite
       break;
   }
 
-  // Sentiment-Multiplikator
+  // Sentiment-Multiplikator (DEFAULT_AVE_SETTINGS)
   let sentimentMultiplier = 1;
   switch (sentiment) {
     case 'positive':
-      sentimentMultiplier = 3; // 3x für positive Berichterstattung
+      sentimentMultiplier = 1.0;
       break;
     case 'neutral':
-      sentimentMultiplier = 1.5; // 1.5x für neutrale Berichterstattung
+      sentimentMultiplier = 0.8;
       break;
     case 'negative':
-      sentimentMultiplier = 0.5; // 0.5x für negative Berichterstattung
+      sentimentMultiplier = 0.5;
       break;
   }
 
-  // AVE = (Reichweite / 1000) * CPM * Sentiment-Multiplikator
-  const ave = (reach / 1000) * baseCPM * sentimentMultiplier;
+  // AVE = Reichweite × Faktor × Sentiment-Multiplikator
+  const ave = reach * factor * sentimentMultiplier;
 
   return Math.round(ave);
 }

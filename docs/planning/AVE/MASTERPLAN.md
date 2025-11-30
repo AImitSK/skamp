@@ -323,10 +323,10 @@ describe('detectOutletType()', () => {
 describe('calculateAVE()', () => {
   const settings: AVESettings = {
     factors: {
-      print: 3,
-      online: 1,
-      broadcast: 5,
-      audio: 0.002,
+      print: 0.003,      // 3€ pro 1000 Reichweite
+      online: 0.001,     // 1€ pro 1000 Reichweite
+      broadcast: 0.005,  // 5€ pro 1000 Reichweite
+      audio: 0.002,      // 2€ pro 1000 Reichweite
     },
     sentimentMultipliers: {
       positive: 1.0,
@@ -342,7 +342,7 @@ describe('calculateAVE()', () => {
       sentiment: 'positive',
     };
     const ave = aveSettingsService.calculateAVE(clipping, settings);
-    expect(ave).toBe(240); // 120.000 × 0.002 × 1.0
+    expect(ave).toBe(240); // 120.000 × 0.002 × 1.0 = 240
   });
 
   it('Online: 50.000 PageViews → 50 € AVE', () => {
@@ -352,7 +352,27 @@ describe('calculateAVE()', () => {
       sentiment: 'positive',
     };
     const ave = aveSettingsService.calculateAVE(clipping, settings);
-    expect(ave).toBe(50000); // 50.000 × 1 × 1.0
+    expect(ave).toBe(50); // 50.000 × 0.001 × 1.0 = 50
+  });
+
+  it('Print: 100.000 Auflage → 300 € AVE', () => {
+    const clipping: MediaClipping = {
+      outletType: 'print',
+      reach: 100000,
+      sentiment: 'positive',
+    };
+    const ave = aveSettingsService.calculateAVE(clipping, settings);
+    expect(ave).toBe(300); // 100.000 × 0.003 × 1.0 = 300
+  });
+
+  it('Broadcast: 500.000 Zuschauer → 2.500 € AVE', () => {
+    const clipping: MediaClipping = {
+      outletType: 'broadcast',
+      reach: 500000,
+      sentiment: 'positive',
+    };
+    const ave = aveSettingsService.calculateAVE(clipping, settings);
+    expect(ave).toBe(2500); // 500.000 × 0.005 × 1.0 = 2.500
   });
 });
 ```
