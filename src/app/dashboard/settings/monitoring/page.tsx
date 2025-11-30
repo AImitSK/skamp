@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
 import { AVESettings, DEFAULT_AVE_SETTINGS } from '@/types/monitoring';
+import { toastService } from '@/lib/utils/toast';
 
 export default function MonitoringSettingsPage() {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ export default function MonitoringSettingsPage() {
       });
     } catch (error) {
       console.error('Fehler beim Laden der AVE-Einstellungen:', error);
+      toastService.error('Fehler beim Laden der Einstellungen');
     } finally {
       setLoading(false);
     }
@@ -83,8 +85,14 @@ export default function MonitoringSettingsPage() {
       );
 
       await loadSettings();
+      toastService.success('AVE-Einstellungen gespeichert');
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
+      toastService.error(
+        error instanceof Error
+          ? `Fehler beim Speichern: ${error.message}`
+          : 'Fehler beim Speichern der Einstellungen'
+      );
     } finally {
       setSaving(false);
     }
@@ -151,7 +159,7 @@ export default function MonitoringSettingsPage() {
                         <Description>Faktor für Printmedien (Zeitungen, Magazine)</Description>
                         <Input
                           type="number"
-                          step="0.1"
+                          step="0.001"
                           min="0"
                           value={formData.printFactor}
                           onChange={(e) => setFormData({ ...formData, printFactor: parseFloat(e.target.value) || 0 })}
@@ -163,7 +171,7 @@ export default function MonitoringSettingsPage() {
                         <Description>Faktor für Online-Medien</Description>
                         <Input
                           type="number"
-                          step="0.1"
+                          step="0.001"
                           min="0"
                           value={formData.onlineFactor}
                           onChange={(e) => setFormData({ ...formData, onlineFactor: parseFloat(e.target.value) || 0 })}
@@ -175,7 +183,7 @@ export default function MonitoringSettingsPage() {
                         <Description>Faktor für TV und Radio</Description>
                         <Input
                           type="number"
-                          step="0.1"
+                          step="0.001"
                           min="0"
                           value={formData.broadcastFactor}
                           onChange={(e) => setFormData({ ...formData, broadcastFactor: parseFloat(e.target.value) || 0 })}
