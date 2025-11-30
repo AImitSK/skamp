@@ -183,6 +183,17 @@ export function PublicationModal({
             domainAuthority: publication.metrics.online?.domainAuthority?.toString() || '',
             hasPaywall: publication.metrics.online?.hasPaywall || false,
             hasMobileApp: publication.metrics.online?.hasMobileApp || false
+          },
+          broadcast: {
+            viewership: publication.metrics.broadcast?.viewership?.toString() || '',
+            marketShare: publication.metrics.broadcast?.marketShare?.toString() || '',
+            broadcastArea: publication.metrics.broadcast?.broadcastArea || ''
+          },
+          audio: {
+            monthlyDownloads: publication.metrics.audio?.monthlyDownloads?.toString() || '',
+            monthlyListeners: publication.metrics.audio?.monthlyListeners?.toString() || '',
+            episodeCount: publication.metrics.audio?.episodeCount?.toString() || '',
+            avgEpisodeDuration: publication.metrics.audio?.avgEpisodeDuration?.toString() || ''
           }
         });
       }
