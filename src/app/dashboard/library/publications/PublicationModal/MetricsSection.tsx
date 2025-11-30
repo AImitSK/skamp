@@ -4,6 +4,7 @@
 import { memo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import type { PublicationFormData, MetricsState } from './types';
 import { frequencies, circulationTypes } from './types';
 import type { PublicationFrequency } from '@/types/library';
@@ -79,8 +80,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <h4 className="font-medium text-zinc-900">Print-Metriken</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
                 Auflage
+                <span className="text-red-500">*</span>
+                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
                 type="number"
@@ -90,6 +93,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   print: { ...metrics.print, circulation: e.target.value }
                 })}
                 placeholder="50000"
+                required
               />
             </div>
             <div>
@@ -192,8 +196,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
                 Monatliche Page Views
+                <span className="text-red-500">*</span>
+                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
                 type="number"
@@ -203,6 +209,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   online: { ...metrics.online, monthlyPageViews: e.target.value }
                 })}
                 placeholder="500000"
+                required
               />
             </div>
             <div>
@@ -299,8 +306,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <h4 className="font-medium text-zinc-900">Broadcast-Metriken (TV/Radio)</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
                 Zuschauer/Hörer (Durchschnitt)
+                <span className="text-red-500">*</span>
+                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
                 type="number"
@@ -310,6 +319,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   broadcast: { ...metrics.broadcast, viewership: e.target.value }
                 })}
                 placeholder="500000"
+                required
               />
             </div>
             <div>
@@ -351,8 +361,10 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
           <h4 className="font-medium text-zinc-900">Audio-Metriken (Podcast)</h4>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
                 Monatliche Downloads
+                <span className="text-red-500">*</span>
+                <InfoTooltip content="Dieses Feld wird für die AVE-Berechnung verwendet" />
               </label>
               <Input
                 type="number"
@@ -362,6 +374,7 @@ export const MetricsSection = memo(function MetricsSection({ formData, metrics, 
                   audio: { ...metrics.audio, monthlyDownloads: e.target.value }
                 })}
                 placeholder="50000"
+                required
               />
             </div>
             <div>
