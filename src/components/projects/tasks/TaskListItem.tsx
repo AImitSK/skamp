@@ -19,6 +19,7 @@ import React from 'react';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { TaskDescriptionTooltip } from '@/components/ui/task-description-tooltip';
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -82,11 +83,13 @@ export const TaskListItem = React.memo(function TaskListItem({
             )}
           </div>
 
-          {/* Task Title */}
+          {/* Task Title mit Beschreibungs-Tooltip */}
           <div className="min-w-0 flex-1">
-            <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
-              {task.title}
-            </Text>
+            <TaskDescriptionTooltip description={task.description}>
+              <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
+                {task.title}
+              </Text>
+            </TaskDescriptionTooltip>
           </div>
         </div>
 

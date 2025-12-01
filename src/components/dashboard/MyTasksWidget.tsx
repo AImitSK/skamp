@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
+import { TaskDescriptionTooltip } from '@/components/ui/task-description-tooltip';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -219,12 +220,14 @@ export function MyTasksWidget() {
                         )}
                       </div>
 
-                      {/* Task Title */}
+                      {/* Task Title mit Beschreibungs-Tooltip */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <Text className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={task.title}>
-                            {task.title}
-                          </Text>
+                          <TaskDescriptionTooltip description={task.description}>
+                            <Text className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={task.title}>
+                              {task.title}
+                            </Text>
+                          </TaskDescriptionTooltip>
                           {task.priority === 'urgent' && (
                             <Badge color="red" className="text-xs flex-shrink-0">Dringend</Badge>
                           )}
