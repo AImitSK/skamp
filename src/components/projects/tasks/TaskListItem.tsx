@@ -86,7 +86,7 @@ export const TaskListItem = React.memo(function TaskListItem({
           {/* Task Title mit Beschreibungs-Tooltip */}
           <div className="min-w-0 flex-1">
             <TaskDescriptionTooltip description={task.description}>
-              <Text className="text-sm font-medium text-gray-900 truncate" title={task.title}>
+              <Text className="text-sm font-medium text-gray-900 truncate">
                 {task.title}
               </Text>
             </TaskDescriptionTooltip>

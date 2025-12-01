@@ -224,7 +224,7 @@ export function MyTasksWidget() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <TaskDescriptionTooltip description={task.description}>
-                            <Text className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis" title={task.title}>
+                            <Text className="text-sm font-medium text-zinc-900 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                               {task.title}
                             </Text>
                           </TaskDescriptionTooltip>
