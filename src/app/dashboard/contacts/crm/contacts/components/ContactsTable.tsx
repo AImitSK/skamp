@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { ContactEnhanced } from "@/types/crm-enhanced";
 import { Tag } from "@/types/crm";
+import { TagsOverflowPopover } from "@/components/ui/tags-overflow-popover";
 
 export interface ContactsTableProps {
   contacts: ContactEnhanced[];
@@ -234,7 +235,13 @@ export function ContactsTable({
                     return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
                   })}
                   {contact.tagIds && contact.tagIds.length > 3 && (
-                    <span className="text-xs text-zinc-400">+{contact.tagIds.length - 3}</span>
+                    <TagsOverflowPopover
+                      tags={contact.tagIds.map(tagId => {
+                        const tag = safeTags.find(t => t.id === tagId);
+                        return tag ? { id: tag.id!, name: tag.name, color: tag.color } : null;
+                      }).filter((t): t is { id: string; name: string; color: string } => t !== null)}
+                      overflowCount={contact.tagIds.length - 3}
+                    />
                   )}
                 </div>
               </div>

@@ -15,6 +15,7 @@ import {
 import { CompanyEnhanced } from "@/types/crm-enhanced";
 import { companyTypeLabels } from "@/types/crm";
 import { FlagIcon } from "../../components/shared/FlagIcon";
+import { TagsOverflowPopover } from "@/components/ui/tags-overflow-popover";
 
 export interface CompaniesTableProps {
   companies: CompanyEnhanced[];
@@ -191,7 +192,13 @@ export function CompaniesTable({
                     ) : null;
                   })}
                   {company.tagIds && company.tagIds.length > 3 && (
-                    <span className="text-xs text-zinc-400">+{company.tagIds.length - 3}</span>
+                    <TagsOverflowPopover
+                      tags={company.tagIds.map(tagId => {
+                        const tag = tagsMap.get(tagId);
+                        return tag ? { id: tagId, name: tag.name, color: tag.color } : null;
+                      }).filter((t): t is { id: string; name: string; color: string } => t !== null)}
+                      overflowCount={company.tagIds.length - 3}
+                    />
                   )}
                 </div>
               </div>
