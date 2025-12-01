@@ -54,7 +54,7 @@ const createMockFolder = (id: string, overrides?: Partial<MediaFolder>): MediaFo
   name: `Test Folder ${id}`,
   userId: 'user-1',
   organizationId: 'org-1',
-  parentFolderId: null,
+  parentFolderId: undefined,
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   ...overrides,
@@ -79,7 +79,6 @@ describe('Media Folders Service - Phase 4a.4', () => {
           name: 'New Folder',
           userId: 'user-1',
           organizationId: 'org-1',
-          parentFolderId: null,
         },
         {
           organizationId: 'org-1',
@@ -372,10 +371,10 @@ describe('Media Folders Service - Phase 4a.4', () => {
           data: () => createMockFolder('folder-1', { name: 'Child', parentFolderId: 'folder-2' }),
           exists: () => true,
         })
-        // Mock getFolder für folder-2 (parent: null)
+        // Mock getFolder für folder-2 (parent: undefined)
         .mockResolvedValueOnce({
           id: 'folder-2',
-          data: () => createMockFolder('folder-2', { name: 'Parent', parentFolderId: null }),
+          data: () => createMockFolder('folder-2', { name: 'Parent', parentFolderId: undefined }),
           exists: () => true,
         });
 

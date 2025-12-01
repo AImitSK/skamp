@@ -1,6 +1,6 @@
-import { EmailCampaignSend } from '@/types/email';
-import { MediaClipping } from '@/types/monitoring';
-import { BrandingSettings } from '@/types/branding';
+import { EmailCampaignSend } from '../../types/email';
+import { MediaClipping } from '../../types/monitoring';
+import { BrandingSettings } from '../../types/branding';
 
 /**
  * Report Configuration Types

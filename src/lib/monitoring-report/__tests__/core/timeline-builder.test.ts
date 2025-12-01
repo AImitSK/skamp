@@ -25,17 +25,50 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 10000
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
           reach: 15000
         } as MediaClipping,
         {
           id: '3',
+          organizationId: 'org-1',
+          title: 'Test Artikel 3',
+          url: 'https://example.com/article-3',
           publishedAt: createTimestamp(new Date('2024-01-16T09:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-16T09:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-16T09:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-16T09:00:00Z')),
           reach: 20000
         } as MediaClipping
       ];
@@ -53,17 +86,50 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-20T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-20T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-20T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-20T10:00:00Z')),
           reach: 10000
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 15000
         } as MediaClipping,
         {
           id: '3',
+          organizationId: 'org-1',
+          title: 'Test Artikel 3',
+          url: 'https://example.com/article-3',
           publishedAt: createTimestamp(new Date('2024-01-18T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-18T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-18T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-18T10:00:00Z')),
           reach: 20000
         } as MediaClipping
       ];
@@ -80,12 +146,34 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: undefined,
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 10000
-        } as MediaClipping,
+        } as unknown as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 15000
         } as MediaClipping
       ];
@@ -101,12 +189,34 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: undefined
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T14:00:00Z')),
           reach: 10000
         } as MediaClipping
       ];
@@ -121,7 +231,18 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-03-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-03-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-03-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-03-15T10:00:00Z')),
           reach: 10000
         } as MediaClipping
       ];
@@ -146,17 +267,50 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 10000
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
           reach: 15000
         } as MediaClipping,
         {
           id: '3',
+          organizationId: 'org-1',
+          title: 'Test Artikel 3',
+          url: 'https://example.com/article-3',
           publishedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
           reach: 20000
         } as MediaClipping
       ];
@@ -174,7 +328,18 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-17T10:00:00Z')),
           reach: 10000
         } as MediaClipping
       ];
@@ -191,17 +356,50 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-29T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-29T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-29T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-29T10:00:00Z')),
           reach: 10000
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 15000
         } as MediaClipping,
         {
           id: '3',
+          organizationId: 'org-1',
+          title: 'Test Artikel 3',
+          url: 'https://example.com/article-3',
           publishedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-22T10:00:00Z')),
           reach: 20000
         } as MediaClipping
       ];
@@ -218,12 +416,34 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: undefined,
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 10000
-        } as MediaClipping,
+        } as unknown as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: 15000
         } as MediaClipping
       ];
@@ -238,12 +458,34 @@ describe('TimelineBuilder', () => {
       const clippings: MediaClipping[] = [
         {
           id: '1',
+          organizationId: 'org-1',
+          title: 'Test Artikel 1',
+          url: 'https://example.com/article-1',
           publishedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-15T10:00:00Z')),
           reach: undefined
         } as MediaClipping,
         {
           id: '2',
+          organizationId: 'org-1',
+          title: 'Test Artikel 2',
+          url: 'https://example.com/article-2',
           publishedAt: createTimestamp(new Date('2024-01-16T10:00:00Z')),
+          outletName: 'Test Outlet',
+          outletType: 'online',
+          sentiment: 'positive',
+          detectionMethod: 'manual',
+          detectedAt: createTimestamp(new Date('2024-01-16T10:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: createTimestamp(new Date('2024-01-16T10:00:00Z')),
+          updatedAt: createTimestamp(new Date('2024-01-16T10:00:00Z')),
           reach: 10000
         } as MediaClipping
       ];

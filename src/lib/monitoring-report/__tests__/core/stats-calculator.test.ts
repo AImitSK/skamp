@@ -32,14 +32,14 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte korrekte Email-Statistiken berechnen', () => {
       const sends: EmailCampaignSend[] = [
-        { id: '1', status: 'delivered' } as EmailCampaignSend,
-        { id: '2', status: 'opened' } as EmailCampaignSend,
-        { id: '3', status: 'opened' } as EmailCampaignSend,
-        { id: '4', status: 'clicked' } as EmailCampaignSend,
-        { id: '5', status: 'clicked' } as EmailCampaignSend,
-        { id: '6', status: 'bounced' } as EmailCampaignSend,
-        { id: '7', status: 'pending' } as EmailCampaignSend,
-        { id: '8', status: 'failed' } as EmailCampaignSend
+        { id: '1', status: 'delivered', campaignId: 'c1', recipientEmail: 't1@test.de', recipientName: 'Test 1', userId: 'u1' } as EmailCampaignSend,
+        { id: '2', status: 'opened', campaignId: 'c1', recipientEmail: 't2@test.de', recipientName: 'Test 2', userId: 'u1' } as EmailCampaignSend,
+        { id: '3', status: 'opened', campaignId: 'c1', recipientEmail: 't3@test.de', recipientName: 'Test 3', userId: 'u1' } as EmailCampaignSend,
+        { id: '4', status: 'clicked', campaignId: 'c1', recipientEmail: 't4@test.de', recipientName: 'Test 4', userId: 'u1' } as EmailCampaignSend,
+        { id: '5', status: 'clicked', campaignId: 'c1', recipientEmail: 't5@test.de', recipientName: 'Test 5', userId: 'u1' } as EmailCampaignSend,
+        { id: '6', status: 'bounced', campaignId: 'c1', recipientEmail: 't6@test.de', recipientName: 'Test 6', userId: 'u1' } as EmailCampaignSend,
+        { id: '7', status: 'queued', campaignId: 'c1', recipientEmail: 't7@test.de', recipientName: 'Test 7', userId: 'u1' } as EmailCampaignSend,
+        { id: '8', status: 'failed', campaignId: 'c1', recipientEmail: 't8@test.de', recipientName: 'Test 8', userId: 'u1' } as EmailCampaignSend
       ];
 
       const result = calculator.calculateEmailStats(sends, []);
@@ -56,10 +56,10 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Conversion-Rate basierend auf clippingId berechnen', () => {
       const sends: EmailCampaignSend[] = [
-        { id: '1', status: 'opened', clippingId: 'clip-1' } as EmailCampaignSend,
-        { id: '2', status: 'opened', clippingId: 'clip-2' } as EmailCampaignSend,
-        { id: '3', status: 'opened' } as EmailCampaignSend,
-        { id: '4', status: 'opened' } as EmailCampaignSend
+        { id: '1', status: 'opened', clippingId: 'clip-1', campaignId: 'c1', recipientEmail: 't1@test.de', recipientName: 'Test 1', userId: 'u1' } as EmailCampaignSend,
+        { id: '2', status: 'opened', clippingId: 'clip-2', campaignId: 'c1', recipientEmail: 't2@test.de', recipientName: 'Test 2', userId: 'u1' } as EmailCampaignSend,
+        { id: '3', status: 'opened', campaignId: 'c1', recipientEmail: 't3@test.de', recipientName: 'Test 3', userId: 'u1' } as EmailCampaignSend,
+        { id: '4', status: 'opened', campaignId: 'c1', recipientEmail: 't4@test.de', recipientName: 'Test 4', userId: 'u1' } as EmailCampaignSend
       ];
 
       const result = calculator.calculateEmailStats(sends, []);
@@ -70,8 +70,8 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Conversion-Rate 0 sein wenn keine Öffnungen', () => {
       const sends: EmailCampaignSend[] = [
-        { id: '1', status: 'delivered', clippingId: 'clip-1' } as EmailCampaignSend,
-        { id: '2', status: 'pending' } as EmailCampaignSend
+        { id: '1', status: 'delivered', clippingId: 'clip-1', campaignId: 'c1', recipientEmail: 't1@test.de', recipientName: 'Test 1', userId: 'u1' } as EmailCampaignSend,
+        { id: '2', status: 'queued', campaignId: 'c1', recipientEmail: 't2@test.de', recipientName: 'Test 2', userId: 'u1' } as EmailCampaignSend
       ];
 
       const result = calculator.calculateEmailStats(sends, []);
@@ -81,8 +81,8 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Click-Rate 0 sein wenn keine Öffnungen', () => {
       const sends: EmailCampaignSend[] = [
-        { id: '1', status: 'delivered' } as EmailCampaignSend,
-        { id: '2', status: 'bounced' } as EmailCampaignSend
+        { id: '1', status: 'delivered', campaignId: 'c1', recipientEmail: 't1@test.de', recipientName: 'Test 1', userId: 'u1' } as EmailCampaignSend,
+        { id: '2', status: 'bounced', campaignId: 'c1', recipientEmail: 't2@test.de', recipientName: 'Test 2', userId: 'u1' } as EmailCampaignSend
       ];
 
       const result = calculator.calculateEmailStats(sends, []);
@@ -92,9 +92,9 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Prozentwerte runden', () => {
       const sends: EmailCampaignSend[] = [
-        { id: '1', status: 'delivered' } as EmailCampaignSend,
-        { id: '2', status: 'opened' } as EmailCampaignSend,
-        { id: '3', status: 'pending' } as EmailCampaignSend
+        { id: '1', status: 'delivered', campaignId: 'c1', recipientEmail: 't1@test.de', recipientName: 'Test 1', userId: 'u1' } as EmailCampaignSend,
+        { id: '2', status: 'opened', campaignId: 'c1', recipientEmail: 't2@test.de', recipientName: 'Test 2', userId: 'u1' } as EmailCampaignSend,
+        { id: '3', status: 'queued', campaignId: 'c1', recipientEmail: 't3@test.de', recipientName: 'Test 3', userId: 'u1' } as EmailCampaignSend
       ];
 
       const result = calculator.calculateEmailStats(sends, []);
@@ -126,9 +126,9 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Gesamt-Reichweite und AVE korrekt summieren', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', reach: 10000, ave: 5000 } as MediaClipping,
-        { id: '2', reach: 20000, ave: 8000 } as MediaClipping,
-        { id: '3', reach: 15000, ave: 7000 } as MediaClipping
+        { id: '1', reach: 10000, ave: 5000, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', reach: 20000, ave: 8000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '3', reach: 15000, ave: 7000, organizationId: 'org1', title: 'Article 3', url: 'http://test.de/3', publishedAt: Timestamp.now(), outletName: 'Outlet 3', outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -141,8 +141,8 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte fehlende Reach/AVE Werte als 0 behandeln', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', reach: undefined, ave: undefined } as MediaClipping,
-        { id: '2', reach: 10000, ave: 5000 } as MediaClipping
+        { id: '1', reach: undefined, ave: undefined, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', reach: 10000, ave: 5000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -153,12 +153,12 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Sentiment-Verteilung korrekt berechnen', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', sentiment: 'positive' } as MediaClipping,
-        { id: '2', sentiment: 'positive' } as MediaClipping,
-        { id: '3', sentiment: 'positive' } as MediaClipping,
-        { id: '4', sentiment: 'neutral' } as MediaClipping,
-        { id: '5', sentiment: 'neutral' } as MediaClipping,
-        { id: '6', sentiment: 'negative' } as MediaClipping
+        { id: '1', sentiment: 'positive', organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', sentiment: 'positive', organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '3', sentiment: 'positive', organizationId: 'org1', title: 'Article 3', url: 'http://test.de/3', publishedAt: Timestamp.now(), outletName: 'Outlet 3', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '4', sentiment: 'neutral', organizationId: 'org1', title: 'Article 4', url: 'http://test.de/4', publishedAt: Timestamp.now(), outletName: 'Outlet 4', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '5', sentiment: 'neutral', organizationId: 'org1', title: 'Article 5', url: 'http://test.de/5', publishedAt: Timestamp.now(), outletName: 'Outlet 5', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '6', sentiment: 'negative', organizationId: 'org1', title: 'Article 6', url: 'http://test.de/6', publishedAt: Timestamp.now(), outletName: 'Outlet 6', outletType: 'online', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -172,13 +172,13 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Top 5 Outlets nach Reichweite sortieren', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', outletName: 'Outlet A', reach: 50000 } as MediaClipping,
-        { id: '2', outletName: 'Outlet A', reach: 30000 } as MediaClipping,
-        { id: '3', outletName: 'Outlet B', reach: 60000 } as MediaClipping,
-        { id: '4', outletName: 'Outlet C', reach: 10000 } as MediaClipping,
-        { id: '5', outletName: 'Outlet D', reach: 40000 } as MediaClipping,
-        { id: '6', outletName: 'Outlet E', reach: 20000 } as MediaClipping,
-        { id: '7', outletName: 'Outlet F', reach: 5000 } as MediaClipping
+        { id: '1', outletName: 'Outlet A', reach: 50000, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', outletName: 'Outlet A', reach: 30000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '3', outletName: 'Outlet B', reach: 60000, organizationId: 'org1', title: 'Article 3', url: 'http://test.de/3', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '4', outletName: 'Outlet C', reach: 10000, organizationId: 'org1', title: 'Article 4', url: 'http://test.de/4', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '5', outletName: 'Outlet D', reach: 40000, organizationId: 'org1', title: 'Article 5', url: 'http://test.de/5', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '6', outletName: 'Outlet E', reach: 20000, organizationId: 'org1', title: 'Article 6', url: 'http://test.de/6', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '7', outletName: 'Outlet F', reach: 5000, organizationId: 'org1', title: 'Article 7', url: 'http://test.de/7', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -213,8 +213,8 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte fehlende outletName als Unbekannt behandeln', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', outletName: undefined, reach: 10000 } as MediaClipping,
-        { id: '2', outletName: 'Test Outlet', reach: 20000 } as MediaClipping
+        { id: '1', outletName: undefined, reach: 10000, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as unknown as MediaClipping,
+        { id: '2', outletName: 'Test Outlet', reach: 20000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletType: 'online', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -229,12 +229,12 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Outlet-Typ Verteilung korrekt berechnen', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', outletType: 'online', reach: 10000 } as MediaClipping,
-        { id: '2', outletType: 'online', reach: 15000 } as MediaClipping,
-        { id: '3', outletType: 'online', reach: 20000 } as MediaClipping,
-        { id: '4', outletType: 'print', reach: 30000 } as MediaClipping,
-        { id: '5', outletType: 'print', reach: 25000 } as MediaClipping,
-        { id: '6', outletType: 'broadcast', reach: 50000 } as MediaClipping
+        { id: '1', outletType: 'online', reach: 10000, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', outletType: 'online', reach: 15000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '3', outletType: 'online', reach: 20000, organizationId: 'org1', title: 'Article 3', url: 'http://test.de/3', publishedAt: Timestamp.now(), outletName: 'Outlet 3', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '4', outletType: 'print', reach: 30000, organizationId: 'org1', title: 'Article 4', url: 'http://test.de/4', publishedAt: Timestamp.now(), outletName: 'Outlet 4', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '5', outletType: 'print', reach: 25000, organizationId: 'org1', title: 'Article 5', url: 'http://test.de/5', publishedAt: Timestamp.now(), outletName: 'Outlet 5', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '6', outletType: 'broadcast', reach: 50000, organizationId: 'org1', title: 'Article 6', url: 'http://test.de/6', publishedAt: Timestamp.now(), outletName: 'Outlet 6', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -268,11 +268,11 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte Outlet-Typ Verteilung nach Count sortieren', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', outletType: 'online' } as MediaClipping,
-        { id: '2', outletType: 'print' } as MediaClipping,
-        { id: '3', outletType: 'print' } as MediaClipping,
-        { id: '4', outletType: 'print' } as MediaClipping,
-        { id: '5', outletType: 'online' } as MediaClipping
+        { id: '1', outletType: 'online', organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '2', outletType: 'print', organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '3', outletType: 'print', organizationId: 'org1', title: 'Article 3', url: 'http://test.de/3', publishedAt: Timestamp.now(), outletName: 'Outlet 3', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '4', outletType: 'print', organizationId: 'org1', title: 'Article 4', url: 'http://test.de/4', publishedAt: Timestamp.now(), outletName: 'Outlet 4', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping,
+        { id: '5', outletType: 'online', organizationId: 'org1', title: 'Article 5', url: 'http://test.de/5', publishedAt: Timestamp.now(), outletName: 'Outlet 5', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);
@@ -283,8 +283,8 @@ describe('ReportStatsCalculator', () => {
 
     it('sollte fehlende outletType als Unbekannt behandeln', () => {
       const clippings: MediaClipping[] = [
-        { id: '1', outletType: undefined, reach: 10000 } as MediaClipping,
-        { id: '2', outletType: 'online', reach: 20000 } as MediaClipping
+        { id: '1', outletType: undefined, reach: 10000, organizationId: 'org1', title: 'Article 1', url: 'http://test.de/1', publishedAt: Timestamp.now(), outletName: 'Outlet 1', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as unknown as MediaClipping,
+        { id: '2', outletType: 'online', reach: 20000, organizationId: 'org1', title: 'Article 2', url: 'http://test.de/2', publishedAt: Timestamp.now(), outletName: 'Outlet 2', sentiment: 'neutral', detectionMethod: 'manual', detectedAt: Timestamp.now(), createdBy: 'user1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() } as MediaClipping
       ];
 
       const result = calculator.calculateClippingStats(clippings);

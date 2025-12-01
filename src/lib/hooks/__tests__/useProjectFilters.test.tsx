@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useProjectFilters } from '../useProjectFilters';
-import { Project } from '@/types/project';
+import { Project } from '../../../types/project';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock-Projekte für Tests
 const mockProjects: Project[] = [
@@ -10,17 +11,21 @@ const mockProjects: Project[] = [
     status: 'active',
     customer: { id: 'c1', name: 'Customer A' },
     organizationId: 'org1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    userId: 'user1',
+    currentStage: 'creation',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
   {
     id: '2',
     title: 'Active Project 2',
-    status: 'in_progress',
+    status: 'active',
     customer: { id: 'c2', name: 'Customer B' },
     organizationId: 'org1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    userId: 'user1',
+    currentStage: 'creation',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
   {
     id: '3',
@@ -28,8 +33,10 @@ const mockProjects: Project[] = [
     status: 'archived',
     customer: { id: 'c3', name: 'Customer C' },
     organizationId: 'org1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    userId: 'user1',
+    currentStage: 'completed',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
   {
     id: '4',
@@ -37,8 +44,10 @@ const mockProjects: Project[] = [
     status: 'active',
     customer: { id: 'c4', name: 'Special Customer' },
     organizationId: 'org1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    userId: 'user1',
+    currentStage: 'creation',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
 ];
 
@@ -266,8 +275,10 @@ describe('useProjectFilters', () => {
           title: 'Simple Project',
           status: 'active',
           organizationId: 'org1',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          userId: 'user1',
+          currentStage: 'creation',
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
         },
       ];
 
@@ -284,10 +295,12 @@ describe('useProjectFilters', () => {
           id: '1',
           title: 'Simple Project',
           status: 'active',
-          customer: { id: 'c1' },
+          customer: { id: 'c1', name: '' },
           organizationId: 'org1',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          userId: 'user1',
+          currentStage: 'creation',
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
         },
       ];
 
@@ -323,8 +336,10 @@ describe('useProjectFilters', () => {
         title: 'New Project',
         status: 'active',
         organizationId: 'org1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        userId: 'user1',
+        currentStage: 'creation',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       }] as Project[];
 
       rerender({ projects: newProjects });

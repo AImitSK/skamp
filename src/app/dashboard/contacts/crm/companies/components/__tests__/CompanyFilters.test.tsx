@@ -1,7 +1,8 @@
 // src/app/dashboard/contacts/crm/companies/components/__tests__\CompanyFilters.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CompanyFilters } from '../CompanyFilters';
-import { CompanyEnhanced, Tag } from '@/types/crm-enhanced';
+import { CompanyEnhanced } from '@/types/crm-enhanced';
+import { Tag } from '@/types/crm';
 
 const mockTags: Tag[] = [
   { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1' },

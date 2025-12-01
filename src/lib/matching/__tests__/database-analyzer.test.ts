@@ -40,58 +40,94 @@ describe('Database Analyzer', () => {
     {
       id: 'company1',
       name: 'Der Spiegel Verlag',
+      officialName: 'Der Spiegel Verlag',
       website: 'https://spiegel.de',
-      isReference: false
+      isReference: false,
+      organizationId: 'test-org',
+      createdBy: 'test-user',
+      type: 'publisher' as const
     },
     {
       id: 'company2',
       name: 'BILD Zeitung',
+      officialName: 'BILD Zeitung',
       website: 'https://bild.de',
-      isReference: false
+      isReference: false,
+      organizationId: 'test-org',
+      createdBy: 'test-user',
+      type: 'publisher' as const
     },
     {
       id: 'company3',
       name: 'Süddeutsche Zeitung',
+      officialName: 'Süddeutsche Zeitung',
       website: 'https://sz.de',
-      isReference: false
+      isReference: false,
+      organizationId: 'test-org',
+      createdBy: 'test-user',
+      type: 'publisher' as const
     },
     {
       id: 'ref-company1',
       name: 'Premium Reference Company',
-      isReference: true
+      officialName: 'Premium Reference Company',
+      isReference: true,
+      organizationId: 'test-org',
+      createdBy: 'test-user',
+      type: 'publisher' as const
     }
   ];
 
   const mockContacts = [
     {
       id: 'contact1',
-      emails: [{ email: 'max@spiegel.de', isPrimary: true }],
+      displayName: 'Max Mustermann',
+      name: { firstName: 'Max', lastName: 'Mustermann' },
+      emails: [{ email: 'max@spiegel.de', isPrimary: true, type: 'business' as const }],
       companyId: 'company1',
-      companyName: 'Der Spiegel Verlag'
+      companyName: 'Der Spiegel Verlag',
+      organizationId: 'test-org',
+      createdBy: 'test-user'
     },
     {
       id: 'contact2',
-      emails: [{ email: 'anna@spiegel.de', isPrimary: true }],
+      displayName: 'Anna Schmidt',
+      name: { firstName: 'Anna', lastName: 'Schmidt' },
+      emails: [{ email: 'anna@spiegel.de', isPrimary: true, type: 'business' as const }],
       companyId: 'company1',
-      companyName: 'Spiegel Verlag'
+      companyName: 'Spiegel Verlag',
+      organizationId: 'test-org',
+      createdBy: 'test-user'
     },
     {
       id: 'contact3',
-      emails: [{ email: 'journalist@bild.de', isPrimary: true }],
+      displayName: 'BILD Journalist',
+      name: { firstName: 'BILD', lastName: 'Journalist' },
+      emails: [{ email: 'journalist@bild.de', isPrimary: true, type: 'business' as const }],
       companyId: 'company2',
-      companyName: 'BILD'
+      companyName: 'BILD',
+      organizationId: 'test-org',
+      createdBy: 'test-user'
     },
     {
       id: 'contact4',
-      emails: [{ email: 'editor@sz.de', isPrimary: true }],
+      displayName: 'SZ Editor',
+      name: { firstName: 'SZ', lastName: 'Editor' },
+      emails: [{ email: 'editor@sz.de', isPrimary: true, type: 'business' as const }],
       companyId: 'company3',
-      companyName: 'SZ'
+      companyName: 'SZ',
+      organizationId: 'test-org',
+      createdBy: 'test-user'
     },
     {
       id: 'contact5',
-      emails: [{ email: 'test@faz.net', isPrimary: true }],
+      displayName: 'FAZ Test',
+      name: { firstName: 'FAZ', lastName: 'Test' },
+      emails: [{ email: 'test@faz.net', isPrimary: true, type: 'business' as const }],
       companyId: null, // Kein Link
-      companyName: 'FAZ'
+      companyName: 'FAZ',
+      organizationId: 'test-org',
+      createdBy: 'test-user'
     }
   ];
 
@@ -308,9 +344,13 @@ describe('Database Analyzer', () => {
               id: 'contact5',
               data: () => ({
                 id: 'contact5',
-                emails: [{ email: 'test@faz.net', isPrimary: true }],
+                displayName: 'FAZ Test',
+                name: { firstName: 'FAZ', lastName: 'Test' },
+                emails: [{ email: 'test@faz.net', isPrimary: true, type: 'business' as const }],
                 companyId: null,
-                companyName: 'FAZ'
+                companyName: 'FAZ',
+                organizationId: 'test-org',
+                createdBy: 'test-user'
               })
             }
           ]
@@ -362,8 +402,12 @@ describe('Database Analyzer', () => {
               id: 'bad-contact',
               data: () => ({
                 id: 'bad-contact',
+                displayName: 'Bad Contact',
+                name: { firstName: 'Bad', lastName: 'Contact' },
                 emails: null, // Malformed
-                companyId: 'company1'
+                companyId: 'company1',
+                organizationId: 'test-org',
+                createdBy: 'test-user'
               })
             }
           ]

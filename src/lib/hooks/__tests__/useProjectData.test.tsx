@@ -53,11 +53,25 @@ const mockProject: Project = {
   title: 'Test Project',
   description: 'Test Description',
   status: 'active',
-  currentStage: 'briefing',
+  currentStage: 'ideas_planning',
   organizationId: 'test-org-id',
   userId: 'user-1',
-  createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 },
-  updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 },
+  createdAt: {
+    seconds: Date.now() / 1000,
+    nanoseconds: 0,
+    toDate: () => new Date(),
+    toMillis: () => Date.now(),
+    isEqual: () => false,
+    toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
+  } as any,
+  updatedAt: {
+    seconds: Date.now() / 1000,
+    nanoseconds: 0,
+    toDate: () => new Date(),
+    toMillis: () => Date.now(),
+    isEqual: () => false,
+    toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
+  } as any,
 };
 
 describe('useProjectData Hooks', () => {
@@ -137,29 +151,29 @@ describe('useProjectData Hooks', () => {
   describe('useProjectsByStage', () => {
     it('fetches and filters projects by stage', async () => {
       const mockProjects = [
-        { ...mockProject, id: 'project-1', currentStage: 'briefing' as PipelineStage },
-        { ...mockProject, id: 'project-2', currentStage: 'concept' as PipelineStage },
-        { ...mockProject, id: 'project-3', currentStage: 'briefing' as PipelineStage },
+        { ...mockProject, id: 'project-1', currentStage: 'ideas_planning' as PipelineStage },
+        { ...mockProject, id: 'project-2', currentStage: 'creation' as PipelineStage },
+        { ...mockProject, id: 'project-3', currentStage: 'ideas_planning' as PipelineStage },
       ];
 
       (projectService.getAll as jest.Mock).mockResolvedValue(mockProjects);
 
       const { Wrapper } = createWrapper();
-      const { result } = renderHook(() => useProjectsByStage('test-org-id', 'briefing'), {
+      const { result } = renderHook(() => useProjectsByStage('test-org-id', 'ideas_planning'), {
         wrapper: Wrapper,
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toHaveLength(2);
-      expect(result.current.data?.[0].currentStage).toBe('briefing');
-      expect(result.current.data?.[1].currentStage).toBe('briefing');
+      expect(result.current.data?.[0].currentStage).toBe('ideas_planning');
+      expect(result.current.data?.[1].currentStage).toBe('ideas_planning');
       expect(projectService.getAll).toHaveBeenCalledWith({ organizationId: 'test-org-id' });
     });
 
     it('does not fetch when organizationId is undefined', () => {
       const { Wrapper } = createWrapper();
-      const { result } = renderHook(() => useProjectsByStage(undefined, 'briefing'), {
+      const { result } = renderHook(() => useProjectsByStage(undefined, 'ideas_planning'), {
         wrapper: Wrapper,
       });
 
@@ -172,7 +186,7 @@ describe('useProjectData Hooks', () => {
     it('moves a project between stages and invalidates cache', async () => {
       const moveResult = {
         success: true,
-        project: { ...mockProject, currentStage: 'concept' as PipelineStage },
+        project: { ...mockProject, currentStage: 'creation' as PipelineStage },
       };
 
       (kanbanBoardService.moveProject as jest.Mock).mockResolvedValue(moveResult);
@@ -190,8 +204,8 @@ describe('useProjectData Hooks', () => {
 
       result.current.mutate({
         projectId: 'project-1',
-        currentStage: 'briefing',
-        targetStage: 'concept',
+        currentStage: 'ideas_planning',
+        targetStage: 'creation',
         userId: 'user-1',
         organizationId: 'test-org-id',
       });
@@ -200,8 +214,8 @@ describe('useProjectData Hooks', () => {
 
       expect(kanbanBoardService.moveProject).toHaveBeenCalledWith(
         'project-1',
-        'briefing',
-        'concept',
+        'ideas_planning',
+        'creation',
         'user-1',
         'test-org-id'
       );
@@ -355,6 +369,7 @@ describe('useProjectData Hooks', () => {
         projectId: 'project-1',
         projectData: { title: 'Updated Title' },
         organizationId: 'test-org-id',
+        userId: 'user-1',
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -362,7 +377,7 @@ describe('useProjectData Hooks', () => {
       expect(projectService.update).toHaveBeenCalledWith(
         'project-1',
         { title: 'Updated Title' },
-        { organizationId: 'test-org-id' }
+        { organizationId: 'test-org-id', userId: 'user-1' }
       );
 
       // Should invalidate both projects list and single project query

@@ -604,6 +604,16 @@ export interface TaskIntegrityReport {
 // PROJECT TASK MANAGEMENT METHODS
 // ========================================
 
+// Type-Definition für erweiterte Methoden
+interface ProjectTaskExtensions {
+  getByProject(projectId: string, organizationId: string): Promise<ProjectTask[]>;
+  getTodayTasks(userId: string, organizationId: string, projectIds?: string[]): Promise<ProjectTask[]>;
+  getOverdueTasks(projectId: string, organizationId: string): Promise<ProjectTask[]>;
+  updateProgress(taskId: string, progress: number): Promise<void>;
+  getTasksWithFilters(organizationId: string, filters: TaskFilters): Promise<ProjectTask[]>;
+  addComputedFields(tasks: ProjectTask[]): ProjectTask[];
+}
+
 // Erweitere den bestehenden taskService
 Object.assign(taskService, {
   /**
@@ -853,3 +863,9 @@ Object.assign(taskService, {
     });
   },
 });
+
+// Type-Assertion für vollständigen Service mit Erweiterungen
+export type TaskService = typeof taskService & ProjectTaskExtensions;
+
+// Re-export mit korrektem Type
+export { taskService as default };

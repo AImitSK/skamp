@@ -1,7 +1,20 @@
 // src/lib/firebase/__tests__/task-service-project-extensions.test.ts
-import { taskService } from '../task-service';
-import { ProjectTask, TaskFilters, TaskPriority, TaskStatus } from '@/types/tasks';
+import { taskService as baseTaskService } from '../task-service';
+import { ProjectTask, TaskFilters } from '@/types/tasks';
 import { Timestamp } from 'firebase/firestore';
+
+// Type-Definition für erweiterte Methoden
+interface ProjectTaskExtensions {
+  getByProject(projectId: string, organizationId: string): Promise<ProjectTask[]>;
+  getTodayTasks(userId: string, organizationId: string, projectIds?: string[]): Promise<ProjectTask[]>;
+  getOverdueTasks(projectId: string, organizationId: string): Promise<ProjectTask[]>;
+  updateProgress(taskId: string, progress: number): Promise<void>;
+  getTasksWithFilters(organizationId: string, filters: TaskFilters): Promise<ProjectTask[]>;
+  addComputedFields(tasks: ProjectTask[]): ProjectTask[];
+}
+
+// Type-Cast für taskService mit erweiterten Methoden
+const taskService = baseTaskService as typeof baseTaskService & ProjectTaskExtensions;
 
 // Mock Firebase
 jest.mock('../client-init', () => ({
@@ -59,23 +72,25 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'task-1',
+          userId: testUserId,
           title: 'Task 1',
           projectId: testProjectId,
           organizationId: testOrganizationId,
           assignedUserId: testUserId,
-          status: 'pending',
-          priority: 'high',
+          status: 'pending' as const,
+          priority: 'high' as const,
           progress: 25,
           dueDate: Timestamp.fromDate(new Date('2024-12-25'))
         },
         {
           id: 'task-2',
+          userId: testUserId,
           title: 'Task 2',
           projectId: testProjectId,
           organizationId: testOrganizationId,
           assignedUserId: testUserId,
-          status: 'in_progress',
-          priority: 'medium',
+          status: 'in_progress' as const,
+          priority: 'medium' as const,
           progress: 75,
           dueDate: Timestamp.fromDate(new Date('2024-12-20'))
         }
@@ -108,9 +123,14 @@ describe('taskService - Project Extensions', () => {
 
       const mockTask = {
         id: 'task-1',
+        userId: testUserId,
         title: 'Task 1',
         projectId: testProjectId,
         organizationId: testOrganizationId,
+        assignedUserId: testUserId,
+        status: 'pending' as const,
+        priority: 'medium' as const,
+        progress: 0,
         dueDate: Timestamp.fromDate(new Date('2024-12-25'))
       };
 
@@ -153,21 +173,27 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'today-task',
+          userId: testUserId,
           title: 'Today Task',
           assignedUserId: testUserId,
           organizationId: testOrganizationId,
           projectId: testProjectId,
           dueDate: Timestamp.fromDate(today),
-          status: 'pending'
+          status: 'pending' as const,
+          priority: 'medium' as const,
+          progress: 0
         },
         {
           id: 'tomorrow-task',
+          userId: testUserId,
           title: 'Tomorrow Task',
           assignedUserId: testUserId,
           organizationId: testOrganizationId,
           projectId: testProjectId,
           dueDate: Timestamp.fromDate(new Date(today.getTime() + 24 * 60 * 60 * 1000)),
-          status: 'pending'
+          status: 'pending' as const,
+          priority: 'medium' as const,
+          progress: 0
         }
       ];
 
@@ -190,16 +216,26 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'project-task',
+          userId: testUserId,
+          title: 'Project Task',
           assignedUserId: testUserId,
           organizationId: testOrganizationId,
           projectId: testProjectId,
+          status: 'pending' as const,
+          priority: 'medium' as const,
+          progress: 0,
           dueDate: Timestamp.fromDate(today)
         },
         {
           id: 'other-project-task',
+          userId: testUserId,
+          title: 'Other Project Task',
           assignedUserId: testUserId,
           organizationId: testOrganizationId,
           projectId: 'other-project',
+          status: 'pending' as const,
+          priority: 'medium' as const,
+          progress: 0,
           dueDate: Timestamp.fromDate(today)
         }
       ];
@@ -222,9 +258,14 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'no-due-date',
+          userId: testUserId,
+          title: 'No Due Date Task',
           assignedUserId: testUserId,
           organizationId: testOrganizationId,
-          projectId: testProjectId
+          projectId: testProjectId,
+          status: 'pending' as const,
+          priority: 'medium' as const,
+          progress: 0
         }
       ];
 
@@ -251,19 +292,27 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'overdue-task',
+          userId: testUserId,
           title: 'Overdue Task',
           projectId: testProjectId,
           organizationId: testOrganizationId,
+          assignedUserId: testUserId,
+          priority: 'medium' as const,
+          progress: 0,
           dueDate: Timestamp.fromDate(yesterday),
-          status: 'pending'
+          status: 'pending' as const
         },
         {
           id: 'completed-overdue',
+          userId: testUserId,
           title: 'Completed Overdue',
           projectId: testProjectId,
           organizationId: testOrganizationId,
+          assignedUserId: testUserId,
+          priority: 'medium' as const,
+          progress: 100,
           dueDate: Timestamp.fromDate(yesterday),
-          status: 'completed'
+          status: 'completed' as const
         }
       ];
 
@@ -289,10 +338,14 @@ describe('taskService - Project Extensions', () => {
       const mockTasks = [
         {
           id: 'no-due-date',
+          userId: testUserId,
           title: 'No Due Date',
           projectId: testProjectId,
           organizationId: testOrganizationId,
-          status: 'pending'
+          assignedUserId: testUserId,
+          priority: 'medium' as const,
+          progress: 0,
+          status: 'pending' as const
         }
       ];
 
@@ -351,8 +404,8 @@ describe('taskService - Project Extensions', () => {
         projectId: testProjectId,
         assignedUserId: testUserId,
         title: 'My High Priority Task',
-        status: 'pending',
-        priority: 'high',
+        status: 'pending' as const,
+        priority: 'high' as const,
         progress: 50,
         dueDate: Timestamp.fromDate(new Date())
       },
@@ -363,8 +416,8 @@ describe('taskService - Project Extensions', () => {
         projectId: 'other-project',
         assignedUserId: 'other-user',
         title: 'Other User Task',
-        status: 'completed',
-        priority: 'low',
+        status: 'completed' as const,
+        priority: 'low' as const,
         progress: 100,
         dueDate: Timestamp.fromDate(new Date())
       }
@@ -464,7 +517,7 @@ describe('taskService - Project Extensions', () => {
       const overdueTask = {
         ...mockTasks[0],
         dueDate: Timestamp.fromDate(yesterday),
-        status: 'pending' as TaskStatus
+        status: 'pending' as const
       };
 
       const mockDocs = [overdueTask, mockTasks[1]].map(task => ({

@@ -43,6 +43,7 @@ const createMockFolder = (): MediaFolder => ({
   id: 'folder-1',
   name: 'Test Folder',
   userId: 'user-1',
+  organizationId: 'org-1',
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
 });
@@ -134,11 +135,19 @@ describe('ShareModal Component - Phase 4a.3', () => {
     // Mock createShareLink response
     const mockShareLink = {
       id: 'share-1',
+      userId: 'user-1',
       shareId: 'abc123',
       title: 'test-image.jpg',
-      type: 'file',
-      downloadAllowed: true,
+      type: 'file' as const,
+      targetId: 'asset-1',
+      active: true,
       accessCount: 0,
+      settings: {
+        expiresAt: null,
+        downloadAllowed: true,
+        passwordRequired: null,
+        watermarkEnabled: false,
+      },
     };
 
     (mediaService.createShareLink as jest.Mock).mockResolvedValue(mockShareLink);
@@ -169,10 +178,8 @@ describe('ShareModal Component - Phase 4a.3', () => {
         type: 'file',
         targetId: 'asset-1',
         title: 'Mein Test Bild',
-        isActive: true,
         settings: {
           downloadAllowed: true,
-          showFileList: false,
           expiresAt: null,
           passwordRequired: 'secure123',
           watermarkEnabled: false,
@@ -237,11 +244,19 @@ describe('ShareModal Component - Phase 4a.3', () => {
     // Mock createShareLink response
     const mockShareLink = {
       id: 'share-1',
+      userId: 'user-1',
       shareId: 'abc123',
       title: 'test-image.jpg',
-      type: 'file',
-      downloadAllowed: true,
+      type: 'file' as const,
+      targetId: 'asset-1',
+      active: true,
       accessCount: 0,
+      settings: {
+        expiresAt: null,
+        downloadAllowed: true,
+        passwordRequired: null,
+        watermarkEnabled: false,
+      },
     };
 
     (mediaService.createShareLink as jest.Mock).mockResolvedValue(mockShareLink);

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CompaniesPage from '../../companies/page';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock Firebase service
 jest.mock('@/lib/firebase/crm-service-enhanced', () => ({
@@ -42,39 +43,36 @@ const mockCompanies: CompanyEnhanced[] = [
     officialName: 'Test AG',
     type: 'customer',
     status: 'active',
-    countryCode: 'DE',
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  } as CompanyEnhanced,
   {
     id: '2',
     name: 'Demo GmbH',
     officialName: 'Demo GmbH',
     type: 'partner',
     status: 'inactive',
-    countryCode: 'AT',
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  } as CompanyEnhanced,
   {
     id: '3',
     name: 'Example Inc',
     officialName: 'Example Inc',
     type: 'customer',
     status: 'active',
-    countryCode: 'US',
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  } as CompanyEnhanced,
 ];
 
 describe('CRM Filter + Export Flow', () => {

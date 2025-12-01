@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ContactsTable } from '../ContactsTable';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper-Funktion um Mock-Timestamp zu erstellen
+const createMockTimestamp = (): Timestamp => {
+  return Timestamp.fromDate(new Date());
+};
 
 const mockContacts: ContactEnhanced[] = [
   {
@@ -15,8 +21,8 @@ const mockContacts: ContactEnhanced[] = [
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: createMockTimestamp(),
+    updatedAt: createMockTimestamp(),
   },
   {
     id: '2',
@@ -28,8 +34,8 @@ const mockContacts: ContactEnhanced[] = [
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: createMockTimestamp(),
+    updatedAt: createMockTimestamp(),
   },
 ];
 

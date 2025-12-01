@@ -52,28 +52,38 @@ describe('ReportDataCollector', () => {
         {
           id: 'send-1',
           campaignId: testCampaignId,
-          contactId: 'contact-1',
-          email: 'test@example.com',
+          recipientEmail: 'test@example.com',
+          recipientName: 'Test User',
           status: 'delivered',
-          sentAt: Timestamp.fromDate(new Date('2024-01-15T10:05:00Z'))
+          sentAt: Timestamp.fromDate(new Date('2024-01-15T10:05:00Z')),
+          userId: 'user-1'
         } as EmailCampaignSend
       ];
 
       const mockClippings: MediaClipping[] = [
         {
           id: 'clipping-1',
+          organizationId: testOrganizationId,
           campaignId: testCampaignId,
+          title: 'Test Article',
+          url: 'https://example.com/article',
           outletName: 'Test Outlet',
+          outletType: 'online',
           reach: 10000,
           sentiment: 'positive',
-          publishedAt: Timestamp.fromDate(new Date('2024-01-16T08:00:00Z'))
+          publishedAt: Timestamp.fromDate(new Date('2024-01-16T08:00:00Z')),
+          detectionMethod: 'manual',
+          detectedAt: Timestamp.fromDate(new Date('2024-01-16T08:00:00Z')),
+          createdBy: 'user-1',
+          createdAt: Timestamp.fromDate(new Date('2024-01-16T08:00:00Z')),
+          updatedAt: Timestamp.fromDate(new Date('2024-01-16T08:00:00Z'))
         } as MediaClipping
       ];
 
       const mockBranding: BrandingSettings = {
         organizationId: testOrganizationId,
-        primaryColor: '#FF5733',
-        companyName: 'Test Company'
+        companyName: 'Test Company',
+        showCopyright: true
       } as BrandingSettings;
 
       (prService.getById as jest.Mock).mockResolvedValue(mockCampaign);

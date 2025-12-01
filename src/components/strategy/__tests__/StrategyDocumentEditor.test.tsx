@@ -2,7 +2,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import '@testing-library/jest-dom';
 
 import StrategyDocumentEditor from '../StrategyDocumentEditor';
@@ -95,20 +94,22 @@ const mockStrategyDocument: StrategyDocument = {
 // HELPER FUNCTIONS
 // ========================================
 
-function createMockEditor(overrides: any = {}) {
+function createMockEditor(overrides: any = {}): any {
+  const commands: any = {
+    setContent: jest.fn(),
+    focus: jest.fn(() => commands),
+    toggleBold: jest.fn(() => commands),
+    toggleItalic: jest.fn(() => commands),
+    toggleHeading: jest.fn(() => commands),
+    toggleBulletList: jest.fn(() => commands),
+    toggleOrderedList: jest.fn(() => commands),
+    toggleBlockquote: jest.fn(() => commands),
+    toggleCodeBlock: jest.fn(() => commands),
+    run: jest.fn()
+  };
+
   return {
-    commands: {
-      setContent: jest.fn(),
-      focus: jest.fn(() => mockEditor.commands),
-      toggleBold: jest.fn(() => mockEditor.commands),
-      toggleItalic: jest.fn(() => mockEditor.commands),
-      toggleHeading: jest.fn(() => mockEditor.commands),
-      toggleBulletList: jest.fn(() => mockEditor.commands),
-      toggleOrderedList: jest.fn(() => mockEditor.commands),
-      toggleBlockquote: jest.fn(() => mockEditor.commands),
-      toggleCodeBlock: jest.fn(() => mockEditor.commands),
-      run: jest.fn()
-    },
+    commands,
     isActive: jest.fn((type: string, attrs?: any) => {
       if (type === 'bold' && overrides.boldActive) return true;
       if (type === 'italic' && overrides.italicActive) return true;
@@ -130,15 +131,15 @@ function createMockEditor(overrides: any = {}) {
   };
 }
 
-const mockEditor = createMockEditor();
+const mockEditor: any = createMockEditor();
 
 // ========================================
 // TEST SETUP
 // ========================================
 
 const defaultProps = {
-  onSave: jest.fn<(content: string, title: string) => Promise<void>>(),
-  onCancel: jest.fn<() => void>(),
+  onSave: jest.fn() as jest.MockedFunction<(content: string, title: string) => Promise<void>>,
+  onCancel: jest.fn() as jest.MockedFunction<() => void>,
   isLoading: false
 };
 
@@ -398,7 +399,7 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte Dokument erfolgreich speichern', async () => {
       const user = userEvent.setup();
-      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockResolvedValue(undefined);
+      const mockOnSave = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<(content: string, title: string) => Promise<void>>;
 
       const editorWithContent = createMockEditor({
         htmlContent: '<h1>Gespeicherter Inhalt</h1>'
@@ -438,12 +439,12 @@ describe('StrategyDocumentEditor', () => {
     test('sollte Loading-State beim Speichern anzeigen', async () => {
       const user = userEvent.setup();
       let resolveSave: (value: void) => void;
-      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>(() => new Promise<void>((resolve) => {
+      const mockOnSave = jest.fn(() => new Promise<void>((resolve) => {
         resolveSave = resolve;
-      }));
-      
+      })) as unknown as jest.MockedFunction<(content: string, title: string) => Promise<void>>;
+
       render(
-        <StrategyDocumentEditor 
+        <StrategyDocumentEditor
           {...defaultProps}
           onSave={mockOnSave}
         />
@@ -472,7 +473,7 @@ describe('StrategyDocumentEditor', () => {
     test('sollte Fehler beim Speichern korrekt behandeln', async () => {
       const user = userEvent.setup();
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockRejectedValue(new Error('Save failed'));
+      const mockOnSave = jest.fn().mockRejectedValue(new Error('Save failed')) as jest.MockedFunction<(content: string, title: string) => Promise<void>>;
       
       render(
         <StrategyDocumentEditor 
@@ -521,7 +522,7 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte onCancel beim Klick auf Abbrechen aufrufen', async () => {
       const user = userEvent.setup();
-      const mockOnCancel = jest.fn<() => void>();
+      const mockOnCancel = jest.fn() as jest.MockedFunction<() => void>;
 
       render(
         <StrategyDocumentEditor
@@ -760,7 +761,7 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte kompletten Editor-Workflow abbilden', async () => {
       const user = userEvent.setup();
-      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockResolvedValue(undefined);
+      const mockOnSave = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<(content: string, title: string) => Promise<void>>;
 
       const editorWithContent = createMockEditor({
         htmlContent: '<h1>Integration Test</h1><p><strong>Fetter Text</strong></p>'
@@ -818,7 +819,7 @@ describe('StrategyDocumentEditor', () => {
 // Erweitere Jest Matchers für bessere Accessibility Tests
 declare global {
   namespace jest {
-    interface Matchers<R> {
+    interface Matchers<R = void> {
       toBeAccessible(): R;
     }
   }
@@ -830,9 +831,9 @@ expect.extend({
     const hasValidRole = received.hasAttribute('role') || received.tagName.toLowerCase() in ['button', 'input', 'textarea'];
     const isNotAriaHidden = received.getAttribute('aria-hidden') !== 'true';
     const hasValidTabIndex = !received.hasAttribute('tabindex') || parseInt(received.getAttribute('tabindex') || '0') >= -1;
-    
+
     const pass = hasValidRole && isNotAriaHidden && hasValidTabIndex;
-    
+
     if (pass) {
       return {
         message: () => `Expected element not to be accessible`,

@@ -8,10 +8,21 @@ jest.mock('firebase-admin/auth', () => ({
   getAuth: jest.fn()
 }));
 
+// Firebase Admin Firestore Mock
+const createMockTimestamp = (date?: Date) => {
+  const d = date || new Date();
+  return {
+    seconds: Math.floor(d.getTime() / 1000),
+    nanoseconds: 0,
+    toDate: () => d,
+    toMillis: () => d.getTime()
+  };
+};
+
 jest.mock('firebase-admin/firestore', () => ({
   Timestamp: {
-    now: jest.fn(() => ({ seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date() })),
-    fromDate: jest.fn((date: Date) => ({ seconds: date.getTime() / 1000, nanoseconds: 0, toDate: () => date }))
+    now: jest.fn(() => createMockTimestamp()),
+    fromDate: jest.fn((date: Date) => createMockTimestamp(date))
   },
   FieldValue: {
     serverTimestamp: jest.fn()
@@ -20,17 +31,24 @@ jest.mock('firebase-admin/firestore', () => ({
 
 jest.mock('@/lib/firebase/admin-init', () => ({
   adminDb: {
-    collection: jest.fn()
-  }
+    collection: jest.fn() as jest.MockedFunction<(collectionPath: string) => any>
+  },
+  adminAuth: {},
+  adminStorage: {}
 }));
 
 jest.mock('@/lib/email/email-sender-service', () => ({
   emailSenderService: {
     prepareEmailData: jest.fn(),
     sendToRecipients: jest.fn()
-  }
+  },
+  EmailSenderService: jest.fn().mockImplementation(() => ({
+    prepareEmailData: jest.fn(),
+    sendToRecipients: jest.fn()
+  }))
 }));
 
+// Import muss NACH den Mocks erfolgen
 import { POST } from '@/app/api/pr/email/send/route';
 import { NextRequest } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
@@ -57,9 +75,9 @@ describe('POST /api/pr/email/send', () => {
 
     // Mock Firestore collection.add
     mockCollectionAdd = jest.fn();
-    mockAdminDb.collection = jest.fn(() => ({
+    mockAdminDb.collection = jest.fn((collectionPath: string) => ({
       add: mockCollectionAdd
-    } as any));
+    } as any)) as jest.MockedFunction<(collectionPath: string) => any>;
 
     // Mock emailSenderService
     mockEmailSenderService.prepareEmailData = jest.fn();
@@ -98,8 +116,8 @@ describe('POST /api/pr/email/send', () => {
       subject: 'Test Subject',
       preheader: 'Test Preheader'
     },
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
+    createdAt: Timestamp.now() as any,
+    updatedAt: Timestamp.now() as any
   };
 
   describe('Authentication', () => {

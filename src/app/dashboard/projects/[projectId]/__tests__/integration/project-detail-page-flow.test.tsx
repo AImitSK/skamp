@@ -1,4 +1,5 @@
 // src/app/dashboard/projects/[projectId]/__tests__/integration/project-detail-page-flow.test.tsx
+import React, { useState } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ProjectProvider } from '../../context/ProjectContext';
 import { ProjectHeader } from '../../components/header/ProjectHeader';
@@ -10,7 +11,6 @@ import { Project } from '@/types/project';
 import { TeamMember } from '@/types/international';
 import { Tag } from '@/types/crm';
 import { Timestamp } from 'firebase/firestore';
-import { useState } from 'react';
 import { createMockTimestamp } from '../helpers/mock-data';
 
 const mockProject: Project = {
@@ -110,7 +110,6 @@ describe('Project Detail Page Integration', () => {
             <ProjectHeader
               teamMembers={mockTeamMembers}
               onEditClick={jest.fn()}
-              onTeamManageClick={jest.fn()}
               onDeleteClick={jest.fn()}
             />
             <ProjectInfoBar projectTags={mockTags} />
@@ -223,7 +222,6 @@ describe('Project Detail Page Integration', () => {
             <ProjectHeader
               teamMembers={mockTeamMembers}
               onEditClick={mockOnEdit}
-              onTeamManageClick={jest.fn()}
               onDeleteClick={mockOnDelete}
             />
             <ProjectInfoBar projectTags={mockTags} />
@@ -287,7 +285,6 @@ describe('Project Detail Page Integration', () => {
             <ProjectHeader
               teamMembers={mockTeamMembers}
               onEditClick={jest.fn()}
-              onTeamManageClick={jest.fn()}
               onDeleteClick={mockOnDelete}
             />
           </ProjectProvider>

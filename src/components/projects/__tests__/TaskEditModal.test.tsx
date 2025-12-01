@@ -585,7 +585,7 @@ describe('TaskEditModal', () => {
       const mockOnClose = jest.fn();
 
       // Mock update to return pending promise
-      const updatePromise = new Promise(() => {}); // Never resolves
+      const updatePromise = new Promise<void>(() => {}); // Never resolves
       mockTaskService.update.mockReturnValue(updatePromise);
 
       render(<TaskEditModal {...defaultProps} onClose={mockOnClose} />);
@@ -685,9 +685,9 @@ describe('TaskEditModal', () => {
     });
 
     it('sollte mit Task ohne Progress umgehen', () => {
-      const task = {
+      const task: ProjectTask = {
         ...mockTasksDataSet.pending,
-        progress: undefined
+        progress: 0
       };
       render(<TaskEditModal {...defaultProps} task={task} />);
 
@@ -783,7 +783,7 @@ describe('TaskEditModal', () => {
       const statusSelect = screen.getByLabelText('Status');
       await user.selectOptions(statusSelect, 'in_progress');
 
-      const progressSlider = screen.getByLabelText('Fortschritt');
+      const progressSlider = screen.getByLabelText('Fortschritt') as HTMLInputElement;
       expect(progressSlider).not.toBeDisabled();
 
       // Fortschritt sollte von 100% auf ursprünglichen Wert zurück

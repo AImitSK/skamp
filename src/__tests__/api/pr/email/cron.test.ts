@@ -53,7 +53,7 @@ describe('POST /api/pr/email/cron', () => {
     mockOrderBy = jest.fn(() => ({ limit: mockLimit }));
     mockWhere = jest.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }));
 
-    mockAdminDb.collection = jest.fn(() => ({
+    (mockAdminDb.collection as jest.Mock) = jest.fn(() => ({
       where: mockWhere
     } as any));
 
@@ -426,7 +426,7 @@ describe('GET /api/pr/email/cron', () => {
     mockCount = jest.fn(() => ({ get: mockGet }));
     mockWhere = jest.fn(() => ({ count: mockCount }));
 
-    mockAdminDb.collection = jest.fn(() => ({
+    (mockAdminDb.collection as jest.Mock) = jest.fn(() => ({
       where: mockWhere
     } as any));
   });

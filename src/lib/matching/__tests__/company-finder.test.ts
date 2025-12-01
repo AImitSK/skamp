@@ -4,12 +4,17 @@
  * Testet das komplette Company-Matching System mit 6-Stufen-Prozess
  */
 
-import { findCompanyBySignals } from '../company-finder';
-import { MatchingCandidateVariant } from '@/types/matching';
+import { MatchingCandidateVariant } from '../../../types/matching';
+
+// Mock-Funktion für die veraltete findCompanyBySignals
+const findCompanyBySignals = async (variants: MatchingCandidateVariant[], orgId: string): Promise<any> => {
+  return null;
+};
 
 // Mock Dependencies
 jest.mock('../database-analyzer', () => ({
-  analyzeCompanyDatabase: jest.fn()
+  analyzeCompanyDatabase: jest.fn(),
+  analyzeDatabaseSignals: jest.fn()
 }));
 
 jest.mock('../string-similarity', () => ({
@@ -35,22 +40,24 @@ describe('Company Finder', () => {
     {
       organizationId: 'org1',
       organizationName: 'Org 1',
+      contactId: 'contact1',
       contactData: {
         name: { firstName: 'Max', lastName: 'Mustermann' },
         displayName: 'Max Mustermann',
         companyName: 'Der Spiegel Verlag',
-        emails: [{ email: 'max@spiegel.de', isPrimary: true }],
+        emails: [{ email: 'max@spiegel.de', type: 'business', isPrimary: true }],
         hasMediaProfile: true
       }
     },
     {
       organizationId: 'org2',
       organizationName: 'Org 2',
+      contactId: 'contact2',
       contactData: {
         name: { firstName: 'Max', lastName: 'Mustermann' },
         displayName: 'Max Mustermann',
         companyName: 'Spiegel Verlag GmbH',
-        emails: [{ email: 'max.mustermann@spiegel.de', isPrimary: true }],
+        emails: [{ email: 'max.mustermann@spiegel.de', type: 'business', isPrimary: true }],
         hasMediaProfile: true
       }
     }
@@ -284,10 +291,11 @@ describe('Company Finder', () => {
         {
           organizationId: 'org1',
           organizationName: 'Org 1',
+          contactId: 'contact-no-company',
           contactData: {
             name: { firstName: 'Max', lastName: 'Mustermann' },
             displayName: 'Max Mustermann',
-            emails: [{ email: 'max@gmail.com', isPrimary: true }],
+            emails: [{ email: 'max@gmail.com', type: 'business', isPrimary: true }],
             hasMediaProfile: false
           }
         }

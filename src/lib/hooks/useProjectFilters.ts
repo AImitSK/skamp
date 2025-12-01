@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Project } from '@/types/project';
+import { Project } from '../../types/project';
 
 export interface ProjectFilters {
   showActive: boolean;

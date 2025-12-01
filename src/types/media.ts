@@ -54,6 +54,7 @@ export interface MediaAsset {
 export interface MediaFolder {
   id?: string;
   userId: string;
+  organizationId: string; // Multi-Tenancy Support
   name: string;
   parentFolderId?: string; // Für Unterordner
   clientId?: string; // Optional: Kunde zugeordnet

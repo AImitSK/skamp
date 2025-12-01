@@ -62,7 +62,12 @@ describe('projectService - Stage Transitions Tests', () => {
   const mockProject = {
     id: testProjectId,
     organizationId: testOrganizationId,
+    userId: testUserId,
+    title: 'Test Project',
+    status: 'active' as const,
     currentStage: 'creation' as PipelineStage,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     workflowState: {
       stageHistory: [],
       lastIntegrityCheck: Timestamp.now(),
@@ -103,12 +108,12 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result: StageTransitionResult = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId
       );
 
       expect(result.success).toBe(true);
-      expect(result.newStage).toBe('internal_approval');
+      expect(result.newStage).toBe('approval');
       expect(result.createdTasks).toContain('2 Tasks erstellt');
       expect(result.updatedTasks).toContain('1 Task-Deadlines aktualisiert');
       expect(result.notifications).toContain('1 Benachrichtigungen gesendet');
@@ -117,7 +122,7 @@ describe('projectService - Stage Transitions Tests', () => {
       expect(projectService.update).toHaveBeenCalledWith(
         testProjectId,
         expect.objectContaining({
-          currentStage: 'internal_approval'
+          currentStage: 'approval'
         }),
         expect.any(Object)
       );
@@ -133,7 +138,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'customer_approval',
+        'approval',
         testUserId
       );
 
@@ -161,7 +166,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId,
         true // force = true
       );
@@ -175,7 +180,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         'non-existent-project',
-        'internal_approval',
+        'approval',
         testUserId
       );
 
@@ -186,9 +191,8 @@ describe('projectService - Stage Transitions Tests', () => {
     it('sollte alle möglichen Stage-Übergänge unterstützen', async () => {
       const stageTransitions: Array<[PipelineStage, PipelineStage]> = [
         ['ideas_planning', 'creation'],
-        ['creation', 'internal_approval'],
-        ['internal_approval', 'customer_approval'],
-        ['customer_approval', 'distribution'],
+        ['creation', 'approval'],
+        ['approval', 'distribution'],
         ['distribution', 'monitoring'],
         ['monitoring', 'completed']
       ];
@@ -251,23 +255,23 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.executeStageTransitionWorkflow(
         testProjectId,
         'creation',
-        'internal_approval'
+        'approval'
       );
 
-      expect(result.actionsExecuted).toContain('transition_creation_to_internal_approval');
+      expect(result.actionsExecuted).toContain('transition_creation_to_approval');
       expect(mockTaskService.markAsCompleted).toHaveBeenCalledWith('auto-task-1');
       expect(result.tasksCreated).toBe(2);
       expect(result.notificationsSent).toBe(1);
     });
 
-    it('sollte Workflow für internal_approval -> customer_approval ausführen', async () => {
+    it('sollte Workflow für approval -> distribution ausführen', async () => {
       const result = await projectService.executeStageTransitionWorkflow(
         testProjectId,
-        'internal_approval',
-        'customer_approval'
+        'approval',
+        'distribution'
       );
 
-      expect(result.actionsExecuted).toContain('transition_internal_to_customer_approval');
+      expect(result.actionsExecuted).toContain('transition_approval_to_distribution');
       expect(result.tasksCreated).toBe(1);
       expect(result.notificationsSent).toBe(1);
     });
@@ -278,7 +282,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.executeStageTransitionWorkflow(
         testProjectId,
         'creation',
-        'internal_approval'
+        'approval'
       );
 
       expect(result.errors).toHaveLength(1);
@@ -302,9 +306,9 @@ describe('projectService - Stage Transitions Tests', () => {
           status: 'pending',
           requiredForStageCompletion: true
         },
-        { 
-          id: 'task-3', 
-          pipelineStage: 'internal_approval', 
+        {
+          id: 'task-3',
+          pipelineStage: 'approval',
           status: 'pending',
           requiredForStageCompletion: false
         }
@@ -317,7 +321,7 @@ describe('projectService - Stage Transitions Tests', () => {
       expect(result.taskCompletion).toBe(33.333333333333336); // 1 von 3 Tasks completed
       expect(result.criticalTasksRemaining).toBe(1); // Eine kritische Task pending
       expect(result.stageProgress.creation).toBe(50); // 1 von 2 creation tasks completed
-      expect(result.stageProgress.internal_approval).toBe(0); // 0 von 1 approval task completed
+      expect(result.stageProgress.approval).toBe(0); // 0 von 1 approval task completed
       expect(result.overallPercent).toBeGreaterThan(0);
       expect(result.lastUpdated).toBeDefined();
     });
@@ -372,7 +376,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result: TransitionValidation = await projectService.validateStageTransition(
         testProjectId,
         'creation',
-        'internal_approval'
+        'approval'
       );
 
       expect(result.isValid).toBe(true);
@@ -390,7 +394,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.validateStageTransition(
         testProjectId,
         'creation',
-        'internal_approval'
+        'approval'
       );
 
       expect(result.isValid).toBe(false);
@@ -398,7 +402,7 @@ describe('projectService - Stage Transitions Tests', () => {
       expect(result.canProceed).toBe(false);
     });
 
-    it('sollte spezielle Validierung für customer_approval durchführen', async () => {
+    it('sollte spezielle Validierung für approval durchführen', async () => {
       mockTaskService.getCriticalTasksForStage.mockResolvedValue([]);
       mockTaskService.getByProjectStage.mockResolvedValue([
         { templateCategory: 'other', status: 'completed' }
@@ -407,7 +411,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.validateStageTransition(
         testProjectId,
         'creation',
-        'customer_approval'
+        'approval'
       );
 
       expect(result.isValid).toBe(false);
@@ -423,7 +427,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.validateStageTransition(
         testProjectId,
         'creation',
-        'customer_approval'
+        'approval'
       );
 
       expect(result.isValid).toBe(true);
@@ -436,7 +440,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const result = await projectService.validateStageTransition(
         testProjectId,
         'creation',
-        'internal_approval'
+        'approval'
       );
 
       expect(result.isValid).toBe(false);
@@ -463,8 +467,8 @@ describe('projectService - Stage Transitions Tests', () => {
 
     it('sollte Rollback für alle Stages unterstützen', async () => {
       const stages: PipelineStage[] = [
-        'ideas_planning', 'creation', 'internal_approval',
-        'customer_approval', 'distribution', 'monitoring'
+        'ideas_planning', 'creation', 'approval',
+        'distribution', 'monitoring', 'completed'
       ];
 
       for (const stage of stages) {
@@ -582,7 +586,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId
       );
 
@@ -616,7 +620,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId
       );
 
@@ -641,7 +645,7 @@ describe('projectService - Stage Transitions Tests', () => {
 
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId
       );
 
@@ -665,7 +669,7 @@ describe('projectService - Stage Transitions Tests', () => {
       const startTime = Date.now();
       const result = await projectService.attemptStageTransition(
         testProjectId,
-        'internal_approval',
+        'approval',
         testUserId
       );
       const endTime = Date.now();

@@ -101,7 +101,7 @@ describe('ApprovalTableRow Component', () => {
     });
 
     it('should render fallback when no campaign title', () => {
-      const approval = createMockApproval({ campaignTitle: undefined });
+      const approval = createMockApproval({ campaignTitle: '' });
       render(<ApprovalTableRow {...defaultProps} approval={approval} />);
 
       expect(screen.getByText('Unbekannte Kampagne')).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('ApprovalTableRow Component', () => {
         recipients: [
           {
             email: 'contact@example.com',
-            name: undefined,
+            name: '',
             id: 'contact-1',
             role: 'approver',
             status: 'pending',
@@ -191,7 +191,7 @@ describe('ApprovalTableRow Component', () => {
 
     it('should render "Nicht zugewiesen" when no client info', () => {
       const approval = createMockApproval({
-        clientName: undefined,
+        clientName: '',
         recipients: [],
         clientEmail: undefined
       });
@@ -241,7 +241,7 @@ describe('ApprovalTableRow Component', () => {
     });
 
     it('should have fallback link when no shareId', async () => {
-      const approval = createMockApproval({ shareId: undefined });
+      const approval = createMockApproval({ shareId: '' });
       const user = userEvent.setup();
       render(<ApprovalTableRow {...defaultProps} approval={approval} />);
 

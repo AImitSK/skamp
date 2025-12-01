@@ -66,19 +66,19 @@ describe('taskService - Pipeline Integration Tests', () => {
           userId: testUserId,
           organizationId: testOrganizationId,
           title: 'Content-Outline erstellen',
-          status: 'pending',
-          priority: 'high',
+          status: 'pending' as TaskStatus,
+          priority: 'high' as TaskPriority,
           linkedProjectId: testProjectId,
           pipelineStage: 'creation',
           requiredForStageCompletion: true
         },
         {
-          id: 'task-creation-2', 
+          id: 'task-creation-2',
           userId: testUserId,
           organizationId: testOrganizationId,
           title: 'Texte verfassen',
-          status: 'in_progress',
-          priority: 'high',
+          status: 'in_progress' as TaskStatus,
+          priority: 'high' as TaskPriority,
           linkedProjectId: testProjectId,
           pipelineStage: 'creation',
           requiredForStageCompletion: true
@@ -122,9 +122,13 @@ describe('taskService - Pipeline Integration Tests', () => {
     });
 
     it('sollte Multi-Tenancy-Isolation gewährleisten', async () => {
-      const wrongOrgTask = {
+      const wrongOrgTask: PipelineAwareTask = {
         id: 'task-wrong-org',
+        userId: testUserId,
         organizationId: 'other-org-123',
+        title: 'Wrong Org Task',
+        status: 'pending' as TaskStatus,
+        priority: 'medium' as TaskPriority,
         linkedProjectId: testProjectId,
         pipelineStage: 'creation'
       };
@@ -142,20 +146,28 @@ describe('taskService - Pipeline Integration Tests', () => {
 
   describe('getCriticalTasksForStage', () => {
     it('sollte nur kritische Tasks für Stage zurückgeben', async () => {
-      const mockTasks = [
+      const mockTasks: PipelineAwareTask[] = [
         {
           id: 'critical-task-1',
+          userId: testUserId,
+          organizationId: testOrganizationId,
           linkedProjectId: testProjectId,
           pipelineStage: 'creation',
           requiredForStageCompletion: true,
-          title: 'Kritische Content-Erstellung'
+          title: 'Kritische Content-Erstellung',
+          status: 'pending' as TaskStatus,
+          priority: 'high' as TaskPriority
         },
         {
           id: 'optional-task',
+          userId: testUserId,
+          organizationId: testOrganizationId,
           linkedProjectId: testProjectId,
-          pipelineStage: 'creation', 
+          pipelineStage: 'creation',
           requiredForStageCompletion: false,
-          title: 'Optionale Aufgabe'
+          title: 'Optionale Aufgabe',
+          status: 'pending' as TaskStatus,
+          priority: 'medium' as TaskPriority
         }
       ];
 
@@ -176,8 +188,8 @@ describe('taskService - Pipeline Integration Tests', () => {
 
     it('sollte alle Stages korrekt filtern können', async () => {
       const stages: PipelineStage[] = [
-        'ideas_planning', 'creation', 'internal_approval',
-        'customer_approval', 'distribution', 'monitoring', 'completed'
+        'ideas_planning', 'creation', 'approval',
+        'distribution', 'monitoring', 'completed'
       ];
 
       mockFirestore.getDocs.mockResolvedValue({ docs: [] });
@@ -196,27 +208,43 @@ describe('taskService - Pipeline Integration Tests', () => {
         return [
           {
             id: 'critical-1',
+            userId: testUserId,
+            organizationId: testOrganizationId,
+            title: 'Critical Task 1',
+            status: 'completed' as TaskStatus,
+            priority: 'high' as TaskPriority,
             pipelineStage: 'creation',
-            requiredForStageCompletion: true,
-            status: 'completed'
+            requiredForStageCompletion: true
           },
           {
-            id: 'critical-2', 
+            id: 'critical-2',
+            userId: testUserId,
+            organizationId: testOrganizationId,
+            title: 'Critical Task 2',
+            status: 'pending' as TaskStatus,
+            priority: 'high' as TaskPriority,
             pipelineStage: 'creation',
-            requiredForStageCompletion: true,
-            status: 'pending'
+            requiredForStageCompletion: true
           },
           {
             id: 'blocking-1',
+            userId: testUserId,
+            organizationId: testOrganizationId,
+            title: 'Blocking Task',
+            status: 'pending' as TaskStatus,
+            priority: 'high' as TaskPriority,
             pipelineStage: 'creation',
-            blocksStageTransition: true,
-            status: 'pending'
+            blocksStageTransition: true
           },
           {
             id: 'optional-1',
+            userId: testUserId,
+            organizationId: testOrganizationId,
+            title: 'Optional Task',
+            status: 'pending' as TaskStatus,
+            priority: 'medium' as TaskPriority,
             pipelineStage: 'creation',
-            requiredForStageCompletion: false,
-            status: 'pending'
+            requiredForStageCompletion: false
           }
         ] as PipelineAwareTask[];
       });
@@ -244,15 +272,23 @@ describe('taskService - Pipeline Integration Tests', () => {
       jest.spyOn(taskService, 'getByProjectId').mockResolvedValueOnce([
         {
           id: 'critical-1',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Critical Task 1',
+          status: 'completed' as TaskStatus,
+          priority: 'high' as TaskPriority,
           pipelineStage: 'creation',
-          requiredForStageCompletion: true,
-          status: 'completed'
+          requiredForStageCompletion: true
         },
         {
           id: 'critical-2',
-          pipelineStage: 'creation', 
-          requiredForStageCompletion: true,
-          status: 'completed'
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Critical Task 2',
+          status: 'completed' as TaskStatus,
+          priority: 'high' as TaskPriority,
+          pipelineStage: 'creation',
+          requiredForStageCompletion: true
         }
       ] as PipelineAwareTask[]);
 
@@ -272,9 +308,13 @@ describe('taskService - Pipeline Integration Tests', () => {
       jest.spyOn(taskService, 'getByProjectId').mockResolvedValueOnce([
         {
           id: 'optional-1',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Optional Task',
+          status: 'pending' as TaskStatus,
+          priority: 'medium' as TaskPriority,
           pipelineStage: 'creation',
-          requiredForStageCompletion: false,
-          status: 'pending'
+          requiredForStageCompletion: false
         }
       ] as PipelineAwareTask[]);
 
@@ -295,7 +335,7 @@ describe('taskService - Pipeline Integration Tests', () => {
           id: 'template-1',
           title: 'Content-Review durchführen',
           category: 'review',
-          stage: 'internal_approval',
+          stage: 'approval',
           priority: 'high',
           requiredForStageCompletion: true,
           daysAfterStageEntry: 3
@@ -304,7 +344,7 @@ describe('taskService - Pipeline Integration Tests', () => {
           id: 'template-2',
           title: 'Freigabe-Dokument erstellen',
           category: 'documentation',
-          stage: 'internal_approval', 
+          stage: 'approval',
           priority: 'medium',
           requiredForStageCompletion: false,
           daysAfterStageEntry: 5
@@ -325,7 +365,7 @@ describe('taskService - Pipeline Integration Tests', () => {
 
       const result = await taskService.createTasksFromTemplates(
         testProjectId,
-        'internal_approval',
+        'approval',
         templates
       );
 
@@ -376,25 +416,40 @@ describe('taskService - Pipeline Integration Tests', () => {
     beforeEach(() => {
       jest.spyOn(taskService, 'getById').mockResolvedValue({
         id: 'completed-task',
+        userId: testUserId,
         organizationId: testOrganizationId,
-        linkedProjectId: testProjectId,
-        status: 'completed'
+        title: 'Completed Task',
+        status: 'completed' as TaskStatus,
+        priority: 'medium' as TaskPriority,
+        linkedProjectId: testProjectId
       } as PipelineAwareTask);
 
       jest.spyOn(taskService, 'getByProjectId').mockResolvedValue([
         {
           id: 'dependent-task-1',
-          dependsOnTaskIds: ['completed-task'],
-          status: 'blocked'
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Dependent Task 1',
+          status: 'blocked' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          dependsOnTaskIds: ['completed-task']
         },
         {
-          id: 'dependent-task-2', 
-          dependsOnTaskIds: ['completed-task', 'other-task'],
-          status: 'blocked'
+          id: 'dependent-task-2',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Dependent Task 2',
+          status: 'blocked' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          dependsOnTaskIds: ['completed-task', 'other-task']
         },
         {
           id: 'other-task',
-          status: 'completed'
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Other Task',
+          status: 'completed' as TaskStatus,
+          priority: 'medium' as TaskPriority
         }
       ] as PipelineAwareTask[]);
 
@@ -421,12 +476,20 @@ describe('taskService - Pipeline Integration Tests', () => {
       jest.spyOn(taskService, 'getByProjectId').mockResolvedValue([
         {
           id: 'dependent-partial',
-          dependsOnTaskIds: ['completed-task', 'still-pending-task'],
-          status: 'blocked'
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Partially Dependent Task',
+          status: 'blocked' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          dependsOnTaskIds: ['completed-task', 'still-pending-task']
         },
         {
           id: 'still-pending-task',
-          status: 'pending'
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Still Pending Task',
+          status: 'pending' as TaskStatus,
+          priority: 'medium' as TaskPriority
         }
       ] as PipelineAwareTask[]);
 
@@ -527,9 +590,33 @@ describe('taskService - Pipeline Integration Tests', () => {
 
       // Mock setup für concurrent handling
       jest.spyOn(taskService, 'getById')
-        .mockResolvedValueOnce({ id: 'task-1', organizationId: testOrganizationId, linkedProjectId: testProjectId } as PipelineAwareTask)
-        .mockResolvedValueOnce({ id: 'task-2', organizationId: testOrganizationId, linkedProjectId: testProjectId } as PipelineAwareTask)  
-        .mockResolvedValueOnce({ id: 'task-3', organizationId: testOrganizationId, linkedProjectId: testProjectId } as PipelineAwareTask);
+        .mockResolvedValueOnce({
+          id: 'task-1',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Task 1',
+          status: 'completed' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          linkedProjectId: testProjectId
+        } as PipelineAwareTask)
+        .mockResolvedValueOnce({
+          id: 'task-2',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Task 2',
+          status: 'completed' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          linkedProjectId: testProjectId
+        } as PipelineAwareTask)
+        .mockResolvedValueOnce({
+          id: 'task-3',
+          userId: testUserId,
+          organizationId: testOrganizationId,
+          title: 'Task 3',
+          status: 'completed' as TaskStatus,
+          priority: 'medium' as TaskPriority,
+          linkedProjectId: testProjectId
+        } as PipelineAwareTask);
 
       jest.spyOn(taskService, 'getByProjectId').mockResolvedValue([]);
       jest.spyOn(taskService, 'markAsCompleted').mockResolvedValue(undefined);
@@ -544,11 +631,15 @@ describe('taskService - Pipeline Integration Tests', () => {
 
     it('sollte Memory-Leaks bei großen Task-Listen vermeiden', async () => {
       // Simuliere große Task-Liste
-      const largeMockTasks = Array.from({ length: 1000 }, (_, index) => ({
+      const largeMockTasks: PipelineAwareTask[] = Array.from({ length: 1000 }, (_, index) => ({
         id: `task-${index}`,
+        userId: testUserId,
+        organizationId: testOrganizationId,
+        title: `Task ${index}`,
+        status: 'pending' as TaskStatus,
+        priority: 'medium' as TaskPriority,
         linkedProjectId: testProjectId,
-        pipelineStage: 'creation',
-        status: 'pending'
+        pipelineStage: 'creation'
       }));
 
       mockFirestore.getDocs.mockResolvedValue({

@@ -31,6 +31,12 @@ jest.mock('firebase/firestore', () => ({
 // Mock task service
 jest.mock('@/lib/firebase/task-service', () => ({
   taskService: {
+    create: jest.fn(),
+    getById: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    getByUserId: jest.fn(),
+    getByProjectId: jest.fn(),
     addComputedFields: jest.fn()
   }
 }));
@@ -53,7 +59,9 @@ jest.mock('@/lib/firebase/client-init', () => ({
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseOrganization = useOrganization as jest.MockedFunction<typeof useOrganization>;
 const mockGetDocs = getDocs as jest.MockedFunction<typeof getDocs>;
-const mockTaskService = taskService as jest.Mocked<typeof taskService>;
+const mockTaskService = taskService as jest.Mocked<typeof taskService> & {
+  addComputedFields: jest.MockedFunction<(tasks: ProjectTask[]) => ProjectTask[]>;
+};
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -101,23 +109,30 @@ describe('useMyTasks Hook', () => {
     mockUseAuth.mockReturnValue({
       user: { uid: 'user-123', email: 'test@example.com' } as any,
       loading: false,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      signUp: jest.fn()
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(),
+      getInitials: jest.fn(),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
 
     // Default Organization Mock
     mockUseOrganization.mockReturnValue({
       currentOrganization: { id: 'org-123', name: 'Test Org' } as any,
       organizations: [],
-      isLoading: false,
-      error: null,
-      setCurrentOrganization: jest.fn(),
-      refreshOrganizations: jest.fn()
+      loading: false,
+      switchOrganization: jest.fn(),
+      isOwner: false,
+      isAdmin: false,
+      userRole: null
     });
 
     // Default taskService.addComputedFields Mock
-    mockTaskService.addComputedFields.mockImplementation((tasks) => tasks);
+    mockTaskService.addComputedFields.mockImplementation((tasks: any) => tasks);
   });
 
   describe('Basic Functionality', () => {
@@ -150,9 +165,15 @@ describe('useMyTasks Hook', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
-        signIn: jest.fn(),
-        signOut: jest.fn(),
-        signUp: jest.fn()
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+        uploadProfileImage: jest.fn(),
+        deleteProfileImage: jest.fn(),
+        getAvatarUrl: jest.fn(),
+        getInitials: jest.fn(),
+        updateUserProfile: jest.fn(),
+        sendVerificationEmail: jest.fn()
       });
 
       const { Wrapper } = createWrapper();
@@ -168,10 +189,11 @@ describe('useMyTasks Hook', () => {
       mockUseOrganization.mockReturnValue({
         currentOrganization: null,
         organizations: [],
-        isLoading: false,
-        error: null,
-        setCurrentOrganization: jest.fn(),
-        refreshOrganizations: jest.fn()
+        loading: false,
+        switchOrganization: jest.fn(),
+        isOwner: false,
+        isAdmin: false,
+        userRole: null
       });
 
       const { Wrapper } = createWrapper();

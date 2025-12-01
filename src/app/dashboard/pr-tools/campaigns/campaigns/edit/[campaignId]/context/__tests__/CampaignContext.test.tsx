@@ -42,6 +42,10 @@ describe('CampaignContext', () => {
     organizationId: organizationId,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
+    distributionListId: '',
+    distributionListName: '',
+    recipientCount: 0,
+    approvalRequired: false,
     boilerplateSections: [
       {
         id: 'section-1',
@@ -55,13 +59,15 @@ describe('CampaignContext', () => {
     ],
     attachedAssets: [
       {
+        id: 'attachment-1',
         assetId: 'asset-1',
-        type: 'file',
+        type: 'asset',
         metadata: {
           fileName: 'test.pdf',
-          fileSize: 1024,
-          mimeType: 'application/pdf'
-        }
+          fileType: 'application/pdf'
+        },
+        attachedAt: Timestamp.now(),
+        attachedBy: 'user-123'
       }
     ],
     keyVisual: {
@@ -100,7 +106,8 @@ describe('CampaignContext', () => {
   const mockEditLockStatus = {
     isLocked: false,
     lockedBy: undefined,
-    lockedAt: undefined
+    lockedAt: undefined,
+    canRequestUnlock: false
   };
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -494,13 +501,15 @@ describe('CampaignContext', () => {
 
       const newAssets = [
         {
+          id: 'attachment-2',
           assetId: 'asset-2',
-          type: 'file' as const,
+          type: 'asset' as const,
           metadata: {
             fileName: 'new.pdf',
-            fileSize: 2048,
-            mimeType: 'application/pdf'
-          }
+            fileType: 'application/pdf'
+          },
+          attachedAt: Timestamp.now(),
+          attachedBy: 'user-123'
         }
       ];
 

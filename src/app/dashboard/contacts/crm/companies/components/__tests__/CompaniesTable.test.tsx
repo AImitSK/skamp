@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { CompaniesTable } from '../CompaniesTable';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { Tag } from '@/types/crm';
+import { Timestamp } from 'firebase/firestore';
 
 const mockCompanies: CompanyEnhanced[] = [
   {
@@ -14,8 +15,8 @@ const mockCompanies: CompanyEnhanced[] = [
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
   {
     id: '2',
@@ -26,13 +27,13 @@ const mockCompanies: CompanyEnhanced[] = [
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
 ];
 
 const mockTags: Tag[] = [
-  { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1', createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
 ];
 
 // Mock functions for required props

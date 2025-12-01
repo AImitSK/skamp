@@ -1,7 +1,7 @@
 import { HTMLGenerator } from '../../generators/html-generator';
 import { generateReportHTML } from '../../templates/report-template';
 import type { MonitoringReportData } from '../../types';
-import type { BrandingSettings } from '@/types/branding';
+import type { BrandingSettings } from '../../../../types/branding';
 
 jest.mock('../../templates/report-template');
 
@@ -23,8 +23,8 @@ describe('HTMLGenerator', () => {
     },
     branding: {
       organizationId: 'org-456',
-      primaryColor: '#FF5733',
-      companyName: 'Test Company'
+      companyName: 'Test Company',
+      showCopyright: true
     } as BrandingSettings,
     emailStats: {
       totalSent: 100,

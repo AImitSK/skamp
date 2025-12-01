@@ -8,6 +8,13 @@
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
+interface CompanyMatchResult {
+  companyId: string;
+  companyName: string;
+  matchType: string;
+  confidence: number;
+}
+
 interface AnalysisResult {
   topMatch: { id: string; name: string } | null;
   confidence: number;
@@ -123,7 +130,7 @@ export async function analyzeDatabaseSignals(
   let topScore = 0;
   let topTotal = 0;
 
-  for (const [companyId, score] of scores.entries()) {
+  for (const [companyId, score] of Array.from(scores.entries())) {
     if (score.count > topScore) {
       topScore = score.count;
       topCompanyId = companyId;
@@ -258,5 +265,111 @@ async function findContactsByWebsite(
   } catch (error) {
     console.error('Error finding contacts by website:', error);
     return [];
+  }
+}
+
+/**
+ * Wrapper-Funktion für Tests - analysiert Company-Datenbank basierend auf Signalen
+ */
+export async function analyzeCompanyDatabase(
+  signals: {
+    companyNames: string[];
+    emailDomains: string[];
+    websites: string[];
+  },
+  organizationId: string
+): Promise<CompanyMatchResult | null> {
+  try {
+    // Lade alle Companies der Organisation (ohne Reference-Companies)
+    const companiesQuery = query(
+      collection(db, 'companies_enhanced'),
+      where('organizationId', '==', organizationId),
+      where('deletedAt', '==', null)
+    );
+
+    const companiesSnapshot = await getDocs(companiesQuery);
+    const companies = companiesSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() as any }))
+      .filter((c: any) => !c.isReference);
+
+    // Lade alle Kontakte der Organisation
+    const contactsQuery = query(
+      collection(db, 'contacts_enhanced'),
+      where('organizationId', '==', organizationId),
+      where('deletedAt', '==', null)
+    );
+
+    const contactsSnapshot = await getDocs(contactsQuery);
+    const contacts = contactsSnapshot.docs.map(doc => doc.data());
+
+    // Analysiere Email-Domains
+    const domainMatches = new Map<string, number>();
+
+    for (const domain of signals.emailDomains) {
+      for (const contact of contacts) {
+        if (!contact.emails || !Array.isArray(contact.emails)) continue;
+        if (!contact.companyId) continue;
+
+        const hasDomain = contact.emails.some((e: any) =>
+          e.email && e.email.toLowerCase().includes(`@${domain.toLowerCase()}`)
+        );
+
+        if (hasDomain) {
+          domainMatches.set(
+            contact.companyId,
+            (domainMatches.get(contact.companyId) || 0) + 1
+          );
+        }
+      }
+    }
+
+    // Analysiere Website-Matches
+    for (const website of signals.websites) {
+      const matchingCompany = companies.find((c: any) =>
+        c.website && c.website.toLowerCase().includes(website.toLowerCase())
+      );
+
+      if (matchingCompany) {
+        return {
+          companyId: (matchingCompany as any).id,
+          companyName: (matchingCompany as any).name,
+          matchType: 'website',
+          confidence: 85
+        };
+      }
+    }
+
+    // Finde Company mit meisten Domain-Matches
+    if (domainMatches.size > 0) {
+      let maxMatches = 0;
+      let bestCompanyId = '';
+
+      for (const [companyId, count] of Array.from(domainMatches.entries())) {
+        if (count > maxMatches) {
+          maxMatches = count;
+          bestCompanyId = companyId;
+        }
+      }
+
+      const matchedCompany = companies.find((c: any) => c.id === bestCompanyId);
+
+      if (matchedCompany) {
+        // Confidence steigt mit Anzahl der Matches
+        const confidence = Math.min(70 + (maxMatches * 10), 95);
+
+        return {
+          companyId: (matchedCompany as any).id,
+          companyName: (matchedCompany as any).name,
+          matchType: 'database_analysis',
+          confidence
+        };
+      }
+    }
+
+    return null;
+
+  } catch (error) {
+    console.error('Error analyzing company database:', error);
+    return null;
   }
 }

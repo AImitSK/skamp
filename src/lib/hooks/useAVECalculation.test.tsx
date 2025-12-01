@@ -43,7 +43,7 @@ const mockAVESettings: AVESettings = {
     print: 5.0,
     online: 3.0,
     broadcast: 4.0,
-    blog: 7.0,
+    audio: 2.0,
   },
   sentimentMultipliers: {
     positive: 1.2,

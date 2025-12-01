@@ -12,6 +12,7 @@ import { approvalServiceExtended } from '@/lib/firebase/approval-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { PRCampaign } from '@/types/pr';
 import { ApprovalEnhanced } from '@/types/approvals';
+import { Timestamp } from 'firebase/firestore';
 
 // Mocks
 jest.mock('@/lib/firebase/pr-service');
@@ -48,7 +49,12 @@ const mockCampaign1 = {
   status: 'draft',
   userId: 'user-123',
   organizationId: 'org-123',
-  createdAt: new Date()
+  contentHtml: '<p>Test content</p>',
+  distributionListId: 'list-1',
+  distributionListName: 'Test List',
+  recipientCount: 0,
+  approvalRequired: false,
+  createdAt: Timestamp.now()
 } as PRCampaign;
 
 const mockCampaign2 = {
@@ -57,7 +63,12 @@ const mockCampaign2 = {
   status: 'sent',
   userId: 'user-123',
   organizationId: 'org-123',
-  createdAt: new Date()
+  contentHtml: '<p>Test content 2</p>',
+  distributionListId: 'list-2',
+  distributionListName: 'Test List 2',
+  recipientCount: 10,
+  approvalRequired: false,
+  createdAt: Timestamp.now()
 } as PRCampaign;
 
 const mockCampaign3 = {
@@ -67,7 +78,12 @@ const mockCampaign3 = {
   userId: 'user-123',
   organizationId: 'org-123',
   projectId: 'project-123',
-  createdAt: new Date()
+  contentHtml: '<p>Test content 3</p>',
+  distributionListId: 'list-3',
+  distributionListName: 'Test List 3',
+  recipientCount: 5,
+  approvalRequired: true,
+  createdAt: Timestamp.now()
 } as PRCampaign;
 
 const mockApproval1 = {
@@ -78,9 +94,37 @@ const mockApproval1 = {
   status: 'pending',
   clientName: 'Test Client',
   organizationId: 'org-123',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  recipients: []
+  userId: 'user-123',
+  createdBy: 'user-123',
+  createdAt: Timestamp.now(),
+  updatedAt: Timestamp.now(),
+  recipients: [],
+  title: 'Freigabe Campaign 1',
+  content: { html: '<p>Test content for approval</p>' },
+  options: {
+    requireAllApprovals: false,
+    allowPartialApproval: true,
+    autoSendAfterApproval: false,
+    allowComments: true,
+    allowInlineComments: false
+  },
+  shareId: 'share-1',
+  shareSettings: {
+    requirePassword: false,
+    requireEmailVerification: false,
+    accessLog: true
+  },
+  history: [],
+  analytics: {
+    totalViews: 0,
+    uniqueViews: 0
+  },
+  requestedAt: Timestamp.now(),
+  notifications: {
+    requested: { sent: false, method: 'email' }
+  },
+  version: 1,
+  workflow: 'simple'
 } as ApprovalEnhanced;
 
 const mockApproval2 = {
@@ -91,9 +135,37 @@ const mockApproval2 = {
   status: 'approved',
   clientName: 'Test Client 2',
   organizationId: 'org-123',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  recipients: []
+  userId: 'user-123',
+  createdBy: 'user-123',
+  createdAt: Timestamp.now(),
+  updatedAt: Timestamp.now(),
+  recipients: [],
+  title: 'Freigabe Campaign 2',
+  content: { html: '<p>Test content for approval 2</p>' },
+  options: {
+    requireAllApprovals: false,
+    allowPartialApproval: true,
+    autoSendAfterApproval: false,
+    allowComments: true,
+    allowInlineComments: false
+  },
+  shareId: 'share-2',
+  shareSettings: {
+    requirePassword: false,
+    requireEmailVerification: false,
+    accessLog: true
+  },
+  history: [],
+  analytics: {
+    totalViews: 5,
+    uniqueViews: 3
+  },
+  requestedAt: Timestamp.now(),
+  notifications: {
+    requested: { sent: true, method: 'email' }
+  },
+  version: 1,
+  workflow: 'simple'
 } as ApprovalEnhanced;
 
 describe('useProjectCampaigns Hook', () => {

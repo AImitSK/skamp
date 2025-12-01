@@ -45,10 +45,58 @@ describe('useCampaignMonitoringData', () => {
 
   describe('successful data loading', () => {
     it('should load all monitoring data in parallel', async () => {
-      const mockCampaign = { id: 'campaign-1', title: 'Test Campaign', projectId: 'project-1' };
-      const mockSends = [{ id: 'send-1', recipientEmail: 'test@example.com' }];
-      const mockClippings = [{ id: 'clip-1', title: 'Test Clipping' }];
-      const mockSuggestions = [{ id: 'sug-1', status: 'pending' }];
+      const mockCampaign = {
+        id: 'campaign-1',
+        title: 'Test Campaign',
+        projectId: 'project-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        contentHtml: '<p>Test content</p>',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false,
+        createdAt: { toDate: () => new Date() } as any,
+        updatedAt: { toDate: () => new Date() } as any
+      };
+      const mockSends = [{
+        id: 'send-1',
+        campaignId: 'campaign-1',
+        recipientEmail: 'test@example.com',
+        recipientName: 'Test User',
+        status: 'sent' as const
+      }];
+      const mockClippings = [{
+        id: 'clip-1',
+        organizationId: 'org-1',
+        title: 'Test Clipping',
+        url: 'https://example.com',
+        publishedAt: { toDate: () => new Date() } as any,
+        outletName: 'Test Outlet',
+        outletType: 'online' as const,
+        sentiment: 'positive' as const,
+        detectionMethod: 'manual' as const,
+        detectedAt: { toDate: () => new Date() } as any,
+        createdBy: 'user-1',
+        createdAt: { toDate: () => new Date() } as any,
+        updatedAt: { toDate: () => new Date() } as any
+      }];
+      const mockSuggestions = [{
+        id: 'sug-1',
+        organizationId: 'org-1',
+        campaignId: 'campaign-1',
+        status: 'pending' as const,
+        articleUrl: 'https://example.com/article',
+        normalizedUrl: 'https://example.com/article',
+        articleTitle: 'Test Article',
+        sources: [],
+        avgMatchScore: 0,
+        highestMatchScore: 0,
+        confidence: 'medium' as const,
+        autoConfirmed: false,
+        createdAt: { toDate: () => new Date() } as any
+      }];
 
       mockPrService.getById.mockResolvedValue(mockCampaign as any);
       mockEmailCampaignService.getSends.mockResolvedValue(mockSends as any);
@@ -83,7 +131,18 @@ describe('useCampaignMonitoringData', () => {
       mockPrService.getById.mockImplementation(async () => {
         prServiceCallTime = Date.now() - startTime;
         await new Promise(resolve => setTimeout(resolve, 50));
-        return { id: 'campaign-1', title: 'Test' } as any;
+        return {
+          id: 'campaign-1',
+          title: 'Test',
+          userId: 'user-1',
+          organizationId: 'org-1',
+          contentHtml: '',
+          status: 'draft' as const,
+          distributionListId: '',
+          distributionListName: '',
+          recipientCount: 0,
+          approvalRequired: false
+        } as any;
       });
 
       mockEmailCampaignService.getSends.mockImplementation(async () => {
@@ -114,7 +173,18 @@ describe('useCampaignMonitoringData', () => {
         },
       });
 
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockResolvedValue([]);
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -153,7 +223,18 @@ describe('useCampaignMonitoringData', () => {
     });
 
     it('should handle error from emailCampaignService', async () => {
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockRejectedValue(new Error('Failed to load sends'));
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -191,7 +272,18 @@ describe('useCampaignMonitoringData', () => {
     });
 
     it('should fetch when both parameters are provided', async () => {
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockResolvedValue([]);
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -210,7 +302,18 @@ describe('useCampaignMonitoringData', () => {
 
   describe('refetch functionality', () => {
     it('should refetch data when refetch is called', async () => {
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockResolvedValue([]);
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -232,7 +335,18 @@ describe('useCampaignMonitoringData', () => {
 
   describe('cache behavior', () => {
     it('should use correct queryKey for caching', async () => {
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockResolvedValue([]);
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -249,7 +363,18 @@ describe('useCampaignMonitoringData', () => {
     });
 
     it('should use different cache for different campaignIds', async () => {
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-1' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-1',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
       mockEmailCampaignService.getSends.mockResolvedValue([]);
       mockClippingService.getByCampaignId.mockResolvedValue([]);
       mockMonitoringSuggestionService.getByCampaignId.mockResolvedValue([]);
@@ -261,7 +386,18 @@ describe('useCampaignMonitoringData', () => {
 
       await waitFor(() => expect(result1.current.isSuccess).toBe(true));
 
-      mockPrService.getById.mockResolvedValue({ id: 'campaign-2' } as any);
+      mockPrService.getById.mockResolvedValue({
+        id: 'campaign-2',
+        userId: 'user-1',
+        organizationId: 'org-1',
+        title: '',
+        contentHtml: '',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      } as any);
 
       const { result: result2 } = renderHook(
         () => useCampaignMonitoringData('campaign-2', 'org-1'),
@@ -270,8 +406,8 @@ describe('useCampaignMonitoringData', () => {
 
       await waitFor(() => expect(result2.current.isSuccess).toBe(true));
 
-      expect(result1.current.data?.campaign.id).toBe('campaign-1');
-      expect(result2.current.data?.campaign.id).toBe('campaign-2');
+      expect(result1.current.data?.campaign?.id).toBe('campaign-1');
+      expect(result2.current.data?.campaign?.id).toBe('campaign-2');
     });
   });
 });

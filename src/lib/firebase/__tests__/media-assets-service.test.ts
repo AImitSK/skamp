@@ -45,12 +45,13 @@ const createMockAsset = (id: string, folderId?: string): MediaAsset => ({
   id,
   fileName: `test-${id}.jpg`,
   fileType: 'image/jpeg',
-  fileSize: 1024,
   downloadUrl: `https://example.com/${id}.jpg`,
   storagePath: `media/${id}.jpg`,
   userId: 'user-1',
-  organizationId: 'org-1',
-  folderId: folderId || null,
+  folderId: folderId || undefined,
+  metadata: {
+    fileSize: 1024,
+  },
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
 });

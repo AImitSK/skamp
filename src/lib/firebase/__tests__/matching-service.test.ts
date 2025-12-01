@@ -118,6 +118,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -173,6 +174,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -215,6 +217,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -235,6 +238,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'nonexistent',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -251,6 +255,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -294,6 +299,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 
@@ -352,6 +358,7 @@ describe('Matching Service Integration', () => {
         candidateId: 'candidate123',
         selectedVariantIndex: 0,
         userId: 'user123',
+        userEmail: 'test@example.com',
         organizationId: 'org123'
       });
 

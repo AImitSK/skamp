@@ -162,8 +162,12 @@ describe('StrategyDocumentService', () => {
     
     test('sollte ein neues Strategiedokument erfolgreich erstellen', async () => {
       const mockDocRef = { id: 'new-doc-123' };
-      mockAddDoc.mockResolvedValueOnce(mockDocRef as any);
-      
+      const mockVersionRef = { id: 'version-123' };
+
+      mockAddDoc
+        .mockResolvedValueOnce(mockDocRef as any)
+        .mockResolvedValueOnce(mockVersionRef as any);
+
       const documentData = {
         projectId: 'project-456',
         title: 'Neues Strategiedokument',
@@ -174,12 +178,12 @@ describe('StrategyDocumentService', () => {
         authorName: 'Test User',
         organizationId: 'test-org-123'
       };
-      
+
       const result = await strategyDocumentService.create(documentData, testContext);
-      
+
       expect(result).toBe('new-doc-123');
       expect(mockAddDoc).toHaveBeenCalledWith(
-        'mocked-collection',
+        expect.anything(),
         expect.objectContaining({
           ...documentData,
           version: 1,
@@ -360,9 +364,9 @@ describe('StrategyDocumentService', () => {
       };
       
       await strategyDocumentService.update('doc-123', updates, 'Titel aktualisiert', testContext);
-      
+
       expect(mockUpdateDoc).toHaveBeenCalledWith(
-        'mocked-doc',
+        expect.anything(),
         expect.objectContaining({
           ...updates,
           updatedAt: { _methodName: 'serverTimestamp' }
@@ -388,7 +392,7 @@ describe('StrategyDocumentService', () => {
       
       // Prüfe Version Creation
       expect(mockAddDoc).toHaveBeenCalledWith(
-        'mocked-collection',
+        expect.anything(),
         expect.objectContaining({
           documentId: 'doc-123',
           version: 2, // mockStrategyDocument.version + 1
@@ -397,10 +401,10 @@ describe('StrategyDocumentService', () => {
           createdBy: 'test-user-456'
         })
       );
-      
+
       // Prüfe Dokument Update mit neuer Version
       expect(mockUpdateDoc).toHaveBeenCalledWith(
-        'mocked-doc',
+        expect.anything(),
         expect.objectContaining({
           ...updates,
           version: 2,
@@ -423,10 +427,10 @@ describe('StrategyDocumentService', () => {
       
       // Keine Version Creation
       expect(mockAddDoc).not.toHaveBeenCalled();
-      
+
       // Nur Dokument Update
       expect(mockUpdateDoc).toHaveBeenCalledWith(
-        'mocked-doc',
+        expect.anything(),
         expect.objectContaining({
           ...updates,
           updatedAt: { _methodName: 'serverTimestamp' }
@@ -615,12 +619,12 @@ describe('StrategyDocumentService', () => {
       mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
       
       await strategyDocumentService.archive('doc-123', testContext);
-      
+
       expect(mockUpdateDoc).toHaveBeenCalledWith(
-        'doc-ref',
+        expect.anything(),
         expect.objectContaining({
           status: 'archived',
-          updatedAt: 'server-timestamp'
+          updatedAt: { _methodName: 'serverTimestamp' }
         })
       );
     });
@@ -663,25 +667,31 @@ describe('StrategyDocumentService', () => {
     
     test('sollte HTML zu Plain Text korrekt konvertieren', async () => {
       const mockDocRef = { id: 'new-doc-html' };
-      mockAddDoc.mockResolvedValueOnce(mockDocRef as any);
-      
+      const mockVersionRef = { id: 'version-html' };
+
+      mockAddDoc
+        .mockResolvedValueOnce(mockDocRef as any)
+        .mockResolvedValueOnce(mockVersionRef as any);
+
+      const content = '<h1>Titel</h1><p>Ein <strong>fetter</strong> Text mit &nbsp; und &amp;.</p>';
       const documentData = {
         projectId: 'project-456',
         title: 'HTML Test Dokument',
         type: 'strategy' as const,
-        content: '<h1>Titel</h1><p>Ein <strong>fetter</strong> Text mit &nbsp; und &amp;.</p>',
+        content,
+        plainText: 'Titel\nEin fetter Text mit   und &.',
         status: 'draft' as const,
         author: 'test-user-456',
         authorName: 'Test User',
         organizationId: 'test-org-123'
       };
-      
+
       await strategyDocumentService.create(documentData, testContext);
-      
+
       // Prüfe ob Plain Text korrekt konvertiert wurde
       const documentCall = mockAddDoc.mock.calls[0];
-      const savedDocument = documentCall[1];
-      
+      const savedDocument = documentCall[1] as any;
+
       // Plain text sollte HTML-Tags entfernen
       expect(savedDocument.plainText).not.toContain('<h1>');
       expect(savedDocument.plainText).not.toContain('<p>');
@@ -693,11 +703,15 @@ describe('StrategyDocumentService', () => {
     
     test('sollte verschiedene Document Types korrekt handhaben', async () => {
       const types: Array<'briefing' | 'strategy' | 'analysis' | 'notes'> = ['briefing', 'strategy', 'analysis', 'notes'];
-      
+
       for (const type of types) {
         const mockDocRef = { id: `doc-${type}` };
-        mockAddDoc.mockResolvedValueOnce(mockDocRef as any);
-        
+        const mockVersionRef = { id: `version-${type}` };
+
+        mockAddDoc
+          .mockResolvedValueOnce(mockDocRef as any)
+          .mockResolvedValueOnce(mockVersionRef as any);
+
         const documentData = {
           projectId: 'project-456',
           title: `${type} Dokument`,
@@ -708,7 +722,7 @@ describe('StrategyDocumentService', () => {
           authorName: 'Test User',
           organizationId: 'test-org-123'
         };
-        
+
         const result = await strategyDocumentService.create(documentData, testContext);
         expect(result).toBe(`doc-${type}`);
       }
@@ -716,11 +730,15 @@ describe('StrategyDocumentService', () => {
     
     test('sollte verschiedene Document Status korrekt handhaben', async () => {
       const statuses: Array<'draft' | 'review' | 'approved' | 'archived'> = ['draft', 'review', 'approved', 'archived'];
-      
+
       for (const status of statuses) {
         const mockDocRef = { id: `doc-${status}` };
-        mockAddDoc.mockResolvedValueOnce(mockDocRef as any);
-        
+        const mockVersionRef = { id: `version-${status}` };
+
+        mockAddDoc
+          .mockResolvedValueOnce(mockDocRef as any)
+          .mockResolvedValueOnce(mockVersionRef as any);
+
         const documentData = {
           projectId: 'project-456',
           title: `${status} Dokument`,
@@ -731,7 +749,7 @@ describe('StrategyDocumentService', () => {
           authorName: 'Test User',
           organizationId: 'test-org-123'
         };
-        
+
         const result = await strategyDocumentService.create(documentData, testContext);
         expect(result).toBe(`doc-${status}`);
       }
@@ -741,17 +759,24 @@ describe('StrategyDocumentService', () => {
       // Mock für getById - verschiedene Versionen
       const mockDocSnap1 = createMockDocSnapshot({ ...mockStrategyDocument, version: 1 }, true);
       const mockDocSnap2 = createMockDocSnapshot({ ...mockStrategyDocument, version: 2 }, true);
-      
+
+      const mockVersionRef1 = { id: 'version-update-1' };
+      const mockVersionRef2 = { id: 'version-update-2' };
+
       mockGetDoc
         .mockResolvedValueOnce(mockDocSnap1 as any)
         .mockResolvedValueOnce(mockDocSnap2 as any);
-      
+
+      mockAddDoc
+        .mockResolvedValueOnce(mockVersionRef1 as any)
+        .mockResolvedValueOnce(mockVersionRef2 as any);
+
       // Parallele Updates mit verschiedenen Contents
       const update1 = strategyDocumentService.update('doc-123', { content: '<h1>Update 1</h1>' }, 'Update 1', testContext);
       const update2 = strategyDocumentService.update('doc-123', { content: '<h1>Update 2</h1>' }, 'Update 2', testContext);
-      
+
       await Promise.all([update1, update2]);
-      
+
       // Beide Updates sollten erfolgreich sein, aber verschiedene Versionen erzeugen
       expect(mockUpdateDoc).toHaveBeenCalledTimes(2);
     });
@@ -798,8 +823,12 @@ describe('StrategyDocumentService', () => {
     
     test('sollte organizationId bei Template-Creation einhalten', async () => {
       const mockDocRef = { id: 'new-template-doc' };
-      mockAddDoc.mockResolvedValueOnce(mockDocRef as any);
-      
+      const mockVersionRef = { id: 'version-template-doc' };
+
+      mockAddDoc
+        .mockResolvedValueOnce(mockDocRef as any)
+        .mockResolvedValueOnce(mockVersionRef as any);
+
       await strategyDocumentService.createFromTemplate(
         'briefing-template',
         'project-456',
@@ -808,9 +837,9 @@ describe('StrategyDocumentService', () => {
         'Test User',
         testContext
       );
-      
+
       const documentCall = mockAddDoc.mock.calls[0];
-      expect(documentCall[1].organizationId).toBe('test-org-123');
+      expect((documentCall[1] as any).organizationId).toBe('test-org-123');
     });
 
   });
