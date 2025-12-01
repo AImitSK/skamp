@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore';
 
 // Basis-Typen
 export type CompanyType = 'customer' | 'supplier' | 'partner' | 'publisher' | 'media_house' | 'agency' | 'other';
+export type ContactType = 'person' | 'function' | 'editorial';
 export type CommunicationType = 'email' | 'phone' | 'meeting' | 'note' | 'task' | 'social';
 export type CommunicationDirection = 'inbound' | 'outbound' | 'internal';
 export type CommunicationStatus = 'completed' | 'pending' | 'cancelled';
@@ -138,11 +139,27 @@ export interface Company {
   updatedAt?: Timestamp;
 }
 
+// Contact Type Labels
+export const contactTypeLabels: Record<ContactType, string> = {
+  person: 'Person',
+  function: 'Funktionskontakt',
+  editorial: 'Redaktion'
+};
+
 // Contact Interface
 export interface Contact {
   id?: string;
-  firstName: string;
-  lastName: string;
+
+  // Kontakttyp: Person oder Funktionskontakt
+  contactType?: ContactType;
+
+  // Für Personen (optional bei Funktionskontakten)
+  firstName?: string;
+  lastName?: string;
+
+  // Für Funktionskontakte (z.B. "Redaktion", "Pressestelle")
+  functionName?: string;
+
   email?: string;
   phone?: string;
   position?: string;

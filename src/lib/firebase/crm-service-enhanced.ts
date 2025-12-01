@@ -399,14 +399,27 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     data: Omit<ContactEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'deletedAt' | 'deletedBy'>,
     context: { organizationId: string; userId: string; autoGlobalMode?: boolean }
   ): Promise<string> {
-    // Validierung
-    if (!data.name?.firstName || !data.name?.lastName) {
-      throw new Error('Vor- und Nachname sind erforderlich');
+    // Setze Default-Kontakttyp falls nicht vorhanden
+    if (!data.contactType) {
+      data.contactType = 'person';
+    }
+
+    // Validierung je nach Kontakttyp
+    if (data.contactType === 'person') {
+      // Personen brauchen Vor- und Nachname
+      if (!data.name?.firstName || !data.name?.lastName) {
+        throw new Error('Vor- und Nachname sind erforderlich');
+      }
+    } else {
+      // Funktionskontakte brauchen functionName
+      if (!data.functionName?.trim()) {
+        throw new Error('Funktionsname ist für Funktionskontakte erforderlich (z.B. "Redaktion", "Pressestelle")');
+      }
     }
 
     // Generiere Display Name falls nicht vorhanden
     if (!data.displayName) {
-      data.displayName = this.formatDisplayName(data.name);
+      data.displayName = this.formatDisplayName(data);
     }
 
     // Clean personalInfo to remove any undefined values
@@ -445,17 +458,27 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
 
   /**
    * Formatiert den Anzeigenamen
+   * Unterstützt sowohl Personen als auch Funktionskontakte
    */
-  private formatDisplayName(name: ContactEnhanced['name']): string {
+  private formatDisplayName(data: Partial<ContactEnhanced>): string {
+    // Für Funktionskontakte: functionName verwenden
+    if (data.contactType && data.contactType !== 'person') {
+      return data.functionName || 'Funktionskontakt';
+    }
+
+    // Für Personen: Name zusammenbauen
+    const name = data.name;
+    if (!name) return 'Unbekannt';
+
     const parts = [];
-    
+
     if (name.title) parts.push(name.title);
     if (name.firstName) parts.push(name.firstName);
     if (name.middleName) parts.push(name.middleName);
     if (name.lastName) parts.push(name.lastName);
     if (name.suffix) parts.push(name.suffix);
-    
-    return parts.join(' ');
+
+    return parts.join(' ') || 'Unbekannt';
   }
 
   /**
@@ -748,14 +771,30 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     for (let i = 0; i < contacts.length; i++) {
       try {
         const contact = contacts[i];
-        
-        // Basis-Validierung
-        if (!contact.name?.firstName || !contact.name?.lastName) {
-          results.errors.push({
-            row: i + 1,
-            error: 'Vor- und Nachname erforderlich'
-          });
-          continue;
+
+        // Setze Default-Kontakttyp falls nicht vorhanden
+        if (!contact.contactType) {
+          contact.contactType = 'person';
+        }
+
+        // Basis-Validierung je nach Kontakttyp
+        if (contact.contactType === 'person') {
+          if (!contact.name?.firstName || !contact.name?.lastName) {
+            results.errors.push({
+              row: i + 1,
+              error: 'Vor- und Nachname erforderlich für Personen-Kontakte'
+            });
+            continue;
+          }
+        } else {
+          // Funktionskontakte brauchen functionName
+          if (!contact.functionName?.trim()) {
+            results.errors.push({
+              row: i + 1,
+              error: 'Funktionsname erforderlich für Funktionskontakte'
+            });
+            continue;
+          }
         }
 
         // Warnung für fehlende E-Mail

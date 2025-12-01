@@ -16,7 +16,7 @@ import { Radio, RadioGroup } from "@/components/ui/radio";
 import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { publicationService } from "@/lib/firebase/library-service";
 import { Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
-import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
+import { ContactEnhanced, CompanyEnhanced, ContactType, contactTypeLabels, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
 import { ContactModalEnhancedProps, ContactTabId, ContactTabConfig } from "@/types/crm-enhanced-ui";
 import { CONTACT_TABS } from "@/lib/constants/crm-constants";
 import { CountryCode, LanguageCode } from "@/types/international";
@@ -142,12 +142,14 @@ export default function ContactModalEnhanced({
   // Defensive: Stelle sicher, dass companies nie undefined ist
   const safeCompanies = companies || [];
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
+    contactType: 'person',
     name: {
       firstName: '',
       lastName: '',
       salutation: '',
       title: ''
     },
+    functionName: '',
     displayName: '',
     status: 'active',
     emails: [],
@@ -211,13 +213,15 @@ export default function ContactModalEnhanced({
       setFormData({
         ...contact,
         // Ensure required fields have defaults
+        contactType: contact.contactType || 'person',
         name: contact.name || {
           firstName: '',
           lastName: '',
           salutation: '',
           title: ''
         },
-        displayName: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`,
+        functionName: contact.functionName || '',
+        displayName: contact.displayName || (contact.contactType !== 'person' ? contact.functionName : `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`),
         status: contact.status || 'active',
         emails: contact.emails || [],
         phones: contact.phones || [],
@@ -399,29 +403,42 @@ export default function ContactModalEnhanced({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validierung
+
+    // Validierung je nach Kontakttyp
     const errors: string[] = [];
-    if (!formData.name?.firstName?.trim()) {
-      errors.push('Vorname ist erforderlich');
+    const isPerson = formData.contactType === 'person' || !formData.contactType;
+
+    if (isPerson) {
+      // Personen brauchen Vor- und Nachname
+      if (!formData.name?.firstName?.trim()) {
+        errors.push('Vorname ist erforderlich');
+      }
+      if (!formData.name?.lastName?.trim()) {
+        errors.push('Nachname ist erforderlich');
+      }
+    } else {
+      // Funktionskontakte brauchen functionName
+      if (!formData.functionName?.trim()) {
+        errors.push('Funktionsname ist erforderlich (z.B. "Redaktion", "Pressestelle")');
+      }
     }
-    if (!formData.name?.lastName?.trim()) {
-      errors.push('Nachname ist erforderlich');
-    }
-    
+
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
     }
-    
+
     setValidationErrors([]);
     setLoading(true);
-    
+
     try {
       // Prepare data for save
       let dataToSave: Partial<ContactEnhanced> = {
         ...formData,
-        displayName: formData.name ? `${formData.name.firstName} ${formData.name.lastName}` : '',
+        // Display Name je nach Kontakttyp generieren
+        displayName: isPerson
+          ? (formData.name ? `${formData.name.firstName} ${formData.name.lastName}` : '')
+          : (formData.functionName || ''),
         status: formData.status || 'active'
       };
 
@@ -515,74 +532,144 @@ export default function ContactModalEnhanced({
             {/* General Tab */}
             {activeTab === 'general' && (
               <FieldGroup>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Field>
-                    <Label>Anrede</Label>
-                    <Select 
-                      value={formData.name?.salutation || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        name: { 
-                          ...formData.name!,
-                          salutation: e.target.value 
-                        }
-                      })}
-                    >
-                      <option value="">Keine Anrede</option>
-                      <option value="Herr">Herr</option>
-                      <option value="Frau">Frau</option>
-                      <option value="Dr.">Dr.</option>
-                      <option value="Prof.">Prof.</option>
-                      <option value="Prof. Dr.">Prof. Dr.</option>
-                    </Select>
-                  </Field>
-                  <Field>
-                    <Label>Titel</Label>
-                    <Input 
-                      value={formData.name?.title || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        name: { 
-                          ...formData.name!,
-                          title: e.target.value 
-                        }
-                      })}
-                      placeholder="z.B. Dr., Prof."
-                    />
-                  </Field>
+                {/* Kontakttyp-Auswahl */}
+                <div className="space-y-4 rounded-md border p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium">Kontakttyp</Label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Wählen Sie, ob dies eine Person oder ein Funktionskontakt (z.B. Redaktion) ist.
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="contactType"
+                        value="person"
+                        checked={formData.contactType === 'person' || !formData.contactType}
+                        onChange={() => setFormData({ ...formData, contactType: 'person' })}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                      />
+                      <span className="text-sm font-medium">Person</span>
+                      <span className="text-xs text-gray-500">(mit Vor- und Nachname)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="contactType"
+                        value="function"
+                        checked={formData.contactType === 'function'}
+                        onChange={() => setFormData({ ...formData, contactType: 'function' })}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                      />
+                      <span className="text-sm font-medium">Funktionskontakt</span>
+                      <span className="text-xs text-gray-500">(z.B. Redaktion)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="contactType"
+                        value="editorial"
+                        checked={formData.contactType === 'editorial'}
+                        onChange={() => setFormData({ ...formData, contactType: 'editorial' })}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                      />
+                      <span className="text-sm font-medium">Redaktion</span>
+                      <span className="text-xs text-gray-500">(allgemeine Redaktion)</span>
+                    </label>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Felder für Funktionskontakte */}
+                {(formData.contactType === 'function' || formData.contactType === 'editorial') && (
                   <Field>
-                    <Label>Vorname *</Label>
-                    <Input 
-                      value={formData.name?.firstName || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        name: { 
-                          ...formData.name!,
-                          firstName: e.target.value 
-                        }
-                      })} 
-                      required 
+                    <Label>Funktionsname *</Label>
+                    <Input
+                      value={formData.functionName || ''}
+                      onChange={(e) => setFormData({ ...formData, functionName: e.target.value })}
+                      placeholder="z.B. Redaktion, Pressestelle, Newsdesk, Wirtschaftsredaktion"
+                      required
                       autoFocus
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Geben Sie einen beschreibenden Namen für diesen Funktionskontakt ein.
+                    </p>
                   </Field>
-                  <Field>
-                    <Label>Nachname *</Label>
-                    <Input 
-                      value={formData.name?.lastName || ''} 
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        name: { 
-                          ...formData.name!,
-                          lastName: e.target.value 
-                        }
-                      })} 
-                      required
-                    />
-                  </Field>
-                </div>
+                )}
+
+                {/* Felder für Personen */}
+                {(formData.contactType === 'person' || !formData.contactType) && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Field>
+                        <Label>Anrede</Label>
+                        <Select
+                          value={formData.name?.salutation || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            name: {
+                              ...formData.name!,
+                              salutation: e.target.value
+                            }
+                          })}
+                        >
+                          <option value="">Keine Anrede</option>
+                          <option value="Herr">Herr</option>
+                          <option value="Frau">Frau</option>
+                          <option value="Dr.">Dr.</option>
+                          <option value="Prof.">Prof.</option>
+                          <option value="Prof. Dr.">Prof. Dr.</option>
+                        </Select>
+                      </Field>
+                      <Field>
+                        <Label>Titel</Label>
+                        <Input
+                          value={formData.name?.title || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            name: {
+                              ...formData.name!,
+                              title: e.target.value
+                            }
+                          })}
+                          placeholder="z.B. Dr., Prof."
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Field>
+                        <Label>Vorname *</Label>
+                        <Input
+                          value={formData.name?.firstName || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            name: {
+                              ...formData.name!,
+                              firstName: e.target.value
+                            }
+                          })}
+                          required
+                          autoFocus
+                        />
+                      </Field>
+                      <Field>
+                        <Label>Nachname *</Label>
+                        <Input
+                          value={formData.name?.lastName || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            name: {
+                              ...formData.name!,
+                              lastName: e.target.value
+                            }
+                          })}
+                          required
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
 
                 <Field>
                   <Label>

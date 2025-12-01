@@ -141,12 +141,28 @@ export interface CompanyEnhanced extends BaseEntity {
 // Erweiterte Contact mit DSGVO & Struktur
 // ========================================
 
+// Kontakttyp Import aus crm.ts
+export type ContactType = 'person' | 'function' | 'editorial';
+
+// Contact Type Labels
+export const contactTypeLabels: Record<ContactType, string> = {
+  person: 'Person',
+  function: 'Funktionskontakt',
+  editorial: 'Redaktion'
+};
+
 export interface ContactEnhanced extends BaseEntity {
-  // Strukturierter Name
+  // Kontakttyp: Person oder Funktionskontakt (Default: 'person')
+  contactType?: ContactType;
+
+  // Strukturierter Name (optional bei Funktionskontakten)
   name: StructuredName;
 
+  // Für Funktionskontakte (z.B. "Redaktion", "Pressestelle", "Newsdesk")
+  functionName?: string;
+
   internalNotes?: string; // Interne Notizen (nicht für Kunden sichtbar)
-  
+
   // Formatierter Anzeigename (generiert oder manuell)
   displayName: string;
   

@@ -39,8 +39,15 @@ export interface ContactsTableProps {
  */
 /**
  * Formatiert den Kontaktnamen als "Nachname, Vorname" (ohne Titel wie Dr.)
+ * Für Funktionskontakte wird der functionName angezeigt
  */
 function formatContactName(contact: ContactEnhanced): string {
+  // Funktionskontakte zeigen functionName
+  if (contact.contactType && contact.contactType !== 'person') {
+    return contact.functionName || contact.displayName || '(Kein Name)';
+  }
+
+  // Personen zeigen "Nachname, Vorname"
   const firstName = contact.name?.firstName || '';
   const lastName = contact.name?.lastName || '';
 
@@ -54,6 +61,22 @@ function formatContactName(contact: ContactEnhanced): string {
     return firstName;
   }
   return contact.displayName || '(Kein Name)';
+}
+
+/**
+ * Gibt ein Badge für den Kontakttyp zurück
+ */
+function getContactTypeBadge(contact: ContactEnhanced): { label: string; color: string } | null {
+  if (!contact.contactType || contact.contactType === 'person') {
+    return null;
+  }
+  if (contact.contactType === 'function') {
+    return { label: 'Funktion', color: 'amber' };
+  }
+  if (contact.contactType === 'editorial') {
+    return { label: 'Redaktion', color: 'cyan' };
+  }
+  return null;
 }
 
 export function ContactsTable({
@@ -127,6 +150,12 @@ export function ContactsTable({
                   </button>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex flex-wrap gap-1">
+                      {/* Kontakttyp-Badge für Funktionskontakte */}
+                      {getContactTypeBadge(contact) && (
+                        <Badge color={getContactTypeBadge(contact)!.color as any} className="text-xs">
+                          {getContactTypeBadge(contact)!.label}
+                        </Badge>
+                      )}
                       {contact.mediaProfile?.isJournalist && (
                         <Badge color="purple" className="text-xs">
                           Journalist
