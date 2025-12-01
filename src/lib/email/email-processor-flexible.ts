@@ -80,8 +80,8 @@ export async function flexibleEmailProcessor(
   }
 
   // Erstelle Processing-Promise und setze Lock SOFORT (vor jeglicher Verarbeitung!)
-  let resolveProcessing: (result: ProcessingResult) => void;
-  let rejectProcessing: (error: any) => void;
+  let resolveProcessing!: (result: ProcessingResult) => void;
+  let rejectProcessing!: (error: any) => void;
 
   const processingPromise = new Promise<ProcessingResult>((resolve, reject) => {
     resolveProcessing = resolve;

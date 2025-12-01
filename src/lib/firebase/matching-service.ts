@@ -114,7 +114,7 @@ export async function importCandidateWithAutoMatching(params: {
     console.log('✅ Kandidat geladen:', {
       matchKey: candidate.matchKey,
       matchType: candidate.matchType,
-      score: candidate.score?.total,
+      score: candidate.score,
       variantenAnzahl: candidate.variants.length
     });
 
@@ -790,7 +790,7 @@ class MatchingCandidatesService {
       const orgsQuery = query(collection(db, 'organizations'));
       const orgsSnapshot = await getDocs(orgsQuery);
       const organizations = orgsSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; name?: string; type?: string }))
         .filter(org => {
           // Filter SuperAdmin-Org
           if (org.type === 'super_admin') return false;
@@ -823,7 +823,7 @@ class MatchingCandidatesService {
           // Filter: nur Journalisten (haben mediaProfile)
           const journalists = contacts.filter(c => c.mediaProfile);
 
-          console.log(`  ✓ ${org.name}: ${journalists.length} journalists`);
+          console.log(`  ✓ ${org.name || org.id}: ${journalists.length} journalists`);
 
           for (const contact of journalists) {
             totalContactsScanned++;
@@ -851,7 +851,7 @@ class MatchingCandidatesService {
             contactsByMatchKey.get(matchKeyResult.key)!.push({
               contact,
               organizationId: org.id,
-              organizationName: org.name
+              organizationName: org.name || org.id
             });
           }
         } catch (error) {
@@ -1117,7 +1117,7 @@ class MatchingCandidatesService {
         id: request.candidateId,
         matchKey: candidate.matchKey,
         matchType: candidate.matchType,
-        score: candidate.score?.total,
+        score: candidate.score,
         variantenAnzahl: candidate.variants.length,
         ausgewählteVariante: request.selectedVariantIndex
       });
@@ -1448,7 +1448,9 @@ class MatchingCandidatesService {
     candidateId: string;
     selectedVariantIndex: number;
     userId: string;
+    userEmail: string;
     organizationId: string;
+    useAiMerge?: boolean;
   }) {
     // Delegiere an die externe Funktion
     return await importCandidateWithAutoMatching(params);

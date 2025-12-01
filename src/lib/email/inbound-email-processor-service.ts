@@ -124,7 +124,6 @@ class InboundEmailProcessorService {
         redirectMetadata: emailData.redirectMetadata,
         labels: emailData.labels,
         hasAttachments: Array.isArray(emailData.attachments) && emailData.attachments.length > 0,
-        attachments: emailData.attachments || [],
         inReplyTo: emailData.inReplyTo,
         references: this.parseReferences(emailData.references)
       });
@@ -309,7 +308,7 @@ class InboundEmailProcessorService {
     const participants = this.extractParticipants(criteria.from, criteria.to);
     const now = Timestamp.now();
 
-    const threadData: Partial<EmailThread> = {
+    const threadData: any = {
       subject: criteria.subject,
       participants,
       lastMessageAt: now,
@@ -409,12 +408,13 @@ class InboundEmailProcessorService {
   }): Promise<{ id: string }> {
     const now = Timestamp.now();
 
-    const messageData: Partial<EmailMessage> = {
+    const messageData: any = {
       threadId: data.threadId,
       messageId: data.messageId,
       from: data.from,
       to: data.to,
       subject: data.subject,
+      snippet: data.textContent.substring(0, 150), // Vorschau-Text aus textContent
       textContent: data.textContent,
       htmlContent: data.htmlContent,
       headers: data.headers || {},
@@ -426,13 +426,14 @@ class InboundEmailProcessorService {
       createdAt: now,
       updatedAt: now,
       folder: 'inbox',
+      importance: 'normal', // Standard-Priorität
       isRead: false,
       isStarred: false,
       isDraft: false,
       isArchived: false,
       labels: data.labels || [],
       hasAttachments: data.hasAttachments,
-      inReplyTo: data.inReplyTo,
+      ...(data.inReplyTo && { inReplyTo: data.inReplyTo }), // Nur setzen wenn nicht null
       references: data.references,
 
       // Inbox-spezifische Felder
@@ -552,7 +553,7 @@ class InboundEmailProcessorService {
 
     // Mindestens 2 gemeinsame Teilnehmer für Match
     let matches = 0;
-    for (const email of criteriaEmails) {
+    for (const email of Array.from(criteriaEmails)) {
       if (threadEmails.has(email)) {
         matches++;
         if (matches >= 2) return true;

@@ -257,7 +257,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       const token = authHeader?.split('Bearer ')[1];
 
       // Validierung
-      if (!draft.content || !draft.recipients || !draft.sender || !draft.metadata) {
+      if (!draft.content || !draft.recipients || !draft.emailAddressId || !draft.metadata) {
         return NextResponse.json(
           { error: 'Unvollständige Draft-Daten' },
           { status: 400 }
@@ -459,15 +459,13 @@ function validateDraft(draft: EmailDraft): {
     missingFields.push('E-Mail-Inhalt (mindestens 50 Zeichen)');
   }
 
-  if ((!draft?.recipients?.listIds || draft.recipients.listIds.length === 0) && 
+  if ((!draft?.recipients?.listIds || draft.recipients.listIds.length === 0) &&
       (!draft?.recipients?.manual || draft.recipients.manual.length === 0)) {
     missingFields.push('Empfänger');
   }
 
-  if (draft?.sender?.type === 'contact' && !draft.sender.contactId) {
-    missingFields.push('Absender-Kontakt');
-  } else if (draft?.sender?.type === 'manual' && (!draft.sender.manual?.name || !draft.sender.manual?.email)) {
-    missingFields.push('Absender-Informationen');
+  if (!draft?.emailAddressId) {
+    missingFields.push('Absender-E-Mail-Adresse');
   }
 
   if (!draft?.metadata?.subject || draft.metadata.subject.trim().length < 5) {

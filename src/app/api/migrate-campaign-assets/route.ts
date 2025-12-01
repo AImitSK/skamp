@@ -13,6 +13,7 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import type { MediaFolder } from '@/types/media';
 
 interface MigrationAsset {
   assetId: string;
@@ -169,8 +170,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
 
     // 3. Projekt-Ordner finden (verwende ECHTE project-service.ts Logik)
     log('📁 Suche Projekt-Ordner mit project-service.ts Pattern...');
-    let projectFolder: any;
-    let medienFolder: any;
+    let projectFolder: MediaFolder & { id: string };
+    let medienFolder: MediaFolder & { id: string };
 
     try {
       // Projekt-Daten laden
@@ -204,35 +205,41 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
         where('isDeleted', '==', false)
       );
       const allFoldersSnapshot = await getDocs(allFoldersQuery);
-      const allFolders = allFoldersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allFolders = allFoldersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as MediaFolder & { id: string }));
       log(`📁 Alle Ordner geladen: ${allFolders.length}`);
 
       // 2. Projekt-Hauptordner finden - ECHTE project-service Logik
       // Suche nach Pattern P-{Datum}-{Company}-{Title}
-      projectFolder = allFolders.find(folder => {
+      let foundProjectFolder = allFolders.find(folder => {
         const name = folder.name;
         const hasPattern = name.startsWith('P-') && name.includes(companyName) && name.includes(projectData.title);
         const hasClientId = projectData.customer?.id ? folder.clientId === projectData.customer.id : true;
         return hasPattern && hasClientId;
       });
 
-      if (!projectFolder) {
+      if (!foundProjectFolder) {
         // Fallback: Suche nur nach Company und Title (ohne Datum-Validierung)
-        projectFolder = allFolders.find(folder => {
+        foundProjectFolder = allFolders.find(folder => {
           const name = folder.name;
           return name.startsWith('P-') && name.includes(companyName) && name.includes(projectData.title);
         });
       }
 
+      projectFolder = foundProjectFolder!;
+
       if (projectFolder) {
         log(`✅ Projekt-Ordner gefunden: ${projectFolder.name} (${projectFolder.id})`);
 
         // 3. Medien-Unterordner finden - ECHTE project-service Logik
-        medienFolder = allFolders.find(folder =>
+        const foundMedienFolder = allFolders.find(folder =>
           folder.parentFolderId === projectFolder.id &&
           folder.name === 'Medien' &&
           (projectData.customer?.id ? folder.clientId === projectData.customer.id : true)
         );
+        medienFolder = foundMedienFolder!;
 
         if (medienFolder) {
           log(`✅ Medien-Ordner gefunden: ${medienFolder.name} (${medienFolder.id})`);
@@ -283,7 +290,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<Migration
           const presseFoldersSnapshot = await getDocs(allFoldersQuery);
 
           if (!presseFoldersSnapshot.empty) {
-            const presseFolder = { id: presseFoldersSnapshot.docs[0].id, ...presseFoldersSnapshot.docs[0].data() };
+            const presseFolder = {
+              id: presseFoldersSnapshot.docs[0].id,
+              ...presseFoldersSnapshot.docs[0].data()
+            } as MediaFolder & { id: string };
             log(`📄 PDF geht in Pressemeldungen-Ordner: ${presseFolder.name} (${presseFolder.id})`);
             // Aber laut Dokumentation sollen alle Assets dupliziert werden - also auch PDFs in Medien
             // targetFolder = presseFolder;

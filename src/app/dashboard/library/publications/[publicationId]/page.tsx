@@ -566,19 +566,19 @@ export default function PublicationDetailPage() {
                             </Text>
                           </div>
                         )}
-                        {publication.metrics.print.subscriptionPriceMonthly && (
+                        {publication.metrics.print.subscriptionPrice?.monthly && (
                           <div>
                             <Text className="text-sm font-medium text-zinc-500">Abo-Preis Monat</Text>
                             <Text className="text-lg font-semibold">
-                              {publication.metrics.print.subscriptionPriceMonthly.amount.toFixed(2)} {publication.metrics.print.subscriptionPriceMonthly.currency}
+                              {publication.metrics.print.subscriptionPrice.monthly.amount.toFixed(2)} {publication.metrics.print.subscriptionPrice.monthly.currency}
                             </Text>
                           </div>
                         )}
-                        {publication.metrics.print.subscriptionPriceAnnual && (
+                        {publication.metrics.print.subscriptionPrice?.annual && (
                           <div>
                             <Text className="text-sm font-medium text-zinc-500">Abo-Preis Jahr</Text>
                             <Text className="text-lg font-semibold">
-                              {publication.metrics.print.subscriptionPriceAnnual.amount.toFixed(2)} {publication.metrics.print.subscriptionPriceAnnual.currency}
+                              {publication.metrics.print.subscriptionPrice.annual.amount.toFixed(2)} {publication.metrics.print.subscriptionPrice.annual.currency}
                             </Text>
                           </div>
                         )}

@@ -161,6 +161,7 @@ export default function ClippingTestSection() {
 
   /**
    * 4a. Test-Daten erstellen
+   * TODO: Modul '@/lib/clipping/seed-clipping-test-data' muss noch erstellt werden
    */
   const handleSeedTestData = async () => {
     if (!user || !currentOrganization) {
@@ -176,14 +177,21 @@ export default function ClippingTestSection() {
     setLoading(true);
 
     try {
-      const { seedClippingTestData } = await import('@/lib/clipping/seed-clipping-test-data');
-      const stats = await seedClippingTestData(currentOrganization.id, user.uid);
+      // TODO: Implementierung fehlt - Modul existiert noch nicht
+      // const { seedClippingTestData } = await import('@/lib/clipping/seed-clipping-test-data');
+      // const stats = await seedClippingTestData(currentOrganization.id, user.uid);
+
+      // Temporäre Dummy-Daten
+      const stats: TestDataStats = {
+        projects: 0,
+        companies: 0,
+        campaigns: 0,
+        clippings: 0,
+        suggestions: 0
+      };
 
       setTestDataStats(stats);
-      toast.success(
-        `Test-Daten erstellt: ${stats.clippings} Clippings, ${stats.suggestions} Suggestions`,
-        { id: toastId, duration: 5000 }
-      );
+      toast.error('Funktion noch nicht implementiert - Modul fehlt', { id: toastId });
     } catch (error) {
       console.error('Seed test data failed:', error);
       toast.error('Fehler beim Erstellen der Test-Daten', { id: toastId });
@@ -194,6 +202,7 @@ export default function ClippingTestSection() {
 
   /**
    * 4b. Test-Daten löschen
+   * TODO: Modul '@/lib/clipping/seed-clipping-test-data' muss noch erstellt werden
    */
   const handleCleanupTestData = async () => {
     if (!currentOrganization) {
@@ -209,11 +218,12 @@ export default function ClippingTestSection() {
     setLoading(true);
 
     try {
-      const { cleanupClippingTestData } = await import('@/lib/clipping/seed-clipping-test-data');
-      await cleanupClippingTestData(currentOrganization.id);
+      // TODO: Implementierung fehlt - Modul existiert noch nicht
+      // const { cleanupClippingTestData } = await import('@/lib/clipping/seed-clipping-test-data');
+      // await cleanupClippingTestData(currentOrganization.id);
 
       setTestDataStats(null);
-      toast.success('Test-Daten gelöscht', { id: toastId });
+      toast.error('Funktion noch nicht implementiert - Modul fehlt', { id: toastId });
     } catch (error) {
       console.error('Cleanup test data failed:', error);
       toast.error('Fehler beim Löschen der Test-Daten', { id: toastId });
@@ -258,7 +268,7 @@ export default function ClippingTestSection() {
         </div>
 
         <Button
-          color="blue"
+          color="primary"
           onClick={handleTestKeywordExtraction}
           disabled={loading || !companyName.trim()}
           className="mb-3"
@@ -330,7 +340,7 @@ export default function ClippingTestSection() {
         />
 
         <Button
-          color="purple"
+          color="indigo"
           onClick={handleTestMatchScore}
           disabled={loading || !testFirmenname.trim() || !testTitel.trim()}
           className="mb-3"
@@ -406,7 +416,7 @@ export default function ClippingTestSection() {
 
         <div className="flex flex-wrap gap-3 mb-3">
           <Button
-            color="green"
+            color="primary"
             onClick={handleSeedTestData}
             disabled={loading}
           >
@@ -415,7 +425,7 @@ export default function ClippingTestSection() {
           </Button>
 
           <Button
-            color="light"
+            color="secondary"
             onClick={handleCleanupTestData}
             disabled={loading}
           >

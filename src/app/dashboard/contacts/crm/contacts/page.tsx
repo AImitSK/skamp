@@ -77,10 +77,10 @@ export default function ContactsPage() {
   }, [tags]);
 
   const companiesMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, { name: string; type: string }>();
     companies.forEach(company => {
       if (company.id) {
-        map.set(company.id, company.name);
+        map.set(company.id, { name: company.name, type: company.type });
       }
     });
     return map;
@@ -89,10 +89,10 @@ export default function ContactsPage() {
   // Filter & Pagination
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      // Kompatibilität: Prüfe sowohl Top-Level als auch nested Namen (ContactEnhanced hat name.firstName)
-      const firstName = contact.firstName || (contact as any).name?.firstName || '';
-      const lastName = contact.lastName || (contact as any).name?.lastName || '';
-      const displayName = (contact as any).displayName || '';
+      // ContactEnhanced hat strukturierten Namen: name.firstName, name.lastName
+      const firstName = contact.name?.firstName || '';
+      const lastName = contact.name?.lastName || '';
+      const displayName = contact.displayName || '';
 
       // Bei leerem Suchbegriff: alle Kontakte anzeigen
       if (!searchTerm.trim()) {
@@ -101,11 +101,13 @@ export default function ContactsPage() {
       } else {
         // Suche in allen relevanten Feldern
         const searchLower = searchTerm.toLowerCase();
+        // ContactEnhanced hat emails Array statt einzelnem email String
+        const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email || contact.emails?.[0]?.email || '';
         const searchMatch =
           firstName.toLowerCase().includes(searchLower) ||
           lastName.toLowerCase().includes(searchLower) ||
           displayName.toLowerCase().includes(searchLower) ||
-          contact.email?.toLowerCase().includes(searchLower) ||
+          primaryEmail.toLowerCase().includes(searchLower) ||
           contact.position?.toLowerCase().includes(searchLower);
         if (!searchMatch) return false;
       }
@@ -118,16 +120,17 @@ export default function ContactsPage() {
                        contact.tagIds?.some(tagId => selectedTagIds.includes(tagId));
       if (!tagMatch) return false;
 
-      const journalistMatch = !journalistsOnly || contact.isJournalist === true;
+      // ContactEnhanced hat mediaProfile.isJournalist
+      const journalistMatch = !journalistsOnly || contact.mediaProfile?.isJournalist === true;
       if (!journalistMatch) return false;
 
       return true;
     }).sort((a, b) => {
       // Alphabetische Sortierung nach Nachname, dann Vorname
-      const lastNameA = a.lastName || (a as any).name?.lastName || '';
-      const lastNameB = b.lastName || (b as any).name?.lastName || '';
-      const firstNameA = a.firstName || (a as any).name?.firstName || '';
-      const firstNameB = b.firstName || (b as any).name?.firstName || '';
+      const lastNameA = a.name?.lastName || '';
+      const lastNameB = b.name?.lastName || '';
+      const firstNameA = a.name?.firstName || '';
+      const firstNameB = b.name?.firstName || '';
 
       const lastNameCompare = lastNameA.localeCompare(lastNameB, 'de');
       if (lastNameCompare !== 0) return lastNameCompare;

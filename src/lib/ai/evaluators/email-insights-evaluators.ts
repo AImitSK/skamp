@@ -1,10 +1,8 @@
 // src/lib/ai/evaluators/email-insights-evaluators.ts
 // Genkit Evaluators für Email Insights Quality Assessment
 
-import { genkit } from 'genkit';
-import { gemini25FlashModel } from '../genkit-config';
-
-const ai = genkit({});
+import { ai, gemini25FlashModel } from '../genkit-config';
+import type { BaseEvalDataPoint } from 'genkit/evaluator';
 
 // ══════════════════════════════════════════════════════════════
 // HEURISTIC EVALUATORS (Free - No LLM Calls)
@@ -18,10 +16,11 @@ export const confidenceScoresValidationEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/confidence-scores-validation',
     displayName: 'Confidence Scores Validation',
-    definition: 'Validates that all confidence scores are between 0 and 1'
+    definition: 'Validates that all confidence scores are between 0 and 1',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     // Für Full Analysis: Prüfe alle 4 Sub-Analysen
     if (output.analysisType === 'full' && output.result) {
@@ -38,20 +37,23 @@ export const confidenceScoresValidationEvaluator = ai.defineEvaluator(
       const avgConfidence = scores.reduce((sum, s) => sum + s, 0) / scores.length;
 
       return {
-        score: allValid ? 1.0 : 0.0,
-        details: {
-          allScoresValid: allValid,
-          averageConfidence: avgConfidence,
-          scores: {
-            sentiment: sentiment?.confidence,
-            intent: intent?.confidence,
-            priority: priority?.confidence,
-            category: category?.confidence
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: allValid ? 1.0 : 0.0,
+          details: {
+            reasoning: allValid
+              ? `All confidence scores are valid (avg: ${avgConfidence.toFixed(2)})`
+              : 'Some confidence scores are out of range (0-1)',
+            allScoresValid: allValid,
+            averageConfidence: avgConfidence,
+            scores: {
+              sentiment: sentiment?.confidence,
+              intent: intent?.confidence,
+              priority: priority?.confidence,
+              category: category?.confidence
+            }
           }
-        },
-        rationale: allValid
-          ? `All confidence scores are valid (avg: ${avgConfidence.toFixed(2)})`
-          : 'Some confidence scores are out of range (0-1)'
+        }
       };
     }
 
@@ -60,11 +62,16 @@ export const confidenceScoresValidationEvaluator = ai.defineEvaluator(
     const isValid = confidence !== undefined && confidence >= 0 && confidence <= 1;
 
     return {
-      score: isValid ? 1.0 : 0.0,
-      details: { confidence },
-      rationale: isValid
-        ? `Confidence score is valid: ${confidence}`
-        : `Confidence score out of range: ${confidence}`
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: isValid ? 1.0 : 0.0,
+        details: {
+          reasoning: isValid
+            ? `Confidence score is valid: ${confidence}`
+            : `Confidence score out of range: ${confidence}`,
+          confidence
+        }
+      }
     };
   }
 );
@@ -77,10 +84,11 @@ export const enumValuesValidationEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/enum-values-validation',
     displayName: 'Enum Values Validation',
-    definition: 'Validates that all enum fields have valid values'
+    definition: 'Validates that all enum fields have valid values',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     const validSentiments = ['positive', 'neutral', 'negative', 'urgent'];
     const validIntents = ['question', 'complaint', 'request', 'information', 'compliment', 'other'];
@@ -101,27 +109,35 @@ export const enumValuesValidationEvaluator = ai.defineEvaluator(
       const invalidFields = checks.filter(c => !c.valid.includes(c.value));
 
       return {
-        score: allValid ? 1.0 : 0.0,
-        details: {
-          allEnumsValid: allValid,
-          invalidFields: invalidFields.map(f => f.field),
-          values: {
-            sentiment: sentiment?.sentiment,
-            intent: intent?.intent,
-            priority: priority?.priority,
-            category: category?.category
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: allValid ? 1.0 : 0.0,
+          details: {
+            reasoning: allValid
+              ? 'All enum values are valid'
+              : `Invalid enum values in: ${invalidFields.map(f => f.field).join(', ')}`,
+            allEnumsValid: allValid,
+            invalidFields: invalidFields.map(f => f.field),
+            values: {
+              sentiment: sentiment?.sentiment,
+              intent: intent?.intent,
+              priority: priority?.priority,
+              category: category?.category
+            }
           }
-        },
-        rationale: allValid
-          ? 'All enum values are valid'
-          : `Invalid enum values in: ${invalidFields.map(f => f.field).join(', ')}`
+        }
       };
     }
 
     return {
-      score: 1.0,
-      details: { analysisType: output.analysisType },
-      rationale: 'Single analysis type - enum validation skipped'
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: 1.0,
+        details: {
+          reasoning: 'Single analysis type - enum validation skipped',
+          analysisType: output.analysisType
+        }
+      }
     };
   }
 );
@@ -134,19 +150,26 @@ export const slaConsistencyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/sla-consistency',
     displayName: 'SLA Consistency Check',
-    definition: 'Validates that SLA recommendation matches priority level'
+    definition: 'Validates that SLA recommendation matches priority level',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     const priority = output.result?.priority?.priority || output.result?.priority;
     const sla = output.result?.priority?.slaRecommendation || output.result?.slaRecommendation;
 
     if (!priority || !sla) {
       return {
-        score: 1.0,
-        details: { priority, sla },
-        rationale: 'SLA or Priority not present in output'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 1.0,
+          details: {
+            reasoning: 'SLA or Priority not present in output',
+            priority,
+            sla
+          }
+        }
       };
     }
 
@@ -162,16 +185,19 @@ export const slaConsistencyEvaluator = ai.defineEvaluator(
     const isConsistent = sla === expected;
 
     return {
-      score: isConsistent ? 1.0 : 0.5,
-      details: {
-        priority,
-        sla,
-        expected,
-        consistent: isConsistent
-      },
-      rationale: isConsistent
-        ? `SLA ${sla} correctly matches priority ${priority}`
-        : `SLA ${sla} does not match priority ${priority} (expected: ${expected})`
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: isConsistent ? 1.0 : 0.5,
+        details: {
+          reasoning: isConsistent
+            ? `SLA ${sla} correctly matches priority ${priority}`
+            : `SLA ${sla} does not match priority ${priority} (expected: ${expected})`,
+          priority,
+          sla,
+          expected,
+          consistent: isConsistent
+        }
+      }
     };
   }
 );
@@ -184,15 +210,21 @@ export const escalationLogicEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/escalation-logic',
     displayName: 'Escalation Logic Check',
-    definition: 'Validates escalation is triggered for urgent/negative scenarios'
+    definition: 'Validates escalation is triggered for urgent/negative scenarios',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     if (output.analysisType !== 'full' || !output.result) {
       return {
-        score: 1.0,
-        rationale: 'Not a full analysis - escalation logic not applicable'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 1.0,
+          details: {
+            reasoning: 'Not a full analysis - escalation logic not applicable'
+          }
+        }
       };
     }
 
@@ -211,18 +243,21 @@ export const escalationLogicEvaluator = ai.defineEvaluator(
     const isCorrect = shouldEscalate === didEscalate;
 
     return {
-      score: isCorrect ? 1.0 : 0.3,
-      details: {
-        sentiment: sentiment?.sentiment,
-        priority: priority?.priority,
-        escalationNeeded,
-        shouldEscalate,
-        didEscalate,
-        correct: isCorrect
-      },
-      rationale: isCorrect
-        ? `Escalation logic correct (needed: ${shouldEscalate}, triggered: ${didEscalate})`
-        : `Escalation logic incorrect (needed: ${shouldEscalate}, triggered: ${didEscalate})`
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: isCorrect ? 1.0 : 0.3,
+        details: {
+          reasoning: isCorrect
+            ? `Escalation logic correct (needed: ${shouldEscalate}, triggered: ${didEscalate})`
+            : `Escalation logic incorrect (needed: ${shouldEscalate}, triggered: ${didEscalate})`,
+          sentiment: sentiment?.sentiment,
+          priority: priority?.priority,
+          escalationNeeded,
+          shouldEscalate,
+          didEscalate,
+          correct: isCorrect
+        }
+      }
     };
   }
 );
@@ -235,18 +270,24 @@ export const actionRequiredConsistencyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/action-required-consistency',
     displayName: 'Action Required Consistency',
-    definition: 'Validates actionRequired flag consistency with intent'
+    definition: 'Validates actionRequired flag consistency with intent',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     const intent = output.result?.intent?.intent || output.result?.intent;
     const actionRequired = output.result?.intent?.actionRequired ?? output.result?.actionRequired;
 
     if (!intent || actionRequired === undefined) {
       return {
-        score: 1.0,
-        rationale: 'Intent or actionRequired not present in output'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 1.0,
+          details: {
+            reasoning: 'Intent or actionRequired not present in output'
+          }
+        }
       };
     }
 
@@ -268,13 +309,16 @@ export const actionRequiredConsistencyEvaluator = ai.defineEvaluator(
     }
 
     return {
-      score: isConsistent ? 1.0 : 0.7,
-      details: {
-        intent,
-        actionRequired,
-        consistent: isConsistent
-      },
-      rationale: reasoning
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: isConsistent ? 1.0 : 0.7,
+        details: {
+          reasoning,
+          intent,
+          actionRequired,
+          consistent: isConsistent
+        }
+      }
     };
   }
 );
@@ -287,13 +331,22 @@ export const arrayLengthValidationEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/array-length-validation',
     displayName: 'Array Length Validation',
-    definition: 'Validates that arrays do not exceed maximum lengths'
+    definition: 'Validates that arrays do not exceed maximum lengths',
+    isBilled: false,
   },
-  async (testCase) => {
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const output = datapoint.output as any;
 
     if (!output.result) {
-      return { score: 1.0, rationale: 'No result to validate' };
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 1.0,
+          details: {
+            reasoning: 'No result to validate'
+          }
+        }
+      };
     }
 
     const checks = [];
@@ -346,15 +399,18 @@ export const arrayLengthValidationEvaluator = ai.defineEvaluator(
     const invalidFields = checks.filter(c => !c.valid);
 
     return {
-      score: allValid ? 1.0 : 0.5,
-      details: {
-        checks,
-        allValid,
-        invalidFields: invalidFields.map(f => f.field)
-      },
-      rationale: allValid
-        ? 'All arrays are within length limits'
-        : `Arrays exceeded limits: ${invalidFields.map(f => `${f.field} (${f.length}/${f.max})`).join(', ')}`
+      testCaseId: datapoint.testCaseId || 'unknown',
+      evaluation: {
+        score: allValid ? 1.0 : 0.5,
+        details: {
+          reasoning: allValid
+            ? 'All arrays are within length limits'
+            : `Arrays exceeded limits: ${invalidFields.map(f => `${f.field} (${f.length}/${f.max})`).join(', ')}`,
+          checks,
+          allValid,
+          invalidFields: invalidFields.map(f => f.field)
+        }
+      }
     };
   }
 );
@@ -371,17 +427,26 @@ export const sentimentAccuracyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/sentiment-accuracy-llm',
     displayName: 'Sentiment Accuracy (LLM)',
-    definition: 'LLM judges whether the detected sentiment is accurate'
+    definition: 'LLM judges whether the detected sentiment is accurate',
+    isBilled: true,
   },
-  async (testCase) => {
-    const input = testCase.input as any;
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const input = datapoint.input as any;
+    const output = datapoint.output as any;
 
     const sentiment = output.result?.sentiment?.sentiment || output.result?.sentiment;
     const confidence = output.result?.sentiment?.confidence || output.result?.confidence;
 
     if (!sentiment) {
-      return { score: 0, rationale: 'No sentiment detected in output' };
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0,
+          details: {
+            reasoning: 'No sentiment detected in output'
+          }
+        }
+      };
     }
 
     const prompt = `Bewerte die Sentiment-Analyse dieser Email:
@@ -415,20 +480,37 @@ Antworte nur mit einer Zahl 0-100.`;
 
       if (isNaN(score) || score < 0 || score > 100) {
         return {
-          score: 0.5,
-          rationale: 'LLM response was not a valid score'
+          testCaseId: datapoint.testCaseId || 'unknown',
+          evaluation: {
+            score: 0.5,
+            details: {
+              reasoning: 'LLM response was not a valid score'
+            }
+          }
         };
       }
 
       return {
-        score: score / 100,
-        details: { llmScore: score, sentiment, confidence },
-        rationale: `LLM scored sentiment accuracy as ${score}/100`
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: score / 100,
+          details: {
+            reasoning: `LLM scored sentiment accuracy as ${score}/100`,
+            llmScore: score,
+            sentiment,
+            confidence
+          }
+        }
       };
     } catch (error) {
       return {
-        score: 0.5,
-        rationale: 'LLM evaluation failed'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0.5,
+          details: {
+            reasoning: 'LLM evaluation failed'
+          }
+        }
       };
     }
   }
@@ -442,17 +524,26 @@ export const intentAccuracyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/intent-accuracy-llm',
     displayName: 'Intent Accuracy (LLM)',
-    definition: 'LLM judges whether the detected intent is accurate'
+    definition: 'LLM judges whether the detected intent is accurate',
+    isBilled: true,
   },
-  async (testCase) => {
-    const input = testCase.input as any;
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const input = datapoint.input as any;
+    const output = datapoint.output as any;
 
     const intent = output.result?.intent?.intent || output.result?.intent;
     const confidence = output.result?.intent?.confidence || output.result?.confidence;
 
     if (!intent) {
-      return { score: 0, rationale: 'No intent detected in output' };
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0,
+          details: {
+            reasoning: 'No intent detected in output'
+          }
+        }
+      };
     }
 
     const prompt = `Bewerte die Intent-Analyse dieser Email:
@@ -488,20 +579,37 @@ Antworte nur mit einer Zahl 0-100.`;
 
       if (isNaN(score) || score < 0 || score > 100) {
         return {
-          score: 0.5,
-          rationale: 'LLM response was not a valid score'
+          testCaseId: datapoint.testCaseId || 'unknown',
+          evaluation: {
+            score: 0.5,
+            details: {
+              reasoning: 'LLM response was not a valid score'
+            }
+          }
         };
       }
 
       return {
-        score: score / 100,
-        details: { llmScore: score, intent, confidence },
-        rationale: `LLM scored intent accuracy as ${score}/100`
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: score / 100,
+          details: {
+            reasoning: `LLM scored intent accuracy as ${score}/100`,
+            llmScore: score,
+            intent,
+            confidence
+          }
+        }
       };
     } catch (error) {
       return {
-        score: 0.5,
-        rationale: 'LLM evaluation failed'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0.5,
+          details: {
+            reasoning: 'LLM evaluation failed'
+          }
+        }
       };
     }
   }
@@ -515,18 +623,27 @@ export const priorityAccuracyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/priority-accuracy-llm',
     displayName: 'Priority Accuracy (LLM)',
-    definition: 'LLM judges whether the priority assessment is accurate'
+    definition: 'LLM judges whether the priority assessment is accurate',
+    isBilled: true,
   },
-  async (testCase) => {
-    const input = testCase.input as any;
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const input = datapoint.input as any;
+    const output = datapoint.output as any;
 
     const priority = output.result?.priority?.priority || output.result?.priority;
     const sla = output.result?.priority?.slaRecommendation || output.result?.slaRecommendation;
     const escalation = output.result?.priority?.escalationNeeded;
 
     if (!priority) {
-      return { score: 0, rationale: 'No priority detected in output' };
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0,
+          details: {
+            reasoning: 'No priority detected in output'
+          }
+        }
+      };
     }
 
     const prompt = `Bewerte die Priority-Analyse dieser Email:
@@ -563,20 +680,38 @@ Antworte nur mit einer Zahl 0-100.`;
 
       if (isNaN(score) || score < 0 || score > 100) {
         return {
-          score: 0.5,
-          rationale: 'LLM response was not a valid score'
+          testCaseId: datapoint.testCaseId || 'unknown',
+          evaluation: {
+            score: 0.5,
+            details: {
+              reasoning: 'LLM response was not a valid score'
+            }
+          }
         };
       }
 
       return {
-        score: score / 100,
-        details: { llmScore: score, priority, sla, escalation },
-        rationale: `LLM scored priority accuracy as ${score}/100`
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: score / 100,
+          details: {
+            reasoning: `LLM scored priority accuracy as ${score}/100`,
+            llmScore: score,
+            priority,
+            sla,
+            escalation
+          }
+        }
       };
     } catch (error) {
       return {
-        score: 0.5,
-        rationale: 'LLM evaluation failed'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0.5,
+          details: {
+            reasoning: 'LLM evaluation failed'
+          }
+        }
       };
     }
   }
@@ -590,18 +725,27 @@ export const categoryAccuracyEvaluator = ai.defineEvaluator(
   {
     name: 'email-insights/category-accuracy-llm',
     displayName: 'Category Accuracy (LLM)',
-    definition: 'LLM judges whether the category classification is accurate'
+    definition: 'LLM judges whether the category classification is accurate',
+    isBilled: true,
   },
-  async (testCase) => {
-    const input = testCase.input as any;
-    const output = testCase.output as any;
+  async (datapoint: BaseEvalDataPoint) => {
+    const input = datapoint.input as any;
+    const output = datapoint.output as any;
 
     const category = output.result?.category?.category || output.result?.category;
     const department = output.result?.category?.suggestedDepartment;
     const assignee = output.result?.category?.suggestedAssignee;
 
     if (!category) {
-      return { score: 0, rationale: 'No category detected in output' };
+      return {
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0,
+          details: {
+            reasoning: 'No category detected in output'
+          }
+        }
+      };
     }
 
     const prompt = `Bewerte die Category-Analyse dieser Email:
@@ -638,20 +782,38 @@ Antworte nur mit einer Zahl 0-100.`;
 
       if (isNaN(score) || score < 0 || score > 100) {
         return {
-          score: 0.5,
-          rationale: 'LLM response was not a valid score'
+          testCaseId: datapoint.testCaseId || 'unknown',
+          evaluation: {
+            score: 0.5,
+            details: {
+              reasoning: 'LLM response was not a valid score'
+            }
+          }
         };
       }
 
       return {
-        score: score / 100,
-        details: { llmScore: score, category, department, assignee },
-        rationale: `LLM scored category accuracy as ${score}/100`
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: score / 100,
+          details: {
+            reasoning: `LLM scored category accuracy as ${score}/100`,
+            llmScore: score,
+            category,
+            department,
+            assignee
+          }
+        }
       };
     } catch (error) {
       return {
-        score: 0.5,
-        rationale: 'LLM evaluation failed'
+        testCaseId: datapoint.testCaseId || 'unknown',
+        evaluation: {
+          score: 0.5,
+          details: {
+            reasoning: 'LLM evaluation failed'
+          }
+        }
       };
     }
   }

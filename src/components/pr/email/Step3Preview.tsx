@@ -191,11 +191,11 @@ export default function Step3Preview({
                 if (contact) {
                 // Konvertiere Contact zu Preview-Format
                 const previewData = {
-                  salutation: contact.name?.salutation || contact.salutation || '',
-                  title: contact.name?.title || contact.title || '',
-                  firstName: contact.name?.firstName || contact.firstName || '',
-                  lastName: contact.name?.lastName || contact.lastName || '',
-                  email: contact.email || contact.emails?.[0]?.email || contact.emails?.[0]?.address || '',
+                  salutation: '',
+                  title: '',
+                  firstName: contact.firstName || '',
+                  lastName: contact.lastName || '',
+                  email: contact.email || '',
                   companyName: contact.companyName || ''
                 };
                 setPreviewContact(previewData);
@@ -305,7 +305,10 @@ export default function Step3Preview({
 
     const senderInfo = {
       name: 'Absender',
-      email: draft.emailAddressId ? 'absender@example.com' : ''
+      email: draft.emailAddressId ? 'absender@example.com' : '',
+      title: '',
+      company: campaign.clientName || '',
+      phone: ''
     };
 
     // Erstelle Email-Content aus Draft
@@ -316,11 +319,11 @@ export default function Step3Preview({
       sampleRecipient as any,
       emailContent,
       {
-        name: senderInfo?.name || 'Ihr Name',
-        title: senderInfo?.title || '',
-        company: senderInfo?.company || campaign.clientName || '',
-        phone: senderInfo?.phone || '',
-        email: senderInfo?.email || ''
+        name: senderInfo.name || 'Ihr Name',
+        title: senderInfo.title || '',
+        company: senderInfo.company || campaign.clientName || '',
+        phone: senderInfo.phone || '',
+        email: senderInfo.email || ''
       },
       assetShareUrl, // Verwende lokalen State statt campaign.assetShareUrl
       campaign.keyVisual,

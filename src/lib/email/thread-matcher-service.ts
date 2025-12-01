@@ -172,9 +172,9 @@ export class ThreadMatcherService {
           // Project-Mailbox: Muss gleiches projectId haben
           // Domain-Mailbox: Muss gleiches domainId haben UND KEIN projectId
           const mailboxMatches = criteria.projectId
-            ? (thread as any).projectId === criteria.projectId
+            ? thread.projectId === criteria.projectId
             : criteria.domainId
-              ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
+              ? thread.domainId === criteria.domainId && !thread.projectId
               : true;
 
           if (mailboxMatches && this.participantsMatch(thread.participants, criteria)) {
@@ -204,9 +204,9 @@ export class ThreadMatcherService {
           const thread = { ...doc.data(), id: doc.id } as EmailThread;
 
           const mailboxMatches = criteria.projectId
-            ? (thread as any).projectId === criteria.projectId
+            ? thread.projectId === criteria.projectId
             : criteria.domainId
-              ? (thread as any).domainId === criteria.domainId && !(thread as any).projectId
+              ? thread.domainId === criteria.domainId && !thread.projectId
               : true;
 
           if (mailboxMatches) {
@@ -332,14 +332,17 @@ export class ThreadMatcherService {
     analysis: EmailThread['aiAnalysis']
   ): Promise<void> {
     try {
-      await updateDoc(doc(db, this.collectionName, threadId), {
-        aiAnalysis: {
-          ...analysis,
-          analyzedAt: serverTimestamp() as Timestamp,
-          generatedBy: 'gemini'
-        },
-        updatedAt: serverTimestamp()
-      });
+      await adminDb
+        .collection(this.collectionName)
+        .doc(threadId)
+        .update({
+          aiAnalysis: {
+            ...analysis,
+            analyzedAt: FieldValue.serverTimestamp() as any,
+            generatedBy: 'gemini'
+          },
+          updatedAt: FieldValue.serverTimestamp()
+        });
     } catch (error) {
       throw error;
     }
@@ -374,9 +377,12 @@ export class ThreadMatcherService {
       const thread = await this.getThread(threadId);
       if (!thread) return;
 
-      await updateDoc(doc(db, this.collectionName, threadId), {
-        updatedAt: serverTimestamp()
-      });
+      await adminDb
+        .collection(this.collectionName)
+        .doc(threadId)
+        .update({
+          updatedAt: FieldValue.serverTimestamp()
+        });
     } catch (error) {
     }
   }

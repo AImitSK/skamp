@@ -78,8 +78,12 @@ export const expectEmailSent = (expectedParams: {
   attachments?: any[];
 }) => {
   expect(mockSend).toHaveBeenCalled();
-  const lastCall = mockSend.mock.calls[mockSend.mock.calls.length - 1];
-  const sentEmail = lastCall[0];
+  const lastCall = mockSend.mock.calls[mockSend.mock.calls.length - 1] as any[] | undefined;
+  const sentEmail = lastCall?.[0];
+
+  if (!sentEmail) {
+    throw new Error('Keine Email-Daten gefunden');
+  }
 
   if (expectedParams.to) {
     expect(sentEmail.to).toEqual(expectedParams.to);

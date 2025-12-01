@@ -64,11 +64,11 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
 
     if (contact) {
       const contactData = {
-        name: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
-        email: contact.email || contact.emails?.[0]?.email || contact.emails?.[0]?.address || '',
+        name: contact.functionName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim(),
+        email: contact.email || '',
         title: contact.position || '',
         company: campaign.clientName || contact.companyName || '',
-        phone: contact.phones?.[0]?.number || contact.phone || ''
+        phone: contact.phone || ''
       };
 
       onChange({
@@ -137,7 +137,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
                   <option value="">Bitte wählen...</option>
                   {companyContacts.map(contact => (
                     <option key={contact.id} value={contact.id}>
-                      {contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim()}
+                      {contact.functionName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim()}
                       {contact.position && ` - ${contact.position}`}
                     </option>
                   ))}

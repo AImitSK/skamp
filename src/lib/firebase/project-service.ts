@@ -1220,16 +1220,16 @@ export const projectService = {
       let approvalStatus: any = null;
       let canProgress = true;
       let blockedReason: string | undefined;
-      
-      if (project.currentStage === 'customer_approval' || nextStage === 'distribution') {
+
+      if (project.currentStage === 'approval' || nextStage === 'distribution') {
         try {
           const { approvalService } = await import('./approval-service');
           const approval = await approvalService.getByProjectId(projectId, context);
-          
+
           if (approval) {
             approvalStatus = approval.status === 'approved' ? 'approved' :
                            approval.status === 'rejected' ? 'rejected' : 'pending';
-                           
+
             if (nextStage === 'distribution' && approval.status !== 'approved') {
               canProgress = false;
               blockedReason = 'Kunden-Freigabe ausstehend';
@@ -1362,27 +1362,27 @@ export const projectService = {
       // Dynamic import um circular dependencies zu vermeiden
       const { taskService } = await import('./task-service');
       
-      // Beispiel-Workflow für creation -> internal_approval
-      if (fromStage === 'creation' && toStage === 'internal_approval') {
-        result.actionsExecuted.push('transition_creation_to_internal_approval');
-        
+      // Beispiel-Workflow für creation -> approval
+      if (fromStage === 'creation' && toStage === 'approval') {
+        result.actionsExecuted.push('transition_creation_to_approval');
+
         // Auto-complete bestimmte Creation-Tasks
         const creationTasks = await taskService.getByProjectStage('', projectId, 'creation');
         const autoCompleteTasks = creationTasks.filter(t => t.autoCompleteOnStageChange);
-        
+
         for (const task of autoCompleteTasks) {
           await taskService.markAsCompleted(task.id!);
           result.actionsExecuted.push(`auto_completed_task_${task.id}`);
         }
-        
+
         result.tasksCreated = 2; // Beispiel: Review-Tasks werden erstellt
         result.notificationsSent = 1;
       }
 
-      // Beispiel-Workflow für internal_approval -> customer_approval  
-      if (fromStage === 'internal_approval' && toStage === 'customer_approval') {
-        result.actionsExecuted.push('transition_internal_to_customer_approval');
-        result.tasksCreated = 1; // Customer-Review-Task
+      // Beispiel-Workflow für approval -> distribution (nach erfolgreicher Freigabe)
+      if (fromStage === 'approval' && toStage === 'distribution') {
+        result.actionsExecuted.push('transition_approval_to_distribution');
+        result.tasksCreated = 1; // Distribution-Tasks
         result.notificationsSent = 1;
       }
 

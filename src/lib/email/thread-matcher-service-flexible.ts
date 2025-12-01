@@ -31,6 +31,8 @@ interface ThreadMatchingCriteria {
   from: EmailAddressInfo;
   to: EmailAddressInfo[];
   organizationId: string;
+  projectId?: string;
+  domainId?: string;
 }
 
 interface ThreadMatchResult {
@@ -68,10 +70,13 @@ interface IncomingEmailData {
   headers?: Record<string, string>;
   textContent?: string;
   campaignId?: string;
+  projectId?: string;
+  domainId?: string;
 }
 
 // Erweitere EmailThread Interface für zusätzliche Felder
-interface ExtendedEmailThread extends EmailThread {
+interface ExtendedEmailThread extends Omit<EmailThread, 'subject'> {
+  subject: string;
   normalizedSubject?: string;
   wasDeferred?: boolean;
 }
@@ -498,7 +503,7 @@ export class FlexibleThreadMatcherService {
         }
         
         // Check for undefined in objects (like participants)
-        if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
+        if (value && typeof value === 'object' && typeof (value as any).toDate !== 'function') {
           // Check if it's an array of objects
           if (Array.isArray(value)) {
             // Already handled above
@@ -765,7 +770,7 @@ export class FlexibleThreadMatcherService {
       
       // Prüfe welche Threads fehlen
       const missingThreadIds: string[] = [];
-      for (const threadId of threadIds) {
+      for (const threadId of Array.from(threadIds)) {
         const threadDoc = await getDoc(doc(db, this.collectionName, threadId));
         if (!threadDoc.exists()) {
           missingThreadIds.push(threadId);
@@ -886,7 +891,7 @@ export class FlexibleThreadMatcherService {
     
     // Mindestens 2 gemeinsame Teilnehmer für Match
     let matches = 0;
-    for (const email of criteriaEmails) {
+    for (const email of Array.from(criteriaEmails)) {
       if (threadEmails.has(email)) {
         matches++;
         if (matches >= 2) return true;
