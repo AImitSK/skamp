@@ -345,8 +345,11 @@ export const projectService = {
         throw new Error('Projekt nicht gefunden oder keine Berechtigung');
       }
 
-      // Cascade-Delete: Zugehöriges Projekt-Postfach löschen
-      await this.deleteProjectMailbox(projectId, context.organizationId);
+      // Cascade-Delete: Zugehörige Ressourcen löschen
+      await Promise.all([
+        this.deleteProjectMailbox(projectId, context.organizationId),
+        this.deleteProjectTasks(projectId, context.organizationId)
+      ]);
 
       // Projekt löschen
       await deleteDoc(doc(db, 'projects', projectId));
@@ -388,6 +391,115 @@ export const projectService = {
     } catch (error) {
       console.error(`[ProjectService] Fehler beim Löschen des Postfachs für Projekt ${projectId}:`, error);
       // Fehler nicht weiterwerfen - Projekt soll trotzdem gelöscht werden können
+    }
+  },
+
+  /**
+   * Löscht alle Tasks eines Projekts (Cascade-Delete Helper)
+   * Berücksichtigt sowohl projectId als auch linkedProjectId (Legacy)
+   */
+  async deleteProjectTasks(
+    projectId: string,
+    organizationId: string
+  ): Promise<{ deletedCount: number }> {
+    try {
+      // Suche Tasks mit projectId
+      const projectIdQuery = query(
+        collection(db, 'tasks'),
+        where('organizationId', '==', organizationId),
+        where('projectId', '==', projectId)
+      );
+
+      // Suche Tasks mit linkedProjectId (Legacy)
+      const linkedProjectIdQuery = query(
+        collection(db, 'tasks'),
+        where('organizationId', '==', organizationId),
+        where('linkedProjectId', '==', projectId)
+      );
+
+      const [projectIdSnapshot, linkedSnapshot] = await Promise.all([
+        getDocs(projectIdQuery),
+        getDocs(linkedProjectIdQuery)
+      ]);
+
+      // Sammle alle Task-IDs (dedupliziert)
+      const taskIds = new Set<string>();
+      projectIdSnapshot.docs.forEach(d => taskIds.add(d.id));
+      linkedSnapshot.docs.forEach(d => taskIds.add(d.id));
+
+      if (taskIds.size === 0) {
+        console.log(`[ProjectService] Keine Tasks für Projekt ${projectId} gefunden`);
+        return { deletedCount: 0 };
+      }
+
+      // Lösche alle Tasks
+      const deletePromises = Array.from(taskIds).map(taskId =>
+        deleteDoc(doc(db, 'tasks', taskId))
+      );
+      await Promise.all(deletePromises);
+
+      console.log(`[ProjectService] ${taskIds.size} Tasks für Projekt ${projectId} gelöscht`);
+      return { deletedCount: taskIds.size };
+    } catch (error) {
+      console.error(`[ProjectService] Fehler beim Löschen der Tasks für Projekt ${projectId}:`, error);
+      // Fehler nicht weiterwerfen - Projekt soll trotzdem gelöscht werden können
+      return { deletedCount: 0 };
+    }
+  },
+
+  /**
+   * Bereinigt verwaiste Tasks (Tasks ohne gültiges Projekt)
+   * Sollte periodisch oder manuell aufgerufen werden
+   */
+  async cleanupOrphanedTasks(
+    organizationId: string
+  ): Promise<{ deletedCount: number; orphanedTaskIds: string[] }> {
+    try {
+      // Hole alle Projekte der Organisation
+      const projectsQuery = query(
+        collection(db, 'projects'),
+        where('organizationId', '==', organizationId)
+      );
+      const projectsSnapshot = await getDocs(projectsQuery);
+      const validProjectIds = new Set(projectsSnapshot.docs.map(d => d.id));
+
+      // Hole alle Tasks der Organisation
+      const tasksQuery = query(
+        collection(db, 'tasks'),
+        where('organizationId', '==', organizationId)
+      );
+      const tasksSnapshot = await getDocs(tasksQuery);
+
+      // Finde verwaiste Tasks
+      const orphanedTasks: string[] = [];
+      for (const taskDoc of tasksSnapshot.docs) {
+        const data = taskDoc.data();
+        const taskProjectId = data.projectId || data.linkedProjectId;
+
+        // Task ist verwaist wenn:
+        // 1. Sie eine projectId hat, aber das Projekt nicht existiert
+        // 2. Sie keine projectId hat (sollte nicht vorkommen bei Projekt-Tasks)
+        if (taskProjectId && !validProjectIds.has(taskProjectId)) {
+          orphanedTasks.push(taskDoc.id);
+        }
+      }
+
+      if (orphanedTasks.length === 0) {
+        console.log(`[ProjectService] Keine verwaisten Tasks für Organisation ${organizationId} gefunden`);
+        return { deletedCount: 0, orphanedTaskIds: [] };
+      }
+
+      // Lösche verwaiste Tasks
+      const deletePromises = orphanedTasks.map(taskId =>
+        deleteDoc(doc(db, 'tasks', taskId))
+      );
+      await Promise.all(deletePromises);
+
+      console.log(`[ProjectService] ${orphanedTasks.length} verwaiste Tasks für Organisation ${organizationId} gelöscht`);
+      return { deletedCount: orphanedTasks.length, orphanedTaskIds: orphanedTasks };
+    } catch (error) {
+      console.error(`[ProjectService] Fehler beim Bereinigen verwaister Tasks:`, error);
+      throw error;
     }
   },
 
