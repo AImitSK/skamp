@@ -47,27 +47,40 @@ export function useMyTasks(filter: MyTasksFilter = 'all') {
       } as ProjectTask));
 
       // Lade projectTitle für jede Task
-      const projectIds = Array.from(new Set(tasks.map(t => t.projectId).filter(Boolean)));
+      // Berücksichtige sowohl projectId als auch linkedProjectId (Legacy)
+      const projectIds = Array.from(new Set(
+        tasks
+          .map(t => t.projectId || (t as any).linkedProjectId)
+          .filter((id): id is string => Boolean(id) && id.length > 0)
+      ));
       const projectTitles: Record<string, string> = {};
 
-      await Promise.all(
-        projectIds.map(async (projectId) => {
-          try {
-            const projectDoc = await getDoc(doc(db, 'projects', projectId));
-            if (projectDoc.exists()) {
-              projectTitles[projectId] = projectDoc.data().title || '';
+      if (projectIds.length > 0) {
+        await Promise.all(
+          projectIds.map(async (projectId) => {
+            try {
+              const projectDoc = await getDoc(doc(db, 'projects', projectId));
+              if (projectDoc.exists()) {
+                const data = projectDoc.data();
+                projectTitles[projectId] = data.title || data.name || 'Unbenanntes Projekt';
+              }
+            } catch (error) {
+              console.error(`Error loading project ${projectId}:`, error);
             }
-          } catch (error) {
-            console.error(`Error loading project ${projectId}:`, error);
-          }
-        })
-      );
+          })
+        );
+      }
 
       // Füge projectTitle zu Tasks hinzu
-      tasks = tasks.map(task => ({
-        ...task,
-        projectTitle: task.projectId ? projectTitles[task.projectId] : undefined
-      }));
+      // Berücksichtige sowohl projectId als auch linkedProjectId (Legacy)
+      tasks = tasks.map(task => {
+        const taskProjectId = task.projectId || (task as any).linkedProjectId;
+        return {
+          ...task,
+          projectId: taskProjectId, // Normalisiere auf projectId
+          projectTitle: taskProjectId ? projectTitles[taskProjectId] : undefined
+        };
+      });
 
       // Füge computed fields hinzu (isOverdue, daysUntilDue, etc.)
       const now = new Date();
