@@ -38,7 +38,8 @@
       "WebFetch(domain:www.celeropress.com)",
       "WebFetch(domain:mxtoolbox.com)",
       "Bash(npm run type-check:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
