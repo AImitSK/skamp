@@ -535,7 +535,7 @@ export default function ContactModalEnhanced({
                 {/* Kontakttyp-Auswahl */}
                 <div className="space-y-4 rounded-md border p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium">Kontakttyp</Label>
+                    <span className="text-sm font-medium text-zinc-950 dark:text-white">Kontakttyp</span>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Wählen Sie, ob dies eine Person oder ein Funktionskontakt (z.B. Redaktion) ist.
                     </p>
