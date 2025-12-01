@@ -14,26 +14,46 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
+// Lade .env.local
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+
 // Firebase Admin initialisieren (falls noch nicht geschehen)
 if (getApps().length === 0) {
-  // Versuche Service Account aus Umgebungsvariable
-  const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  // Versuche Service Account aus FIREBASE_ADMIN_SERVICE_ACCOUNT (JSON-String)
+  const serviceAccountJson = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT;
 
-  if (serviceAccount) {
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
+  if (serviceAccountJson) {
+    try {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      initializeApp({
+        credential: cert(serviceAccount)
+      });
+      console.log('Firebase Admin mit FIREBASE_ADMIN_SERVICE_ACCOUNT initialisiert.');
+    } catch (e) {
+      console.error('Fehler beim Parsen von FIREBASE_ADMIN_SERVICE_ACCOUNT:', e);
+      process.exit(1);
+    }
   } else {
     // Fallback: Versuche aus Datei zu laden
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const serviceAccountKey = require('../serviceAccountKey.json');
-      initializeApp({
-        credential: cert(serviceAccountKey)
-      });
-    } catch {
+    const serviceAccountPath = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH;
+    if (serviceAccountPath) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const serviceAccountKey = require(serviceAccountPath);
+        initializeApp({
+          credential: cert(serviceAccountKey)
+        });
+        console.log('Firebase Admin mit Service Account Datei initialisiert.');
+      } catch {
+        console.error('Fehler: Service Account Datei nicht gefunden:', serviceAccountPath);
+        process.exit(1);
+      }
+    } else {
       console.error('Fehler: Keine Firebase-Credentials gefunden.');
-      console.error('Bitte GOOGLE_APPLICATION_CREDENTIALS setzen oder serviceAccountKey.json bereitstellen.');
+      console.error('Bitte FIREBASE_ADMIN_SERVICE_ACCOUNT oder FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH in .env.local setzen.');
       process.exit(1);
     }
   }
