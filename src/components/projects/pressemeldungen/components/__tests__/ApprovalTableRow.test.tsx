@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ApprovalTableRow, { getStatusColor, getStatusLabel, formatDate, getTimeSinceLastActivity } from '../ApprovalTableRow';
-import { ApprovalEnhanced } from '@/types/approvals';
+import { ApprovalEnhanced } from '../../../../../types/approvals';
 import { Timestamp } from 'firebase/firestore';
 
 const createMockApproval = (overrides: Partial<ApprovalEnhanced> = {}): ApprovalEnhanced => ({
@@ -18,19 +18,52 @@ const createMockApproval = (overrides: Partial<ApprovalEnhanced> = {}): Approval
   organizationId: 'org-123',
   createdAt: Timestamp.fromDate(new Date('2025-01-01')),
   updatedAt: Timestamp.fromDate(new Date('2025-01-15')),
+  createdBy: 'user-123',
+  title: 'Test Approval',
+  workflow: 'simple',
+  version: 1,
+  requestedAt: Timestamp.fromDate(new Date('2025-01-01')),
+  content: {
+    html: '<p>Test content</p>',
+    plainText: 'Test content',
+    subject: 'Test Subject'
+  },
+  options: {
+    requireAllApprovals: false,
+    allowPartialApproval: true,
+    autoSendAfterApproval: false,
+    allowComments: true,
+    allowInlineComments: false
+  },
+  shareSettings: {
+    requirePassword: false,
+    requireEmailVerification: false,
+    accessLog: false
+  },
+  history: [],
+  analytics: {
+    totalViews: 0,
+    uniqueViews: 0
+  },
+  notifications: {
+    requested: {
+      sent: false,
+      method: 'email'
+    }
+  },
   recipients: [
     {
       email: 'contact@example.com',
       name: 'Contact Person',
       id: 'contact-1',
-      role: 'primary',
+      role: 'approver',
       status: 'pending',
       isRequired: true,
       notificationsSent: 0
-    } as any
+    }
   ],
   ...overrides
-} as ApprovalEnhanced);
+});
 
 describe('ApprovalTableRow Component', () => {
   const defaultProps = {
@@ -133,7 +166,11 @@ describe('ApprovalTableRow Component', () => {
           {
             email: 'contact@example.com',
             name: undefined,
-            id: 'contact-1'
+            id: 'contact-1',
+            role: 'approver',
+            status: 'pending',
+            isRequired: true,
+            notificationsSent: 0
           }
         ]
       });

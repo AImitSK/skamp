@@ -571,10 +571,5 @@ describe('ProjectFolderFeatureFlags', () => {
 });
 
 // Mock Helper Functions
-jest.mock('@/lib/firebase/services/user', () => ({
-  getCurrentUser: jest.fn(() => Promise.resolve(mockUser))
-}));
-
-jest.mock('@/lib/firebase/services/organization', () => ({
-  getOrganization: jest.fn(() => Promise.resolve(mockOrganization))
-}));
+// Note: Mocks müssen außerhalb des describe-Blocks definiert werden
+// da mockUser und mockOrganization zur Laufzeit definiert werden

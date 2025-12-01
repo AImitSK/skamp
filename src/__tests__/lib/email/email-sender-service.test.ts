@@ -170,7 +170,10 @@ function expectEmailSent(expectedParams: {
 }) {
   expect(mockSgMailSend).toHaveBeenCalled();
   const lastCall = mockSgMailSend.mock.calls[mockSgMailSend.mock.calls.length - 1];
-  const sentEmail = lastCall[0];
+  const sentEmailData = lastCall[0];
+
+  // SendGrid send() kann ein Array oder einzelnes Objekt akzeptieren
+  const sentEmail = Array.isArray(sentEmailData) ? sentEmailData[0] : sentEmailData;
 
   if (expectedParams.to) {
     expect(sentEmail.to).toBe(expectedParams.to);
@@ -324,8 +327,16 @@ describe('EmailSenderService', () => {
     const mockPreparedData = {
       campaign: {
         id: 'campaign-123',
+        userId: 'user-123',
+        organizationId: 'org-123',
         title: 'Test Pressemitteilung',
-        mainContent: '<p>{{salutationFormal}} {{title}} {{firstName}} {{lastName}},</p><h1>Test</h1>'
+        mainContent: '<p>{{salutationFormal}} {{title}} {{firstName}} {{lastName}},</p><h1>Test</h1>',
+        contentHtml: '<p>Generated Content</p>',
+        status: 'draft' as const,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
       },
       signatureHtml: '<div class="signature">{{senderName}}</div>',
       pdfBase64: 'bW9jay1wZGYtYmFzZTY0',
@@ -452,7 +463,8 @@ describe('EmailSenderService', () => {
       );
 
       // Assert
-      const sentEmail = mockSgMailSend.mock.calls[0][0];
+      const sentEmailData = mockSgMailSend.mock.calls[0][0];
+      const sentEmail = Array.isArray(sentEmailData) ? sentEmailData[0] : sentEmailData;
       expect(sentEmail.html).toContain('Sehr geehrter Herr');
     });
 
@@ -535,7 +547,8 @@ describe('EmailSenderService', () => {
       );
 
       // Assert
-      const sentEmail = mockSgMailSend.mock.calls[0][0];
+      const sentEmailData = mockSgMailSend.mock.calls[0][0];
+      const sentEmail = Array.isArray(sentEmailData) ? sentEmailData[0] : sentEmailData;
 
       // Diese Texte sollten NICHT im Email-HTML sein:
       expect(sentEmail.html).not.toContain('Reply-To System aktiv');
@@ -557,7 +570,8 @@ describe('EmailSenderService', () => {
       );
 
       // Assert
-      const sentEmail = mockSgMailSend.mock.calls[0][0];
+      const sentEmailData = mockSgMailSend.mock.calls[0][0];
+      const sentEmail = Array.isArray(sentEmailData) ? sentEmailData[0] : sentEmailData;
       expect(sentEmail.html).toContain('Anna Schmidt'); // Von signatureHtml mit Variablen
     });
   });

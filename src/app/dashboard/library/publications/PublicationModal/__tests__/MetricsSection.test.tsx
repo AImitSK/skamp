@@ -52,6 +52,17 @@ const mockMetrics: MetricsState = {
     hasPaywall: false,
     hasMobileApp: true,
   },
+  broadcast: {
+    viewership: '',
+    marketShare: '',
+    broadcastArea: '',
+  },
+  audio: {
+    monthlyDownloads: '',
+    monthlyListeners: '',
+    episodeCount: '',
+    avgEpisodeDuration: '',
+  },
 };
 
 describe('MetricsSection', () => {

@@ -24,7 +24,26 @@ jest.mock('@/lib/firebase/task-service', () => ({
     delete: jest.fn(),
     updateProgress: jest.fn(),
     create: jest.fn(),
-    update: jest.fn()
+    update: jest.fn(),
+    getByProjectId: jest.fn(),
+    getById: jest.fn(),
+    getAll: jest.fn(),
+    getByDateRange: jest.fn(),
+    getByClientId: jest.fn(),
+    getByCampaignId: jest.fn(),
+    getStats: jest.fn(),
+    checkAndNotifyOverdueTasks: jest.fn(),
+    getByProjectStage: jest.fn(),
+    getCriticalTasksForStage: jest.fn(),
+    checkStageCompletionRequirements: jest.fn(),
+    createTasksFromTemplates: jest.fn(),
+    handleTaskCompletion: jest.fn(),
+    updateTaskDependencies: jest.fn(),
+    validateTaskIntegrity: jest.fn(),
+    getTodayTasks: jest.fn(),
+    getOverdueTasks: jest.fn(),
+    getTasksWithFilters: jest.fn(),
+    addComputedFields: jest.fn()
   }
 }));
 
@@ -154,15 +173,32 @@ jest.mock('../TaskEditModal', () => ({
   }
 }));
 
-const mockTaskService = taskService as jest.Mocked<typeof taskService>;
+const mockTaskService = taskService as jest.Mocked<typeof taskService> & {
+  getByProject: jest.Mock;
+  updateProgress: jest.Mock;
+};
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('ProjectTaskManager - Integration Tests', () => {
   const mockUser = {
     uid: 'user-123',
     email: 'test@example.com',
-    displayName: 'Test User'
-  };
+    displayName: 'Test User',
+    emailVerified: false,
+    isAnonymous: false,
+    metadata: {},
+    providerData: [],
+    refreshToken: '',
+    tenantId: null,
+    delete: jest.fn(),
+    getIdToken: jest.fn(),
+    getIdTokenResult: jest.fn(),
+    reload: jest.fn(),
+    toJSON: jest.fn(),
+    phoneNumber: null,
+    photoURL: null,
+    providerId: 'firebase'
+  } as any;
 
   const teamMembers: TeamMember[] = Object.values(mockTeamMembersDataSet);
 
@@ -180,9 +216,15 @@ describe('ProjectTaskManager - Integration Tests', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
       loading: false,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      signUp: jest.fn()
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(),
+      getInitials: jest.fn(),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
   });
 
@@ -436,7 +478,7 @@ describe('ProjectTaskManager - Integration Tests', () => {
       const task = createMockTask({ progress: 25 });
 
       mockTaskService.getByProject.mockResolvedValue([task]);
-      mockTaskService.updateProgress.mockResolvedValue();
+      mockTaskService.updateProgress.mockResolvedValue(undefined);
 
       render(<ProjectTaskManager {...defaultProps} />);
 

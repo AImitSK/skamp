@@ -15,20 +15,31 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MessageInput } from '../MessageInput';
 import { TeamMember } from '@/types/international';
+import { Timestamp } from 'firebase/firestore';
 
 describe('MessageInput', () => {
   const mockTeamMembers: TeamMember[] = [
     {
+      id: 'tm-1',
       userId: 'user-1',
+      organizationId: 'org-test',
       displayName: 'Alice Smith',
       email: 'alice@example.com',
       role: 'member',
+      status: 'active',
+      invitedAt: Timestamp.now(),
+      invitedBy: 'admin-1',
     },
     {
+      id: 'tm-2',
       userId: 'user-2',
+      organizationId: 'org-test',
       displayName: 'Bob Johnson',
       email: 'bob@example.com',
       role: 'member',
+      status: 'active',
+      invitedAt: Timestamp.now(),
+      invitedBy: 'admin-1',
     },
   ];
 

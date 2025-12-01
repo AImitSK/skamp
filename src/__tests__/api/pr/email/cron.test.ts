@@ -158,30 +158,42 @@ describe('POST /api/pr/email/cron', () => {
           userId: 'user-123',
           campaignId: 'campaign-123',
           draft: {
-            content: { signatureId: 'sig-123' },
-            recipients: { listIds: [], manual: [], totalCount: 10 },
-            sender: { type: 'contact', contactData: { email: 'sender@example.com' } },
-            metadata: { subject: 'Test' }
+            campaignId: 'campaign-123',
+            campaignTitle: 'Test Campaign',
+            content: { body: '', signatureId: 'sig-123' },
+            recipients: { listIds: [], listNames: [], manual: [], totalCount: 10, validCount: 10 },
+            emailAddressId: 'email-addr-123',
+            metadata: { subject: 'Test', preheader: '' },
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
           },
           sendAt: Timestamp.now(),
           timezone: 'Europe/Berlin',
           status: 'pending',
-          attempts: 0
+          attempts: 0,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         }),
         createMockDoc('email-2', {
           organizationId: 'org-123',
           userId: 'user-123',
           campaignId: 'campaign-456',
           draft: {
-            content: {},
-            recipients: { listIds: [], manual: [], totalCount: 5 },
-            sender: { type: 'manual', manual: { email: 'sender@example.com' } },
-            metadata: { subject: 'Test 2' }
+            campaignId: 'campaign-456',
+            campaignTitle: 'Test Campaign 2',
+            content: { body: '' },
+            recipients: { listIds: [], listNames: [], manual: [], totalCount: 5, validCount: 5 },
+            emailAddressId: 'email-addr-456',
+            metadata: { subject: 'Test 2', preheader: '' },
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
           },
           sendAt: Timestamp.now(),
           timezone: 'Europe/Berlin',
           status: 'pending',
-          attempts: 0
+          attempts: 0,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         })
       ];
 
@@ -211,14 +223,20 @@ describe('POST /api/pr/email/cron', () => {
         userId: 'user-123',
         campaignId: 'campaign-123',
         draft: {
-          content: {},
-          recipients: { listIds: [], manual: [], totalCount: 10 },
-          sender: { type: 'contact', contactData: { email: 'sender@example.com' } },
-          metadata: { subject: 'Test' }
+          campaignId: 'campaign-123',
+          campaignTitle: 'Test Campaign',
+          content: { body: '' },
+          recipients: { listIds: [], listNames: [], manual: [], totalCount: 10, validCount: 10 },
+          emailAddressId: 'email-addr-123',
+          metadata: { subject: 'Test', preheader: '' },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         },
         sendAt: Timestamp.now(),
         status: 'pending',
-        attempts: 0
+        attempts: 0,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       });
 
       mockGet.mockResolvedValue({ empty: false, docs: [mockDoc] });
@@ -254,14 +272,20 @@ describe('POST /api/pr/email/cron', () => {
         userId: 'user-123',
         campaignId: 'campaign-123',
         draft: {
-          content: {},
-          recipients: { listIds: [], manual: [], totalCount: 10 },
-          sender: { type: 'contact', contactData: { email: 'sender@example.com' } },
-          metadata: { subject: 'Test' }
+          campaignId: 'campaign-123',
+          campaignTitle: 'Test Campaign',
+          content: { body: '' },
+          recipients: { listIds: [], listNames: [], manual: [], totalCount: 10, validCount: 10 },
+          emailAddressId: 'email-addr-123',
+          metadata: { subject: 'Test', preheader: '' },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         },
         sendAt: Timestamp.now(),
         status: 'pending',
-        attempts: 0
+        attempts: 0,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       });
 
       mockGet.mockResolvedValue({ empty: false, docs: [mockDoc] });
@@ -285,14 +309,20 @@ describe('POST /api/pr/email/cron', () => {
         userId: 'user-123',
         campaignId: 'campaign-123',
         draft: {
-          content: {},
-          recipients: { listIds: [], manual: [], totalCount: 10 },
-          sender: { type: 'contact', contactData: { email: 'sender@example.com' } },
-          metadata: { subject: 'Test' }
+          campaignId: 'campaign-123',
+          campaignTitle: 'Test Campaign',
+          content: { body: '' },
+          recipients: { listIds: [], listNames: [], manual: [], totalCount: 10, validCount: 10 },
+          emailAddressId: 'email-addr-123',
+          metadata: { subject: 'Test', preheader: '' },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         },
         sendAt: Timestamp.now(),
         status: 'pending',
-        attempts: 2 // Bereits 2 Versuche
+        attempts: 2, // Bereits 2 Versuche
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       });
 
       mockGet.mockResolvedValue({ empty: false, docs: [mockDoc] });
@@ -315,14 +345,20 @@ describe('POST /api/pr/email/cron', () => {
         userId: 'user-123',
         campaignId: 'campaign-123',
         draft: {
-          content: {},
-          recipients: { listIds: [], manual: [], totalCount: 10 },
-          sender: { type: 'contact', contactData: { email: 'sender@example.com' } },
-          metadata: { subject: 'Test' }
+          campaignId: 'campaign-123',
+          campaignTitle: 'Test Campaign',
+          content: { body: '' },
+          recipients: { listIds: [], listNames: [], manual: [], totalCount: 10, validCount: 10 },
+          emailAddressId: 'email-addr-123',
+          metadata: { subject: 'Test', preheader: '' },
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         },
         sendAt: Timestamp.now(),
         status: 'pending',
-        attempts: 0
+        attempts: 0,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       });
 
       mockGet.mockResolvedValue({ empty: false, docs: [mockDoc] });

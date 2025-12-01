@@ -1,4 +1,5 @@
 // src/app/dashboard/contacts/crm/__tests__/integration/crm-contacts-flow.test.tsx
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ContactsPage from '../../contacts/page';
@@ -37,27 +38,28 @@ const mockContacts: ContactEnhanced[] = [
   {
     id: '1',
     displayName: 'Max Mustermann',
-    firstName: 'Max',
-    lastName: 'Mustermann',
-    email: 'max@test.com',
+    name: {
+      firstName: 'Max',
+      lastName: 'Mustermann',
+    },
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
   },
   {
     id: '2',
     displayName: 'Erika Musterfrau',
-    firstName: 'Erika',
-    lastName: 'Musterfrau',
-    email: 'erika@test.com',
-    isJournalist: true,
+    name: {
+      firstName: 'Erika',
+      lastName: 'Musterfrau',
+    },
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    mediaProfile: {
+      isJournalist: true,
+      publicationIds: [],
+    },
   },
 ];
 
@@ -102,13 +104,13 @@ describe('CRM Contacts CRUD Flow', () => {
     contactsEnhancedService.create.mockResolvedValue({
       id: '3',
       displayName: 'New Contact',
-      firstName: 'New',
-      lastName: 'Contact',
+      name: {
+        firstName: 'New',
+        lastName: 'Contact',
+      },
       organizationId: 'test-org-id',
       createdBy: 'test-user',
       updatedBy: 'test-user',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     const createButton = screen.getByText(/Neu hinzufügen/i);

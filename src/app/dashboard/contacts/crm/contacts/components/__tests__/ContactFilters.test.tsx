@@ -5,7 +5,7 @@ import { Tag } from '@/types/crm';
 import { ContactEnhanced, CompanyEnhanced } from '@/types/crm-enhanced';
 
 const mockTags: Tag[] = [
-  { id: 'tag-1', name: 'VIP', color: 'red', organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1', updatedBy: 'user-1' },
+  { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1' },
 ];
 
 const mockCompanyOptions = [
@@ -17,13 +17,12 @@ const mockContacts: ContactEnhanced[] = [
   {
     id: '1',
     displayName: 'Max Mustermann',
-    firstName: 'Max',
-    lastName: 'Mustermann',
+    name: {
+      firstName: 'Max',
+      lastName: 'Mustermann',
+    },
     organizationId: 'org-1',
     createdBy: 'user-1',
-    updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
     tagIds: ['tag-1'], // Tag hinzufügen damit er im Filter erscheint
   },
 ];

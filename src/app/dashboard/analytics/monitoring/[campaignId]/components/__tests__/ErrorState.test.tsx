@@ -45,7 +45,7 @@ describe('ErrorState', () => {
 
       render(<ErrorState error={error} onRetry={mockOnRetry} />);
 
-      expect(ErrorState.type).toBeDefined();
+      expect((ErrorState as any).$$typeof).toBeDefined();
     });
   });
 });

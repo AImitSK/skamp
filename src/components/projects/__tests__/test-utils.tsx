@@ -8,30 +8,39 @@ import { Timestamp } from 'firebase/firestore';
 // Test Data Factories
 export const createMockTask = (overrides: Partial<ProjectTask> = {}): ProjectTask => ({
   id: 'test-task-1',
-  userId: 'user-123',
+  userId: 'pm-user-123',
   organizationId: 'org-123',
   projectId: 'project-123',
-  assignedUserId: 'user-123',
+  assignedUserId: 'pm-user-123',
   title: 'Test Task',
   description: 'Test Description',
   status: 'pending',
   priority: 'medium',
   progress: 50,
   dueDate: Timestamp.fromDate(new Date('2024-12-25')),
+  isAllDay: true,
   isOverdue: false,
   daysUntilDue: 5,
   overdueBy: 0,
+  createdAt: Timestamp.fromDate(new Date('2024-01-01')),
+  updatedAt: Timestamp.fromDate(new Date('2024-01-02')),
   ...overrides
 });
 
 export const createMockTeamMember = (overrides: Partial<TeamMember> = {}): TeamMember => ({
   id: 'member-1',
   userId: 'user-123',
+  organizationId: 'org-123',
   displayName: 'John Doe',
   email: 'john@example.com',
   photoUrl: 'https://example.com/john.jpg',
   role: 'member',
-  permissions: [],
+  customPermissions: [],
+  status: 'active',
+  invitedAt: Timestamp.fromDate(new Date('2024-01-01')),
+  invitedBy: 'admin-user-123',
+  joinedAt: Timestamp.fromDate(new Date('2024-01-02')),
+  lastActiveAt: Timestamp.fromDate(new Date()),
   ...overrides
 });
 
@@ -39,24 +48,28 @@ export const createMockTeamMember = (overrides: Partial<TeamMember> = {}): TeamM
 export const mockTasksDataSet = {
   pending: createMockTask({
     id: 'pending-task',
+    title: 'Pending Test Task',
     status: 'pending',
     priority: 'high',
     progress: 25
   }),
   inProgress: createMockTask({
     id: 'in-progress-task',
+    title: 'In Progress Test Task',
     status: 'in_progress',
     priority: 'medium',
     progress: 75
   }),
   completed: createMockTask({
     id: 'completed-task',
+    title: 'Completed Test Task',
     status: 'completed',
     priority: 'low',
     progress: 100
   }),
   overdue: createMockTask({
     id: 'overdue-task',
+    title: 'Overdue Test Task',
     status: 'pending',
     priority: 'urgent',
     progress: 30,
@@ -67,6 +80,7 @@ export const mockTasksDataSet = {
   }),
   dueToday: createMockTask({
     id: 'due-today-task',
+    title: 'Due Today Test Task',
     status: 'pending',
     priority: 'high',
     progress: 80,
@@ -77,6 +91,7 @@ export const mockTasksDataSet = {
   }),
   noDueDate: createMockTask({
     id: 'no-due-date-task',
+    title: 'No Due Date Test Task',
     status: 'pending',
     priority: 'medium',
     progress: 60,
@@ -91,19 +106,25 @@ export const mockTeamMembersDataSet = {
   projectManager: createMockTeamMember({
     id: 'pm-1',
     userId: 'pm-user-123',
+    organizationId: 'org-123',
     displayName: 'Project Manager',
-    role: 'manager'
+    email: 'pm@example.com',
+    role: 'admin'
   }),
   developer: createMockTeamMember({
     id: 'dev-1',
     userId: 'dev-user-123',
+    organizationId: 'org-123',
     displayName: 'Developer One',
+    email: 'dev@example.com',
     role: 'member'
   }),
   designer: createMockTeamMember({
     id: 'design-1',
     userId: 'design-user-123',
+    organizationId: 'org-123',
     displayName: 'Designer One',
+    email: 'designer@example.com',
     role: 'member'
   })
 };

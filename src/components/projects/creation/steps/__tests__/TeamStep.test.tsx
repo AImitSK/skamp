@@ -50,9 +50,9 @@ describe('TeamStep', () => {
   };
 
   const mockTeamMembers = [
-    { id: 'member-1', displayName: 'Test User 1', role: 'Admin', userId: 'user-1' },
-    { id: 'member-2', displayName: 'Test User 2', role: 'Editor', userId: 'user-2' },
-    { id: 'member-3', displayName: 'Test User 3', role: 'Viewer', userId: 'user-3' }
+    { id: 'member-1', displayName: 'Test User 1', email: 'user1@test.com', role: 'Admin' },
+    { id: 'member-2', displayName: 'Test User 2', email: 'user2@test.com', role: 'Editor' },
+    { id: 'member-3', displayName: 'Test User 3', email: 'user3@test.com', role: 'Viewer' }
   ];
 
   const mockCreationOptions = {

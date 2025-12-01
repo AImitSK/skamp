@@ -3,6 +3,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useKIAnalysis } from './useKIAnalysis';
 import { apiClient } from '@/lib/api/api-client';
+import type { KeywordMetrics } from '../types';
 
 // Mock apiClient
 jest.mock('@/lib/api/api-client', () => ({
@@ -81,7 +82,7 @@ describe('useKIAnalysis', () => {
 
     const { result } = renderHook(() => useKIAnalysis());
 
-    let metrics;
+    let metrics: Partial<KeywordMetrics> | undefined;
     await act(async () => {
       metrics = await result.current.analyzeKeyword('Innovation', 'Test text');
     });
@@ -98,7 +99,7 @@ describe('useKIAnalysis', () => {
 
     const { result } = renderHook(() => useKIAnalysis());
 
-    let metrics;
+    let metrics: Partial<KeywordMetrics> | undefined;
     await act(async () => {
       metrics = await result.current.analyzeKeyword('Innovation', 'Test text');
     });
@@ -116,7 +117,7 @@ describe('useKIAnalysis', () => {
 
     const { result } = renderHook(() => useKIAnalysis());
 
-    let metrics;
+    let metrics: Partial<KeywordMetrics> | undefined;
     await act(async () => {
       metrics = await result.current.analyzeKeyword('Innovation', 'Test text');
     });
@@ -194,7 +195,7 @@ describe('useKIAnalysis', () => {
 
     const { result } = renderHook(() => useKIAnalysis());
 
-    let metrics;
+    let metrics: Partial<KeywordMetrics> | undefined;
     await act(async () => {
       metrics = await result.current.analyzeKeyword('Innovation', 'Test text');
     });
@@ -210,7 +211,7 @@ describe('useKIAnalysis', () => {
 
     const { result } = renderHook(() => useKIAnalysis());
 
-    let metrics;
+    let metrics: Partial<KeywordMetrics> | undefined;
     await act(async () => {
       metrics = await result.current.analyzeKeyword('Innovation', 'Test text');
     });

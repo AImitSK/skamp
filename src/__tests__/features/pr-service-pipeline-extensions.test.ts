@@ -2,12 +2,12 @@
 import { jest } from '@jest/globals';
 
 // Firebase Mocks
-const mockGetDoc = jest.fn();
-const mockGetDocs = jest.fn();
-const mockCollection = jest.fn();
-const mockQuery = jest.fn();
-const mockWhere = jest.fn();
-const mockOrderBy = jest.fn();
+const mockGetDoc = jest.fn() as jest.Mock<any>;
+const mockGetDocs = jest.fn() as jest.Mock<any>;
+const mockCollection = jest.fn() as jest.Mock<any>;
+const mockQuery = jest.fn() as jest.Mock<any>;
+const mockWhere = jest.fn() as jest.Mock<any>;
+const mockOrderBy = jest.fn() as jest.Mock<any>;
 
 jest.mock('firebase/firestore', () => ({
   collection: mockCollection,
@@ -23,21 +23,21 @@ jest.mock('@/lib/firebase/client-init', () => ({
 }));
 
 // Mock prService.getById und prService.update für updatePipelineStage Test
-const mockPrServiceGetById = jest.fn();
-const mockPrServiceUpdate = jest.fn();
+const mockPrServiceGetById = jest.fn() as jest.Mock<any>;
+const mockPrServiceUpdate = jest.fn() as jest.Mock<any>;
 
 // Vollständiger Mock des gesamten prService Moduls
 jest.mock('@/lib/firebase/pr-service', () => {
-  const originalModule = jest.requireActual('@/lib/firebase/pr-service');
+  const originalModule = jest.requireActual('@/lib/firebase/pr-service') as any;
   return {
     ...originalModule,
     prService: {
-      ...originalModule.prService,
+      ...(originalModule.prService || {}),
       getById: mockPrServiceGetById,
       update: mockPrServiceUpdate,
       // Pipeline-Extensions - Diese müssen wir direkt importieren
-      getByProjectId: originalModule.prService.getByProjectId,
-      updatePipelineStage: originalModule.prService.updatePipelineStage
+      getByProjectId: originalModule.prService?.getByProjectId,
+      updatePipelineStage: originalModule.prService?.updatePipelineStage
     }
   };
 });
@@ -62,7 +62,11 @@ describe('PR Service - Pipeline Extensions', () => {
     projectId: mockProjectId,
     pipelineStage: 'creation' as PipelineStage,
     status: 'draft',
-    content: 'Test Content',
+    contentHtml: 'Test Content',
+    distributionListId: '',
+    distributionListName: '',
+    recipientCount: 0,
+    approvalRequired: false,
     createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
     updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any
   };
@@ -72,9 +76,9 @@ describe('PR Service - Pipeline Extensions', () => {
     
     // Standard Mock-Setups
     mockCollection.mockReturnValue({ collection: 'pr_campaigns' });
-    mockQuery.mockImplementation((...args) => ({ query: args }));
-    mockWhere.mockImplementation((field, op, value) => ({ where: [field, op, value] }));
-    mockOrderBy.mockImplementation((field, direction) => ({ orderBy: [field, direction] }));
+    mockQuery.mockImplementation((...args: any[]) => ({ query: args }));
+    mockWhere.mockImplementation((field: string, op: string, value: any) => ({ where: [field, op, value] }));
+    mockOrderBy.mockImplementation((field: string, direction: string) => ({ orderBy: [field, direction] }));
   });
 
   describe('getByProjectId', () => {
@@ -113,7 +117,7 @@ describe('PR Service - Pipeline Extensions', () => {
     });
 
     it('sollte leeres Array bei Firebase-Fehlern zurückgeben', async () => {
-      mockGetDocs.mkRejectedValue(new Error('Firestore network error'));
+      mockGetDocs.mockRejectedValue(new Error('Firestore network error'));
 
       const result = await prService.getByProjectId(mockProjectId, mockContext);
 
@@ -183,10 +187,10 @@ describe('PR Service - Pipeline Extensions', () => {
       const result = await prService.getByProjectId(mockProjectId, mockContext);
 
       expect(result).toHaveLength(4);
-      expect(result.find(c => c.pipelineStage === 'creation')).toBeDefined();
-      expect(result.find(c => c.pipelineStage === 'review')).toBeDefined();
-      expect(result.find(c => c.pipelineStage === 'approval')).toBeDefined();
-      expect(result.find(c => c.pipelineStage === 'distribution')).toBeDefined();
+      expect(result.find(c => c.pipelineStage === 'creation' as PipelineStage)).toBeDefined();
+      expect(result.find(c => c.pipelineStage === 'review' as PipelineStage)).toBeDefined();
+      expect(result.find(c => c.pipelineStage === 'approval' as PipelineStage)).toBeDefined();
+      expect(result.find(c => c.pipelineStage === 'distribution' as PipelineStage)).toBeDefined();
     });
 
     it('sollte mit extremen Datenmengen umgehen können', async () => {
@@ -256,7 +260,7 @@ describe('PR Service - Pipeline Extensions', () => {
     });
 
     it('sollte alle gültigen Pipeline-Stages handhaben', async () => {
-      const validStages: PipelineStage[] = ['creation', 'review', 'approval', 'distribution', 'completed'];
+      const validStages = ['creation', 'review', 'approval', 'distribution', 'completed'] as const;
 
       for (const stage of validStages) {
         jest.clearAllMocks();
@@ -282,7 +286,7 @@ describe('PR Service - Pipeline Extensions', () => {
 
     it('sollte Firebase-GetById-Fehler weiterwerfen', async () => {
       const getByIdError = new Error('Firebase getById failed');
-      mockPrServiceGetById.mkRejectedValue(getByIdError);
+      mockPrServiceGetById.mockRejectedValue(getByIdError);
 
       await expect(
         prService.updatePipelineStage(mockCampaignId, newStage, mockContext)
@@ -319,7 +323,7 @@ describe('PR Service - Pipeline Extensions', () => {
     });
 
     it('sollte mit gleichzeitigen Stage-Updates umgehen (Race Conditions)', async () => {
-      const stages: PipelineStage[] = ['review', 'approval', 'distribution'];
+      const stages = ['review', 'approval', 'distribution'] as const;
       
       // Simuliere gleichzeitige Updates
       const updatePromises = stages.map(stage =>
@@ -415,7 +419,7 @@ describe('PR Service - Pipeline Extensions', () => {
       expect(campaigns).toHaveLength(50);
 
       // 2. Aktualisiere erste 10 Kampagnen parallel
-      mockPrServiceGetById.mockImplementation((id) => 
+      mockPrServiceGetById.mockImplementation((id: string) =>
         Promise.resolve(campaigns.find(c => c.id === id) || null)
       );
       mockPrServiceUpdate.mockResolvedValue(undefined);

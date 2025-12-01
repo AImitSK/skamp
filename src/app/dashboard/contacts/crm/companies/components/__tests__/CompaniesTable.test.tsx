@@ -8,6 +8,7 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '1',
     name: 'Test AG',
+    officialName: 'Test Aktiengesellschaft',
     type: 'customer',
     status: 'active',
     organizationId: 'org-1',
@@ -19,6 +20,7 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '2',
     name: 'Demo GmbH',
+    officialName: 'Demo Gesellschaft mit beschränkter Haftung',
     type: 'partner',
     status: 'inactive',
     organizationId: 'org-1',
@@ -30,7 +32,7 @@ const mockCompanies: CompanyEnhanced[] = [
 ];
 
 const mockTags: Tag[] = [
-  { id: 'tag-1', name: 'VIP', color: 'red', organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1', updatedBy: 'user-1' },
+  { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 // Mock functions for required props

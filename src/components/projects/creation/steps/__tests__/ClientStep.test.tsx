@@ -37,8 +37,8 @@ describe('ClientStep', () => {
 
   const mockCreationOptions = {
     availableClients: [
-      { id: 'client-1', name: 'Test Client 1', type: 'customer' },
-      { id: 'client-2', name: 'Test Client 2', type: 'publisher' }
+      { id: 'client-1', name: 'Test Client 1', type: 'customer', contactCount: 0 },
+      { id: 'client-2', name: 'Test Client 2', type: 'publisher', contactCount: 0 }
     ],
     availableTeamMembers: [],
     availableTemplates: [],

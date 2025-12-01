@@ -12,9 +12,9 @@ describe('Alert Component', () => {
 
   it('renders different alert types with correct styling', () => {
     const types = ['info', 'success', 'warning', 'error'] as const;
-    
+
     types.forEach(type => {
-      const { unmount } = render(<Alert type={type} title={`${type} alert`} />);
+      const { unmount } = render(<Alert type={type} title={`${type} alert`} message="Test message" />);
       expect(screen.getByText(`${type} alert`)).toBeInTheDocument();
       unmount();
     });
@@ -22,25 +22,25 @@ describe('Alert Component', () => {
 
   it('renders action button when provided', () => {
     const mockAction = jest.fn();
-    
+
     render(
-      <Alert 
-        title="Test Title" 
-        action={{ label: 'Click me', onClick: mockAction }} 
+      <Alert
+        title="Test Title"
+        message="Test message"
+        action={{ label: 'Click me', onClick: mockAction }}
       />
     );
-    
+
     const actionButton = screen.getByText('Click me');
     expect(actionButton).toBeInTheDocument();
-    
+
     fireEvent.click(actionButton);
     expect(mockAction).toHaveBeenCalledTimes(1);
   });
 
-  it('renders without message when not provided', () => {
-    render(<Alert title="Title only" />);
-    
-    expect(screen.getByText('Title only')).toBeInTheDocument();
-    expect(screen.queryByText('undefined')).not.toBeInTheDocument();
+  it('renders without title when not provided', () => {
+    render(<Alert message="Message only" />);
+
+    expect(screen.getByText('Message only')).toBeInTheDocument();
   });
 });

@@ -57,7 +57,12 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
       storageFolder: 'internal-pdfs/campaign-123'
     },
     createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now()
+    updatedAt: Timestamp.now(),
+    // Fehlende required Properties ergänzt
+    mainContent: '<p>Hauptinhalt der Kampagne</p>',
+    boilerplateSections: [],
+    distributionListIds: [],
+    distributionListNames: []
   };
 
   beforeEach(() => {
@@ -67,11 +72,11 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
 
   describe('Pipeline-Stadium Rendering', () => {
     it('sollte Creation-Stadium korrekt anzeigen', () => {
-      const campaign = { ...baseCampaign, pipelineStage: 'creation' as const };
-      
+      const campaign: PRCampaign = { ...baseCampaign, pipelineStage: 'creation' };
+
       render(
-        <PipelinePDFViewer 
-          campaign={campaign} 
+        <PipelinePDFViewer
+          campaign={campaign}
           organizationId={mockOrganizationId}
           onPDFGenerated={mockOnPDFGenerated}
         />
@@ -83,11 +88,11 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     });
 
     it('sollte Review-Stadium korrekt anzeigen', () => {
-      const campaign = { ...baseCampaign, pipelineStage: 'internal_approval' as const };
-      
+      const campaign: PRCampaign = { ...baseCampaign, pipelineStage: 'internal_approval' as any };
+
       render(
-        <PipelinePDFViewer 
-          campaign={campaign} 
+        <PipelinePDFViewer
+          campaign={campaign}
           organizationId={mockOrganizationId}
           onPDFGenerated={mockOnPDFGenerated}
         />
@@ -102,11 +107,11 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     });
 
     it('sollte Approval-Stadium korrekt anzeigen', () => {
-      const campaign = { ...baseCampaign, pipelineStage: 'customer_approval' as const };
-      
+      const campaign: PRCampaign = { ...baseCampaign, pipelineStage: 'customer_approval' as any };
+
       render(
-        <PipelinePDFViewer 
-          campaign={campaign} 
+        <PipelinePDFViewer
+          campaign={campaign}
           organizationId={mockOrganizationId}
           onPDFGenerated={mockOnPDFGenerated}
         />

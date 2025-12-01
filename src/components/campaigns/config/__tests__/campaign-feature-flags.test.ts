@@ -6,18 +6,19 @@ import {
   isUploadTypeSmartRouterEnabled,
   getUIEnhancements,
   getMigrationStatus,
-  createFeatureFlagContext
+  createFeatureFlagContext,
+  type FeatureFlagContext
 } from '../campaign-feature-flags';
 
 describe('CampaignFeatureFlags', () => {
   
   describe('getFeatureFlags', () => {
     it('sollte Development Flags zurückgeben', () => {
-      const context = createFeatureFlagContext({
+      const context: FeatureFlagContext = {
         organizationId: 'org123',
         userId: 'user123',
         environment: 'development'
-      });
+      };
 
       const flags = campaignFeatureFlags.getFeatureFlags(context);
 
@@ -28,11 +29,11 @@ describe('CampaignFeatureFlags', () => {
     });
 
     it('sollte Production Flags zurückgeben', () => {
-      const context = createFeatureFlagContext({
+      const context: FeatureFlagContext = {
         organizationId: 'org123',
         userId: 'user123',
         environment: 'production'
-      });
+      };
 
       const flags = campaignFeatureFlags.getFeatureFlags(context);
 

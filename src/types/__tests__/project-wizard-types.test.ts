@@ -494,14 +494,13 @@ describe('Project Wizard Types - Interface Compliance Tests', () => {
     it('sollte alle PipelineStage-Werte akzeptieren', () => {
       const stages: PipelineStage[] = [
         'ideas_planning',
-        'creation', 
-        'internal_approval',
-        'customer_approval',
+        'creation',
+        'approval',
         'distribution',
         'monitoring',
         'completed'
       ];
-      
+
       stages.forEach(stage => {
         const task: Partial<ProjectTask> = {
           stage

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { LoadingState } from '../LoadingState';
 
 describe('LoadingState', () => {
@@ -21,7 +22,7 @@ describe('LoadingState', () => {
     it('should be a memoized component', () => {
       render(<LoadingState />);
 
-      expect(LoadingState.type).toBeDefined();
+      expect((LoadingState as any).type).toBeDefined();
     });
   });
 });

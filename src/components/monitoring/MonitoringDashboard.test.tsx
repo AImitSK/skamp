@@ -117,7 +117,7 @@ const mockSends: EmailCampaignSend[] = [
 const mockAVESettings = {
   id: 'ave-123',
   organizationId: 'org-123',
-  factors: { print: 5.0, online: 3.0, broadcast: 4.0, blog: 7.0 },
+  factors: { print: 5.0, online: 3.0, broadcast: 4.0, audio: 2.0 },
   sentimentMultipliers: { positive: 1.2, neutral: 1.0, negative: 0.8 },
   updatedBy: 'user-123',
   createdAt: createTimestamp(new Date()) as any,

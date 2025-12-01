@@ -34,8 +34,9 @@ const mockTeamMembers: TeamMember[] = [
     email: 'john@example.com',
     organizationId: 'org1',
     role: 'member',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    status: 'active',
+    invitedAt: new Date('2024-01-01') as any,
+    invitedBy: 'owner1',
   },
   {
     id: 'member2',
@@ -44,31 +45,34 @@ const mockTeamMembers: TeamMember[] = [
     email: 'jane@example.com',
     organizationId: 'org1',
     role: 'member',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    status: 'active',
+    invitedAt: new Date('2024-01-01') as any,
+    invitedBy: 'owner1',
   },
 ];
 
 const mockProjects: Project[] = [
   {
     id: 'proj1',
+    userId: 'currentUser',
     title: 'Test Project 1',
     status: 'active',
     currentStage: 'creation',
     customer: { id: 'c1', name: 'Customer A' },
     assignedTo: ['user1', 'user2'],
     organizationId: 'org1',
-    createdAt: '2024-01-15T10:00:00.000Z',
-    updatedAt: '2024-01-20T10:00:00.000Z',
+    createdAt: '2024-01-15T10:00:00.000Z' as any,
+    updatedAt: '2024-01-20T10:00:00.000Z' as any,
   },
   {
     id: 'proj2',
+    userId: 'currentUser',
     title: 'Archived Project',
     status: 'archived',
     currentStage: 'completed',
     organizationId: 'org1',
-    createdAt: '2024-01-10T10:00:00.000Z',
-    updatedAt: '2024-01-18T10:00:00.000Z',
+    createdAt: '2024-01-10T10:00:00.000Z' as any,
+    updatedAt: '2024-01-18T10:00:00.000Z' as any,
   },
 ];
 
@@ -238,8 +242,9 @@ describe('ProjectTable', () => {
           email: 'bob@example.com',
           organizationId: 'org1',
           role: 'member',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          status: 'active',
+          invitedAt: new Date('2024-01-01') as any,
+          invitedBy: 'owner1',
         },
         {
           id: 'member4',
@@ -248,8 +253,9 @@ describe('ProjectTable', () => {
           email: 'alice@example.com',
           organizationId: 'org1',
           role: 'member',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          status: 'active',
+          invitedAt: new Date('2024-01-01') as any,
+          invitedBy: 'owner1',
         },
         {
           id: 'member5',
@@ -258,8 +264,9 @@ describe('ProjectTable', () => {
           email: 'charlie@example.com',
           organizationId: 'org1',
           role: 'member',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          status: 'active',
+          invitedAt: new Date('2024-01-01') as any,
+          invitedBy: 'owner1',
         },
       ];
 

@@ -40,8 +40,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
     currentStage: 'creation',
     customer: {
       id: mockClientId,
-      name: 'Test Client GmbH',
-      email: 'contact@testclient.de'
+      name: 'Test Client GmbH'
     },
     linkedCampaigns: [],
     createdAt: Timestamp.now(),
@@ -51,15 +50,20 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
   const mockCampaign: PRCampaign = {
     id: mockCampaignId,
     title: 'Integration Test Kampagne',
-    mainContent: '<p>Dies ist der Hauptinhalt für den Integration Test mit ausreichend Text für PDF-Generation.</p>',
+    contentHtml: '<p>Dies ist der Hauptinhalt für den Integration Test mit ausreichend Text für PDF-Generation.</p>',
     organizationId: mockOrganizationId,
     userId: mockUserId,
     status: 'draft',
     projectId: mockProjectId,
     pipelineStage: 'creation',
+    distributionListId: 'list-default',
+    distributionListName: 'Test-Verteilerliste',
+    recipientCount: 0,
+    approvalRequired: false,
     internalPDFs: {
       enabled: true,
       autoGenerate: true,
+      storageFolder: 'pdf-versions',
       versionCount: 0,
       lastGenerated: undefined
     },
@@ -68,13 +72,14 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         id: 'section-1',
         customTitle: 'Unternehmensinfo',
         content: '<p>Über das Test-Unternehmen</p>',
-        type: 'company'
+        type: 'boilerplate',
+        position: 'footer',
+        order: 0,
+        isLocked: false
       }
     ],
     keyVisual: {
-      url: 'https://example.com/test-visual.jpg',
-      alt: 'Test Visual',
-      caption: 'Integration Test Visual'
+      url: 'https://example.com/test-visual.jpg'
     },
     clientName: 'Test Client GmbH',
     templateId: 'modern-template',
@@ -109,9 +114,13 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
 
     mockMediaService.uploadMedia.mockResolvedValue({
       downloadUrl: 'https://storage.googleapis.com/bucket/uploaded-integration.pdf',
-      path: 'pdf-versions/uploaded-integration.pdf',
-      fileSize: 102400,
-      metadata: {}
+      fileName: 'uploaded-integration.pdf',
+      fileType: 'application/pdf',
+      userId: 'pdf-system',
+      storagePath: 'pdf-versions/uploaded-integration.pdf',
+      metadata: {
+        fileSize: 102400
+      }
     });
 
     mockProjectService.getById.mockResolvedValue(mockProject);
@@ -134,6 +143,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         internalPDFs: {
           enabled: true,
           autoGenerate: true,
+          storageFolder: 'pdf-versions',
           versionCount: 0
         }
       };
@@ -218,6 +228,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
           internalPDFs: {
             enabled: true,
             autoGenerate: true,
+            storageFolder: 'pdf-versions',
             versionCount: i + 1 // Increasing version count
           }
         };
@@ -254,7 +265,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
 
       const campaignWithRetry = {
         ...mockCampaign,
-        internalPDFs: { enabled: true, autoGenerate: true, versionCount: 0 }
+        internalPDFs: { enabled: true, autoGenerate: true, storageFolder: 'pdf-versions', versionCount: 0 }
       };
 
       // 2. handleCampaignSave sollte nicht crashen bei PDF-Fehler
@@ -332,9 +343,13 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         .mockRejectedValueOnce(new Error('Storage temporarily unavailable'))
         .mockResolvedValue({
           downloadUrl: 'https://storage.googleapis.com/bucket/retry-upload.pdf',
-          path: 'pdf-versions/retry-upload.pdf',
-          fileSize: 51200,
-          metadata: {}
+          fileName: 'retry-upload.pdf',
+          fileType: 'application/pdf',
+          userId: 'pdf-system',
+          storagePath: 'pdf-versions/retry-upload.pdf',
+          metadata: {
+            fileSize: 51200
+          }
         });
 
       mockPDFVersionsService.generatePipelinePDF.mockImplementation(
@@ -482,11 +497,14 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
     it('sollte Memory-effiziente Verarbeitung großer Pipeline-Workflows testen', async () => {
       const largeCampaign = {
         ...mockCampaign,
-        mainContent: '<p>' + 'Lorem ipsum '.repeat(5000) + '</p>',
+        contentHtml: '<p>' + 'Lorem ipsum '.repeat(5000) + '</p>',
         boilerplateSections: Array.from({ length: 20 }, (_, i) => ({
           id: `section-${i}`,
           content: `<p>Large section ${i} content</p>`,
-          type: 'main' as const
+          type: 'main' as const,
+          position: 'custom' as const,
+          order: i,
+          isLocked: false
         }))
       };
 
@@ -607,7 +625,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
       // Setup: Campaign mit initial state
       const initialCampaign = {
         ...mockCampaign,
-        internalPDFs: { enabled: true, autoGenerate: true, versionCount: 2 }
+        internalPDFs: { enabled: true, autoGenerate: true, storageFolder: 'pdf-versions', versionCount: 2 }
       };
 
       // Mock fehlgeschlagene PDF-Generation

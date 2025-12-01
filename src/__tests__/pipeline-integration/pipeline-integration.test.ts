@@ -21,8 +21,40 @@ const mockFirestoreOps = {
   Timestamp: { now: jest.fn(() => ({ seconds: 1234567890, nanoseconds: 0 })) }
 };
 
-jest.doMock('firebase/firestore', () => mockFirestoreOps);
-jest.doMock('@/lib/firebase/client-init', () => ({ db: { mockDb: true } }));
+// Service Mocks - Create mocks that will be returned by the factory functions
+const mockProjectService: any = {
+  create: jest.fn(),
+  getById: jest.fn(),
+  getAll: jest.fn(),
+  update: jest.fn(),
+  addLinkedCampaign: jest.fn(),
+  getLinkedCampaigns: jest.fn(),
+  delete: jest.fn()
+};
+
+const mockPrService: any = {
+  getById: jest.fn(),
+  update: jest.fn(),
+  getByProjectId: jest.fn(),
+  updatePipelineStage: jest.fn()
+};
+
+// Use jest.mock with factory functions that return the mocks
+jest.mock('firebase/firestore', () => ({
+  ...mockFirestoreOps
+}));
+
+jest.mock('@/lib/firebase/client-init', () => ({
+  db: { mockDb: true }
+}));
+
+jest.mock('@/lib/firebase/project-service', () => ({
+  projectService: mockProjectService
+}));
+
+jest.mock('@/lib/firebase/pr-service', () => ({
+  prService: mockPrService
+}));
 
 // React Testing Library Mocks
 const mockRender = jest.fn();
@@ -35,9 +67,9 @@ const mockScreen = {
   getAllByText: jest.fn()
 };
 const mockFireEvent = { change: jest.fn(), click: jest.fn(), focus: jest.fn() };
-const mockWaitFor = jest.fn((callback) => Promise.resolve(callback()));
+const mockWaitFor = jest.fn((callback: () => any) => Promise.resolve(callback())) as unknown as typeof import('@testing-library/react').waitFor;
 
-jest.doMock('@testing-library/react', () => ({
+jest.mock('@testing-library/react', () => ({
   render: mockRender,
   screen: mockScreen,
   fireEvent: mockFireEvent,
@@ -45,50 +77,24 @@ jest.doMock('@testing-library/react', () => ({
 }));
 
 // UI Component Mocks
-jest.doMock('@/components/ui/text', () => ({
+jest.mock('@/components/ui/text', () => ({
   Text: ({ children, className }: any) => ({ type: 'Text', props: { children, className } })
 }));
 
-jest.doMock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, plain, className }: any) => ({ 
-    type: 'Button', 
+jest.mock('@/components/ui/button', () => ({
+  Button: ({ children, onClick, plain, className }: any) => ({
+    type: 'Button',
     props: { children, onClick, plain, className },
     click: onClick
   })
 }));
 
-jest.doMock('@/components/ui/badge', () => ({
+jest.mock('@/components/ui/badge', () => ({
   Badge: ({ children, color }: any) => ({ type: 'Badge', props: { children, color } })
 }));
 
-jest.doMock('@heroicons/react/24/outline', () => ({
+jest.mock('@heroicons/react/24/outline', () => ({
   LinkIcon: ({ className }: any) => ({ type: 'LinkIcon', props: { className } })
-}));
-
-// Service Mocks
-const mockProjectService = {
-  create: jest.fn(),
-  getById: jest.fn(),
-  getAll: jest.fn(),
-  update: jest.fn(),
-  addLinkedCampaign: jest.fn(),
-  getLinkedCampaigns: jest.fn(),
-  delete: jest.fn()
-};
-
-const mockPrService = {
-  getById: jest.fn(),
-  update: jest.fn(),
-  getByProjectId: jest.fn(),
-  updatePipelineStage: jest.fn()
-};
-
-jest.doMock('@/lib/firebase/project-service', () => ({
-  projectService: mockProjectService
-}));
-
-jest.doMock('@/lib/firebase/pr-service', () => ({
-  prService: mockPrService
 }));
 
 // Types

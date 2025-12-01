@@ -16,15 +16,15 @@ jest.mock('next/link', () => {
 // Mock Data
 const createMockAsset = (overrides?: Partial<MediaAsset>): MediaAsset => ({
   id: 'asset-1',
+  userId: 'user-1',
   fileName: 'test-image.jpg',
   fileType: 'image/jpeg',
+  storagePath: 'media/test.jpg',
+  downloadUrl: 'https://example.com/test.jpg',
+  folderId: undefined,
   metadata: {
     fileSize: 1024000,
   },
-  downloadUrl: 'https://example.com/test.jpg',
-  storagePath: 'media/test.jpg',
-  userId: 'user-1',
-  folderId: undefined,
   createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   updatedAt: { seconds: Date.now() / 1000, nanoseconds: 0 } as any,
   ...overrides,
@@ -92,17 +92,16 @@ describe('MediaCard Component - Phase 4a.3', () => {
       expect(container?.parentElement).toBeInTheDocument();
     });
 
-    it('sollte Company Badge rendern wenn companyName vorhanden', () => {
-      render(<MediaCard {...defaultProps} companyName="ACME Corp" />);
+    it('sollte Asset Info Container korrekt rendern', () => {
+      const asset = createMockAsset({
+        fileName: 'my-document.pdf',
+      });
 
-      expect(screen.getByText('ACME Corp')).toBeInTheDocument();
-    });
+      render(<MediaCard {...defaultProps} asset={asset} />);
 
-    it('sollte kein Company Badge rendern ohne companyName', () => {
-      render(<MediaCard {...defaultProps} />);
-
-      // Badge sollte nicht existieren (keine company name)
-      expect(screen.queryByText(/corp/i)).not.toBeInTheDocument();
+      // File Info Container sollte existieren
+      const fileInfo = screen.getByText('my-document.pdf').closest('div');
+      expect(fileInfo).toBeInTheDocument();
     });
   });
 

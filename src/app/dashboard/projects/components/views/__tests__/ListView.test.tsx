@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import ListView from '../ListView';
 import { Project } from '@/types/project';
 import { TeamMember } from '@/types/international';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock child components
 jest.mock('../../tables/ProjectTable', () => {
@@ -43,29 +44,32 @@ const mockTeamMembers: TeamMember[] = [
     email: 'john@example.com',
     organizationId: 'org1',
     role: 'member',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    status: 'active',
+    invitedAt: Timestamp.fromDate(new Date('2024-01-01')),
+    invitedBy: 'admin1',
   },
 ];
 
 const mockProjects: Project[] = [
   {
     id: 'proj1',
+    userId: 'user1',
     title: 'Test Project 1',
     status: 'active',
     currentStage: 'creation',
     organizationId: 'org1',
-    createdAt: '2024-01-15T10:00:00.000Z',
-    updatedAt: '2024-01-20T10:00:00.000Z',
+    createdAt: Timestamp.fromDate(new Date('2024-01-15T10:00:00.000Z')),
+    updatedAt: Timestamp.fromDate(new Date('2024-01-20T10:00:00.000Z')),
   },
   {
     id: 'proj2',
+    userId: 'user1',
     title: 'Test Project 2',
     status: 'active',
-    currentStage: 'planning',
+    currentStage: 'ideas_planning',
     organizationId: 'org1',
-    createdAt: '2024-01-10T10:00:00.000Z',
-    updatedAt: '2024-01-18T10:00:00.000Z',
+    createdAt: Timestamp.fromDate(new Date('2024-01-10T10:00:00.000Z')),
+    updatedAt: Timestamp.fromDate(new Date('2024-01-18T10:00:00.000Z')),
   },
 ];
 

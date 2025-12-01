@@ -68,7 +68,7 @@ const mockProjects: Project[] = [
     id: 'project-3',
     title: 'Test Projekt 3',
     description: 'Beschreibung 3',
-    currentStage: 'internal_approval' as PipelineStage,
+    currentStage: 'approval' as PipelineStage,
     status: 'active',
     organizationId: 'org-1',
     userId: 'user-1',
@@ -98,8 +98,8 @@ const mockProjectUpdates: ProjectUpdate[] = [
     projectId: 'project-1',
     projectTitle: 'Test Projekt 1',
     action: 'moved',
-    fromStage: 'ideas_planning' as PipelineStage,
-    toStage: 'creation' as PipelineStage,
+    fromStage: 'ideas_planning',
+    toStage: 'creation',
     userId: 'user-1',
     userName: 'Test User 1',
     timestamp: mockTimestamp
@@ -128,7 +128,7 @@ const createMockUnsubscribe = () => jest.fn();
 // ========================================
 
 describe('useBoardRealtime', () => {
-  const mockOnSnapshot = onSnapshot as jest.MockedFunction<typeof onSnapshot>;
+  const mockOnSnapshot = onSnapshot as jest.MockedFunction<any>;
   const mockCollection = collection as jest.Mock;
   const mockQuery = query as jest.Mock;
   const mockWhere = where as jest.Mock;
@@ -136,15 +136,15 @@ describe('useBoardRealtime', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Standard Mock Setup
     mockCollection.mockReturnValue({});
     mockQuery.mockReturnValue({});
     mockWhere.mockReturnValue({});
     mockOrderBy.mockReturnValue({});
-    
+
     // Standard onSnapshot Mock - erfolgreicher Fall
-    mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+    mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
       // Simulate successful snapshot
       setTimeout(() => {
         onNext(createMockSnapshot(mockProjects));
@@ -184,7 +184,7 @@ describe('useBoardRealtime', () => {
       expect(result.current.boardData?.projectsByStage).toBeDefined();
       expect(result.current.boardData?.projectsByStage['ideas_planning']).toHaveLength(1);
       expect(result.current.boardData?.projectsByStage['creation']).toHaveLength(1);
-      expect(result.current.boardData?.projectsByStage['internal_approval']).toHaveLength(1);
+      expect(result.current.boardData?.projectsByStage['approval']).toHaveLength(1);
     });
 
     it('sollte Projekte korrekt nach Stages gruppieren', async () => {
@@ -202,10 +202,9 @@ describe('useBoardRealtime', () => {
       const { projectsByStage } = result.current.boardData!;
       expect(projectsByStage['ideas_planning'][0].id).toBe('project-1');
       expect(projectsByStage['creation'][0].id).toBe('project-2');
-      expect(projectsByStage['internal_approval'][0].id).toBe('project-3');
-      
+      expect(projectsByStage['approval'][0].id).toBe('project-3');
+
       // Leere Stages sollten existieren
-      expect(projectsByStage['customer_approval']).toEqual([]);
       expect(projectsByStage['distribution']).toEqual([]);
       expect(projectsByStage['monitoring']).toEqual([]);
       expect(projectsByStage['completed']).toEqual([]);
@@ -249,9 +248,9 @@ describe('useBoardRealtime', () => {
     it('sollte auf Projekt-Updates reagieren', async () => {
       // Arrange
       const organizationId = 'org-1';
-      let projectsCallback: Function;
+      let projectsCallback: any;
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         if (!projectsCallback) {
           projectsCallback = onNext;
           // Initial data
@@ -287,10 +286,10 @@ describe('useBoardRealtime', () => {
     it('sollte auf Active Users Updates reagieren', async () => {
       // Arrange
       const organizationId = 'org-1';
-      let usersCallback: Function;
+      let usersCallback: any;
       let callCount = 0;
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         callCount++;
         if (callCount === 1) {
           // Projects listener
@@ -328,10 +327,10 @@ describe('useBoardRealtime', () => {
     it('sollte auf Project Updates reagieren', async () => {
       // Arrange
       const organizationId = 'org-1';
-      let updatesCallback: Function;
+      let updatesCallback: any;
       let callCount = 0;
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         callCount++;
         if (callCount === 1) {
           setTimeout(() => onNext(createMockSnapshot(mockProjects)), 0);
@@ -379,10 +378,10 @@ describe('useBoardRealtime', () => {
         projectId: `project-${i}`
       }));
 
-      let updatesCallback: Function;
+      let updatesCallback: any;
       let callCount = 0;
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         callCount++;
         if (callCount === 3) {
           updatesCallback = onNext;
@@ -427,7 +426,7 @@ describe('useBoardRealtime', () => {
       const organizationId = 'org-1';
       const errorMessage = 'Firestore permission denied';
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         setTimeout(() => onError(new Error(errorMessage)), 0);
         return createMockUnsubscribe();
       });
@@ -446,7 +445,7 @@ describe('useBoardRealtime', () => {
       // Arrange
       const organizationId = 'org-1';
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         setTimeout(() => {
           const malformedSnapshot = {
             forEach: () => {
@@ -473,7 +472,7 @@ describe('useBoardRealtime', () => {
       const organizationId = 'org-1';
       let callCount = 0;
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         callCount++;
         if (callCount === 1) {
           // Projects - successful
@@ -533,8 +532,7 @@ describe('useBoardRealtime', () => {
       const filteredProjectsByStage = {
         'ideas_planning': [mockProjects[0]],
         'creation': [],
-        'internal_approval': [],
-        'customer_approval': [],
+        'approval': [],
         'distribution': [],
         'monitoring': [],
         'completed': []
@@ -566,7 +564,7 @@ describe('useBoardRealtime', () => {
         updatedAt: undefined
       }));
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         setTimeout(() => onNext(createMockSnapshot(projectsWithoutTimestamps)), 0);
         return createMockUnsubscribe();
       });
@@ -596,7 +594,7 @@ describe('useBoardRealtime', () => {
         }
       ];
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         setTimeout(() => onNext(createMockSnapshot(projectsWithInvalidStage)), 0);
         return createMockUnsubscribe();
       });
@@ -629,7 +627,7 @@ describe('useBoardRealtime', () => {
       ];
 
       let callCount = 0;
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
         callCount++;
         if (callCount === 1) {
           setTimeout(() => onNext(createMockSnapshot(mockProjects)), 0);
@@ -682,8 +680,8 @@ describe('useBoardRealtime', () => {
       // Arrange
       const organizationId = 'org-1';
 
-      mockOnSnapshot.mockImplementation((query, onNext, onError) => {
-        setTimeout(() => onNext({ forEach: (cb: Function) => {} }), 0);
+      mockOnSnapshot.mockImplementation((queryRef: any, onNext: any, onError?: any) => {
+        setTimeout(() => onNext({ forEach: (cb: any) => {} }), 0);
         return createMockUnsubscribe();
       });
 

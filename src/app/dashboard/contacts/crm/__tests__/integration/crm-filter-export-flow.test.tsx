@@ -39,6 +39,7 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '1',
     name: 'Test AG',
+    officialName: 'Test AG',
     type: 'customer',
     status: 'active',
     countryCode: 'DE',
@@ -51,6 +52,7 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '2',
     name: 'Demo GmbH',
+    officialName: 'Demo GmbH',
     type: 'partner',
     status: 'inactive',
     countryCode: 'AT',
@@ -63,6 +65,7 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '3',
     name: 'Example Inc',
+    officialName: 'Example Inc',
     type: 'customer',
     status: 'active',
     countryCode: 'US',

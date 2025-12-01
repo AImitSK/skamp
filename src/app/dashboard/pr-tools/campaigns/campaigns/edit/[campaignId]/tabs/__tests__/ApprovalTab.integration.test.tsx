@@ -50,6 +50,13 @@ jest.mock('@/lib/firebase/pdf-versions-service', () => ({
   PDFVersion: {}
 }));
 
+// Mock approvalService
+jest.mock('@/lib/firebase/approval-service', () => ({
+  approvalService: {
+    getApprovalByCampaignId: jest.fn().mockResolvedValue(null)
+  }
+}));
+
 // Mock ApprovalSettings
 const mockApprovalSettingsOnChange = jest.fn();
 jest.mock('@/components/campaigns/ApprovalSettings', () => ({
@@ -106,6 +113,7 @@ jest.mock('@/components/campaigns/ApprovalSettings', () => ({
 
 const createMockCampaign = (overrides = {}) => ({
   id: 'test-campaign-id',
+  userId: 'test-user-id',
   organizationId: 'test-org-id',
   clientId: 'test-client-id',
   clientName: 'Test Client GmbH',
@@ -115,6 +123,10 @@ const createMockCampaign = (overrides = {}) => ({
   contentHtml: '<p>Test press release</p>',
   keywords: ['test', 'campaign'],
   status: 'draft' as const,
+  distributionListId: '',
+  distributionListName: '',
+  recipientCount: 0,
+  approvalRequired: false,
   createdAt: new Date(),
   updatedAt: new Date(),
   approvalData: {
@@ -136,7 +148,7 @@ const renderApprovalTabWithContext = (campaignData = createMockCampaign()) => {
       campaignId="test-campaign-id"
       organizationId="test-org-id"
     >
-      <ApprovalTab organizationId="test-org-id" />
+      <ApprovalTab organizationId="test-org-id" campaignId="test-campaign-id" />
     </CampaignProvider>
   );
 };
@@ -444,7 +456,7 @@ describe('ApprovalTab Integration', () => {
           campaignId="test-campaign-id"
           organizationId="test-org-id"
         >
-          <ApprovalTab organizationId="test-org-id" />
+          <ApprovalTab organizationId="test-org-id" campaignId="test-campaign-id" />
         </CampaignProvider>
       );
 
@@ -467,7 +479,7 @@ describe('ApprovalTab Integration', () => {
           campaignId="test-campaign-id"
           organizationId="new-org-id"
         >
-          <ApprovalTab organizationId="new-org-id" />
+          <ApprovalTab organizationId="new-org-id" campaignId="test-campaign-id" />
         </CampaignProvider>
       );
 

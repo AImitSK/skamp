@@ -55,27 +55,27 @@ describe('MediaLibraryFeatureFlags', () => {
     });
 
     it('sollte Development-spezifische Flags korrekt setzen', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'development' };
+
       const flags = getMediaLibraryFeatureFlags();
-      
+
       expect(flags.SMART_ROUTER_LOGGING).toBe(true);
       expect(flags.UPLOAD_METHOD_TOGGLE).toBe(true);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
 
     it('sollte Production-spezifische Flags korrekt setzen', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'production' };
+
       const flags = getMediaLibraryFeatureFlags();
-      
+
       expect(flags.SMART_ROUTER_LOGGING).toBe(false);
       expect(flags.UPLOAD_METHOD_TOGGLE).toBe(false);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
   });
 
@@ -207,21 +207,21 @@ describe('MediaLibraryFeatureFlags', () => {
 
   describe('isDebuggingEnabled', () => {
     it('sollte in Development Mode true zurückgeben', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'development' };
+
       expect(isDebuggingEnabled()).toBe(true);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
 
     it('sollte in Production Mode false zurückgeben', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'production' };
+
       expect(isDebuggingEnabled()).toBe(false);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
 
     it('sollte bei Debug Environment Variable true zurückgeben', () => {
@@ -308,33 +308,33 @@ describe('MediaLibraryFeatureFlags', () => {
     });
 
     it('sollte Development-spezifische UI Config zurückgeben', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'development' };
+
       const config = getUIFeatureConfig();
       expect(config.allowMethodToggle).toBe(true);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
 
     it('sollte Production-spezifische UI Config zurückgeben', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'production' };
+
       const config = getUIFeatureConfig();
       expect(config.allowMethodToggle).toBe(false);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
   });
 
   describe('logFeatureFlagStatus', () => {
     it('sollte in Development Mode loggen', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'development' };
+
       logFeatureFlagStatus();
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '🚩 Media Library Feature Flags:',
         expect.objectContaining({
@@ -347,19 +347,19 @@ describe('MediaLibraryFeatureFlags', () => {
           logging: expect.any(Boolean)
         })
       );
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
 
     it('sollte in Production Mode nicht loggen', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      
+      const originalEnv = process.env;
+      process.env = { ...originalEnv, NODE_ENV: 'production' };
+
       logFeatureFlagStatus();
-      
+
       expect(mockConsoleLog).not.toHaveBeenCalled();
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
   });
 
@@ -454,17 +454,17 @@ describe('MediaLibraryFeatureFlags', () => {
     });
 
     it('sollte NODE_ENV Changes bei erneutem Aufruf berücksichtigen', () => {
-      const originalEnv = process.env.NODE_ENV;
-      
-      process.env.NODE_ENV = 'development';
+      const originalEnv = process.env;
+
+      process.env = { ...originalEnv, NODE_ENV: 'development' };
       const devFlags = getMediaLibraryFeatureFlags();
       expect(devFlags.UPLOAD_METHOD_TOGGLE).toBe(true);
-      
-      process.env.NODE_ENV = 'production';
+
+      process.env = { ...originalEnv, NODE_ENV: 'production' };
       const prodFlags = getMediaLibraryFeatureFlags();
       expect(prodFlags.UPLOAD_METHOD_TOGGLE).toBe(false);
-      
-      process.env.NODE_ENV = originalEnv;
+
+      process.env = originalEnv;
     });
   });
 

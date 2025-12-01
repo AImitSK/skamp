@@ -74,8 +74,8 @@ export function TaskEditModal({
         priority: formData.priority,
         status: formData.status,
         progress: formData.progress,
-        ...(formData.description.trim() && { description: formData.description.trim() }),
-        ...(formData.dueDate && { dueDate: Timestamp.fromDate(new Date(formData.dueDate)) })
+        description: formData.description.trim() || undefined,
+        dueDate: formData.dueDate ? Timestamp.fromDate(new Date(formData.dueDate)) : undefined
       };
 
       // If marking as completed, add completedAt timestamp

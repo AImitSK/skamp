@@ -70,20 +70,11 @@ describe('ProjectService', () => {
     status: 'active' as ProjectStatus,
     currentStage: 'creation' as PipelineStage,
     customer: {
-      name: 'Test Kunde GmbH',
-      contactPerson: 'Max Mustermann',
-      email: 'max@testkunde.de'
+      id: 'customer-123',
+      name: 'Test Kunde GmbH'
     },
-    budget: {
-      allocated: 10000,
-      spent: 2500,
-      currency: 'EUR'
-    },
-    timeline: {
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-06-30'),
-      milestones: []
-    },
+    budget: 10000,
+    currency: 'EUR',
     linkedCampaigns: []
   };
 
@@ -103,7 +94,7 @@ describe('ProjectService', () => {
   describe('create', () => {
     it('sollte ein neues Projekt erfolgreich erstellen', async () => {
       const mockDocRef = { id: mockProjectId };
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       const result = await projectService.create(mockProjectData);
 
@@ -120,18 +111,18 @@ describe('ProjectService', () => {
 
     it('sollte Fehler beim Erstellen weiterwerfen', async () => {
       const error = new Error('Firebase Fehler');
-      mockAddDoc.mockRejectedValue(error);
+      mockAddDoc.mockRejectedValue(error as any);
 
       await expect(projectService.create(mockProjectData)).rejects.toThrow('Firebase Fehler');
     });
 
     it('sollte alle erforderlichen Felder mit Timestamps ergänzen', async () => {
       const mockDocRef = { id: mockProjectId };
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       await projectService.create(mockProjectData);
 
-      const savedData = mockAddDoc.mock.calls[0][1];
+      const savedData = mockAddDoc.mock.calls[0][1] as any;
       expect(savedData).toHaveProperty('createdAt');
       expect(savedData).toHaveProperty('updatedAt');
       expect(savedData.title).toBe(mockProjectData.title);
@@ -150,7 +141,7 @@ describe('ProjectService', () => {
           updatedAt: { seconds: 1234567890, nanoseconds: 0 }
         })
       };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -165,7 +156,7 @@ describe('ProjectService', () => {
 
     it('sollte null zurückgeben wenn Projekt nicht existiert', async () => {
       const mockDocSnap = { exists: () => false };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -181,7 +172,7 @@ describe('ProjectService', () => {
           organizationId: 'andere-org-123' // Andere Organisation!
         })
       };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -189,7 +180,7 @@ describe('ProjectService', () => {
     });
 
     it('sollte null zurückgeben bei Firebase-Fehlern', async () => {
-      mockGetDoc.mockRejectedValue(new Error('Network error'));
+      mockGetDoc.mockRejectedValue(new Error('Network error') as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -210,7 +201,7 @@ describe('ProjectService', () => {
           data: () => ({ ...proj, id: undefined })
         }))
       };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       const result = await projectService.getAll(mockContext);
 
@@ -223,7 +214,7 @@ describe('ProjectService', () => {
 
     it('sollte Projekte nach Status filtern können', async () => {
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       await projectService.getAll({
         organizationId: mockOrganizationId,
@@ -237,7 +228,7 @@ describe('ProjectService', () => {
 
     it('sollte Projekte nach currentStage filtern können', async () => {
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       await projectService.getAll({
         organizationId: mockOrganizationId,
@@ -249,7 +240,7 @@ describe('ProjectService', () => {
     });
 
     it('sollte leeres Array bei Fehlern zurückgeben', async () => {
-      mockGetDocs.mockRejectedValue(new Error('Network error'));
+      mockGetDocs.mockRejectedValue(new Error('Network error') as any);
 
       const result = await projectService.getAll(mockContext);
 
@@ -258,13 +249,13 @@ describe('ProjectService', () => {
 
     it('sollte mehrere Filter gleichzeitig anwenden können', async () => {
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       await projectService.getAll({
         organizationId: mockOrganizationId,
-        filters: { 
+        filters: {
           status: 'active',
-          currentStage: 'review'
+          currentStage: 'review' as any
         }
       });
 
@@ -307,9 +298,9 @@ describe('ProjectService', () => {
 
     it('sollte Firebase-Fehler weiterwerfen', async () => {
       const mockExistingProject = { id: mockProjectId, ...mockProjectData };
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject);
-      
-      mockUpdateDoc.mockRejectedValue(new Error('Firebase Update Fehler'));
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject as any);
+
+      mockUpdateDoc.mockRejectedValue(new Error('Firebase Update Fehler') as any);
 
       const updateData = { title: 'Neuer Titel' };
 
@@ -320,10 +311,10 @@ describe('ProjectService', () => {
 
     it('sollte organizationId und userId nicht überschreibbar machen', async () => {
       const mockExistingProject = { id: mockProjectId, ...mockProjectData };
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject as any);
 
       // Versuche organizationId und userId zu ändern (sollte ignoriert werden)
-      const updateData = { 
+      const updateData = {
         title: 'Neuer Titel',
         organizationId: 'hacker-org', // Sollte ignoriert werden
         userId: 'hacker-user' // Sollte ignoriert werden
@@ -331,7 +322,7 @@ describe('ProjectService', () => {
 
       await projectService.update(mockProjectId, updateData, mockContext);
 
-      const savedData = mockUpdateDoc.mock.calls[0][1];
+      const savedData = mockUpdateDoc.mock.calls[0][1] as any;
       expect(savedData).not.toHaveProperty('organizationId');
       expect(savedData).not.toHaveProperty('userId');
       expect(savedData.title).toBe('Neuer Titel');
@@ -410,16 +401,16 @@ describe('ProjectService', () => {
         ...mockProjectData,
         linkedCampaigns: ['campaign-1', 'campaign-2']
       };
-      
+
       const mockCampaigns = [
         { id: 'campaign-1', organizationId: mockOrganizationId, title: 'Kampagne 1' },
         { id: 'campaign-2', organizationId: mockOrganizationId, title: 'Kampagne 2' }
       ];
 
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject as any);
       mockPrService.getById
-        .mockResolvedValueOnce(mockCampaigns[0])
-        .mockResolvedValueOnce(mockCampaigns[1]);
+        .mockResolvedValueOnce(mockCampaigns[0] as any)
+        .mockResolvedValueOnce(mockCampaigns[1] as any);
 
       const result = await projectService.getLinkedCampaigns(mockProjectId, { organizationId: mockOrganizationId });
 
@@ -464,17 +455,17 @@ describe('ProjectService', () => {
         ...mockProjectData,
         linkedCampaigns: ['campaign-1', 'campaign-2']
       };
-      
+
       // Kampagne 2 gehört zu anderer Organisation
       const mockCampaigns = [
         { id: 'campaign-1', organizationId: mockOrganizationId, title: 'Kampagne 1' },
         { id: 'campaign-2', organizationId: 'andere-org', title: 'Kampagne 2' }
       ];
 
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject as any);
       mockPrService.getById
-        .mockResolvedValueOnce(mockCampaigns[0])
-        .mockResolvedValueOnce(mockCampaigns[1]);
+        .mockResolvedValueOnce(mockCampaigns[0] as any)
+        .mockResolvedValueOnce(mockCampaigns[1] as any);
 
       const result = await projectService.getLinkedCampaigns(mockProjectId, { organizationId: mockOrganizationId });
 
@@ -489,11 +480,11 @@ describe('ProjectService', () => {
         linkedCampaigns: ['campaign-1', 'campaign-2', 'campaign-3']
       };
 
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject as any);
       mockPrService.getById
-        .mockResolvedValueOnce({ id: 'campaign-1', organizationId: mockOrganizationId, title: 'Kampagne 1' })
-        .mockResolvedValueOnce(null) // Nicht gefunden
-        .mockResolvedValueOnce({ id: 'campaign-3', organizationId: mockOrganizationId, title: 'Kampagne 3' });
+        .mockResolvedValueOnce({ id: 'campaign-1', organizationId: mockOrganizationId, title: 'Kampagne 1' } as any)
+        .mockResolvedValueOnce(null as any) // Nicht gefunden
+        .mockResolvedValueOnce({ id: 'campaign-3', organizationId: mockOrganizationId, title: 'Kampagne 3' } as any);
 
       const result = await projectService.getLinkedCampaigns(mockProjectId, { organizationId: mockOrganizationId });
 
@@ -514,7 +505,7 @@ describe('ProjectService', () => {
   describe('delete', () => {
     it('sollte Projekt erfolgreich löschen', async () => {
       const mockExistingProject = { id: mockProjectId, ...mockProjectData };
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject as any);
 
       await projectService.delete(mockProjectId, { organizationId: mockOrganizationId });
 
@@ -533,9 +524,9 @@ describe('ProjectService', () => {
 
     it('sollte Firebase-Lösch-Fehler weiterwerfen', async () => {
       const mockExistingProject = { id: mockProjectId, ...mockProjectData };
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject);
-      
-      mockDeleteDoc.mockRejectedValue(new Error('Firebase Delete Fehler'));
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject as any);
+
+      mockDeleteDoc.mockRejectedValue(new Error('Firebase Delete Fehler') as any);
 
       await expect(
         projectService.delete(mockProjectId, { organizationId: mockOrganizationId })
@@ -574,7 +565,7 @@ describe('ProjectService', () => {
       };
 
       const mockDocRef = { id: mockProjectId };
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       const result = await projectService.create(projectDataWithNulls);
 
@@ -583,7 +574,7 @@ describe('ProjectService', () => {
 
     it('sollte Race Conditions bei gleichzeitigen Updates handhaben', async () => {
       const mockExistingProject = { id: mockProjectId, ...mockProjectData };
-      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject);
+      jest.spyOn(projectService, 'getById').mockResolvedValue(mockExistingProject as any);
 
       const updates = [
         { title: 'Update 1' },
@@ -613,7 +604,7 @@ describe('ProjectService', () => {
           organizationId: 'andere-organisation-123'
         })
       };
-      mockGetDoc.mkResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, {
         organizationId: 'meine-organisation-123'

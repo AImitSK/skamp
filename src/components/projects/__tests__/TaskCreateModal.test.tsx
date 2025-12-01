@@ -457,7 +457,7 @@ describe('TaskCreateModal', () => {
       const mockOnClose = jest.fn();
 
       // Mock create to return pending promise
-      const createPromise = new Promise(() => {}); // Never resolves
+      const createPromise = new Promise<string>(() => {}); // Never resolves
       mockTaskService.create.mockReturnValue(createPromise);
 
       render(<TaskCreateModal {...defaultProps} onClose={mockOnClose} />);

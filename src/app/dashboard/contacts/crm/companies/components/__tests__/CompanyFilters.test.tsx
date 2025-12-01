@@ -1,26 +1,25 @@
 // src/app/dashboard/contacts/crm/companies/components/__tests__\CompanyFilters.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CompanyFilters } from '../CompanyFilters';
-import { CompanyType } from '@/types/crm';
-import { Tag } from '@/types/crm';
-import { CompanyEnhanced } from '@/types/crm-enhanced';
+import { CompanyEnhanced, Tag } from '@/types/crm-enhanced';
 
 const mockTags: Tag[] = [
-  { id: 'tag-1', name: 'VIP', color: 'red', organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1', updatedBy: 'user-1' },
-  { id: 'tag-2', name: 'Partner', color: 'blue', organizationId: 'org-1', createdAt: new Date(), updatedAt: new Date(), createdBy: 'user-1', updatedBy: 'user-1' },
+  { id: 'tag-1', name: 'VIP', color: 'red', userId: 'user-1' },
+  { id: 'tag-2', name: 'Partner', color: 'blue', userId: 'user-1' },
 ];
 
 const mockCompanies: CompanyEnhanced[] = [
   {
     id: '1',
     name: 'Test AG',
+    officialName: 'Test AG',
     type: 'customer',
     status: 'active',
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date() as any,
+    updatedAt: new Date() as any,
     tagIds: ['tag-1', 'tag-2'], // Tags hinzufügen damit sie im Filter erscheinen
   },
 ];

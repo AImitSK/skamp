@@ -7,6 +7,7 @@ import { prService } from '@/lib/firebase/pr-service';
 import { toastService } from '@/lib/utils/toast';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
+import { ApprovalEnhanced } from '@/types/approvals';
 import { Timestamp } from 'firebase/firestore';
 
 // Mocks
@@ -48,10 +49,14 @@ const mockTeamMembers = [
   }
 ] as TeamMember[];
 
+const mockApprovals: ApprovalEnhanced[] = [];
+
 describe('CampaignTableRow Component', () => {
   const defaultProps = {
     campaign: mockCampaign,
     teamMembers: mockTeamMembers,
+    approvals: mockApprovals,
+    organizationId: 'org-123',
     onRefresh: jest.fn(),
     onSend: jest.fn()
   };

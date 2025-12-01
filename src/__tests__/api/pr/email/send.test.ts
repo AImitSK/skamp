@@ -281,7 +281,8 @@ describe('POST /api/pr/email/send', () => {
         validDraft.recipients,
         mockPreparedData,
         validDraft.emailAddressId,
-        validDraft.metadata
+        validDraft.metadata,
+        validDraft.content.body
       );
     });
 

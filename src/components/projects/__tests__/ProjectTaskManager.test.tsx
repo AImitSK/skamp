@@ -12,10 +12,10 @@ import { Timestamp } from 'firebase/firestore';
 // Mock Firebase
 jest.mock('@/lib/firebase/task-service', () => ({
   taskService: {
-    getByProject: jest.fn(),
+    getByProject: jest.fn(), // (projectId, organizationId) => Promise<ProjectTask[]>
     markAsCompleted: jest.fn(),
     delete: jest.fn(),
-    updateProgress: jest.fn(),
+    updateProgress: jest.fn(), // (taskId, progress) => Promise<void>
     create: jest.fn(),
     update: jest.fn()
   }
@@ -25,6 +25,28 @@ jest.mock('@/lib/firebase/task-service', () => ({
 jest.mock('@/context/AuthContext', () => ({
   useAuth: jest.fn()
 }));
+
+// Mock Firebase User type
+const createMockUser = (overrides = {}) => ({
+  uid: 'user-123',
+  email: 'test@example.com',
+  displayName: 'Test User',
+  emailVerified: true,
+  isAnonymous: false,
+  metadata: {},
+  providerData: [],
+  refreshToken: '',
+  tenantId: null,
+  delete: jest.fn(),
+  getIdToken: jest.fn(),
+  getIdTokenResult: jest.fn(),
+  reload: jest.fn(),
+  toJSON: jest.fn(),
+  phoneNumber: null,
+  photoURL: null,
+  providerId: 'firebase',
+  ...overrides
+});
 
 // Mock Child Components
 jest.mock('../TaskCreateModal', () => ({
@@ -50,34 +72,42 @@ jest.mock('../TaskEditModal', () => ({
   )
 }));
 
-const mockTaskService = taskService as jest.Mocked<typeof taskService>;
+// Type-safe mock mit expliziten Methoden
+const mockTaskService = taskService as jest.Mocked<typeof taskService> & {
+  getByProject: jest.MockedFunction<(projectId: string, organizationId: string) => Promise<ProjectTask[]>>;
+  updateProgress: jest.MockedFunction<(taskId: string, progress: number) => Promise<void>>;
+};
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('ProjectTaskManager', () => {
-  const mockUser = {
-    uid: 'user-123',
-    email: 'test@example.com',
-    displayName: 'Test User'
-  };
+  const mockUser = createMockUser();
 
   const mockTeamMembers: TeamMember[] = [
     {
       id: 'member-1',
       userId: 'user-123',
+      organizationId: 'org-123',
       displayName: 'John Doe',
       email: 'john@example.com',
       photoUrl: 'https://example.com/john.jpg',
       role: 'member',
-      permissions: []
+      status: 'active',
+      invitedAt: Timestamp.fromDate(new Date('2024-01-01')),
+      invitedBy: 'user-admin',
+      customPermissions: []
     },
     {
       id: 'member-2',
       userId: 'user-456',
+      organizationId: 'org-123',
       displayName: 'Jane Smith',
       email: 'jane@example.com',
       photoUrl: 'https://example.com/jane.jpg',
-      role: 'manager',
-      permissions: []
+      role: 'admin',
+      status: 'active',
+      invitedAt: Timestamp.fromDate(new Date('2024-01-01')),
+      invitedBy: 'user-owner',
+      customPermissions: []
     }
   ];
 
@@ -146,9 +176,15 @@ describe('ProjectTaskManager', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
       loading: false,
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      signUp: jest.fn()
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(),
+      getInitials: jest.fn(),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
 
     mockTaskService.getByProject.mockResolvedValue(mockTasks);

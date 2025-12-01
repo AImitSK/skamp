@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import '@testing-library/jest-dom';
 
 import StrategyDocumentEditor from '../StrategyDocumentEditor';
 import type { StrategyDocument } from '@/lib/firebase/strategy-document-service';
@@ -136,8 +137,8 @@ const mockEditor = createMockEditor();
 // ========================================
 
 const defaultProps = {
-  onSave: jest.fn(),
-  onCancel: jest.fn(),
+  onSave: jest.fn<(content: string, title: string) => Promise<void>>(),
+  onCancel: jest.fn<() => void>(),
   isLoading: false
 };
 
@@ -397,15 +398,15 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte Dokument erfolgreich speichern', async () => {
       const user = userEvent.setup();
-      const mockOnSave = jest.fn().mockResolvedValue(undefined);
-      
+      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockResolvedValue(undefined);
+
       const editorWithContent = createMockEditor({
         htmlContent: '<h1>Gespeicherter Inhalt</h1>'
       });
       useEditor.mockReturnValue(editorWithContent);
-      
+
       render(
-        <StrategyDocumentEditor 
+        <StrategyDocumentEditor
           {...defaultProps}
           onSave={mockOnSave}
         />
@@ -437,7 +438,7 @@ describe('StrategyDocumentEditor', () => {
     test('sollte Loading-State beim Speichern anzeigen', async () => {
       const user = userEvent.setup();
       let resolveSave: (value: void) => void;
-      const mockOnSave = jest.fn(() => new Promise<void>((resolve) => {
+      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>(() => new Promise<void>((resolve) => {
         resolveSave = resolve;
       }));
       
@@ -470,8 +471,8 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte Fehler beim Speichern korrekt behandeln', async () => {
       const user = userEvent.setup();
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const mockOnSave = jest.fn().mockRejectedValue(new Error('Save failed'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockRejectedValue(new Error('Save failed'));
       
       render(
         <StrategyDocumentEditor 
@@ -520,10 +521,10 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte onCancel beim Klick auf Abbrechen aufrufen', async () => {
       const user = userEvent.setup();
-      const mockOnCancel = jest.fn();
-      
+      const mockOnCancel = jest.fn<() => void>();
+
       render(
-        <StrategyDocumentEditor 
+        <StrategyDocumentEditor
           {...defaultProps}
           onCancel={mockOnCancel}
         />
@@ -759,15 +760,15 @@ describe('StrategyDocumentEditor', () => {
     
     test('sollte kompletten Editor-Workflow abbilden', async () => {
       const user = userEvent.setup();
-      const mockOnSave = jest.fn().mockResolvedValue(undefined);
-      
+      const mockOnSave = jest.fn<(content: string, title: string) => Promise<void>>().mockResolvedValue(undefined);
+
       const editorWithContent = createMockEditor({
         htmlContent: '<h1>Integration Test</h1><p><strong>Fetter Text</strong></p>'
       });
       useEditor.mockReturnValue(editorWithContent);
-      
+
       render(
-        <StrategyDocumentEditor 
+        <StrategyDocumentEditor
           {...defaultProps}
           onSave={mockOnSave}
         />

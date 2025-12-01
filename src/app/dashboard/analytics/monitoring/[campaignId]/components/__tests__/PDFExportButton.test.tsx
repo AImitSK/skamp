@@ -149,7 +149,7 @@ describe('PDFExportButton', () => {
 
       render(<PDFExportButton />);
 
-      expect(PDFExportButton.type).toBeDefined();
+      expect((PDFExportButton as any).type).toBeDefined();
     });
   });
 });

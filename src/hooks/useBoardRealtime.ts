@@ -26,8 +26,7 @@ export const useBoardRealtime = (organizationId: string) => {
     const stages: PipelineStage[] = [
       'ideas_planning',
       'creation',
-      'internal_approval', 
-      'customer_approval',
+      'approval',
       'distribution',
       'monitoring',
       'completed'

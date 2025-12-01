@@ -26,7 +26,14 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: Timestamp.fromDate(new Date('2024-01-15')),
         } as any,
         isPDFGenerating: false,
@@ -48,7 +55,14 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: mockTimestamp,
         } as any,
         isPDFGenerating: false,
@@ -64,7 +78,14 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: null,
         } as any,
         isPDFGenerating: false,
@@ -79,7 +100,14 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: Timestamp.fromDate(new Date()),
         } as any,
         isPDFGenerating: false,
@@ -97,7 +125,14 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: Timestamp.fromDate(new Date()),
         } as any,
         isPDFGenerating: false,
@@ -130,15 +165,26 @@ describe('MonitoringHeader', () => {
       mockUseMonitoring.mockReturnValue({
         campaign: {
           id: 'campaign-1',
+          userId: 'test-user-id',
           title: 'Test Campaign',
+          contentHtml: '<p>Test content</p>',
+          status: 'draft' as const,
+          distributionListId: 'list-1',
+          distributionListName: 'Test List',
+          recipientCount: 10,
+          approvalRequired: false,
           sentAt: Timestamp.fromDate(new Date()),
         } as any,
         isPDFGenerating: false,
       } as any);
 
-      render(<MonitoringHeader />);
+      const { rerender } = render(<MonitoringHeader />);
+      const firstRender = screen.getByText('Monitoring: Test Campaign');
 
-      expect(MonitoringHeader.type).toBeDefined();
+      rerender(<MonitoringHeader />);
+      const secondRender = screen.getByText('Monitoring: Test Campaign');
+
+      expect(firstRender).toBe(secondRender);
     });
   });
 });

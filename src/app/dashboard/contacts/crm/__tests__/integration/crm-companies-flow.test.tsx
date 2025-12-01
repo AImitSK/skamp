@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CompaniesPage from '../../companies/page';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
+import { Timestamp } from 'firebase/firestore';
 
 // Mock Firebase service
 jest.mock('@/lib/firebase/crm-service-enhanced', () => ({
@@ -31,24 +32,26 @@ const mockCompanies: CompanyEnhanced[] = [
   {
     id: '1',
     name: 'Test AG',
+    officialName: 'Test AG',
     type: 'customer',
     status: 'active',
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
   {
     id: '2',
     name: 'Demo GmbH',
+    officialName: 'Demo GmbH',
     type: 'partner',
     status: 'inactive',
     organizationId: 'test-org-id',
     createdBy: 'test-user',
     updatedBy: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   },
 ];
 
@@ -91,13 +94,14 @@ describe('CRM Companies CRUD Flow', () => {
     companiesEnhancedService.create.mockResolvedValue({
       id: '3',
       name: 'New Company',
+      officialName: 'New Company',
       type: 'customer',
       status: 'active',
       organizationId: 'test-org-id',
       createdBy: 'test-user',
       updatedBy: 'test-user',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
 
     const createButton = screen.getByText(/Neu hinzufügen/i);

@@ -26,7 +26,7 @@ describe('PipelineAwareTask Interface Tests', () => {
       };
 
       expect(pipelineTask.pipelineStage).toBe('creation');
-      expect(['ideas_planning', 'creation', 'internal_approval', 'customer_approval', 
+      expect(['ideas_planning', 'creation', 'approval',
               'distribution', 'monitoring', 'completed']).toContain(pipelineTask.pipelineStage);
     });
 
@@ -84,7 +84,7 @@ describe('PipelineAwareTask Interface Tests', () => {
       const stageDepTask: PipelineAwareTask = {
         ...baseTask,
         dependsOnStageCompletion: ['ideas_planning', 'creation'],
-        pipelineStage: 'internal_approval'
+        pipelineStage: 'approval'
       };
 
       expect(stageDepTask.dependsOnStageCompletion).toHaveLength(2);
@@ -264,7 +264,7 @@ describe('PipelineAwareTask Interface Tests', () => {
     it('sollte kritische Task mit allen Features unterstützen', () => {
       const complexTask: PipelineAwareTask = {
         ...baseTask,
-        pipelineStage: 'internal_approval',
+        pipelineStage: 'approval',
         requiredForStageCompletion: true,
         stageTransitionTrigger: false,
         blocksStageTransition: true,
@@ -285,7 +285,7 @@ describe('PipelineAwareTask Interface Tests', () => {
       };
 
       // Validiere alle kritischen Eigenschaften
-      expect(complexTask.pipelineStage).toBe('internal_approval');
+      expect(complexTask.pipelineStage).toBe('approval');
       expect(complexTask.requiredForStageCompletion).toBe(true);
       expect(complexTask.blocksStageTransition).toBe(true);
       expect(complexTask.dependsOnTaskIds).toHaveLength(2);
@@ -366,8 +366,8 @@ describe('PipelineAwareTask Interface Tests', () => {
     it('sollte ungültige Stage-Übergänge verhindern', () => {
       const invalidStages: string[] = ['invalid_stage', '', 'unknown'];
       const validStages: PipelineStage[] = [
-        'ideas_planning', 'creation', 'internal_approval', 
-        'customer_approval', 'distribution', 'monitoring', 'completed'
+        'ideas_planning', 'creation', 'approval',
+        'distribution', 'monitoring', 'completed'
       ];
 
       invalidStages.forEach(stage => {

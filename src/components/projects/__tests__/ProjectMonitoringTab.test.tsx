@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { ProjectMonitoringTab } from '../ProjectMonitoringTab';
-import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion } from '@/lib/hooks/useMonitoringData';
+import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion, useProjectMonitoringTracker, useToggleMonitoring, useExtendMonitoring } from '@/lib/hooks/useMonitoringData';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -56,6 +56,9 @@ jest.mock('@/lib/utils/toast', () => ({
 const mockUseProjectMonitoringData = useProjectMonitoringData as jest.MockedFunction<typeof useProjectMonitoringData>;
 const mockUseConfirmSuggestion = useConfirmSuggestion as jest.MockedFunction<typeof useConfirmSuggestion>;
 const mockUseRejectSuggestion = useRejectSuggestion as jest.MockedFunction<typeof useRejectSuggestion>;
+const mockUseProjectMonitoringTracker = useProjectMonitoringTracker as jest.MockedFunction<typeof useProjectMonitoringTracker>;
+const mockUseToggleMonitoring = useToggleMonitoring as jest.MockedFunction<typeof useToggleMonitoring>;
+const mockUseExtendMonitoring = useExtendMonitoring as jest.MockedFunction<typeof useExtendMonitoring>;
 const mockUseOrganization = useOrganization as jest.MockedFunction<typeof useOrganization>;
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
@@ -91,6 +94,14 @@ describe('ProjectMonitoringTab', () => {
     mutateAsync: jest.fn().mockResolvedValue(undefined)
   };
 
+  const mockToggleMutation = {
+    mutateAsync: jest.fn().mockResolvedValue(undefined)
+  };
+
+  const mockExtendMutation = {
+    mutateAsync: jest.fn().mockResolvedValue(undefined)
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -98,21 +109,40 @@ describe('ProjectMonitoringTab', () => {
       currentOrganization: mockOrganization as any,
       organizations: [mockOrganization] as any,
       switchOrganization: jest.fn(),
-      loading: false
+      loading: false,
+      isOwner: false,
+      isAdmin: false,
+      userRole: 'member'
     });
 
     mockUseAuth.mockReturnValue({
       user: mockUser as any,
       loading: false,
-      signOut: jest.fn(),
-      signInWithGoogle: jest.fn(),
-      signInWithMicrosoft: jest.fn()
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(() => null),
+      getInitials: jest.fn(() => 'TU'),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
 
     mockUseRouter.mockReturnValue(mockRouter as any);
 
     mockUseConfirmSuggestion.mockReturnValue(mockConfirmMutation as any);
     mockUseRejectSuggestion.mockReturnValue(mockRejectMutation as any);
+    mockUseToggleMonitoring.mockReturnValue(mockToggleMutation as any);
+    mockUseExtendMonitoring.mockReturnValue(mockExtendMutation as any);
+
+    // Mock useProjectMonitoringTracker - Standard Return
+    mockUseProjectMonitoringTracker.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+      refetch: jest.fn()
+    } as any);
   });
 
   it('should render loading state while data is loading', () => {
@@ -191,7 +221,8 @@ describe('ProjectMonitoringTab', () => {
       expect(mockConfirmMutation.mutateAsync).toHaveBeenCalledWith({
         suggestionId: 'sugg-1',
         userId: mockUser.uid,
-        organizationId: mockOrganization.id
+        organizationId: mockOrganization.id,
+        sentiment: 'neutral'
       });
     });
   });
@@ -262,9 +293,15 @@ describe('ProjectMonitoringTab', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
-      signOut: jest.fn(),
-      signInWithGoogle: jest.fn(),
-      signInWithMicrosoft: jest.fn()
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(() => null),
+      getInitials: jest.fn(() => '?'),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
 
     mockUseProjectMonitoringData.mockReturnValue({
@@ -289,7 +326,10 @@ describe('ProjectMonitoringTab', () => {
       currentOrganization: null,
       organizations: [],
       switchOrganization: jest.fn(),
-      loading: false
+      loading: false,
+      isOwner: false,
+      isAdmin: false,
+      userRole: null
     });
 
     mockUseProjectMonitoringData.mockReturnValue({

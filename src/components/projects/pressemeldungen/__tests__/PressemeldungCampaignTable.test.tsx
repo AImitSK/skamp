@@ -6,6 +6,7 @@ import PressemeldungCampaignTable from '../PressemeldungCampaignTable';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
+import { Timestamp } from 'firebase/firestore';
 
 // Mocks
 jest.mock('@/lib/firebase/team-service-enhanced');
@@ -31,25 +32,35 @@ jest.mock('@/components/pr/EmailSendModal', () => ({
   )
 }));
 
-const mockCampaign1 = {
+const mockCampaign1: PRCampaign = {
   id: 'campaign-1',
   title: 'Campaign 1',
+  contentHtml: '',
   status: 'draft',
   userId: 'user-123',
   organizationId: 'org-123',
-  createdAt: new Date()
-} as PRCampaign;
+  distributionListId: '',
+  distributionListName: '',
+  recipientCount: 0,
+  approvalRequired: false,
+  createdAt: Timestamp.now()
+};
 
-const mockCampaign2 = {
+const mockCampaign2: PRCampaign = {
   id: 'campaign-2',
   title: 'Campaign 2',
+  contentHtml: '',
   status: 'sent',
   userId: 'user-456',
   organizationId: 'org-123',
-  createdAt: new Date()
-} as PRCampaign;
+  distributionListId: '',
+  distributionListName: '',
+  recipientCount: 0,
+  approvalRequired: false,
+  createdAt: Timestamp.now()
+};
 
-const mockTeamMembers = [
+const mockTeamMembers: TeamMember[] = [
   {
     id: 'member-1',
     userId: 'user-123',
@@ -57,7 +68,10 @@ const mockTeamMembers = [
     email: 'john@example.com',
     role: 'admin',
     photoUrl: 'https://example.com/john.jpg',
-    organizationId: 'org-123'
+    organizationId: 'org-123',
+    status: 'active',
+    invitedAt: Timestamp.now(),
+    invitedBy: 'user-owner'
   },
   {
     id: 'member-2',
@@ -66,13 +80,17 @@ const mockTeamMembers = [
     email: 'jane@example.com',
     role: 'member',
     photoUrl: 'https://example.com/jane.jpg',
-    organizationId: 'org-123'
+    organizationId: 'org-123',
+    status: 'active',
+    invitedAt: Timestamp.now(),
+    invitedBy: 'user-owner'
   }
-] as TeamMember[];
+];
 
 describe('PressemeldungCampaignTable Component', () => {
   const defaultProps = {
     campaigns: [],
+    approvals: [],
     organizationId: 'org-123',
     onRefresh: jest.fn()
   };

@@ -88,12 +88,12 @@ describe('ProjectCreationWizard', () => {
 
   const mockCreationOptions = {
     availableClients: [
-      { id: 'client-1', name: 'Test Client 1', type: 'customer' },
-      { id: 'client-2', name: 'Test Client 2', type: 'publisher' }
+      { id: 'client-1', name: 'Test Client 1', type: 'customer', contactCount: 5 },
+      { id: 'client-2', name: 'Test Client 2', type: 'publisher', contactCount: 10 }
     ],
     availableTeamMembers: [
-      { id: 'member-1', displayName: 'Test User 1', role: 'Admin', userId: 'user-1' },
-      { id: 'member-2', displayName: 'Test User 2', role: 'Editor', userId: 'user-2' }
+      { id: 'member-1', displayName: 'Test User 1', email: 'user1@example.com', role: 'Admin' },
+      { id: 'member-2', displayName: 'Test User 2', email: 'user2@example.com', role: 'Editor' }
     ],
     availableTemplates: [],
     availableDistributionLists: [],
@@ -104,7 +104,16 @@ describe('ProjectCreationWizard', () => {
     jest.clearAllMocks();
     mockUseAuth.mockReturnValue({
       user: mockUser as any,
-      loading: false
+      loading: false,
+      register: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(() => null),
+      getInitials: jest.fn(() => 'TU'),
+      updateUserProfile: jest.fn(),
+      sendVerificationEmail: jest.fn()
     });
     mockProjectService.getProjectCreationOptions.mockResolvedValue(mockCreationOptions);
     mockTagsService.getAll.mockResolvedValue([]);

@@ -39,7 +39,10 @@
       "WebFetch(domain:mxtoolbox.com)",
       "Bash(npm run type-check:*)",
       "Bash(git restore:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"TeamStep.test.tsx\" -Context 0,1)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -8,8 +8,10 @@ const mockContacts: ContactEnhanced[] = [
   {
     id: '1',
     displayName: 'Max Mustermann',
-    firstName: 'Max',
-    lastName: 'Mustermann',
+    name: {
+      firstName: 'Max',
+      lastName: 'Mustermann',
+    },
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
@@ -19,8 +21,10 @@ const mockContacts: ContactEnhanced[] = [
   {
     id: '2',
     displayName: 'Erika Musterfrau',
-    firstName: 'Erika',
-    lastName: 'Musterfrau',
+    name: {
+      firstName: 'Erika',
+      lastName: 'Musterfrau',
+    },
     organizationId: 'org-1',
     createdBy: 'user-1',
     updatedBy: 'user-1',
@@ -61,8 +65,8 @@ describe('ContactsTable', () => {
       />
     );
 
-    expect(screen.getByText('Max Mustermann')).toBeInTheDocument();
-    expect(screen.getByText('Erika Musterfrau')).toBeInTheDocument();
+    expect(screen.getByText('Mustermann, Max')).toBeInTheDocument();
+    expect(screen.getByText('Musterfrau, Erika')).toBeInTheDocument();
   });
 
   it('handles row selection', () => {
@@ -106,7 +110,7 @@ describe('ContactsTable', () => {
     );
 
     // Find contact name button
-    const contactButton = screen.getByText('Max Mustermann');
+    const contactButton = screen.getByText('Mustermann, Max');
     fireEvent.click(contactButton);
 
     expect(onView).toHaveBeenCalledWith('1');

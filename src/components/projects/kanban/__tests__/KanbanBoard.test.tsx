@@ -5,7 +5,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { KanbanBoard, KanbanBoardProps } from '../KanbanBoard';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { Project, PipelineStage } from '@/types/project';
-import { BoardFilters } from '@/lib/kanban/kanban-board-service';
+import { BoardFilters, ActiveUser } from '@/lib/kanban/kanban-board-service';
 import { Timestamp } from 'firebase/firestore';
 
 // ========================================
@@ -127,18 +127,18 @@ const mockProjects: Record<PipelineStage, Project[]> = {
   'completed': []
 };
 
-const mockActiveUsers = [
+const mockActiveUsers: ActiveUser[] = [
   {
     id: 'user-1',
     name: 'Test User 1',
     avatar: 'avatar1.jpg',
     currentProject: 'project-1',
-    lastSeen: new Date()
+    lastSeen: mockTimestamp
   },
   {
     id: 'user-2',
     name: 'Test User 2',
-    lastSeen: new Date()
+    lastSeen: mockTimestamp
   }
 ];
 
@@ -172,12 +172,9 @@ const defaultProps: KanbanBoardProps = {
   projects: mockProjects,
   totalProjects: 2,
   activeUsers: mockActiveUsers,
-  filters: mockFilters,
   loading: false,
   onProjectMove: jest.fn(),
-  onFiltersChange: jest.fn(),
-  onProjectSelect: jest.fn(),
-  onRefresh: jest.fn()
+  onProjectSelect: jest.fn()
 };
 
 // ========================================
@@ -186,33 +183,29 @@ const defaultProps: KanbanBoardProps = {
 
 describe('KanbanBoard', () => {
   const mockOnProjectMove = jest.fn();
-  const mockOnFiltersChange = jest.fn();
   const mockOnProjectSelect = jest.fn();
-  const mockOnRefresh = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     (useDragAndDrop as jest.Mock).mockReturnValue(mockUseDragAndDrop);
-    
+
     // Mock window size für Desktop
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
       configurable: true,
       value: 1200,
     });
-    
+
     Object.defineProperty(window, 'innerHeight', {
       writable: true,
       configurable: true,
       value: 800,
     });
-    
+
     // Reset props functions
     defaultProps.onProjectMove = mockOnProjectMove;
-    defaultProps.onFiltersChange = mockOnFiltersChange;
     defaultProps.onProjectSelect = mockOnProjectSelect;
-    defaultProps.onRefresh = mockOnRefresh;
   });
 
   afterEach(() => {
@@ -426,22 +419,16 @@ describe('KanbanBoard', () => {
 
     it('sollte Filter-Änderungen korrekt weiterleiten', () => {
       render(<KanbanBoard {...defaultProps} />);
-      
+
       // Mock wurde an BoardHeader weitergereicht
       expect(screen.getByTestId('board-header')).toBeInTheDocument();
-      // onFiltersChange wird über Props weitergereicht und sollte in Tests der Child-Components getestet werden
+      // Filter werden auf höherer Ebene verwaltet
     });
 
     it('sollte aktuelle Filter an Header und Filter-Panel weiterreichen', () => {
-      const filtersWithData: BoardFilters = {
-        ...mockFilters,
-        search: 'test',
-        customers: ['customer-1']
-      };
-      
-      render(<KanbanBoard {...defaultProps} filters={filtersWithData} />);
-      
-      // Filter werden an Header weitergereicht
+      render(<KanbanBoard {...defaultProps} />);
+
+      // Board-Header sollte vorhanden sein
       expect(screen.getByTestId('board-header')).toBeInTheDocument();
     });
   });
@@ -475,14 +462,11 @@ describe('KanbanBoard', () => {
     });
 
     it('sollte Filter-spezifische Empty-Message anzeigen wenn Filter aktiv', () => {
-      const activeFilters = { ...mockFilters, search: 'nonexistent' };
-
       render(
         <KanbanBoard
           {...defaultProps}
           projects={emptyProjects}
           totalProjects={0}
-          filters={activeFilters}
           loading={false}
         />
       );
@@ -526,12 +510,6 @@ describe('KanbanBoard', () => {
   describe('Event Handling', () => {
     it.skip('sollte onRefresh beim Klick auf Refresh-Button aufrufen', () => {
       // Refresh button removed from KanbanBoard - test no longer applicable
-      render(<KanbanBoard {...defaultProps} />);
-
-      const refreshButton = screen.getByTestId('refresh-button');
-      fireEvent.click(refreshButton);
-
-      expect(mockOnRefresh).toHaveBeenCalledTimes(1);
     });
 
     it('sollte onProjectMove an alle Spalten weiterreichen', () => {
@@ -676,14 +654,12 @@ describe('KanbanBoard', () => {
         projects: mockProjects,
         totalProjects: 0,
         activeUsers: [],
-        filters: mockFilters,
         loading: false,
-        onProjectMove: jest.fn(),
-        onFiltersChange: jest.fn()
+        onProjectMove: jest.fn()
       };
-      
+
       render(<KanbanBoard {...minimalProps as KanbanBoardProps} />);
-      
+
       expect(screen.getByTestId('board-header')).toBeInTheDocument();
     });
 

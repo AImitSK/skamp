@@ -150,7 +150,7 @@ describe('TabNavigation', () => {
 
       render(<TabNavigation activeTab="dashboard" onChange={mockOnChange} />);
 
-      expect(TabNavigation.type).toBeDefined();
+      expect(TabNavigation.$$typeof).toBeDefined();
     });
   });
 });
