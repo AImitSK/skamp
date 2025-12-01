@@ -480,18 +480,25 @@ async function checkOverdueTasks(userId: string, organizationId?: string) {
     const existingNotifications = await getDocs(existingQuery);
     
     if (existingNotifications.empty) {
+      // Bestimme die richtige URL basierend auf projectId
+      const linkUrl = task.projectId
+        ? `/dashboard/projects/${task.projectId}?tab=tasks`
+        : `/dashboard`;
+
       await notificationsService.create({
         userId: userId,
         organizationId: organizationId,
         type: 'TASK_OVERDUE',
-        title: 'Überfälliger Task',
+        title: 'Überfälliger Projekt-Task',
         message: `Dein Task "${task.title}" ist überfällig.`,
-        linkUrl: `/dashboard/tasks/${doc.id}`,
-        linkType: 'task',
-        linkId: doc.id,
+        linkUrl,
+        linkType: task.projectId ? 'project' : 'task',
+        linkId: task.projectId || doc.id,
         isRead: false,
         metadata: {
-          taskName: task.title
+          taskName: task.title,
+          taskId: doc.id,
+          projectId: task.projectId
         }
       });
     }

@@ -16,7 +16,7 @@ export type NotificationType =
   | 'project_assignment'
   | 'TEAM_CHAT_MENTION';
 
-export type LinkType = 'campaign' | 'approval' | 'media' | 'task';
+export type LinkType = 'campaign' | 'approval' | 'media' | 'task' | 'project';
 
 export interface NotificationMetadata {
   campaignId?: string;
@@ -24,11 +24,12 @@ export interface NotificationMetadata {
   clientName?: string;
   mediaAssetName?: string;
   taskName?: string;
+  taskId?: string;
   senderName?: string;
   recipientCount?: number;
   daysOverdue?: number;
   bouncedEmail?: string;
-  // Team Chat Mentions
+  // Team Chat Mentions & Project
   projectId?: string;
   projectTitle?: string;
   messageContent?: string;

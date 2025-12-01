@@ -6,16 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 import { useNotificationSettings } from '@/hooks/use-notifications';
+import { toastService } from '@/lib/utils/toast';
 import {
-  BellIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   EnvelopeIcon,
-  CalendarDaysIcon,
   LinkIcon,
-  ArrowDownTrayIcon,
-  ClockIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingGroup {
@@ -39,7 +37,7 @@ interface NotificationSettingsState {
   // Schedule Mails
   emailSentSuccess: boolean;
   emailBounced: boolean;
-  // Tasks
+  // Projekt-Tasks
   taskOverdue: boolean;
   // Mediencenter
   mediaFirstAccess: boolean;
@@ -53,7 +51,6 @@ export function NotificationSettings() {
   const [localSettings, setLocalSettings] = useState<NotificationSettingsState | null>(null);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Initialize local settings from fetched settings
   useEffect(() => {
@@ -66,7 +63,7 @@ export function NotificationSettings() {
         overdueApprovalDays: settings.overdueApprovalDays,
         emailSentSuccess: settings.emailSentSuccess,
         emailBounced: settings.emailBounced,
-        taskOverdue: settings.taskOverdue,
+        taskOverdue: settings.taskOverdue ?? true,
         mediaFirstAccess: settings.mediaFirstAccess,
         mediaDownloaded: settings.mediaDownloaded,
         teamChatMention: (settings as any).teamChatMention ?? true,
@@ -134,13 +131,13 @@ export function NotificationSettings() {
       ]
     },
     {
-      title: 'Tasks',
-      icon: CalendarDaysIcon,
+      title: 'Projekt-Tasks',
+      icon: ClipboardDocumentListIcon,
       settings: [
         {
           key: 'taskOverdue',
-          label: 'Überfällige Kalender-Tasks',
-          description: 'Benachrichtigung über überfällige Tasks'
+          label: 'Überfällige Projekt-Tasks',
+          description: 'Benachrichtigung wenn Aufgaben in Projekten überfällig werden'
         }
       ]
     },
@@ -166,8 +163,8 @@ export function NotificationSettings() {
       settings: [
         {
           key: 'teamChatMention',
-          label: '@-Erwähnungen im Team-Chat',
-          description: 'Benachrichtigung wenn Sie in einem Projekt-Chat erwähnt werden'
+          label: '@-Erwähnungen',
+          description: 'Benachrichtigung wenn Sie im Projekt-Chat oder in E-Mail-Notizen erwähnt werden'
         }
       ]
     }
@@ -180,19 +177,17 @@ export function NotificationSettings() {
       ...prev!,
       [key]: checked
     }));
-    setSaveSuccess(false);
   };
 
   const handleNumberChange = (key: keyof NotificationSettingsState, value: string) => {
     if (!localSettings) return;
-    
+
     const numValue = parseInt(value) || 0;
     if (numValue >= 0) {
       setLocalSettings(prev => ({
         ...prev!,
         [key]: numValue
       }));
-      setSaveSuccess(false);
     }
   };
 
@@ -200,16 +195,13 @@ export function NotificationSettings() {
     if (!localSettings || !hasChanges) return;
 
     setSaving(true);
-    setSaveSuccess(false);
-    
+
     try {
       await updateSettings(localSettings);
-      setSaveSuccess(true);
       setHasChanges(false);
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toastService.success('Einstellungen gespeichert');
     } catch (err) {
+      toastService.error('Fehler beim Speichern der Einstellungen');
     } finally {
       setSaving(false);
     }
@@ -253,12 +245,6 @@ export function NotificationSettings() {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-4 flex items-center gap-3">
-          {saveSuccess && (
-            <span className="text-sm text-green-600 flex items-center gap-1">
-              <CheckCircleIcon className="h-4 w-4" />
-              Gespeichert
-            </span>
-          )}
           <Button
             onClick={handleSave}
             disabled={!hasChanges || saving}
