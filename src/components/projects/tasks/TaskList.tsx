@@ -33,7 +33,8 @@ interface TaskListProps {
   organizationId: string;
   userId: string;
   teamMembers: Array<{
-    id: string;
+    id: string;       // Firebase Auth UID (userId)
+    odcId?: string;   // Firestore Doc ID (für Fallback)
     displayName: string;
     email: string;
     photoUrl?: string;
@@ -64,8 +65,13 @@ export const TaskList = React.memo(function TaskList({
   onTasksInvalidate,
   formatDate
 }: TaskListProps) {
-  const getTeamMember = (userId: string) => {
-    return teamMembers.find(m => m.id === userId);
+  const getTeamMember = (assignedUserId: string) => {
+    if (!assignedUserId) return undefined;
+    // Suche primär nach id (userId), dann nach docId als Fallback
+    // Tasks speichern assignedUserId als Firebase Auth UID
+    return teamMembers.find(m =>
+      m.id === assignedUserId || m.odcId === assignedUserId
+    );
   };
 
   // Loading State

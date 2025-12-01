@@ -320,7 +320,8 @@ export function ProjectTaskManager({
         organizationId={organizationId}
         userId={user?.uid || ''}
         teamMembers={getProjectTeamMembers().map(m => ({
-          id: m.userId || m.id || '',
+          id: m.userId || m.id || '', // Primär: userId (Firebase Auth UID)
+          odcId: m.id || '', // Backup: Firestore Doc ID für Debugging
           displayName: m.displayName,
           email: m.email || '',
           photoUrl: m.photoUrl
