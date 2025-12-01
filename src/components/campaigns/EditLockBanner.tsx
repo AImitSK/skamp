@@ -31,11 +31,29 @@ import {
 // Icon-Mapping für dynamische Icon-Anzeige
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
   ClockIcon,
-  UserGroupIcon, 
+  UserGroupIcon,
   CheckCircleIcon,
   CogIcon,
   LockClosedIcon
 };
+
+// Übersetzung für Action-Labels
+const ACTION_LABELS: Record<string, string> = {
+  'customer_approval_lock': 'Kundenfreigabe angefordert',
+  'customer_approval_requested': 'Kundenfreigabe angefordert',
+  'Freigabe erteilt': 'Freigabe erteilt',
+  'Freigabe angefordert': 'Freigabe angefordert',
+  'PDF-Generierung': 'PDF-Generierung',
+  'Änderungen durch Kunde erbeten': 'Änderungen durch Kunde erbeten',
+  'manual_lock': 'Manuell gesperrt'
+};
+
+/**
+ * Übersetzt Action-Labels in lesbare deutsche Texte
+ */
+function translateAction(action: string): string {
+  return ACTION_LABELS[action] || action;
+}
 
 interface EditLockBannerProps {
   campaign: PRCampaign;
@@ -181,7 +199,7 @@ export function EditLockBanner({
                   <div className="flex items-center gap-2">
                     <ClockIcon className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">
-                      Aktion: <strong>{campaign.lockedBy.action}</strong>
+                      Aktion: <strong>{translateAction(campaign.lockedBy.action)}</strong>
                     </span>
                   </div>
                   {campaign.lockedAt && (

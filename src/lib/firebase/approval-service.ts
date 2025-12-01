@@ -2242,15 +2242,16 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
 
       // Historie-Eintrag hinzufügen (wie Chat-Nachricht)
+      // WICHTIG: Keine undefined Werte - Firestore arrayUnion erlaubt keine undefined
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
         timestamp: Timestamp.now(),
-        action: 'changes_requested', // Nutzt bestehenden Action-Type für Chat-Kompatibilität
-        actorName: context.displayName,
-        actorEmail: context.email,
-        actorPhotoUrl: context.photoUrl,
+        action: 'approved', // Korrekter Action-Type für Freigabe
+        actorName: context.displayName || 'Unbekannt',
+        actorEmail: context.email || '',
+        ...(context.photoUrl ? { actorPhotoUrl: context.photoUrl } : {}),
         details: {
-          comment: reason,
+          comment: reason || 'Manuelle Freigabe erteilt',
           manualApproval: true // Flag für Badge "Freigabe erteilt"
         }
       };
@@ -2262,6 +2263,16 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         updatedAt: serverTimestamp(),
         history: arrayUnion(historyEntry)
       };
+
+      // Campaign Edit-Lock Reason auf approved_final ändern
+      if (approval.campaignId) {
+        const { pdfVersionsService } = await import('./pdf-versions-service');
+        await pdfVersionsService.lockCampaignEditing(approval.campaignId, 'approved_final', {
+          userId: context.userId,
+          displayName: context.displayName,
+          action: 'Freigabe erteilt'
+        });
+      }
 
       // Update Recipients Status
       if (approval.recipients && Array.isArray(approval.recipients)) {
@@ -2311,15 +2322,16 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
 
       // Historie-Eintrag hinzufügen (wie Chat-Nachricht)
+      // WICHTIG: Keine undefined Werte - Firestore arrayUnion erlaubt keine undefined
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
         timestamp: Timestamp.now(),
         action: 'changes_requested',
-        actorName: context.displayName,
-        actorEmail: context.email,
-        actorPhotoUrl: context.photoUrl,
+        actorName: context.displayName || 'Unbekannt',
+        actorEmail: context.email || '',
+        ...(context.photoUrl ? { actorPhotoUrl: context.photoUrl } : {}),
         details: {
-          comment: reason,
+          comment: reason || 'Änderungen angefordert',
           manualChangesRequested: true // Flag für Badge "Änderungen erbeten"
         }
       };
