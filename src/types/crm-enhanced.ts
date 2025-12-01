@@ -148,7 +148,7 @@ export type ContactType = 'person' | 'function' | 'editorial';
 export const contactTypeLabels: Record<ContactType, string> = {
   person: 'Person',
   function: 'Funktionskontakt',
-  editorial: 'Redaktion'
+  editorial: 'Funktionskontakt' // Legacy-Alias
 };
 
 export interface ContactEnhanced extends BaseEntity {

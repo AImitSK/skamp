@@ -143,7 +143,7 @@ export interface Company {
 export const contactTypeLabels: Record<ContactType, string> = {
   person: 'Person',
   function: 'Funktionskontakt',
-  editorial: 'Redaktion'
+  editorial: 'Funktionskontakt' // Legacy-Alias
 };
 
 // Contact Interface

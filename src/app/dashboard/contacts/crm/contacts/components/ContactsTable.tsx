@@ -70,11 +70,9 @@ function getContactTypeBadge(contact: ContactEnhanced): { label: string; color: 
   if (!contact.contactType || contact.contactType === 'person') {
     return null;
   }
-  if (contact.contactType === 'function') {
-    return { label: 'Funktion', color: 'amber' };
-  }
-  if (contact.contactType === 'editorial') {
-    return { label: 'Redaktion', color: 'cyan' };
+  // Funktionskontakte (inkl. legacy 'editorial') zeigen graues Badge
+  if (contact.contactType === 'function' || contact.contactType === 'editorial') {
+    return { label: 'Funktion', color: 'zinc' };
   }
   return null;
 }
