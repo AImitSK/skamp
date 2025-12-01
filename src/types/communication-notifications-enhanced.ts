@@ -414,6 +414,18 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, NotificationTempla
       projectTitle: 'Q1 Marketing Campaign',
       senderName: 'Max Mustermann'
     }
+  },
+  TEAM_CHAT_MENTION: {
+    type: 'TEAM_CHAT_MENTION',
+    titleTemplate: '@-Erwähnung im Team-Chat',
+    messageTemplate: '{mentionedByName} hat Sie in {projectTitle} erwähnt: "{messageContent}"',
+    requiredFields: ['mentionedByName', 'projectTitle', 'messageContent'],
+    optionalFields: [],
+    sampleMetadata: {
+      mentionedByName: 'Anna Schmidt',
+      projectTitle: 'Marketing Kampagne Q1',
+      messageContent: 'Können Sie das bitte prüfen?'
+    }
   }
 };
 
@@ -502,7 +514,8 @@ export function createDefaultSettings(): NotificationSettings {
     // Mediencenter
     mediaFirstAccess: true,
     mediaDownloaded: true,
-    mediaLinkExpired: true,
+    // Team
+    teamChatMention: true,
     // Timestamps
     createdAt: new Date() as any,
     updatedAt: new Date() as any

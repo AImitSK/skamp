@@ -341,15 +341,20 @@ class NotificationsService {
 
   /**
    * Update notification settings for a user with organization support
+   * Verwendet setDoc mit merge:true um auch bei nicht-existierenden Dokumenten zu funktionieren
    */
   async updateSettings(userId: string, settings: Partial<NotificationSettings>, organizationId?: string): Promise<void> {
     try {
       const settingsId = organizationId ? `${organizationId}_${userId}` : userId;
       const docRef = doc(db, NOTIFICATION_SETTINGS_COLLECTION, settingsId);
-      await updateDoc(docRef, {
+
+      // setDoc mit merge:true erstellt das Dokument wenn es nicht existiert
+      await setDoc(docRef, {
         ...settings,
+        userId,
+        ...(organizationId && { organizationId }),
         updatedAt: serverTimestamp()
-      });
+      }, { merge: true });
     } catch (error) {
       throw error;
     }
@@ -390,7 +395,7 @@ class NotificationsService {
   }
   private async isNotificationEnabled(userId: string, type: NotificationType, organizationId?: string): Promise<boolean> {
     const settings = await this.getSettings(userId, organizationId);
-    
+
     switch (type) {
       case 'APPROVAL_GRANTED':
         return settings.approvalGranted;
@@ -412,10 +417,11 @@ class NotificationsService {
       case 'MEDIA_DOWNLOADED':
         return settings.mediaDownloaded;
       case 'MEDIA_LINK_EXPIRED':
-        return settings.mediaLinkExpired;
+        // TODO: Trigger nicht implementiert - immer false
+        return false;
       case 'TEAM_CHAT_MENTION':
-        // Team-Chat Mentions standardmäßig aktiviert
-        return true;
+        // Default to true if undefined (for backwards compatibility)
+        return (settings as any).teamChatMention !== undefined ? (settings as any).teamChatMention : true;
       default:
         return true;
     }

@@ -114,7 +114,7 @@ describe('Notifications Service Integration Tests', () => {
     taskOverdue: true,
     mediaFirstAccess: false,
     mediaDownloaded: false,
-    mediaLinkExpired: true,
+    teamChatMention: true,
     createdAt: serverTimestamp() as any,
     updatedAt: serverTimestamp() as any
   };

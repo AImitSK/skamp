@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 import { useNotificationSettings } from '@/hooks/use-notifications';
-import { 
+import {
   BellIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -14,7 +14,8 @@ import {
   CalendarDaysIcon,
   LinkIcon,
   ArrowDownTrayIcon,
-  ClockIcon
+  ClockIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingGroup {
@@ -29,16 +30,22 @@ interface SettingGroup {
 }
 
 interface NotificationSettingsState {
+  // Freigaben
   approvalGranted: boolean;
   changesRequested: boolean;
+  firstView: boolean;
   overdueApprovals: boolean;
   overdueApprovalDays: number;
+  // Schedule Mails
   emailSentSuccess: boolean;
   emailBounced: boolean;
+  // Tasks
   taskOverdue: boolean;
+  // Mediencenter
   mediaFirstAccess: boolean;
   mediaDownloaded: boolean;
-  mediaLinkExpired: boolean;
+  // Team
+  teamChatMention: boolean;
 }
 
 export function NotificationSettings() {
@@ -54,6 +61,7 @@ export function NotificationSettings() {
       setLocalSettings({
         approvalGranted: settings.approvalGranted,
         changesRequested: settings.changesRequested,
+        firstView: settings.firstView ?? true,
         overdueApprovals: settings.overdueApprovals,
         overdueApprovalDays: settings.overdueApprovalDays,
         emailSentSuccess: settings.emailSentSuccess,
@@ -61,7 +69,7 @@ export function NotificationSettings() {
         taskOverdue: settings.taskOverdue,
         mediaFirstAccess: settings.mediaFirstAccess,
         mediaDownloaded: settings.mediaDownloaded,
-        mediaLinkExpired: settings.mediaLinkExpired,
+        teamChatMention: (settings as any).teamChatMention ?? true,
       });
     }
   }, [settings]);
@@ -90,6 +98,11 @@ export function NotificationSettings() {
           key: 'changesRequested',
           label: 'Korrekturstatus: Änderungen erbeten',
           description: 'Benachrichtigung wenn Änderungen angefordert wurden'
+        },
+        {
+          key: 'firstView',
+          label: 'Erstmaliges Ansehen einer Freigabe',
+          description: 'Benachrichtigung wenn der Kunde die Freigabe zum ersten Mal öffnet'
         },
         {
           key: 'overdueApprovals',
@@ -144,11 +157,17 @@ export function NotificationSettings() {
           key: 'mediaDownloaded',
           label: 'Download eines geteilten Mediums',
           description: 'Benachrichtigung wenn geteilte Medien heruntergeladen werden'
-        },
+        }
+      ]
+    },
+    {
+      title: 'Team',
+      icon: UserGroupIcon,
+      settings: [
         {
-          key: 'mediaLinkExpired',
-          label: 'Ablaufdatum eines Links überschritten',
-          description: 'Benachrichtigung wenn ein geteilter Link abläuft'
+          key: 'teamChatMention',
+          label: '@-Erwähnungen im Team-Chat',
+          description: 'Benachrichtigung wenn Sie in einem Projekt-Chat erwähnt werden'
         }
       ]
     }

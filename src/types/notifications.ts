@@ -69,7 +69,9 @@ export interface NotificationSettings {
   // Mediencenter
   mediaFirstAccess: boolean;
   mediaDownloaded: boolean;
-  mediaLinkExpired: boolean;
+  // mediaLinkExpired: boolean; // TODO: Trigger noch nicht implementiert
+  // Team
+  teamChatMention: boolean;
   // Timestamps
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -94,7 +96,8 @@ export const DEFAULT_NOTIFICATION_SETTINGS: Omit<NotificationSettings, 'id' | 'u
   // Mediencenter
   mediaFirstAccess: true,
   mediaDownloaded: true,
-  mediaLinkExpired: true,
+  // Team
+  teamChatMention: true,
 };
 
 // Notification templates for consistent messaging

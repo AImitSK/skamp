@@ -175,7 +175,9 @@ export default function TestNotificationsPage() {
       MEDIA_FIRST_ACCESS: "Media-Zugriff",
       MEDIA_DOWNLOADED: "Media Download",
       MEDIA_LINK_EXPIRED: "Link abgelaufen",
-      FIRST_VIEW: "Erste Ansicht"
+      FIRST_VIEW: "Erste Ansicht",
+      TEAM_CHAT_MENTION: "Chat-Erwähnung",
+      project_assignment: "Projekt-Zuweisung"
     };
     return titles[type];
   };
