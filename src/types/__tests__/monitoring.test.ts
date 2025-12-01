@@ -88,13 +88,13 @@ describe('AVE System Type Definitions - Phase 4 Tests', () => {
     // TypeScript-Fehler Test (wird bei Kompilierung geprüft)
     // Dieser Test dokumentiert dass 'blog' NICHT mehr erlaubt ist
     it('sollte blog NICHT akzeptieren (TypeScript Error erwartet)', () => {
-      // @ts-expect-error - blog sollte nicht mehr erlaubt sein
       const clipping: MediaClipping = {
         organizationId: 'test-org',
         title: 'Test',
         url: 'https://example.com',
         publishedAt: Timestamp.now(),
         outletName: 'Test',
+        // @ts-expect-error - blog sollte nicht mehr erlaubt sein
         outletType: 'blog', // ❌ Blog sollte TypeScript Error werfen
         sentiment: 'positive',
         detectionMethod: 'manual',
