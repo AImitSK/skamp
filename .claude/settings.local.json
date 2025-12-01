@@ -42,7 +42,10 @@
       "Bash(find:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(Select-String -Pattern \"TeamStep.test.tsx\" -Context 0,1)"
+      "Bash(Select-String -Pattern \"TeamStep.test.tsx\" -Context 0,1)",
+      "Bash(for:*)",
+      "Bash(do echo \"  $f\")",
+      "Bash(done)"
     ]
   },
   "enableAllProjectMcpServers": true,
