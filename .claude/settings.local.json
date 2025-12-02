@@ -45,7 +45,11 @@
       "Bash(Select-String -Pattern \"TeamStep.test.tsx\" -Context 0,1)",
       "Bash(for:*)",
       "Bash(do echo \"  $f\")",
-      "Bash(done)"
+      "Bash(done)",
+      "WebSearch",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:genkit.dev)",
+      "WebFetch(domain:github.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

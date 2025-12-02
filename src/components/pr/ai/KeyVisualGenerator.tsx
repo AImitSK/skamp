@@ -208,9 +208,9 @@ export function KeyVisualGenerator({
         {state === 'generating-prompts' ? 'Generiert Bildideen...' : 'KI Bildideen'}
       </Button>
 
-      {/* Bildvorschläge zur Auswahl - Breites horizontales Layout */}
+      {/* Bildvorschläge zur Auswahl - Breites 1-spaltiges Layout */}
       {state === 'selecting' && suggestions.length > 0 && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-5 w-[800px] max-w-[90vw]">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-5 w-[600px] max-w-[90vw]">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-semibold text-gray-900">Wählen Sie einen Bildstil</h4>
             <button
@@ -221,8 +221,8 @@ export function KeyVisualGenerator({
             </button>
           </div>
 
-          {/* Horizontales Grid für 3 Karten */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Vertikale Liste */}
+          <div className="space-y-3">
             {suggestions.map((suggestion, index) => {
               const config = styleConfig[suggestion.style] || styleConfig['Konzeptuell'];
               const IconComponent = config.icon;
@@ -231,36 +231,34 @@ export function KeyVisualGenerator({
                 <button
                   key={index}
                   onClick={() => generateImage(suggestion)}
-                  className="text-left p-4 rounded-lg border border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 transition-all group flex flex-col h-full"
+                  className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-purple-400 hover:bg-purple-50/50 transition-all group"
                 >
-                  {/* Header mit Icon und Badge */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                  <div className="flex items-start gap-3">
+                    {/* Icon */}
+                    <div className={`p-2 rounded-lg ${config.bgColor} flex-shrink-0`}>
                       <IconComponent className={`h-5 w-5 ${config.iconColor}`} />
                     </div>
-                    <div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor}`}>
-                        {suggestion.style}
-                      </span>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Header mit Badge und Mood */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor}`}>
+                          {suggestion.style}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {suggestion.mood}
+                        </span>
+                      </div>
+
+                      {/* Beschreibung */}
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {suggestion.description}
+                      </p>
                     </div>
-                  </div>
 
-                  {/* Mood */}
-                  <p className="text-xs text-gray-500 mb-2">
-                    {suggestion.mood}
-                  </p>
-
-                  {/* Beschreibung */}
-                  <p className="text-sm text-gray-700 leading-relaxed flex-1">
-                    {suggestion.description}
-                  </p>
-
-                  {/* Hover-Indikator */}
-                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400 group-hover:text-purple-600 transition-colors">
-                      Klicken zum Generieren
-                    </span>
-                    <PhotoIcon className="h-4 w-4 text-gray-300 group-hover:text-purple-500 transition-colors" />
+                    {/* Hover Icon */}
+                    <PhotoIcon className="h-5 w-5 text-gray-300 group-hover:text-purple-500 flex-shrink-0 transition-colors" />
                   </div>
                 </button>
               );
