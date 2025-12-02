@@ -72,6 +72,14 @@ export async function GET(request: NextRequest) {
         // Don't block the response if sync fails
       }
 
+      // Helper: FlexibleTimestamp zu Date konvertieren
+      const toDate = (ts: any): Date => {
+        if (!ts) return new Date();
+        if (ts instanceof Date) return ts;
+        if (typeof ts.toDate === 'function') return ts.toDate();
+        return new Date(ts);
+      };
+
       // Serialize timestamps for client
       const organization: Organization = {
         id: orgDoc.id,
@@ -81,8 +89,8 @@ export async function GET(request: NextRequest) {
         tier: orgData.tier,
         stripeCustomerId: orgData.stripeCustomerId || undefined,
         stripeSubscriptionId: orgData.stripeSubscriptionId || undefined,
-        createdAt: orgData.createdAt?.toDate?.() || new Date(orgData.createdAt as any),
-        updatedAt: orgData.updatedAt?.toDate?.() || new Date(orgData.updatedAt as any),
+        createdAt: toDate(orgData.createdAt),
+        updatedAt: toDate(orgData.updatedAt),
         usage,
       };
 
@@ -90,10 +98,8 @@ export async function GET(request: NextRequest) {
       if (orgData.promoDetails) {
         organization.promoDetails = {
           ...orgData.promoDetails,
-          grantedAt: orgData.promoDetails.grantedAt?.toDate?.() || new Date(orgData.promoDetails.grantedAt as any),
-          expiresAt: orgData.promoDetails.expiresAt?.toDate?.()
-            ? orgData.promoDetails.expiresAt.toDate()
-            : (orgData.promoDetails.expiresAt ? new Date(orgData.promoDetails.expiresAt as any) : null),
+          grantedAt: toDate(orgData.promoDetails.grantedAt),
+          expiresAt: orgData.promoDetails.expiresAt ? toDate(orgData.promoDetails.expiresAt) : null,
         };
       }
 

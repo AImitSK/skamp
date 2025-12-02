@@ -421,14 +421,14 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
     // Parse emails mit neuer Struktur: Typ, Adresse, Primär
     if (row["E-Mail 1 Adresse"]) {
       contact.emails!.push({
-        type: mapEmailType(row["E-Mail 1 Typ"]) || 'business',
+        type: mapContactEmailType(row["E-Mail 1 Typ"]) || 'business',
         email: row["E-Mail 1 Adresse"],
         isPrimary: row["E-Mail 1 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 1 Primär"]?.toLowerCase() === 'true'
       });
     }
     if (row["E-Mail 2 Adresse"]) {
       contact.emails!.push({
-        type: mapEmailType(row["E-Mail 2 Typ"]) || 'private',
+        type: mapContactEmailType(row["E-Mail 2 Typ"]) || 'private',
         email: row["E-Mail 2 Adresse"],
         isPrimary: row["E-Mail 2 Primär"]?.toLowerCase() === 'ja' || row["E-Mail 2 Primär"]?.toLowerCase() === 'true'
       });
@@ -626,6 +626,18 @@ Thomas;Schneider;Herr;;Nachhaltigkeitsmanager;CSR;Greentech Solutions KG;active;
       'press': 'press'
     };
     return typeMap[type?.toLowerCase()] || 'general';
+  };
+
+  const mapContactEmailType = (type: string): 'business' | 'private' | 'other' => {
+    const typeMap: Record<string, 'business' | 'private' | 'other'> = {
+      'geschäftlich': 'business',
+      'business': 'business',
+      'privat': 'private',
+      'private': 'private',
+      'sonstige': 'other',
+      'other': 'other'
+    };
+    return typeMap[type?.toLowerCase()] || 'business';
   };
 
   const mapCommunicationChannel = (channel: string): 'email' | 'phone' | 'messaging' | 'mail' | undefined => {

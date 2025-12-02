@@ -481,14 +481,17 @@ export default function CompanyDetailPage() {
                         }
 
                         let date;
-                        // Handle Firestore Timestamp object
-                        if (company.foundedDate.toDate && typeof company.foundedDate.toDate === 'function') {
-                          date = company.foundedDate.toDate();
-                        } else if (company.foundedDate.seconds) {
+                        // foundedDate kann Date oder Timestamp sein
+                        if (company.foundedDate instanceof Date) {
+                          date = company.foundedDate;
+                        } else if (company.foundedDate && typeof company.foundedDate === 'object' && 'toDate' in company.foundedDate && typeof (company.foundedDate as any).toDate === 'function') {
+                          // Handle Firestore Timestamp object
+                          date = (company.foundedDate as any).toDate();
+                        } else if (company.foundedDate && typeof company.foundedDate === 'object' && 'seconds' in company.foundedDate) {
                           // Plain object with seconds/nanoseconds
-                          date = new Date(company.foundedDate.seconds * 1000);
+                          date = new Date((company.foundedDate as any).seconds * 1000);
                         } else {
-                          date = new Date(company.foundedDate);
+                          date = new Date(company.foundedDate as any);
                         }
 
                         const year = date.getFullYear();

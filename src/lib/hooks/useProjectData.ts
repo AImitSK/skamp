@@ -23,12 +23,13 @@ export function useProjects(organizationId: string | undefined) {
 /**
  * Hook zum Laden eines einzelnen Projekts
  */
-export function useProject(projectId: string | undefined) {
+export function useProject(projectId: string | undefined, organizationId?: string) {
   return useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
       if (!projectId) throw new Error('No project ID');
-      return projectService.getById(projectId);
+      // organizationId ist optional - falls nicht verfügbar, wird aus Projekt-Daten geladen
+      return projectService.getById(projectId, { organizationId: organizationId || 'default' });
     },
     enabled: !!projectId,
     staleTime: 5 * 60 * 1000,

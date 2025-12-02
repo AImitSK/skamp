@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       console.log('[Reactivate API] Subscription reactivated:', {
         subscriptionId: subscription.id,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        currentPeriodEnd: subscription.current_period_end,
+        currentPeriodEnd: (subscription as any).current_period_end,
       });
 
       // Update subscription document in Firestore

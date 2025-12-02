@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
             campaignId: data.campaignId,
             campaignTitle: data.campaignTitle,
             recipientCount: validRecipients.length,
-            status: 'limit_exceeded',
+            status: 'failed', // "limit_exceeded" ist nicht im Type, verwende "failed"
             errorMessage: 'Monthly email limit exceeded',
             ip,
             userAgent

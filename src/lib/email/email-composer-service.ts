@@ -262,9 +262,6 @@ export const emailComposerService = {
 
     return {
       recipient: {
-        salutation: contact.salutation || '',
-        salutationFormal: salutationFormal,
-        title: contact.title || '',
         firstName: contact.firstName,
         lastName: contact.lastName,
         fullName: `${contact.firstName} ${contact.lastName}`,

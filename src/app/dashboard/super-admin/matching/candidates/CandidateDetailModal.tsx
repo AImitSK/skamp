@@ -274,21 +274,21 @@ export default function CandidateDetailModal({
           </div>
 
           <div className="flex justify-end gap-2 p-6 border-t border-zinc-200 dark:border-zinc-800">
-            <Button color="light" onClick={onClose}>
+            <Button color="zinc" onClick={onClose}>
               Abbrechen
             </Button>
 
-            <Button color="red" onClick={handleReject} disabled={actionLoading}>
+            <Button color="secondary" onClick={handleReject} disabled={actionLoading}>
               <XMarkIcon className="size-4" />
               <span>Ablehnen</span>
             </Button>
 
-            <Button color="light" onClick={handleSkip} disabled={actionLoading}>
+            <Button color="zinc" onClick={handleSkip} disabled={actionLoading}>
               <ForwardIcon className="size-4" />
               <span>Überspringen</span>
             </Button>
 
-            <Button color="green" onClick={handleImport} disabled={actionLoading}>
+            <Button color="primary" onClick={handleImport} disabled={actionLoading}>
               <CheckIcon className="size-4" />
               <span>Importieren</span>
             </Button>

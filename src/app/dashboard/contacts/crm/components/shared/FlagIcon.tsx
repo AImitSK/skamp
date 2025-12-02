@@ -57,5 +57,5 @@ export function FlagIcon({
 
   if (!Flag) return null;
 
-  return <Flag className={className} title={countryCode} />;
+  return <Flag className={className} {...(countryCode ? { title: countryCode, 'aria-label': countryCode } : {})} />;
 }

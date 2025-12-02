@@ -164,7 +164,7 @@ async function Posts({ page, category }: { page: number; category?: string }) {
 
   return (
     <div className="mt-6">
-      {posts.map((post) => (
+      {posts.map((post: any) => (
         <div
           key={post.slug}
           className="relative grid grid-cols-1 border-b border-b-gray-100 py-10 first:border-t first:border-t-gray-200 max-sm:gap-3 sm:grid-cols-3"

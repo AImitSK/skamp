@@ -256,7 +256,7 @@ class PublicationService extends BaseService<Publication> {
           ...publication.metrics,
           ...metrics
         },
-        lastVerificationAt: Timestamp.now()
+        lastVerificationAt: Timestamp.now().toDate()
       },
       context
     );
@@ -273,9 +273,9 @@ class PublicationService extends BaseService<Publication> {
       publicationId,
       {
         verified: true,
-        verifiedAt: Timestamp.now(),
+        verifiedAt: Timestamp.now().toDate(),
         verifiedBy: context.userId,
-        lastVerificationAt: Timestamp.now()
+        lastVerificationAt: Timestamp.now().toDate()
       },
       context
     );

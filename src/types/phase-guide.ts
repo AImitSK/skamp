@@ -2,6 +2,9 @@
 import { Timestamp } from 'firebase/firestore';
 import type { PipelineStage } from './project';
 
+// Re-export PipelineStage für andere Module
+export type { PipelineStage };
+
 export interface PhaseGuide {
   phase: PipelineStage;
   title: string;

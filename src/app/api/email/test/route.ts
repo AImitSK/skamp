@@ -415,10 +415,20 @@ export async function POST(request: NextRequest) {
             template = systemTemplates[0];
           }
 
+          // Konvertiere CampaignBoilerplateSection[] in das erwartete Format für das Template
+          const formattedBoilerplateSections = (campaign.boilerplateSections || []).map(section => ({
+            id: section.id,
+            customTitle: section.customTitle,
+            content: section.content || '',
+            type: section.type === 'boilerplate' ? undefined : section.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
+            boilerplate: section.boilerplateId ? { content: section.content || '' } : undefined,
+            contentHtml: section.content
+          }));
+
           const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
             title: campaign.title,
             mainContent: pdfContent,
-            boilerplateSections: campaign.boilerplateSections || [],
+            boilerplateSections: formattedBoilerplateSections,
             keyVisual: campaign.keyVisual,
             clientName: campaign.clientName || 'Test Client',
             date: new Date().toISOString()

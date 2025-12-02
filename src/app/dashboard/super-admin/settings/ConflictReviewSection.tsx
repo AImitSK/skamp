@@ -208,7 +208,7 @@ export default function ConflictReviewSection() {
             {/* Aktionen */}
             <div className="flex justify-end gap-2">
               <Button
-                color="red"
+                color="secondary"
                 onClick={() => handleReject(conflict.id!)}
               >
                 <XMarkIcon className="size-4" />
@@ -216,7 +216,7 @@ export default function ConflictReviewSection() {
               </Button>
 
               <Button
-                color="green"
+                color="primary"
                 onClick={() => handleApprove(conflict.id!)}
               >
                 <CheckCircleIcon className="size-4" />

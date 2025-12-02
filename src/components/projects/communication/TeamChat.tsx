@@ -199,7 +199,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         try {
           const mentionedUserIds = teamChatNotificationsService.extractMentionedUserIds(
             newMessage,
-            teamMembers
+            teamMembers as any
           );
 
           if (mentionedUserIds.length > 0) {
@@ -449,7 +449,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
 
       {/* Nachrichten-Bereich */}
       <MessageList
-        messages={messages}
+        messages={messages as any}
         loading={loading}
         userId={userId}
         organizationId={organizationId}
@@ -459,7 +459,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
         userDisplayName={userDisplayName}
         lastReadTimestamp={lastReadTimestamp}
         messagesEndRef={messagesEndRef}
-        teamMembers={teamMembers}
+        teamMembers={teamMembers as any}
         showReactionTooltip={showReactionTooltip}
         onReaction={handleReaction}
         onShowTooltip={setShowReactionTooltip}
@@ -479,7 +479,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({
           showMentionDropdown={showMentionDropdown}
           mentionDropdownPosition={mentionDropdownPosition}
           mentionSearchTerm={mentionSearchTerm}
-          teamMembers={teamMembers}
+          teamMembers={teamMembers as any}
           selectedMentionIndex={selectedMentionIndex}
           selectMention={selectMention}
           setShowMentionDropdown={setShowMentionDropdown}

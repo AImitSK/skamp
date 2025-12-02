@@ -150,7 +150,7 @@ export default function BillingPage() {
         </div>
         <div className="flex gap-2">
           {!hasSubscription && !isSpecialAccount && (
-            <Button color="amber" onClick={handleFixOrganization} disabled={fixLoading}>
+            <Button color="secondary" onClick={handleFixOrganization} disabled={fixLoading}>
               {fixLoading ? 'Aktualisiere...' : '🔧 Subscription Sync'}
             </Button>
           )}

@@ -1750,9 +1750,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 agencyLogoUrl,
                 organizationId: approval.organizationId,
                 brandingSettings: brandingSettings ? {
-                  companyName: brandingSettings.companyName,
+                  companyName: brandingSettings.companyName || '',
                   logoUrl: brandingSettings.logoUrl,
-                  emailLogoUrl: brandingSettings.emailLogoUrl, // Email-optimierte Logo-Version
                   address: brandingSettings.address,
                   phone: brandingSettings.phone,
                   email: brandingSettings.email,
@@ -2252,8 +2251,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         ...(context.photoUrl ? { actorPhotoUrl: context.photoUrl } : {}),
         details: {
           comment: reason || 'Manuelle Freigabe erteilt',
-          manualApproval: true // Flag für Badge "Freigabe erteilt"
-        }
+          newStatus: 'approved' as ApprovalStatus
+        } as any
       };
 
       // Update Approval Status
@@ -2332,8 +2331,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         ...(context.photoUrl ? { actorPhotoUrl: context.photoUrl } : {}),
         details: {
           comment: reason || 'Änderungen angefordert',
-          manualChangesRequested: true // Flag für Badge "Änderungen erbeten"
-        }
+          newStatus: 'changes_requested' as ApprovalStatus
+        } as any
       };
 
       // Update Approval Status

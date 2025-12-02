@@ -390,11 +390,9 @@ Antworte im JSON-Format:
         prompt,
         config: {
           temperature: 0.2,
-          maxOutputTokens: 256
-        },
-        output: {
-          format: 'json',
-          schema: {
+          maxOutputTokens: 256,
+          response_mime_type: 'application/json',
+          response_schema: {
             type: 'object',
             properties: {
               score: { type: 'number' },
@@ -489,11 +487,9 @@ Antworte im JSON-Format:
         prompt,
         config: {
           temperature: 0.2,
-          maxOutputTokens: 256
-        },
-        output: {
-          format: 'json',
-          schema: {
+          maxOutputTokens: 256,
+          response_mime_type: 'application/json',
+          response_schema: {
             type: 'object',
             properties: {
               score: { type: 'number' },
@@ -586,11 +582,9 @@ Antworte im JSON-Format:
         prompt,
         config: {
           temperature: 0.2,
-          maxOutputTokens: 512
-        },
-        output: {
-          format: 'json',
-          schema: {
+          maxOutputTokens: 512,
+          response_mime_type: 'application/json',
+          response_schema: {
             type: 'object',
             properties: {
               score: { type: 'number' },

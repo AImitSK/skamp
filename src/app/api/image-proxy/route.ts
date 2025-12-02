@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
 
           console.info(`[image-proxy] Successfully loaded from Firebase Storage: ${filePath}`);
 
-          return new NextResponse(buffer, {
+          // Buffer ist kompatibel mit BodyInit - explizites Casting
+          return new NextResponse(buffer as unknown as BodyInit, {
             status: 200,
             headers: {
               'Content-Type': contentType,

@@ -495,7 +495,7 @@ export default function SuperAdminSettingsPage() {
 
             {/* Manual Scan Button */}
             <Button
-              color="blue"
+              color="primary"
               onClick={handleTriggerScan}
               disabled={loading}
               className="w-full"
@@ -531,7 +531,7 @@ export default function SuperAdminSettingsPage() {
 
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    color="green"
+                    color="primary"
                     onClick={handleSeedRealisticTestData}
                     disabled={loading}
                     className="flex-1"
@@ -541,7 +541,7 @@ export default function SuperAdminSettingsPage() {
                   </Button>
 
                   <Button
-                    color="light"
+                    color="zinc"
                     onClick={handleCleanupRealisticTestData}
                     disabled={loading}
                     className="flex-1"

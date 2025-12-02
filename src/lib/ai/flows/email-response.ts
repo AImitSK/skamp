@@ -22,7 +22,7 @@ const TONE_DESCRIPTIONS: Record<string, { de: string; en: string }> = {
 
 function getSystemPrompt(responseType: string, tone: string, language: string): string {
   const lang = language === 'de' ? 'auf Deutsch' : 'in English';
-  const toneDesc = TONE_DESCRIPTIONS[tone]?.[language] || TONE_DESCRIPTIONS[tone]?.de || tone;
+  const toneDesc = TONE_DESCRIPTIONS[tone]?.[language as 'de' | 'en'] || TONE_DESCRIPTIONS[tone]?.de || tone;
 
   const baseInstructions = `ANTWORT-QUALITÄT:
 ✓ Verwende ${toneDesc} Tonalität

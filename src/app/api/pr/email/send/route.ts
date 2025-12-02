@@ -157,12 +157,12 @@ export async function POST(request: NextRequest) {
         userId,
         campaignId,
         draft,
-        sendAt: Timestamp.fromDate(sendAt),
+        sendAt: Timestamp.fromDate(sendAt) as any, // Type-Cast: firebase-admin Timestamp zu client Timestamp
         timezone: draft.scheduling?.timezone || 'Europe/Berlin',
         status: 'pending',
         attempts: 0,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        createdAt: Timestamp.now() as any, // Type-Cast: firebase-admin Timestamp zu client Timestamp
+        updatedAt: Timestamp.now() as any // Type-Cast: firebase-admin Timestamp zu client Timestamp
       };
 
       const docRef = await adminDb.collection('scheduled_emails').add(scheduledEmail);

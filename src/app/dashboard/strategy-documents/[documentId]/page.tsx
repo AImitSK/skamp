@@ -129,13 +129,13 @@ export default function StrategyDocumentPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'yellow' | 'blue' | 'green' | 'zinc' => {
     switch (status) {
       case 'draft': return 'yellow';
       case 'review': return 'blue';
       case 'approved': return 'green';
-      case 'archived': return 'gray';
-      default: return 'gray';
+      case 'archived': return 'zinc';
+      default: return 'zinc';
     }
   };
 
@@ -201,7 +201,7 @@ export default function StrategyDocumentPage() {
                   {getStatusLabel(document.status)}
                 </Badge>
                 {document.templateName && (
-                  <Badge color="gray" className="text-xs">
+                  <Badge color="zinc" className="text-xs">
                     aus {document.templateName}
                   </Badge>
                 )}
@@ -227,16 +227,16 @@ export default function StrategyDocumentPage() {
           </div>
           
           <div className="flex items-center space-x-3">
-            <Button outline onClick={handleExportPDF}>
+            <Button plain onClick={handleExportPDF}>
               <DownloadIcon className="w-4 h-4 mr-2" />
               PDF Export
             </Button>
-            
+
             {!isReadOnly && (
               <>
                 {document.status === 'draft' && (
                   <Button
-                    outline
+                    plain
                     onClick={() => handleStatusUpdate('review')}
                     disabled={saving}
                   >
@@ -244,9 +244,10 @@ export default function StrategyDocumentPage() {
                     Zur Prüfung
                   </Button>
                 )}
-                
+
                 {document.status === 'review' && (
                   <Button
+                    color="primary"
                     onClick={() => handleStatusUpdate('approved')}
                     disabled={saving}
                   >

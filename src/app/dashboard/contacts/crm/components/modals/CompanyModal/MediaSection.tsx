@@ -160,7 +160,6 @@ export function MediaSection({ formData, companyId, userId }: MediaSectionProps)
                          pub.type === 'tv' ? 'TV' :
                          pub.type === 'radio' ? 'Radio' :
                          pub.type === 'trade_journal' ? 'Fachzeitschrift' :
-                         pub.type === 'press_agency' ? 'Nachrichtenagentur' :
                          pub.type === 'social_media' ? 'Social Media' :
                          pub.type}
                       </Badge>

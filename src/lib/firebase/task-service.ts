@@ -401,7 +401,8 @@ export const taskService = {
     );
 
     // Füge computed fields hinzu (isOverdue, daysUntilDue, overdueBy)
-    return this.addComputedFields(uniqueTasks as ProjectTask[]) as PipelineAwareTask[];
+    // Nutze addComputedFields direkt aus dem erweiterten taskService
+    return (taskService as any).addComputedFields(uniqueTasks as ProjectTask[]) as PipelineAwareTask[];
   },
 
   /**

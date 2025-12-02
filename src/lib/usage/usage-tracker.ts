@@ -437,7 +437,8 @@ export async function syncStorageUsage(organizationId: string): Promise<void> {
 
     // Summiere alle File-Größen
     const totalBytes = files.reduce((sum, file) => {
-      const size = parseInt(file.metadata.size || '0', 10);
+      const sizeStr = String(file.metadata.size || '0');
+      const size = parseInt(sizeStr, 10);
       return sum + size;
     }, 0);
 

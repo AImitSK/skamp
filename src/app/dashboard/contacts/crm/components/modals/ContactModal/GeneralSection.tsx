@@ -138,7 +138,7 @@ export function GeneralSection({
           selectedTagIds={formData.tagIds || []}
           availableTags={tags}
           onChange={(tagIds) => setFormData({ ...formData, tagIds })}
-          onCreateTag={onCreateTag}
+          onCreateTag={onCreateTag!}
         />
       </Field>
 

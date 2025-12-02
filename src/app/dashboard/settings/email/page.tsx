@@ -208,10 +208,11 @@ export default function EmailSettingsPage() {
 
     } catch (error) {
       console.error('❌ DEBUG loadDomains: Error:', error);
+      const errorObj = error as Error;
       console.error('❌ DEBUG loadDomains: Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
+        message: errorObj?.message,
+        stack: errorObj?.stack,
+        name: errorObj?.name
       });
       showToast('Fehler beim Laden der Domains', 'error');
     } finally {
@@ -838,7 +839,7 @@ export default function EmailSettingsPage() {
                     <option value="">Domain wählen...</option>
                     {domains.map(domain => (
                       <option key={domain.id} value={domain.id}>
-                        @{domain.name} ({domain.status})
+                        @{domain.name} ({domain.verified ? 'verified' : 'pending'})
                       </option>
                     ))}
                   </Select>

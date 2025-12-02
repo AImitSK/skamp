@@ -139,19 +139,19 @@ export async function POST(request: NextRequest) {
         const { extractAttachmentsFromFormData } = await import('@/lib/email/email-attachments-service');
         processedAttachments = await extractAttachmentsFromFormData(
           formData,
-          orgId, // Wird später durch richtige orgId ersetzt
-          emailData.messageId
+          orgId || 'default', // Sicherstellen dass orgId nicht undefined ist
+          emailData.messageId || 'unknown'
         );
 
         console.log(`📎 Processed ${processedAttachments.length} attachments`);
       } catch (attachmentError) {
         console.error('❌ Attachment processing failed:', attachmentError);
         // Fallback zu alter Methode (jetzt auch mit Upload!)
-        processedAttachments = await processAttachments(formData, parsedEmail, orgId, emailData.messageId);
+        processedAttachments = await processAttachments(formData, parsedEmail, orgId || 'default', emailData.messageId || 'unknown');
       }
     } else {
       // Keine attachment-info (typisch für Domain-Emails) - nutze Legacy-Methode mit Upload
-      processedAttachments = await processAttachments(formData, parsedEmail, orgId, emailData.messageId);
+      processedAttachments = await processAttachments(formData, parsedEmail, orgId || 'default', emailData.messageId || 'unknown');
     }
 
     if (processedAttachments.length > 0) {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       // Ersetze CID-Links in HTML mit echten URLs
       if (emailData.htmlContent && processedAttachments.some(a => a.inline && a.contentId)) {
         const { replaceInlineImageCIDs } = await import('@/lib/email/email-attachments-service');
-        emailData.htmlContent = replaceInlineImageCIDs(emailData.htmlContent, processedAttachments);
+        emailData.htmlContent = replaceInlineImageCIDs(emailData.htmlContent || '', processedAttachments);
       }
     }
 
@@ -439,7 +439,7 @@ function parseFormData(formData: FormData): ParsedEmail | null {
                 // Quoted-Printable encoding
                 const qpDecoded = encodedText
                   .replace(/_/g, ' ')
-                  .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+                  .replace(/=([0-9A-Fa-f]{2})/g, (_match: string, hex: string) =>
                     String.fromCharCode(parseInt(hex, 16))
                   );
                 return qpDecoded;

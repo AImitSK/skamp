@@ -95,8 +95,7 @@ const PHASE_GUIDES: Record<PipelineStage, PhaseGuide | null> = {
   },
 
   // Für späte Phasen wird die bestehende Pressemeldung Box verwendet
-  'internal_approval': null,
-  'customer_approval': null,
+  'approval': null,
   'distribution': null,
   'monitoring': null,
   'completed': null

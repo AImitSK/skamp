@@ -91,8 +91,9 @@ export class TeamChatNotificationsService {
             title: `${authorName} hat Sie erwähnt`,
             message: `In ${projectTitle}: "${truncatedMessage}"`,
             linkUrl: `/dashboard/projects/${projectId}?tab=teamchat`,
-            linkType: 'project' as any, // Erweitere LinkType später
+            linkType: 'project',
             linkId: projectId,
+            isRead: false,
             metadata: {
               projectId,
               projectTitle,

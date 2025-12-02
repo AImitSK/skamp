@@ -93,7 +93,11 @@ export function ProjectTaskManager({
             return dueDate.getTime() === today.getTime();
           }
           if (filter === 'overdue') {
-            return task.isOverdue;
+            // Berechne isOverdue dynamisch
+            if (!task.dueDate || task.status === 'completed') return false;
+            const dueDateMidnight = task.dueDate.toDate();
+            dueDateMidnight.setHours(0, 0, 0, 0);
+            return dueDateMidnight.getTime() < today.getTime();
           }
           if (filter === 'future') {
             if (!task.dueDate) return false;
@@ -209,7 +213,8 @@ export function ProjectTaskManager({
     const newProgress = Math.round(clickPosition * 100);
 
     try {
-      await taskService.updateProgress(task.id!, newProgress);
+      // Update progress via generic update method
+      await taskService.update(task.id!, { progress: newProgress });
       invalidateTasks();
     } catch (error) {
       console.error('Error updating progress:', error);
@@ -312,7 +317,7 @@ export function ProjectTaskManager({
 
       {/* Task List */}
       <TaskList
-        tasks={filteredAndSortedTasks}
+        tasks={filteredAndSortedTasks as any}
         isLoading={isLoading}
         activeFiltersCount={activeFiltersCount}
         viewMode={viewMode}
@@ -329,7 +334,7 @@ export function ProjectTaskManager({
         onEdit={setEditingTask}
         onComplete={handleCompleteTask}
         onDelete={handleDeleteTask}
-        onProgressClick={handleProgressClick}
+        onProgressClick={handleProgressClick as any}
         onCreateClick={() => setShowCreateModal(true)}
         onTasksInvalidate={invalidateTasks}
         formatDate={formatDate}

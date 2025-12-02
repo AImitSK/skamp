@@ -21,7 +21,7 @@ export function useCommunicationFeed(
       return projectCommunicationService.getProjectCommunicationFeed(
         projectId,
         organizationId,
-        options || {}
+        { limit: options?.limitCount }
       );
     },
     enabled: !!projectId && !!organizationId,
@@ -40,17 +40,19 @@ export function useCreateInternalNote() {
       projectId: string;
       content: string;
       author: string;
+      authorName: string;
       organizationId: string;
-      attachments?: any[];
       mentions?: string[];
+      attachments?: string[];
     }) => {
       return projectCommunicationService.createInternalNote(
         data.projectId,
         data.content,
         data.author,
+        data.authorName,
         data.organizationId,
-        data.attachments || [],
-        data.mentions
+        data.mentions,
+        data.attachments
       );
     },
     onSuccess: (_, variables) => {
@@ -73,13 +75,14 @@ export function useLinkEmailToProject() {
       emailThreadId: string;
       projectId: string;
       method: 'manual' | 'automatic';
-      organizationId?: string;
+      userId?: string;
     }) => {
       return projectCommunicationService.linkEmailToProject(
         data.emailThreadId,
         data.projectId,
         data.method,
-        data.organizationId
+        1.0, // confidence
+        data.userId
       );
     },
     onSuccess: (_, variables) => {

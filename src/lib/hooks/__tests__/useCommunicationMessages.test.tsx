@@ -117,6 +117,7 @@ describe('useCreateInternalNote', () => {
       projectId: 'project-123',
       content: 'Test internal note',
       author: 'Test User',
+      authorName: 'Test User',
       organizationId: 'org-123',
       mentions: ['@user2']
     });
@@ -157,6 +158,7 @@ describe('useCreateInternalNote', () => {
       projectId: 'project-123',
       content: 'Test note',
       author: 'Test User',
+      authorName: 'Test User',
       organizationId: 'org-123'
     });
 
@@ -180,7 +182,7 @@ describe('useLinkEmailToProject', () => {
       projectId: 'project-123',
       emailThreadId: 'thread-456',
       method: 'manual',
-      organizationId: 'org-123'
+      userId: 'user-123'
     });
 
     expect(projectCommunicationService.linkEmailToProject).toHaveBeenCalledWith(
@@ -215,7 +217,7 @@ describe('useLinkEmailToProject', () => {
       projectId: 'project-123',
       emailThreadId: 'thread-456',
       method: 'manual',
-      organizationId: 'org-123'
+      userId: 'user-123'
     });
 
     expect(invalidateSpy).toHaveBeenCalledWith({

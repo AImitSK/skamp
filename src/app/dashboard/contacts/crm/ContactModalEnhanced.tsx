@@ -1328,7 +1328,7 @@ export default function ContactModalEnhanced({
                         ...formData,
                         personalInfo: {
                           ...formData.personalInfo,
-                          birthday: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
+                          birthday: e.target.value ? (Timestamp.fromDate(new Date(e.target.value)) as unknown as Date) : undefined
                         }
                       })}
                     />

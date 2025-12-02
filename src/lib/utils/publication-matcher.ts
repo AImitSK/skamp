@@ -105,10 +105,10 @@ export async function handleRecipientLookup(
           matchedPublications.push({
             name: libPub.title,
             id: libPub.id,
-            type: mapPublicationTypeToMonitoring(libPub.type, libPub.format),
+            type: mapPublicationTypeToMonitoring(libPub.type, libPub.format as any),
             reach,
             circulation,
-            format: libPub.format,
+            format: libPub.format as any,
             source: 'library',
             focusAreas: libPub.focusAreas
           });

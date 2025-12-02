@@ -159,12 +159,12 @@ export function MonitoringSuggestionsTable({
   };
 
   const getConfidenceBadge = (confidence: MonitoringSuggestion['confidence']) => {
-    const colors = {
+    const colorMap = {
       low: 'zinc',
       medium: 'yellow',
       high: 'green',
       very_high: 'blue'
-    };
+    } as const;
 
     const labels = {
       low: 'Niedrig',
@@ -173,7 +173,7 @@ export function MonitoringSuggestionsTable({
       very_high: 'Sehr Hoch'
     };
 
-    return <Badge color={colors[confidence]}>{labels[confidence]}</Badge>;
+    return <Badge color={colorMap[confidence] as any}>{labels[confidence]}</Badge>;
   };
 
   const getStatusBadge = (status: MonitoringSuggestion['status']) => {
@@ -280,17 +280,17 @@ export function MonitoringSuggestionsTable({
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
                         <Button
-                          color="green"
                           onClick={() => openConfirmDialog(suggestion)}
                           disabled={processingId === suggestion.id}
+                          className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <CheckCircleIcon className="size-4" />
                           Übernehmen
                         </Button>
                         <Button
-                          color="red"
                           onClick={() => handleMarkSpam(suggestion)}
                           disabled={processingId === suggestion.id}
+                          className="bg-red-600 hover:bg-red-700 text-white"
                         >
                           <ExclamationTriangleIcon className="size-4" />
                           Spam
@@ -477,9 +477,9 @@ export function MonitoringSuggestionsTable({
             Abbrechen
           </Button>
           <Button
-            color="green"
             onClick={handleConfirmWithSentiment}
             disabled={processingId !== null || checkingDuplicate}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             Clipping erstellen
           </Button>

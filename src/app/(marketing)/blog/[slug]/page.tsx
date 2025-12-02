@@ -107,7 +107,7 @@ export default async function BlogPost({
                     Kategorien
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {post.categories.map((category) => (
+                    {post.categories.map((category: { slug: string; title: string }) => (
                       <Link
                         key={category.slug}
                         href={`/blog?category=${category.slug}`}
@@ -125,7 +125,7 @@ export default async function BlogPost({
                     Tags
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
+                    {post.tags.map((tag: { slug: string; title: string }) => (
                       <Link
                         key={tag.slug}
                         href={`/blog?tag=${tag.slug}`}

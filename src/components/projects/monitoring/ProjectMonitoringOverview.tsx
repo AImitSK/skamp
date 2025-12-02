@@ -136,7 +136,13 @@ export function ProjectMonitoringOverview({
 
   // Status Distribution Data
   const statusData = useMemo(() => {
-    const autoConfirmed = clippings.filter(c => c.detectionMethod === 'automated').length;
+    // detectionMethod ist: 'manual' | 'google_news' | 'rss' | 'web_scraping' | 'imported'
+    // Alles außer 'manual' und 'imported' zählt als automatisch
+    const autoConfirmed = clippings.filter(c =>
+      c.detectionMethod === 'google_news' ||
+      c.detectionMethod === 'rss' ||
+      c.detectionMethod === 'web_scraping'
+    ).length;
     const manual = clippings.filter(c => c.detectionMethod === 'manual').length;
     const pending = pendingSuggestions.length;
 
@@ -451,9 +457,8 @@ export function ProjectMonitoringOverview({
                 <div className="flex items-center gap-2 ml-4">
                   {onConfirmSuggestion && (
                     <Button
-                      size="sm"
-                      color="green"
                       onClick={() => openConfirmDialog(suggestion)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm"
                     >
                       <CheckCircleIcon className="h-4 w-4" />
                       Bestätigen
@@ -461,10 +466,9 @@ export function ProjectMonitoringOverview({
                   )}
                   {onRejectSuggestion && (
                     <Button
-                      size="sm"
                       plain
                       onClick={() => onRejectSuggestion(suggestion.id!)}
-                      className="!text-red-600 hover:!text-red-700"
+                      className="!text-red-600 hover:!text-red-700 px-3 py-1.5 text-sm"
                     >
                       Ablehnen
                     </Button>
@@ -543,7 +547,9 @@ export function ProjectMonitoringOverview({
                             locale: de
                           })}
                       </span>
-                      {clipping.detectionMethod === 'automated' && (
+                      {(clipping.detectionMethod === 'google_news' ||
+                        clipping.detectionMethod === 'rss' ||
+                        clipping.detectionMethod === 'web_scraping') && (
                         <>
                           <span>•</span>
                           <Badge color="green" className="text-xs !py-0">🤖 Auto</Badge>
@@ -672,8 +678,8 @@ export function ProjectMonitoringOverview({
             Abbrechen
           </Button>
           <Button
-            color="green"
             onClick={handleConfirmWithSentiment}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             Clipping erstellen
           </Button>

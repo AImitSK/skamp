@@ -211,14 +211,14 @@ export default function ContactModalEnhanced({
       // Map old contact format to enhanced format
       setFormData({
         name: {
-          firstName: contact.firstName,
-          lastName: contact.lastName
+          firstName: contact.firstName || '',
+          lastName: contact.lastName || ''
         },
-        displayName: `${contact.firstName} ${contact.lastName}`,
-        companyId: contact.companyId,
-        companyName: contact.companyName,
-        position: contact.position,
-        department: contact.department,
+        displayName: `${contact.firstName || ''} ${contact.lastName || ''}`,
+        companyId: contact.companyId || '',
+        companyName: contact.companyName || '',
+        position: contact.position || '',
+        department: contact.department || '',
         
         emails: contact.email ? [{
           type: 'business',
@@ -285,9 +285,9 @@ export default function ContactModalEnhanced({
   }, [contact, companies]);
 
   const loadTags = async () => {
-    if (!organizationId) return;
+    if (!userId) return;
     try {
-      const userTags = await tagsService.getAll(organizationId, userId);
+      const userTags = await tagsService.getAll(userId);
       setTags(userTags);
     } catch (error) {
       // Silent error handling
@@ -296,7 +296,7 @@ export default function ContactModalEnhanced({
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
-      const tagId = await tagsService.create({ name, color }, organizationId);
+      const tagId = await tagsService.create({ name, color, userId });
       await loadTags();
       return tagId;
     } catch (error) {

@@ -415,18 +415,18 @@ const STANDARD_TEMPLATES: ProjectTemplate[] = [
       {
         title: 'Interne Review durchführen',
         category: 'review',
-        stage: 'internal_approval',
+        stage: 'approval' as PipelineStage,
         priority: 'high',
         daysAfterStart: 15,
         assignmentRule: 'project_manager',
         requiredForStageCompletion: true
       },
-      
+
       // Customer Approval
       {
         title: 'Kundenpräsentation vorbereiten',
         category: 'presentation',
-        stage: 'customer_approval',
+        stage: 'approval' as PipelineStage,
         priority: 'high',
         daysAfterStart: 17,
         assignmentRule: 'project_manager',
@@ -469,7 +469,7 @@ const STANDARD_TEMPLATES: ProjectTemplate[] = [
       },
       {
         title: 'Kundenfreigabe erforderlich',
-        stage: 'customer_approval',
+        stage: 'approval' as PipelineStage,
         daysAfterStart: 18,
         type: 'deadline'
       },

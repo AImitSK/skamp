@@ -338,7 +338,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   console.log('[Stripe Webhook] Invoice paid:', invoice.id);
 
-  const subscriptionId = invoice.subscription as string;
+  // Type-sichere Extraktion: Stripe.Invoice.subscription kann string oder Subscription object sein
+  const subscription = (invoice as any).subscription;
+  const subscriptionId = typeof subscription === 'string' ? subscription : subscription?.id;
 
   if (!subscriptionId) {
     return; // Keine Subscription-Invoice
@@ -379,7 +381,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.error('[Stripe Webhook] Invoice payment failed:', invoice.id);
 
-  const subscriptionId = invoice.subscription as string;
+  // Type-sichere Extraktion: Stripe.Invoice.subscription kann string oder Subscription object sein
+  const subscription = (invoice as any).subscription;
+  const subscriptionId = typeof subscription === 'string' ? subscription : subscription?.id;
 
   if (!subscriptionId) {
     return;
@@ -409,8 +413,8 @@ function mapStripeSubscriptionToFirestore(
     stripePriceId: price.id,
     tier,
     status: subscription.status as SubscriptionStatus,
-    currentPeriodStart: new Date(subscription.current_period_start * 1000) as any,
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000) as any,
+    currentPeriodStart: new Date((subscription as any).current_period_start * 1000) as any,
+    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000) as any,
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
     pricePerMonth: (price.unit_amount || 0) / 100, // Cents to EUR
     billingInterval: price.recurring?.interval as 'month' | 'year',

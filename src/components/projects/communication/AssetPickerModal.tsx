@@ -185,13 +185,12 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
         {/* Breadcrumb Navigation */}
         {navigationStack.length > 0 && (
           <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Button
-              outline
+            <button
               onClick={handleBackClick}
-              className="p-1"
+              className="p-1 border border-gray-300 rounded hover:bg-gray-50"
             >
               <ArrowLeftIcon className="size-4" />
-            </Button>
+            </button>
             <div className="flex items-center space-x-1">
               <span>Projekt-Ordner</span>
               {breadcrumbs.map((folder, index) => (
@@ -269,9 +268,11 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
                             </Text>
                           </div>
                         </div>
-                        <Button size="sm" color="blue">
+                        <button
+                          className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                        >
                           Auswählen
-                        </Button>
+                        </button>
                       </div>
                     );
                   })}
@@ -287,9 +288,12 @@ export const AssetPickerModal: React.FC<AssetPickerModalProps> = ({
       </DialogBody>
 
       <DialogActions>
-        <Button outline onClick={onClose}>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+        >
           Abbrechen
-        </Button>
+        </button>
       </DialogActions>
     </Dialog>
   );

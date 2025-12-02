@@ -16,11 +16,15 @@ export function useGlobalJournalists() {
         where('isGlobal', '==', true)
       );
       const snapshot = await getDocs(globalContactsQuery);
-      const allContacts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ContactEnhanced[];
-      return allContacts.filter(c => c.isGlobal && c.mediaProfile?.isJournalist);
+      const allContacts = snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        return {
+          id: doc.id,
+          ...data
+        } as ContactEnhanced;
+      });
+      // Filter for journalists only
+      return allContacts.filter(c => c.mediaProfile?.isJournalist);
     },
     staleTime: 5 * 60 * 1000, // 5 Minuten
   });

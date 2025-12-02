@@ -1,6 +1,7 @@
 // src/app/api/threads/update-status/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service';
+import { adminDb } from '@/lib/firebase/admin-init';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +15,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update thread status
-    await threadMatcherService.updateThreadStatus(threadId, status);
+    // Update thread status direkt in Firestore (threadMatcherService hat keine updateThreadStatus Methode)
+    await adminDb.collection('email_threads').doc(threadId).update({
+      status,
+      updatedAt: FieldValue.serverTimestamp()
+    });
 
     return NextResponse.json({
       success: true,

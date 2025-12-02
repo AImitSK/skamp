@@ -710,7 +710,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                       })()}
                       onChange={(e) => setFormData({
                         ...formData,
-                        foundedDate: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
+                        foundedDate: e.target.value ? (Timestamp.fromDate(new Date(e.target.value)) as unknown as Date) : undefined
                       })}
                     />
                   </Field>
@@ -1273,7 +1273,6 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                                    pub.type === 'tv' ? 'TV' :
                                    pub.type === 'radio' ? 'Radio' :
                                    pub.type === 'trade_journal' ? 'Fachzeitschrift' :
-                                   pub.type === 'press_agency' ? 'Nachrichtenagentur' :
                                    pub.type === 'social_media' ? 'Social Media' :
                                    pub.type}
                                 </Badge>

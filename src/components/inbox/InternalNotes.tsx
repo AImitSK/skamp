@@ -173,7 +173,18 @@ export function InternalNotes({
   }, []);
 
   // Filtered team members for mentions (use allTeamMembers)
-  const membersForMentions = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
+  // Konvertiere zu einem einheitlichen Format für die Mention-Komponente
+  const membersForMentions: Array<{
+    id: string;
+    userId: string;
+    displayName: string;
+    email: string;
+  }> = (allTeamMembers.length > 0 ? allTeamMembers : teamMembers).map(m => ({
+    id: m.id,
+    userId: m.userId,
+    displayName: m.displayName,
+    email: m.email
+  }));
 
   // Keyboard-Navigation für Mention-Dropdown
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -232,7 +243,14 @@ export function InternalNotes({
   // Extract mentions from text - Verwende den gleichen Service wie Team Chat
   const extractMentions = (text: string): string[] => {
     const membersToSearch = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
-    return teamChatNotificationsService.extractMentionedUserIds(text, membersToSearch);
+    // TeamMember[] zu kompatiblem Format konvertieren für extractMentionedUserIds
+    const compatibleMembers = membersToSearch.map(m => ({
+      id: m.id,
+      userId: m.userId,
+      displayName: m.displayName,
+      email: m.email
+    }));
+    return teamChatNotificationsService.extractMentionedUserIds(text, compatibleMembers as any);
   };
 
   // Submit note
@@ -275,16 +293,17 @@ export function InternalNotes({
               title: `${userName} hat Sie erwähnt`,
               message: `In einer Email-Notiz: "${newNote.substring(0, 100)}${newNote.length > 100 ? '...' : ''}"`,
               linkUrl: `/dashboard/communication/inbox?threadId=${threadId}`,
-              linkType: 'email' as any,
+              linkType: 'project',
               linkId: threadId,
               metadata: {
-                threadId,
-                emailId,
+                projectId: threadId, // threadId als projectId verwenden für Kompatibilität
+                projectTitle: 'Email-Thread',
+                messageContent: newNote.substring(0, 200),
                 mentionedBy: user.uid,
-                mentionedByName: userName,
-                content: newNote.substring(0, 200)
-              }
-            });
+                mentionedByName: userName
+              },
+              isRead: false
+            } as any);
           } catch (error) {
             console.error('Fehler beim Erstellen der Benachrichtigung:', error);
           }
@@ -395,7 +414,7 @@ export function InternalNotes({
               isVisible={showMentions}
               position={mentionDropdownPosition}
               searchTerm={mentionSearch}
-              teamMembers={membersForMentions}
+              teamMembers={membersForMentions as any}
               selectedIndex={selectedMentionIndex}
               onSelect={insertMention}
               onClose={() => setShowMentions(false)}

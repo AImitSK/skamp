@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Parser from 'rss-parser';
+import { Timestamp } from 'firebase-admin/firestore';
 import {
   CampaignMonitoringTracker,
   MonitoringSource,
@@ -211,6 +212,7 @@ async function crawlRssFeed(
 
       // Nur aufnehmen wenn Firmenname gefunden wurde
       if (autoConfirmResult.companyMatch.found) {
+        const foundAtTimestamp = Timestamp.fromDate(new Date());
         sources.push({
           type: 'rss_feed',
           sourceName: channel.publicationName,
@@ -220,7 +222,7 @@ async function crawlRssFeed(
           matchedKeywords: autoConfirmResult.companyMatch.matchedKeyword
             ? [autoConfirmResult.companyMatch.matchedKeyword]
             : [],
-          foundAt: new Date(),
+          foundAt: foundAtTimestamp as any, // Type-cast wegen unterschiedlicher Timestamp-Implementierungen
           publicationId: channel.publicationId,
           articleUrl: item.link,
           articleTitle: item.title,
@@ -265,6 +267,7 @@ async function crawlGoogleNews(
 
       // Nur aufnehmen wenn Firmenname gefunden wurde
       if (autoConfirmResult.companyMatch.found) {
+        const foundAtTimestamp = Timestamp.fromDate(new Date());
         sources.push({
           type: 'google_news',
           sourceName: 'Google News',
@@ -273,7 +276,7 @@ async function crawlGoogleNews(
           matchedKeywords: autoConfirmResult.companyMatch.matchedKeyword
             ? [autoConfirmResult.companyMatch.matchedKeyword]
             : [],
-          foundAt: new Date(),
+          foundAt: foundAtTimestamp as any, // Type-cast wegen unterschiedlicher Timestamp-Implementierungen
           articleUrl: item.link,
           articleTitle: item.title,
           articleExcerpt: item.contentSnippet,
@@ -360,6 +363,9 @@ async function processSuggestion(
   if (result.created && result.autoConfirmed && result.suggestionId) {
     const { determineConfidence } = await import('@/lib/firebase-admin/keyword-extraction-service');
 
+    const createdTimestamp = Timestamp.fromDate(new Date());
+    const updatedTimestamp = Timestamp.fromDate(new Date());
+
     const suggestionData = {
       organizationId: tracker.organizationId,
       campaignId: tracker.campaignId,
@@ -367,7 +373,7 @@ async function processSuggestion(
       normalizedUrl: normalized,
       articleTitle: source.articleTitle,
       articleExcerpt: source.articleExcerpt,
-      sources: [source],
+      sources: [source] as any[], // Type-cast wegen unterschiedlicher Timestamp-Implementierungen
       avgMatchScore: source.matchScore,
       highestMatchScore: source.matchScore,
       confidence: determineConfidence(source.autoConfirmResult),
@@ -377,8 +383,8 @@ async function processSuggestion(
       companyMatchInTitle: source.autoConfirmResult?.companyMatch.inTitle,
       matchedCompanyKeyword: source.autoConfirmResult?.companyMatch.matchedKeyword,
       seoScore: source.autoConfirmResult?.seoScore,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: createdTimestamp as any,
+      updatedAt: updatedTimestamp as any
     };
 
     await createClippingFromSuggestion(result.suggestionId, suggestionData, tracker);

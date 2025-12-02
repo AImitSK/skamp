@@ -28,8 +28,8 @@ import {
 export const mergeVariantsFlow = ai.defineFlow(
   {
     name: 'mergeVariants',
-    inputSchema: MergeVariantsInputSchema,
-    outputSchema: MergedContactSchema
+    inputSchema: MergeVariantsInputSchema as any,
+    outputSchema: MergedContactSchema as any
   },
   async (input: MergeVariantsInput): Promise<MergedContact> => {
     const { variants } = input;
@@ -156,7 +156,7 @@ KRITISCH:
       console.log('🐛 DEBUG - Raw result:', JSON.stringify(result, null, 2).substring(0, 500));
 
       // Extrahiere Text aus Genkit Response Struktur
-      const textOutput = result.message?.content?.[0]?.text || result.text?.() || JSON.stringify(result);
+      const textOutput = result.message?.content?.[0]?.text || result.text || JSON.stringify(result);
       console.log('🐛 DEBUG - Text Output (erste 500 chars):', textOutput.substring(0, 500));
 
       // Parse JSON

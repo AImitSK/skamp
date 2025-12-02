@@ -60,7 +60,7 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
 
       console.log('🌟 Company wird als global erstellt:', {
         name: data.name,
-        isGlobal: globalizedData.isGlobal,
+        isGlobal: (globalizedData as any).isGlobal,
         autoGlobalMode: context.autoGlobalMode
       });
 
@@ -446,7 +446,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
 
       console.log('🌟 Contact wird als global erstellt:', {
         name: data.displayName,
-        isGlobal: globalizedData.isGlobal,
+        isGlobal: (globalizedData as any).isGlobal,
         autoGlobalMode: context.autoGlobalMode
       });
 
@@ -849,7 +849,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
               results.skipped++;
               results.warnings.push({
                 row: i + 1,
-                warning: `Kontakt "${contact.displayName || `${contact.name.firstName} ${contact.name.lastName}`}" existiert bereits und wurde übersprungen`
+                warning: `Kontakt "${contact.displayName || `${contact.name?.firstName} ${contact.name?.lastName}`}" existiert bereits und wurde übersprungen`
               });
             }
             continue;

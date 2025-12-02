@@ -277,7 +277,7 @@ function CandidateRow({
         <div className="flex items-center gap-1">
           {/* Details Button */}
           <Button
-            color="light"
+            color="zinc"
             onClick={onViewDetails}
             disabled={actionLoading}
             title="Details anzeigen"
@@ -291,7 +291,7 @@ function CandidateRow({
             <>
               {/* Quick Import */}
               <Button
-                color="green"
+                color="primary"
                 onClick={handleQuickImport}
                 disabled={actionLoading}
                 title="Schnell importieren (erste Variante)"
@@ -302,7 +302,7 @@ function CandidateRow({
 
               {/* Skip */}
               <Button
-                color="light"
+                color="zinc"
                 onClick={handleSkip}
                 disabled={actionLoading}
                 title="Überspringen"
@@ -313,7 +313,7 @@ function CandidateRow({
 
               {/* Reject */}
               <Button
-                color="red"
+                color="secondary"
                 onClick={handleReject}
                 disabled={actionLoading}
                 title="Ablehnen"

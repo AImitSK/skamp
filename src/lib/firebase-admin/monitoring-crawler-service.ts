@@ -4,6 +4,7 @@
  */
 
 import { adminDb } from '@/lib/firebase/admin-init';
+import * as admin from 'firebase-admin';
 import {
   CampaignMonitoringTracker,
   MonitoringSuggestion,
@@ -12,6 +13,9 @@ import {
   AutoConfirmResult
 } from '@/types/monitoring';
 import { determineConfidence } from '@/lib/firebase-admin/keyword-extraction-service';
+
+// Type für Admin SDK Timestamp
+type AdminTimestamp = admin.firestore.Timestamp;
 
 /**
  * Lädt alle aktiven Tracker
@@ -27,6 +31,11 @@ export async function getActiveTrackers(): Promise<CampaignMonitoringTracker[]> 
 
     // Filter nur aktive Tracker die noch nicht abgelaufen sind
     const trackers = snapshot.docs
+      .filter(doc => {
+        // Filtere bereits hier mit Admin SDK Timestamp
+        const endDate = doc.data().endDate?.toDate();
+        return endDate && endDate > now;
+      })
       .map(doc => {
         const data = doc.data();
         return {
@@ -40,8 +49,7 @@ export async function getActiveTrackers(): Promise<CampaignMonitoringTracker[]> 
           nextCrawlAt: data.nextCrawlAt?.toDate(),
           channels: data.channels || []
         } as CampaignMonitoringTracker;
-      })
-      .filter(tracker => tracker.endDate > now);
+      });
 
     return trackers;
   } catch (error) {
@@ -191,7 +199,7 @@ async function incrementSpamMatchCount(patternId: string): Promise<void> {
     const docRef = adminDb.collection('spam_patterns').doc(patternId);
     await docRef.update({
       timesMatched: (await docRef.get()).data()?.timesMatched + 1 || 1,
-      updatedAt: new Date()
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
     });
   } catch (error) {
     console.error('Failed to increment spam match count:', error);
@@ -265,7 +273,7 @@ export async function updateSuggestionWithNewSource(
       confidence,
       autoConfirmed: shouldAutoConfirm,
       status: shouldAutoConfirm ? 'auto_confirmed' : existing.status,
-      updatedAt: new Date()
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
     };
 
     // 🆕 Plan 02: Speichere Auto-Confirm Analyse-Daten
@@ -315,8 +323,8 @@ export async function createSuggestion(
       confidence,
       autoConfirmed: shouldAutoConfirm,
       status: shouldAutoConfirm ? 'auto_confirmed' : 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: admin.firestore.Timestamp.fromDate(new Date()) as any,
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date()) as any
     };
 
     const docRef = await adminDb.collection('monitoring_suggestions').add(suggestionData);
@@ -366,8 +374,8 @@ export async function createSuggestionWithAutoConfirm(
       confidence,
       autoConfirmed: shouldAutoConfirm,
       status: shouldAutoConfirm ? 'auto_confirmed' : 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
     };
 
     // 🆕 Plan 02: Speichere Auto-Confirm Analyse-Daten
@@ -412,23 +420,28 @@ export async function createClippingFromSuggestion(
       return null;
     }
 
+    // Nutze foundAt Timestamp von der ersten Source
+    const publishedDate = suggestion.sources[0].foundAt instanceof Date
+      ? suggestion.sources[0].foundAt
+      : (suggestion.sources[0].foundAt as any)?.toDate?.() || new Date();
+
     const clippingData = {
       organizationId: tracker.organizationId,
       campaignId: tracker.campaignId,
       projectId: campaign.projectId,
       title: suggestion.articleTitle,
       url: suggestion.articleUrl,
-      publishedAt: suggestion.sources[0].publishedAt || new Date(),
+      publishedAt: admin.firestore.Timestamp.fromDate(publishedDate),
       outletName: suggestion.sources[0].sourceName,
       outletType: 'online' as const,
       sentiment: 'neutral' as const,
       detectionMethod: 'automated' as const,
-      detectedAt: new Date(),
+      detectedAt: admin.firestore.Timestamp.fromDate(new Date()),
       createdBy: 'system-crawler',
       verifiedBy: 'system-auto-confirm',
-      verifiedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+      verifiedAt: admin.firestore.Timestamp.fromDate(new Date()),
+      createdAt: admin.firestore.Timestamp.fromDate(new Date()),
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
     };
 
     const clippingRef = await adminDb.collection('media_clippings').add(clippingData);
@@ -436,7 +449,7 @@ export async function createClippingFromSuggestion(
     // Update Suggestion mit clippingId
     await adminDb.collection('monitoring_suggestions').doc(suggestionId).update({
       clippingId: clippingRef.id,
-      autoConfirmedAt: new Date()
+      autoConfirmedAt: admin.firestore.Timestamp.fromDate(new Date())
     });
 
     console.log(`✅ Auto-confirmed clipping created: ${clippingRef.id}`);
@@ -473,16 +486,28 @@ export async function updateTrackerChannel(
 
     const tracker = doc.data() as CampaignMonitoringTracker;
 
+    // Konvertiere Date-Felder zu Admin SDK Timestamps
+    const timestampUpdates: Record<string, unknown> = { ...updates };
+    if (updates.lastChecked) {
+      timestampUpdates.lastChecked = admin.firestore.Timestamp.fromDate(updates.lastChecked);
+    }
+    if (updates.lastSuccess) {
+      timestampUpdates.lastSuccess = admin.firestore.Timestamp.fromDate(updates.lastSuccess);
+    }
+    if (updates.foundAt) {
+      timestampUpdates.foundAt = admin.firestore.Timestamp.fromDate(updates.foundAt);
+    }
+
     const updatedChannels = tracker.channels.map(ch => {
       if (ch.id === channelId) {
-        return { ...ch, ...updates };
+        return { ...ch, ...timestampUpdates };
       }
       return ch;
     });
 
     await docRef.update({
       channels: updatedChannels,
-      updatedAt: new Date()
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
     });
   } catch (error) {
     console.error('❌ Error updating tracker channel:', error);
@@ -502,10 +527,20 @@ export async function updateTrackerStats(
   }
 ): Promise<void> {
   try {
-    await adminDb.collection('campaign_monitoring_trackers').doc(trackerId).update({
+    // Konvertiere Date-Felder zu Admin SDK Timestamps
+    const updateData: Record<string, unknown> = {
       ...stats,
-      updatedAt: new Date()
-    });
+      updatedAt: admin.firestore.Timestamp.fromDate(new Date())
+    };
+
+    if (stats.lastCrawlAt) {
+      updateData.lastCrawlAt = admin.firestore.Timestamp.fromDate(stats.lastCrawlAt);
+    }
+    if (stats.nextCrawlAt) {
+      updateData.nextCrawlAt = admin.firestore.Timestamp.fromDate(stats.nextCrawlAt);
+    }
+
+    await adminDb.collection('campaign_monitoring_trackers').doc(trackerId).update(updateData);
   } catch (error) {
     console.error('❌ Error updating tracker stats:', error);
   }
@@ -533,7 +568,7 @@ export async function deactivateExpiredTrackers(): Promise<number> {
       if (endDate && endDate <= now) {
         await doc.ref.update({
           isActive: false,
-          updatedAt: new Date()
+          updatedAt: admin.firestore.Timestamp.fromDate(new Date())
         });
         deactivated++;
       }

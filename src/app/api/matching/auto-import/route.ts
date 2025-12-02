@@ -103,8 +103,8 @@ export async function GET(request: NextRequest) {
       userEmail: SUPER_ADMIN_EMAIL,
       organizationId: SUPER_ADMIN_ORG_ID,
       baseUrl,
-      maxCandidates,
-      offset
+      ...(maxCandidates !== undefined && { maxCandidates }),
+      ...(offset !== undefined && { offset })
     });
 
     console.log('✅ Auto-import completed', result.stats);
@@ -240,9 +240,8 @@ export async function POST(request: NextRequest) {
       userId: SUPER_ADMIN_USER_ID,
       userEmail: SUPER_ADMIN_EMAIL,
       organizationId: SUPER_ADMIN_ORG_ID,
-      baseUrl,
-      maxCandidates,
-      offset
+      baseUrl
+      // maxCandidates und offset werden hier nicht verwendet (sind im GET-Handler definiert)
     });
 
     console.log('✅ Auto-import completed (POST)', result.stats);

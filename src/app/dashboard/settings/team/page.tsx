@@ -495,8 +495,11 @@ export default function TeamSettingsPage() {
   const activeMembersOnly = activeMembers.filter(m => m.status === 'active');
 
   // Team Member Limit aus Subscription Tier
-  const teamLimit = currentOrganization?.tier
-    ? SUBSCRIPTION_LIMITS[currentOrganization.tier]?.users || -1
+  // Property 'tier' existiert möglicherweise nicht im Organization Type, deshalb type assertion
+  const orgWithTier = currentOrganization as any;
+  const tierValue = orgWithTier?.tier;
+  const teamLimit = tierValue && SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
+    ? SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS].users
     : -1;
   const isLimitReached = teamLimit !== -1 && activeMembers.length >= teamLimit;
   

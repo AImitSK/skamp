@@ -421,7 +421,7 @@ export default function ContactDetailPage() {
   if (error) {
     return (
       <div className="p-8">
-        <Alert type="error" title="Fehler" message={error} />
+        <Alert type="error" title={error} />
         <div className="mt-4">
           <Button 
             onClick={() => router.push('/dashboard/contacts/crm/')} 
@@ -841,7 +841,7 @@ export default function ContactDetailPage() {
             )}
 
             {/* Professional Info / Biografie */}
-            {contact.professionalInfo && (contact.professionalInfo.bio || contact.professionalInfo.education?.length || contact.professionalInfo.careerHistory?.length) && (
+            {contact.professionalInfo && (contact.professionalInfo.biography || contact.professionalInfo.education?.length || contact.professionalInfo.certifications?.length) && (
               <InfoCard title="Biografie" icon={BriefcaseIcon}>
                 <div className="space-y-4">
                   {contact.professionalInfo.education && contact.professionalInfo.education.length > 0 && (

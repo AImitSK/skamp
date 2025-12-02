@@ -2237,6 +2237,7 @@ export const projectService = {
           // "Projekte" Hauptordner erstellen wenn er nicht existiert
           projectsRootFolderId = await mediaService.createFolder({
             userId: context.userId,
+            organizationId: context.organizationId,
             name: 'Projekte',
             parentFolderId: undefined, // Root-Ordner
             description: 'Alle Projektordner',
@@ -2258,6 +2259,7 @@ export const projectService = {
       // Projektordner erstellen - als Unterordner von "Projekte" und MIT clientId wenn vorhanden
       const mainFolderId = await mediaService.createFolder({
         userId: context.userId,
+        organizationId: context.organizationId,
         name: projectFolderName,
         parentFolderId: projectsRootFolderId, // Unter "Projekte" Ordner
         description: `Projektordner für "${project.title}" - ${companyName}`,
@@ -2295,6 +2297,7 @@ export const projectService = {
         try {
           const subfolderId = await mediaService.createFolder({
             userId: context.userId,
+            organizationId: context.organizationId,
             name: subfolder.name,
             parentFolderId: mainFolderId,
             description: subfolder.description,

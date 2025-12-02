@@ -494,7 +494,7 @@ export const MessageItem = React.memo<MessageItemProps>(function MessageItem({
           <Button plain onClick={() => setShowDeleteDialog(false)}>
             Abbrechen
           </Button>
-          <Button color="red" onClick={confirmDelete} disabled={deleteMessageMutation.isPending}>
+          <Button color="primary" onClick={confirmDelete} disabled={deleteMessageMutation.isPending} className="bg-red-600 hover:bg-red-700">
             {deleteMessageMutation.isPending ? 'Löschen...' : 'Nachricht löschen'}
           </Button>
         </DialogActions>

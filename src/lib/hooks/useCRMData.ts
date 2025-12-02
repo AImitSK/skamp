@@ -110,7 +110,7 @@ export function useUpdateCompany() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       data,
       organizationId
@@ -118,7 +118,14 @@ export function useUpdateCompany() {
       id: string;
       data: Partial<CompanyEnhanced>;
       organizationId: string;
-    }) => companiesEnhancedService.update(id, data, organizationId),
+    }) => {
+      const { updateDoc, doc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/client-init');
+      await updateDoc(doc(db, 'companies_enhanced', id), {
+        ...data,
+        updatedAt: new Date(),
+      });
+    },
     onSuccess: (_, { organizationId }) => {
       queryClient.invalidateQueries({ queryKey: ['companies', organizationId] });
     },
@@ -168,7 +175,7 @@ export function useUpdateContact() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       data,
       organizationId
@@ -176,7 +183,14 @@ export function useUpdateContact() {
       id: string;
       data: Partial<ContactEnhanced>;
       organizationId: string;
-    }) => contactsEnhancedService.update(id, data, organizationId),
+    }) => {
+      const { updateDoc, doc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/client-init');
+      await updateDoc(doc(db, 'contacts_enhanced', id), {
+        ...data,
+        updatedAt: new Date(),
+      });
+    },
     onSuccess: (_, { organizationId }) => {
       queryClient.invalidateQueries({ queryKey: ['contacts', organizationId] });
     },

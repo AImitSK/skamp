@@ -204,17 +204,15 @@ export default function PhaseGuideBox({
                       {!isCompleted && (
                         <>
                           <Button
-                            size="sm"
                             onClick={() => handleTaskAction(task)}
-                            className="flex-1"
+                            className="flex-1 text-sm py-1.5"
                           >
                             {getActionButtonText(task.actionType)}
                           </Button>
                           <Button
-                            size="sm"
                             plain
                             onClick={() => handleTaskComplete(task.id)}
-                            className="px-3"
+                            className="px-3 text-sm py-1.5"
                             title="Als erledigt markieren"
                           >
                             ✓
@@ -224,10 +222,9 @@ export default function PhaseGuideBox({
 
                       {isCompleted && (
                         <Button
-                          size="sm"
                           plain
                           onClick={() => handleTaskComplete(task.id)}
-                          className="flex-1"
+                          className="flex-1 text-sm py-1.5"
                         >
                           Als unerledigt markieren
                         </Button>

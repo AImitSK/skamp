@@ -86,9 +86,9 @@ function mechanicalMerge(variants: MatchingCandidateVariant[]): MergedContactDat
   // Kombiniere Media Types
   const allMediaTypes = new Set<string>();
   variants.forEach(v => {
-    v.contactData.mediaTypes?.forEach(type => allMediaTypes.add(type));
+    v.contactData.mediaTypes?.forEach((type: string) => allMediaTypes.add(type));
   });
-  merged.mediaTypes = Array.from(allMediaTypes);
+  merged.mediaTypes = Array.from(allMediaTypes) as any;
 
   // Kombiniere Social Profiles (ohne Duplikate)
   const allProfiles = new Map<string, any>();

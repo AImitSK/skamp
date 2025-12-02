@@ -265,7 +265,7 @@ export function ContactsTable({
                     <TagsOverflowPopover
                       tags={contact.tagIds.map(tagId => {
                         const tag = safeTags.find(t => t.id === tagId);
-                        return tag ? { id: tag.id!, name: tag.name, color: tag.color } : null;
+                        return tag ? { id: tag.id!, name: tag.name, color: tag.color as string } : null;
                       }).filter((t): t is { id: string; name: string; color: string } => t !== null)}
                       overflowCount={contact.tagIds.length - 3}
                     />

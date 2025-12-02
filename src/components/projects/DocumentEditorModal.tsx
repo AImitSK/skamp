@@ -7,6 +7,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+// @ts-ignore - lodash wird als JS-Library verwendet
 import { debounce } from 'lodash';
 
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
@@ -219,27 +220,34 @@ export default function DocumentEditorModal({
 
         if (document?.id) {
           // Update existierendes Strategiedokument
-          await strategyDocumentService.update(document.id, {
-            title: title.trim(),
-            content: content,
-            updatedAt: new Date()
-          });
+          await strategyDocumentService.update(
+            document.id,
+            {
+              title: title.trim(),
+              content: content
+            },
+            'Manuell aktualisiert',
+            { organizationId, userId: user.uid }
+          );
         } else {
           // Neues Strategiedokument erstellen
-          await strategyDocumentService.create({
-            projectId,
-            title: title.trim(),
-            type: 'strategy',
-            content: content,
-            status: 'draft',
-            author: user.uid,
-            authorName: user.displayName || user.email || 'Unbekannt',
-            templateId: templateInfo?.type,
-            templateName: templateInfo?.name
-          }, {
-            organizationId,
-            userId: user.uid
-          });
+          await strategyDocumentService.create(
+            {
+              projectId,
+              title: title.trim(),
+              type: 'strategy' as any,
+              content: content,
+              status: 'draft',
+              author: user.uid,
+              authorName: user.displayName || user.email || 'Unbekannt',
+              templateId: templateInfo?.type,
+              templateName: templateInfo?.name
+            } as any,
+            {
+              organizationId,
+              userId: user.uid
+            }
+          );
         }
       } else {
         // Standard Document-Content-Service verwenden

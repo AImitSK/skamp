@@ -153,7 +153,6 @@ class DefaultEmailService {
       isShared: data.isShared,
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
-      userId: data.userId,
       createdBy: data.userId,
       updatedBy: data.userId
     };

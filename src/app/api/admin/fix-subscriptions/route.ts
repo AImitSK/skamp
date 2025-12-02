@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
       console.log('[Fix Subscriptions] Starting fix process');
 
       // Check if Super-Admin
-      console.log('[Fix Subscriptions] Checking super-admin status for:', auth.uid);
+      console.log('[Fix Subscriptions] Checking super-admin status for:', auth.userId);
       const userMembershipsQuery = await adminDb
         .collection('users')
-        .doc(auth.uid)
+        .doc(auth.userId)
         .collection('memberships')
         .where('organizationId', '==', 'super-admin')
         .where('role', '==', 'super-admin')

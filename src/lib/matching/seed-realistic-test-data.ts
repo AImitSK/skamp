@@ -1077,13 +1077,13 @@ export async function seedRealisticTestData(): Promise<ScenarioStats> {
       const companyName = company?.name;
 
       // Für Keep Existing: Leichte Variationen in den Daten
-      let contactData = { ...contact };
+      let contactData: any = { ...contact };
       if (contactIndex >= 31 && orgIdx % 3 === 0) {
         // Jede 3. Org hat leicht andere Daten
         contactData = {
           ...contact,
           position: `${contact.position} (Variante ${orgIdx + 1})`,
-          phone: contact.phone ? `+49 ${orgIdx}${orgIdx} 12345678` : undefined,
+          phone: contact.publicationId ? `+49 ${orgIdx}${orgIdx} 12345678` : undefined,
         };
       }
 

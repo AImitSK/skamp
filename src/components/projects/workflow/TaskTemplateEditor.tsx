@@ -53,8 +53,7 @@ export default function TaskTemplateEditor({
   const stageLabels: Record<PipelineStage, string> = {
     'ideas_planning': 'Ideen & Planung',
     'creation': 'Erstellung',
-    'internal_approval': 'Interne Freigabe',
-    'customer_approval': 'Kunden-Freigabe',
+    'approval': 'Freigabe',
     'distribution': 'Verteilung',
     'monitoring': 'Monitoring',
     'completed': 'Abgeschlossen'
@@ -63,8 +62,7 @@ export default function TaskTemplateEditor({
   const stageOptions: PipelineStage[] = [
     'ideas_planning',
     'creation',
-    'internal_approval',
-    'customer_approval',
+    'approval',
     'distribution',
     'monitoring'
   ];

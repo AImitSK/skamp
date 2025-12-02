@@ -24,7 +24,6 @@ import {
 } from '@/types/ai';
 import DocumentPickerModal from './DocumentPickerModal';
 import {
-  type GenerationStep,
   type StructuredGenerationModalProps,
   type ContextSetupStepProps,
   type ContentInputStepProps,
@@ -35,6 +34,7 @@ import {
   TONES,
   AUDIENCES
 } from './structured-generation/types';
+import type { GenerationStep } from './structured-generation/types';
 import TemplateDropdown from './structured-generation/components/TemplateDropdown';
 import StepProgressBar from './structured-generation/components/StepProgressBar';
 import ErrorBanner from './structured-generation/components/ErrorBanner';
@@ -45,7 +45,7 @@ import { useStructuredGeneration } from './structured-generation/hooks/useStruct
 import { useKeyboardShortcuts } from './structured-generation/hooks/useKeyboardShortcuts';
 import ContextSetupStep from './structured-generation/steps/ContextSetupStep';
 import ContentInputStep from './structured-generation/steps/ContentInputStep';
-import GenerationStep from './structured-generation/steps/GenerationStep';
+import GenerationStepComponent from './structured-generation/steps/GenerationStep';
 import ReviewStep from './structured-generation/steps/ReviewStep';
 
 export default function StructuredGenerationModal({ onClose, onGenerate, existingContent, organizationId, dokumenteFolderId }: StructuredGenerationModalProps) {
@@ -232,14 +232,14 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
             )}
 
             {currentStep === 'generating' && (
-              <GenerationStep isGenerating={isGenerating} />
+              <GenerationStepComponent isGenerating={isGenerating} />
             )}
 
             {currentStep === 'review' && generatedResult && (
-              <ReviewStep 
+              <ReviewStep
                 result={generatedResult}
                 onRegenerate={() => {
-                  setGeneratedResult(null);
+                  // Reset state und gehe zurück zu content step
                   setCurrentStep('content');
                 }}
               />

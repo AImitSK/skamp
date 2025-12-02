@@ -200,8 +200,6 @@ export class EmailService {
         firstName: request.recipientName?.split(' ')[0] || 'Test',
         lastName: request.recipientName?.split(' ')[1] || 'Empfänger',
         email: request.recipientEmail,
-        salutation: 'Herr', // Standard-Anrede für Test
-        title: 'Dr.', // Standard-Titel für Test
         companyName: 'Test Company',
         companyId: '',
         createdAt: Timestamp.now(),
@@ -221,9 +219,7 @@ export class EmailService {
           name: testContact.firstName + ' ' + testContact.lastName,
           firstName: testContact.firstName,
           lastName: testContact.lastName,
-          companyName: testContact.companyName,
-          salutation: testContact.salutation,
-          title: testContact.title
+          companyName: testContact.companyName
         },
         campaignEmail: emailContent,
         senderInfo,
@@ -446,24 +442,16 @@ export class EmailService {
       companyName: contact.companyName
     };
 
-    // Berechne salutationFormal basierend auf salutation
+    // Berechne salutationFormal (Contact hat kein salutation-Property mehr)
     let salutationFormal = 'Sehr geehrte Damen und Herren';
-    if (contact.salutation) {
-      const salutation = contact.salutation.toLowerCase();
-      if (salutation === 'herr') {
-        salutationFormal = 'Sehr geehrter Herr';
-      } else if (salutation === 'frau') {
-        salutationFormal = 'Sehr geehrte Frau';
-      }
-    }
 
     // Variablen ersetzen
     const variables = {
       salutationFormal: salutationFormal,
-      title: contact.title || '',
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      fullName: `${contact.firstName} ${contact.lastName}`,
+      title: '',
+      firstName: contact.firstName || '',
+      lastName: contact.lastName || '',
+      fullName: `${contact.firstName || ''} ${contact.lastName || ''}`,
       companyName: contact.companyName || '',
       senderName: senderInfo.name,
       senderTitle: senderInfo.title,

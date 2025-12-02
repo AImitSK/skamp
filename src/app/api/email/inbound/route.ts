@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     const organizationId = mailboxInfo.organizationId;
     const emailAccountId = mailboxInfo.emailAccountId || 'system-inbox'; // Fallback
-    const userId = mailboxInfo.userId || '';
+    const userId = (mailboxInfo as any).userId || ''; // userId ist optional und nur für Metadata
 
     // 4. Attachments verarbeiten (wenn vorhanden)
     let processedAttachments: any[] = [];
@@ -300,8 +300,7 @@ async function getMailboxInfo(domainId: string | null): Promise<{ organizationId
 
     return {
       organizationId: mailbox?.organizationId,
-      emailAccountId: mailbox?.emailAccountId,
-      userId: mailbox?.userId
+      emailAccountId: mailbox?.emailAccountId
     };
 
   } catch (error) {

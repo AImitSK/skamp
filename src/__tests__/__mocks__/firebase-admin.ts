@@ -84,11 +84,11 @@ export const mockCollectionData = (collectionName: string, docs: any[]) => {
     if (name === collectionName) {
       const mockCollectionRef = createMockCollectionRef();
       mockCollectionRef.get.mockResolvedValue({
-        docs: docs.map(doc => ({
+        docs: docs.map((doc: any) => ({
           id: doc.id || 'mock-id',
           data: () => doc,
           exists: true
-        })),
+        })) as any,
         empty: docs.length === 0,
         size: docs.length
       });

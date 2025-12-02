@@ -15,6 +15,9 @@ import {
   LanguageCode
 } from './international';
 
+// Re-export LanguageCode für externe Verwendung
+export type { LanguageCode } from './international';
+
 // ========================================
 // Erweiterte Company mit Mandantenfähigkeit
 // ========================================

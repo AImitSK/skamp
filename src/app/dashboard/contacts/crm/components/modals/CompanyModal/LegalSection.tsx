@@ -129,7 +129,7 @@ export function LegalSection({ formData, setFormData }: CompanyModalSectionProps
             })()}
             onChange={(e) => setFormData({
               ...formData,
-              foundedDate: e.target.value ? Timestamp.fromDate(new Date(e.target.value)) : undefined
+              foundedDate: e.target.value ? (Timestamp.fromDate(new Date(e.target.value)) as unknown as Date) : undefined
             })}
           />
         </Field>

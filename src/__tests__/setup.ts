@@ -131,8 +131,9 @@ global.Headers = class Headers extends Map<string, string> {
     }
   }
 
-  get(name: string): string | null {
-    return super.get(name.toLowerCase()) || null;
+  // Override get mit kompatiblen Typen
+  override get(name: string): string | undefined {
+    return super.get(name.toLowerCase());
   }
 
   set(name: string, value: string): this {

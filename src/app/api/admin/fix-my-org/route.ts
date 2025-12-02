@@ -11,7 +11,7 @@ import { stripe } from '@/lib/stripe/stripe-service';
 export async function POST(request: NextRequest) {
   try {
     return await withAuth(request, async (req, auth: AuthContext) => {
-      console.log('[Fix My Org] User:', auth.uid, 'OrgID:', auth.organizationId);
+      console.log('[Fix My Org] User:', auth.userId, 'OrgID:', auth.organizationId);
 
       // Get organization
       const orgDoc = await adminDb

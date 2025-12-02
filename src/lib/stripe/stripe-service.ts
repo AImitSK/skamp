@@ -22,7 +22,7 @@ function getStripe(): Stripe {
     }
 
     stripeInstance = new Stripe(stripeSecretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-09-30.clover' as any,
       typescript: true,
     });
   }

@@ -50,7 +50,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
         <Label>Listen-Typ</Label>
         <RadioGroup
           value={formData.type}
-          onChange={(value: 'dynamic' | 'static') => onFormDataChange({ type: value })}
+          onChange={(value: string) => onFormDataChange({ type: value as 'dynamic' | 'static' })}
           className="mt-2 space-y-4"
         >
           <RadioField>

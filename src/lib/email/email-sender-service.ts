@@ -8,9 +8,9 @@
 import { adminDb } from '@/lib/firebase/admin-init';
 import sgMail from '@sendgrid/mail';
 import { emailComposerService } from '@/lib/email/email-composer-service';
-import { PRCampaign } from '@/types/pr';
+import { PRCampaign, CampaignBoilerplateSection } from '@/types/pr';
 import { EmailDraft, ManualRecipient, EmailMetadata, EmailVariables } from '@/types/email-composer';
-import { EmailAddress } from '@/types/email';
+import { EmailAddress } from '@/types/email-enhanced';
 
 // SendGrid konfigurieren
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
@@ -136,8 +136,8 @@ export class EmailSenderService {
       throw new Error('Kein Content für PDF vorhanden');
     }
 
-    // userId: Nutze übergebenen userId, oder campaign.createdBy, oder campaign.userId als Fallback
-    const effectiveUserId = userId || campaign.createdBy || campaign.userId;
+    // userId: Nutze übergebenen userId oder campaign.userId als Fallback
+    const effectiveUserId = userId || campaign.userId;
 
     if (!effectiveUserId) {
       throw new Error('userId für PDF-Generation nicht verfügbar');
@@ -158,8 +158,8 @@ export class EmailSenderService {
 
       const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
         title: campaign.title,
-        mainContent: campaign.mainContent, // WICHTIG: mainContent, nicht contentHtml!
-        boilerplateSections: campaign.boilerplateSections || [],
+        mainContent: campaign.mainContent || '', // WICHTIG: mainContent, nicht contentHtml!
+        boilerplateSections: (campaign.boilerplateSections || []) as any,
         keyVisual: campaign.keyVisual,
         clientName: campaign.clientName || 'Client',
         date: new Date().toISOString()
@@ -411,14 +411,12 @@ export class EmailSenderService {
         firstName: recipient.firstName,
         lastName: recipient.lastName,
         email: recipient.email,
-        companyName: recipient.companyName,
-        salutation: recipient.salutation,
-        title: recipient.title
+        companyName: recipient.companyName
       },
       {
         name: emailAddress.displayName || emailAddress.email,
         email: emailAddress.email,
-        company: emailAddress.domain,
+        company: typeof emailAddress.domain === 'string' ? emailAddress.domain : emailAddress.domain?.name || '',
         title: undefined,
         phone: undefined
       },
@@ -442,7 +440,7 @@ export class EmailSenderService {
 
     // FROM: Verifizierte EmailAddress
     const senderEmail = emailAddress.email;
-    const senderName = emailAddress.displayName || emailAddress.domain || undefined;
+    const senderName = emailAddress.displayName || (typeof emailAddress.domain === 'string' ? emailAddress.domain : emailAddress.domain?.name) || undefined;
 
     // REPLY-TO: Generiere Reply-To Adresse via replyToGeneratorService
     const { replyToGeneratorService } = await import('./reply-to-generator-service');
@@ -464,7 +462,7 @@ export class EmailSenderService {
       to: recipient.email,
       from: {
         email: senderEmail,
-        name: senderName
+        name: senderName || undefined
       },
       replyTo: replyToAddress, // ✅ Reply-To hinzugefügt
       subject: personalizedSubject,
@@ -477,7 +475,7 @@ export class EmailSenderService {
           disposition: 'attachment'
         }
       ]
-    };
+    } as any;
 
     // Senden via SendGrid
     const sendResult = await sgMail.send(msg);

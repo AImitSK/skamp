@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       console.log('[Cancel API] Subscription canceled:', {
         subscriptionId: subscription.id,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        currentPeriodEnd: subscription.current_period_end,
+        currentPeriodEnd: (subscription as any).current_period_end,
       });
 
       // Update subscription document in Firestore
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Subscription wird zum Ende der Billing Period gekündigt',
-        cancelAt: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancelAt: new Date((subscription as any).current_period_end * 1000).toISOString(),
       });
     } catch (error: any) {
       console.error('[Cancel API] Error:', error);

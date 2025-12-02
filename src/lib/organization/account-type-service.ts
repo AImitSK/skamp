@@ -57,7 +57,10 @@ export class AccountTypeService {
     }
 
     const now = new Date();
-    const expiryDate = org.promoDetails.expiresAt.toDate();
+    // Handle both Timestamp and Date types
+    const expiryDate = typeof (org.promoDetails.expiresAt as any).toDate === 'function'
+      ? (org.promoDetails.expiresAt as any).toDate()
+      : new Date(org.promoDetails.expiresAt as any);
 
     return now < expiryDate;
   }
@@ -126,7 +129,12 @@ export class AccountTypeService {
       throw new Error('Organization is not a promo account');
     }
 
-    const currentExpiry = org.promoDetails?.expiresAt?.toDate() || new Date();
+    // Handle both Timestamp and Date types
+    const currentExpiry = org.promoDetails?.expiresAt
+      ? (typeof (org.promoDetails.expiresAt as any).toDate === 'function'
+          ? (org.promoDetails.expiresAt as any).toDate()
+          : new Date(org.promoDetails.expiresAt as any))
+      : new Date();
     const newExpiry = new Date(currentExpiry);
     newExpiry.setMonth(newExpiry.getMonth() + additionalMonths);
 

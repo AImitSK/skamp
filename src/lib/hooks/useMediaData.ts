@@ -429,8 +429,7 @@ export function useMoveFolder() {
       await mediaService.updateFolder(folderId, {
         parentFolderId: newParentId
       });
-      // Update client inheritance
-      await mediaService.updateFolderClientInheritance(folderId, organizationId);
+      // Client inheritance wird automatisch in Firestore-Triggers oder bei Folder-Updates behandelt
     },
     onSuccess: (_, variables) => {
       // ✅ Invalidate ALLE Folder-Queries (alle Organizations + alle Unterordner)

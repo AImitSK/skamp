@@ -993,7 +993,6 @@ export default function InboxPage() {
               selectedEmail={selectedEmail}
               onReply={handleReply}
               onForward={handleForward}
-              onArchive={handleArchive}
               onDelete={handleDelete}
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}

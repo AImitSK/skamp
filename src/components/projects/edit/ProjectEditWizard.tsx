@@ -23,6 +23,7 @@ import {
   CampaignsEditStep
 } from './steps';
 import { EditWizardStep, ProjectEditFormData } from './steps/types';
+import { ProjectStatus } from '@/types/project';
 
 // Navigation Components
 import { StepTabs } from '../creation/components/StepTabs';
@@ -208,11 +209,10 @@ export function ProjectEditWizard({
     const updateData: Partial<Project> = {
       title: formData.title,
       description: formData.description,
-      status: formData.status,
+      status: formData.status as ProjectStatus,
       currentStage: formData.currentStage,
       assignedTo: formData.assignedTeamMembers,
-      updatedAt: Timestamp.now(),
-      updatedBy: user.uid
+      updatedAt: Timestamp.now()
     };
 
     // Add optional fields
@@ -289,9 +289,9 @@ export function ProjectEditWizard({
 
         {/* Tab Navigation */}
         <StepTabs
-          currentStep={currentStep}
-          onStepChange={handleStepChange}
-          completedSteps={completedSteps}
+          currentStep={currentStep as any}
+          onStepChange={(step) => handleStepChange(step as any)}
+          completedSteps={completedSteps as any[]}
           stepLabels={['Projekt', 'Kunde', 'Team', 'Kampagnen']}
           allowAllSteps={true}
         />

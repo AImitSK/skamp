@@ -985,7 +985,7 @@ export const textTransformFlow = ai.defineFlow(
 
     // Text Extraction (siehe genkit-integration-learnings.md)
     const generatedText = result.message?.content?.[0]?.text
-                       || (typeof result.text === 'function' ? result.text() : '')
+                       || result.text
                        || '';
 
     console.log('🔍 Text Extraction Debug:', {

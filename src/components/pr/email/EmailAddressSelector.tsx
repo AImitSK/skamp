@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { EmailAddress } from '@/types/email';
+import { EmailAddress } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
@@ -46,14 +46,13 @@ export default function EmailAddressSelector({
           id: a.id,
           email: a.email,
           isActive: a.isActive,
-          verificationStatus: a.verificationStatus
+          domainVerified: a.domain?.verified
         }))
       });
 
-      // Filter: Nur aktive Emails
-      // Wenn verificationStatus nicht gesetzt ist, akzeptieren wir die Email (Backwards-Kompatibilität)
+      // Filter: Nur aktive Emails mit verifizierter Domain
       const activeAddresses = addresses.filter(
-        (addr) => addr.isActive && (!addr.verificationStatus || addr.verificationStatus === 'verified')
+        (addr) => addr.isActive && addr.domain?.verified
       );
 
       console.log('✅ Gefilterte Adressen:', {
@@ -181,11 +180,6 @@ export default function EmailAddressSelector({
               <p className="text-blue-700 mt-1">
                 Antworten werden automatisch an die generierte Reply-To-Adresse weitergeleitet.
               </p>
-              {selectedEmail.description && (
-                <p className="text-blue-600 mt-1 text-xs">
-                  {selectedEmail.description}
-                </p>
-              )}
             </div>
           </div>
         </div>
