@@ -123,6 +123,8 @@ export default React.memo(function ContentTab({
               selectedProjectId={selectedProjectId}
               selectedProjectName={selectedProjectName}
               enableSmartRouter={true}
+              // KI-Bildgenerator: Pressemeldungs-Content für Bildideen
+              pressReleaseContent={editorContent}
             />
           </div>
         </div>

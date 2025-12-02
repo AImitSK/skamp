@@ -38,5 +38,13 @@ export const gemini25FlashModel = googleAI.model('gemini-2.5-flash');
 // $0.10/1M Input-Tokens, $0.40/1M Output-Tokens
 export const gemini25FlashLiteModel = googleAI.model('gemini-2.5-flash-lite');
 
+// ══════════════════════════════════════════════════════════════
+// IMAGEN MODELLE (Bildgenerierung)
+// ══════════════════════════════════════════════════════════════
+
+// Imagen 3 - Für hochwertige Bildgenerierung
+// $0.03 pro Bild, unterstützt 16:9 Aspect Ratio
+export const imagen3Model = googleAI.model('imagen-3.0-generate-002');
+
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
 import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
+import { KeyVisualGenerator } from '@/components/pr/ai/KeyVisualGenerator';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
@@ -41,6 +42,9 @@ interface KeyVisualSectionProps {
   selectedProjectId?: string;
   selectedProjectName?: string;
   enableSmartRouter?: boolean;
+
+  // KI-Bildgenerator Props
+  pressReleaseContent?: string;
 }
 
 export function KeyVisualSection({
@@ -56,7 +60,10 @@ export function KeyVisualSection({
   campaignName,
   selectedProjectId,
   selectedProjectName,
-  enableSmartRouter = false
+  enableSmartRouter = false,
+
+  // KI-Bildgenerator Props
+  pressReleaseContent
 }: KeyVisualSectionProps) {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
@@ -279,10 +286,33 @@ export function KeyVisualSection({
     }
   };
 
+  // Handler für KI-generiertes Bild
+  const handleAIImageGenerated = (imageData: { downloadUrl: string; assetId: string }) => {
+    onChange({
+      url: imageData.downloadUrl,
+      assetId: imageData.assetId
+    });
+  };
+
   return (
     <div className="mb-6">
-      <div className="mb-4">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
+
+        {/* KI-Bildgenerator Button */}
+        {selectedProjectId && selectedProjectName && pressReleaseContent && (
+          <KeyVisualGenerator
+            content={pressReleaseContent}
+            organizationId={organizationId}
+            projectId={selectedProjectId}
+            projectName={selectedProjectName}
+            campaignId={campaignId}
+            campaignName={campaignName}
+            clientId={clientId}
+            onImageGenerated={handleAIImageGenerated}
+            disabled={false}
+          />
+        )}
       </div>
 
       {!value ? (
