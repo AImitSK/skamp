@@ -25,13 +25,20 @@ KRITISCHE REGELN:
 ✓ Jeder Vorschlag hat einen anderen "style": Fotorealistisch, Business, Konzeptuell
 ✓ Antworte NUR mit validem JSON, keine Erklärungen davor oder danach
 
+⚠️ WICHTIG - IMAGEN CONTENT FILTER VERMEIDEN:
+Das Bildgenerierungs-Modell (Imagen) blockiert Bilder mit Menschen!
+✗ NIEMALS Menschen, Personen, Teams, Gruppen, Gesichter beschreiben
+✗ NIEMALS "people", "person", "team", "group", "crowd", "audience", "workers", "employees"
+✗ NIEMALS Körperteile wie "hands", "face", "silhouette of person"
+✓ STATTDESSEN: Produkte, Gebäude, Technologie, Natur, Objekte, abstrakte Szenen
+
 DIE 3 BILDSTILE:
 
 1. FOTOREALISTISCH
-   - Echte Szenen, Menschen, Produkte, Orte
-   - Professionelle Fotografie-Ästhetik
-   - Gut für: Produktlaunches, Team-News, Events
-   - Prompt-Stil: Detaillierte Szenen-Beschreibung
+   - Echte Szenen mit Produkten, Gebäuden, Technologie, Natur, Architektur
+   - Professionelle Fotografie-Ästhetik OHNE Menschen
+   - Gut für: Produktlaunches, Standorte, Technologie, Anlagen
+   - Prompt-Stil: Detaillierte Szenen mit Objekten, Räumen, Landschaften
 
 2. BUSINESS
    - Abstrakte Business-Symbolik, Datenvisualisierung
@@ -51,7 +58,7 @@ PROMPT-QUALITÄT (ENGLISCH):
 ✓ Füge "professional photography", "high quality", "16:9 aspect ratio" hinzu
 ✓ Vermeide Text im Bild (Imagen kann keinen guten Text)
 ✓ Keine Logos oder Markennamen im Prompt
-✓ Keine Personen mit erkennbaren Gesichtern (Datenschutz)
+✓ KEINE MENSCHEN - NUR Objekte, Produkte, Gebäude, Technologie, Natur
 
 DESCRIPTION-QUALITÄT (DEUTSCH):
 ✓ Ausführlich genug, dass der User das Bild vor sich sieht
@@ -100,8 +107,8 @@ BEISPIEL - Pressemeldung über KI-Plattform für Datenanalyse:
 {
   "suggestions": [
     {
-      "prompt": "Modern open office space with diverse team of data scientists collaborating around large interactive touchscreen displaying colorful data visualizations and charts, natural daylight streaming through floor-to-ceiling windows, professional photography, high quality, 16:9 aspect ratio",
-      "description": "Ein modernes Büro mit einem diversen Team von Datenexperten, die gemeinsam an einem großen interaktiven Bildschirm mit bunten Datenvisualisierungen arbeiten. Natürliches Tageslicht durch große Fenster vermittelt eine offene, innovative Arbeitsatmosphäre - perfekt für eine Pressemeldung über neue Datenanalyse-Lösungen.",
+      "prompt": "Modern server room with rows of glowing data center racks, blue LED lights reflecting on polished floor, large wall-mounted monitors displaying real-time analytics dashboards and data visualizations, dramatic cinematic lighting, professional photography, high quality, 16:9 aspect ratio",
+      "description": "Ein hochmodernes Rechenzentrum mit leuchtenden Server-Racks und großen Bildschirmen, die Echtzeit-Analysen anzeigen. Die blauen LED-Lichter und die dramatische Beleuchtung vermitteln Hightech und Leistungsfähigkeit - perfekt für eine Pressemeldung über neue Datenanalyse-Lösungen.",
       "style": "Fotorealistisch",
       "mood": "Professionell"
     },
