@@ -14,12 +14,28 @@ import { genkitEval, GenkitMetric } from '@genkit-ai/evaluator';
  * - Google AI (GOOGLE_GENAI_API_KEY): Für Gemini Text-Modelle
  * - Vertex AI (GOOGLE_APPLICATION_CREDENTIALS): Für Imagen Bildgenerierung
  */
+// Service Account Credentials für Vertex AI (gleicher wie Firebase Admin)
+const getVertexCredentials = () => {
+  const serviceAccount = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT;
+  if (serviceAccount) {
+    try {
+      return JSON.parse(serviceAccount);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+};
+
 export const ai = genkit({
   plugins: [
     googleAI(),
     vertexAI({
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       location: process.env.VERTEX_AI_LOCATION || 'europe-west1',
+      googleAuth: {
+        credentials: getVertexCredentials()
+      }
     }),
     // Genkit Standard-Evaluatoren
     genkitEval({
