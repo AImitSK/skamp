@@ -210,7 +210,7 @@ export function KeyVisualGenerator({
 
       {/* Bildvorschläge zur Auswahl - Breites 1-spaltiges Layout */}
       {state === 'selecting' && suggestions.length > 0 && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-5 w-[600px] max-w-[90vw]">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 p-5 w-[800px] max-w-[90vw]">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-semibold text-gray-900">Wählen Sie einen Bildstil</h4>
             <button

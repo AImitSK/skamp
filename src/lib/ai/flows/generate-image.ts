@@ -40,9 +40,10 @@ export const generateImageFlow = ai.defineFlow(
   },
   async (input: GenerateImageInput): Promise<GenerateImageOutput> => {
 
-    // Imagen 4 ist das empfohlene Modell für hochwertige Bildgenerierung
-    // Alternativ: gemini-2.5-flash-preview-image-generation für konversationelle Bildbearbeitung
-    const modelName = 'googleai/imagen-4.0-generate-002';
+    // Gemini 2.0 Flash Experimental mit nativer Bildgenerierung
+    // HINWEIS: Imagen-Modelle (imagen-3, imagen-4) erfordern Vertex AI, nicht die Gemini Developer API
+    // gemini-2.0-flash-exp unterstützt Text-zu-Bild über die normale API
+    const modelName = 'googleai/gemini-2.0-flash-exp';
 
     console.log('🖼️ Bildgenerierung gestartet', {
       promptLength: input.prompt.length,
