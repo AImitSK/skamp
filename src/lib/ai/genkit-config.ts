@@ -5,16 +5,22 @@
 
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
+import { vertexAI } from '@genkit-ai/vertexai';
 import { genkitEval, GenkitMetric } from '@genkit-ai/evaluator';
 
 /**
- * Genkit Instance mit Google AI Plugin + Evaluators
+ * Genkit Instance mit Google AI Plugin + Vertex AI Plugin + Evaluators
  *
- * Verwendet GOOGLE_GENAI_API_KEY aus .env
+ * - Google AI (GOOGLE_GENAI_API_KEY): Für Gemini Text-Modelle
+ * - Vertex AI (GOOGLE_APPLICATION_CREDENTIALS): Für Imagen Bildgenerierung
  */
 export const ai = genkit({
   plugins: [
     googleAI(),
+    vertexAI({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      location: process.env.VERTEX_AI_LOCATION || 'europe-west1',
+    }),
     // Genkit Standard-Evaluatoren
     genkitEval({
       judge: googleAI.model('gemini-2.5-flash'),
@@ -39,15 +45,14 @@ export const gemini25FlashModel = googleAI.model('gemini-2.5-flash');
 export const gemini25FlashLiteModel = googleAI.model('gemini-2.5-flash-lite');
 
 // ══════════════════════════════════════════════════════════════
-// BILDGENERIERUNG MODELLE
+// BILDGENERIERUNG MODELLE (via Vertex AI)
 // ══════════════════════════════════════════════════════════════
 
-// Imagen 4 - Empfohlenes Modell für hochwertige Bildgenerierung (Text-zu-Bild)
-// $0.04 pro Bild, unterstützt verschiedene Aspect Ratios
-export const imagen4Model = googleAI.model('imagen-4.0-generate-002');
-
-// Gemini 2.5 Flash Image - Für konversationelle Bildbearbeitung
-export const geminiFlashImageModel = googleAI.model('gemini-2.5-flash-preview-image-generation');
+// Imagen 3 - Für hochwertige Bildgenerierung (Text-zu-Bild)
+// $0.03 pro Bild, unterstützt verschiedene Aspect Ratios
+// WICHTIG: Imagen ist NUR über Vertex AI verfügbar, nicht über Gemini API
+// Model-String Format: 'vertexai/imagen3' (nicht 'imagen-3.0-generate-002')
+export const IMAGEN3_MODEL = 'vertexai/imagen3';
 
 // Type-Helpers
 export type { GenerateOptions } from 'genkit';

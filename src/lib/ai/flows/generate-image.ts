@@ -1,8 +1,7 @@
 // src/lib/ai/flows/generate-image.ts
-// Genkit Flow für KI-Bildgenerierung
-// Verwendet Gemini 2.0 Flash Experimental (kostenlos) oder Imagen 3 (kostenpflichtig)
+// Genkit Flow für KI-Bildgenerierung mit Imagen 3 (via Vertex AI)
 
-import { ai } from '../genkit-config';
+import { ai, IMAGEN3_MODEL } from '../genkit-config';
 import {
   GenerateImageInputSchema,
   GenerateImageOutputSchema,
@@ -25,8 +24,7 @@ const IMAGE_CONFIG = {
   defaultNegativePrompt: 'text, watermark, logo, signature, blurry, low quality, distorted, deformed, ugly, bad anatomy'
 };
 
-// Bildgenerierung verwendet Imagen 4 (empfohlen von Google)
-// Imagen 4 for Generation: Höchste Bildqualität für Text-zu-Bild
+// Imagen 3 via Vertex AI für hochwertige Bildgenerierung
 
 // ══════════════════════════════════════════════════════════════
 // GENKIT FLOW DEFINITION
@@ -40,15 +38,9 @@ export const generateImageFlow = ai.defineFlow(
   },
   async (input: GenerateImageInput): Promise<GenerateImageOutput> => {
 
-    // Gemini 2.0 Flash Experimental mit nativer Bildgenerierung
-    // HINWEIS: Imagen-Modelle (imagen-3, imagen-4) erfordern Vertex AI, nicht die Gemini Developer API
-    // gemini-2.0-flash-exp unterstützt Text-zu-Bild über die normale API
-    const modelName = 'googleai/gemini-2.0-flash-exp';
-
-    console.log('🖼️ Bildgenerierung gestartet', {
+    console.log('🖼️ Bildgenerierung mit Imagen 3 (Vertex AI) gestartet', {
       promptLength: input.prompt.length,
-      aspectRatio: input.aspectRatio || '16:9',
-      model: modelName
+      aspectRatio: input.aspectRatio || '16:9'
     });
 
     // ══════════════════════════════════════════════════════════════
@@ -67,18 +59,20 @@ export const generateImageFlow = ai.defineFlow(
     }
 
     console.log('📝 Optimierter Prompt:', optimizedPrompt.substring(0, 100) + '...');
-    console.log('🤖 Model:', modelName);
+    console.log('🤖 Model: imagen-3.0-generate-002 (Vertex AI)');
 
     // ══════════════════════════════════════════════════════════════
-    // 2. BILDGENERIERUNG API CALL
+    // 2. IMAGEN BILDGENERIERUNG (Vertex AI)
     // ══════════════════════════════════════════════════════════════
 
-    // Verwendet String-basiertes Modell für Type-Kompatibilität
     const result = await ai.generate({
-      model: modelName,
+      model: IMAGEN3_MODEL,
       prompt: optimizedPrompt,
       output: {
         format: 'media'
+      },
+      config: {
+        aspectRatio: '16:9'
       }
     });
 
