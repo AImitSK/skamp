@@ -181,8 +181,8 @@ Erstelle jetzt 3 Bildvorschläge für diese Pressemeldung. Antworte NUR mit vali
         { text: userPrompt }
       ],
       config: {
-        temperature: 0.9, // Etwas kreativer für Bildideen
-        maxOutputTokens: 2048,
+        temperature: 0.7, // Etwas weniger kreativ für konsistenteres JSON
+        maxOutputTokens: 4096, // Erhöht von 2048 - 3 Prompts brauchen mehr Platz
       }
     });
 
