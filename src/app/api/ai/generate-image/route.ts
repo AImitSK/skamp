@@ -1,6 +1,7 @@
 // src/app/api/ai/generate-image/route.ts
 // API Route für KI-gestützte Bildgenerierung mit Imagen 3 - Powered by Genkit!
 // Generiert Bild, speichert in KI-Bilder Ordner, erstellt Asset
+// Phase 6.2: Admin SDK Migration für Server-Side Folder Access
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
@@ -8,7 +9,8 @@ import { generateImageFlow, extractBase64FromDataUrl, generateImageFilename } fr
 import { checkAILimit } from '@/lib/usage/usage-tracker';
 import { trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
 import { mediaService } from '@/lib/firebase/media-service';
-import * as foldersService from '@/lib/firebase/media-folders-service';
+import { adminDb } from '@/lib/firebase/admin-init';
+import admin from '@/lib/firebase/admin-init';
 
 // Konstante: 1 generiertes Bild = 500 AI-Wörter
 const IMAGE_WORD_EQUIVALENT = 500;
@@ -25,6 +27,7 @@ interface GenerateImageRequest {
 /**
  * Findet oder erstellt den "KI-Bilder" Ordner im Projekt
  * Pfad: Projekt > Medien > KI-Bilder
+ * Verwendet Admin SDK für Server-Side Zugriff ohne Client-Permissions
  */
 async function getOrCreateAIImagesFolder(
   organizationId: string,
@@ -32,8 +35,15 @@ async function getOrCreateAIImagesFolder(
   projectId: string,
   projectName: string
 ): Promise<string> {
-  // 1. Alle Ordner der Organisation laden
-  const allFolders = await foldersService.getAllFoldersForOrganization(organizationId);
+  // 1. Alle Ordner der Organisation laden (Admin SDK)
+  const foldersSnapshot = await adminDb.collection('media_folders')
+    .where('organizationId', '==', organizationId)
+    .get();
+
+  const allFolders = foldersSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Array<{ id: string; name: string; parentFolderId?: string }>;
 
   // 2. Projekt-Hauptordner finden (Format: "P-XXXX - Projektname")
   const projectFolder = allFolders.find(folder =>
@@ -58,28 +68,26 @@ async function getOrCreateAIImagesFolder(
     folder.parentFolderId === medienFolder.id && folder.name === 'KI-Bilder'
   );
 
-  // 5. Falls nicht vorhanden, erstellen
+  // 5. Falls nicht vorhanden, erstellen (Admin SDK)
   if (!kiImageFolder) {
     console.log('📁 Erstelle KI-Bilder Ordner...');
 
-    const newFolderId = await foldersService.createFolder(
-      {
-        name: 'KI-Bilder',
-        description: 'Automatisch generierte Bilder durch KI (Imagen)',
-        parentFolderId: medienFolder.id,
-        organizationId,
-        userId, // Required by MediaFolder interface
-        color: '#8B5CF6' // Lila für KI
-      },
-      { organizationId, userId }
-    );
+    const newFolderRef = await adminDb.collection('media_folders').add({
+      name: 'KI-Bilder',
+      description: 'Automatisch generierte Bilder durch KI (Imagen)',
+      parentFolderId: medienFolder.id,
+      organizationId,
+      createdBy: userId,
+      color: '#8B5CF6', // Lila für KI
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
-    console.log('✅ KI-Bilder Ordner erstellt:', newFolderId);
-    return newFolderId;
+    console.log('✅ KI-Bilder Ordner erstellt:', newFolderRef.id);
+    return newFolderRef.id;
   }
 
-  // kiImageFolder.id ist garantiert vorhanden wenn kiImageFolder existiert
-  return kiImageFolder.id as string;
+  return kiImageFolder.id;
 }
 
 export async function POST(request: NextRequest) {
@@ -240,15 +248,15 @@ export async function POST(request: NextRequest) {
       }
 
       // ══════════════════════════════════════════════════════════════
-      // ASSET IN FIRESTORE ANLEGEN
+      // ASSET IN FIRESTORE ANLEGEN (Admin SDK)
       // ══════════════════════════════════════════════════════════════
 
       let assetId: string;
       try {
         // Asset-Metadaten erstellen
-        const assetData = {
+        const assetData: Record<string, any> = {
           name: generateImageFilename('KI-Visual'),
-          type: 'image' as const,
+          type: 'image',
           mimeType: `image/${imageResult.format}`,
           size: uploadResult.fileSize,
           downloadUrl: uploadResult.downloadUrl,
@@ -258,28 +266,24 @@ export async function POST(request: NextRequest) {
           folderId: kiFolderId,
           organizationId: auth.organizationId,
           createdBy: auth.userId,
-          clientId: clientId || undefined,
           metadata: {
             width: imageResult.width,
             height: imageResult.height,
             source: 'ai-generated',
             generator: 'imagen-3',
-            prompt: prompt,
-            campaignId: campaignId || undefined,
-            campaignName: campaignName || undefined
-          }
+            prompt: prompt
+          },
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
-        // Asset in Firestore speichern (via uploadMedia mit bereits hochgeladenem File)
-        // Wir nutzen einen direkten Firestore-Eintrag
-        const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+        // Optionale Felder nur wenn definiert
+        if (clientId) assetData.clientId = clientId;
+        if (campaignId) assetData.metadata.campaignId = campaignId;
+        if (campaignName) assetData.metadata.campaignName = campaignName;
 
-        const docRef = await addDoc(collection(db, 'media_assets'), {
-          ...assetData,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
+        // Asset in Firestore speichern (Admin SDK)
+        const docRef = await adminDb.collection('media_assets').add(assetData);
 
         assetId = docRef.id;
         console.log('✅ Asset erstellt:', assetId);
