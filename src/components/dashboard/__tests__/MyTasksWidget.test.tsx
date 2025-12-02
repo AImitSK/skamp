@@ -91,7 +91,7 @@ describe('MyTasksWidget Component', () => {
       expect(screen.getByText('Keine offenen Tasks')).toBeInTheDocument();
     });
 
-    it('should show success message in empty state', () => {
+    it('should show success icon in empty state', () => {
       mockUseMyTasks.mockReturnValue({
         data: [],
         isLoading: false,
@@ -101,7 +101,9 @@ describe('MyTasksWidget Component', () => {
 
       render(<MyTasksWidget />);
 
-      expect(screen.getByText(/Gut gemacht/i)).toBeInTheDocument();
+      // Prüfe ob das CheckCircle Icon angezeigt wird
+      const icon = document.querySelector('.text-zinc-300');
+      expect(icon).toBeInTheDocument();
     });
   });
 

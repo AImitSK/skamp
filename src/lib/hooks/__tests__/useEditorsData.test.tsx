@@ -47,6 +47,17 @@ jest.mock('@/lib/firebase/config', () => ({
   db: {},
 }));
 
+jest.mock('@/lib/firebase/client-init', () => ({
+  auth: {
+    currentUser: {
+      getIdToken: jest.fn().mockResolvedValue('mock-token'),
+    },
+  },
+}));
+
+// Mock global fetch
+global.fetch = jest.fn();
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -183,6 +194,23 @@ describe('useEditorsData Hooks', () => {
         mockReference
       );
 
+      // Mock API calls
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/usage/check-contacts-limit')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ allowed: true, current: 5, limit: 100 }),
+          });
+        }
+        if (url.includes('/api/admin/sync-usage')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ success: true }),
+          });
+        }
+        return Promise.reject(new Error('Unknown URL'));
+      });
+
       const { result } = renderHook(() => useCreateJournalistReference(), {
         wrapper: createWrapper(),
       });
@@ -210,6 +238,17 @@ describe('useEditorsData Hooks', () => {
       (multiEntityService.removeJournalistReference as jest.Mock).mockResolvedValue(
         undefined
       );
+
+      // Mock API calls
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url.includes('/api/admin/sync-usage')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ success: true }),
+          });
+        }
+        return Promise.reject(new Error('Unknown URL'));
+      });
 
       const { result } = renderHook(() => useRemoveJournalistReference(), {
         wrapper: createWrapper(),

@@ -307,13 +307,13 @@ describe('NotificationsDropdown', () => {
 
   it('sollte korrekte Notification-Icons anzeigen', async () => {
     render(<NotificationsDropdown />);
-    
+
     const bellButton = screen.getByRole('button');
     fireEvent.click(bellButton);
-    
+
     await waitFor(() => {
-      // Icons sind als Emojis implementiert, also prüfen wir auf die Container
-      const notificationItems = document.querySelectorAll('[class*="cursor-pointer"]');
+      // Icons sind SVGs innerhalb der Notification-Items (nicht der Button selbst)
+      const notificationItems = document.querySelectorAll('.px-4.py-3.hover\\:bg-gray-50.cursor-pointer');
       expect(notificationItems).toHaveLength(3);
     });
   });
@@ -336,14 +336,15 @@ describe('NotificationsDropdown', () => {
     });
 
     render(<NotificationsDropdown />);
-    
+
     const bellButton = screen.getByRole('button');
     fireEvent.click(bellButton);
-    
+
     await waitFor(() => {
-      const notificationItems = document.querySelectorAll('[class*="cursor-pointer"]');
+      // Zähle nur die Notification-Items, nicht den Dropdown-Button
+      const notificationItems = document.querySelectorAll('.px-4.py-3.hover\\:bg-gray-50.cursor-pointer');
       expect(notificationItems).toHaveLength(8); // Maximal 8 anzeigen
-      
+
       // Sollte Hinweis auf weitere Notifications geben
       expect(screen.getByText('(4 weitere)')).toBeInTheDocument();
     });

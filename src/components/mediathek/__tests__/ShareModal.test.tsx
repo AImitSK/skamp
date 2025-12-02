@@ -3,14 +3,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ShareModal from '../ShareModal';
 import { MediaAsset, MediaFolder } from '@/types/media';
-import { mediaService } from '@/lib/firebase/media-service';
-
-// Mock mediaService
-jest.mock('@/lib/firebase/media-service', () => ({
-  mediaService: {
-    createShareLink: jest.fn(),
-  },
-}));
 
 // Mock toast service
 jest.mock('@/lib/utils/toast', () => ({
@@ -61,6 +53,12 @@ const defaultProps = {
 describe('ShareModal Component - Phase 4a.3', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset fetch mock to default
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ shareId: 'abc123' }),
+    });
   });
 
   // ============================================================================
@@ -132,25 +130,12 @@ describe('ShareModal Component - Phase 4a.3', () => {
   // ============================================================================
 
   it('sollte Share-Link generieren', async () => {
-    // Mock createShareLink response
-    const mockShareLink = {
-      id: 'share-1',
-      userId: 'user-1',
-      shareId: 'abc123',
-      title: 'test-image.jpg',
-      type: 'file' as const,
-      targetId: 'asset-1',
-      active: true,
-      accessCount: 0,
-      settings: {
-        expiresAt: null,
-        downloadAllowed: true,
-        passwordRequired: null,
-        watermarkEnabled: false,
-      },
-    };
-
-    (mediaService.createShareLink as jest.Mock).mockResolvedValue(mockShareLink);
+    // Mock fetch response
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ shareId: 'abc123' }),
+    });
 
     render(<ShareModal {...defaultProps} />);
 
@@ -170,21 +155,28 @@ describe('ShareModal Component - Phase 4a.3', () => {
     const submitButton = screen.getByRole('button', { name: 'Share-Link erstellen' });
     fireEvent.click(submitButton);
 
-    // Warte auf API-Call
+    // Warte auf fetch API-Call
     await waitFor(() => {
-      expect(mediaService.createShareLink).toHaveBeenCalledWith({
-        organizationId: 'org-1',
-        createdBy: 'user-1',
-        type: 'file',
-        targetId: 'asset-1',
-        title: 'Mein Test Bild',
-        settings: {
-          downloadAllowed: true,
-          expiresAt: null,
-          passwordRequired: 'secure123',
-          watermarkEnabled: false,
+      expect(global.fetch).toHaveBeenCalledWith('/api/media/share/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        description: 'Test Beschreibung',
+        body: JSON.stringify({
+          organizationId: 'org-1',
+          createdBy: 'user-1',
+          type: 'file',
+          targetId: 'asset-1',
+          title: 'Mein Test Bild',
+          description: 'Test Beschreibung',
+          settings: {
+            downloadAllowed: true,
+            showFileList: false,
+            expiresAt: null,
+            passwordRequired: 'secure123',
+            watermarkEnabled: false,
+          },
+        }),
       });
     });
 
@@ -241,25 +233,12 @@ describe('ShareModal Component - Phase 4a.3', () => {
   });
 
   it('sollte Link kopieren', async () => {
-    // Mock createShareLink response
-    const mockShareLink = {
-      id: 'share-1',
-      userId: 'user-1',
-      shareId: 'abc123',
-      title: 'test-image.jpg',
-      type: 'file' as const,
-      targetId: 'asset-1',
-      active: true,
-      accessCount: 0,
-      settings: {
-        expiresAt: null,
-        downloadAllowed: true,
-        passwordRequired: null,
-        watermarkEnabled: false,
-      },
-    };
-
-    (mediaService.createShareLink as jest.Mock).mockResolvedValue(mockShareLink);
+    // Mock fetch response
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ shareId: 'abc123' }),
+    });
 
     render(<ShareModal {...defaultProps} />);
 

@@ -99,11 +99,9 @@ export function useCreateJournalistReference() {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log('✅ Usage synced after journalist reference import');
         }
       } catch (syncError) {
-        console.error('Failed to sync usage after import:', syncError);
-        // Don't block the success - sync will happen on next page load
+        // Silent fail - sync will happen on next page load
       }
     },
   });
@@ -138,11 +136,9 @@ export function useRemoveJournalistReference() {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log('✅ Usage synced after journalist reference removal');
         }
       } catch (syncError) {
-        console.error('Failed to sync usage after removal:', syncError);
-        // Don't block the success - sync will happen on next page load
+        // Silent fail - sync will happen on next page load
       }
     },
   });

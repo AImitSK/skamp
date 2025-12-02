@@ -36,7 +36,11 @@ const customJestConfig = {
     '!src/**/.next/**',
     '!src/**/types/**',
   ],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/.next/',
+    '<rootDir>/e2e/',
+  ],
   transformIgnorePatterns: [
     '/node_modules/(?!(nanoid|@firebase|firebase|react-dnd|dnd-core|@react-dnd|react-dnd-touch-backend)/)',
     '^.+\\.module\\.(css|sass|scss)$',

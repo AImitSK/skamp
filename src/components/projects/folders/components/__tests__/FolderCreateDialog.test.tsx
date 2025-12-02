@@ -159,6 +159,7 @@ describe('FolderCreateDialog Component', () => {
       expect(mockCreateFolder).toHaveBeenCalledWith(
         {
           userId: 'user-123',
+          organizationId: 'org-123',
           name: 'Mein Ordner',
           parentFolderId: 'parent-1',
           description: 'Unterordner erstellt von Test User'

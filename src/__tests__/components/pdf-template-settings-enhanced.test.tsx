@@ -3,11 +3,11 @@ import { render, screen } from '@testing-library/react';
 import { jest } from '@jest/globals';
 
 // Mock everything as any to prevent TypeScript errors
-jest.mock('@/app/dashboard/settings/pdf-templates/page', () => ({
-  default: () => <div data-testid="pdf-template-settings">PDFTemplateSettings</div>
+jest.mock('@/app/dashboard/settings/templates/page', () => ({
+  default: () => <div data-testid="pdf-template-settings">TemplatesPage</div>
 }));
 
-jest.mock('@/lib/hooks/useAuth', () => ({
+jest.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'test-user' } })
 }));
 

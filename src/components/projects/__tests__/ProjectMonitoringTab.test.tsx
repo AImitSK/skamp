@@ -1,4 +1,6 @@
+import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProjectMonitoringTab } from '../ProjectMonitoringTab';
 import { useProjectMonitoringData, useConfirmSuggestion, useRejectSuggestion, useProjectMonitoringTracker, useToggleMonitoring, useExtendMonitoring } from '@/lib/hooks/useMonitoringData';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -62,6 +64,22 @@ const mockUseExtendMonitoring = useExtendMonitoring as jest.MockedFunction<typeo
 const mockUseOrganization = useOrganization as jest.MockedFunction<typeof useOrganization>;
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
+
+// Helper to render with QueryClient
+function renderWithQueryClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false }
+    }
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
 
 describe('ProjectMonitoringTab', () => {
   const mockProjectId = 'project-123';
@@ -153,7 +171,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('loading-state')).toBeInTheDocument();
     expect(screen.getByText('Lade Monitoring-Daten...')).toBeInTheDocument();
@@ -167,7 +185,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     expect(screen.getByText('Noch keine Monitoring-Aktivitäten')).toBeInTheDocument();
@@ -181,7 +199,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
     expect(screen.getByText('Overview Component')).toBeInTheDocument();
@@ -195,7 +213,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    const { rerender } = render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    const { rerender } = renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
 
@@ -212,7 +230,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const confirmButton = screen.getByText('Confirm Suggestion');
     fireEvent.click(confirmButton);
@@ -235,7 +253,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const rejectButton = screen.getByText('Reject Suggestion');
     fireEvent.click(rejectButton);
@@ -259,7 +277,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const confirmButton = screen.getByText('Confirm Suggestion');
     fireEvent.click(confirmButton);
@@ -279,7 +297,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const rejectButton = screen.getByText('Reject Suggestion');
     fireEvent.click(rejectButton);
@@ -311,7 +329,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const confirmButton = screen.getByText('Confirm Suggestion');
     fireEvent.click(confirmButton);
@@ -339,7 +357,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     const confirmButton = screen.getByText('Confirm Suggestion');
     fireEvent.click(confirmButton);
@@ -357,7 +375,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
   });
@@ -370,7 +388,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
   });
@@ -383,7 +401,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: jest.fn()
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
   });
@@ -398,7 +416,7 @@ describe('ProjectMonitoringTab', () => {
       refetch: mockRefetch
     } as any);
 
-    render(<ProjectMonitoringTab projectId={mockProjectId} />);
+    renderWithQueryClient(<ProjectMonitoringTab projectId={mockProjectId} />);
 
     expect(screen.getByTestId('monitoring-overview')).toBeInTheDocument();
   });

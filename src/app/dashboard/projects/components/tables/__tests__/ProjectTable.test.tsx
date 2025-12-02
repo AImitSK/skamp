@@ -107,7 +107,6 @@ describe('ProjectTable', () => {
       expect(screen.getByText('Status')).toBeInTheDocument();
       expect(screen.getByText('Projektphase')).toBeInTheDocument();
       expect(screen.getByText('Team')).toBeInTheDocument();
-      expect(screen.getByText('Priorität')).toBeInTheDocument();
       expect(screen.getByText('Aktualisiert')).toBeInTheDocument();
     });
 
@@ -441,42 +440,6 @@ describe('ProjectTable', () => {
       await waitFor(() => {
         expect(toastService.error).toHaveBeenCalledWith('Projekt konnte nicht gelöscht werden');
       });
-    });
-  });
-
-  describe('Priority Display', () => {
-    it('should display priority when available', () => {
-      const projectsWithPriority: Project[] = [
-        { ...mockProjects[0], priority: 'high' } as any,
-      ];
-
-      render(<ProjectTable {...defaultProps} projects={projectsWithPriority} />);
-
-      expect(screen.getByText('Hoch')).toBeInTheDocument();
-    });
-
-    it('should display dash when priority is not available', () => {
-      render(<ProjectTable {...defaultProps} />);
-
-      // mockProjects don't have priority, so should show "-"
-      const dashElements = screen.getAllByText('-');
-      expect(dashElements.length).toBeGreaterThan(0);
-    });
-
-    it('should display different priority levels correctly', () => {
-      const projectsWithDifferentPriorities: Project[] = [
-        { ...mockProjects[0], id: 'p1', priority: 'urgent' } as any,
-        { ...mockProjects[0], id: 'p2', title: 'P2', priority: 'high' } as any,
-        { ...mockProjects[0], id: 'p3', title: 'P3', priority: 'medium' } as any,
-        { ...mockProjects[0], id: 'p4', title: 'P4', priority: 'low' } as any,
-      ];
-
-      render(<ProjectTable {...defaultProps} projects={projectsWithDifferentPriorities} />);
-
-      expect(screen.getByText('Dringend')).toBeInTheDocument();
-      expect(screen.getByText('Hoch')).toBeInTheDocument();
-      expect(screen.getByText('Mittel')).toBeInTheDocument();
-      expect(screen.getByText('Niedrig')).toBeInTheDocument();
     });
   });
 

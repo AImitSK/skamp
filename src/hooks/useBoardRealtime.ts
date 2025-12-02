@@ -60,10 +60,11 @@ export const useBoardRealtime = (organizationId: string) => {
           
           snapshot.forEach(doc => {
             const data = doc.data();
-            projects.push({ 
-              id: doc.id, 
+
+            projects.push({
               ...data,
-              // Sicherstellen, dass Timestamps korrekt konvertiert werden
+              id: doc.id,
+              // Timestamps setzen falls sie fehlen - NACH dem data spread
               createdAt: data.createdAt || Timestamp.now(),
               updatedAt: data.updatedAt || Timestamp.now()
             } as Project);

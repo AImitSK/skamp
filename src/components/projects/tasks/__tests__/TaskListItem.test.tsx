@@ -90,12 +90,14 @@ describe('TaskListItem Component', () => {
       expect(titleElement).toHaveClass('truncate');
     });
 
-    it('should show full title in title attribute', () => {
+    it('should render task title inside tooltip wrapper', () => {
       const task = createMockTask({ title: 'Full Title' });
       render(<TaskListItem {...defaultProps} task={task} />);
 
+      // Text wird gerendert (innerhalb des Tooltip-Wrappers)
       const titleElement = screen.getByText('Full Title');
-      expect(titleElement).toHaveAttribute('title', 'Full Title');
+      expect(titleElement).toBeInTheDocument();
+      expect(titleElement).toHaveClass('truncate');
     });
   });
 

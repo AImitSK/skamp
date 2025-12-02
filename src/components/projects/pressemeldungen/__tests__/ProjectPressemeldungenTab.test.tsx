@@ -24,31 +24,11 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('../PressemeldungCampaignTable', () => ({
   __esModule: true,
-  default: ({ campaigns, onRefresh }: any) => (
+  default: ({ campaigns, approvals, onRefresh }: any) => (
     <div data-testid="campaign-table">
       <div>Campaigns: {campaigns.length}</div>
-      <button onClick={onRefresh}>Refresh Campaigns</button>
-    </div>
-  )
-}));
-
-jest.mock('../PressemeldungApprovalTable', () => ({
-  __esModule: true,
-  default: ({ approvals, onRefresh }: any) => (
-    <div data-testid="approval-table">
       <div>Approvals: {approvals.length}</div>
-      <button onClick={onRefresh}>Refresh Approvals</button>
-    </div>
-  )
-}));
-
-jest.mock('../PressemeldungToggleSection', () => ({
-  __esModule: true,
-  default: ({ projectId, campaignId, organizationId }: any) => (
-    <div data-testid="toggle-section">
-      <div>Project: {projectId}</div>
-      <div>Campaign: {campaignId}</div>
-      <div>Organization: {organizationId}</div>
+      <button onClick={onRefresh}>Refresh Table</button>
     </div>
   )
 }));
@@ -367,24 +347,17 @@ describe('ProjectPressemeldungenTab Component', () => {
       const user = userEvent.setup();
       render(<ProjectPressemeldungenTab {...defaultProps} />);
 
-      const refreshButton = screen.getByText('Refresh Campaigns');
+      const refreshButton = screen.getByText('Refresh Table');
       await user.click(refreshButton);
 
       expect(mockRefetch).toHaveBeenCalled();
     });
   });
 
-  describe('Approval Table Rendering', () => {
-    it('should render approval table', () => {
-      render(<ProjectPressemeldungenTab {...defaultProps} />);
-
-      expect(screen.getByText('Freigabe')).toBeInTheDocument();
-      expect(screen.getByTestId('approval-table')).toBeInTheDocument();
-    });
-
-    it('should render approval table with approvals', () => {
+  describe('Campaign Table with Approvals', () => {
+    it('should pass approvals to campaign table', () => {
       mockUseProjectPressData.mockReturnValue({
-        campaigns: [],
+        campaigns: [mockCampaign],
         approvals: [mockApproval],
         isLoading: false,
         isError: false,
@@ -394,13 +367,50 @@ describe('ProjectPressemeldungenTab Component', () => {
 
       render(<ProjectPressemeldungenTab {...defaultProps} />);
 
+      expect(screen.getByTestId('campaign-table')).toBeInTheDocument();
+      expect(screen.getByText('Campaigns: 1')).toBeInTheDocument();
       expect(screen.getByText('Approvals: 1')).toBeInTheDocument();
     });
 
-    it('should pass refetch to approval table', async () => {
+    it('should render table with multiple approvals', () => {
+      const mockApproval2 = {
+        ...mockApproval,
+        id: 'approval-2'
+      };
+
+      mockUseProjectPressData.mockReturnValue({
+        campaigns: [mockCampaign],
+        approvals: [mockApproval, mockApproval2],
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: jest.fn()
+      });
+
+      render(<ProjectPressemeldungenTab {...defaultProps} />);
+
+      expect(screen.getByText('Approvals: 2')).toBeInTheDocument();
+    });
+
+    it('should render table with no approvals', () => {
+      mockUseProjectPressData.mockReturnValue({
+        campaigns: [mockCampaign],
+        approvals: [],
+        isLoading: false,
+        isError: false,
+        error: null,
+        refetch: jest.fn()
+      });
+
+      render(<ProjectPressemeldungenTab {...defaultProps} />);
+
+      expect(screen.getByText('Approvals: 0')).toBeInTheDocument();
+    });
+
+    it('should pass refetch callback to table', async () => {
       const mockRefetch = jest.fn();
       mockUseProjectPressData.mockReturnValue({
-        campaigns: [],
+        campaigns: [mockCampaign],
         approvals: [mockApproval],
         isLoading: false,
         isError: false,
@@ -411,51 +421,10 @@ describe('ProjectPressemeldungenTab Component', () => {
       const user = userEvent.setup();
       render(<ProjectPressemeldungenTab {...defaultProps} />);
 
-      const refreshButton = screen.getByText('Refresh Approvals');
+      const refreshButton = screen.getByText('Refresh Table');
       await user.click(refreshButton);
 
       expect(mockRefetch).toHaveBeenCalled();
-    });
-  });
-
-  describe('Toggle Section Rendering', () => {
-    it('should not render toggle section when no approvals', () => {
-      render(<ProjectPressemeldungenTab {...defaultProps} />);
-
-      expect(screen.queryByTestId('toggle-section')).not.toBeInTheDocument();
-    });
-
-    it('should render toggle section when approvals exist', () => {
-      mockUseProjectPressData.mockReturnValue({
-        campaigns: [mockCampaign],
-        approvals: [mockApproval],
-        isLoading: false,
-        isError: false,
-        error: null,
-        refetch: jest.fn()
-      });
-
-      render(<ProjectPressemeldungenTab {...defaultProps} />);
-
-      expect(screen.getByText('Freigabe-Details')).toBeInTheDocument();
-      expect(screen.getByTestId('toggle-section')).toBeInTheDocument();
-    });
-
-    it('should pass correct props to toggle section', () => {
-      mockUseProjectPressData.mockReturnValue({
-        campaigns: [mockCampaign],
-        approvals: [mockApproval],
-        isLoading: false,
-        isError: false,
-        error: null,
-        refetch: jest.fn()
-      });
-
-      render(<ProjectPressemeldungenTab {...defaultProps} />);
-
-      expect(screen.getByText('Project: project-123')).toBeInTheDocument();
-      expect(screen.getByText('Campaign: campaign-1')).toBeInTheDocument();
-      expect(screen.getByText('Organization: org-123')).toBeInTheDocument();
     });
   });
 });

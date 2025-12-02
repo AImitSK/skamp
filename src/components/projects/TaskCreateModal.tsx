@@ -60,13 +60,6 @@ export function TaskCreateModal({
     setError(null);
 
     try {
-      // Debug-Ausgabe für Troubleshooting
-      console.log('TaskCreate Debug:', {
-        assignedUserId: formData.assignedUserId,
-        projectManagerId,
-        teamMembers: teamMembers.map(m => ({ id: m.id, userId: m.userId, name: m.displayName }))
-      });
-
       const taskData: Omit<ProjectTask, 'id' | 'createdAt' | 'updatedAt' | 'isOverdue' | 'daysUntilDue' | 'overdueBy'> = {
         userId: formData.assignedUserId,
         organizationId,
