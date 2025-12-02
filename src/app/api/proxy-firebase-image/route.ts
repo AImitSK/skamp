@@ -13,10 +13,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validierung: Nur Firebase Storage URLs erlauben
-    if (!imageUrl.includes('firebasestorage.googleapis.com')) {
+    // Validierung: Nur Firebase/Google Cloud Storage URLs erlauben
+    // - firebasestorage.googleapis.com: Standard Firebase Storage URLs (Client SDK)
+    // - storage.googleapis.com: Signed URLs vom Admin SDK (z.B. KI-generierte Bilder)
+    const isFirebaseStorage = imageUrl.includes('firebasestorage.googleapis.com');
+    const isGoogleCloudStorage = imageUrl.includes('storage.googleapis.com');
+
+    if (!isFirebaseStorage && !isGoogleCloudStorage) {
       return NextResponse.json(
-        { error: 'Only Firebase Storage URLs are allowed' },
+        { error: 'Only Firebase/Google Cloud Storage URLs are allowed' },
         { status: 400 }
       );
     }
