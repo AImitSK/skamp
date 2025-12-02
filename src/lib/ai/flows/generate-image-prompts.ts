@@ -195,34 +195,52 @@ Erstelle jetzt 3 Bildvorschläge für diese Pressemeldung. Antworte NUR mit vali
     }
 
     console.log('✅ Bildprompts-Text generiert, Länge:', generatedText.length);
+    console.log('🔍 DEBUG Raw Response (first 1000 chars):', generatedText.substring(0, 1000));
 
     // ══════════════════════════════════════════════════════════════
-    // 4. JSON PARSING
+    // 4. JSON PARSING (robust)
     // ══════════════════════════════════════════════════════════════
 
-    // Extrahiere JSON aus der Antwort (kann in Markdown-Blöcken sein)
-    let jsonString = generatedText;
+    let jsonString = generatedText.trim();
 
-    // Entferne Markdown Code-Blöcke falls vorhanden
-    const jsonMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonString = jsonMatch[1];
+    // Methode 1: Entferne Markdown Code-Blöcke falls vorhanden
+    const codeBlockMatch = jsonString.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1].trim();
+      console.log('🔍 JSON aus Code-Block extrahiert');
     }
 
-    // Finde JSON-Objekt
-    const jsonObjectMatch = jsonString.match(/\{[\s\S]*\}/);
-    if (!jsonObjectMatch) {
+    // Methode 2: Finde das äußerste JSON-Objekt (greedy match für verschachtelte Objekte)
+    const jsonStartIndex = jsonString.indexOf('{');
+    const jsonEndIndex = jsonString.lastIndexOf('}');
+
+    if (jsonStartIndex === -1 || jsonEndIndex === -1 || jsonEndIndex <= jsonStartIndex) {
       console.error('❌ Kein JSON-Objekt gefunden in:', generatedText.substring(0, 500));
       throw new Error('Kein valides JSON in der Antwort gefunden');
     }
 
+    jsonString = jsonString.substring(jsonStartIndex, jsonEndIndex + 1);
+    console.log('🔍 JSON extrahiert, Länge:', jsonString.length);
+
     let parsed: any;
     try {
-      parsed = JSON.parse(jsonObjectMatch[0]);
+      parsed = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('❌ JSON Parse Error:', parseError);
-      console.error('❌ Versuchter JSON-String:', jsonObjectMatch[0].substring(0, 500));
-      throw new Error('JSON konnte nicht geparst werden');
+      console.error('❌ Versuchter JSON-String:', jsonString.substring(0, 500));
+
+      // Fallback: Versuche JSON zu reparieren (häufige Probleme)
+      try {
+        // Entferne mögliche Trailing Commas
+        const cleanedJson = jsonString
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']');
+        parsed = JSON.parse(cleanedJson);
+        console.log('✅ JSON nach Bereinigung erfolgreich geparst');
+      } catch (retryError) {
+        console.error('❌ Auch bereinigte JSON konnte nicht geparst werden');
+        throw new Error('JSON konnte nicht geparst werden');
+      }
     }
 
     // ══════════════════════════════════════════════════════════════
