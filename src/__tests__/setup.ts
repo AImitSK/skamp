@@ -325,6 +325,43 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock TipTap Editor für Komponenten die den Editor verwenden
+const createMockChain = () => {
+  const chain = {
+    focus: jest.fn().mockReturnValue(chain),
+    toggleBold: jest.fn().mockReturnValue(chain),
+    toggleItalic: jest.fn().mockReturnValue(chain),
+    toggleUnderline: jest.fn().mockReturnValue(chain),
+    toggleStrike: jest.fn().mockReturnValue(chain),
+    toggleHeading: jest.fn().mockReturnValue(chain),
+    toggleBulletList: jest.fn().mockReturnValue(chain),
+    toggleOrderedList: jest.fn().mockReturnValue(chain),
+    toggleBlockquote: jest.fn().mockReturnValue(chain),
+    toggleHashtag: jest.fn().mockReturnValue(chain),
+    toggleCTA: jest.fn().mockReturnValue(chain),
+    setLink: jest.fn().mockReturnValue(chain),
+    unsetLink: jest.fn().mockReturnValue(chain),
+    setColor: jest.fn().mockReturnValue(chain),
+    setMark: jest.fn().mockReturnValue(chain),
+    clearNodes: jest.fn().mockReturnValue(chain),
+    unsetAllMarks: jest.fn().mockReturnValue(chain),
+    setTextAlign: jest.fn().mockReturnValue(chain),
+    undo: jest.fn().mockReturnValue(chain),
+    redo: jest.fn().mockReturnValue(chain),
+    run: jest.fn(),
+  };
+  return chain;
+};
+
+// Proxy für dynamischen Zugriff auf can() Methoden
+const createCanProxy = () => {
+  return new Proxy({}, {
+    get: (target, prop) => {
+      // Alle can() Aufrufe geben eine Funktion zurück die true zurückgibt
+      return jest.fn(() => true);
+    }
+  });
+};
+
 const mockEditor = {
   commands: {
     setContent: jest.fn(),
@@ -340,24 +377,18 @@ const mockEditor = {
     toggleHeading: jest.fn(),
     toggleBulletList: jest.fn(),
     toggleOrderedList: jest.fn(),
+    toggleBlockquote: jest.fn(),
+    toggleHashtag: jest.fn(),
+    toggleCTA: jest.fn(),
     setLink: jest.fn(),
     unsetLink: jest.fn(),
+    setColor: jest.fn(),
     undo: jest.fn(),
     redo: jest.fn(),
   },
-  can: jest.fn(() => ({
-    toggleBold: jest.fn(() => true),
-    toggleItalic: jest.fn(() => true),
-    toggleUnderline: jest.fn(() => true),
-    toggleStrike: jest.fn(() => true),
-    toggleHeading: jest.fn(() => true),
-    toggleBulletList: jest.fn(() => true),
-    toggleOrderedList: jest.fn(() => true),
-    setLink: jest.fn(() => true),
-    undo: jest.fn(() => true),
-    redo: jest.fn(() => true),
-  })),
-  isActive: jest.fn(() => false),
+  can: jest.fn(() => createCanProxy()),
+  isActive: jest.fn((name?: string) => false),
+  getAttributes: jest.fn((name: string) => ({})),
   getHTML: jest.fn(() => '<p>Test content</p>'),
   getText: jest.fn(() => 'Test content'),
   getJSON: jest.fn(() => ({ type: 'doc', content: [] })),
@@ -367,12 +398,7 @@ const mockEditor = {
   on: jest.fn(),
   off: jest.fn(),
   destroy: jest.fn(),
-  chain: jest.fn(() => ({
-    focus: jest.fn().mockReturnThis(),
-    toggleBold: jest.fn().mockReturnThis(),
-    toggleItalic: jest.fn().mockReturnThis(),
-    run: jest.fn(),
-  })),
+  chain: jest.fn(() => createMockChain()),
 };
 
 jest.mock('@tiptap/react', () => ({

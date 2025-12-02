@@ -49,8 +49,10 @@ describe('MediaDistributionChart Component', () => {
     it('should render legend items with correct labels and counts', () => {
       render(<MediaDistributionChart data={mockData} />);
 
-      expect(screen.getByText('Online: 15')).toBeInTheDocument();
-      expect(screen.getByText('Print: 8')).toBeInTheDocument();
+      // Labels enthalten jetzt Emojis durch getOutletTypeLabel()
+      expect(screen.getByText('💻 Online: 15')).toBeInTheDocument();
+      expect(screen.getByText('📰 Print: 8')).toBeInTheDocument();
+      // Radio hat kein spezifisches Emoji-Mapping, bleibt als Text
       expect(screen.getByText('Radio: 3')).toBeInTheDocument();
     });
 

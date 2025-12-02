@@ -50,13 +50,15 @@ jest.mock('@heroicons/react/24/outline', () => {
     }
     return <div className={className} onClick={onClick} data-testid="mock-icon">Icon</div>;
   };
-  
+
   return {
     PhotoIcon: mockIcon,
     DocumentIcon: mockIcon,
     ChevronDownIcon: mockIcon,
     ChevronUpIcon: mockIcon,
-    PaperClipIcon: mockIcon
+    PaperClipIcon: mockIcon,
+    EyeIcon: mockIcon,
+    ArrowDownTrayIcon: mockIcon
   };
 });
 

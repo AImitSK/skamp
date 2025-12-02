@@ -351,7 +351,7 @@ class UploadPerformanceManagerService {
           totalBytes: 0,
           transferRate: 0,
           estimatedRemainingMs: ((Date.now() - startTime) / processedCount) * (items.length - processedCount),
-          startedAt: Timestamp.fromMillis(startTime)
+          startedAt: Timestamp.fromDate(new Date(startTime))
         });
 
         // Memory Cleanup nach Verarbeitung
@@ -400,13 +400,16 @@ class UploadPerformanceManagerService {
   ): UploadProgress {
     const totalFiles = fileProgresses.length;
     const completedFiles = fileProgresses.filter(fp => fp.progress === 100).length;
-    const overallProgress = fileProgresses.reduce((sum, fp) => sum + fp.progress, 0) / totalFiles;
-    
+    // NaN vermeiden wenn keine Files vorhanden sind
+    const overallProgress = totalFiles > 0
+      ? fileProgresses.reduce((sum, fp) => sum + fp.progress, 0) / totalFiles
+      : 0;
+
     const totalSize = fileProgresses.reduce((sum, fp) => sum + fp.fileSize, 0);
     const transferredBytes = fileProgresses.reduce((sum, fp) => sum + (fp.fileSize * fp.progress / 100), 0);
-    
+
     const currentFile = fileProgresses.find(fp => fp.progress > 0 && fp.progress < 100);
-    
+
     return {
       phase: completedFiles === totalFiles ? 'complete' : 'uploading',
       overallProgress,

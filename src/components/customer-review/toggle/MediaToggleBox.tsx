@@ -98,7 +98,14 @@ function MediaToggleBoxComponent({
 
             {/* Medien-Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayItems.map((mediaItem) => (
+              {displayItems.map((mediaItem) => {
+                // Null-Safety für korrupte Daten
+                if (!mediaItem || !mediaItem.id) return null;
+
+                const mimeType = mediaItem.mimeType || 'application/octet-stream';
+                const filename = mediaItem.filename || 'Unknown file';
+
+                return (
                 <div
                   key={mediaItem.id}
                   className="group relative bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 transition-colors duration-150 cursor-pointer"
@@ -107,15 +114,15 @@ function MediaToggleBoxComponent({
                 >
                   {/* Media-Vorschau */}
                   <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                    {mediaItem.mimeType.startsWith('image/') && mediaItem.thumbnailUrl ? (
+                    {mimeType.startsWith('image/') && mediaItem.thumbnailUrl ? (
                       <img
                         src={mediaItem.thumbnailUrl}
-                        alt={mediaItem.filename}
+                        alt={filename}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-4xl" role="img" aria-label={mediaItem.mimeType}>
-                        {getFileTypeIcon(mediaItem.mimeType)}
+                      <span className="text-4xl" role="img" aria-label={mimeType}>
+                        {getFileTypeIcon(mimeType)}
                       </span>
                     )}
                     
@@ -125,7 +132,7 @@ function MediaToggleBoxComponent({
                         <button
                           className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors"
                           title="Vollbild anzeigen"
-                          aria-label={`${mediaItem.filename} in Vollbild anzeigen`}
+                          aria-label={`${filename} in Vollbild anzeigen`}
                         >
                           <EyeIcon className="h-5 w-5" />
                         </button>
@@ -133,7 +140,7 @@ function MediaToggleBoxComponent({
                           onClick={(e) => handleDownload(e, mediaItem)}
                           className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors"
                           title="Herunterladen"
-                          aria-label={`${mediaItem.filename} herunterladen`}
+                          aria-label={`${filename} herunterladen`}
                         >
                           <ArrowDownTrayIcon className="h-5 w-5" />
                         </button>
@@ -144,24 +151,25 @@ function MediaToggleBoxComponent({
                   {/* Media-Info */}
                   <div className="p-3">
                     <h4 className="font-medium text-gray-900 text-sm truncate">
-                      {mediaItem.filename}
+                      {filename}
                     </h4>
                     <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                      <span>{formatFileSize(mediaItem.size)}</span>
+                      <span>{formatFileSize(mediaItem.size || 0)}</span>
                       {mediaItem.metadata?.dimensions && (
                         <span>{mediaItem.metadata.dimensions.width}×{mediaItem.metadata.dimensions.height}</span>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
       </ToggleBox>
 
       {/* Vollbild-Modal (einfache Implementierung) */}
-      {selectedMedia && selectedMedia.mimeType.startsWith('image/') && (
+      {selectedMedia && selectedMedia.mimeType && selectedMedia.mimeType.startsWith('image/') && (
         <div 
           className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4"
           onClick={() => setSelectedMedia(null)}

@@ -164,7 +164,7 @@ describe('Public Share Page - Phase 4a.5', () => {
       ...mockShareLink,
       settings: {
         ...mockShareLink.settings,
-        passwordRequired: 'hashed-password-123',
+        requirePassword: true, // Boolean Flag in aktueller Komponente
       },
     };
 
@@ -191,7 +191,7 @@ describe('Public Share Page - Phase 4a.5', () => {
       ...mockShareLink,
       settings: {
         ...mockShareLink.settings,
-        passwordRequired: 'correct-password',
+        requirePassword: true, // Boolean Flag in aktueller Komponente
       },
     };
 
@@ -200,6 +200,13 @@ describe('Public Share Page - Phase 4a.5', () => {
       isLoading: false,
       error: null,
     });
+
+    // Mock fetch für Passwort-Validierung - falsches Passwort
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: async () => ({ valid: false }),
+    } as Response);
 
     render(<SharePage />);
 
@@ -215,14 +222,10 @@ describe('Public Share Page - Phase 4a.5', () => {
     const submitButton = screen.getByText('Zugriff freischalten');
     fireEvent.click(submitButton);
 
-    // Nach falschem Passwort sollte Passwort-Prompt weiterhin sichtbar sein
+    // Nach falschem Passwort sollte Fehlermeldung erscheinen
     await waitFor(() => {
-      expect(screen.getByText('Passwort erforderlich')).toBeInTheDocument();
+      expect(screen.getByText(/Falsches Passwort/i)).toBeInTheDocument();
     });
-
-    // Passwort-Input sollte weiterhin sichtbar sein
-    expect(screen.getByPlaceholderText(/Passwort eingeben/i)).toBeInTheDocument();
-    expect(screen.getByText('Zugriff freischalten')).toBeInTheDocument();
   });
 
   // ============================================================================
@@ -235,7 +238,7 @@ describe('Public Share Page - Phase 4a.5', () => {
       type: 'campaign' as const,
       settings: {
         ...mockShareLink.settings,
-        passwordRequired: null,
+        requirePassword: false,
       },
     };
 
@@ -251,7 +254,11 @@ describe('Public Share Page - Phase 4a.5', () => {
       error: null,
     });
 
-    (mediaService.getCampaignMediaAssets as jest.Mock).mockResolvedValue(campaignAssets);
+    // Mock fetch für Campaign-Assets
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: campaignAssets }),
+    } as Response);
 
     render(<SharePage />);
 
@@ -272,7 +279,7 @@ describe('Public Share Page - Phase 4a.5', () => {
       type: 'campaign' as const,
       settings: {
         ...mockShareLink.settings,
-        passwordRequired: null,
+        requirePassword: false,
       },
     };
 
@@ -282,15 +289,19 @@ describe('Public Share Page - Phase 4a.5', () => {
       error: null,
     });
 
-    (mediaService.getCampaignMediaAssets as jest.Mock).mockResolvedValue([]);
+    // Mock fetch - leeres Asset-Array
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: [] }),
+    } as Response);
 
     render(<SharePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Fehler')).toBeInTheDocument();
+      expect(screen.getByText('Keine Inhalte')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Keine Medien in dieser Kampagne gefunden/i)).toBeInTheDocument();
+    expect(screen.getByText(/Diese Kampagne enthält keine Medien/i)).toBeInTheDocument();
   });
 
   // ============================================================================
@@ -298,6 +309,12 @@ describe('Public Share Page - Phase 4a.5', () => {
   // ============================================================================
 
   it('sollte Download-Button rendern wenn erlaubt', async () => {
+    // Mock fetch für File-Share
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: [mockAsset] }),
+    } as Response);
+
     render(<SharePage />);
 
     await waitFor(() => {
@@ -324,6 +341,12 @@ describe('Public Share Page - Phase 4a.5', () => {
       error: null,
     });
 
+    // Mock fetch für File-Share
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: [mockAsset] }),
+    } as Response);
+
     render(<SharePage />);
 
     await waitFor(() => {
@@ -338,37 +361,62 @@ describe('Public Share Page - Phase 4a.5', () => {
   });
 
   // ============================================================================
-  // TEST 5: BRANDING ANZEIGEN
+  // TEST 5: LOGO UND FOOTER ANZEIGEN
   // ============================================================================
 
-  it('sollte Branding anzeigen', async () => {
+  it('sollte CeleroPress Logo und Footer anzeigen', async () => {
+    // Mock fetch für File-Share
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: [mockAsset] }),
+    } as Response);
+
     render(<SharePage />);
 
     await waitFor(() => {
       expect(screen.getByText('Test Share')).toBeInTheDocument();
     });
 
-    // Logo sollte vorhanden sein
-    const logo = document.querySelector('img[alt="Test Company"]');
-    expect(logo).toBeInTheDocument();
-    expect(logo).toHaveAttribute('src', 'https://example.com/logo.png');
+    // CeleroPress Logo sollte vorhanden sein
+    const logos = screen.getAllByAltText('CeleroPress');
+    expect(logos.length).toBeGreaterThan(0);
 
-    // Footer-Branding sollte vorhanden sein
-    expect(screen.getByText('Test Company')).toBeInTheDocument();
-    expect(screen.getByText(/Test Street 123/i)).toBeInTheDocument();
-    expect(screen.getByText('+49 123 456789')).toBeInTheDocument();
-    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    // Footer mit Copyright sollte vorhanden sein
+    const currentYear = new Date().getFullYear();
+    expect(screen.getByText(new RegExp(`© ${currentYear} CeleroPress`))).toBeInTheDocument();
   });
 
-  it('sollte KEIN Branding bei Campaign-Shares', async () => {
+  it('sollte "Medien-Freigabe" Label anzeigen', async () => {
+    // Mock fetch für File-Share
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: [mockAsset] }),
+    } as Response);
+
+    render(<SharePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Share')).toBeInTheDocument();
+    });
+
+    // Label sollte vorhanden sein
+    expect(screen.getByText('Medien-Freigabe')).toBeInTheDocument();
+  });
+
+  it('sollte Element-Count korrekt anzeigen', async () => {
     const campaignShareLink = {
       ...mockShareLink,
       type: 'campaign' as const,
       settings: {
         ...mockShareLink.settings,
-        passwordRequired: null,
+        requirePassword: false,
       },
     };
+
+    const campaignAssets = [
+      { ...mockAsset, id: 'asset-1', fileName: 'image1.jpg' },
+      { ...mockAsset, id: 'asset-2', fileName: 'image2.jpg' },
+    ];
 
     (useShareLink as jest.Mock).mockReturnValue({
       data: campaignShareLink,
@@ -376,36 +424,19 @@ describe('Public Share Page - Phase 4a.5', () => {
       error: null,
     });
 
-    (mediaService.getCampaignMediaAssets as jest.Mock).mockResolvedValue([mockAsset]);
+    // Mock fetch für Campaign-Assets
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ assets: campaignAssets }),
+    } as Response);
 
     render(<SharePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Test Share')).toBeInTheDocument();
+      expect(screen.getByText('image1.jpg')).toBeInTheDocument();
     });
 
-    // Kein Logo
-    const logo = document.querySelector('img[alt="Test Company"]');
-    expect(logo).not.toBeInTheDocument();
-
-    // Minimal Label statt Branding
-    expect(screen.getByText('Medien-Freigabe')).toBeInTheDocument();
-
-    // Minimaler Footer
-    expect(screen.getByText(/Alle Rechte vorbehalten/i)).toBeInTheDocument();
-  });
-
-  it('sollte Fallback-Branding bei fehlendem Logo', async () => {
-    (brandingService.getBrandingSettings as jest.Mock).mockResolvedValue(null);
-
-    render(<SharePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Test Share')).toBeInTheDocument();
-    });
-
-    // Fallback-Text statt Logo
-    expect(screen.getByText('Freigabe-System')).toBeInTheDocument();
-    expect(screen.getByText('Media Share')).toBeInTheDocument();
+    // Element-Count sollte korrekt sein
+    expect(screen.getByText(/2 Elemente/i)).toBeInTheDocument();
   });
 });
