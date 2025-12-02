@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { MyTasksWidget } from '@/components/dashboard/MyTasksWidget';
 import { useNotifications } from '@/hooks/use-notifications';
 import { Notification } from '@/types/notifications';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { prService } from '@/lib/firebase/pr-service';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';

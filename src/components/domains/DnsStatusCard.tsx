@@ -13,8 +13,8 @@ import {
   InformationCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { de } from 'date-fns/locale/de';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCardProps) {
   // Calculate summary

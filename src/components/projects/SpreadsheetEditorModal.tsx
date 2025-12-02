@@ -223,7 +223,7 @@ export default function SpreadsheetEditorModal({
       </DialogBody>
 
       <DialogActions>
-        <Button variant="outline" onClick={handleClose}>
+        <Button plain onClick={handleClose}>
           Abbrechen
         </Button>
         <Button

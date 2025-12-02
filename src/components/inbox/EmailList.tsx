@@ -97,8 +97,7 @@ export function EmailList({
               "border-b border-gray-200 px-4 py-3 cursor-pointer transition-colors relative",
               "hover:bg-blue-50",
               isSelected && "bg-blue-50 hover:bg-blue-100",
-              hasUnread && "bg-white",
-              thread.isStarred && "bg-yellow-50"
+              hasUnread && "bg-white"
             )}
           >
             <div className="flex-1 min-w-0">

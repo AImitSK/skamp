@@ -44,7 +44,8 @@ export default function SpreadsheetEditor({
     initialData?.data || createEmptySpreadsheet().data
   );
 
-  const handleDataChange = (newData: Array<Array<{ value: string }>>) => {
+  const handleDataChange = (newData: Array<Array<{ value: string }>> | undefined) => {
+    if (!newData) return;
     setData(newData);
     onDataChange({
       rows: newData.length,
@@ -115,7 +116,7 @@ export default function SpreadsheetEditor({
       <div className="flex-1 p-4 overflow-auto">
         <Spreadsheet
           data={data}
-          onChange={handleDataChange}
+          onChange={handleDataChange as any}
           columnLabels={Array.from({ length: data[0]?.length || 0 }, (_, i) =>
             String.fromCharCode(65 + i)
           )}

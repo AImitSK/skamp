@@ -21,8 +21,8 @@ import {
   ClockIcon,
   ArrowTrendingUpIcon
 } from '@heroicons/react/24/outline';
-import format from 'date-fns/format';
-import { de } from 'date-fns/locale/de';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface NotificationBellProps {
   onNotificationClick?: (notification: NotificationData) => void;
@@ -129,7 +129,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
     }
 
     // Navigate to inbox for mention notifications
-    if (notification.type === 'TEAM_CHAT_MENTION' && notification.metadata?.threadId) {
+    if (notification.type === 'mention' && notification.metadata?.threadId) {
       console.log('📧 Navigating to inbox with threadId:', notification.metadata.threadId);
 
       const targetUrl = `/dashboard/communication/inbox?threadId=${notification.metadata.threadId}&openNotes=true`;

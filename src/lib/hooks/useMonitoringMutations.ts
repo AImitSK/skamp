@@ -14,7 +14,7 @@ export interface MarkAsPublishedFormData {
   articleUrl: string;
   articleTitle: string;
   outletName: string;
-  outletType: 'print' | 'online' | 'broadcast' | 'blog';
+  outletType: 'print' | 'online' | 'broadcast' | 'audio';
   reach: string;
   sentiment: 'positive' | 'neutral' | 'negative';
   sentimentScore: number;
@@ -40,7 +40,7 @@ export interface UpdateClippingFormData {
   articleUrl: string;
   articleTitle: string;
   outletName: string;
-  outletType: 'print' | 'online' | 'broadcast' | 'blog';
+  outletType: 'print' | 'online' | 'broadcast' | 'audio';
   reach: string;
   sentiment: 'positive' | 'neutral' | 'negative';
   sentimentScore: number;

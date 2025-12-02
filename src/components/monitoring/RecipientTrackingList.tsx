@@ -356,7 +356,7 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
           <Button plain onClick={() => setDeletingSend(null)} disabled={loading}>
             Abbrechen
           </Button>
-          <Button color="red" onClick={handleDelete} disabled={loading}>
+          <Button color="secondary" onClick={handleDelete} disabled={loading}>
             {loading ? 'Löschen...' : 'Löschen'}
           </Button>
         </DialogActions>

@@ -19,7 +19,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db } from './config';
-import { MonitoringSuggestion } from '@/types/monitoring';
+import { MonitoringSuggestion, MediaClipping } from '@/types/monitoring';
 import { clippingService } from './clipping-service';
 import { detectOutletType } from '@/lib/utils/outlet-type-detector';
 import { publicationService } from './library-service';
@@ -115,7 +115,7 @@ class MonitoringSuggestionService {
     }
 
     // Erstelle Clipping aus Suggestion
-    const clippingData: Record<string, any> = {
+    const clippingData: Partial<MediaClipping> = {
       organizationId: suggestion.organizationId,
       campaignId: suggestion.campaignId,
       projectId: campaign.projectId,
@@ -124,8 +124,8 @@ class MonitoringSuggestionService {
       publishedAt: suggestion.sources[0]?.foundAt || Timestamp.now(),
       outletName: suggestion.sources[0]?.sourceName || 'Unbekannt',
       outletType,
-      sentiment: context.sentiment || 'neutral' as const,
-      detectionMethod: 'automated' as const,
+      sentiment: context.sentiment || 'neutral',
+      detectionMethod: 'google_news',
       detectedAt: suggestion.createdAt,
       createdBy: context.userId,
       verifiedBy: context.userId,
@@ -136,12 +136,9 @@ class MonitoringSuggestionService {
     if (suggestion.articleExcerpt) {
       clippingData.excerpt = suggestion.articleExcerpt;
     }
-    if (suggestion.articleImage) {
-      clippingData.imageUrl = suggestion.articleImage;
-    }
 
     const clippingId = await clippingService.create(
-      clippingData,
+      clippingData as any,
       context
     );
 

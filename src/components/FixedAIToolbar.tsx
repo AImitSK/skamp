@@ -367,7 +367,7 @@ Antworte NUR mit dem erweiterten Text.`;
 
       const isAlreadyParsed = !result.includes('<') && !result.includes('**') && !result.includes('GESAMTER TEXT:');
 
-      if (action === 'elaborate') {
+      if (action === 'expand') {
         result = result
           .replace(/<\/?h[1-6][^>]*>/gi, '')
           .replace(/<\/?strong[^>]*>/gi, '')

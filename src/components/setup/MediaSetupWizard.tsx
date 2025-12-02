@@ -100,10 +100,10 @@ export default function MediaSetupWizard({ onClose, onComplete, userId, organiza
       // Schritt 1: Tags erstellen
       for (const tagData of STANDARD_PRESS_TAGS) {
         if (selectedTags.includes(tagData.name)) {
-          const tagId = await tagsService.create(
-            tagData,
-            organizationId
-          );
+          const tagId = await tagsService.create({
+            ...tagData,
+            userId
+          });
           createdTagIds.set(tagData.name, tagId);
         }
       }

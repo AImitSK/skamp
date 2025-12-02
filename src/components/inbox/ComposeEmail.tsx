@@ -253,8 +253,6 @@ ${responsiveForwardedHtml}`;
           userId: user?.uid || organizationId,
           signatureId: selectedSignatureId || undefined,
           mode,
-          domainId: replyToEmail?.domainId,
-          projectId: replyToEmail?.projectId,
           // Attachments
           attachments: attachments.map(att => ({
             filename: att.metadata?.fileName || 'attachment',

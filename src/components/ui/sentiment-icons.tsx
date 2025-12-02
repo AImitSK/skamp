@@ -26,8 +26,9 @@ export function SentimentNeutralIcon({ className = 'h-5 w-5', title = 'Neutral' 
       viewBox="0 0 24 24"
       strokeWidth={1.5}
       stroke="currentColor"
-      title={title}
+      aria-label={title}
     >
+      <title>{title}</title>
       <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 14h8" />
       <circle cx="9" cy="9.5" r="1" fill="currentColor" />

@@ -535,7 +535,8 @@ export class PublicationsAPIService {
         print: 0,
         online: 0,
         both: 0,
-        broadcast: 0
+        broadcast: 0,
+        audio: 0
       };
       
       let totalCirculation = 0;

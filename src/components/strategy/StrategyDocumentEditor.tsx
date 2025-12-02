@@ -122,7 +122,7 @@ export default function StrategyDocumentEditor({
           
           <Button
             onClick={onCancel}
-            variant="outline"
+            plain
           >
             Abbrechen
           </Button>

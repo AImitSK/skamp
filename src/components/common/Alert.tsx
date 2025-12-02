@@ -12,7 +12,7 @@ import {
 export interface AlertProps {
   type?: 'info' | 'success' | 'warning' | 'error';
   title?: string;
-  message: string;
+  message?: string;
   action?: {
     label: string;
     onClick: () => void;
@@ -86,9 +86,11 @@ export function Alert({
                 {title}
               </Text>
             )}
-            <Text className={`${title ? 'mt-2' : ''} text-sm ${styles.message}`}>
-              {message}
-            </Text>
+            {message && (
+              <Text className={`${title ? 'mt-2' : ''} text-sm ${styles.message}`}>
+                {message}
+              </Text>
+            )}
           </div>
           {action && (
             <p className="mt-3 text-sm md:mt-0 md:ml-6">

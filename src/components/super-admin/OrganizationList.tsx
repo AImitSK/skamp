@@ -154,7 +154,13 @@ export default function OrganizationList() {
                         Promo: {org.promoDetails.code}
                         {org.promoDetails.expiresAt && (
                           <span className="ml-2">
-                            • Läuft ab: {new Date(org.promoDetails.expiresAt.toDate()).toLocaleDateString('de-DE')}
+                            • Läuft ab: {(() => {
+                              const expiresAt = org.promoDetails.expiresAt;
+                              if (typeof expiresAt === 'object' && expiresAt !== null && 'toDate' in expiresAt) {
+                                return (expiresAt as any).toDate().toLocaleDateString('de-DE');
+                              }
+                              return new Date(expiresAt as any).toLocaleDateString('de-DE');
+                            })()}
                           </span>
                         )}
                       </p>

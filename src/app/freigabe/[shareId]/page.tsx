@@ -396,9 +396,7 @@ export default function ApprovalPage() {
             comment: h.details?.comment || '',
             requestedAt: h.timestamp,
             author: authorName,
-            action: h.action,  // WICHTIG: action-Feld übertragen!
-            manualApproval: h.details?.manualApproval || false,
-            manualChangesRequested: h.details?.manualChangesRequested || false
+            action: h.action  // WICHTIG: action-Feld übertragen!
           };
         }) || [],
         approvedAt: approvalData.approvedAt,
@@ -858,9 +856,7 @@ export default function ApprovalPage() {
                 createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date()),
                 isRead: true,
                 campaignId: shareId,
-                organizationId: campaign.organizationId || '',
-                manualApproval: (latest as any).manualApproval || false,
-                manualChangesRequested: (latest as any).manualChangesRequested || false
+                organizationId: campaign.organizationId || ''
               };
             })()}
           />
@@ -993,9 +989,7 @@ export default function ApprovalPage() {
                   createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date()),
                   isRead: true,
                   campaignId: shareId,
-                  organizationId: campaign.organizationId || '',
-                  manualApproval: (feedback as any).manualApproval || false,
-                  manualChangesRequested: (feedback as any).manualChangesRequested || false
+                  organizationId: campaign.organizationId || ''
                 };
               }) || []}
               latestMessage={(() => {
@@ -1041,9 +1035,7 @@ export default function ApprovalPage() {
                   createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date()),
                   isRead: true,
                   campaignId: shareId,
-                  organizationId: campaign.organizationId || '',
-                  manualApproval: (latest as any).manualApproval || false,
-                  manualChangesRequested: (latest as any).manualChangesRequested || false
+                  organizationId: campaign.organizationId || ''
                 };
               })()}
               onReply={(communication) => {

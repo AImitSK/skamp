@@ -8,7 +8,6 @@ export { ViewToggle } from './ViewToggle';
 export { StatusBadge } from './StatusBadge';
 export { EditLockBanner } from './EditLockBanner';
 export { EditLockStatusIndicator } from './EditLockStatusIndicator';
-export { ApprovalHistoryModal } from './ApprovalHistoryModal';
 export { CustomerContactSelector } from './CustomerContactSelector';
 export { ApprovalSettings } from './ApprovalSettings';
 export { PRSEOHeaderBar } from './PRSEOHeaderBar';

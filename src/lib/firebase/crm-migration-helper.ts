@@ -133,12 +133,12 @@ export function migrateCompanyFromEnhanced(enhanced: CompanyEnhanced): Omit<Comp
     email: enhanced.emails?.find(e => e.isPrimary)?.email || enhanced.emails?.[0]?.email,
     phone: enhanced.phones?.find(p => p.isPrimary)?.number || enhanced.phones?.[0]?.number,
     address: enhanced.mainAddress ? {
-      street: enhanced.mainAddress.street,
+      street: enhanced.mainAddress.street ?? '',
       street2: enhanced.mainAddress.addressLine2,
-      city: enhanced.mainAddress.city,
+      city: enhanced.mainAddress.city ?? '',
       state: enhanced.mainAddress.region,
-      postalCode: enhanced.mainAddress.postalCode,
-      zip: enhanced.mainAddress.postalCode,
+      postalCode: enhanced.mainAddress.postalCode ?? '',
+      zip: enhanced.mainAddress.postalCode ?? '',
       country: enhanced.mainAddress.countryCode
     } : undefined,
     mediaInfo: enhanced.mediaInfo,
@@ -175,8 +175,8 @@ export function migrateContactToEnhanced(
     
     // Structured name
     name: {
-      firstName: contact.firstName,
-      lastName: contact.lastName
+      firstName: contact.firstName ?? '',
+      lastName: contact.lastName ?? ''
     },
     displayName: `${contact.firstName} ${contact.lastName}`,
     

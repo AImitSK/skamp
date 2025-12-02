@@ -6,7 +6,7 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ManualRecipient } from '@/types/email-composer';
-import { DistributionList } from '@/types/lists';
+import { DistributionList, ListCategory } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
 import { projectListsService, ProjectDistributionList } from '@/lib/firebase/project-lists-service';
 import { useAuth } from '@/context/AuthContext';
@@ -79,7 +79,7 @@ export default function RecipientManager({
 
           if (projectList.type === 'linked' && projectList.masterListId) {
             // Linked List: Lade aus distribution_lists
-            const masterList = await listsService.getById(projectList.masterListId, currentOrganization.id, user.uid);
+            const masterList = await listsService.getById(projectList.masterListId);
             if (masterList) {
               loadedLists.push(masterList);
             }
@@ -89,16 +89,15 @@ export default function RecipientManager({
               id: projectList.id!,
               name: projectList.name || 'Unbenannte Liste',
               description: projectList.description || '',
+              type: 'static' as const,
               organizationId: projectList.organizationId,
-              createdBy: projectList.addedBy,
+              userId: projectList.addedBy,
               createdAt: projectList.addedAt,
               updatedAt: projectList.lastModified,
               contactIds: projectList.contactIds || [],
               contactCount: projectList.cachedContactCount || projectList.contactIds?.length || 0,
-              category: projectList.category || 'custom',
-              filters: projectList.filters || {},
-              listType: projectList.listType || 'static',
-              isActive: true
+              category: (projectList.category || 'custom') as ListCategory,
+              filters: projectList.filters || {}
             };
             loadedLists.push(customList);
           }

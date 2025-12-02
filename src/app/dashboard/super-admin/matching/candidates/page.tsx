@@ -293,7 +293,7 @@ export default function MatchingCandidatesPage() {
           </p>
           {filters.status?.length === 1 && filters.status[0] === 'pending' && (
             <div className="mt-6">
-              <Button color="blue" onClick={handleScan}>
+              <Button color="indigo" onClick={handleScan}>
                 <ArrowPathIcon className="size-4" />
                 Jetzt scannen
               </Button>

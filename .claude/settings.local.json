@@ -49,7 +49,8 @@
       "WebSearch",
       "WebFetch(domain:firebase.google.com)",
       "WebFetch(domain:genkit.dev)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "mcp__ide__getDiagnostics"
     ]
   },
   "enableAllProjectMcpServers": true,

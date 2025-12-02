@@ -124,9 +124,10 @@ export default function PublicationFilterSection({
     setExpandedSections(newExpanded);
   };
 
-  const applyPreset = (preset: typeof PUBLICATION_FILTER_PRESETS[0]) => {
-    onChange(preset.filters);
-  };
+  // applyPreset ist derzeit nicht verwendet - kann später aktiviert werden wenn Preset-UI implementiert wird
+  // const applyPreset = (preset: typeof PUBLICATION_FILTER_PRESETS[0]) => {
+  //   onChange(preset.filters);
+  // };
 
   if (loading) {
     return (

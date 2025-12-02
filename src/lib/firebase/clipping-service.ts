@@ -214,7 +214,7 @@ export const clippingService = {
         print: 0,
         online: 0,
         broadcast: 0,
-        blog: 0
+        audio: 0
       },
       byCategory: {
         news: 0,

@@ -291,7 +291,7 @@ export default function CandidateFilters({
 
       {/* Scan Button */}
       <Button
-        color="blue"
+        color="indigo"
         onClick={onScan}
         disabled={scanning}
         className="whitespace-nowrap h-10"

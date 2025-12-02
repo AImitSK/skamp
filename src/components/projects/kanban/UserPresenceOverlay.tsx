@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { de } from 'date-fns/locale/de';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 // ========================================
 // INTERFACES

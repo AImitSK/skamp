@@ -169,12 +169,12 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {recentAssets.map((asset) => {
-                  const FileIcon = getFileIcon(asset.fileType);
+                  const FileIcon = getFileIcon(asset.fileType ?? '');
                   
                   return (
                     <div key={asset.id} className="group relative">
                       <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border hover:shadow-md transition-all duration-200">
-                        {asset.fileType.startsWith('image/') ? (
+                        {asset.fileType?.startsWith('image/') ? (
                           <img
                             src={asset.downloadUrl}
                             alt={asset.fileName}

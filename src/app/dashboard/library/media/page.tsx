@@ -608,7 +608,7 @@ export default function MediathekPage() {
           // React Query Mutation - auto invalidates queries
           await deleteFolderMutation.mutateAsync({
             folderId: folder.id!,
-            organizationId
+            organizationId: organizationId ?? undefined
           });
           toastService.success('Ordner gelöscht');
         } catch (error) {
@@ -654,7 +654,7 @@ export default function MediathekPage() {
           // React Query Mutation - auto invalidates queries
           await deleteAssetMutation.mutateAsync({
             asset,
-            organizationId
+            organizationId: organizationId ?? undefined
           });
           toastService.success('Datei gelöscht');
         } catch(error) {
@@ -871,11 +871,12 @@ export default function MediathekPage() {
         />
       )}
       
-      {showFolderModal && (
-        <FolderModal 
+      {showFolderModal && organizationId && (
+        <FolderModal
           folder={editingFolder}
           parentFolderId={currentFolderId}
           allFolders={allFolders}
+          organizationId={organizationId}
           onClose={() => {
             setShowFolderModal(false);
             setEditingFolder(undefined);

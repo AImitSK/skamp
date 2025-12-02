@@ -18,6 +18,7 @@ interface CampaignPreviewStepProps {
   finalContentHtml: string;
   keyVisual?: KeyVisualData;
   selectedCompanyName?: string;
+  campaignAdminName?: string;
   realPrScore: {
     totalScore: number;
     breakdown: {
@@ -50,6 +51,7 @@ export function CampaignPreviewStep({
   finalContentHtml,
   keyVisual,
   selectedCompanyName,
+  campaignAdminName,
   realPrScore,
   keywords,
   boilerplateSections,

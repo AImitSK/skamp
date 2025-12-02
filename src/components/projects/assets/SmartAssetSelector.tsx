@@ -318,7 +318,7 @@ export default function SmartAssetSelector({
   };
 
   const handleConfirm = () => {
-    onSelect(selectedAssets, selectedFolders);
+    onSelect?.(selectedAssets, selectedFolders);
   };
 
   const getSuggestionBadge = (suggestion: AssetSuggestion) => {

@@ -38,6 +38,7 @@ const FolderCreateDialog = React.memo(function FolderCreateDialog({
     try {
       await createFolder({
         userId: user.uid,
+        organizationId, // Erforderlich für MediaFolder
         name: folderName.trim(),
         parentFolderId,
         description: `Unterordner erstellt von ${user.displayName || user.email}`

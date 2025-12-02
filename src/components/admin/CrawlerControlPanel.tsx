@@ -100,7 +100,7 @@ export function CrawlerControlPanel({
       <div className="flex gap-3">
         {cronJobStatus.isEnabled ? (
           <Button
-            color="red"
+            color="secondary"
             onClick={() => setShowPauseDialog(true)}
             disabled={loading}
           >
@@ -146,7 +146,7 @@ export function CrawlerControlPanel({
             Abbrechen
           </Button>
           <Button
-            color="red"
+            color="secondary"
             onClick={handlePause}
             disabled={loading || !pauseReason.trim()}
           >

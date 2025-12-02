@@ -70,7 +70,6 @@ export default React.memo(function PreviewTab({
           // Titel aus verschiedenen Quellen extrahieren
           const sectionTitle = section.customTitle ||
                              section.boilerplate?.name ||
-                             section.boilerplate?.title ||
                              '';
 
           // Content aus verschiedenen Quellen extrahieren

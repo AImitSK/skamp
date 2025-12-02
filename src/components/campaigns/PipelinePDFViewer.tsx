@@ -61,19 +61,12 @@ export const PipelinePDFViewer = ({
           icon: DocumentTextIcon,
           description: 'Entwurfs-PDFs für interne Abstimmung'
         };
-      case 'internal_approval':
-        return {
-          label: 'Review',
-          color: 'amber' as const,
-          icon: ClockIcon,
-          description: 'Review-PDFs für Team-Freigabe'
-        };
-      case 'customer_approval':
+      case 'approval':
         return {
           label: 'Freigabe',
           color: 'green' as const,
           icon: CheckCircleIcon,
-          description: 'Finale PDFs für Kunden-Freigabe'
+          description: 'PDFs für Freigabe (Team & Kunde)'
         };
       default:
         return {

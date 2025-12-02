@@ -78,7 +78,7 @@ export default function ProjectsPage() {
   const [showEditWizard, setShowEditWizard] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -241,7 +241,7 @@ export default function ProjectsPage() {
   };
 
   // Handle view mode change
-  const handleViewModeChange = (mode: 'board' | 'list' | 'calendar') => {
+  const handleViewModeChange = (mode: 'board' | 'list') => {
     setViewMode(mode);
   };
 
@@ -401,14 +401,14 @@ export default function ProjectsPage() {
           <div className="flex items-center bg-zinc-100 rounded-lg p-1">
             <button
               onClick={() => handleViewModeChange('board')}
-              className={`p-2 rounded transition-colors ${viewMode === 'board' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
+              className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-700"
               title="Board-Ansicht"
             >
               <Squares2X2Icon className="h-4 w-4" />
             </button>
             <button
               onClick={() => handleViewModeChange('list')}
-              className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white text-primary' : 'text-zinc-500 hover:text-zinc-700'}`}
+              className="p-2 rounded transition-colors bg-white text-primary"
               title="Listen-Ansicht"
             >
               <ListBulletIcon className="h-4 w-4" />

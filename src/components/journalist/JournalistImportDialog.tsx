@@ -157,7 +157,7 @@ export function JournalistImportDialog({
 
       <DialogActions>
         <Button
-          variant="outline"
+          plain
           onClick={handleClose}
           disabled={loading}
         >

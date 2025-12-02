@@ -29,8 +29,8 @@ import {
   EmailDomainEnhanced,
   DomainStatus,
 } from '@/types/email-domains-enhanced';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { de } from 'date-fns/locale/de';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 // Alert Component using existing pattern
 function Alert({

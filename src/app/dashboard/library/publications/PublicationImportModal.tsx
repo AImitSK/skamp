@@ -324,7 +324,7 @@ Heise Online;IT-Nachrichten und Hintergründe;;website;online;active;https://www
       'radio': 'radio',
       'newsletter': 'newsletter',
       'fachzeitschrift': 'trade_journal',
-      'nachrichtenagentur': 'press_agency',
+      'nachrichtenagentur': 'newspaper', // press_agency existiert nicht in PublicationType
       'social media': 'social_media'
     };
     return typeMap[type?.toLowerCase()] || 'magazine';

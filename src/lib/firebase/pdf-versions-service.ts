@@ -824,6 +824,7 @@ class PDFVersionsService {
                     const vorschauFolderId = await mediaService.createFolder(
                       {
                         userId,
+                        organizationId, // Erforderlich für MediaFolder
                         name: 'Vorschau',
                         description: 'PDF-Vorschauversionen für Kampagnen',
                         parentFolderId: pressemeldungenFolder.id,
@@ -877,6 +878,7 @@ class PDFVersionsService {
               const folderId = await mediaService.createFolder(
                 {
                   userId,
+                  organizationId, // Erforderlich für MediaFolder
                   name: 'PDF-Vorschau',
                   description: 'PDF-Vorschauversionen (Fallback für Campaigns ohne Projekt)',
                   color: '#F59E0B' // Orange als Warnung

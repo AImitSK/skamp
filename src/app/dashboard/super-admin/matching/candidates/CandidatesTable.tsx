@@ -169,7 +169,7 @@ export default function CandidatesTable({
           </div>
 
           <Button
-            color="light"
+            color="zinc"
             onClick={onRefresh}
             className="text-sm"
           >

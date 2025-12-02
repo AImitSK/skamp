@@ -142,7 +142,7 @@ export function CustomerCommentSystem({
                   <Badge color={entry.actorEmail?.includes('agentur@') ? 'yellow' : 'orange'}>
                     {entry.actorName || 'Unbekannt'}
                   </Badge>
-                  {entry.details?.manualApproval && (
+                  {(entry.details as any)?.manualApproval && (
                     <>
                       <Badge color="green">
                         Freigabe erteilt
@@ -153,7 +153,7 @@ export function CustomerCommentSystem({
                       </Badge>
                     </>
                   )}
-                  {entry.details?.manualChangesRequested && (
+                  {(entry.details as any)?.manualChangesRequested && (
                     <>
                       <Badge color="orange">
                         Änderungen erbeten

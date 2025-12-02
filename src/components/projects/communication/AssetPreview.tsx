@@ -243,7 +243,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
                     <EyeIcon className="h-4 w-4" />
                     Öffnen
                   </Button>
-                  <Button onClick={handleDownload} outline className="flex items-center gap-2">
+                  <Button onClick={handleDownload} plain className="flex items-center gap-2">
                     <ArrowDownTrayIcon className="h-4 w-4" />
                     Download
                   </Button>

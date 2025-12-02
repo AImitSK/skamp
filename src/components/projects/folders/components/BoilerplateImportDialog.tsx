@@ -194,7 +194,7 @@ export default function BoilerplateImportDialog({
       </DialogBody>
 
       <DialogActions>
-        <Button variant="outline" onClick={handleClose} disabled={importing}>
+        <Button plain onClick={handleClose} disabled={importing}>
           Abbrechen
         </Button>
       </DialogActions>

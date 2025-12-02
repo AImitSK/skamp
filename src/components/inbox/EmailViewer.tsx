@@ -5,8 +5,8 @@ import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
-import format from 'date-fns/format';
-import { de } from 'date-fns/locale/de';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,

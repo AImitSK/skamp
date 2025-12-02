@@ -13,6 +13,7 @@ interface FolderModalProps {
   folder?: MediaFolder;
   parentFolderId?: string;
   allFolders?: MediaFolder[];
+  organizationId: string; // Erforderlich für MediaFolder
   onClose: () => void;
   onSave: (folderData: Omit<MediaFolder, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
@@ -28,11 +29,12 @@ const FOLDER_COLORS = [
   '#84cc16', // Lime
 ];
 
-export default function FolderModal({ 
-  folder, 
-  parentFolderId, 
+export default function FolderModal({
+  folder,
+  parentFolderId,
   allFolders = [],
-  onClose, 
+  organizationId,
+  onClose,
   onSave
 }: FolderModalProps) {
   const [name, setName] = useState(folder?.name || '');
@@ -54,6 +56,7 @@ export default function FolderModal({
         description: description.trim() || undefined,
         color: selectedColor,
         parentFolderId,
+        organizationId, // Erforderlich für MediaFolder
       });
       onClose();
     } catch (error) {

@@ -246,7 +246,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             <div className="flex space-x-3">
               {activeView === 'external' && (
                 <Button
-                  outline
+                  plain
                   onClick={() => {
                     // TODO: E-Mail verknüpfen Feature implementieren
                   }}

@@ -136,7 +136,7 @@ export default function CandidateVariantCard({
         <div className="flex items-center gap-2">
           {/* Recommended Badge */}
           {isRecommended && (
-            <Badge color="blue" className="flex items-center gap-1">
+            <Badge color="indigo" className="flex items-center gap-1">
               <SparklesIcon className="size-3" />
               <span>Empfohlen</span>
             </Badge>
@@ -185,7 +185,7 @@ export default function CandidateVariantCard({
                 <div key={idx} className="text-sm">
                   <span className="text-zinc-900 dark:text-white">{email.email}</span>
                   {email.isPrimary && (
-                    <Badge color="blue" className="ml-2 text-xs">Primary</Badge>
+                    <Badge color="indigo" className="ml-2 text-xs">Primary</Badge>
                   )}
                   {email.type && <span className="text-zinc-500 ml-2">({email.type})</span>}
                 </div>
@@ -203,7 +203,7 @@ export default function CandidateVariantCard({
                 <div key={idx} className="text-sm">
                   <span className="text-zinc-900 dark:text-white">{phone.number}</span>
                   {phone.isPrimary && (
-                    <Badge color="blue" className="ml-2 text-xs">Primary</Badge>
+                    <Badge color="indigo" className="ml-2 text-xs">Primary</Badge>
                   )}
                   {phone.type && <span className="text-zinc-500 ml-2">({phone.type})</span>}
                 </div>
@@ -254,7 +254,7 @@ export default function CandidateVariantCard({
               {data.mediaTypes && data.mediaTypes.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {data.mediaTypes.map((type, idx) => (
-                    <Badge key={idx} color="blue" className="text-xs">
+                    <Badge key={idx} color="indigo" className="text-xs">
                       {type}
                     </Badge>
                   ))}
@@ -295,7 +295,7 @@ export default function CandidateVariantCard({
       {!isSelected && (
         <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
           <Button
-            color="light"
+            color="zinc"
             onClick={onSelect}
             className="w-full"
           >

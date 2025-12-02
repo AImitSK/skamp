@@ -2,13 +2,22 @@
 // Jest Setup und Konfiguration für Media Library Smart Router Tests
 
 import '@testing-library/jest-dom';
-import { setupFirebaseMocks } from '../__mocks__/firebase-mocks';
+
+// Setup Firebase Mocks manually (mock file doesn't exist)
+const setupFirebaseMocks = () => {
+  // Mock Firebase services
+  jest.mock('@/lib/firebase/client-init', () => ({
+    db: {},
+    storage: {},
+    auth: {}
+  }));
+};
 
 // Global Test Setup
 beforeAll(() => {
   // Setup Firebase Mocks
   setupFirebaseMocks();
-  
+
   // Mock console methods für cleaner Test-Output
   global.console = {
     ...console,
@@ -21,8 +30,12 @@ beforeAll(() => {
     debug: process.env.JEST_VERBOSE === 'true' ? console.debug : jest.fn()
   };
 
-  // Mock Environment Variables für konsistente Tests
-  process.env.NODE_ENV = 'test';
+  // Mock Environment Variables für konsistente Tests (using Object.defineProperty for read-only properties)
+  Object.defineProperty(process.env, 'NODE_ENV', {
+    value: 'test',
+    writable: true,
+    configurable: true
+  });
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-project';
   process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = 'test-bucket';
 });
@@ -143,7 +156,7 @@ expect.extend({
 });
 
 // Global Test Utilities
-global.testUtils = {
+(globalThis as any).testUtils = {
   // Warte auf Async Operations
   waitForAsyncOperations: async (timeout: number = 100) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
@@ -258,7 +271,7 @@ export default jestSetupConfig;
 // Dummy test to prevent Jest error
 describe('Jest Setup', () => {
   it('should have test utilities available', () => {
-    expect(global.testUtils).toBeDefined();
-    expect(typeof global.testUtils.waitForAsyncOperations).toBe('function');
+    expect((globalThis as any).testUtils).toBeDefined();
+    expect(typeof (globalThis as any).testUtils.waitForAsyncOperations).toBe('function');
   });
 });

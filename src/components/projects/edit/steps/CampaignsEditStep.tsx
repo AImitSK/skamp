@@ -47,7 +47,7 @@ export default function CampaignsEditStep({
   };
 
   const handleCreateCampaign = async () => {
-    if (!campaignTitle.trim() || !user) return;
+    if (!campaignTitle.trim() || !user || !project.id) return;
 
     try {
       setIsCreating(true);

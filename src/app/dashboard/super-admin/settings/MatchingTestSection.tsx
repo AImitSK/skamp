@@ -65,10 +65,11 @@ export default function MatchingTestSection() {
       const testVariants = [{
         organizationId: 'test',
         organizationName: 'Test Org',
+        contactId: 'test-contact',
         contactData: {
           name: { firstName: 'Test', lastName: 'User' },
           displayName: 'Test User',
-          emails: companyTestDomain ? [{ email: `test@${companyTestDomain}`, isPrimary: true }] : [],
+          emails: companyTestDomain ? [{ email: `test@${companyTestDomain}`, type: 'business' as const, isPrimary: true }] : [],
           companyName: companyTestName || undefined,
           hasMediaProfile: false
         }
@@ -102,6 +103,7 @@ export default function MatchingTestSection() {
       const testVariants = [{
         organizationId: 'test',
         organizationName: 'Test Org',
+        contactId: 'test-contact',
         contactData: {
           name: { firstName: 'Test', lastName: 'User' },
           displayName: 'Test User',

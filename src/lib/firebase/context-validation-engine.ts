@@ -278,15 +278,15 @@ class ContextValidationEngineService {
         // Durch Inheritance-Chain gehen
         for (const source of rule.inheritanceChain) {
           const inheritedValue = await this.resolveInheritanceValue(enhancedContext, rule.field, source);
-          
+
           if (inheritedValue !== undefined) {
             if (rule.field === 'autoTags' && currentValue) {
               // Tags zusammenführen
-              enhancedContext[rule.field] = [...(currentValue as string[]), ...inheritedValue] as string[];
+              (enhancedContext as any)[rule.field] = [...(currentValue as string[]), ...inheritedValue];
             } else {
-              enhancedContext[rule.field] = inheritedValue;
+              (enhancedContext as any)[rule.field] = inheritedValue;
             }
-            
+
             inheritanceLog.push(`${rule.field} inherited from ${source}: ${inheritedValue}`);
             break;
           }

@@ -160,7 +160,7 @@ class CampaignMonitoringService {
     return {
       id: `google_news_${campaign.id}`,
       type: 'google_news',
-      publicationId: null, // Google News ist nicht publication-spezifisch (null statt undefined für Firestore)
+      publicationId: undefined, // Google News ist nicht publication-spezifisch
       publicationName: 'Google News',
       url: googleNewsUrl,
       isActive: true,

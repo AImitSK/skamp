@@ -65,8 +65,8 @@ function formatRelativeTime(date: Date): string {
 
 export function NotificationItem({ notification, onMarkAsRead, onDelete }: NotificationItemProps) {
   const router = useRouter();
-  const Icon = iconMap[notification.type];
-  const colorClasses = NOTIFICATION_COLORS[notification.type];
+  const Icon = iconMap[notification.type as keyof typeof iconMap];
+  const colorClasses = NOTIFICATION_COLORS[notification.type as keyof typeof NOTIFICATION_COLORS];
   
   // Format timestamp
   const timeAgo = formatRelativeTime(notification.createdAt.toDate());

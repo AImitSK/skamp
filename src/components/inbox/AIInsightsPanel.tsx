@@ -66,8 +66,8 @@ export function AIInsightsPanel({
       if (!email.textContent && email.htmlContent) {
         content = email.htmlContent
           .replace(/<img[^>]*>/gi, '[Bild]') // Ersetze Bilder
-          .replace(/<style[^>]*>.*?<\/style>/gis, '') // Entferne CSS
-          .replace(/<script[^>]*>.*?<\/script>/gis, '') // Entferne Scripts
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Entferne CSS
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Entferne Scripts
           .replace(/<[^>]+>/g, ' ') // Entferne alle HTML-Tags
           .replace(/\s+/g, ' ') // Normalisiere Whitespace
           .trim();

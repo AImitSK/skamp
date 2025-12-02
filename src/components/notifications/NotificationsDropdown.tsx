@@ -27,7 +27,7 @@ import {
   LinkIcon
 } from '@heroicons/react/24/outline';
 import { Notification } from '@/types/notifications';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 interface NotificationsDropdownProps {

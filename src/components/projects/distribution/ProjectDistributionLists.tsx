@@ -69,9 +69,9 @@ export default function ProjectDistributionLists({ projectId, organizationId }: 
   }, [searchTerm]);
 
   const handleLinkMasterList = useCallback(async (masterListId: string) => {
-    if (!user) return;
-    await linkMasterList.mutateAsync({ masterListId, userId: user.uid, organizationId });
-  }, [user, organizationId, linkMasterList]);
+    if (!user?.uid) return;
+    await linkMasterList.mutateAsync({ masterListId, userId: user.uid });
+  }, [user, linkMasterList]);
 
   const handleCreateProjectList = useCallback(async (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;

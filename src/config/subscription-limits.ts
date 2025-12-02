@@ -92,7 +92,7 @@ export const SUBSCRIPTION_LIMITS: Record<SubscriptionTier, SubscriptionLimits> =
  * Helper: Get limits for a specific tier
  */
 export function getLimitsForTier(tier: string): SubscriptionLimits {
-  return SUBSCRIPTION_LIMITS[tier] || SUBSCRIPTION_LIMITS.STARTER;
+  return SUBSCRIPTION_LIMITS[tier as SubscriptionTier] || SUBSCRIPTION_LIMITS.STARTER;
 }
 
 /**

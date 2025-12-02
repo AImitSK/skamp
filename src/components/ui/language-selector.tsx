@@ -91,8 +91,8 @@ export const LanguageSelector = forwardRef<HTMLInputElement, LanguageSelectorSin
     return (
       <div className={className}>
         <Combobox
-          value={selectedLanguage}
-          onChange={(language: LanguageOption | null) => onChange(language?.code || null)}
+          value={selectedLanguage ?? undefined}
+          onChange={(language: LanguageOption | null) => onChange(language?.code ?? null)}
           disabled={disabled}
           aria-label={ariaLabel}
           placeholder={placeholder}

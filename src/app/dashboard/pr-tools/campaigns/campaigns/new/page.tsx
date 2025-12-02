@@ -1036,9 +1036,10 @@ export default function NewPRCampaignPage() {
                   <div className="mb-4">
                     <ModernCustomerSelector
                       value={selectedCompanyId}
-                      onChange={(companyId, companyName) => {
-                        setSelectedCompanyId(companyId);
-                        setSelectedCompanyName(companyName);
+                      onChange={(companyId) => {
+                        setSelectedCompanyId(companyId || '');
+                        // Note: companyName müsste separat geholt werden wenn benötigt
+                        setSelectedCompanyName('');
                         // Projekt zurücksetzen wenn Kunde geändert wird
                         setSelectedProjectId('');
                         setSelectedProject(null);

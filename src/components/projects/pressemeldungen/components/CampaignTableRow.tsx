@@ -198,13 +198,18 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
           </Badge>
           {campaign.status === 'scheduled' && campaign.scheduledAt && (
             <div className="text-xs text-gray-500 mt-1">
-              {new Date(campaign.scheduledAt.toDate ? campaign.scheduledAt.toDate() : campaign.scheduledAt).toLocaleString('de-DE', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {(() => {
+                const scheduledDate = typeof campaign.scheduledAt === 'object' && campaign.scheduledAt !== null && 'toDate' in campaign.scheduledAt
+                  ? (campaign.scheduledAt as any).toDate()
+                  : new Date(campaign.scheduledAt as any);
+                return scheduledDate.toLocaleString('de-DE', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+              })()}
             </div>
           )}
         </div>

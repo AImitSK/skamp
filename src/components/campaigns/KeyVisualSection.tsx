@@ -163,7 +163,7 @@ export function KeyVisualSection({
             const uploadedAsset = await mediaService.uploadClientMedia(
               croppedFile,
               organizationId,
-              clientId,
+              clientId ?? '',
               medienFolder.id, // Upload direkt in Medien-Ordner
               undefined, // Kein Progress-Callback
               { userId, description: `KeyVisual für Campaign ${campaignName || campaignId}` }
@@ -181,9 +181,9 @@ export function KeyVisualSection({
         const uploadResult = await uploadCampaignHeroImage({
           organizationId,
           userId,
-          campaignId,
+          campaignId: campaignId ?? '',
           campaignName,
-          clientId,
+          clientId: clientId ?? '',
           file: croppedFile
         });
         downloadUrl = uploadResult.asset?.downloadUrl || uploadResult.path;

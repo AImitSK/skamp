@@ -113,8 +113,8 @@ export const CountrySelector = forwardRef<HTMLInputElement, CountrySelectorSingl
     return (
       <div className={className}>
         <Combobox
-          value={selectedCountry}
-          onChange={(country: CountryOption | null) => onChange(country?.code || null)}
+          value={selectedCountry ?? undefined}
+          onChange={(country: CountryOption | null) => onChange(country?.code ?? null)}
           disabled={disabled}
           aria-label={ariaLabel}
           placeholder={placeholder}

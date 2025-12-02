@@ -169,6 +169,7 @@ export const brandingService = {
       // Erstelle "Branding" Ordner wenn er nicht existiert
       const folderId = await mediaService.createFolder({
         userId,
+        organizationId, // Erforderlich für MediaFolder
         name: 'Branding',
         parentFolderId: undefined, // Root-Ordner
         description: 'Firmenlogos und Branding-Materialien',

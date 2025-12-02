@@ -18,8 +18,8 @@ import { Combobox } from '@headlessui/react';
 import clsx from 'clsx';
 
 interface CustomerSelectorProps {
-  value: string;
-  onChange: (companyId: string, companyName: string) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   required?: boolean;
   label?: string;
   description?: string;
@@ -148,11 +148,8 @@ export function CustomerSelector({
       <div className="mt-2">
         <Combobox
           value={value}
-          onChange={(companyId: string) => {
-            const company = companies.find(c => c.id === companyId);
-            if (company) {
-              onChange(company.id, company.name);
-            }
+          onChange={(companyId: string | null) => {
+            onChange(companyId);
           }}
           disabled={disabled || loading}
         >

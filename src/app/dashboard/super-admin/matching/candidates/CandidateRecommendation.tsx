@@ -52,7 +52,7 @@ export default function CandidateRecommendationBox({
             <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
               💡 Empfehlung
             </h3>
-            <Badge color="blue" className="text-xs">
+            <Badge color="indigo" className="text-xs">
               {`Variante #${recommendation.recommendedIndex + 1}`}
             </Badge>
           </div>
@@ -73,7 +73,7 @@ export default function CandidateRecommendationBox({
         {!isRecommendedSelected && (
           <div className="flex-shrink-0">
             <Button
-              color="blue"
+              color="indigo"
               onClick={() => onSelectVariant(recommendation.recommendedIndex)}
               className="text-sm"
             >

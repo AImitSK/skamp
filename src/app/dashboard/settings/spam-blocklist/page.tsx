@@ -207,10 +207,10 @@ export default function SpamBlocklistPage() {
                           {pattern.pattern}
                         </code>
                         {pattern.isRegex && (
-                          <Badge color="blue" className="ml-2">RegEx</Badge>
+                          <Badge color="indigo" className="ml-2">RegEx</Badge>
                         )}
                         {!pattern.isActive && (
-                          <Badge color="gray" className="ml-2">Inaktiv</Badge>
+                          <Badge color="zinc" className="ml-2">Inaktiv</Badge>
                         )}
                         {pattern.description && (
                           <p className="text-xs text-gray-500 mt-2">{pattern.description}</p>
@@ -228,7 +228,7 @@ export default function SpamBlocklistPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Button
-                        color="red"
+                        color="secondary"
                         onClick={() => pattern.id && handleDelete(pattern.id)}
                       >
                         <TrashIcon className="size-4" />

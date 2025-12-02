@@ -59,6 +59,8 @@ interface EditLockBannerProps {
   campaign: PRCampaign;
   onGrantApproval?: (reason: string) => Promise<void>;
   onRequestChanges?: (reason: string) => Promise<void>;
+  onRequestUnlock?: (reason: string) => Promise<void>;
+  onRetry?: () => Promise<void>;
   className?: string;
   showDetails?: boolean;
 }
@@ -75,6 +77,8 @@ export function EditLockBanner({
   campaign,
   onGrantApproval,
   onRequestChanges,
+  onRequestUnlock,
+  onRetry,
   className = "",
   showDetails = true
 }: EditLockBannerProps) {
