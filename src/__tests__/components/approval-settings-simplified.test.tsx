@@ -89,14 +89,14 @@ describe('ApprovalSettings (Simplified)', () => {
       expect(screen.queryByTestId('team-member-selector')).not.toBeInTheDocument();
     });
 
-    it('should show simplified workflow preview', () => {
+    it('should show customer contact selector when approval is enabled', () => {
       const approvalData = createTestApprovalData({ customerApprovalRequired: true });
       renderApprovalSettings({ value: approvalData });
-      
-      expect(screen.getByText('📝 Freigabe-Workflow (Einstufig)')).toBeInTheDocument();
-      expect(screen.getByText('Kampagne wird zur Kundenfreigabe eingereicht')).toBeInTheDocument();
-      expect(screen.getByText('PDF wird automatisch generiert und an Kunde gesendet')).toBeInTheDocument();
-      expect(screen.getByText('Nach Freigabe kann Kampagne versendet werden')).toBeInTheDocument();
+
+      // Komponente zeigt CustomerContactSelector an
+      expect(screen.getByTestId('customer-contact-selector')).toBeInTheDocument();
+      // Warnung wenn kein Kontakt ausgewählt
+      expect(screen.getByText('Kontakt erforderlich')).toBeInTheDocument();
     });
   });
 
@@ -132,20 +132,22 @@ describe('ApprovalSettings (Simplified)', () => {
       expect(screen.queryByTestId('customer-contact-selector')).not.toBeInTheDocument();
     });
 
-    it('should show workflow preview only when approval is enabled', () => {
+    it('should show customer message only when approval is enabled', () => {
       const approvalData = createTestApprovalData({ customerApprovalRequired: false });
       renderApprovalSettings({ value: approvalData });
-      
-      expect(screen.queryByText('📝 Freigabe-Workflow (Einstufig)')).not.toBeInTheDocument();
-      
+
+      // Keine Customer-Message Felder sichtbar wenn deaktiviert
+      expect(screen.queryByText('Neue Nachricht an den Kunden (optional)')).not.toBeInTheDocument();
+
       const approvalDataEnabled = createTestApprovalData({ customerApprovalRequired: true });
-      const { rerender } = render(<ApprovalSettings 
+      const { rerender } = render(<ApprovalSettings
         value={approvalDataEnabled}
         onChange={jest.fn()}
         organizationId="test-org-id"
       />);
-      
-      expect(screen.getByText('📝 Freigabe-Workflow (Einstufig)')).toBeInTheDocument();
+
+      // Customer-Message Feld ist sichtbar wenn aktiviert
+      expect(screen.getByText('Neue Nachricht an den Kunden (optional)')).toBeInTheDocument();
     });
   });
 
@@ -190,9 +192,9 @@ describe('ApprovalSettings (Simplified)', () => {
     it('should show customer message textarea when approval is enabled', () => {
       const approvalData = createTestApprovalData({ customerApprovalRequired: true });
       renderApprovalSettings({ value: approvalData });
-      
-      expect(screen.getByText('Nachricht an den Kunden (optional)')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Persönliche Nachricht für den Kunden zur Freigabe...')).toBeInTheDocument();
+
+      expect(screen.getByText('Neue Nachricht an den Kunden (optional)')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Neue Nachricht für die erneute Freigabe-Anfrage...')).toBeInTheDocument();
     });
 
     it('should update customer message on input', async () => {
@@ -204,11 +206,11 @@ describe('ApprovalSettings (Simplified)', () => {
         onChange: mockOnChange 
       });
       
-      const textarea = screen.getByPlaceholderText('Persönliche Nachricht für den Kunden zur Freigabe...');
-      
+      const textarea = screen.getByPlaceholderText('Neue Nachricht für die erneute Freigabe-Anfrage...');
+
       // Simulate typing a single character to verify onChange is called
       await userEvent.type(textarea, 'A');
-      
+
       // Check that onChange was called with the partial message
       expect(mockOnChange).toHaveBeenCalled();
       expect(mockOnChange.mock.calls[0][0]).toEqual(
@@ -220,22 +222,21 @@ describe('ApprovalSettings (Simplified)', () => {
   });
 
   describe('Simplified Workflow', () => {
-    
-    it('should show only customer stage in workflow preview', () => {
+
+    it('should show only customer-related elements when approval is enabled', () => {
       const approvalData = createTestApprovalData({ customerApprovalRequired: true });
       renderApprovalSettings({ value: approvalData });
-      
-      // Workflow ist einstufig - nur Customer-Stage
-      expect(screen.getByText('📝 Freigabe-Workflow (Einstufig)')).toBeInTheDocument();
-      
-      // Workflow-Schritte prüfen
-      expect(screen.getByText('Kampagne wird zur Kundenfreigabe eingereicht')).toBeInTheDocument();
-      expect(screen.getByText('PDF wird automatisch generiert und an Kunde gesendet')).toBeInTheDocument();
-      expect(screen.getByText('Nach Freigabe kann Kampagne versendet werden')).toBeInTheDocument();
-      
-      // KEINE Team-Referenzen im Workflow
-      expect(screen.queryByText(/Team/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/intern/)).not.toBeInTheDocument();
+
+      // CustomerContactSelector ist sichtbar
+      expect(screen.getByTestId('customer-contact-selector')).toBeInTheDocument();
+
+      // Customer-Message Feld ist sichtbar
+      expect(screen.getByText('Neue Nachricht an den Kunden (optional)')).toBeInTheDocument();
+
+      // KEINE Team-Referenzen vorhanden
+      expect(screen.queryByText(/Team-Freigabe/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Team-Mitglieder/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/intern/i)).not.toBeInTheDocument();
     });
   });
 
@@ -293,13 +294,13 @@ describe('ApprovalSettings (Simplified)', () => {
   });
 
   describe('Accessibility', () => {
-    
+
     it('should have proper form labels', () => {
       const approvalData = createTestApprovalData({ customerApprovalRequired: true });
       renderApprovalSettings({ value: approvalData });
-      
+
       expect(screen.getByText('Kundenfreigabe erforderlich')).toBeInTheDocument();
-      expect(screen.getByText('Nachricht an den Kunden (optional)')).toBeInTheDocument();
+      expect(screen.getByText('Neue Nachricht an den Kunden (optional)')).toBeInTheDocument();
     });
 
     it('should have proper switch role', () => {

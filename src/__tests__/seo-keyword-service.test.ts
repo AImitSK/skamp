@@ -2,8 +2,14 @@
 import { seoKeywordService } from '@/lib/ai/seo-keyword-service';
 import type { KeywordDetectionOptions, PerKeywordMetrics } from '@/lib/ai/seo-keyword-service';
 
-// Mock fetch für API-Calls
-global.fetch = jest.fn();
+// Mock apiClient statt fetch
+jest.mock('@/lib/api/api-client', () => ({
+  apiClient: {
+    post: jest.fn()
+  }
+}));
+
+import { apiClient } from '@/lib/api/api-client';
 
 describe('SEOKeywordService', () => {
   beforeEach(() => {
@@ -20,11 +26,8 @@ describe('SEOKeywordService', () => {
   describe('detectKeywords', () => {
     test('erkennt Keywords aus PR-Text über KI-API', async () => {
       // Mock successful API response
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Digitale Transformation, KI-Lösung, Automatisierung, Innovation'
-        })
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Digitale Transformation, KI-Lösung, Automatisierung, Innovation'
       });
 
       const text = `
@@ -58,7 +61,7 @@ describe('SEOKeywordService', () => {
 
     test('verwendet Fallback bei KI-API-Fehler', async () => {
       // Mock API error
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
+      (apiClient.post as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
 
       const text = `
         Innovation Innovation Innovation Innovation Innovation Innovation
@@ -74,11 +77,8 @@ describe('SEOKeywordService', () => {
     });
 
     test('respektiert maxKeywords Option', async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Keyword1, Keyword2, Keyword3, Keyword4, Keyword5, Keyword6'
-        })
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Keyword1, Keyword2, Keyword3, Keyword4, Keyword5, Keyword6'
       });
 
       const text = 'Test text with multiple potential keywords for extraction testing';
@@ -90,11 +90,8 @@ describe('SEOKeywordService', () => {
     });
 
     test('filtert Common Words heraus', async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Innovation, der, und, aber, Automatisierung'
-        })
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Innovation, der, und, aber, Automatisierung'
       });
 
       const text = 'This is a sufficient length text for testing common word filtering functionality with keywords';
@@ -110,12 +107,9 @@ describe('SEOKeywordService', () => {
     test('verwendet Cache für identische Anfragen', async () => {
       // Clear any existing cache first
       seoKeywordService.clearCache();
-      
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Cached Keywords, Test'
-        })
+
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Cached Keywords, Test'
       });
 
       const text = 'This is a long enough text for keyword detection that meets minimum requirements for processing';
@@ -126,7 +120,7 @@ describe('SEOKeywordService', () => {
       // Zweite Anfrage (sollte aus Cache kommen)
       const result2 = await seoKeywordService.detectKeywords(text);
 
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(apiClient.post).toHaveBeenCalledTimes(1);
       expect(result1.keywords).toEqual(result2.keywords);
       expect(result1.detectedAt).toEqual(result2.detectedAt);
     });
@@ -136,12 +130,9 @@ describe('SEOKeywordService', () => {
     test('führt Keyword-Detection nach Debounce-Zeit aus', async () => {
       // Clear cache and mocks first
       seoKeywordService.clearCache();
-      
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Debounced Keywords'
-        })
+
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Debounced, Keywords'  // Kommasepariert für korrektes Parsing
       });
 
       const callback = jest.fn();
@@ -164,7 +155,7 @@ describe('SEOKeywordService', () => {
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(
         expect.objectContaining({
-          keywords: ['debounced', 'keywords'], // Parsing teilt sie auf
+          keywords: ['Debounced', 'Keywords'], // Keywords wie vom Mock zurückgegeben
           confidence: expect.any(Number),
           textLength: text.length
         })
@@ -515,15 +506,13 @@ describe('SEOKeywordService', () => {
     test('clearCache leert den Cache', async () => {
       // Clear initial state
       seoKeywordService.clearCache();
-      
-      (fetch as jest.Mock)
+
+      (apiClient.post as jest.Mock)
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ content: 'Test Keywords First' })
+          generatedText: 'Test Keywords First'
         })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ content: 'Test Keywords Second' })
+          generatedText: 'Test Keywords Second'
         });
 
       const text = 'This is a long enough text for cache clearing test with sufficient content for keyword processing';
@@ -537,7 +526,7 @@ describe('SEOKeywordService', () => {
       // Zweite Anfrage (sollte neuen API-Call machen)
       await seoKeywordService.detectKeywords(text);
 
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(apiClient.post).toHaveBeenCalledTimes(2);
     });
 
     test('clearDebounceTimers stoppt alle Timer', () => {
@@ -567,11 +556,8 @@ describe('SEOKeywordService', () => {
     });
 
     test('behandelt Sonderzeichen im Text', async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'KI-Lösung, E-Commerce'
-        })
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'KI-Lösung, E-Commerce'
       });
 
       const text = 'Unsere innovative KI-Lösung revolutioniert den E-Commerce Bereich und bietet umfassende Automatisierung für moderne Unternehmen! @#$%^&*()';
@@ -584,20 +570,17 @@ describe('SEOKeywordService', () => {
     test('behandelt sehr lange Texte', async () => {
       // Clear cache first
       seoKeywordService.clearCache();
-      
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Innovation, Automatisierung, Digitalisierung'
-        })
+
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Innovation, Automatisierung, Digitalisierung'
       });
 
       const longText = new Array(500).fill('innovation automatisierung digitalisierung').join(' ');
 
       const result = await seoKeywordService.detectKeywords(longText);
 
-      expect(result.keywords).toContain('Innovation');
-      expect(result.keywords).toContain('Automatisierung');
+      // Keywords werden vom Mock zurückgegeben
+      expect(result.keywords).toEqual(['Innovation', 'Automatisierung', 'Digitalisierung']);
       expect(result.textLength).toBe(longText.length);
     });
     
@@ -616,12 +599,9 @@ describe('SEOKeywordService', () => {
     test('behandelt ungültigen API-Response', async () => {
       // Clear cache first
       seoKeywordService.clearCache();
-      
+
       // Mock empty/invalid response
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({})
-      });
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({});
 
       const text = 'automatisierung automatisierung innovation innovation digitalisierung transformation businesslogik businesslogik keywordtest keywordtest';
       const options = { minWordLength: 5, excludeCommonWords: false }; // Weniger strenge Optionen
@@ -683,11 +663,8 @@ describe('SEOKeywordService', () => {
 
   describe('Performance Tests', () => {
     test('Keyword-Detection ist schnell genug', async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          content: 'Performance, Test, Keywords'
-        })
+      (apiClient.post as jest.Mock).mockResolvedValueOnce({
+        generatedText: 'Performance, Test, Keywords'
       });
 
       const text = 'Performance test text for speed measurement';

@@ -134,7 +134,7 @@ describe('useProjectData Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toEqual(mockProject);
-      expect(projectService.getById).toHaveBeenCalledWith('project-1');
+      expect(projectService.getById).toHaveBeenCalledWith('project-1', { organizationId: 'default' });
     });
 
     it('does not fetch when projectId is undefined', () => {

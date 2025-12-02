@@ -16,19 +16,34 @@ describe('StatusBadge', () => {
 
   it('renders all status types', () => {
     const statuses: PRCampaignStatus[] = [
-      'draft', 'in_review', 'changes_requested', 'approved', 
+      'draft', 'in_review', 'changes_requested', 'approved',
       'scheduled', 'sending', 'sent', 'archived'
     ];
 
+    // Erwartete Labels fuer jeden Status (aus campaignStatus.ts)
+    const expectedLabels: Record<PRCampaignStatus, string> = {
+      draft: 'Entwurf',
+      in_review: 'In Prüfung',
+      changes_requested: 'Änderung erbeten',
+      approved: 'Freigegeben',
+      scheduled: 'Geplant',
+      sending: 'Wird gesendet',
+      sent: 'Gesendet',
+      archived: 'Archiviert'
+    };
+
     statuses.forEach(status => {
       const { unmount } = render(<StatusBadge status={status} />);
-      expect(screen.getByRole('generic')).toBeInTheDocument();
+      // Pruefe dass das erwartete Label vorhanden ist
+      expect(screen.getByText(expectedLabels[status])).toBeInTheDocument();
       unmount();
     });
   });
 
   it('applies custom className', () => {
-    const { container } = render(<StatusBadge status="sent" className="custom-class" />);
-    expect(container.firstChild).toHaveClass('custom-class');
+    render(<StatusBadge status="sent" className="custom-class" />);
+    // Die className wird auf das Badge-Element angewendet (span)
+    const badge = screen.getByText('Gesendet').closest('span');
+    expect(badge).toHaveClass('custom-class');
   });
 });

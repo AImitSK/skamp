@@ -25,22 +25,23 @@
 | Tests bestanden | 3.764 (84%) | +1 |
 | Tests fehlgeschlagen | 676 (15%) | -1 |
 
-### Aktueller Stand (02.12.2025 - nach 3 Runden parallel Agent-Reparaturen)
+### Aktueller Stand (02.12.2025 - nach 5 Runden parallel Agent-Reparaturen)
 | Metrik | Wert | Änderung vs. Start |
 |--------|------|----------|
-| Test Suites gesamt | 329 | - |
-| Test Suites fehlgeschlagen | 93 | **-30** ✅ |
-| Test Suites bestanden | 236 | **+30** ✅ |
+| Test Suites gesamt | 316 | - |
+| Test Suites fehlgeschlagen | 61 | **-62** ✅ |
+| Test Suites bestanden | 254 | **+43** ✅ |
 | Tests gesamt | 4.571 | +85 (neue Tests) |
-| Tests bestanden | 3.960 (87%) | **+197** ✅ |
-| Tests fehlgeschlagen | 563 (12%) | **-114** ✅ |
-| Tests übersprungen | 10 | - |
+| Tests bestanden | 4.094 (90%) | **+331** ✅ |
+| Tests fehlgeschlagen | 419 (9%) | **-258** ✅ |
+| Tests übersprungen | 20 | - |
 | Tests TODO | 38 | - |
 
 ### Fortschritt Übersicht
 ```
-Fehlgeschlagene Tests: 677 → 563 (-114 Tests, -17%)
-Erfolgsrate: 84% → 87% (+3%)
+Fehlgeschlagene Tests: 677 → 419 (-258 Tests, -38%)
+Erfolgsrate: 84% → 90% (+6%)
+Fehlgeschlagene Test-Suites: 123 → 61 (-62, -50%)
 ```
 
 ---

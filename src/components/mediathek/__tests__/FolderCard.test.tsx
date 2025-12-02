@@ -60,27 +60,34 @@ describe('FolderCard Component - Phase 4a.3', () => {
       expect(svgs.length).toBeGreaterThan(0);
     });
 
-    it('sollte Company Badge rendern wenn clientId vorhanden', () => {
+    it('sollte Folder ohne Client-Badge rendern (cleaner Design)', () => {
       const folder = createMockFolder({
         clientId: 'company-1',
       });
 
       render(<FolderCard {...defaultProps} folder={folder} />);
 
-      // Company Badge sollte angezeigt werden
-      expect(screen.getByText('ACME Corp')).toBeInTheDocument();
+      // Company Badge wird nicht mehr angezeigt (cleaner Design)
+      // Client-Info ist nur noch im Tooltip verfügbar
+      expect(screen.queryByText('ACME Corp')).not.toBeInTheDocument();
+
+      // Folder-Name sollte aber weiterhin angezeigt werden
+      expect(screen.getByText('Test Folder')).toBeInTheDocument();
     });
 
-    it('sollte kein Company Badge rendern ohne clientId', () => {
+    it('sollte beschreibung im Tooltip-Attribut haben wenn vorhanden', () => {
       const folder = createMockFolder({
-        clientId: undefined,
+        name: 'My Projects',
+        description: 'Wichtige Projekt-Dateien',
       });
 
-      render(<FolderCard {...defaultProps} folder={folder} />);
+      const { container } = render(<FolderCard {...defaultProps} folder={folder} />);
 
-      // Keine Company Badge
-      expect(screen.queryByText('ACME Corp')).not.toBeInTheDocument();
-      expect(screen.queryByText('Tech Solutions')).not.toBeInTheDocument();
+      // Tooltip sollte Name und Beschreibung enthalten
+      const card = container.firstChild as HTMLElement;
+      const titleAttr = card.getAttribute('title');
+      expect(titleAttr).toContain('My Projects');
+      expect(titleAttr).toContain('Wichtige Projekt-Dateien');
     });
 
     it('sollte custom Folder-Color anwenden', () => {

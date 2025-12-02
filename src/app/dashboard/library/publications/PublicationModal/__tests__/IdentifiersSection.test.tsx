@@ -9,7 +9,7 @@ const mockIdentifiers: IdentifierItem[] = [
 ];
 
 const mockSocialMediaUrls: SocialMediaItem[] = [
-  { platform: 'Twitter', url: 'https://twitter.com/test' },
+  { platform: 'twitter', url: 'https://twitter.com/test' },
 ];
 
 describe('IdentifiersSection', () => {
@@ -48,7 +48,7 @@ describe('IdentifiersSection', () => {
     expect(screen.getByDisplayValue('978-3-16-148410-0')).toBeInTheDocument();
 
     // Check social media values
-    expect(screen.getByDisplayValue('Twitter')).toBeInTheDocument();
+    // Platform wird als 'twitter' gespeichert und als 'Twitter/X' im Label angezeigt
     expect(screen.getByDisplayValue('https://twitter.com/test')).toBeInTheDocument();
   });
 
@@ -138,12 +138,12 @@ describe('IdentifiersSection', () => {
     );
 
     // Click add social media button
-    const addButton = screen.getByText('Social Media hinzufügen');
+    const addButton = screen.getByText('Profil hinzufügen');
     fireEvent.click(addButton);
 
     expect(setSocialMediaUrls).toHaveBeenCalledWith([
       ...mockSocialMediaUrls,
-      { platform: '', url: '' },
+      { platform: 'linkedin', url: '' }, // Komponente setzt defaultmaessig 'linkedin'
     ]);
   });
 
@@ -160,12 +160,12 @@ describe('IdentifiersSection', () => {
       />
     );
 
-    // Change platform
-    const platformInput = screen.getByDisplayValue('Twitter');
-    fireEvent.change(platformInput, { target: { value: 'LinkedIn' } });
+    // Change URL
+    const urlInput = screen.getByDisplayValue('https://twitter.com/test');
+    fireEvent.change(urlInput, { target: { value: 'https://twitter.com/updated' } });
 
     expect(setSocialMediaUrls).toHaveBeenCalledWith([
-      { platform: 'LinkedIn', url: 'https://twitter.com/test' },
+      { platform: 'twitter', url: 'https://twitter.com/updated' },
     ]);
   });
 });

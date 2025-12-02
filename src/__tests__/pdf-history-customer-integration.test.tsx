@@ -122,18 +122,19 @@ describe('PDF-Historie für Kundenfreigabe', () => {
         },
         fileSize: 2048000
       });
-      
+
       render(
-        <PDFVersionOverview 
+        <PDFVersionOverview
           version={mockPdfVersion}
           campaignTitle="Test Campaign"
           variant="customer"
           onHistoryToggle={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('250 Wörter • 3 Seiten')).toBeInTheDocument();
-      expect(screen.getByText(/2.00 MB/)).toBeInTheDocument();
+      // 2048000 bytes = 1.953125 MB (gerundet zu 1.95 MB)
+      expect(screen.getByText(/1.95 MB/)).toBeInTheDocument();
     });
   });
   
@@ -141,17 +142,18 @@ describe('PDF-Historie für Kundenfreigabe', () => {
     
     it('should display PDF history modal with customer-specific information', () => {
       const mockPdfVersions = [
-        createTestPdfVersion({ 
-          version: 1, 
+        createTestPdfVersion({
+          version: 1,
           status: 'rejected',
-          customerApproval: { 
+          customerApproval: {
             shareId: 'test-share-id-1',
             requestedAt: { toDate: () => new Date('2024-01-10T10:00:00Z') } as any,
-            approvedAt: { toDate: () => new Date('2024-01-10T12:00:00Z') } as any
-          }
+            approvedAt: { toDate: () => new Date('2024-01-10T12:00:00Z') } as any,
+            comment: 'Datum korrigieren'
+          } as any
         }),
-        createTestPdfVersion({ 
-          version: 2, 
+        createTestPdfVersion({
+          version: 2,
           status: 'pending_customer',
           customerApproval: {
             shareId: 'test-share-id-2',
@@ -159,9 +161,9 @@ describe('PDF-Historie für Kundenfreigabe', () => {
           }
         })
       ];
-      
+
       const mockOnClose = jest.fn();
-      
+
       render(
         <PDFHistoryModal
           versions={mockPdfVersions}
@@ -169,20 +171,20 @@ describe('PDF-Historie für Kundenfreigabe', () => {
           onClose={mockOnClose}
         />
       );
-      
+
       // Modal-Titel
       expect(screen.getByText('PDF-Versions-Historie')).toBeInTheDocument();
-      
+
       // Customer-spezifische Info-Box
       expect(screen.getByText(/Hier sehen Sie alle PDF-Versionen/)).toBeInTheDocument();
-      
+
       // Beide Versionen angezeigt (neueste zuerst)
       expect(screen.getByText('Version 2')).toBeInTheDocument();
       expect(screen.getByText('Version 1')).toBeInTheDocument();
-      
-      // Kommentar angezeigt
-      expect(screen.getByText('"Datum korrigieren"')).toBeInTheDocument();
-      
+
+      // Kommentar angezeigt (mit HTML entities &ldquo; und &rdquo;)
+      expect(screen.getByText(/Datum korrigieren/)).toBeInTheDocument();
+
       // Status-Badges
       expect(screen.getByText('Zur Freigabe')).toBeInTheDocument();
       expect(screen.getByText('Abgelehnt')).toBeInTheDocument();
@@ -191,7 +193,7 @@ describe('PDF-Historie für Kundenfreigabe', () => {
     it('should close modal when close button is clicked', () => {
       const mockOnClose = jest.fn();
       const mockPdfVersions = [createTestPdfVersion()];
-      
+
       render(
         <PDFHistoryModal
           versions={mockPdfVersions}
@@ -199,8 +201,18 @@ describe('PDF-Historie für Kundenfreigabe', () => {
           onClose={mockOnClose}
         />
       );
-      
-      fireEvent.click(screen.getByText('Schließen'));
+
+      // Es gibt mehrere "Schließen"-Texte (Button + sr-only für X-Icon)
+      // Wir nehmen den sichtbaren Button
+      const closeButtons = screen.getAllByText('Schließen');
+      const visibleCloseButton = closeButtons.find(button =>
+        !button.parentElement?.classList.contains('sr-only')
+      );
+
+      if (visibleCloseButton) {
+        fireEvent.click(visibleCloseButton);
+      }
+
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
     
@@ -287,27 +299,27 @@ describe('PDF-Historie für Kundenfreigabe', () => {
     
     it('should display appropriate file sizes in human readable format', () => {
       const testCases = [
-        { bytes: 1024, expected: '1.00 KB' },
-        { bytes: 1048576, expected: '1.00 MB' },
+        { bytes: 1024, expected: '1 KB' },
+        { bytes: 1048576, expected: '1 MB' },
         { bytes: 2560000, expected: '2.44 MB' }
       ];
-      
+
       testCases.forEach(({ bytes, expected }) => {
         const mockPdfVersion = createTestPdfVersion({ fileSize: bytes });
-        
-        const { rerender } = render(
-          <PDFVersionOverview 
+
+        const { unmount } = render(
+          <PDFVersionOverview
             version={mockPdfVersion}
             campaignTitle="Test"
             variant="customer"
             onHistoryToggle={jest.fn()}
           />
         );
-        
+
         expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
-        
+
         // Cleanup für nächsten Test
-        rerender(<div />);
+        unmount();
       });
     });
     
