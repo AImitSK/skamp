@@ -40,6 +40,15 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/.next/',
     '<rootDir>/e2e/',
+    // E2E Tests im src Verzeichnis (nur mit Playwright ausführen)
+    '<rootDir>/src/__tests__/e2e/',
+    // Setup-Dateien und Utilities ausschließen (keine echten Tests)
+    '<rootDir>/src/__tests__/setup.ts',
+    '<rootDir>/src/__tests__/setupFirebaseMocks.ts',
+    '<rootDir>/src/__tests__/test-utils.tsx',
+    '<rootDir>/src/__tests__/__mocks__/',
+    '<rootDir>/src/components/projects/__tests__/test-utils.tsx',
+    '.*helpers/mock-data\\.ts$',
   ],
   transformIgnorePatterns: [
     '/node_modules/(?!(nanoid|@firebase|firebase|react-dnd|dnd-core|@react-dnd|react-dnd-touch-backend)/)',
