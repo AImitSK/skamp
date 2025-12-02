@@ -15,7 +15,7 @@ import { genkitEval, GenkitMetric } from '@genkit-ai/evaluator';
  * - Vertex AI (GOOGLE_APPLICATION_CREDENTIALS): Für Imagen Bildgenerierung
  */
 // Service Account Credentials für Vertex AI (gleicher wie Firebase Admin)
-const getVertexCredentials = () => {
+const getServiceAccountCredentials = () => {
   const serviceAccount = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT;
   if (serviceAccount) {
     try {
@@ -27,15 +27,21 @@ const getVertexCredentials = () => {
   return undefined;
 };
 
+const serviceAccountCreds = getServiceAccountCredentials();
+
 export const ai = genkit({
   plugins: [
     googleAI(),
     vertexAI({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || serviceAccountCreds?.project_id,
       location: process.env.VERTEX_AI_LOCATION || 'europe-west1',
-      googleAuth: {
-        credentials: getVertexCredentials()
-      }
+      googleAuth: serviceAccountCreds ? {
+        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+        credentials: {
+          client_email: serviceAccountCreds.client_email,
+          private_key: serviceAccountCreds.private_key,
+        }
+      } : undefined
     }),
     // Genkit Standard-Evaluatoren
     genkitEval({
