@@ -8,8 +8,7 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { generateImageFlow, extractBase64FromDataUrl, generateImageFilename } from '@/lib/ai/flows/generate-image';
 import { checkAILimit } from '@/lib/usage/usage-tracker';
 import { trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
-import { mediaService } from '@/lib/firebase/media-service';
-import { adminDb } from '@/lib/firebase/admin-init';
+import { adminDb, adminStorage } from '@/lib/firebase/admin-init';
 import admin from '@/lib/firebase/admin-init';
 
 // Konstante: 1 generiertes Bild = 500 AI-Wörter
@@ -216,10 +215,10 @@ export async function POST(request: NextRequest) {
       }
 
       // ══════════════════════════════════════════════════════════════
-      // BILD IN FIREBASE STORAGE SPEICHERN
+      // BILD IN FIREBASE STORAGE SPEICHERN (Admin SDK)
       // ══════════════════════════════════════════════════════════════
 
-      let uploadResult;
+      let uploadResult: { filePath: string; downloadUrl: string; fileSize: number };
       try {
         // Base64 aus Data-URL extrahieren
         const { base64, mimeType } = extractBase64FromDataUrl(imageResult.imageUrl);
@@ -227,18 +226,36 @@ export async function POST(request: NextRequest) {
 
         // Dateiname generieren
         const fileName = generateImageFilename('ki-visual');
+        const filePath = `organizations/${auth.organizationId}/ai-images/${fileName}`;
 
-        // Upload via mediaService
-        uploadResult = await mediaService.uploadBuffer(
-          buffer,
-          fileName,
-          mimeType,
-          auth.organizationId,
-          'ai-images', // Storage-Unterordner
-          { userId: auth.userId, clientId }
-        );
+        // Upload via Admin SDK
+        const bucket = adminStorage.bucket();
+        const file = bucket.file(filePath);
 
-        console.log('✅ Bild hochgeladen:', uploadResult.filePath);
+        await file.save(buffer, {
+          metadata: {
+            contentType: mimeType,
+            metadata: {
+              uploadedBy: auth.userId,
+              source: 'ai-generated',
+              generator: 'imagen-3'
+            }
+          }
+        });
+
+        // Download URL generieren (signierte URL, 7 Tage gültig)
+        const [signedUrl] = await file.getSignedUrl({
+          action: 'read',
+          expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 Tage
+        });
+
+        uploadResult = {
+          filePath,
+          downloadUrl: signedUrl,
+          fileSize: buffer.length
+        };
+
+        console.log('✅ Bild hochgeladen (Admin SDK):', filePath);
       } catch (uploadError: any) {
         console.error('❌ Upload Fehler:', uploadError);
         return NextResponse.json(
