@@ -270,19 +270,32 @@ export async function POST(request: NextRequest) {
 
       let assetId: string;
       try {
-        // Asset-Metadaten erstellen
+        // Dateiname für Asset
+        const fileName = generateImageFilename('KI-Visual');
+        const fileType = `image/${imageResult.format}`;
+
+        // Asset-Metadaten erstellen (gleiches Schema wie uploadClientMedia)
         const assetData: Record<string, any> = {
-          name: generateImageFilename('KI-Visual'),
+          // Pflichtfelder für Media Library Anzeige
+          fileName: fileName,
+          fileType: fileType,
+          name: fileName,
           type: 'image',
-          mimeType: `image/${imageResult.format}`,
+          mimeType: fileType,
           size: uploadResult.fileSize,
+
+          // URLs
           downloadUrl: uploadResult.downloadUrl,
-          thumbnailUrl: uploadResult.downloadUrl, // Bild ist sein eigenes Thumbnail
+          thumbnailUrl: uploadResult.downloadUrl,
           originalUrl: uploadResult.downloadUrl,
           storagePath: uploadResult.filePath,
+
+          // Organisation & Ordner
           folderId: kiFolderId,
           organizationId: auth.organizationId,
           createdBy: auth.userId,
+
+          // Metadaten
           metadata: {
             width: imageResult.width,
             height: imageResult.height,
@@ -290,6 +303,8 @@ export async function POST(request: NextRequest) {
             generator: 'imagen-3',
             prompt: prompt
           },
+
+          // Timestamps
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
