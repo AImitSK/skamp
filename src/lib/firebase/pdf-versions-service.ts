@@ -724,7 +724,6 @@ class PDFVersionsService {
         : (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'); // Server-Side: volle URL
 
       const apiUrl = `${baseUrl}/api/generate-pdf`;
-      console.log('📄 PDF-API URL:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: 'POST',

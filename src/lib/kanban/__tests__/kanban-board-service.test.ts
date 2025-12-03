@@ -271,6 +271,9 @@ describe('KanbanBoardService', () => {
       // Arrange
       const organizationId = '';
 
+      // Bei leerer organizationId sollte projectService.getAll keine Projekte zurückgeben
+      mockProjectService.getAll.mockResolvedValueOnce([]);
+
       // Act
       const result = await kanbanBoardService.getBoardData(organizationId);
 
@@ -424,7 +427,12 @@ describe('KanbanBoardService', () => {
       const userId = 'user-1';
       const organizationId = 'org-1';
 
-      mockGetDocs.mockRejectedValue(new Error('Database connection error'));
+      // Mock getDocs für Drag-Lock Check (erfolgreich, kein Lock)
+      mockGetDocs.mockResolvedValueOnce({ empty: true, docs: [] } as any);
+      // Mock projectService.getById für Validierung (erfolgreich)
+      mockProjectService.getById.mockResolvedValueOnce(mockProject);
+      // Mock projectService.update wirft Fehler
+      mockProjectService.update.mockRejectedValueOnce(new Error('Database connection error'));
 
       // Act
       const result = await kanbanBoardService.moveProject(
@@ -433,7 +441,9 @@ describe('KanbanBoardService', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.errors).toContain('Database connection error');
+      expect(result.errors).toBeDefined();
+      expect(result.errors!.length).toBeGreaterThan(0);
+      expect(result.errors![0]).toContain('Database connection error');
     });
   });
 
@@ -555,11 +565,17 @@ describe('KanbanBoardService', () => {
     it('sollte überfällige Projekte filtern', async () => {
       // Arrange
       const overdueDate = new Date('2023-01-01'); // Vergangenes Datum
+      // Mock Timestamp mit toDate Methode
+      const mockOverdueTimestamp = {
+        toDate: () => overdueDate,
+        seconds: Math.floor(overdueDate.getTime() / 1000),
+        nanoseconds: 0
+      };
       const projectsWithDueDate = testProjects.map(p => ({
         ...p,
-        dueDate: Timestamp.fromDate(overdueDate),
+        dueDate: mockOverdueTimestamp as any,
         status: 'active' as const
-      }));
+      })) as Project[];
       const filters: BoardFilters = { overdue: true };
 
       // Act
@@ -914,7 +930,13 @@ describe('KanbanBoardService', () => {
       await kanbanBoardService.getActiveUsers(organizationId);
 
       // Assert
-      expect(where).toHaveBeenCalledWith('lastSeen', '>', expect.anything());
+      // Prüfe dass where mit organizationId aufgerufen wurde
+      expect(where).toHaveBeenCalledWith('organizationId', '==', organizationId);
+      // Prüfe dass where mindestens 2x aufgerufen wurde (einmal für organizationId, einmal für lastSeen)
+      expect((where as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+      // Prüfe dass orderBy mit lastSeen aufgerufen wurde
+      expect(orderBy).toHaveBeenCalledWith('lastSeen', 'desc');
+      // Prüfe dass limit mit 20 aufgerufen wurde
       expect(limit).toHaveBeenCalledWith(20);
     });
   });
@@ -958,12 +980,18 @@ describe('KanbanBoardService', () => {
     it('sollte mit extremen Datumswerten umgehen', async () => {
       // Arrange
       const extremeDate = new Date('1970-01-01');
-      const projects = [{ 
-        ...mockProject, 
-        createdAt: Timestamp.fromDate(extremeDate) 
+      // Mock Timestamp mit toDate Methode
+      const mockExtremeTimestamp = {
+        toDate: () => extremeDate,
+        seconds: Math.floor(extremeDate.getTime() / 1000),
+        nanoseconds: 0
+      };
+      const projects = [{
+        ...mockProject,
+        createdAt: mockExtremeTimestamp as any
       }];
-      const filters: BoardFilters = { 
-        dateRange: [new Date('1969-01-01'), new Date('1971-01-01')] 
+      const filters: BoardFilters = {
+        dateRange: [new Date('1969-01-01'), new Date('1971-01-01')]
       };
 
       // Act

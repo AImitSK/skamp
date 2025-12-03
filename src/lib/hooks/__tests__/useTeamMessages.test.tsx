@@ -229,7 +229,7 @@ describe('useMessageReaction', () => {
     );
   });
 
-  it('sollte Cache invalidieren nach erfolgreichem Toggle', async () => {
+  it('sollte optimistischen Update durchführen ohne Cache-Invalidierung', async () => {
     (teamChatService.toggleReaction as jest.Mock).mockResolvedValue(undefined);
 
     const queryClient = new QueryClient({
@@ -238,6 +238,19 @@ describe('useMessageReaction', () => {
         mutations: { retry: false },
       },
     });
+
+    // Initialer Cache-Zustand mit bestehenden Messages
+    const initialMessages = [
+      {
+        id: 'msg-1',
+        content: 'Test message',
+        authorId: 'user-2',
+        authorName: 'User 2',
+        timestamp: new Date(),
+        reactions: []
+      }
+    ];
+    queryClient.setQueryData(['team-messages', 'project-123'], initialMessages);
 
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -257,9 +270,20 @@ describe('useMessageReaction', () => {
       userName: 'Test User'
     });
 
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['team-messages', 'project-123']
-    });
+    // Prüfe dass KEIN invalidateQueries aufgerufen wurde
+    // (Real-time Subscription übernimmt Updates)
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    // Prüfe dass optimistischer Update durchgeführt wurde
+    const updatedMessages = queryClient.getQueryData(['team-messages', 'project-123']) as any[];
+    expect(updatedMessages[0].reactions).toEqual([
+      {
+        emoji: '👍',
+        userIds: ['user-1'],
+        userNames: ['Test User'],
+        count: 1
+      }
+    ]);
   });
 });
 

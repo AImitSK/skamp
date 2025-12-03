@@ -12,23 +12,33 @@ export function useTogglePersistence(storageKey: string) {
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
-        setPersistedState(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Validierung: Nur Objekte (keine Arrays, null, etc.) akzeptieren
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setPersistedState(parsed);
+        } else {
+          setPersistedState({});
+        }
       }
     } catch (error) {
       console.error('Fehler beim Laden des Toggle-Status:', error);
+      setPersistedState({});
     }
   }, [storageKey]);
 
   const saveToggleState = useCallback((id: string, isOpen: boolean) => {
-    const newState = { ...persistedState, [id]: isOpen };
-    setPersistedState(newState);
-    
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(newState));
-    } catch (error) {
-      console.error('Fehler beim Speichern des Toggle-Status:', error);
-    }
-  }, [storageKey, persistedState]);
+    setPersistedState((prevState) => {
+      const newState = { ...prevState, [id]: isOpen };
+
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(newState));
+      } catch (error) {
+        console.error('Fehler beim Speichern des Toggle-Status:', error);
+      }
+
+      return newState;
+    });
+  }, [storageKey]);
 
   const getToggleState = useCallback((id: string, defaultValue = false) => {
     return persistedState[id] ?? defaultValue;

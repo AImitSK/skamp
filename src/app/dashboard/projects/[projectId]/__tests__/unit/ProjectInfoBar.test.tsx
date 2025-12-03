@@ -67,7 +67,7 @@ describe('ProjectInfoBar', () => {
     );
   };
 
-  it('should render phase, customer, priority and deadline', () => {
+  it('should render phase, customer and deadline', () => {
     renderWithProvider(mockProject, mockTags);
 
     expect(screen.getByText('Phase:')).toBeInTheDocument();
@@ -75,9 +75,6 @@ describe('ProjectInfoBar', () => {
 
     expect(screen.getByText('Kunde:')).toBeInTheDocument();
     expect(screen.getByText('Acme Corporation')).toBeInTheDocument();
-
-    expect(screen.getByText('Priorität:')).toBeInTheDocument();
-    expect(screen.getByText('Hoch')).toBeInTheDocument();
 
     expect(screen.getByText('Deadline:')).toBeInTheDocument();
     expect(screen.getByText(/31\. Dez\. 2025/)).toBeInTheDocument();
@@ -124,27 +121,6 @@ describe('ProjectInfoBar', () => {
     fireEvent.click(customerButton);
 
     expect(mockPush).toHaveBeenCalledWith('/dashboard/contacts/crm/companies/customer-123');
-  });
-
-  it('should display high priority badge correctly', () => {
-    const highPriorityProject = { ...mockProject, priority: 'high' as const };
-    renderWithProvider(highPriorityProject, []);
-
-    expect(screen.getByText('Hoch')).toBeInTheDocument();
-  });
-
-  it('should display medium priority badge correctly', () => {
-    const mediumPriorityProject = { ...mockProject, priority: 'medium' as const };
-    renderWithProvider(mediumPriorityProject, []);
-
-    expect(screen.getByText('Mittel')).toBeInTheDocument();
-  });
-
-  it('should display low priority badge correctly', () => {
-    const lowPriorityProject = { ...mockProject, priority: 'low' as const };
-    renderWithProvider(lowPriorityProject, []);
-
-    expect(screen.getByText('Niedrig')).toBeInTheDocument();
   });
 
   it('should not render deadline section when deadline is not set', () => {

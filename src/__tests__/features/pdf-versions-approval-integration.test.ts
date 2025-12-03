@@ -114,18 +114,39 @@ describe('PDF Versions Approval Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Standard Firebase Mock Setup
     const mockCollectionRef = { name: 'pdf_versions' };
     const mockQueryRef = { collection: mockCollectionRef };
     const mockDocRef = { id: 'pdf-version-123' };
-    
+
     mockCollection.mockReturnValue(mockCollectionRef as any);
     mockQuery.mockReturnValue(mockQueryRef as any);
     mockWhere.mockReturnValue(mockQueryRef as any);
     mockOrderBy.mockReturnValue(mockQueryRef as any);
     mockLimit.mockReturnValue(mockQueryRef as any);
     mockDoc.mockReturnValue(mockDocRef as any);
+
+    // Mock generateRealPDF (private Methode)
+    jest.spyOn(pdfVersionsService as any, 'generateRealPDF').mockResolvedValue({
+      pdfUrl: 'https://storage.example.com/test.pdf',
+      fileSize: 123456,
+    });
+
+    // Mock getLatestVersionNumber
+    jest.spyOn(pdfVersionsService as any, 'getLatestVersionNumber').mockResolvedValue(0);
+
+    // Mock getVersionById - wird per-Test überschrieben falls nötig
+    jest.spyOn(pdfVersionsService as any, 'getVersionById').mockImplementation((versionId: string) => {
+      // Default: Return mock version with campaignId
+      return Promise.resolve({
+        id: versionId,
+        campaignId: mockCampaignId,
+        organizationId: mockContext.organizationId,
+        version: 1,
+        status: 'pending_customer',
+      });
+    });
   });
 
   describe('PDF Creation with Approval Integration', () => {
@@ -172,7 +193,7 @@ describe('PDF Versions Approval Integration', () => {
 
     it('sollte Campaign bei Approval-PDF sperren', async () => {
       mockApprovalService.getById.mockResolvedValue(mockApproval as ApprovalEnhanced);
-      
+
       const mockDocRef = { id: 'pdf-locks-campaign' };
       mockAddDoc.mockResolvedValue(mockDocRef as any);
       mockUpdateDoc.mockResolvedValue(undefined);
@@ -189,11 +210,12 @@ describe('PDF Versions Approval Integration', () => {
       );
 
       // Verify campaign was locked
+      // Note: Der Service konvertiert 'pending_approval' zu 'pending_customer_approval'
       expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(), // campaigns doc
         expect.objectContaining({
           editLocked: true,
-          editLockedReason: 'pending_approval',
+          editLockedReason: 'pending_customer_approval',
           lockedAt: expect.anything(),
         })
       );
@@ -216,21 +238,21 @@ describe('PDF Versions Approval Integration', () => {
 
       expect(mockApprovalService.getById).not.toHaveBeenCalled();
 
-      expect(mockAddDoc).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          status: 'draft',
-          approvalId: undefined,
-          customerApproval: undefined,
-          contentSnapshot: expect.objectContaining({
-            createdForApproval: false,
-          }),
-        })
-      );
+      const addDocCall = mockAddDoc.mock.calls[0][1] as any;
+      expect(addDocCall).toMatchObject({
+        status: 'draft',
+        contentSnapshot: expect.objectContaining({
+          createdForApproval: false,
+        }),
+      });
+
+      // Stelle sicher, dass approvalId und customerApproval NICHT gesetzt sind
+      expect(addDocCall.approvalId).toBeUndefined();
+      expect(addDocCall.customerApproval).toBeUndefined();
 
       // Campaign sollte nicht gesperrt werden für Draft
       // Da wir 2 Updates haben (PDF creation + campaign update), prüfen wir spezifisch nach Lock
-      const campaignLockUpdate = mockUpdateDoc.mock.calls.find(call => 
+      const campaignLockUpdate = mockUpdateDoc.mock.calls.find(call =>
         call[1] && typeof call[1] === 'object' && 'editLocked' in call[1] && call[1].editLocked === true
       );
       expect(campaignLockUpdate).toBeUndefined();
@@ -271,11 +293,12 @@ describe('PDF Versions Approval Integration', () => {
       );
 
       // Campaign sollte mit approved-Lock gesperrt bleiben
+      // Note: Der Service konvertiert 'approved' zu 'approved_final'
       expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(), // campaign doc
         expect.objectContaining({
           editLocked: true,
-          editLockedReason: 'approved',
+          editLockedReason: 'approved_final',
           lockedAt: expect.anything(),
         })
       );
@@ -423,10 +446,17 @@ describe('PDF Versions Approval Integration', () => {
       );
 
       expect(mockApprovalService.getById).toHaveBeenCalledTimes(2);
-      expect(mockAddDoc).toHaveBeenCalledTimes(2);
 
-      const call1 = mockAddDoc.mock.calls[0][1] as any;
-      const call2 = mockAddDoc.mock.calls[1][1] as any;
+      // Filter nur PDF-Version-Aufrufe (nicht audit_logs)
+      const pdfVersionCalls = mockAddDoc.mock.calls.filter((call: any) => {
+        const data = call[1];
+        return data && data.version !== undefined && data.campaignId;
+      });
+
+      expect(pdfVersionCalls).toHaveLength(2);
+
+      const call1 = pdfVersionCalls[0][1] as any;
+      const call2 = pdfVersionCalls[1][1] as any;
 
       expect(call1.customerApproval.shareId).toBe('share-v1');
       expect(call2.customerApproval.shareId).toBe('share-v2');
@@ -468,6 +498,9 @@ describe('PDF Versions Approval Integration', () => {
       mockGetDocs.mockResolvedValue({
         docs: versionsWithApprovals,
         empty: false,
+        forEach: (callback: any) => {
+          versionsWithApprovals.forEach(callback);
+        },
       } as any);
 
       const result = await pdfVersionsService.getVersionHistory(mockCampaignId);
@@ -654,8 +687,9 @@ describe('PDF Versions Approval Integration', () => {
     });
 
     it('sollte Campaign Lock Status basierend auf Approval Status aktualisieren', async () => {
+      // Note: Der Service konvertiert 'approved' zu 'approved_final'
       const testCases = [
-        { status: 'approved', expectedLock: true, expectedReason: 'approved' },
+        { status: 'approved', expectedLock: true, expectedReason: 'approved_final' },
         { status: 'rejected', expectedLock: false, expectedReason: null },
         { status: 'draft', expectedLock: false, expectedReason: null },
       ] as const;

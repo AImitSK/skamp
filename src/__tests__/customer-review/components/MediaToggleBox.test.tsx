@@ -13,21 +13,10 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MediaToggleBox } from '@/components/customer-review/toggle/MediaToggleBox';
 import { MediaToggleBoxProps, MediaItem } from '@/types/customer-review';
-
-// Fix für React 18 createRoot Issue mit JSDOM
-beforeEach(() => {
-  // Cleanup vor jedem Test
-  cleanup();
-});
-
-afterEach(() => {
-  // Cleanup nach jedem Test
-  cleanup();
-});
 
 // Mock für Heroicons
 jest.mock('@heroicons/react/24/outline', () => ({
@@ -50,23 +39,8 @@ jest.mock('@/components/customer-review/toggle/ToggleBox', () => ({
   )
 }));
 
-// Mock DOM-Methoden für Download-Tests
-const mockCreateElement = jest.fn();
-const mockAppendChild = jest.fn();
-const mockRemoveChild = jest.fn();
+// Mock für Download-Tests
 const mockClick = jest.fn();
-
-Object.defineProperty(document, 'createElement', {
-  value: mockCreateElement
-});
-
-Object.defineProperty(document.body, 'appendChild', {
-  value: mockAppendChild
-});
-
-Object.defineProperty(document.body, 'removeChild', {
-  value: mockRemoveChild
-});
 
 describe('MediaToggleBox Komponente', () => {
   // Test-Daten
@@ -130,15 +104,11 @@ describe('MediaToggleBox Komponente', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Setup DOM-Element-Mock
-    const mockLinkElement = {
-      href: '',
-      download: '',
-      click: mockClick
-    };
-    
-    mockCreateElement.mockReturnValue(mockLinkElement);
+    mockClick.mockClear();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Basis-Rendering', () => {
@@ -246,42 +216,56 @@ describe('MediaToggleBox Komponente', () => {
 
     it('sollte Download bei Download-Button-Klick auslösen', async () => {
       const user = userEvent.setup();
-      
+
+      // Spies für DOM-Methoden
+      const createElementSpy = jest.spyOn(document, 'createElement');
+      const appendChildSpy = jest.spyOn(document.body, 'appendChild');
+      const removeChildSpy = jest.spyOn(document.body, 'removeChild');
+
       render(<MediaToggleBox {...defaultProps} />);
-      
+
       // Hover über Media-Item um Download-Button sichtbar zu machen
       const mediaItem = screen.getByTestId('media-item-media-1');
       await user.hover(mediaItem);
-      
+
       const downloadButtons = screen.getAllByLabelText(/herunterladen/i);
       await user.click(downloadButtons[0]);
-      
-      expect(mockCreateElement).toHaveBeenCalledWith('a');
-      expect(mockAppendChild).toHaveBeenCalled();
-      expect(mockClick).toHaveBeenCalled();
-      expect(mockRemoveChild).toHaveBeenCalled();
+
+      // Verifiziere dass Download-Logik aufgerufen wurde
+      expect(createElementSpy).toHaveBeenCalledWith('a');
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
     });
 
     it('sollte Download-Link korrekte Attribute setzen', async () => {
       const user = userEvent.setup();
-      const mockLink = {
-        href: '',
-        download: '',
-        click: mockClick
+      const originalAppendChild = document.body.appendChild;
+      let capturedLink: any = null;
+
+      // Spioniere nur für Link-Elemente
+      document.body.appendChild = function(node: any) {
+        if (node.tagName === 'A') {
+          capturedLink = node;
+        }
+        return originalAppendChild.call(this, node);
       };
-      
-      mockCreateElement.mockReturnValue(mockLink);
-      
+
       render(<MediaToggleBox {...defaultProps} />);
-      
+
       const mediaItem = screen.getByTestId('media-item-media-1');
       await user.hover(mediaItem);
-      
+
       const downloadButtons = screen.getAllByLabelText(/herunterladen/i);
       await user.click(downloadButtons[0]);
-      
-      expect(mockLink.href).toBe('https://example.com/image1.jpg');
-      expect(mockLink.download).toBe('image1.jpg');
+
+      // Verifiziere dass ein Link erstellt wurde
+      expect(capturedLink).not.toBeNull();
+      expect(capturedLink.tagName).toBe('A');
+      expect(capturedLink.href).toBe('https://example.com/image1.jpg');
+      expect(capturedLink.download).toBe('image1.jpg');
+
+      // Wiederherstellen
+      document.body.appendChild = originalAppendChild;
     });
 
     it('sollte Download-Event nicht propagieren', async () => {
@@ -309,41 +293,51 @@ describe('MediaToggleBox Komponente', () => {
   describe('Lightbox-Funktionalität', () => {
     it('sollte Lightbox für Bilder öffnen', async () => {
       const user = userEvent.setup();
-      
+
       render(<MediaToggleBox {...defaultProps} />);
-      
+
       const imageItem = screen.getByTestId('media-item-media-1');
       await user.click(imageItem);
-      
-      // Lightbox sollte geöffnet werden
-      await waitFor(() => {
-        const lightboxImage = screen.getByAltText('image1.jpg');
-        const lightboxContainer = lightboxImage.closest('.fixed');
-        expect(lightboxContainer).toBeInTheDocument();
-        expect(lightboxContainer).toHaveClass('inset-0', 'z-50', 'bg-black', 'bg-opacity-75');
-      });
+
+      // Lightbox sollte geöffnet werden - es gibt jetzt 2 Bilder mit diesem Alt-Text (Thumbnail + Lightbox)
+      const images = screen.getAllByAltText('image1.jpg');
+      expect(images.length).toBe(2);
+
+      // Das zweite Bild sollte das Lightbox-Bild sein
+      const lightboxImage = images[1];
+      const lightboxContainer = lightboxImage.closest('.fixed');
+      expect(lightboxContainer).toBeInTheDocument();
+      expect(lightboxContainer).toHaveClass('inset-0', 'z-50', 'bg-black', 'bg-opacity-75');
     });
 
     it('sollte Lightbox schließen beim Außenklick', async () => {
       const user = userEvent.setup();
-      
+
       render(<MediaToggleBox {...defaultProps} />);
-      
+
       // Lightbox öffnen
       const imageItem = screen.getByTestId('media-item-media-1');
       await user.click(imageItem);
-      
-      // Auf Lightbox-Overlay klicken
-      await waitFor(async () => {
-        const lightboxOverlay = screen.getByAltText('image1.jpg').closest('.fixed');
-        if (lightboxOverlay) {
-          await user.click(lightboxOverlay);
-        }
-      });
-      
-      // Lightbox sollte geschlossen werden
+
+      // Warte bis Lightbox geöffnet ist
       await waitFor(() => {
-        expect(screen.queryByAltText('image1.jpg')).not.toBeInTheDocument();
+        const images = screen.getAllByAltText('image1.jpg');
+        expect(images.length).toBe(2);
+      });
+
+      // Finde das Lightbox-Overlay
+      const images = screen.getAllByAltText('image1.jpg');
+      const lightboxImage = images[1];
+      const lightboxOverlay = lightboxImage.closest('.fixed');
+
+      if (lightboxOverlay) {
+        await user.click(lightboxOverlay);
+      }
+
+      // Lightbox sollte geschlossen werden - nur noch 1 Bild (Thumbnail)
+      await waitFor(() => {
+        const imagesAfterClose = screen.queryAllByAltText('image1.jpg');
+        expect(imagesAfterClose.length).toBe(1);
       });
     });
 
@@ -366,14 +360,15 @@ describe('MediaToggleBox Komponente', () => {
   describe('Empty States', () => {
     it('sollte Empty-State anzeigen bei leeren Media-Items', () => {
       render(
-        <MediaToggleBox 
-          {...defaultProps} 
-          mediaItems={[]} 
+        <MediaToggleBox
+          {...defaultProps}
+          mediaItems={[]}
         />
       );
-      
+
       expect(screen.getByText('Keine Medien angehängt')).toBeInTheDocument();
-      expect(screen.getByTestId('count-badge')).toHaveTextContent('0');
+      // Count-Badge wird bei count=0 nicht angezeigt (siehe ToggleBox.test.tsx Zeile 78-82)
+      expect(screen.queryByTestId('count-badge')).not.toBeInTheDocument();
     });
 
     it('sollte PaperClip-Icon im Empty-State anzeigen', () => {

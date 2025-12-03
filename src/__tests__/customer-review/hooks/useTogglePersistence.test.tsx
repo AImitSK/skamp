@@ -295,29 +295,31 @@ describe('useTogglePersistence Hook', () => {
   describe('Performance-Optimierung', () => {
     it('sollte stabile Funktions-Referenzen haben', () => {
       const { result } = renderHook(() => useTogglePersistence('test-key'));
-      
+
       const {
         saveToggleState: save1,
         getToggleState: get1,
         clearPersistedState: clear1
       } = result.current;
-      
+
       // State ändern
       act(() => {
         result.current.saveToggleState('toggle-1', true);
       });
-      
+
       const {
         saveToggleState: save2,
         getToggleState: get2,
         clearPersistedState: clear2
       } = result.current;
-      
-      // Funktions-Referenzen sollten bei State-Änderungen NICHT stabil bleiben
-      // (wegen persistedState Dependency in useCallback)
-      expect(save1).not.toBe(save2);
+
+      // saveToggleState sollte stabil sein (verwendet setState mit Callback)
+      // clearPersistedState sollte stabil sein (nur storageKey dependency)
+      expect(save1).toBe(save2);
+      expect(clear1).toBe(clear2);
+
+      // getToggleState ändert sich bei State-Änderungen (persistedState dependency)
       expect(get1).not.toBe(get2);
-      expect(clear1).toBe(clear2); // clearPersistedState hat keine persistedState dependency
     });
   });
 
@@ -426,11 +428,12 @@ describe('useTogglePersistence Hook', () => {
 
     it('sollte mit leeren localStorage-Daten umgehen', () => {
       mockLocalStorage.setItem('test-key', '');
-      
+
       const { result } = renderHook(() => useTogglePersistence('test-key'));
-      
+
+      // Leerer String wird als falsy behandelt und JSON.parse wird nicht aufgerufen
       expect(result.current.persistedState).toEqual({});
-      expect(mockConsoleError).toHaveBeenCalled();
+      expect(mockConsoleError).not.toHaveBeenCalled();
     });
 
     it('sollte mit nicht-Objekt-Daten in localStorage umgehen', () => {

@@ -33,19 +33,19 @@ describe('MediaToolbar Component - Phase 4a.3', () => {
     render(<MediaToolbar {...defaultProps} />);
 
     // Search-Input sollte vorhanden sein
-    const searchInput = screen.getByPlaceholderText(/Dateien und Ordner durchsuchen/i);
+    const searchInput = screen.getByPlaceholderText(/Suchen/i);
     expect(searchInput).toBeInTheDocument();
     expect(searchInput).toHaveValue('');
 
     // Search-Icon sollte vorhanden sein
-    const searchIcon = document.querySelector('.text-gray-400');
+    const searchIcon = document.querySelector('.text-zinc-700');
     expect(searchIcon).toBeInTheDocument();
   });
 
   it('sollte Search-Input ändern können', () => {
     render(<MediaToolbar {...defaultProps} />);
 
-    const searchInput = screen.getByPlaceholderText(/Dateien und Ordner durchsuchen/i);
+    const searchInput = screen.getByPlaceholderText(/Suchen/i);
 
     // Text eingeben
     fireEvent.change(searchInput, { target: { value: 'test.jpg' } });
@@ -80,15 +80,15 @@ describe('MediaToolbar Component - Phase 4a.3', () => {
   it('sollte aktiven View-Mode anzeigen', () => {
     const { rerender } = render(<MediaToolbar {...defaultProps} viewMode="grid" />);
 
-    // Grid-Button sollte aktiv sein
-    let activeButtons = document.querySelectorAll('.bg-white.shadow-sm');
+    // Grid-Button sollte aktiv sein (hat bg-white und text-primary Klassen)
+    let activeButtons = document.querySelectorAll('.bg-white.text-primary');
     expect(activeButtons.length).toBeGreaterThan(0);
 
     // Zu List-Mode wechseln
     rerender(<MediaToolbar {...defaultProps} viewMode="list" />);
 
-    // List-Button sollte aktiv sein
-    activeButtons = document.querySelectorAll('.bg-white.shadow-sm');
+    // List-Button sollte aktiv sein (hat bg-white und text-primary Klassen)
+    activeButtons = document.querySelectorAll('.bg-white.text-primary');
     expect(activeButtons.length).toBeGreaterThan(0);
   });
 
@@ -99,13 +99,14 @@ describe('MediaToolbar Component - Phase 4a.3', () => {
   it('sollte Bulk-Actions zeigen bei Selection', () => {
     render(<MediaToolbar {...defaultProps} selectedAssetsCount={5} />);
 
-    // Selection-Info sollte angezeigt werden
-    expect(screen.getByText('5 ausgewählt')).toBeInTheDocument();
+    // Selection-Info sollte angezeigt werden (Text ist über mehrere Elemente verteilt)
+    expect(screen.getByText(/5 ausgewählt/i)).toBeInTheDocument();
 
     // Bulk-Actions sollten vorhanden sein
     expect(screen.getByText('Alle auswählen')).toBeInTheDocument();
     expect(screen.getByText('Auswahl aufheben')).toBeInTheDocument();
-    expect(screen.getByText('Löschen')).toBeInTheDocument();
+    // Der Delete-Button zeigt "{count} Löschen"
+    expect(screen.getByText('5 Löschen')).toBeInTheDocument();
   });
 
   it('sollte Bulk-Actions NICHT zeigen ohne Selection', () => {
@@ -130,8 +131,8 @@ describe('MediaToolbar Component - Phase 4a.3', () => {
     fireEvent.click(clearButton);
     expect(defaultProps.onClearSelection).toHaveBeenCalledTimes(1);
 
-    // Löschen
-    const deleteButton = screen.getByText('Löschen');
+    // Löschen - Button-Text enthält Count
+    const deleteButton = screen.getByText('3 Löschen');
     fireEvent.click(deleteButton);
     expect(defaultProps.onBulkDelete).toHaveBeenCalledTimes(1);
   });

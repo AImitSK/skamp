@@ -278,6 +278,25 @@ describe('DatenTabContent Component', () => {
       );
     });
 
+    it('sollte title="Projektdaten" an ProjectFoldersView übergeben', () => {
+      render(
+        <DatenTabContent
+          project={mockProject}
+          organizationId="org-123"
+          projectFolders={mockProjectFolders}
+          foldersLoading={false}
+          onRefresh={mockOnRefresh}
+        />
+      );
+
+      expect(mockProjectFoldersView).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Projektdaten'
+        }),
+        expect.anything()
+      );
+    });
+
     it('sollte undefined customerId übergeben wenn customer fehlt', () => {
       const projectWithoutCustomer: Project = {
         id: 'project-123',
@@ -699,7 +718,8 @@ describe('DatenTabContent Component', () => {
           projectFolders: mockProjectFolders,
           foldersLoading: true,
           onRefresh: mockOnRefresh,
-          filterByFolder: 'all'
+          filterByFolder: 'all',
+          title: 'Projektdaten'
         },
         expect.anything()
       );

@@ -245,7 +245,6 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
       const userCompanies = await companiesEnhancedService.getAll(organizationId);
       setCompanies(userCompanies.filter(c => c.id !== company?.id));
     } catch (error) {
-      console.error('Fehler beim Laden der Companies:', error);
       // Silent error handling
     }
   }, [organizationId, company?.id]);
@@ -279,16 +278,6 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
 
   useEffect(() => {
     if (company) {
-      // Debug: Check if phones are loaded
-      console.log('📞 CompanyModal loading company:', {
-        id: company.id,
-        name: company.name,
-        phones: company.phones,
-        emails: company.emails,
-        foundedDate: company.foundedDate,
-        foundedDateType: company.foundedDate?.constructor?.name
-      });
-
       // Directly use enhanced company data
       setFormData({
         ...company,
@@ -907,9 +896,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                   
                   {formData.phones && formData.phones.length > 0 ? (
                     <div className="space-y-3">
-                      {formData.phones.map((phone, index) => {
-                        console.log('📱 Rendering phone field:', { index, phone, hasNumber: !!phone.number });
-                        return (
+                      {formData.phones.map((phone, index) => (
                         <div key={index} className="grid grid-cols-12 gap-2 items-start">
                           <div className="col-span-2">
                             <Select
@@ -980,8 +967,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                             </Button>
                           </div>
                         </div>
-                        );
-                      })}
+                      ))}
                     </div>
                   ) : (
                     <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>

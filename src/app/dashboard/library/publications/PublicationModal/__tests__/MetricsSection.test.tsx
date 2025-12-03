@@ -134,7 +134,10 @@ describe('MetricsSection', () => {
     );
 
     expect(screen.getByText('Print-Metriken')).toBeInTheDocument();
-    expect(screen.getByText('Auflage')).toBeInTheDocument();
+    // Text "Auflage *" wird durch InfoTooltip aufgeteilt, daher nach Input suchen
+    expect(screen.getByPlaceholderText('50000')).toBeInTheDocument();
+    // Oder Auflagentyp-Label pruefen
+    expect(screen.getByText('Auflagentyp')).toBeInTheDocument();
   });
 
   it('sollte Online-Metriken anzeigen wenn Format online oder both', () => {

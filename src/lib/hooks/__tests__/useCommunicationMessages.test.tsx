@@ -40,14 +40,17 @@ describe('useCommunicationFeed', () => {
 
   it('sollte Communication Feed laden', async () => {
     const mockFeed = {
-      emails: [
-        { id: 'email-1', subject: 'Test Email', timestamp: new Date() }
+      projectId: 'project-123',
+      entries: [
+        { id: 'email-1', type: 'email-thread' as const, title: 'Test Email', preview: 'Test', timestamp: { toMillis: () => Date.now() } }
       ],
-      internalNotes: [
-        { id: 'note-1', content: 'Test Note', timestamp: new Date() }
-      ],
-      statusChanges: [],
-      approvals: []
+      summary: {
+        totalEntries: 1,
+        unreadEmails: 0,
+        pendingApprovals: 0,
+        recentActivity: 1
+      },
+      hasMore: false
     };
 
     (projectCommunicationService.getProjectCommunicationFeed as jest.Mock).mockResolvedValue(mockFeed);
@@ -62,7 +65,7 @@ describe('useCommunicationFeed', () => {
     expect(projectCommunicationService.getProjectCommunicationFeed).toHaveBeenCalledWith(
       'project-123',
       'org-123',
-      {}
+      { limit: undefined }
     );
   });
 
@@ -79,10 +82,15 @@ describe('useCommunicationFeed', () => {
 
   it('sollte limitCount Option respektieren', async () => {
     const mockFeed = {
-      emails: [],
-      internalNotes: [],
-      statusChanges: [],
-      approvals: []
+      projectId: 'project-123',
+      entries: [],
+      summary: {
+        totalEntries: 0,
+        unreadEmails: 0,
+        pendingApprovals: 0,
+        recentActivity: 0
+      },
+      hasMore: false
     };
 
     (projectCommunicationService.getProjectCommunicationFeed as jest.Mock).mockResolvedValue(mockFeed);
@@ -96,7 +104,7 @@ describe('useCommunicationFeed', () => {
     expect(projectCommunicationService.getProjectCommunicationFeed).toHaveBeenCalledWith(
       'project-123',
       'org-123',
-      { limitCount: 50 }
+      { limit: 50 }
     );
   });
 });
@@ -107,16 +115,14 @@ describe('useCreateInternalNote', () => {
   });
 
   it('sollte interne Notiz erfolgreich erstellen', async () => {
-    (projectCommunicationService.createInternalNote as jest.Mock).mockResolvedValue({
-      id: 'note-123'
-    });
+    (projectCommunicationService.createInternalNote as jest.Mock).mockResolvedValue('note-123');
 
     const { result } = renderHook(() => useCreateInternalNote(), { wrapper: createWrapper() });
 
     await result.current.mutateAsync({
       projectId: 'project-123',
       content: 'Test internal note',
-      author: 'Test User',
+      author: 'user-123',
       authorName: 'Test User',
       organizationId: 'org-123',
       mentions: ['@user2']
@@ -125,17 +131,16 @@ describe('useCreateInternalNote', () => {
     expect(projectCommunicationService.createInternalNote).toHaveBeenCalledWith(
       'project-123',
       'Test internal note',
+      'user-123',
       'Test User',
       'org-123',
-      [],
-      ['@user2']
+      ['@user2'],
+      undefined
     );
   });
 
   it('sollte Cache invalidieren nach erfolgreichem Erstellen', async () => {
-    (projectCommunicationService.createInternalNote as jest.Mock).mockResolvedValue({
-      id: 'note-123'
-    });
+    (projectCommunicationService.createInternalNote as jest.Mock).mockResolvedValue('note-123');
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -189,7 +194,8 @@ describe('useLinkEmailToProject', () => {
       'thread-456',
       'project-123',
       'manual',
-      'org-123'
+      1.0,
+      'user-123'
     );
   });
 

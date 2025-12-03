@@ -1,15 +1,23 @@
 // src/__tests__/api/webhooks/event-manager.test.ts
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
+// Mock webhook service MUSS VOR dem Import stehen
+jest.mock('@/lib/api/webhook-service');
+
 import { EventManager, eventManager } from '@/lib/api/event-manager';
 import { webhookService } from '@/lib/api/webhook-service';
 
-// Mock webhook service
-const mockTriggerEvent = jest.fn();
-jest.mock('@/lib/api/webhook-service', () => ({
-  webhookService: {
-    triggerEvent: mockTriggerEvent
-  }
-}));
+// Cast zu Mock um Zugriff auf Mock-Funktionen zu haben
+const mockWebhookService = webhookService as jest.Mocked<typeof webhookService>;
+
+// Helper function um auf setImmediate zu warten
+// Muss mehrere Event Loop Iterationen warten
+const waitForAsyncCallbacks = async () => {
+  // Warte auf setImmediate + ein bisschen extra Zeit
+  await new Promise(resolve => setImmediate(resolve));
+  // Zusätzlicher Tick für gute Maßnahme
+  await new Promise(resolve => setTimeout(resolve, 10));
+};
 
 describe('EventManager', () => {
   const testOrganizationId = 'test-org-123';
@@ -17,6 +25,8 @@ describe('EventManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Stelle sicher dass triggerEvent gemockt ist
+    mockWebhookService.triggerEvent = jest.fn().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -45,7 +55,10 @@ describe('EventManager', () => {
         testMetadata
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'contact.created',
         testData,
         testOrganizationId,
@@ -55,7 +68,7 @@ describe('EventManager', () => {
 
     it('sollte Fehler beim Webhook-Service abfangen', async () => {
       // Mock error
-      (mockTriggerEvent as any).mockRejectedValue(
+      (mockWebhookService.triggerEvent as any).mockRejectedValue(
         new Error('Webhook service error')
       );
 
@@ -68,6 +81,9 @@ describe('EventManager', () => {
       await expect(
         eventManager.triggerEvent('contact.created', testData, testOrganizationId)
       ).resolves.toBeUndefined();
+
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
 
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
@@ -87,10 +103,10 @@ describe('EventManager', () => {
       await expect(promise).resolves.toBeUndefined();
 
       // Webhook service sollte trotzdem aufgerufen werden
-      // (nach einem kurzen Delay für setImmediate)
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
-      expect(mockTriggerEvent).toHaveBeenCalled();
+      // (nach async callback)
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalled();
     });
   });
 
@@ -110,7 +126,10 @@ describe('EventManager', () => {
         { userId: testUserId }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'contact.created',
         contact,
         testOrganizationId,
@@ -128,8 +147,10 @@ describe('EventManager', () => {
           contact,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
 
-        expect(mockTriggerEvent).toHaveBeenCalledWith(
+        expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
           `contact.${action}`,
           contact,
           testOrganizationId,
@@ -137,7 +158,7 @@ describe('EventManager', () => {
         );
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(3);
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -156,7 +177,10 @@ describe('EventManager', () => {
         { userId: testUserId, source: 'api' }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'company.updated',
         company,
         testOrganizationId,
@@ -174,10 +198,12 @@ describe('EventManager', () => {
           company,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(3);
-      
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(3);
+
       // Verify each call had the correct event type
       const calls = (webhookService.triggerEvent as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe('company.created');
@@ -202,7 +228,10 @@ describe('EventManager', () => {
         { userId: testUserId, source: 'admin' }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'publication.verified',
         publication,
         testOrganizationId,
@@ -220,10 +249,12 @@ describe('EventManager', () => {
           publication,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(4);
-      
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(4);
+
       const calls = (webhookService.triggerEvent as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe('publication.created');
       expect(calls[1][0]).toBe('publication.updated');
@@ -250,7 +281,10 @@ describe('EventManager', () => {
         { userId: testUserId }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'media_asset.created',
         asset,
         testOrganizationId,
@@ -268,10 +302,12 @@ describe('EventManager', () => {
           asset,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(3);
-      
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(3);
+
       const calls = (webhookService.triggerEvent as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe('media_asset.created');
       expect(calls[1][0]).toBe('media_asset.updated');
@@ -294,7 +330,10 @@ describe('EventManager', () => {
         { userId: testUserId, recipients: ['test@example.com'] }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'media_kit.shared',
         mediaKit,
         testOrganizationId,
@@ -312,10 +351,12 @@ describe('EventManager', () => {
           mediaKit,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(2);
-      
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(2);
+
       const calls = (webhookService.triggerEvent as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe('media_kit.created');
       expect(calls[1][0]).toBe('media_kit.shared');
@@ -337,7 +378,10 @@ describe('EventManager', () => {
         { userId: testUserId, source: 'scheduler' }
       );
 
-      expect(mockTriggerEvent).toHaveBeenCalledWith(
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
+
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledWith(
         'campaign.completed',
         campaign,
         testOrganizationId,
@@ -355,10 +399,12 @@ describe('EventManager', () => {
           campaign,
           testOrganizationId
         );
+        // Warte auf async callback nach jedem Aufruf
+        await waitForAsyncCallbacks();
       }
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(3);
-      
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(3);
+
       const calls = (webhookService.triggerEvent as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe('campaign.created');
       expect(calls[1][0]).toBe('campaign.sent');
@@ -369,7 +415,7 @@ describe('EventManager', () => {
   describe('Error Handling', () => {
     it('sollte Fehler in Event-Callbacks abfangen', async () => {
       // Mock webhook service error
-      mockTriggerEvent.mockImplementation(() => {
+      mockWebhookService.triggerEvent.mockImplementation(() => {
         throw new Error('Webhook error');
       });
 
@@ -382,8 +428,8 @@ describe('EventManager', () => {
         eventManager.triggerEvent('contact.created', testData, testOrganizationId)
       ).resolves.toBeUndefined();
 
-      // Sollte asynchron verarbeitet werden, also warten
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Warte auf async callback
+      await waitForAsyncCallbacks();
 
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
@@ -407,8 +453,11 @@ describe('EventManager', () => {
         )
       ).resolves.toBeUndefined();
 
+      // Warte auf async callbacks
+      await waitForAsyncCallbacks();
+
       // Events sollten trotzdem getriggert werden
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(2);
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -417,7 +466,7 @@ describe('EventManager', () => {
       let webhookStarted = false;
       let mainCompleted = false;
 
-      mockTriggerEvent.mockImplementation(async () => {
+      mockWebhookService.triggerEvent.mockImplementation(async () => {
         webhookStarted = true;
         // Simulate slow webhook processing
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -434,10 +483,14 @@ describe('EventManager', () => {
       await eventPromise;
       mainCompleted = true;
 
-      // Main should complete before webhook processing
+      // Main should complete before webhook processing starts
       expect(mainCompleted).toBe(true);
-      
-      // Wait for async webhook processing
+
+      // Wait for async callback to trigger the webhook
+      await waitForAsyncCallbacks();
+
+      // Now webhook should have started
+      // Wait for slow processing to complete
       await new Promise(resolve => setTimeout(resolve, 60));
       expect(webhookStarted).toBe(true);
     });
@@ -456,10 +509,10 @@ describe('EventManager', () => {
       // Alle sollten schnell completed werden
       await Promise.all(promises);
 
-      // Warte auf async processing
-      await new Promise(resolve => setTimeout(resolve, 20));
+      // Warte auf async callbacks
+      await waitForAsyncCallbacks();
 
-      expect(mockTriggerEvent).toHaveBeenCalledTimes(3);
+      expect(mockWebhookService.triggerEvent).toHaveBeenCalledTimes(3);
     });
   });
 });

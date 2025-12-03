@@ -1,6 +1,13 @@
 // Test setup file for Jest
 import 'jest-environment-jsdom';
 
+// Polyfill setImmediate for jsdom environment
+if (typeof setImmediate === 'undefined') {
+  global.setImmediate = ((callback: (...args: any[]) => void, ...args: any[]) => {
+    return setTimeout(callback, 0, ...args);
+  }) as typeof setImmediate;
+}
+
 // Mock fetch for Firebase Auth
 global.fetch = jest.fn(() =>
   Promise.resolve({
