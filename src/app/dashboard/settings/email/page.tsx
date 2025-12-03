@@ -85,24 +85,11 @@ export default function EmailSettingsPage() {
 
   // Load all data
   useEffect(() => {
-    console.log('🔍 DEBUG useEffect: organizationId changed:', organizationId);
-    console.log('🔍 DEBUG useEffect: Will call loadDomains?', !!organizationId);
-
     if (organizationId) {
-      console.log('🔍 DEBUG useEffect: Calling loadDomains now...');
-      try {
-        loadEmailAddresses();
-        console.log('🔍 DEBUG useEffect: About to call loadDomains...');
-        loadDomains();
-        console.log('🔍 DEBUG useEffect: loadDomains called, now calling signatures...');
-        loadSignatures();
-        loadTeamMembers(); // NEU: Lade echte Team-Mitglieder
-        console.log('🔍 DEBUG useEffect: All functions called successfully');
-      } catch (error) {
-        console.error('❌ DEBUG useEffect: Error calling functions:', error);
-      }
-    } else {
-      console.log('⚠️ DEBUG useEffect: organizationId is empty, not loading domains');
+      loadEmailAddresses();
+      loadDomains();
+      loadSignatures();
+      loadTeamMembers();
     }
   }, [organizationId]);
 
@@ -144,39 +131,14 @@ export default function EmailSettingsPage() {
   };
 
   const loadDomains = async () => {
-    console.log('🔍 DEBUG loadDomains: Function called!');
-
     try {
       setLoadingDomains(true);
-      console.log('🔍 DEBUG loadDomains: Starting...');
-      console.log('🔍 DEBUG loadDomains: organizationId:', organizationId);
 
-      if (!organizationId) {
-        console.log('❌ DEBUG loadDomains: organizationId is empty, stopping');
-        return;
-      }
+      if (!organizationId) return;
 
-      console.log('🔍 DEBUG loadDomains: About to call domainServiceEnhanced.getAll()');
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
-      console.log('📧 DEBUG loadDomains: Raw domains from service:', allDomains);
-      console.log('📧 DEBUG loadDomains: Domain count:', allDomains.length);
 
-      // Debug jede Domain einzeln
-      allDomains.forEach((domain, index) => {
-        console.log(`📧 DEBUG loadDomains: Domain ${index}:`, {
-          id: domain.id,
-          domain: domain.domain,
-          status: domain.status,
-          organizationId: domain.organizationId,
-          createdAt: domain.createdAt
-        });
-      });
-
-      // Zeige alle Domains an (inklusive failed), damit User sie sehen können
-      const verifiedDomains = allDomains; // Entferne Filter temporär
-      console.log('✅ DEBUG loadDomains: Domains after filter (should be same):', verifiedDomains);
-
-      const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
+      const emailDomains: EmailDomain[] = allDomains.map(d => ({
         id: d.id!,
         name: d.domain,
         verified: d.status === 'verified',
@@ -185,22 +147,10 @@ export default function EmailSettingsPage() {
         status: d.status
       } as EmailDomain));
 
-      console.log('🎯 DEBUG loadDomains: Final emailDomains for UI:', emailDomains);
-      console.log('🎯 DEBUG loadDomains: About to call setDomains...');
       setDomains(emailDomains);
-      console.log('🎯 DEBUG loadDomains: setDomains called successfully!');
-
     } catch (error) {
-      console.error('❌ DEBUG loadDomains: Error:', error);
-      const errorObj = error as Error;
-      console.error('❌ DEBUG loadDomains: Error details:', {
-        message: errorObj?.message,
-        stack: errorObj?.stack,
-        name: errorObj?.name
-      });
       toastService.error('Fehler beim Laden der Domains');
     } finally {
-      console.log('🔍 DEBUG loadDomains: Finally block - setting loadingDomains to false');
       setLoadingDomains(false);
     }
   };
@@ -208,22 +158,13 @@ export default function EmailSettingsPage() {
   const loadEmailAddresses = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Loading email addresses for:', {
-        organizationId,
-        userId: user?.uid,
-        role: currentOrganization?.role
-      });
-      
       const addresses = await emailAddressService.getByOrganization(
         organizationId,
         user?.uid || '',
-        currentOrganization?.role // Rolle für erweiterte Berechtigungen
+        currentOrganization?.role
       );
-      
-      console.log('📬 Email addresses loaded:', addresses);
       setEmailAddresses(addresses);
     } catch (error) {
-      console.error('❌ Error loading email addresses:', error);
       toastService.error('Fehler beim Laden der E-Mail-Adressen');
     } finally {
       setLoading(false);
