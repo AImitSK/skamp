@@ -17,7 +17,7 @@ import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/ui/text';
 import { Avatar } from '@/components/ui/avatar';
-import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
+import { EmailAddress, EmailSignature, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { SignatureList } from '@/components/email/SignatureList';
@@ -31,7 +31,6 @@ import {
   UserGroupIcon,
   EllipsisVerticalIcon,
   CheckCircleIcon,
-  DocumentTextIcon,
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
@@ -42,7 +41,7 @@ import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 
 
-type TabType = 'addresses' | 'templates' | 'signatures';
+type TabType = 'addresses' | 'signatures';
 
 export default function EmailSettingsPage() {
   const { user } = useAuth();
@@ -335,7 +334,6 @@ export default function EmailSettingsPage() {
 
   const tabs = [
     { id: 'addresses' as TabType, name: 'E-Mail-Adressen', icon: EnvelopeIcon },
-    { id: 'templates' as TabType, name: 'Vorlagen', icon: DocumentTextIcon },
     { id: 'signatures' as TabType, name: 'Signaturen', icon: PencilSquareIcon }
   ];
 
@@ -360,7 +358,7 @@ export default function EmailSettingsPage() {
           <div className="min-w-0 flex-1">
             <Heading>E-Mail Einstellungen</Heading>
             <Text className="mt-2 text-zinc-500">
-              Verwalten Sie E-Mail-Adressen, Vorlagen und Signaturen für Ihre Organisation
+              Verwalten Sie E-Mail-Adressen und Signaturen für Ihre Organisation
             </Text>
           </div>
         </div>
@@ -539,20 +537,6 @@ export default function EmailSettingsPage() {
               </div>
             </div>
           </>
-        )}
-
-        {activeTab === 'templates' && (
-          <div className="bg-white rounded-lg border p-8 text-center">
-            <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Vorlagen</h3>
-            <p className="text-gray-500 mb-4">
-              Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen
-            </p>
-            <Button className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Erste Vorlage erstellen
-            </Button>
-          </div>
         )}
 
         {activeTab === 'signatures' && (

@@ -57,6 +57,9 @@ export default function EmailEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // Ref um zu tracken ob Update vom User oder extern kam
+  const isUserTyping = useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -83,9 +86,16 @@ export default function EmailEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
+      isUserTyping.current = true;
       if (onChangeRef.current) {
         onChangeRef.current(editor.getHTML());
       }
+    },
+    onFocus: () => {
+      isUserTyping.current = true;
+    },
+    onBlur: () => {
+      isUserTyping.current = false;
     },
     editorProps: {
       attributes: {
@@ -95,9 +105,15 @@ export default function EmailEditor({
     immediatelyRender: false // SSR-Fix für TipTap
   }, []); // Keine Dependencies - Editor wird nur einmal initialisiert
 
-  // Update editor content when prop changes
+  // Sync content from prop only when editor loses focus or content is completely different
+  // This prevents the loop: user types -> onChange -> parent updates -> setContent resets cursor
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (!editor || isUserTyping.current) return;
+
+    const editorContent = editor.getHTML();
+    // Nur synchronisieren wenn Content komplett anders ist (z.B. neues Modal)
+    // Nicht wenn es nur kleine HTML-Differenzen gibt
+    if (content && content !== editorContent && !editor.isFocused) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
