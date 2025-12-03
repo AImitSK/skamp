@@ -129,198 +129,196 @@ export default function SpamBlocklistPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-full">
-        <aside className="w-64 shrink-0 border-r border-gray-200 bg-gray-50 p-6">
+  return (
+    <>
+      <div className="flex flex-col gap-10 lg:flex-row">
+        {/* Linke Spalte: Navigation */}
+        <aside className="w-full lg:w-64 lg:flex-shrink-0">
           <SettingsNav />
         </aside>
-        <main className="flex-1 p-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
-  return (
-    <div className="flex h-full">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 shrink-0 border-r border-gray-200 bg-gray-50 p-6">
-        <SettingsNav />
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <div className="mx-auto max-w-6xl">
-          {/* Header */}
-          <div className="mb-8">
-            <Heading>Globale Spam-Blocklist</Heading>
-            <Text className="mt-2 text-gray-600">
-              Filtere unerwünschte Veröffentlichungs-Vorschläge organisationsweit
-            </Text>
-          </div>
-
-          {/* Add Pattern Button */}
-          <div className="mb-6">
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <PlusIcon className="size-4" />
-              Pattern hinzufügen
-            </Button>
-          </div>
-
-          {/* Patterns Table */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Typ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pattern
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Matches
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {patterns.map((pattern) => (
-                  <tr key={pattern.id} className={`hover:bg-gray-50 ${!pattern.isActive ? 'opacity-50' : ''}`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge color="zinc">
-                        {getTypeLabel(pattern.type)}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                          {pattern.pattern}
-                        </code>
-                        {pattern.isRegex && (
-                          <Badge color="indigo" className="ml-2">RegEx</Badge>
-                        )}
-                        {!pattern.isActive && (
-                          <Badge color="zinc" className="ml-2">Inaktiv</Badge>
-                        )}
-                        {pattern.description && (
-                          <p className="text-xs text-gray-500 mt-2">{pattern.description}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{pattern.timesMatched || 0}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <SimpleSwitch
-                        checked={pattern.isActive}
-                        onChange={() => handleToggle(pattern)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button
-                        color="secondary"
-                        onClick={() => pattern.id && handleDelete(pattern.id)}
-                      >
-                        <TrashIcon className="size-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {patterns.length === 0 && !loading && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Noch keine Spam-Patterns definiert</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Erstellen Sie Ihr erstes Pattern, um unerwünschte Monitoring-Vorschläge zu filtern
-                </p>
+        {/* Rechte Spalte: Hauptinhalt */}
+        <div className="flex-1">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+                <Text className="mt-4">Lade Spam-Patterns...</Text>
               </div>
-            )}
-          </div>
-
-          {/* Add Pattern Dialog */}
-          <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-            <DialogTitle>Spam-Pattern hinzufügen</DialogTitle>
-            <DialogBody>
-              <div className="space-y-4">
-                <Field>
-                  <Label>Typ</Label>
-                  <Select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as SpamPattern['type'] })}
-                  >
-                    <option value="url_domain">URL Domain</option>
-                    <option value="keyword_title">Keyword (Titel)</option>
-                    <option value="keyword_content">Keyword (Inhalt)</option>
-                    <option value="outlet_name">Medium Name</option>
-                  </Select>
-                  <Text className="text-xs text-gray-500 mt-1">
-                    Wählen Sie den Typ des Filters
+            </div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="md:flex md:items-center md:justify-between mb-8">
+                <div className="min-w-0 flex-1">
+                  <Heading level={1}>Globale Spam-Blocklist</Heading>
+                  <Text className="mt-2 text-gray-600">
+                    Filtere unerwünschte Veröffentlichungs-Vorschläge organisationsweit
                   </Text>
-                </Field>
-
-                <Field>
-                  <Label>Pattern</Label>
-                  <Input
-                    type="text"
-                    value={formData.pattern}
-                    onChange={(e) => setFormData({ ...formData, pattern: e.target.value })}
-                    placeholder="z.B. spam-domain.com oder 'pressemitteilung'"
-                  />
-                  <Text className="text-xs text-gray-500 mt-1">
-                    Das Pattern, nach dem gesucht werden soll
-                  </Text>
-                </Field>
-
-                <div className="flex items-center gap-3">
-                  <SimpleSwitch
-                    checked={formData.isRegex}
-                    onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
-                  />
-                  <div>
-                    <div className="font-medium text-sm text-gray-900">RegEx Pattern</div>
-                    <Text className="text-xs text-gray-500">
-                      Regulärer Ausdruck für erweiterte Muster
-                    </Text>
-                  </div>
                 </div>
-
-                <Field>
-                  <Label>Beschreibung (optional)</Label>
-                  <Input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Warum ist das Spam?"
-                  />
-                  <Text className="text-xs text-gray-500 mt-1">
-                    Hilfreiche Notiz für andere Team-Mitglieder
-                  </Text>
-                </Field>
+                <div className="mt-4 md:mt-0">
+                  <Button
+                    onClick={() => setIsDialogOpen(true)}
+                    className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Pattern hinzufügen
+                  </Button>
+                </div>
               </div>
-            </DialogBody>
-            <DialogActions>
-              <Button plain onClick={() => setIsDialogOpen(false)}>
-                Abbrechen
-              </Button>
-              <Button onClick={handleAdd} disabled={!formData.pattern.trim()}>
-                Hinzufügen
-              </Button>
-            </DialogActions>
-          </Dialog>
+
+              {/* Patterns Table */}
+              <div className="bg-white rounded-lg ring-1 ring-gray-900/5 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Typ
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pattern
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Matches
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aktionen
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {patterns.map((pattern) => (
+                      <tr key={pattern.id} className={`hover:bg-gray-50 ${!pattern.isActive ? 'opacity-50' : ''}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge color="zinc">
+                            {getTypeLabel(pattern.type)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                              {pattern.pattern}
+                            </code>
+                            {pattern.isRegex && (
+                              <Badge color="indigo" className="ml-2">RegEx</Badge>
+                            )}
+                            {!pattern.isActive && (
+                              <Badge color="zinc" className="ml-2">Inaktiv</Badge>
+                            )}
+                            {pattern.description && (
+                              <p className="text-xs text-gray-500 mt-2">{pattern.description}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{pattern.timesMatched || 0}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <SimpleSwitch
+                            checked={pattern.isActive}
+                            onChange={() => handleToggle(pattern)}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Button
+                            color="secondary"
+                            onClick={() => pattern.id && handleDelete(pattern.id)}
+                          >
+                            <TrashIcon className="size-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {patterns.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">Noch keine Spam-Patterns definiert</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Erstellen Sie Ihr erstes Pattern, um unerwünschte Monitoring-Vorschläge zu filtern
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Add Pattern Dialog */}
+      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+        <DialogTitle>Spam-Pattern hinzufügen</DialogTitle>
+        <DialogBody>
+          <div className="space-y-4">
+            <Field>
+              <Label>Typ</Label>
+              <Select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as SpamPattern['type'] })}
+              >
+                <option value="url_domain">URL Domain</option>
+                <option value="keyword_title">Keyword (Titel)</option>
+                <option value="keyword_content">Keyword (Inhalt)</option>
+                <option value="outlet_name">Medium Name</option>
+              </Select>
+              <Text className="text-xs text-gray-500 mt-1">
+                Wählen Sie den Typ des Filters
+              </Text>
+            </Field>
+
+            <Field>
+              <Label>Pattern</Label>
+              <Input
+                type="text"
+                value={formData.pattern}
+                onChange={(e) => setFormData({ ...formData, pattern: e.target.value })}
+                placeholder="z.B. spam-domain.com oder 'pressemitteilung'"
+              />
+              <Text className="text-xs text-gray-500 mt-1">
+                Das Pattern, nach dem gesucht werden soll
+              </Text>
+            </Field>
+
+            <div className="flex items-center gap-3">
+              <SimpleSwitch
+                checked={formData.isRegex}
+                onChange={(checked) => setFormData({ ...formData, isRegex: checked })}
+              />
+              <div>
+                <div className="font-medium text-sm text-gray-900">RegEx Pattern</div>
+                <Text className="text-xs text-gray-500">
+                  Regulärer Ausdruck für erweiterte Muster
+                </Text>
+              </div>
+            </div>
+
+            <Field>
+              <Label>Beschreibung (optional)</Label>
+              <Input
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Warum ist das Spam?"
+              />
+              <Text className="text-xs text-gray-500 mt-1">
+                Hilfreiche Notiz für andere Team-Mitglieder
+              </Text>
+            </Field>
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setIsDialogOpen(false)}>
+            Abbrechen
+          </Button>
+          <Button onClick={handleAdd} disabled={!formData.pattern.trim()}>
+            Hinzufügen
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
