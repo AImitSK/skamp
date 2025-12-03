@@ -58,7 +58,6 @@ import {
   UserIcon,
   DocumentCheckIcon,
   CreditCardIcon,
-  PuzzlePieceIcon,
   CodeBracketIcon,
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
@@ -267,17 +266,16 @@ export default function DashboardLayout({
         name: "API-Verwaltung",
         href: "/dashboard/admin/api",
         icon: CodeBracketIcon,
-      },
-      {
-        name: "Integrationen",
-        href: "/dashboard/admin/integrations",
-        icon: PuzzlePieceIcon,
-        dividerAfter: true, // Trennlinie nach diesem Item
+        badge: "PREMIUM",
+        superAdminOnly: true,
       },
       {
         name: "Developer Portal",
         href: "/dashboard/developer",
         icon: CodeBracketIcon,
+        badge: "PREMIUM",
+        superAdminOnly: true,
+        dividerAfter: true,
       },
       {
         name: "Dokumentation",
@@ -417,16 +415,41 @@ export default function DashboardLayout({
                   <div className="font-medium text-zinc-900 dark:text-white">{user?.displayName || user?.email?.split("@")[0]}</div>
                   <div className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</div>
                 </div>
-                {userMenuItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </a>
-                ))}
+                {userMenuItems.map((item) => {
+                  const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+
+                  if (isRestricted) {
+                    return (
+                      <div
+                        key={item.name}
+                        className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+                      >
+                        <span className="flex items-center gap-2 text-zinc-400">
+                          {item.name}
+                          {(item as any).badge && (
+                            <Badge color="pink">{(item as any).badge}</Badge>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="flex items-center gap-2">
+                        {item.name}
+                        {(item as any).badge && (
+                          <Badge color="pink">{(item as any).badge}</Badge>
+                        )}
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
             <div className="py-6">
@@ -641,18 +664,40 @@ export default function DashboardLayout({
                       </div>
                     </DropdownItem>
                     <DropdownDivider />
-                    {userMenuItems.map((item, index) => (
-                      <React.Fragment key={item.name}>
-                        <DropdownItem
-                          href={item.href}
-                          compact
-                        >
-                          <item.icon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
-                          <span className="text-sm text-zinc-900 dark:text-white">{item.name}</span>
-                        </DropdownItem>
-                        {item.dividerAfter && <DropdownDivider />}
-                      </React.Fragment>
-                    ))}
+                    {userMenuItems.map((item) => {
+                      const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+
+                      if (isRestricted) {
+                        return (
+                          <React.Fragment key={item.name}>
+                            <div className="flex items-center gap-2 px-3.5 py-2 opacity-50 cursor-not-allowed">
+                              <item.icon className="size-3.5 flex-shrink-0 text-zinc-400" />
+                              <span className="text-sm text-zinc-400">{item.name}</span>
+                              {(item as any).badge && (
+                                <Badge color="pink" className="ml-auto">{(item as any).badge}</Badge>
+                              )}
+                            </div>
+                            {(item as any).dividerAfter && <DropdownDivider />}
+                          </React.Fragment>
+                        );
+                      }
+
+                      return (
+                        <React.Fragment key={item.name}>
+                          <DropdownItem
+                            href={item.href}
+                            compact
+                          >
+                            <item.icon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                            <span className="text-sm text-zinc-900 dark:text-white">{item.name}</span>
+                            {(item as any).badge && (
+                              <Badge color="pink" className="ml-auto">{(item as any).badge}</Badge>
+                            )}
+                          </DropdownItem>
+                          {(item as any).dividerAfter && <DropdownDivider />}
+                        </React.Fragment>
+                      );
+                    })}
                     <DropdownDivider />
                     <DropdownItem
                       onClick={handleLogout}
