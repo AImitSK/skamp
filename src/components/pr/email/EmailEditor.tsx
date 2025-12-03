@@ -53,6 +53,10 @@ export default function EmailEditor({
   const [logoError, setLogoError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Ref für onChange um Stale Closures zu vermeiden
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -79,8 +83,8 @@ export default function EmailEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      if (onChange) {
-        onChange(editor.getHTML());
+      if (onChangeRef.current) {
+        onChangeRef.current(editor.getHTML());
       }
     },
     editorProps: {
@@ -89,7 +93,7 @@ export default function EmailEditor({
       }
     },
     immediatelyRender: false // SSR-Fix für TipTap
-  }, [onChange]); // FIX: onChange in dependencies
+  }, []); // Keine Dependencies - Editor wird nur einmal initialisiert
 
   // Update editor content when prop changes
   useEffect(() => {
