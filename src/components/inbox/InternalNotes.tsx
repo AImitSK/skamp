@@ -152,27 +152,41 @@ export function InternalNotes({
 
     if (mentionMatch) {
       const searchTerm = mentionMatch[1];
-      setMentionSearch(searchTerm);
-      setSelectedMentionIndex(0);
 
-      // Berechne Position des Dropdowns
-      if (textareaRef.current) {
-        const rect = textareaRef.current.getBoundingClientRect();
-        const lines = beforeCursor.split('\n');
-        const currentLine = lines[lines.length - 1];
-        const charWidth = 8; // Geschätzte Zeichen-Breite
+      // Prüfe ob es passende Team-Members gibt
+      const membersToSearch = allTeamMembers.length > 0 ? allTeamMembers : teamMembers;
+      const hasMatches = membersToSearch.some(member =>
+        member.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
-        setMentionDropdownPosition({
-          top: rect.top - 200, // Über der Textarea
-          left: rect.left + (currentLine.length * charWidth)
-        });
+      // Nur Dropdown zeigen wenn es Matches gibt
+      if (hasMatches) {
+        setMentionSearch(searchTerm);
+        setSelectedMentionIndex(0);
+
+        // Berechne Position des Dropdowns
+        if (textareaRef.current) {
+          const rect = textareaRef.current.getBoundingClientRect();
+          const lines = beforeCursor.split('\n');
+          const currentLine = lines[lines.length - 1];
+          const charWidth = 8; // Geschätzte Zeichen-Breite
+
+          setMentionDropdownPosition({
+            top: rect.top - 200, // Über der Textarea
+            left: rect.left + (currentLine.length * charWidth)
+          });
+        }
+
+        setShowMentions(true);
+      } else {
+        // Kein Match mehr - Dropdown schließen
+        setShowMentions(false);
       }
-
-      setShowMentions(true);
     } else {
       setShowMentions(false);
     }
-  }, []);
+  }, [allTeamMembers, teamMembers]);
 
   // Filtered team members for mentions (use allTeamMembers)
   // Konvertiere zu einem einheitlichen Format für die Mention-Komponente
