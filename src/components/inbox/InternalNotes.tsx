@@ -228,13 +228,20 @@ export function InternalNotes({
   const insertMention = (member: any) => {
     const lastAtIndex = newNote.lastIndexOf('@');
     const beforeAt = newNote.substring(0, lastAtIndex);
-    const afterAt = newNote.substring(lastAtIndex + 1);
-    const spaceIndex = afterAt.indexOf(' ');
-    // afterMention beginnt bereits mit Leerzeichen (wenn vorhanden), also kein extra Leerzeichen!
-    const afterMention = spaceIndex !== -1 ? afterAt.substring(spaceIndex) : '';
 
-    setNewNote(`${beforeAt}@${member.displayName}${afterMention}`);
+    // Text nach @ und dem aktuellen Suchbegriff
+    // mentionSearch enthält das, was der User nach @ getippt hat
+    const searchLength = mentionSearch.length;
+    const afterSearchTerm = newNote.substring(lastAtIndex + 1 + searchLength);
+
+    // Baue den neuen Text zusammen:
+    // - Text vor @
+    // - @ + ausgewählter Name
+    // - Rest des Textes nach dem Suchbegriff (mit Leerzeichen, falls nicht vorhanden)
+    const needsSpace = afterSearchTerm.length > 0 && !afterSearchTerm.startsWith(' ');
+    setNewNote(`${beforeAt}@${member.displayName}${needsSpace ? ' ' : ''}${afterSearchTerm.trimStart()}`);
     setShowMentions(false);
+    setMentionSearch('');
 
     // Focus textarea wieder
     textareaRef.current?.focus();
