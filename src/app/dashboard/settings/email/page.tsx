@@ -20,8 +20,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
-import { RoutingRuleEditor } from '@/components/email/RoutingRuleEditor';
 import { SignatureList } from '@/components/email/SignatureList';
+import { toastService } from '@/lib/utils/toast';
 import {
   PlusIcon,
   PencilIcon,
@@ -30,16 +30,10 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   UserGroupIcon,
-  ArrowPathIcon,
   EllipsisVerticalIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
-  ClockIcon,
-  FunnelIcon,
   DocumentTextIcon,
-  PencilSquareIcon,
-  DocumentDuplicateIcon,
-  ChartBarIcon
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
@@ -48,15 +42,6 @@ import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 
-// Toast notification helper
-const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-  // Temporäre Lösung ohne react-hot-toast
-  if (type === 'error') {
-    alert(`Fehler: ${message}`);
-  } else {
-    // In Production würde hier eine Toast-Library verwendet
-  }
-};
 
 type TabType = 'addresses' | 'templates' | 'signatures';
 
@@ -76,7 +61,6 @@ export default function EmailSettingsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showRoutingModal, setShowRoutingModal] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<EmailAddress | null>(null);
   
   // NEU: State für echte Team-Mitglieder
@@ -133,7 +117,7 @@ export default function EmailSettingsPage() {
       const activeMembers = members.filter(m => m.status === 'active');
       setTeamMembers(activeMembers);
     } catch (error) {
-      showToast('Fehler beim Laden der Team-Mitglieder', 'error');
+      toastService.error('Fehler beim Laden der Team-Mitglieder');
       
       // Fallback: Erstelle das erste Team-Mitglied (Owner) wenn keines existiert
       if (user) {
@@ -214,7 +198,7 @@ export default function EmailSettingsPage() {
         stack: errorObj?.stack,
         name: errorObj?.name
       });
-      showToast('Fehler beim Laden der Domains', 'error');
+      toastService.error('Fehler beim Laden der Domains');
     } finally {
       console.log('🔍 DEBUG loadDomains: Finally block - setting loadingDomains to false');
       setLoadingDomains(false);
@@ -240,7 +224,7 @@ export default function EmailSettingsPage() {
       setEmailAddresses(addresses);
     } catch (error) {
       console.error('❌ Error loading email addresses:', error);
-      showToast('Fehler beim Laden der E-Mail-Adressen', 'error');
+      toastService.error('Fehler beim Laden der E-Mail-Adressen');
     } finally {
       setLoading(false);
     }
@@ -253,7 +237,7 @@ export default function EmailSettingsPage() {
       const sigs = await emailSignatureService.getByOrganization(organizationId);
       setSignatures(sigs);
     } catch (error) {
-      showToast('Fehler beim Laden der Signaturen', 'error');
+      toastService.error('Fehler beim Laden der Signaturen');
     } finally {
       setLoadingSignatures(false);
     }
@@ -301,51 +285,16 @@ export default function EmailSettingsPage() {
     setShowDeleteModal(true);
   };
 
-  const handleRouting = (address: EmailAddress) => {
-    setSelectedAddress(address);
-    setShowRoutingModal(true);
-  };
-
-  const handleRoutingUpdate = () => {
-    // Reload email addresses after routing rules update
-    loadEmailAddresses();
-  };
-
-  const handleDuplicate = async (address: EmailAddress) => {
-    try {
-      const duplicateData: EmailAddressFormData = {
-        localPart: `${address.localPart}-kopie`,
-        domainId: address.domainId,
-        displayName: `${address.displayName} (Kopie)`,
-        aliasType: address.aliasType || 'specific',
-        isActive: false, // Kopie ist standardmäßig inaktiv
-        inboxEnabled: address.inboxEnabled,
-        assignedUserIds: address.assignedUserIds,
-        clientName: address.clientName || '',
-        aiEnabled: address.aiSettings?.enabled || false,
-        autoSuggest: address.aiSettings?.autoSuggest || false,
-        autoCategorize: address.aiSettings?.autoCategorize || false,
-        preferredTone: address.aiSettings?.preferredTone || 'formal'
-      };
-      
-      await emailAddressService.create(duplicateData, organizationId, user?.uid || '');
-      showToast('E-Mail-Adresse erfolgreich dupliziert');
-      await loadEmailAddresses();
-    } catch (error) {
-      showToast('Fehler beim Duplizieren der E-Mail-Adresse', 'error');
-    }
-  };
-
   const handleSaveEmailAddress = async () => {
     try {
       setSaving(true);
       
       if (showAddModal) {
         await emailAddressService.create(formData, organizationId, user?.uid || '');
-        showToast('E-Mail-Adresse erfolgreich erstellt');
+        toastService.success('E-Mail-Adresse erfolgreich erstellt');
       } else if (showEditModal && selectedAddress?.id) {
         await emailAddressService.update(selectedAddress.id, formData, user?.uid || '');
-        showToast('E-Mail-Adresse erfolgreich aktualisiert');
+        toastService.success('E-Mail-Adresse erfolgreich aktualisiert');
       }
       
       await loadEmailAddresses();
@@ -354,9 +303,9 @@ export default function EmailSettingsPage() {
       setSelectedAddress(null);
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, 'error');
+        toastService.error(error.message);
       } else {
-        showToast('Fehler beim Speichern der E-Mail-Adresse', 'error');
+        toastService.error('Fehler beim Speichern der E-Mail-Adresse');
       }
     } finally {
       setSaving(false);
@@ -365,19 +314,19 @@ export default function EmailSettingsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedAddress?.id) return;
-    
+
     try {
       setSaving(true);
       await emailAddressService.delete(selectedAddress.id, user?.uid || '');
-      showToast('E-Mail-Adresse erfolgreich gelöscht');
+      toastService.success('E-Mail-Adresse erfolgreich gelöscht');
       await loadEmailAddresses();
       setShowDeleteModal(false);
       setSelectedAddress(null);
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, 'error');
+        toastService.error(error.message);
       } else {
-        showToast('Fehler beim Löschen der E-Mail-Adresse', 'error');
+        toastService.error('Fehler beim Löschen der E-Mail-Adresse');
       }
     } finally {
       setSaving(false);
@@ -386,13 +335,13 @@ export default function EmailSettingsPage() {
 
   const handleSetAsDefault = async (address: EmailAddress) => {
     if (!address.id) return;
-    
+
     try {
       await emailAddressService.setAsDefault(address.id, organizationId);
-      showToast('E-Mail-Adresse als Standard gesetzt');
+      toastService.success('E-Mail-Adresse als Standard gesetzt');
       await loadEmailAddresses();
     } catch (error) {
-      showToast('Fehler beim Setzen als Standard', 'error');
+      toastService.error('Fehler beim Setzen als Standard');
     }
   };
 
@@ -401,10 +350,10 @@ export default function EmailSettingsPage() {
     try {
       if (id) {
         await emailSignatureService.update(id, signature, user?.uid || '');
-        showToast('Signatur erfolgreich aktualisiert');
+        toastService.success('Signatur erfolgreich aktualisiert');
       } else {
         await emailSignatureService.create(signature, organizationId, user?.uid || '');
-        showToast('Signatur erfolgreich erstellt');
+        toastService.success('Signatur erfolgreich erstellt');
       }
       await loadSignatures();
     } catch (error) {
@@ -415,13 +364,13 @@ export default function EmailSettingsPage() {
   const handleDeleteSignature = async (id: string) => {
     try {
       await emailSignatureService.delete(id);
-      showToast('Signatur erfolgreich gelöscht');
+      toastService.success('Signatur erfolgreich gelöscht');
       await loadSignatures();
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, 'error');
+        toastService.error(error.message);
       } else {
-        showToast('Fehler beim Löschen der Signatur', 'error');
+        toastService.error('Fehler beim Löschen der Signatur');
       }
     }
   };
@@ -429,21 +378,19 @@ export default function EmailSettingsPage() {
   const handleDuplicateSignature = async (id: string) => {
     try {
       await emailSignatureService.duplicate(id, user?.uid || '');
-      showToast('Signatur erfolgreich dupliziert');
+      toastService.success('Signatur erfolgreich dupliziert');
       await loadSignatures();
     } catch (error) {
-      showToast('Fehler beim Duplizieren der Signatur', 'error');
+      toastService.error('Fehler beim Duplizieren der Signatur');
     }
   };
 
   const getStatusIcon = (address: EmailAddress) => {
-    if (!address.isActive) {
-      return <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />;
-    }
-    if (address.lastUsedAt && new Date(address.lastUsedAt as any) > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+    // Zeige grünes Icon wenn aktiv, sonst grau
+    if (address.isActive) {
       return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
     }
-    return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+    return <CheckCircleIcon className="h-5 w-5 text-gray-400" />;
   };
 
   const tabs = [
@@ -457,13 +404,6 @@ export default function EmailSettingsPage() {
     id: addr.id!,
     email: addr.email,
     displayName: addr.displayName
-  }));
-
-  // NEU: Konvertiere TeamMember zu Format für RoutingRuleEditor
-  const teamMembersForRouting = teamMembers.map(member => ({
-    id: member.userId, // Verwende userId statt id
-    name: member.displayName,
-    email: member.email
   }));
 
   return (
@@ -512,70 +452,6 @@ export default function EmailSettingsPage() {
         {/* Tab Content */}
         {activeTab === 'addresses' && (
           <>
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                      {emailAddresses.filter(a => a.isActive).length}
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      Aktive Adressen
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <SparklesIcon className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                      {emailAddresses.filter(a => a.aiSettings?.enabled).length}
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      Mit KI
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <ArrowPathIcon className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                      {emailAddresses.reduce((sum, a) => sum + (a.routingRules?.length || 0), 0)}
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      Routing-Regeln
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <UserGroupIcon className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                      {loadingTeam ? '...' : teamMembers.length}
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      Team-Mitglieder
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Action Button */}
             <div className="flex justify-end mb-4">
               <Button onClick={handleAdd} className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
@@ -589,22 +465,16 @@ export default function EmailSettingsPage() {
               {/* Header */}
               <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                 <div className="flex items-center">
-                  <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     E-Mail-Adresse
                   </div>
                   <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Status
                   </div>
-                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Team
                   </div>
-                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Client
-                  </div>
-                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Features
-                  </div>
-                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+                  <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
                     Aktionen
                   </div>
                 </div>
@@ -625,7 +495,7 @@ export default function EmailSettingsPage() {
                     <div key={address.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                       <div className="flex items-center">
                         {/* Email Address */}
-                        <div className="w-[25%] min-w-0">
+                        <div className="w-[40%] min-w-0">
                           <div>
                             <p className="font-medium text-sm text-zinc-900 dark:text-white truncate">{address.email}</p>
                             <p className="text-xs text-gray-500 truncate">{address.displayName}</p>
@@ -633,9 +503,6 @@ export default function EmailSettingsPage() {
                               <p className="text-xs text-gray-500">
                                 {address.aliasType === 'catch-all' ? 'Catch-All' : `Pattern: ${address.aliasPattern}`}
                               </p>
-                            )}
-                            {address.domain && !address.domain.verified && (
-                              <p className="text-xs text-yellow-600">Domain wird verifiziert</p>
                             )}
                           </div>
                         </div>
@@ -653,7 +520,7 @@ export default function EmailSettingsPage() {
                         </div>
 
                         {/* Team */}
-                        <div className="w-[20%]">
+                        <div className="w-[35%]">
                           <div className="flex -space-x-2">
                             {address.availableToAll ? (
                               <Badge color="sky" className="whitespace-nowrap">
@@ -697,43 +564,8 @@ export default function EmailSettingsPage() {
                           </div>
                         </div>
 
-                        {/* Client */}
-                        <div className="w-[15%]">
-                          {address.clientName ? (
-                            <Badge color="purple" className="whitespace-nowrap">
-                              {address.clientName}
-                            </Badge>
-                          ) : (
-                            <span className="text-gray-400 text-sm">-</span>
-                          )}
-                        </div>
-
-                        {/* Features */}
-                        <div className="w-[15%]">
-                          <div className="flex gap-1">
-                            {address.inboxEnabled && (
-                              <Badge color="zinc" className="whitespace-nowrap">
-                                <EnvelopeIcon className="h-3 w-3 mr-1" />
-                                Inbox
-                              </Badge>
-                            )}
-                            {address.aiSettings?.enabled && (
-                              <Badge color="zinc" className="whitespace-nowrap">
-                                <SparklesIcon className="h-3 w-3 mr-1" />
-                                KI
-                              </Badge>
-                            )}
-                            {address.routingRules && address.routingRules.length > 0 && (
-                              <Badge color="zinc" className="whitespace-nowrap">
-                                <ArrowPathIcon className="h-3 w-3 mr-1" />
-                                {address.routingRules.length}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
                         {/* Actions */}
-                        <div className="flex-1 flex justify-end">
+                        <div className="w-[10%] flex justify-end">
                           <Dropdown>
                             <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
                               <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -745,21 +577,13 @@ export default function EmailSettingsPage() {
                                   Als Standard setzen
                                 </DropdownItem>
                               )}
-                              <DropdownItem onClick={() => handleRouting(address)}>
-                                <FunnelIcon className="h-4 w-4" />
-                                Routing-Regeln
-                              </DropdownItem>
                               <DropdownItem onClick={() => handleEdit(address)}>
                                 <PencilIcon className="h-4 w-4" />
                                 Bearbeiten
                               </DropdownItem>
-                              <DropdownItem onClick={() => handleDuplicate(address)}>
-                                <DocumentDuplicateIcon className="h-4 w-4" />
-                                Duplizieren
-                              </DropdownItem>
                               <DropdownDivider />
-                              <DropdownItem 
-                                onClick={() => handleDelete(address)} 
+                              <DropdownItem
+                                onClick={() => handleDelete(address)}
                                 disabled={address.isDefault}
                               >
                                 <TrashIcon className="h-4 w-4" />
@@ -1093,17 +917,6 @@ export default function EmailSettingsPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Routing Rules Modal - Using new RoutingRuleEditor */}
-      {showRoutingModal && selectedAddress && (
-        <RoutingRuleEditor
-          emailAddress={selectedAddress}
-          isOpen={showRoutingModal}
-          onClose={() => setShowRoutingModal(false)}
-          onUpdate={handleRoutingUpdate}
-          teamMembers={teamMembersForRouting}
-        />
-      )}
     </div>
   );
 }
