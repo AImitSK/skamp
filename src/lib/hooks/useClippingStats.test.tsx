@@ -189,16 +189,16 @@ describe('useClippingStats Hook', () => {
 
       expect(result.current.outletDistribution).toHaveLength(2); // online, print
 
-      const online = result.current.outletDistribution.find((d) => d.name === 'online');
+      const online = result.current.outletDistribution.find((d) => d.name === 'Online');
       expect(online).toMatchObject({
-        name: 'online',
+        name: 'Online',
         count: 2,
         reach: 25000,
       });
 
-      const print = result.current.outletDistribution.find((d) => d.name === 'print');
+      const print = result.current.outletDistribution.find((d) => d.name === 'Print');
       expect(print).toMatchObject({
-        name: 'print',
+        name: 'Print',
         count: 1,
         reach: 50000,
       });

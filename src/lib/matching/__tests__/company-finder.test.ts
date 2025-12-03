@@ -1,26 +1,19 @@
 /**
  * Tests für Company Finder
  *
- * Testet das komplette Company-Matching System mit 6-Stufen-Prozess
+ * Testet das komplette Company-Matching System mit findOrCreateCompany
  */
 
 import { MatchingCandidateVariant } from '../../../types/matching';
-
-// Mock-Funktion für die veraltete findCompanyBySignals
-const findCompanyBySignals = async (variants: MatchingCandidateVariant[], orgId: string): Promise<any> => {
-  return null;
-};
+import { findOrCreateCompany, CompanyMatchResult } from '../company-finder';
 
 // Mock Dependencies
 jest.mock('../database-analyzer', () => ({
-  analyzeCompanyDatabase: jest.fn(),
   analyzeDatabaseSignals: jest.fn()
 }));
 
 jest.mock('../string-similarity', () => ({
-  matchCompanyNames: jest.fn(),
-  extractDomain: jest.fn(),
-  domainsMatch: jest.fn()
+  findBestCompanyMatches: jest.fn()
 }));
 
 jest.mock('firebase/firestore', () => ({
@@ -35,6 +28,12 @@ jest.mock('@/lib/firebase/config', () => ({
   db: {}
 }));
 
+jest.mock('@/lib/firebase/crm-service-enhanced', () => ({
+  companiesEnhancedService: {
+    create: jest.fn()
+  }
+}));
+
 describe('Company Finder', () => {
   const mockVariants: MatchingCandidateVariant[] = [
     {
@@ -46,18 +45,6 @@ describe('Company Finder', () => {
         displayName: 'Max Mustermann',
         companyName: 'Der Spiegel Verlag',
         emails: [{ email: 'max@spiegel.de', type: 'business', isPrimary: true }],
-        hasMediaProfile: true
-      }
-    },
-    {
-      organizationId: 'org2',
-      organizationName: 'Org 2',
-      contactId: 'contact2',
-      contactData: {
-        name: { firstName: 'Max', lastName: 'Mustermann' },
-        displayName: 'Max Mustermann',
-        companyName: 'Spiegel Verlag GmbH',
-        emails: [{ email: 'max.mustermann@spiegel.de', type: 'business', isPrimary: true }],
         hasMediaProfile: true
       }
     }
@@ -75,218 +62,308 @@ describe('Company Finder', () => {
       name: 'BILD Zeitung',
       website: 'https://bild.de',
       isReference: false
-    },
-    {
-      id: 'ref-company',
-      name: 'Premium Reference',
-      isReference: true
     }
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Suppress console.logs in tests
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  describe('Stufe 1: Exakte Company-ID Links', () => {
-    it('should find company by exact ID link', async () => {
-      const variantsWithCompanyId: MatchingCandidateVariant[] = [
-        {
-          ...mockVariants[0],
-          contactData: {
-            ...mockVariants[0].contactData,
-            companyId: 'company1'
-          }
-        }
-      ];
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
+  describe('Database Analysis Match', () => {
+    it('should find company via database analysis with high confidence', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
       const { getDocs } = require('firebase/firestore');
+
+      // Mock companies in database
       getDocs.mockResolvedValueOnce({
-        docs: [{
+        docs: mockCompanies.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
+      });
+
+      // Mock database analysis result
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: { id: 'company1', name: 'Der Spiegel Verlag' },
+        confidence: 0.95,
+        evidence: { emailDomainMatches: 5, websiteMatches: 3 }
+      });
+
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      expect(result.companyId).toBe('company1');
+      expect(result.companyName).toBe('Der Spiegel Verlag');
+      expect(result.method).toBe('database_analysis');
+      expect(result.confidence).toBe('high');
+      expect(result.wasCreated).toBe(false);
+    });
+
+    it('should use medium confidence for scores between 0.7 and 0.9', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { getDocs } = require('firebase/firestore');
+
+      getDocs.mockResolvedValueOnce({
+        docs: mockCompanies.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
+      });
+
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: { id: 'company1', name: 'Der Spiegel Verlag' },
+        confidence: 0.75,
+        evidence: {}
+      });
+
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      expect(result.confidence).toBe('medium');
+      expect(result.method).toBe('database_analysis');
+    });
+  });
+
+  describe('Fuzzy Name Matching', () => {
+    it('should find company via fuzzy match when DB analysis fails', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { findBestCompanyMatches } = require('../string-similarity');
+      const { getDocs } = require('firebase/firestore');
+
+      // Mock companies
+      getDocs.mockResolvedValueOnce({
+        docs: mockCompanies.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
+      });
+
+      // Mock low DB analysis confidence
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
+      });
+
+      // Mock fuzzy match success
+      findBestCompanyMatches.mockReturnValue([
+        {
           id: 'company1',
-          data: () => mockCompanies[0]
-        }]
-      });
+          name: 'Der Spiegel Verlag',
+          score: 88
+        }
+      ]);
 
-      const result = await findCompanyBySignals(variantsWithCompanyId, 'test-org');
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
 
-      expect(result).toBeDefined();
-      expect(result?.companyId).toBe('company1');
-      expect(result?.matchType).toBe('direct_id');
-      expect(result?.confidence).toBe(100);
+      expect(result.companyId).toBe('company1');
+      expect(result.method).toBe('fuzzy_match');
+      expect(result.confidence).toBe('medium');
+      expect(result.wasCreated).toBe(false);
     });
 
-    it('should ignore reference companies even with direct ID', async () => {
-      const variantsWithRefId: MatchingCandidateVariant[] = [
+    it('should use high confidence for fuzzy match >= 90%', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { findBestCompanyMatches } = require('../string-similarity');
+      const { getDocs } = require('firebase/firestore');
+
+      getDocs.mockResolvedValueOnce({
+        docs: mockCompanies.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
+      });
+
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
+      });
+
+      findBestCompanyMatches.mockReturnValue([
         {
-          ...mockVariants[0],
-          contactData: {
-            ...mockVariants[0].contactData,
-            companyId: 'ref-company'
-          }
+          id: 'company1',
+          name: 'Der Spiegel Verlag',
+          score: 92
+        }
+      ]);
+
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      expect(result.confidence).toBe('high');
+    });
+  });
+
+  describe('Exact Name Match', () => {
+    it('should find company via exact name match', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { findBestCompanyMatches } = require('../string-similarity');
+      const { getDocs } = require('firebase/firestore');
+
+      getDocs.mockResolvedValueOnce({
+        docs: mockCompanies.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
+      });
+
+      // Mock failed previous stages
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
+      });
+
+      findBestCompanyMatches.mockReturnValue([]);
+
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      expect(result.companyId).toBe('company1');
+      expect(result.companyName).toBe('Der Spiegel Verlag');
+      expect(result.method).toBe('exact_match');
+      expect(result.confidence).toBe('high');
+      expect(result.wasCreated).toBe(false);
+    });
+  });
+
+  describe('Create New Company', () => {
+    it('should create new company when no match found', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { findBestCompanyMatches } = require('../string-similarity');
+      const { getDocs } = require('firebase/firestore');
+      const { companiesEnhancedService } = require('@/lib/firebase/crm-service-enhanced');
+
+      // Mock no existing companies
+      getDocs.mockResolvedValueOnce({ docs: [] });
+
+      // Mock service create
+      companiesEnhancedService.create.mockResolvedValue('new-company-id');
+
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      expect(result.companyId).toBe('new-company-id');
+      expect(result.companyName).toBe('Der Spiegel Verlag');
+      expect(result.method).toBe('created_new');
+      expect(result.confidence).toBe('low');
+      expect(result.wasCreated).toBe(true);
+
+      expect(companiesEnhancedService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Der Spiegel Verlag',
+          organizationId: 'org1',
+          isReference: false
+        }),
+        expect.objectContaining({
+          organizationId: 'org1',
+          userId: 'user1',
+          autoGlobalMode: false
+        })
+      );
+    });
+
+    it('should handle autoGlobalMode correctly', async () => {
+      const { getDocs } = require('firebase/firestore');
+      const { companiesEnhancedService } = require('@/lib/firebase/crm-service-enhanced');
+
+      getDocs.mockResolvedValueOnce({ docs: [] });
+      companiesEnhancedService.create.mockResolvedValue('new-company-id');
+
+      await findOrCreateCompany(mockVariants, 'org1', 'user1', true);
+
+      expect(companiesEnhancedService.create).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          autoGlobalMode: true
+        })
+      );
+    });
+  });
+
+  describe('Reference Company Filtering', () => {
+    it('should exclude reference companies from matching', async () => {
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      const { getDocs } = require('firebase/firestore');
+
+      const companiesWithRef = [
+        ...mockCompanies,
+        {
+          id: 'ref-company',
+          name: 'Premium Reference',
+          isReference: true
         }
       ];
 
-      const { getDocs } = require('firebase/firestore');
       getDocs.mockResolvedValueOnce({
-        docs: [{
-          id: 'ref-company',
-          data: () => mockCompanies[2] // Reference company
-        }]
-      });
-
-      const result = await findCompanyBySignals(variantsWithRefId, 'test-org');
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('Stufe 2: Database Analysis', () => {
-    it('should use database analysis when available', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-
-      analyzeCompanyDatabase.mockResolvedValue({
-        companyId: 'company1',
-        companyName: 'Der Spiegel Verlag',
-        matchType: 'database_analysis',
-        confidence: 85
-      });
-
-      // Mock empty direct ID search
-      const { getDocs } = require('firebase/firestore');
-      getDocs.mockResolvedValue({ docs: [] });
-
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
-
-      expect(result).toBeDefined();
-      expect(result?.companyId).toBe('company1');
-      expect(result?.matchType).toBe('database_analysis');
-      expect(result?.confidence).toBe(85);
-    });
-  });
-
-  describe('Stufe 3: Exakte Namens-Matches', () => {
-    it('should find company by exact name match', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      const { matchCompanyNames } = require('../string-similarity');
-      const { getDocs } = require('firebase/firestore');
-
-      // Mock empty previous stages
-      analyzeCompanyDatabase.mockResolvedValue(null);
-      getDocs.mockResolvedValue({ docs: [] });
-
-      // Mock company search
-      getDocs.mockResolvedValueOnce({
-        docs: mockCompanies.filter(c => !c.isReference).map(company => ({
+        docs: companiesWithRef.map(company => ({
           id: company.id,
           data: () => company
         }))
       });
 
-      // Mock exact match
-      matchCompanyNames.mockReturnValue({ match: true, score: 100 });
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
+      });
 
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
+      await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
 
-      expect(result).toBeDefined();
-      expect(result?.matchType).toBe('exact_name');
-      expect(result?.confidence).toBe(100);
+      // Verify analyzeDatabaseSignals was called with filtered companies (no references)
+      expect(analyzeDatabaseSignals).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'company1' }),
+          expect.objectContaining({ id: 'company2' })
+        ]),
+        'org1'
+      );
+
+      // Should not contain reference company
+      const callArgs = analyzeDatabaseSignals.mock.calls[0][1];
+      expect(callArgs.find((c: any) => c.id === 'ref-company')).toBeUndefined();
     });
-  });
 
-  describe('Stufe 4: Fuzzy Name Matching', () => {
-    it('should find company by fuzzy name match', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      const { matchCompanyNames } = require('../string-similarity');
+    it('should exclude companies with ref- prefix in ID', async () => {
       const { getDocs } = require('firebase/firestore');
 
-      // Mock empty previous stages
-      analyzeCompanyDatabase.mockResolvedValue(null);
-      getDocs.mockResolvedValue({ docs: [] });
+      const companiesWithRefPattern = [
+        ...mockCompanies,
+        {
+          id: 'ref-123',
+          name: 'Company with ref ID',
+          isReference: false // not marked as reference, but has ref- pattern
+        }
+      ];
 
-      // Mock company search
       getDocs.mockResolvedValueOnce({
-        docs: mockCompanies.filter(c => !c.isReference).map(company => ({
+        docs: companiesWithRefPattern.map(company => ({
           id: company.id,
           data: () => company
         }))
       });
 
-      // Mock fuzzy match (first call exact = false, second call fuzzy = true)
-      matchCompanyNames
-        .mockReturnValueOnce({ match: false, score: 50 }) // Not exact
-        .mockReturnValueOnce({ match: true, score: 87 }); // Fuzzy match
-
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
-
-      expect(result).toBeDefined();
-      expect(result?.matchType).toBe('fuzzy_name');
-      expect(result?.confidence).toBe(87);
-    });
-  });
-
-  describe('Stufe 5: Domain Matching', () => {
-    it('should find company by domain match', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      const { matchCompanyNames, extractDomain, domainsMatch } = require('../string-similarity');
-      const { getDocs } = require('firebase/firestore');
-
-      // Mock empty previous stages
-      analyzeCompanyDatabase.mockResolvedValue(null);
-      getDocs.mockResolvedValue({ docs: [] });
-
-      // Mock company search
-      getDocs.mockResolvedValueOnce({
-        docs: mockCompanies.filter(c => !c.isReference).map(company => ({
-          id: company.id,
-          data: () => company
-        }))
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
       });
 
-      // Mock no name matches
-      matchCompanyNames.mockReturnValue({ match: false, score: 30 });
+      await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
 
-      // Mock domain extraction and matching
-      extractDomain.mockReturnValue('spiegel.de');
-      domainsMatch.mockReturnValue(true);
-
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
-
-      expect(result).toBeDefined();
-      expect(result?.matchType).toBe('domain');
-      expect(result?.confidence).toBe(95);
-    });
-  });
-
-  describe('Stufe 6: Neue Company erstellen', () => {
-    it('should return null when no matches found (letting caller create new)', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      const { matchCompanyNames, extractDomain, domainsMatch } = require('../string-similarity');
-      const { getDocs } = require('firebase/firestore');
-
-      // Mock empty all stages
-      analyzeCompanyDatabase.mockResolvedValue(null);
-      getDocs.mockResolvedValue({ docs: [] });
-
-      getDocs.mockResolvedValueOnce({
-        docs: mockCompanies.filter(c => !c.isReference).map(company => ({
-          id: company.id,
-          data: () => company
-        }))
-      });
-
-      // Mock no matches
-      matchCompanyNames.mockReturnValue({ match: false, score: 20 });
-      extractDomain.mockReturnValue('newcompany.com');
-      domainsMatch.mockReturnValue(false);
-
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
-
-      expect(result).toBeNull();
+      const callArgs = analyzeDatabaseSignals.mock.calls[0][1];
+      expect(callArgs.find((c: any) => c.id === 'ref-123')).toBeUndefined();
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle variants without company data', async () => {
+    it('should handle variants without company name', async () => {
       const variantsNoCompany: MatchingCandidateVariant[] = [
         {
           organizationId: 'org1',
@@ -301,63 +378,100 @@ describe('Company Finder', () => {
         }
       ];
 
-      const result = await findCompanyBySignals(variantsNoCompany, 'test-org');
+      const { getDocs } = require('firebase/firestore');
+      getDocs.mockResolvedValueOnce({ docs: [] });
 
-      expect(result).toBeNull();
+      const result = await findOrCreateCompany(variantsNoCompany, 'org1', 'user1', false);
+
+      expect(result.companyId).toBeNull();
+      expect(result.companyName).toBeNull();
+      expect(result.confidence).toBe('none');
+      expect(result.method).toBe('none');
+      expect(result.wasCreated).toBe(false);
     });
 
     it('should handle firestore errors gracefully', async () => {
       const { getDocs } = require('firebase/firestore');
       getDocs.mockRejectedValue(new Error('Firestore error'));
 
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
+      const { companiesEnhancedService } = require('@/lib/firebase/crm-service-enhanced');
+      companiesEnhancedService.create.mockResolvedValue('new-company-id');
 
-      expect(result).toBeNull();
+      const result = await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
+
+      // Should fallback to creating new company
+      expect(result.wasCreated).toBe(true);
+      expect(result.method).toBe('created_new');
     });
 
-    it('should prioritize highest confidence match', async () => {
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      const { matchCompanyNames } = require('../string-similarity');
+    it('should handle deleted companies correctly', async () => {
       const { getDocs } = require('firebase/firestore');
 
-      // Mock database analysis with lower confidence
-      analyzeCompanyDatabase.mockResolvedValue({
-        companyId: 'company2',
-        companyName: 'BILD Zeitung',
-        matchType: 'database_analysis',
-        confidence: 75
-      });
+      const companiesWithDeleted = [
+        ...mockCompanies,
+        {
+          id: 'deleted-company',
+          name: 'Deleted Company',
+          deletedAt: new Date(),
+          isReference: false
+        }
+      ];
 
-      // Mock direct ID search (empty)
-      getDocs.mockResolvedValue({ docs: [] });
-
-      // Mock exact name match with higher confidence
       getDocs.mockResolvedValueOnce({
-        docs: [{
-          id: 'company1',
-          data: () => mockCompanies[0]
-        }]
+        docs: companiesWithDeleted.map(company => ({
+          id: company.id,
+          data: () => company
+        }))
       });
 
-      matchCompanyNames.mockReturnValue({ match: true, score: 100 });
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
+      });
 
-      const result = await findCompanyBySignals(mockVariants, 'test-org');
+      await findOrCreateCompany(mockVariants, 'org1', 'user1', false);
 
-      // Should prefer exact name match (100%) over database analysis (75%)
-      expect(result?.matchType).toBe('exact_name');
-      expect(result?.confidence).toBe(100);
+      const callArgs = analyzeDatabaseSignals.mock.calls[0][1];
+      expect(callArgs.find((c: any) => c.id === 'deleted-company')).toBeUndefined();
     });
+  });
 
-    it('should exclude reference companies from all matching stages', async () => {
-      const { matchCompanyNames } = require('../string-similarity');
+  describe('Signal Extraction', () => {
+    it('should extract signals from multiple variants', async () => {
+      const multiVariants: MatchingCandidateVariant[] = [
+        {
+          organizationId: 'org1',
+          organizationName: 'Org 1',
+          contactId: 'contact1',
+          contactData: {
+            name: { firstName: 'Max', lastName: 'Mustermann' },
+            displayName: 'Max Mustermann',
+            companyName: 'Der Spiegel Verlag',
+            emails: [{ email: 'max@spiegel.de', type: 'business', isPrimary: true }],
+            website: 'https://spiegel.de',
+            companyId: 'existing-company',
+            hasMediaProfile: true
+          }
+        },
+        {
+          organizationId: 'org2',
+          organizationName: 'Org 2',
+          contactId: 'contact2',
+          contactData: {
+            name: { firstName: 'Max', lastName: 'Mustermann' },
+            displayName: 'Max Mustermann',
+            companyName: 'Spiegel Verlag GmbH',
+            emails: [{ email: 'max.mustermann@spiegel.de', type: 'business', isPrimary: true }],
+            hasMediaProfile: true
+          }
+        }
+      ];
+
       const { getDocs } = require('firebase/firestore');
+      const { analyzeDatabaseSignals } = require('../database-analyzer');
 
-      // Mock empty previous stages
-      const { analyzeCompanyDatabase } = require('../database-analyzer');
-      analyzeCompanyDatabase.mockResolvedValue(null);
-      getDocs.mockResolvedValue({ docs: [] });
-
-      // Mock company search including reference
       getDocs.mockResolvedValueOnce({
         docs: mockCompanies.map(company => ({
           id: company.id,
@@ -365,28 +479,29 @@ describe('Company Finder', () => {
         }))
       });
 
-      // Mock match with reference company name
-      matchCompanyNames.mockImplementation((name1: string, name2: string) => {
-        if (name2 === 'Premium Reference') {
-          return { match: true, score: 100 };
-        }
-        return { match: false, score: 0 };
+      analyzeDatabaseSignals.mockResolvedValue({
+        topMatch: null,
+        confidence: 0.5,
+        evidence: {}
       });
 
-      const variantsWithRefName: MatchingCandidateVariant[] = [
-        {
-          ...mockVariants[0],
-          contactData: {
-            ...mockVariants[0].contactData,
-            companyName: 'Premium Reference'
-          }
-        }
-      ];
+      await findOrCreateCompany(multiVariants, 'org1', 'user1', false);
 
-      const result = await findCompanyBySignals(variantsWithRefName, 'test-org');
+      // Verify signals were extracted and passed to analyzer
+      const callArgs = analyzeDatabaseSignals.mock.calls[0][0];
 
-      // Should not match reference company
-      expect(result).toBeNull();
+      // Should have extracted email domains
+      expect(callArgs.emailDomains).toContain('spiegel.de');
+
+      // Should have extracted websites
+      expect(callArgs.websites).toContain('spiegel.de');
+
+      // Should have extracted company names
+      expect(callArgs.companyNames).toContain('Der Spiegel Verlag');
+      expect(callArgs.companyNames).toContain('Spiegel Verlag GmbH');
+
+      // Should have extracted company IDs
+      expect(callArgs.companyIds).toContain('existing-company');
     });
   });
 });

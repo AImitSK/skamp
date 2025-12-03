@@ -1,24 +1,45 @@
 // src/__tests__/profile/user-service.test.ts
-import { userService } from '@/lib/firebase/user-service';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { updateProfile, User } from 'firebase/auth';
 
-// Mock Firebase
+// Mock Firebase BEFORE imports
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+  getApp: jest.fn(() => ({})),
+  getApps: jest.fn(() => [{}])
+}));
+
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(() => ({})),
+  updateProfile: jest.fn()
+}));
+
 jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(() => ({})),
   doc: jest.fn(),
   setDoc: jest.fn(),
   getDoc: jest.fn(),
   updateDoc: jest.fn(),
-  serverTimestamp: jest.fn(() => new Date())
+  serverTimestamp: jest.fn(() => new Date()),
+  collection: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  getDocs: jest.fn()
 }));
 
-jest.mock('firebase/auth', () => ({
-  updateProfile: jest.fn()
+jest.mock('firebase/storage', () => ({
+  getStorage: jest.fn(() => ({}))
+}));
+
+jest.mock('firebase/functions', () => ({
+  getFunctions: jest.fn(() => ({}))
 }));
 
 jest.mock('@/lib/firebase/config', () => ({
-  db: {}
+  firebaseConfig: {}
 }));
+
+import { userService } from '@/lib/firebase/user-service';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateProfile, User } from 'firebase/auth';
 
 describe('UserService', () => {
   const mockUser: Partial<User> = {
@@ -136,7 +157,7 @@ describe('UserService', () => {
       const mockDocRef = { id: 'test-user-123' };
       (doc as jest.Mock).mockReturnValue(mockDocRef);
       (updateProfile as jest.Mock).mockResolvedValue(undefined);
-      (updateDoc as jest.Mock).mockResolvedValue(undefined);
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
 
       await userService.updateProfile(mockUser as User, {
         displayName: 'New Name'
@@ -146,18 +167,19 @@ describe('UserService', () => {
         displayName: 'New Name'
       });
 
-      expect(updateDoc).toHaveBeenCalledWith(
+      expect(setDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
           displayName: 'New Name'
-        })
+        }),
+        { merge: true }
       );
     });
 
     it('sollte phoneNumber nur in Firestore aktualisieren', async () => {
       const mockDocRef = { id: 'test-user-123' };
       (doc as jest.Mock).mockReturnValue(mockDocRef);
-      (updateDoc as jest.Mock).mockResolvedValue(undefined);
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
 
       await userService.updateProfile(mockUser as User, {
         phoneNumber: '+49987654321'
@@ -165,11 +187,12 @@ describe('UserService', () => {
 
       expect(updateProfile).not.toHaveBeenCalled();
 
-      expect(updateDoc).toHaveBeenCalledWith(
+      expect(setDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
           phoneNumber: '+49987654321'
-        })
+        }),
+        { merge: true }
       );
     });
 
@@ -245,15 +268,16 @@ describe('UserService', () => {
     it('sollte ein Profil als gelöscht markieren (soft delete)', async () => {
       const mockDocRef = { id: 'test-user-123' };
       (doc as jest.Mock).mockReturnValue(mockDocRef);
-      (updateDoc as jest.Mock).mockResolvedValue(undefined);
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
 
       await userService.deleteProfile('test-user-123');
 
-      expect(updateDoc).toHaveBeenCalledWith(
+      expect(setDoc).toHaveBeenCalledWith(
         mockDocRef,
         expect.objectContaining({
           deleted: true
-        })
+        }),
+        { merge: true }
       );
     });
   });

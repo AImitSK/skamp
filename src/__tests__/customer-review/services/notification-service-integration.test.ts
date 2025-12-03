@@ -413,7 +413,8 @@ describe('Notifications Service Integration Tests', () => {
     });
 
     it('sollte Settings für Organization aktualisieren', async () => {
-      (updateDoc as jest.Mock).mockResolvedValue(undefined);
+      // Service verwendet setDoc mit merge:true statt updateDoc
+      (setDoc as jest.Mock).mockResolvedValue(undefined);
 
       const updateData = {
         approvalGranted: false,
@@ -422,14 +423,18 @@ describe('Notifications Service Integration Tests', () => {
 
       await notificationsService.updateSettings(mockUserId, updateData, mockOrganizationId);
 
-      expect(updateDoc).toHaveBeenCalledWith(
+      // Service verwendet setDoc mit merge:true
+      expect(setDoc).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           ...updateData,
+          userId: mockUserId,
+          organizationId: mockOrganizationId,
           updatedAt: expect.any(Object)
-        })
+        }),
+        { merge: true }
       );
-      
+
       expect(doc).toHaveBeenCalledWith(
         expect.anything(),
         'notification_settings',

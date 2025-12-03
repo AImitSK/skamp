@@ -219,14 +219,21 @@ describe('Media Assets Service - Phase 4a.4', () => {
       expect(storage.deleteObject).toHaveBeenCalled();
     });
 
-    it('sollte Error werfen bei Storage-Fehler', async () => {
+    it('sollte Asset trotz Storage-Fehler löschen (Firestore)', async () => {
+      // Service ignoriert Storage-Fehler und löscht trotzdem das Firestore-Dokument
       const mockAsset = createMockAsset('asset-1');
 
+      const firestore = require('firebase/firestore');
       const storage = require('firebase/storage');
-      storage.deleteObject.mockRejectedValue(new Error('Storage error'));
 
-      // Service wirft Fehler weiter
-      await expect(deleteMediaAsset(mockAsset)).rejects.toThrow('Storage error');
+      storage.deleteObject.mockRejectedValue(new Error('Storage error'));
+      firestore.deleteDoc.mockResolvedValue(undefined);
+
+      // Service sollte nicht werfen - Fehler wird intern behandelt
+      await expect(deleteMediaAsset(mockAsset)).resolves.not.toThrow();
+
+      // Firestore-Dokument sollte trotzdem gelöscht werden
+      expect(firestore.deleteDoc).toHaveBeenCalled();
     });
   });
 

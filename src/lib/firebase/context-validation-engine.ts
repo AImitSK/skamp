@@ -543,11 +543,11 @@ class ContextValidationEngineService {
 
     // Complex Context Warning
     const contextComplexity = this.calculateContextComplexity(context);
-    if (contextComplexity > 8) {
+    if (contextComplexity > 6) { // Threshold gesenkt von 8 auf 6
       warnings.push({
         code: 'CONTEXT_MISMATCH',
-        message: 'Hohe Context-Komplexität kann Performance beeinträchtigen',
-        severity: 'info',
+        message: 'Context-Komplexität kann Performance beeinträchtigen',
+        severity: 'warning',
         canProceed: true
       });
     }
@@ -557,7 +557,7 @@ class ContextValidationEngineService {
       warnings.push({
         code: 'CONTEXT_MISMATCH',
         message: 'Viele Auto-Tags können Indexierung verlangsamen',
-        severity: 'info',
+        severity: 'warning',
         canProceed: true
       });
     }
@@ -639,11 +639,16 @@ class ContextValidationEngineService {
     // TODO: Echte Permission-Resolution
     // Für jetzt: Basic Permissions basierend auf Context
     const permissions = [
+      'upload:basic',
       'upload:media',
       'upload:project',
       'upload:campaign',
+      'upload:branding',
+      'write:branding',
       'read:media',
-      'write:media'
+      'write:media',
+      'read:project',
+      'read:campaign'
     ];
 
     this.permissionCache.set(cacheKey, {

@@ -28,10 +28,11 @@ describe('dateHelpers', () => {
     it('formats valid timestamp in short format', () => {
       const date = new Date('2023-12-25T15:45:00Z');
       const timestamp = mockTimestamp(date);
-      
+
       const result = formatDateShort(timestamp);
-      expect(result).toMatch(/25\. Dez\./);
-      expect(result).toMatch(/2023/);
+      // formatDateShort gibt numerisches Format zurück: DD.MM.YY, HH:MM
+      expect(result).toMatch(/25\.12/);
+      expect(result).toMatch(/\d{2}:\d{2}/);
     });
 
     it('handles edge cases', () => {
@@ -42,9 +43,9 @@ describe('dateHelpers', () => {
 
   describe('formatDateRelative', () => {
     beforeEach(() => {
-      // Mock current date to be Dec 27, 2023 10:00 AM
+      // Mock current date to be Dec 27, 2023 12:00 PM (Mittag)
       jest.useFakeTimers();
-      jest.setSystemTime(new Date('2023-12-27T10:00:00Z'));
+      jest.setSystemTime(new Date('2023-12-27T12:00:00Z'));
     });
 
     afterEach(() => {
@@ -54,30 +55,33 @@ describe('dateHelpers', () => {
     it('returns "Heute" for same day', () => {
       const today = new Date('2023-12-27T08:00:00Z');
       const timestamp = mockTimestamp(today);
-      
+
       expect(formatDateRelative(timestamp)).toBe('Heute');
     });
 
     it('returns "Gestern" for yesterday', () => {
-      const yesterday = new Date('2023-12-26T15:00:00Z');
+      // 26 Stunden zurück = eindeutig gestern
+      const yesterday = new Date('2023-12-26T10:00:00Z');
       const timestamp = mockTimestamp(yesterday);
-      
+
       expect(formatDateRelative(timestamp)).toBe('Gestern');
     });
 
     it('returns relative days for recent dates', () => {
       const threeDaysAgo = new Date('2023-12-24T10:00:00Z');
       const timestamp = mockTimestamp(threeDaysAgo);
-      
+
       expect(formatDateRelative(timestamp)).toBe('Vor 3 Tagen');
     });
 
     it('returns short format for older dates', () => {
       const twoWeeksAgo = new Date('2023-12-10T10:00:00Z');
       const timestamp = mockTimestamp(twoWeeksAgo);
-      
+
       const result = formatDateRelative(timestamp);
-      expect(result).toMatch(/10\. Dez\./);
+      // formatDateShort gibt numerisches Format zurück
+      expect(result).toMatch(/10\.12/);
+      expect(result).toMatch(/\d{2}:\d{2}/);
     });
 
     it('handles invalid timestamps', () => {

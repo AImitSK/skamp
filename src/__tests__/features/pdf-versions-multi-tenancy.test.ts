@@ -49,6 +49,32 @@ jest.mock('nanoid', () => ({
   nanoid: jest.fn(() => 'mock-nanoid-id'),
 }));
 
+// Mock PDF-Template Service
+jest.mock('@/lib/firebase/pdf-template-service', () => ({
+  pdfTemplateService: {
+    getTemplateById: jest.fn(),
+    getSystemTemplates: jest.fn().mockResolvedValue([{
+      id: 'default-template',
+      name: 'Standard Template',
+      html: '<html><body>{{mainContent}}</body></html>'
+    }]),
+    renderTemplateWithStyle: jest.fn().mockResolvedValue('<html><body>Rendered HTML</body></html>')
+  }
+}));
+
+// Mock Media Service
+jest.mock('@/lib/firebase/media-service', () => ({
+  mediaService: {
+    uploadMedia: jest.fn(),
+    uploadClientMedia: jest.fn(),
+    getAllFoldersForOrganization: jest.fn(),
+    createFolder: jest.fn()
+  }
+}));
+
+// Mock global fetch für PDF-Generation API
+global.fetch = jest.fn();
+
 const mockCollection = collection as jest.MockedFunction<typeof collection>;
 const mockQuery = query as jest.MockedFunction<typeof query>;
 const mockWhere = where as jest.MockedFunction<typeof where>;
@@ -60,6 +86,7 @@ const mockDoc = doc as jest.MockedFunction<typeof doc>;
 const mockAddDoc = addDoc as jest.MockedFunction<typeof addDoc>;
 const mockUpdateDoc = updateDoc as jest.MockedFunction<typeof updateDoc>;
 const mockApprovalService = approvalService as jest.Mocked<typeof approvalService>;
+const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe('PDF Versions Multi-Tenancy Security', () => {
   const orgA = {
@@ -109,18 +136,38 @@ describe('PDF Versions Multi-Tenancy Security', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Standard Firebase Mock Setup
     const mockCollectionRef = { name: 'pdf_versions' };
     const mockQueryRef = { collection: mockCollectionRef };
     const mockDocRef = { id: 'pdf-version-123' };
-    
+
     mockCollection.mockReturnValue(mockCollectionRef as any);
     mockQuery.mockReturnValue(mockQueryRef as any);
     mockWhere.mockReturnValue(mockQueryRef as any);
     mockOrderBy.mockReturnValue(mockQueryRef as any);
     mockLimit.mockReturnValue(mockQueryRef as any);
     mockDoc.mockReturnValue(mockDocRef as any);
+
+    // Mock fetch für PDF-Generation API
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        pdfUrl: 'https://storage.googleapis.com/test-org/test-pdf.pdf',
+        fileSize: 10240,
+        needsClientUpload: false
+      }),
+      text: async () => '',
+      status: 200,
+      statusText: 'OK'
+    } as Response);
+
+    // Mock getCurrentVersion für Version-Nummerierung
+    mockGetDocs.mockResolvedValue({
+      docs: [],
+      empty: true
+    } as any);
   });
 
   describe('Tenant Isolation bei PDF-Erstellung', () => {
@@ -282,6 +329,8 @@ describe('PDF Versions Multi-Tenancy Security', () => {
   describe('Tenant Isolation bei Campaign Lock Operations', () => {
     it('sollte Campaign Locks nur für eigene Organization ausführen', async () => {
       mockUpdateDoc.mockResolvedValue(undefined);
+      // Mock addDoc für Audit-Log
+      mockAddDoc.mockResolvedValue({ id: 'audit-log-123' } as any);
 
       await pdfVersionsService.lockCampaignEditing(campaignA, 'pending_approval');
 
@@ -289,7 +338,7 @@ describe('PDF Versions Multi-Tenancy Security', () => {
         expect.anything(), // campaigns doc with correct ID
         expect.objectContaining({
           editLocked: true,
-          editLockedReason: 'pending_approval',
+          editLockedReason: 'pending_customer_approval', // Service konvertiert pending_approval zu pending_customer_approval
           lockedAt: expect.anything(),
         })
       );

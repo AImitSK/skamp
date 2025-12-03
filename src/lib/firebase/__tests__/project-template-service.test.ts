@@ -29,26 +29,42 @@ jest.mock('firebase/firestore');
 jest.mock('../project-service');
 
 describe('ProjectTemplateService', () => {
-  
+
   const mockOrganizationId = 'org123';
   const mockUserId = 'user123';
-  
+
+  // Mock-Referenzen außerhalb von beforeEach definieren
+  const mockCollectionRef = { _type: 'collection' };
+  const mockDocRef = { _type: 'doc' };
+  const mockQuery = { _type: 'query' };
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    
     // Mock Timestamp
-    (Timestamp.now as jest.Mock) = jest.fn(() => ({ 
-      seconds: 1640995200, 
-      nanoseconds: 0 
+    (Timestamp.now as jest.Mock) = jest.fn(() => ({
+      seconds: 1640995200,
+      nanoseconds: 0
     }));
-    
-    // Mock Firestore functions
-    (collection as jest.Mock) = jest.fn();
-    (doc as jest.Mock) = jest.fn();
-    (query as jest.Mock) = jest.fn();
-    (where as jest.Mock) = jest.fn();
-    (orderBy as jest.Mock) = jest.fn();
-    (limit as jest.Mock) = jest.fn();
+
+    // Mock Firestore functions mit konsistenten Rückgabewerten
+    (collection as jest.Mock).mockReturnValue(mockCollectionRef);
+    (doc as jest.Mock).mockReturnValue(mockDocRef);
+    (query as jest.Mock).mockReturnValue(mockQuery);
+    (where as jest.Mock).mockReturnValue(mockQuery);
+    (orderBy as jest.Mock).mockReturnValue(mockQuery);
+    (limit as jest.Mock).mockReturnValue(mockQuery);
+
+    // Reset getDoc, updateDoc, addDoc, deleteDoc zu Default-Implementierung
+    // Verwende mockImplementation für persistente Mocks
+    (getDoc as jest.Mock).mockImplementation(() => Promise.resolve({ exists: () => false }));
+    (updateDoc as jest.Mock).mockImplementation(() => Promise.resolve(undefined));
+    (addDoc as jest.Mock).mockImplementation(() => Promise.resolve({ id: 'mock-id' }));
+    (deleteDoc as jest.Mock).mockImplementation(() => Promise.resolve(undefined));
+    (getDocs as jest.Mock).mockImplementation(() => Promise.resolve({ docs: [] }));
+  });
+
+  afterEach(() => {
+    // Restore alle Spies um Test-Isolation sicherzustellen
+    jest.restoreAllMocks();
   });
 
   describe('getAll', () => {

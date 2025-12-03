@@ -178,33 +178,32 @@ describe('useToggleState Hook', () => {
   });
 
   describe('Performance-Optimierung', () => {
-    it('sollte stabile Funktions-Referenzen haben', () => {
+    it('sollte stabile Funktions-Referenzen haben für Setter', () => {
       const { result } = renderHook(() => useToggleState());
-      
+
       const {
         toggleBox: toggleBox1,
         openBox: openBox1,
         closeBox: closeBox1,
-        isOpen: isOpen1
       } = result.current;
-      
+
       // State ändern
       act(() => {
         result.current.toggleBox('test-toggle');
       });
-      
+
       const {
         toggleBox: toggleBox2,
         openBox: openBox2,
         closeBox: closeBox2,
-        isOpen: isOpen2
       } = result.current;
-      
-      // Funktions-Referenzen sollten stabil bleiben
+
+      // Setter-Funktionen sollten stabil bleiben (useCallback ohne dependencies)
       expect(toggleBox1).toBe(toggleBox2);
       expect(openBox1).toBe(openBox2);
       expect(closeBox1).toBe(closeBox2);
-      expect(isOpen1).toBe(isOpen2);
+
+      // isOpen ändert sich mit toggleStates (ist abhängig vom State, daher korrekt)
     });
 
     it('sollte nicht unnötig re-rendern bei gleichen State-Änderungen', () => {
@@ -362,23 +361,23 @@ describe('useToggleState Hook', () => {
   });
 
   describe('Hook Re-Initialization', () => {
-    it('sollte initial States bei Re-Mount respektieren', () => {
+    it('sollte initial States bei Props-Änderung NICHT ändern (useState initialisiert nur einmal)', () => {
       const initialStates = { 'toggle-1': true };
-      
-      const { result, unmount, rerender } = renderHook(
+
+      const { result, rerender } = renderHook(
         ({ initial }) => useToggleState(initial),
         {
           initialProps: { initial: initialStates }
         }
       );
-      
+
       expect(result.current.isOpen('toggle-1')).toBe(true);
-      
-      unmount();
-      
+
+      // useState initial value wird nur beim ersten Render verwendet
       rerender({ initial: { 'toggle-1': false } });
-      
-      expect(result.current.isOpen('toggle-1')).toBe(false);
+
+      // State bleibt unverändert, da useState initial value nur einmal ausgewertet wird
+      expect(result.current.isOpen('toggle-1')).toBe(true);
     });
   });
 

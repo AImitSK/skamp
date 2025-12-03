@@ -114,9 +114,9 @@ describe('AVE System Type Definitions - Phase 4 Tests', () => {
       const settings: AVESettings = {
         organizationId: 'test-org',
         factors: {
-          print: 3,
-          online: 1,
-          broadcast: 5,
+          print: 0.003,
+          online: 0.001,
+          broadcast: 0.005,
           audio: 0.002, // ✅ Audio-Faktor vorhanden
         },
         sentimentMultipliers: {
@@ -136,9 +136,9 @@ describe('AVE System Type Definitions - Phase 4 Tests', () => {
       const settings: AVESettings = {
         organizationId: 'test-org',
         factors: {
-          print: 3,
-          online: 1,
-          broadcast: 5,
+          print: 0.003,
+          online: 0.001,
+          broadcast: 0.005,
           audio: 0.002,
         },
         sentimentMultipliers: {
@@ -163,9 +163,9 @@ describe('AVE System Type Definitions - Phase 4 Tests', () => {
       const settings: AVESettings = {
         organizationId: 'test-org',
         factors: {
-          print: 3,
-          online: 1,
-          broadcast: 5,
+          print: 0.003,
+          online: 0.001,
+          broadcast: 0.005,
           audio: 0.002,
           // @ts-expect-error - blog sollte nicht mehr existieren
           blog: 0.5, // ❌ Blog sollte TypeScript Error werfen
@@ -194,9 +194,9 @@ describe('AVE System Type Definitions - Phase 4 Tests', () => {
     });
 
     it('sollte alle Standard-Faktoren haben', () => {
-      expect(DEFAULT_AVE_SETTINGS.factors.print).toBe(3);
-      expect(DEFAULT_AVE_SETTINGS.factors.online).toBe(1);
-      expect(DEFAULT_AVE_SETTINGS.factors.broadcast).toBe(5);
+      expect(DEFAULT_AVE_SETTINGS.factors.print).toBe(0.003);
+      expect(DEFAULT_AVE_SETTINGS.factors.online).toBe(0.001);
+      expect(DEFAULT_AVE_SETTINGS.factors.broadcast).toBe(0.005);
       expect(DEFAULT_AVE_SETTINGS.factors.audio).toBe(0.002);
     });
 

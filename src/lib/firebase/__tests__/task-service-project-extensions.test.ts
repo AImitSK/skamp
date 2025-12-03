@@ -107,7 +107,16 @@ describe('taskService - Project Extensions', () => {
       const result = await taskService.getByProject(testProjectId, testOrganizationId);
 
       expect(result).toHaveLength(2);
+      // Tasks werden nach dueDate sortiert - task-2 hat früheres Datum (2024-12-20)
       expect(result[0]).toEqual(expect.objectContaining({
+        id: 'task-2',
+        title: 'Task 2',
+        projectId: testProjectId,
+        isOverdue: expect.any(Boolean),
+        daysUntilDue: expect.any(Number),
+        overdueBy: expect.any(Number)
+      }));
+      expect(result[1]).toEqual(expect.objectContaining({
         id: 'task-1',
         title: 'Task 1',
         projectId: testProjectId,

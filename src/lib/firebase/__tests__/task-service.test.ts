@@ -428,6 +428,7 @@ describe('taskService', () => {
 
       expect(mockNotificationsService.create).toHaveBeenCalledWith({
         userId: testUserId,
+        organizationId: testOrganizationId,
         type: 'TASK_OVERDUE',
         title: 'Überfälliger Task',
         message: 'Dein Task "Overdue Task" ist überfällig.',

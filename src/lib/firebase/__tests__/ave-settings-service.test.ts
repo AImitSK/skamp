@@ -76,9 +76,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
     });
 
     it('sollte alle vier Standard-Faktoren haben', () => {
-      expect(DEFAULT_AVE_SETTINGS.factors.print).toBe(3);
-      expect(DEFAULT_AVE_SETTINGS.factors.online).toBe(1);
-      expect(DEFAULT_AVE_SETTINGS.factors.broadcast).toBe(5);
+      expect(DEFAULT_AVE_SETTINGS.factors.print).toBe(0.003);
+      expect(DEFAULT_AVE_SETTINGS.factors.online).toBe(0.001);
+      expect(DEFAULT_AVE_SETTINGS.factors.broadcast).toBe(0.005);
       expect(DEFAULT_AVE_SETTINGS.factors.audio).toBe(0.002);
     });
 
@@ -95,9 +95,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
         id: testSettingsId,
         organizationId: testOrganizationId,
         factors: {
-          print: 3,
-          online: 1,
-          broadcast: 5,
+          print: 0.003,
+          online: 0.001,
+          broadcast: 0.005,
           audio: 0.002,
         },
         sentimentMultipliers: {
@@ -157,9 +157,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
     const audioSettings: AVESettings = {
       organizationId: testOrganizationId,
       factors: {
-        print: 3,
-        online: 1,
-        broadcast: 5,
+        print: 0.003,
+        online: 0.001,
+        broadcast: 0.005,
         audio: 0.002,
       },
       sentimentMultipliers: {
@@ -252,9 +252,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
     const settings: AVESettings = {
       organizationId: testOrganizationId,
       factors: {
-        print: 3,
-        online: 1,
-        broadcast: 5,
+        print: 0.003,
+        online: 0.001,
+        broadcast: 0.005,
         audio: 0.002,
       },
       sentimentMultipliers: {
@@ -267,28 +267,28 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
       createdAt: Timestamp.now(),
     };
 
-    it('sollte für Online mit 50.000 PageViews 50.000 EUR berechnen', () => {
+    it('sollte für Online mit 50.000 PageViews 50 EUR berechnen', () => {
       const clipping = createTestClipping('online', 50000, 'positive');
       const ave = aveSettingsService.calculateAVE(clipping, settings);
 
-      // 50.000 × 1 × 1.0 = 50.000
-      expect(ave).toBe(50000);
+      // 50.000 × 0.001 × 1.0 = 50
+      expect(ave).toBe(50);
     });
 
-    it('sollte für Print mit 50.000 Auflage 150.000 EUR berechnen', () => {
+    it('sollte für Print mit 50.000 Auflage 150 EUR berechnen', () => {
       const clipping = createTestClipping('print', 50000, 'positive');
       const ave = aveSettingsService.calculateAVE(clipping, settings);
 
-      // 50.000 × 3 × 1.0 = 150.000
-      expect(ave).toBe(150000);
+      // 50.000 × 0.003 × 1.0 = 150
+      expect(ave).toBe(150);
     });
 
-    it('sollte für Broadcast mit 50.000 Viewership 250.000 EUR berechnen', () => {
+    it('sollte für Broadcast mit 50.000 Viewership 250 EUR berechnen', () => {
       const clipping = createTestClipping('broadcast', 50000, 'positive');
       const ave = aveSettingsService.calculateAVE(clipping, settings);
 
-      // 50.000 × 5 × 1.0 = 250.000
-      expect(ave).toBe(250000);
+      // 50.000 × 0.005 × 1.0 = 250
+      expect(ave).toBe(250);
     });
 
     it('sollte für Audio mit 50.000 Downloads 100 EUR berechnen', () => {
@@ -299,7 +299,7 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
       expect(ave).toBe(100);
     });
 
-    it('sollte zeigen dass Audio den niedrigsten Faktor hat (realistisch für Podcasts)', () => {
+    it('sollte korrektes Verhältnis der Faktoren zeigen (Broadcast > Print > Audio > Online)', () => {
       const reach = 100000;
       const sentiment = 'positive';
 
@@ -321,14 +321,14 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
       );
 
       expect(audioAVE).toBe(200); // 100.000 × 0.002
-      expect(onlineAVE).toBe(100000); // 100.000 × 1
-      expect(printAVE).toBe(300000); // 100.000 × 3
-      expect(broadcastAVE).toBe(500000); // 100.000 × 5
+      expect(onlineAVE).toBe(100); // 100.000 × 0.001
+      expect(printAVE).toBe(300); // 100.000 × 0.003
+      expect(broadcastAVE).toBe(500); // 100.000 × 0.005
 
-      // Audio hat den niedrigsten AVE
-      expect(audioAVE).toBeLessThan(onlineAVE);
-      expect(audioAVE).toBeLessThan(printAVE);
-      expect(audioAVE).toBeLessThan(broadcastAVE);
+      // Korrekte Reihenfolge: Broadcast > Print > Audio > Online
+      expect(broadcastAVE).toBeGreaterThan(printAVE);
+      expect(printAVE).toBeGreaterThan(audioAVE);
+      expect(audioAVE).toBeGreaterThan(onlineAVE);
     });
   });
 
@@ -336,9 +336,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
     const settings: AVESettings = {
       organizationId: testOrganizationId,
       factors: {
-        print: 3,
-        online: 1,
-        broadcast: 5,
+        print: 0.003,
+        online: 0.001,
+        broadcast: 0.005,
         audio: 0.002,
       },
       sentimentMultipliers: {
@@ -411,9 +411,9 @@ describe('AVE Settings Service - Phase 4 Tests', () => {
       const settings: AVESettings = {
         organizationId: testOrganizationId,
         factors: {
-          print: 3,
-          online: 1,
-          broadcast: 5,
+          print: 0.003,
+          online: 0.001,
+          broadcast: 0.005,
           audio: 0.002,
         },
         sentimentMultipliers: {

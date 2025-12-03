@@ -2,16 +2,16 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAlert } from '@/hooks/useAlert';
 
-// Mock setTimeout
-jest.useFakeTimers();
-
 describe('useAlert Hook', () => {
   beforeEach(() => {
-    jest.clearAllTimers();
+    // Fake timers für jeden Test aktivieren
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
+    // Aufräumen nach jedem Test
     jest.runOnlyPendingTimers();
+    jest.clearAllTimers();
     jest.useRealTimers();
   });
 

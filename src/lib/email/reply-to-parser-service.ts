@@ -71,8 +71,6 @@ class ReplyToParserService {
         const localPart = parts.slice(0, -1).join('-'); // Alles vor dem letzten Teil
         const projectId = parts[parts.length - 1]; // Letzter Teil
 
-        console.log('✅ Projekt-Postfach erkannt:', { localPart, projectId });
-
         return {
           type: 'project',
           localPart,
@@ -83,8 +81,6 @@ class ReplyToParserService {
     }
 
     // Domain-Postfach (kein Bindestrich oder ungültiges Format)
-    console.log('✅ Domain-Postfach erkannt:', { domain: localPartFull });
-
     return {
       type: 'domain',
       domain: localPartFull,
@@ -106,12 +102,9 @@ class ReplyToParserService {
     try {
       // Für Projekt-Postfächer: Lade Projekt zuerst
       if (parsed.type === 'project' && parsed.projectId) {
-        console.log('📋 Lade Projekt:', parsed.projectId);
-
         const projectDoc = await getDoc(doc(db, 'projects', parsed.projectId));
 
         if (!projectDoc.exists()) {
-          console.warn(`⚠️ Projekt nicht gefunden: ${parsed.projectId}`);
           return null;
         }
 
@@ -119,7 +112,6 @@ class ReplyToParserService {
 
         // Validierung: Prüfe organizationId
         if (project.organizationId !== organizationId) {
-          console.warn(`⚠️ Projekt gehört zu anderer Organisation`);
           return null;
         }
 
@@ -127,16 +119,12 @@ class ReplyToParserService {
         const domainId = project.domainId;
 
         if (!domainId) {
-          console.warn(`⚠️ Projekt hat keine domainId`);
           return null;
         }
-
-        console.log('📬 Lade Domain-Postfach:', domainId);
 
         const mailboxDoc = await getDoc(doc(db, 'domain_mailboxes', domainId));
 
         if (!mailboxDoc.exists()) {
-          console.warn(`⚠️ Domain-Postfach nicht gefunden: ${domainId}`);
           return null;
         }
 
@@ -145,12 +133,9 @@ class ReplyToParserService {
 
       // Für Domain-Postfächer: Direkter Lookup
       if (parsed.type === 'domain' && parsed.domainId) {
-        console.log('📬 Lade Domain-Postfach:', parsed.domainId);
-
         const mailboxDoc = await getDoc(doc(db, 'domain_mailboxes', parsed.domainId));
 
         if (!mailboxDoc.exists()) {
-          console.warn(`⚠️ Domain-Postfach nicht gefunden: ${parsed.domainId}`);
           return null;
         }
 
@@ -158,7 +143,6 @@ class ReplyToParserService {
 
         // Validierung: Prüfe organizationId
         if (mailbox.organizationId !== organizationId) {
-          console.warn(`⚠️ Domain-Postfach gehört zu anderer Organisation`);
           return null;
         }
 
@@ -167,7 +151,6 @@ class ReplyToParserService {
 
       return null;
     } catch (error) {
-      console.error('❌ Fehler beim Laden des Domain-Postfachs:', error);
       return null;
     }
   }

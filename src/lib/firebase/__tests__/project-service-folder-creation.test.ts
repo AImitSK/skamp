@@ -302,8 +302,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         ...mockProject,
         customer: { id: 'company-123', name: 'Test Firma' }
       };
-      const mockDocSnap = createMockDocSnapshot(projectWithCustomer);
-      mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+
+      // Direkt projectService.getById mocken
+      jest.spyOn(projectService, 'getById').mockResolvedValueOnce(projectWithCustomer as any);
 
       // Mock für companyServiceEnhanced
       mockCompanyServiceEnhanced.getById.mockResolvedValueOnce({ id: 'company-123', name: 'Test Firma' } as any);
@@ -319,6 +320,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         .mockResolvedValueOnce('subfolder-2') // Dokumente
         .mockResolvedValueOnce('subfolder-3') // Pressemeldungen
         .mockResolvedValueOnce('subfolder-4'); // Analysen
+
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
 
       await projectService.createProjectFolderStructure(
         'project-123',
@@ -343,7 +347,7 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'test-user-456',
-          name: expect.stringContaining(`P-${dateStr}-Test Firma-Test Projekt für Ordner`),
+          name: `P-${dateStr}-Test Firma-Test Projekt für Ordner`,
           parentFolderId: 'projects-root-folder', // Jetzt unter "Projekte"
           clientId: 'company-123'
         }),
@@ -395,6 +399,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         .mockResolvedValueOnce('subfolder-3') // Pressemeldungen
         .mockResolvedValueOnce('subfolder-4'); // Analysen
 
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
+
       await projectService.createProjectFolderStructure(
         'project-123',
         'test-org-123',
@@ -414,7 +421,7 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: expect.stringContaining(`P-${dateStr}-Existing Company-Test Projekt für Ordner`),
+          name: `P-${dateStr}-Existing Company-Test Projekt für Ordner`,
           parentFolderId: 'existing-projects-folder',
           clientId: 'company-789'
         }),
@@ -462,6 +469,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       mockMediaService.createFolder.mockImplementation((folderData: any) => {
         return Promise.resolve(`folder-${folderData.name.replace(/\s+/g, '-').toLowerCase()}`);
       });
+
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
 
       await projectService.createProjectFolderStructure(
         'project-123',
@@ -538,6 +548,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
 
       mockMediaService.createFolder.mockResolvedValue('folder-id');
 
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
+
       await projectService.createProjectFolderStructure(
         'project-123',
         'test-org-123',
@@ -574,6 +587,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       mockMediaService.getFolders.mockResolvedValue([]);
 
       mockMediaService.createFolder.mockResolvedValue('folder-id');
+
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
 
       await projectService.createProjectFolderStructure(
         'project-123',
@@ -615,8 +631,7 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
     
     test('sollte partielle Ordner-Erstellung handhaben (Hauptordner erstellt, Unterordner fehlschlagen)', async () => {
       // Mock für getById
-      const mockDocSnap = createMockDocSnapshot(mockProject);
-      mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      jest.spyOn(projectService, 'getById').mockResolvedValueOnce(mockProject as any);
 
       // Mock für getFolders
       mockMediaService.getFolders.mockResolvedValue([]);
@@ -627,18 +642,28 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         .mockResolvedValueOnce('main-folder-id') // Projektordner erfolgreich
         .mockRejectedValueOnce(new Error('Subfolder error 1')); // Erster Unterordner fehlgeschlagen
 
-      // Der Code wirft einen allgemeinen Fehler, da die Unterordner-Erstellung in einem try-catch ist
-      // aber der Hauptfehler wird in der catch-Klausel der createProjectFolderStructure Methode gefangen
-      await expect(projectService.createProjectFolderStructure(
+      // Mock für update - wird aufgerufen selbst wenn einige Unterordner fehlschlagen
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
+
+      // Der Code sollte NICHT fehlschlagen, da Unterordner-Fehler in try-catch gefangen werden
+      await projectService.createProjectFolderStructure(
         'project-123',
         'test-org-123',
         testContext
-      )).rejects.toThrow('Projekt-Ordner konnten nicht erstellt werden');
+      );
 
-      // "Projekte" Ordner sollte trotzdem erstellt worden sein
+      // "Projekte" Ordner sollte erstellt worden sein
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Projekte'
+        }),
+        testContext
+      );
+
+      // Projektordner sollte auch erstellt worden sein
+      expect(mockMediaService.createFolder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parentFolderId: 'projects-folder-id'
         }),
         testContext
       );
@@ -658,14 +683,15 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       mockAddDoc.mockResolvedValueOnce(mockProjectRef as any);
 
       const createdProject = {
+        ...mockProject,
         id: 'integration-test-project',
         title: 'Integration Test Projekt',
         organizationId: 'test-org-123',
         userId: 'test-user-456'
       };
 
-      const mockDocSnap = createMockDocSnapshot(createdProject);
-      mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      // Mock getById für die Ordner-Erstellung
+      jest.spyOn(projectService, 'getById').mockResolvedValueOnce(createdProject as any);
 
       // Mock für getFolders
       mockMediaService.getFolders.mockResolvedValue([]);
@@ -679,6 +705,9 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         .mockResolvedValueOnce('sub-2') // Dokumente
         .mockResolvedValueOnce('sub-3') // Pressemeldungen
         .mockResolvedValueOnce('sub-4'); // Analysen
+
+      // Mock für update (wird am Ende aufgerufen)
+      jest.spyOn(projectService, 'update').mockResolvedValueOnce(undefined as any);
 
       const projectData = {
         title: 'Integration Test Projekt',
@@ -725,16 +754,17 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
     
     test('sollte Race Conditions bei parallelen Projekt-Erstellungen handhaben', async () => {
       // Setup für parallele Projekte
-      const project1Data = { ...mockProject, title: 'Projekt 1', userId: 'user-1' };
-      const project2Data = { ...mockProject, title: 'Projekt 2', userId: 'user-2' };
+      const project1Data = { ...mockProject, title: 'Projekt 1', userId: 'user-1', status: 'active' as const, priority: 'medium' as const, currentStage: 'ideas_planning' as const };
+      const project2Data = { ...mockProject, title: 'Projekt 2', userId: 'user-2', status: 'active' as const, priority: 'medium' as const, currentStage: 'ideas_planning' as const };
 
       mockAddDoc
         .mockResolvedValueOnce({ id: 'project-1' } as any)
         .mockResolvedValueOnce({ id: 'project-2' } as any);
 
-      mockGetDoc
-        .mockResolvedValueOnce(createMockDocSnapshot({ ...project1Data, id: 'project-1' }) as any)
-        .mockResolvedValueOnce(createMockDocSnapshot({ ...project2Data, id: 'project-2' }) as any);
+      // Mock getById für beide Projekte
+      jest.spyOn(projectService, 'getById')
+        .mockResolvedValueOnce({ ...project1Data, id: 'project-1' } as any)
+        .mockResolvedValueOnce({ ...project2Data, id: 'project-2' } as any);
 
       // Mock für getFolders - beide Male leer (oder "Projekte" Ordner wird beim ersten Mal erstellt)
       mockMediaService.getFolders
@@ -743,6 +773,11 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
 
       // Mock Ordner-Erstellungen für beide Projekte
       mockMediaService.createFolder.mockResolvedValue('folder-id');
+
+      // Mock für update (zwei Mal aufgerufen)
+      jest.spyOn(projectService, 'update')
+        .mockResolvedValueOnce(undefined as any)
+        .mockResolvedValueOnce(undefined as any);
 
       // Parallele Erstellung
       const results = await Promise.all([

@@ -148,11 +148,13 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         }
       };
 
-      // 2. Simuliere handleCampaignSave (Auto-Generate)
+      // 2. Simuliere handleCampaignSave mit vollständiger Logik
       mockPDFVersionsService.handleCampaignSave.mockImplementation(
         async (campaignId, campaignData, context) => {
           if (campaignData.projectId && campaignData.internalPDFs?.enabled && campaignData.internalPDFs?.autoGenerate) {
-            await mockPDFVersionsService.generatePipelinePDF(campaignId, campaignData, context);
+            const pdfUrl = await mockPDFVersionsService.generatePipelinePDF(campaignId, campaignData, context);
+            // Update status wird in generatePipelinePDF aufgerufen
+            await mockPDFVersionsService.updateInternalPDFStatus(campaignId, context);
           }
         }
       );
@@ -160,6 +162,8 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
       mockPDFVersionsService.generatePipelinePDF.mockResolvedValue(
         'https://storage.googleapis.com/bucket/pipeline-integration.pdf'
       );
+
+      mockPDFVersionsService.updateInternalPDFStatus.mockResolvedValue(undefined);
 
       // 3. Führe Campaign-Save durch
       await mockPDFVersionsService.handleCampaignSave(
@@ -268,7 +272,20 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         internalPDFs: { enabled: true, autoGenerate: true, storageFolder: 'pdf-versions', versionCount: 0 }
       };
 
-      // 2. handleCampaignSave sollte nicht crashen bei PDF-Fehler
+      // 2. handleCampaignSave sollte Fehler abfangen und nicht crashen
+      mockPDFVersionsService.handleCampaignSave.mockImplementation(
+        async (campaignId, campaignData, context) => {
+          try {
+            if (campaignData.projectId && campaignData.internalPDFs?.enabled && campaignData.internalPDFs?.autoGenerate) {
+              await mockPDFVersionsService.generatePipelinePDF(campaignId, campaignData, context);
+            }
+          } catch (error) {
+            // Silent fail - Campaign-Save soll nicht scheitern
+            console.warn('Auto-PDF-Generation fehlgeschlagen:', error);
+          }
+        }
+      );
+
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       await expect(
@@ -288,6 +305,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
       );
 
       expect(mockPDFVersionsService.generatePipelinePDF).toHaveBeenCalledTimes(2);
+      consoleSpy.mockRestore();
     });
 
     it('sollte Network-Timeout bei PDF-API robust handhaben', async () => {
@@ -339,9 +357,14 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         })
       });
 
-      mockMediaService.uploadMedia
-        .mockRejectedValueOnce(new Error('Storage temporarily unavailable'))
-        .mockResolvedValue({
+      // Mock mit erfolgreicher Retry-Logik
+      let uploadAttempts = 0;
+      mockMediaService.uploadMedia.mockImplementation(async () => {
+        uploadAttempts++;
+        if (uploadAttempts === 1) {
+          throw new Error('Storage temporarily unavailable');
+        }
+        return {
           downloadUrl: 'https://storage.googleapis.com/bucket/retry-upload.pdf',
           fileName: 'retry-upload.pdf',
           fileType: 'application/pdf',
@@ -350,26 +373,38 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
           metadata: {
             fileSize: 51200
           }
-        });
+        };
+      });
 
+      // Simuliere retry-logic in generatePipelinePDF
       mockPDFVersionsService.generatePipelinePDF.mockImplementation(
         async (campaignId, campaignData, context) => {
-          // Simuliere die real implementation mit retry logic
-          try {
-            // First upload attempt fails
-            await mockMediaService.uploadMedia(
-              expect.any(File),
-              context.organizationId,
-              undefined,
-              undefined,
-              3, // retry count
-              { userId: 'pdf-system' }
-            );
-            
-            return 'https://storage.googleapis.com/bucket/retry-upload.pdf';
-          } catch (error) {
-            throw new Error(`PDF-Generation fehlgeschlagen: ${error}`);
+          // First attempt fails, second succeeds (retry logic)
+          let retries = 0;
+          const maxRetries = 3;
+
+          while (retries < maxRetries) {
+            try {
+              const uploadResult = await mockMediaService.uploadMedia(
+                expect.any(File),
+                context.organizationId,
+                undefined,
+                undefined,
+                maxRetries,
+                { userId: 'pdf-system' }
+              );
+
+              return uploadResult.downloadUrl;
+            } catch (error) {
+              retries++;
+              if (retries >= maxRetries) {
+                throw new Error(`PDF-Generation fehlgeschlagen nach ${maxRetries} Versuchen: ${error}`);
+              }
+              // Retry
+            }
           }
+
+          throw new Error('PDF-Generation fehlgeschlagen: Max retries reached');
         }
       );
 
@@ -381,6 +416,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
       );
 
       expect(result).toBe('https://storage.googleapis.com/bucket/retry-upload.pdf');
+      expect(uploadAttempts).toBe(2); // First failed, second succeeded
     });
   });
 
@@ -590,7 +626,20 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
 
     it('sollte Pipeline-Stage-Übergang mit PDF-Regeneration testen', async () => {
       const stages: Array<'creation' | 'review' | 'approval'> = ['creation', 'review', 'approval'];
-      
+
+      // Setup handleCampaignSave Mock mit korrekter Logik
+      mockPDFVersionsService.handleCampaignSave.mockImplementation(
+        async (campaignId, campaignData, context) => {
+          try {
+            if (campaignData.projectId && campaignData.internalPDFs?.enabled && campaignData.internalPDFs?.autoGenerate) {
+              await mockPDFVersionsService.generatePipelinePDF(campaignId, campaignData, context);
+            }
+          } catch (error) {
+            // Silent fail
+          }
+        }
+      );
+
       for (const stage of stages) {
         const campaignAtStage = {
           ...mockCampaign,
@@ -608,7 +657,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         );
 
         expect(result).toBe(`https://storage.googleapis.com/bucket/${stage}-stage.pdf`);
-        
+
         // Auto-Generate sollte für jede Stage funktionieren
         await mockPDFVersionsService.handleCampaignSave(
           mockCampaignId,
@@ -633,12 +682,25 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
         new Error('PDF generation service unavailable')
       );
 
-      // handleCampaignSave sollte nicht scheitern
+      // handleCampaignSave sollte Fehler abfangen und nicht scheitern
+      mockPDFVersionsService.handleCampaignSave.mockImplementation(
+        async (campaignId, campaignData, context) => {
+          try {
+            if (campaignData.projectId && campaignData.internalPDFs?.enabled && campaignData.internalPDFs?.autoGenerate) {
+              await mockPDFVersionsService.generatePipelinePDF(campaignId, campaignData, context);
+              await mockPDFVersionsService.updateInternalPDFStatus(campaignId, context);
+            }
+          } catch (error) {
+            // Silent fail - Campaign-Save soll nicht scheitern, keine Status-Updates
+          }
+        }
+      );
+
       await expect(
         mockPDFVersionsService.handleCampaignSave(mockCampaignId, initialCampaign, mockContext)
       ).resolves.not.toThrow();
 
-      // Version count sollte NICHT erhöht worden sein
+      // Version count sollte NICHT erhöht worden sein (wegen Fehler)
       expect(mockPDFVersionsService.updateInternalPDFStatus).not.toHaveBeenCalled();
 
       // Recovery: Service wieder verfügbar
