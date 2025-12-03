@@ -333,9 +333,9 @@ export default function BrandingPage() {
                         />
                         <Button
                           type="button"
+                          color="secondary"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingLogo}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                         >
                           <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
                           {uploadingLogo ? 'Wird hochgeladen...' : 'Logo hochladen'}
