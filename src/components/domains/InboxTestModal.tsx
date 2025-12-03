@@ -9,6 +9,7 @@ import { Field, Label, Description } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 import { 
@@ -37,6 +38,7 @@ const defaultTestProviders: TestProvider[] = [
 
 export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [domain, setDomain] = useState<EmailDomainEnhanced | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
@@ -47,15 +49,23 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
   const [testComplete, setTestComplete] = useState(false);
 
   useEffect(() => {
-    loadDomain();
-  }, [domainId]);
+    if (currentOrganization?.id) {
+      loadDomain();
+    }
+  }, [domainId, currentOrganization?.id]);
 
   const loadDomain = async () => {
+    if (!currentOrganization?.id) {
+      setError('Organisation nicht geladen');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const domainData = await domainServiceEnhanced.getById(
         domainId,
-        user!.uid // TODO: Use proper organizationId
+        currentOrganization.id
       );
       setDomain(domainData);
     } catch (err) {
@@ -118,10 +128,10 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       }
 
       setTestResults(response.results);
-      
+
       // Save test results to Firebase
       const context = {
-        organizationId: user!.uid,
+        organizationId: currentOrganization!.id,
         userId: user!.uid
       };
 

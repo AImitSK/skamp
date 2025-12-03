@@ -17,9 +17,9 @@ import {
   ClockIcon,
   XCircleIcon,
   InformationCircleIcon,
-  PlayCircleIcon,
   EnvelopeIcon,
 } from '@heroicons/react/24/outline';
+import { toastService } from '@/lib/utils/toast';
 import { AddDomainModal } from '@/components/domains/AddDomainModal';
 import { InboxTestModal } from '@/components/domains/InboxTestModal';
 import { DnsStatusCard } from '@/components/domains/DnsStatusCard';
@@ -32,23 +32,10 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 
-// Alert Component using existing pattern
-function Alert({
-  type = 'info',
-  children
-}: {
-  type?: 'info' | 'success' | 'warning' | 'error';
-  children: React.ReactNode;
-}) {
-  const styles = {
-    info: 'bg-blue-50 border-blue-200',
-    success: 'bg-green-50 border-green-200',
-    warning: 'bg-yellow-50 border-yellow-200',
-    error: 'bg-red-50 border-red-200'
-  };
-
+// Info Alert Component (nur für Info-Boxen, nicht für Fehlermeldungen)
+function InfoAlert({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`rounded-lg border p-4 ${styles[type]}`}>
+    <div className="rounded-lg border p-4 bg-blue-50 border-blue-200">
       {children}
     </div>
   );
@@ -63,7 +50,6 @@ export default function DomainsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInboxTest, setShowInboxTest] = useState<string | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<EmailDomainEnhanced | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [checkingDns, setCheckingDns] = useState<string | null>(null);
 
   // Context for all operations
@@ -77,13 +63,12 @@ export default function DomainsPage() {
 
     try {
       setLoading(true);
-      setError(null);
       const context = getContext();
       const data = await domainServiceEnhanced.getAll(context.organizationId);
       setDomains(data);
     } catch (error: any) {
       console.error('Domain loading error:', error);
-      setError('Domains konnten nicht geladen werden');
+      toastService.error('Domains konnten nicht geladen werden');
     } finally {
       setLoading(false);
     }
@@ -99,11 +84,10 @@ export default function DomainsPage() {
   const handleVerify = async (domainId: string) => {
     try {
       setVerifying(domainId);
-      setError(null);
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.sendgridDomainId) {
-        setError('Domain oder SendGrid ID nicht gefunden');
+        toastService.error('Domain oder SendGrid ID nicht gefunden');
         return;
       }
 
@@ -136,7 +120,7 @@ export default function DomainsPage() {
         await loadDomains();
       }
     } catch (error: any) {
-      setError(error.message || 'Verifizierung fehlgeschlagen');
+      toastService.error(error.message || 'Verifizierung fehlgeschlagen');
     } finally {
       setVerifying(null);
     }
@@ -145,11 +129,10 @@ export default function DomainsPage() {
   const checkDnsStatus = async (domainId: string) => {
     try {
       setCheckingDns(domainId);
-      setError(null);
 
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.dnsRecords || domain.dnsRecords.length === 0) {
-        setError('Domain oder DNS Records nicht gefunden');
+        toastService.error('Domain oder DNS Records nicht gefunden');
         return;
       }
 
@@ -178,7 +161,7 @@ export default function DomainsPage() {
         }
       }
     } catch (error: any) {
-      setError('DNS-Überprüfung fehlgeschlagen');
+      toastService.error('DNS-Überprüfung fehlgeschlagen');
     } finally {
       setCheckingDns(null);
     }
@@ -190,7 +173,6 @@ export default function DomainsPage() {
     }
 
     try {
-      setError(null);
       const domain = domains.find(d => d.id === domainId);
 
       if (domain?.sendgridDomainId) {
@@ -203,9 +185,10 @@ export default function DomainsPage() {
       const context = getContext();
       await domainServiceEnhanced.softDelete(domainId, context);
       await loadDomains();
+      toastService.success('Domain erfolgreich gelöscht');
 
     } catch (error: any) {
-      setError('Domain konnte nicht gelöscht werden');
+      toastService.error('Domain konnte nicht gelöscht werden');
     }
   };
 
@@ -259,19 +242,18 @@ export default function DomainsPage() {
           ) : (
             <>
               {/* Header */}
-              <div className="mb-8">
+              <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="min-w-0 flex-1">
                   <Heading level={1}>Versand-Domains authentifizieren</Heading>
                   <Text className="mt-2 text-gray-600">
                     Verbinden Sie Ihre Domain, um E-Mails im Namen Ihrer eigenen Marke zu versenden.
                   </Text>
                 </div>
-                <div className="mt-6 flex justify-end gap-3">
-                  <Button plain onClick={() => window.open('https://help.celeropress.de/domains', '_blank')}>
-                    <PlayCircleIcon className="w-4 h-4 mr-2" />
-                    Video-Tutorial
-                  </Button>
-                  <Button onClick={() => setShowAddModal(true)}>
+                <div className="mt-4 md:mt-0 flex gap-3">
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
+                  >
                     <PlusIcon className="w-4 h-4 mr-2" />
                     Neue Domain hinzufügen
                   </Button>
@@ -280,7 +262,7 @@ export default function DomainsPage() {
 
               {/* Info Alert für Erstnutzer */}
               {domains.length === 0 && !loading && (
-                <Alert type="info">
+                <InfoAlert>
                   <div className="flex gap-3">
                     <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
                     <div>
@@ -292,19 +274,7 @@ export default function DomainsPage() {
                       </Text>
                     </div>
                   </div>
-                </Alert>
-              )}
-
-              {/* Error Alert */}
-              {error && (
-                <div className="my-6">
-                  <Alert type="error">
-                    <div className="flex gap-3">
-                      <XCircleIcon className="w-5 h-5 text-red-600 shrink-0" />
-                      <Text className="text-red-800">{error}</Text>
-                    </div>
-                  </Alert>
-                </div>
+                </InfoAlert>
               )}
 
               {/* Domains List */}
@@ -337,9 +307,9 @@ export default function DomainsPage() {
                             />
                           )}
 
-                          {domain.status === 'verified' && (
+                          {domain.status === 'verified' && ((domain.inboxTests && domain.inboxTests.length > 0) || (domain.emailsSent && domain.emailsSent > 0)) && (
                             <div className="mt-4 flex items-center gap-4">
-                              {domain.inboxTestScore !== undefined && (
+                              {domain.inboxTests && domain.inboxTests.length > 0 && domain.inboxTestScore !== undefined && (
                                 <div className="flex items-center gap-2">
                                   <div className="text-sm text-gray-600">Zustellrate:</div>
                                   <Badge
