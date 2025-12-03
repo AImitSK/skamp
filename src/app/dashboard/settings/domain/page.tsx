@@ -233,10 +233,8 @@ export default function DomainsPage() {
           {(authLoading || orgLoading || loading) ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <ArrowPathIcon className="w-12 h-12 text-gray-400 animate-spin mx-auto" />
-                <Text className="mt-4">
-                  {authLoading ? 'Authentifizierung...' : orgLoading ? 'Organisation wird geladen...' : 'Lade Domains...'}
-                </Text>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+                <Text className="mt-4">Lade Domains...</Text>
               </div>
             </div>
           ) : (
