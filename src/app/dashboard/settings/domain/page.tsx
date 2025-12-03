@@ -307,9 +307,12 @@ export default function DomainsPage() {
                             />
                           )}
 
-                          {domain.status === 'verified' && ((domain.inboxTests && domain.inboxTests.length > 0) || (domain.emailsSent && domain.emailsSent > 0)) && (
+                          {domain.status === 'verified' && (
+                            (domain.inboxTests && domain.inboxTests.length > 0) ||
+                            (typeof domain.emailsSent === 'number' && domain.emailsSent > 0)
+                          ) && (
                             <div className="mt-4 flex items-center gap-4">
-                              {domain.inboxTests && domain.inboxTests.length > 0 && domain.inboxTestScore !== undefined && (
+                              {domain.inboxTests && domain.inboxTests.length > 0 && typeof domain.inboxTestScore === 'number' && (
                                 <div className="flex items-center gap-2">
                                   <div className="text-sm text-gray-600">Zustellrate:</div>
                                   <Badge
@@ -323,7 +326,7 @@ export default function DomainsPage() {
                                   </Badge>
                                 </div>
                               )}
-                              {domain.emailsSent && domain.emailsSent > 0 && (
+                              {typeof domain.emailsSent === 'number' && domain.emailsSent > 0 && (
                                 <Text className="text-sm text-gray-600">
                                   {domain.emailsSent} E-Mails versendet
                                 </Text>
