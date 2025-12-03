@@ -49,9 +49,9 @@ jest.mock('@/lib/firebase/organization-service', () => ({
 jest.mock('@/lib/firebase/tags-service', () => ({
   tagsService: {
     getAll: jest.fn().mockResolvedValue([
-      { id: 'tag-1', name: 'frontend', color: '#3b82f6' },
-      { id: 'tag-2', name: 'react', color: '#10b981' },
-      { id: 'tag-3', name: 'typescript', color: '#f59e0b' },
+      { id: 'tag-1', name: 'frontend', color: 'blue', userId: 'user-1' },
+      { id: 'tag-2', name: 'react', color: 'green', userId: 'user-1' },
+      { id: 'tag-3', name: 'typescript', color: 'orange', userId: 'user-1' },
     ]),
   },
 }));
@@ -157,9 +157,9 @@ describe('ProjectCard', () => {
 
     // Provide tag objects via props (as component expects)
     const mockTags = [
-      { id: 'tag-1', name: 'frontend', color: '#3b82f6' },
-      { id: 'tag-2', name: 'react', color: '#10b981' },
-      { id: 'tag-3', name: 'typescript', color: '#f59e0b' },
+      { id: 'tag-1', name: 'frontend', color: 'blue' as const, userId: 'user-1' },
+      { id: 'tag-2', name: 'react', color: 'green' as const, userId: 'user-1' },
+      { id: 'tag-3', name: 'typescript', color: 'orange' as const, userId: 'user-1' },
     ];
 
     render(<ProjectCard project={projectWithTags} useDraggableProject={mockUseDraggableProject} tags={mockTags} />);

@@ -139,23 +139,23 @@ function createMockEditor(overrides: any = {}): any {
     run: jest.fn()
   };
 
-  const chainMethods = {
-    focus: jest.fn(() => chainMethods),
-    toggleBold: jest.fn(() => chainMethods),
-    toggleItalic: jest.fn(() => chainMethods),
-    toggleHeading: jest.fn(() => chainMethods),
-    toggleBulletList: jest.fn(() => chainMethods),
-    toggleOrderedList: jest.fn(() => chainMethods),
-    toggleBlockquote: jest.fn(() => chainMethods),
-    toggleCodeBlock: jest.fn(() => chainMethods),
-    insertTable: jest.fn(() => chainMethods),
-    addColumnBefore: jest.fn(() => chainMethods),
-    addColumnAfter: jest.fn(() => chainMethods),
-    deleteColumn: jest.fn(() => chainMethods),
-    addRowBefore: jest.fn(() => chainMethods),
-    addRowAfter: jest.fn(() => chainMethods),
-    deleteRow: jest.fn(() => chainMethods),
-    deleteTable: jest.fn(() => chainMethods),
+  const chainMethods: any = {
+    focus: jest.fn((): any => chainMethods),
+    toggleBold: jest.fn((): any => chainMethods),
+    toggleItalic: jest.fn((): any => chainMethods),
+    toggleHeading: jest.fn((): any => chainMethods),
+    toggleBulletList: jest.fn((): any => chainMethods),
+    toggleOrderedList: jest.fn((): any => chainMethods),
+    toggleBlockquote: jest.fn((): any => chainMethods),
+    toggleCodeBlock: jest.fn((): any => chainMethods),
+    insertTable: jest.fn((): any => chainMethods),
+    addColumnBefore: jest.fn((): any => chainMethods),
+    addColumnAfter: jest.fn((): any => chainMethods),
+    deleteColumn: jest.fn((): any => chainMethods),
+    addRowBefore: jest.fn((): any => chainMethods),
+    addRowAfter: jest.fn((): any => chainMethods),
+    deleteRow: jest.fn((): any => chainMethods),
+    deleteTable: jest.fn((): any => chainMethods),
     run: jest.fn()
   };
 

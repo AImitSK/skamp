@@ -5,7 +5,7 @@ import 'jest-environment-jsdom';
 if (typeof setImmediate === 'undefined') {
   global.setImmediate = ((callback: (...args: any[]) => void, ...args: any[]) => {
     return setTimeout(callback, 0, ...args);
-  }) as typeof setImmediate;
+  }) as unknown as typeof setImmediate;
 }
 
 // Mock fetch for Firebase Auth
@@ -332,30 +332,38 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock TipTap Editor für Komponenten die den Editor verwenden
-const createMockChain = () => {
-  const chain = {
-    focus: jest.fn().mockReturnValue(chain),
-    toggleBold: jest.fn().mockReturnValue(chain),
-    toggleItalic: jest.fn().mockReturnValue(chain),
-    toggleUnderline: jest.fn().mockReturnValue(chain),
-    toggleStrike: jest.fn().mockReturnValue(chain),
-    toggleHeading: jest.fn().mockReturnValue(chain),
-    toggleBulletList: jest.fn().mockReturnValue(chain),
-    toggleOrderedList: jest.fn().mockReturnValue(chain),
-    toggleBlockquote: jest.fn().mockReturnValue(chain),
-    toggleHashtag: jest.fn().mockReturnValue(chain),
-    toggleCTA: jest.fn().mockReturnValue(chain),
-    setLink: jest.fn().mockReturnValue(chain),
-    unsetLink: jest.fn().mockReturnValue(chain),
-    setColor: jest.fn().mockReturnValue(chain),
-    setMark: jest.fn().mockReturnValue(chain),
-    clearNodes: jest.fn().mockReturnValue(chain),
-    unsetAllMarks: jest.fn().mockReturnValue(chain),
-    setTextAlign: jest.fn().mockReturnValue(chain),
-    undo: jest.fn().mockReturnValue(chain),
-    redo: jest.fn().mockReturnValue(chain),
+const createMockChain = (): any => {
+  const chain: any = {
+    focus: jest.fn(),
+    toggleBold: jest.fn(),
+    toggleItalic: jest.fn(),
+    toggleUnderline: jest.fn(),
+    toggleStrike: jest.fn(),
+    toggleHeading: jest.fn(),
+    toggleBulletList: jest.fn(),
+    toggleOrderedList: jest.fn(),
+    toggleBlockquote: jest.fn(),
+    toggleHashtag: jest.fn(),
+    toggleCTA: jest.fn(),
+    setLink: jest.fn(),
+    unsetLink: jest.fn(),
+    setColor: jest.fn(),
+    setMark: jest.fn(),
+    clearNodes: jest.fn(),
+    unsetAllMarks: jest.fn(),
+    setTextAlign: jest.fn(),
+    undo: jest.fn(),
+    redo: jest.fn(),
     run: jest.fn(),
   };
+
+  // Setze alle mockReturnValue nach der Deklaration
+  Object.keys(chain).forEach(key => {
+    if (key !== 'run') {
+      chain[key].mockReturnValue(chain);
+    }
+  });
+
   return chain;
 };
 

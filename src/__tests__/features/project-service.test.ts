@@ -41,24 +41,24 @@ jest.mock('@/lib/firebase/pr-service', () => ({
 // Media Service Mock für createProjectFolderStructure
 jest.mock('@/lib/firebase/media-service', () => ({
   mediaService: {
-    getFolders: jest.fn().mockResolvedValue([]),
-    createFolder: jest.fn().mockResolvedValue('folder-123'),
-    getFolder: jest.fn().mockResolvedValue(null),
-    getFolderFileCount: jest.fn().mockResolvedValue(0),
-    getMediaAssets: jest.fn().mockResolvedValue([]),
-    getMediaAssetById: jest.fn().mockResolvedValue(null),
-    uploadMedia: jest.fn().mockResolvedValue({ id: 'asset-123' }),
-    getAllFoldersForOrganization: jest.fn().mockResolvedValue([]),
-    getProjectAssetSummary: jest.fn().mockResolvedValue({}),
-    validateAssetAttachments: jest.fn().mockResolvedValue({ isValid: true, missingAssets: [], outdatedSnapshots: [] })
+    getFolders: jest.fn<any>().mockResolvedValue([]),
+    createFolder: jest.fn<any>().mockResolvedValue('folder-123'),
+    getFolder: jest.fn<any>().mockResolvedValue(null),
+    getFolderFileCount: jest.fn<any>().mockResolvedValue(0),
+    getMediaAssets: jest.fn<any>().mockResolvedValue([]),
+    getMediaAssetById: jest.fn<any>().mockResolvedValue(null),
+    uploadMedia: jest.fn<any>().mockResolvedValue({ id: 'asset-123' }),
+    getAllFoldersForOrganization: jest.fn<any>().mockResolvedValue([]),
+    getProjectAssetSummary: jest.fn<any>().mockResolvedValue({}),
+    validateAssetAttachments: jest.fn<any>().mockResolvedValue({ isValid: true, missingAssets: [], outdatedSnapshots: [] })
   }
 }));
 
 // Company Service Mock für createProjectFolderStructure
 jest.mock('@/lib/firebase/company-service-enhanced', () => ({
   companyServiceEnhanced: {
-    getById: jest.fn().mockResolvedValue({ id: 'company-1', name: 'Test Company' }),
-    getAll: jest.fn().mockResolvedValue([])
+    getById: jest.fn<any>().mockResolvedValue({ id: 'company-1', name: 'Test Company' }),
+    getAll: jest.fn<any>().mockResolvedValue([])
   }
 }));
 
@@ -121,8 +121,8 @@ describe('ProjectService', () => {
     jest.clearAllMocks();
 
     // Standard Mock-Setups - NACH clearAllMocks()
-    mockCollection.mockReturnValue({ collection: 'projects' });
-    mockDoc.mockReturnValue({ id: mockProjectId });
+    mockCollection.mockReturnValue({ collection: 'projects' } as any);
+    mockDoc.mockReturnValue({ id: mockProjectId } as any);
 
     // Query-Builder Mock Chain - returnThis Pattern
     const mockQueryChain = {
@@ -132,21 +132,21 @@ describe('ProjectService', () => {
       limit: jest.fn().mockReturnThis()
     };
 
-    mockQuery.mockReturnValue(mockQueryChain);
-    mockWhere.mockReturnValue(mockQueryChain);
-    mockOrderBy.mockReturnValue(mockQueryChain);
-    mockLimit.mockReturnValue(mockQueryChain);
+    mockQuery.mockReturnValue(mockQueryChain as any);
+    mockWhere.mockReturnValue(mockQueryChain as any);
+    mockOrderBy.mockReturnValue(mockQueryChain as any);
+    mockLimit.mockReturnValue(mockQueryChain as any);
 
-    mockServerTimestamp.mockReturnValue({ serverTimestamp: true });
+    mockServerTimestamp.mockReturnValue({ serverTimestamp: true } as any);
 
     // Timestamp.now() Mock
     (mockTimestamp.now as jest.Mock).mockReturnValue({ seconds: 1234567890, nanoseconds: 0 });
 
     // WICHTIG: Setze DEFAULT-Returns für häufig verwendete Mocks
     // DEFAULT für addDoc - MUSS id haben sonst crasht create()
-    mockAddDoc.mockResolvedValue({ id: mockProjectId });
-    mockGetDoc.mockResolvedValue({ exists: () => false });
-    mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+    mockAddDoc.mockResolvedValue({ id: mockProjectId } as any);
+    mockGetDoc.mockResolvedValue({ exists: () => false } as any);
+    mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
     mockUpdateDoc.mockResolvedValue(undefined);
     mockDeleteDoc.mockResolvedValue(undefined);
   });
@@ -172,13 +172,13 @@ describe('ProjectService', () => {
 
       // Mock Query für Email-Lookup
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
       // Mock getDocs um default email query zu handhaben
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
 
       // WICHTIG: addDoc MUSS ein Object mit id zurückgeben
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       // Mock Timestamp.now() für createAt/updatedAt
       const mockNowTimestamp = { seconds: 1234567890, nanoseconds: 0 };
@@ -200,9 +200,9 @@ describe('ProjectService', () => {
 
       // Mock Query
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
       mockAddDoc.mockRejectedValue(error);
 
       // Mock Timestamp.now()
@@ -217,10 +217,10 @@ describe('ProjectService', () => {
 
       // Mock Query
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       // Mock Timestamp.now()
       const mockNowTimestamp = { seconds: 1234567890, nanoseconds: 0 };
@@ -247,7 +247,7 @@ describe('ProjectService', () => {
           updatedAt: { seconds: 1234567890, nanoseconds: 0 }
         })
       };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -267,7 +267,7 @@ describe('ProjectService', () => {
 
     it('sollte null zurückgeben wenn Projekt nicht existiert', async () => {
       const mockDocSnap = { exists: () => false };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -284,7 +284,7 @@ describe('ProjectService', () => {
           organizationId: 'andere-org-123' // Andere Organisation!
         })
       };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, mockContext);
 
@@ -314,7 +314,7 @@ describe('ProjectService', () => {
         limit: jest.fn().mockReturnThis()
       };
 
-      mockQuery.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
 
       const mockSnapshot = {
         docs: mockProjects.map(proj => ({
@@ -325,7 +325,7 @@ describe('ProjectService', () => {
           }
         }))
       };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       const result = await projectService.getAll(mockContext);
 
@@ -342,10 +342,10 @@ describe('ProjectService', () => {
         orderBy: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis()
       };
-      mockQuery.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
 
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       const result = await projectService.getAll({
         organizationId: mockOrganizationId,
@@ -363,10 +363,10 @@ describe('ProjectService', () => {
         orderBy: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis()
       };
-      mockQuery.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
 
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       const result = await projectService.getAll({
         organizationId: mockOrganizationId,
@@ -391,10 +391,10 @@ describe('ProjectService', () => {
         orderBy: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis()
       };
-      mockQuery.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
 
       const mockSnapshot = { docs: [] };
-      mockGetDocs.mockResolvedValue(mockSnapshot);
+      mockGetDocs.mockResolvedValue(mockSnapshot as any);
 
       const result = await projectService.getAll({
         organizationId: mockOrganizationId,
@@ -674,10 +674,10 @@ describe('ProjectService', () => {
 
       // Mock Query für Cascade-Delete Queries
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
       // Mock für deleteProjectMailbox und deleteProjectTasks - MUSS docs[] zurückgeben
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
 
       // Mock deleteDoc - wird für Projekt selbst aufgerufen
       mockDeleteDoc.mockResolvedValue(undefined);
@@ -709,10 +709,10 @@ describe('ProjectService', () => {
 
       // Mock Query für Cascade-Delete Queries
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
       // Mock für Cascade-Delete Helpers - MÜSSEN erfolgreich sein
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
 
       // Mock deleteDoc - wirft Fehler beim Projekt-Delete
       mockDeleteDoc.mockRejectedValue(new Error('Firebase Delete Fehler'));
@@ -764,10 +764,10 @@ describe('ProjectService', () => {
 
       // Mock Query für Email-Lookup
       const mockQueryResult = { query: 'built-query' };
-      mockQuery.mockReturnValue(mockQueryResult);
+      mockQuery.mockReturnValue(mockQueryResult as any);
 
-      mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
-      mockAddDoc.mockResolvedValue(mockDocRef);
+      mockGetDocs.mockResolvedValue({ empty: true, docs: [] } as any);
+      mockAddDoc.mockResolvedValue(mockDocRef as any);
 
       // Mock Timestamp.now()
       const mockNowTimestamp = { seconds: 1234567890, nanoseconds: 0 };
@@ -828,7 +828,7 @@ describe('ProjectService', () => {
           organizationId: 'andere-organisation-123' // Andere Organisation!
         })
       };
-      mockGetDoc.mockResolvedValue(mockDocSnap);
+      mockGetDoc.mockResolvedValue(mockDocSnap as any);
 
       const result = await projectService.getById(mockProjectId, {
         organizationId: 'meine-organisation-123'
@@ -847,13 +847,13 @@ describe('ProjectService', () => {
         limit: jest.fn().mockReturnThis()
       };
 
-      mockQuery.mockReturnValue(mockQueryChain);
-      mockWhere.mockReturnValue(mockQueryChain);
-      mockOrderBy.mockReturnValue(mockQueryChain);
-      mockLimit.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
+      mockWhere.mockReturnValue(mockQueryChain as any);
+      mockOrderBy.mockReturnValue(mockQueryChain as any);
+      mockLimit.mockReturnValue(mockQueryChain as any);
 
       // Mock getDocs mit leeren Docs
-      mockGetDocs.mockResolvedValue({ docs: [] });
+      mockGetDocs.mockResolvedValue({ docs: [] } as any);
 
       const result = await projectService.getAll({ organizationId: mockOrganizationId });
 
@@ -871,12 +871,12 @@ describe('ProjectService', () => {
         limit: jest.fn().mockReturnThis()
       };
 
-      mockQuery.mockReturnValue(mockQueryChain);
-      mockWhere.mockReturnValue(mockQueryChain);
-      mockOrderBy.mockReturnValue(mockQueryChain);
-      mockLimit.mockReturnValue(mockQueryChain);
+      mockQuery.mockReturnValue(mockQueryChain as any);
+      mockWhere.mockReturnValue(mockQueryChain as any);
+      mockOrderBy.mockReturnValue(mockQueryChain as any);
+      mockLimit.mockReturnValue(mockQueryChain as any);
 
-      mockGetDocs.mockResolvedValue({ docs: [] });
+      mockGetDocs.mockResolvedValue({ docs: [] } as any);
 
       const filters = { status: 'active' as ProjectStatus };
       const result = await projectService.getAll({ organizationId: mockOrganizationId, filters });

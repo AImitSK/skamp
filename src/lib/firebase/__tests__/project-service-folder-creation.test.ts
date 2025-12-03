@@ -60,7 +60,7 @@ jest.mock('../media-service', () => ({
 
 // Company Service Mock
 const mockCompanyServiceEnhanced = {
-  getById: jest.fn(),
+  getById: jest.fn() as jest.MockedFunction<(companyId: string, organizationId: string) => Promise<any | null>>,
 };
 
 jest.mock('../company-service-enhanced', () => ({

@@ -1,15 +1,29 @@
 // src/__tests__/features/pr-service-pipeline-extensions.test.ts - Tests für PR Service Pipeline-Erweiterungen
 import { jest } from '@jest/globals';
 import type { PRCampaign, PipelineStage } from '@/types/pr';
+import { Timestamp } from 'firebase/firestore';
 
 // Import OHNE Mock erst mal
 import { prService } from '@/lib/firebase/pr-service';
 
-// Dann manuell Mock-Funktionen zuweisen
-const mockGetByProjectId = jest.fn();
-const mockUpdatePipelineStage = jest.fn();
-const mockGetById = jest.fn();
-const mockUpdate = jest.fn();
+// Helper: Erstelle Mock-Timestamp
+const createMockTimestamp = (millis: number): Timestamp => {
+  return {
+    seconds: Math.floor(millis / 1000),
+    nanoseconds: (millis % 1000) * 1000000,
+    toDate: () => new Date(millis),
+    toMillis: () => millis,
+    isEqual: () => false,
+    valueOf: () => '',
+    compareTo: () => 0,
+  } as unknown as Timestamp;
+};
+
+// Dann manuell Mock-Funktionen zuweisen mit korrekten Typen
+const mockGetByProjectId = jest.fn<(projectId: string, context: { organizationId: string }) => Promise<PRCampaign[]>>();
+const mockUpdatePipelineStage = jest.fn<(campaignId: string, stage: string, context: { organizationId: string }) => Promise<void>>();
+const mockGetById = jest.fn<(campaignId: string) => Promise<PRCampaign | null>>();
+const mockUpdate = jest.fn<(campaignId: string, data: Partial<Omit<PRCampaign, 'id' | 'userId'>>) => Promise<void>>();
 
 // Ersetze die echten Methoden mit Mocks
 prService.getByProjectId = mockGetByProjectId as any;
@@ -39,8 +53,8 @@ describe('PR Service - Pipeline Extensions', () => {
     distributionListName: '',
     recipientCount: 0,
     approvalRequired: false,
-    createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
-    updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any
+    createdAt: createMockTimestamp(1234567890000),
+    updatedAt: createMockTimestamp(1234567890000)
   };
 
   beforeEach(() => {
@@ -86,12 +100,12 @@ describe('PR Service - Pipeline Extensions', () => {
       const olderCampaign = {
         ...mockCampaign,
         id: 'campaign-old',
-        createdAt: { seconds: 1234567000, nanoseconds: 0 }
+        createdAt: createMockTimestamp(1234567000000)
       };
       const newerCampaign = {
         ...mockCampaign,
         id: 'campaign-new',
-        createdAt: { seconds: 1234567999, nanoseconds: 0 }
+        createdAt: createMockTimestamp(1234567999000)
       };
 
       const sortedCampaigns = [newerCampaign, olderCampaign];
@@ -114,8 +128,8 @@ describe('PR Service - Pipeline Extensions', () => {
 
     it('sollte verschiedene Pipeline-Stages korrekt handhaben', async () => {
       const campaignStages = [
-        { ...mockCampaign, id: 'camp-1', pipelineStage: 'creation' as PipelineStage },
-        { ...mockCampaign, id: 'camp-2', pipelineStage: 'review' as PipelineStage },
+        { ...mockCampaign, id: 'camp-1', pipelineStage: 'ideas_planning' as PipelineStage },
+        { ...mockCampaign, id: 'camp-2', pipelineStage: 'creation' as PipelineStage },
         { ...mockCampaign, id: 'camp-3', pipelineStage: 'approval' as PipelineStage },
         { ...mockCampaign, id: 'camp-4', pipelineStage: 'distribution' as PipelineStage }
       ];
@@ -125,8 +139,8 @@ describe('PR Service - Pipeline Extensions', () => {
       const result = await prService.getByProjectId(mockProjectId, mockContext);
 
       expect(result).toHaveLength(4);
+      expect(result.find(c => c.pipelineStage === 'ideas_planning')).toBeDefined();
       expect(result.find(c => c.pipelineStage === 'creation')).toBeDefined();
-      expect(result.find(c => c.pipelineStage === 'review')).toBeDefined();
       expect(result.find(c => c.pipelineStage === 'approval')).toBeDefined();
       expect(result.find(c => c.pipelineStage === 'distribution')).toBeDefined();
     });
@@ -149,7 +163,7 @@ describe('PR Service - Pipeline Extensions', () => {
   });
 
   describe('updatePipelineStage', () => {
-    const newStage = 'review' as PipelineStage;
+    const newStage: PipelineStage = 'approval';
 
     beforeEach(() => {
       mockGetById.mockResolvedValue(mockCampaign);
@@ -184,7 +198,7 @@ describe('PR Service - Pipeline Extensions', () => {
     });
 
     it('sollte alle gültigen Pipeline-Stages handhaben', async () => {
-      const validStages: PipelineStage[] = ['creation', 'review', 'approval', 'distribution', 'completed'];
+      const validStages: PipelineStage[] = ['ideas_planning', 'creation', 'approval', 'distribution', 'monitoring', 'completed'];
 
       for (const stage of validStages) {
         jest.clearAllMocks();
@@ -216,10 +230,11 @@ describe('PR Service - Pipeline Extensions', () => {
 
     it('sollte Stage-Übergänge korrekt verarbeiten', async () => {
       const stageTransitions: Array<{ from: PipelineStage; to: PipelineStage }> = [
-        { from: 'creation', to: 'review' },
-        { from: 'review', to: 'approval' },
+        { from: 'ideas_planning', to: 'creation' },
+        { from: 'creation', to: 'approval' },
         { from: 'approval', to: 'distribution' },
-        { from: 'distribution', to: 'completed' }
+        { from: 'distribution', to: 'monitoring' },
+        { from: 'monitoring', to: 'completed' }
       ];
 
       for (const transition of stageTransitions) {
@@ -233,7 +248,7 @@ describe('PR Service - Pipeline Extensions', () => {
     });
 
     it('sollte mit gleichzeitigen Stage-Updates umgehen (Race Conditions)', async () => {
-      const stages: PipelineStage[] = ['review', 'approval', 'distribution'];
+      const stages: PipelineStage[] = ['creation', 'approval', 'distribution'];
 
       mockUpdatePipelineStage.mockResolvedValue(undefined);
 
@@ -261,7 +276,7 @@ describe('PR Service - Pipeline Extensions', () => {
     it('sollte getByProjectId und updatePipelineStage zusammen funktionieren', async () => {
       const projectCampaigns = [
         { ...mockCampaign, id: 'camp-1', pipelineStage: 'creation' as PipelineStage },
-        { ...mockCampaign, id: 'camp-2', pipelineStage: 'review' as PipelineStage }
+        { ...mockCampaign, id: 'camp-2', pipelineStage: 'approval' as PipelineStage }
       ];
 
       mockGetByProjectId.mockResolvedValue(projectCampaigns);
@@ -289,7 +304,7 @@ describe('PR Service - Pipeline Extensions', () => {
       );
 
       await expect(
-        prService.updatePipelineStage(mockCampaignId, 'review', otherOrgContext)
+        prService.updatePipelineStage(mockCampaignId, 'approval', otherOrgContext)
       ).rejects.toThrow('Kampagne nicht gefunden oder keine Berechtigung');
     });
 
@@ -307,7 +322,7 @@ describe('PR Service - Pipeline Extensions', () => {
       expect(campaigns).toHaveLength(50);
 
       const updatePromises = campaigns.slice(0, 10).map(campaign =>
-        prService.updatePipelineStage(campaign.id!, 'review', mockContext)
+        prService.updatePipelineStage(campaign.id!, 'approval', mockContext)
       );
 
       await Promise.all(updatePromises);

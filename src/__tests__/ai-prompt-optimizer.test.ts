@@ -63,7 +63,8 @@ interface TestResult {
 const mockAICall = async (prompt: string): Promise<string> => {
   // Extrahiere den ursprünglichen Text aus dem Prompt
   // Suche nach "Text: " am Ende des Prompts (nach allen Regeln)
-  const textMatch = prompt.match(/Text:\s*(.+)$/s);
+  // Verwende [\s\S] statt . mit s-Flag (ES2018-kompatibel)
+  const textMatch = prompt.match(/Text:\s*([\s\S]+)$/);
   if (!textMatch) {
     return "SK Online Marketing bietet B2B-Marketing-Lösungen.";
   }

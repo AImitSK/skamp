@@ -366,26 +366,26 @@ describe('ProjectFolderFeatureFlags', () => {
   describe('Umgebungs-spezifische Konfigurationen', () => {
     it('sollte Development-Environment Features aktivieren', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
 
       const devFlags = new ProjectFolderFeatureFlags();
 
       expect(await devFlags.isFeatureEnabled('debug_mode', mockUser, mockOrganization)).toBe(true);
       expect(await devFlags.isFeatureEnabled('performance_metrics', mockUser, mockOrganization)).toBe(true);
 
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('sollte Production-Environment Sicherheitsfeatures aktivieren', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
 
       const prodFlags = new ProjectFolderFeatureFlags();
 
       expect(await prodFlags.isFeatureEnabled('enhanced_logging', mockUser, mockOrganization)).toBe(true);
       expect(await prodFlags.isFeatureEnabled('debug_mode', mockUser, mockOrganization)).toBe(false);
 
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('sollte Custom Environment Variables respektieren', async () => {

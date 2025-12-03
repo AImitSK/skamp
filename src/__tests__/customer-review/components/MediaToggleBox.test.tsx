@@ -243,11 +243,11 @@ describe('MediaToggleBox Komponente', () => {
       let capturedLink: any = null;
 
       // Spioniere nur für Link-Elemente
-      document.body.appendChild = function(node: any) {
-        if (node.tagName === 'A') {
+      document.body.appendChild = function<T extends Node>(node: T): T {
+        if ((node as any).tagName === 'A') {
           capturedLink = node;
         }
-        return originalAppendChild.call(this, node);
+        return originalAppendChild.call(this, node) as T;
       };
 
       render(<MediaToggleBox {...defaultProps} />);

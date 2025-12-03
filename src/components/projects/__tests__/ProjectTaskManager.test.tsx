@@ -334,7 +334,7 @@ describe('ProjectTaskManager', () => {
       await waitFor(() => {
         const badges = screen.queryAllByText((content, element) => {
           // Badge hat text-xs Klasse
-          return content === 'Meine Tasks' && element?.classList.contains('text-xs');
+          return content === 'Meine Tasks' && (element?.classList.contains('text-xs') ?? false);
         });
         expect(badges.length).toBeGreaterThanOrEqual(1);
       });
@@ -428,7 +428,7 @@ describe('ProjectTaskManager', () => {
 
       // Badges sollten beide erscheinen
       const myTasksBadges = screen.queryAllByText((content, element) => {
-        return content === 'Meine Tasks' && element?.classList.contains('text-xs');
+        return content === 'Meine Tasks' && (element?.classList.contains('text-xs') ?? false);
       });
       expect(myTasksBadges.length).toBeGreaterThanOrEqual(1);
 

@@ -196,9 +196,11 @@ describe('BulkExportService', () => {
       expect(result.id).toBe(jobId);
       expect(result.type).toBe('export');
       expect(result.status).toBe('completed');
-      expect(result.entities).toBeDefined();
+      // entities ist im Mock-Response vorhanden, aber nicht im APIBulkJobResponse-Interface
+      expect((result as any).entities).toBeDefined();
       expect(result.progress).toBeDefined();
-      expect(result.downloadUrl).toContain(jobId);
+      // downloadUrl ist im Mock-Response als Top-Level Property, im Interface aber in result.downloadUrl
+      expect((result as any).downloadUrl || result.result?.downloadUrl).toContain(jobId);
     });
 
     it.skip('sollte Fehler werfen wenn Job nicht existiert', async () => {

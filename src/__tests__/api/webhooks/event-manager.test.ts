@@ -6,6 +6,7 @@ jest.mock('@/lib/api/webhook-service');
 
 import { EventManager, eventManager } from '@/lib/api/event-manager';
 import { webhookService } from '@/lib/api/webhook-service';
+import { WebhookEvent } from '@/types/api-webhooks';
 
 // Cast zu Mock um Zugriff auf Mock-Funktionen zu haben
 const mockWebhookService = webhookService as jest.Mocked<typeof webhookService>;
@@ -26,7 +27,7 @@ describe('EventManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Stelle sicher dass triggerEvent gemockt ist
-    mockWebhookService.triggerEvent = jest.fn().mockResolvedValue(undefined);
+    mockWebhookService.triggerEvent = jest.fn().mockImplementation(async () => {}) as any;
   });
 
   afterEach(() => {

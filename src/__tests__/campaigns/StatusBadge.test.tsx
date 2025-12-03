@@ -16,13 +16,14 @@ describe('StatusBadge', () => {
 
   it('renders all status types', () => {
     const statuses: PRCampaignStatus[] = [
-      'draft', 'in_review', 'changes_requested', 'approved',
+      'draft', 'generating_preview', 'in_review', 'changes_requested', 'approved',
       'scheduled', 'sending', 'sent', 'archived'
     ];
 
     // Erwartete Labels fuer jeden Status (aus campaignStatus.ts)
     const expectedLabels: Record<PRCampaignStatus, string> = {
       draft: 'Entwurf',
+      generating_preview: 'Generiere Vorschau',
       in_review: 'In Prüfung',
       changes_requested: 'Änderung erbeten',
       approved: 'Freigegeben',

@@ -42,9 +42,9 @@ jest.mock('firebase/firestore', () => ({
 }));
 
 // Mock mock-export-import-service BEFORE importing BulkImportService
-const mockStartImport = jest.fn();
-const mockGetJobById = jest.fn();
-const mockGetJobs = jest.fn();
+const mockStartImport = jest.fn() as jest.MockedFunction<any>;
+const mockGetJobById = jest.fn() as jest.MockedFunction<any>;
+const mockGetJobs = jest.fn() as jest.MockedFunction<any>;
 
 jest.mock('@/lib/api/mock-export-import-service', () => ({
   mockBulkImportService: {

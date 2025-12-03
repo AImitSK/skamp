@@ -137,7 +137,8 @@ describe('PDF Versions Approval Integration', () => {
     jest.spyOn(pdfVersionsService as any, 'getLatestVersionNumber').mockResolvedValue(0);
 
     // Mock getVersionById - wird per-Test überschrieben falls nötig
-    jest.spyOn(pdfVersionsService as any, 'getVersionById').mockImplementation((versionId: string) => {
+    jest.spyOn(pdfVersionsService as any, 'getVersionById').mockImplementation((...args: unknown[]): Promise<any> => {
+      const versionId = args[0] as string;
       // Default: Return mock version with campaignId
       return Promise.resolve({
         id: versionId,
