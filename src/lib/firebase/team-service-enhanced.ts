@@ -192,6 +192,35 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
   }
 
   /**
+   * Erneuert den Einladungs-Token für ein bestehendes Mitglied (Resend Invite)
+   */
+  async renewInvitationToken(
+    memberId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<{ invitationToken: string }> {
+    // Prüfe ob Mitglied existiert
+    const member = await this.getById(memberId, context.organizationId);
+    if (!member) {
+      throw new Error('Mitglied nicht gefunden');
+    }
+
+    // Prüfe ob Status 'invited' ist
+    if (member.status !== 'invited') {
+      throw new Error('Einladung kann nur für ausstehende Einladungen erneuert werden');
+    }
+
+    // Generiere neuen Token
+    const invitationToken = this.generateInvitationToken();
+    const tokenExpiry = new Date();
+    tokenExpiry.setDate(tokenExpiry.getDate() + 7); // 7 Tage gültig
+
+    // Speichere neuen Token
+    await this.saveInvitationToken(memberId, invitationToken, tokenExpiry);
+
+    return { invitationToken };
+  }
+
+  /**
    * Einladung annehmen
    */
   async acceptInvite(

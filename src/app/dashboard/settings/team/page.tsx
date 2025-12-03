@@ -336,24 +336,20 @@ export default function TeamSettingsPage() {
   };
 
   const handleResendInvite = async (member: TeamMember) => {
-    if (!user) return;
-    
+    if (!user || !member.id) return;
+
     try {
-      // Generiere neuen Token
+      // Erneuere den Token für das bestehende Mitglied
       const context = { organizationId, userId: user.uid };
-      const { invitationToken } = await teamMemberService.invite(
-        {
-          email: member.email,
-          role: member.role,
-          displayName: member.displayName
-        },
+      const { invitationToken } = await teamMemberService.renewInvitationToken(
+        member.id,
         context
       );
-      
+
       // Sende E-Mail erneut
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
       const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${member.id}`;
-      
+
       const response = await fetch('/api/email/send', {
         method: 'POST',
         headers: {
@@ -381,15 +377,15 @@ export default function TeamSettingsPage() {
           replyTo: 'noreply@celeropress.com'
         })
       });
-      
+
       if (response.ok) {
         toastService.success('Einladung wurde erneut versendet');
       } else {
         throw new Error('E-Mail-Versand fehlgeschlagen');
       }
-    } catch (error) {
-      
-      toastService.error('Fehler beim erneuten Versenden der Einladung');
+    } catch (error: any) {
+      console.error('Error resending invite:', error);
+      toastService.error(error.message || 'Fehler beim erneuten Versenden der Einladung');
     }
   };
   
@@ -498,9 +494,11 @@ export default function TeamSettingsPage() {
   // Property 'tier' existiert möglicherweise nicht im Organization Type, deshalb type assertion
   const orgWithTier = currentOrganization as any;
   const tierValue = orgWithTier?.tier;
-  const teamLimit = tierValue && SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
-    ? SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS].users
-    : -1;
+  // Default auf STARTER wenn kein Tier gefunden wird (anstatt -1/Unlimited)
+  const subscriptionLimits = tierValue && SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
+    ? SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
+    : SUBSCRIPTION_LIMITS.STARTER;
+  const teamLimit = subscriptionLimits.users;
   const isLimitReached = teamLimit !== -1 && activeMembers.length >= teamLimit;
   
   return (
@@ -584,11 +582,7 @@ export default function TeamSettingsPage() {
                 <Text className="text-sm text-gray-600">Aktive Mitglieder</Text>
               </div>
               <div className="text-2xl font-semibold text-gray-900 whitespace-nowrap">
-                {teamLimit === -1 ? (
-                  <span>{activeMembersOnly.length} <span className="text-base font-normal text-[#005fab]">(Unlimited)</span></span>
-                ) : (
-                  <span className={isLimitReached ? 'text-red-600' : ''}>{activeMembersOnly.length} / {teamLimit}</span>
-                )}
+                <span className={isLimitReached ? 'text-red-600' : ''}>{activeMembersOnly.length} / {teamLimit}</span>
               </div>
             </div>
           </Link>
