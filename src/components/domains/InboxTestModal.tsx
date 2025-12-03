@@ -12,11 +12,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
-import { 
+import {
   EmailDomainEnhanced,
   InboxTestResult,
-  InboxTestModalProps,
-  TestProvider
+  InboxTestModalProps
 } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,
@@ -29,13 +28,6 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 
-const defaultTestProviders: TestProvider[] = [
-  { name: 'Gmail', icon: '📧', recommended: true },
-  { name: 'Outlook', icon: '📮', recommended: true },
-  { name: 'Yahoo', icon: '📪' },
-  { name: 'Custom', icon: '✉️' }
-];
-
 export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -43,8 +35,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<InboxTestResult[]>([]);
-  const [customEmails, setCustomEmails] = useState('');
-  const [useCustomEmails, setUseCustomEmails] = useState(false);
+  const [testEmails, setTestEmails] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [testComplete, setTestComplete] = useState(false);
 
@@ -78,28 +69,24 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
   const handleStartTest = async () => {
     if (!domain) return;
 
+    // Validiere E-Mail-Adressen
+    const testAddresses = testEmails
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.includes('@'));
+
+    if (testAddresses.length === 0) {
+      setError('Bitte geben Sie mindestens eine gültige E-Mail-Adresse ein');
+      return;
+    }
+
     try {
       setTesting(true);
       setError(null);
       setTestResults([]);
 
-      // Prepare test addresses
-      let testAddresses: string[] = [];
-      if (useCustomEmails && customEmails) {
-        testAddresses = customEmails
-          .split(',')
-          .map(email => email.trim())
-          .filter(email => email.includes('@'));
-        
-        if (testAddresses.length === 0) {
-          setError('Bitte geben Sie gültige E-Mail-Adressen ein');
-          setTesting(false);
-          return;
-        }
-      }
-
       // Determine from email
-      const fromEmail = domain.subdomain 
+      const fromEmail = domain.subdomain
         ? `test@${domain.subdomain}.${domain.domain}`
         : `test@${domain.domain}`;
 
@@ -120,7 +107,7 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
         domainId,
         fromEmail,
         domain: domain.domain,
-        testAddresses: testAddresses.length > 0 ? testAddresses : undefined
+        testAddresses
       });
 
       if (!response.success) {
@@ -237,58 +224,21 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                 </div>
               )}
 
-              {/* Test Options */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Test-Optionen</h4>
-                
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      checked={!useCustomEmails}
-                      onChange={() => setUseCustomEmails(false)}
-                      className="text-blue-600"
-                    />
-                    <div>
-                      <Text className="font-medium">Standard-Test</Text>
-                      <Text className="text-sm text-gray-600">
-                        Test mit vordefinierten E-Mail-Adressen (Gmail, Outlook, etc.)
-                      </Text>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      checked={useCustomEmails}
-                      onChange={() => setUseCustomEmails(true)}
-                      className="text-blue-600"
-                    />
-                    <div className="flex-1">
-                      <Text className="font-medium">Eigene E-Mail-Adressen</Text>
-                      <Text className="text-sm text-gray-600">
-                        Testen Sie mit Ihren eigenen E-Mail-Adressen
-                      </Text>
-                    </div>
-                  </label>
-                </div>
-
-                {useCustomEmails && (
-                  <Field className="mt-3">
-                    <Label>E-Mail-Adressen (kommagetrennt)</Label>
-                    <Input
-                      type="text"
-                      value={customEmails}
-                      onChange={(e) => setCustomEmails(e.target.value)}
-                      placeholder="test1@gmail.com, test2@outlook.com"
-                      disabled={testing}
-                    />
-                    <Description>
-                      Geben Sie die E-Mail-Adressen ein, an die Test-E-Mails gesendet werden sollen
-                    </Description>
-                  </Field>
-                )}
-              </div>
+              {/* E-Mail-Adressen Eingabe */}
+              <Field>
+                <Label>Test-E-Mail-Adressen</Label>
+                <Input
+                  type="text"
+                  value={testEmails}
+                  onChange={(e) => setTestEmails(e.target.value)}
+                  placeholder="test@gmail.com, test@outlook.com"
+                  disabled={testing}
+                />
+                <Description>
+                  Geben Sie eine oder mehrere E-Mail-Adressen ein (kommagetrennt), an die Test-E-Mails gesendet werden sollen.
+                  Prüfen Sie anschließend, ob die E-Mails im Posteingang oder Spam-Ordner gelandet sind.
+                </Description>
+              </Field>
 
               {/* Previous Test Results */}
               {domain.inboxTests && domain.inboxTests.length > 0 && (
@@ -304,7 +254,10 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
                 <Button plain onClick={onClose}>
                   Abbrechen
                 </Button>
-                <Button onClick={handleStartTest} disabled={testing}>
+                <Button
+                  onClick={handleStartTest}
+                  disabled={testing || !testEmails.trim()}
+                >
                   {testing ? (
                     <>
                       <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
