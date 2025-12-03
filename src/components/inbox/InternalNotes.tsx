@@ -75,6 +75,7 @@ export function InternalNotes({
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionDropdownPosition, setMentionDropdownPosition] = useState({ top: 0, left: 0 });
   const [isExpanded, setIsExpanded] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [allTeamMembers, setAllTeamMembers] = useState<Array<{
     id: string;
@@ -143,6 +144,7 @@ export function InternalNotes({
     const cursorPos = e.target.selectionStart;
 
     setNewNote(value);
+    setCursorPosition(cursorPos);
 
     // Prüfe auf @-Mention
     const beforeCursor = value.substring(0, cursorPos);
@@ -224,28 +226,31 @@ export function InternalNotes({
     }
   }, [showMentions, mentionSearch, selectedMentionIndex, membersForMentions]);
 
-  // Insert mention
-  const insertMention = (member: any) => {
-    const lastAtIndex = newNote.lastIndexOf('@');
-    const beforeAt = newNote.substring(0, lastAtIndex);
+  // Insert mention - 1:1 wie im TeamChat
+  const insertMention = useCallback((member: any) => {
+    const beforeCursor = newNote.substring(0, cursorPosition);
+    const afterCursor = newNote.substring(cursorPosition);
 
-    // Text nach @ und dem aktuellen Suchbegriff
-    // mentionSearch enthält das, was der User nach @ getippt hat
-    const searchLength = mentionSearch.length;
-    const afterSearchTerm = newNote.substring(lastAtIndex + 1 + searchLength);
+    // Finde das @ und ersetze es mit dem Namen
+    const mentionMatch = beforeCursor.match(/@([\w\s]*)$/);
+    if (mentionMatch && mentionMatch.index !== undefined) {
+      const beforeMention = beforeCursor.substring(0, mentionMatch.index);
+      const newText = beforeMention + `@${member.displayName} ` + afterCursor;
+      const newCursorPos = beforeMention.length + member.displayName.length + 2;
 
-    // Baue den neuen Text zusammen:
-    // - Text vor @
-    // - @ + ausgewählter Name
-    // - Rest des Textes nach dem Suchbegriff (mit Leerzeichen, falls nicht vorhanden)
-    const needsSpace = afterSearchTerm.length > 0 && !afterSearchTerm.startsWith(' ');
-    setNewNote(`${beforeAt}@${member.displayName}${needsSpace ? ' ' : ''}${afterSearchTerm.trimStart()}`);
-    setShowMentions(false);
-    setMentionSearch('');
+      setNewNote(newText);
+      setShowMentions(false);
+      setMentionSearch('');
 
-    // Focus textarea wieder
-    textareaRef.current?.focus();
-  };
+      // Setze Cursor-Position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          textareaRef.current.focus();
+        }
+      }, 0);
+    }
+  }, [newNote, cursorPosition]);
 
   // Extract mentions from text - Verwende den gleichen Service wie Team Chat
   const extractMentions = (text: string): string[] => {
