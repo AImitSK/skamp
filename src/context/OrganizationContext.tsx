@@ -12,6 +12,7 @@ interface Organization {
   id: string;
   name: string;
   role: string;
+  tier?: 'STARTER' | 'BUSINESS' | 'AGENTUR';
 }
 
 interface OrganizationContextType {
@@ -116,11 +117,18 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       activeMemberships.map(async (m) => {
         let orgName = m.organizationId === m.userId ? 'Meine Organisation' : `Team ${m.organizationId}`;
 
-        // Versuche den echten Namen aus der organizations Collection zu laden
+        // Versuche den echten Namen und Tier aus der organizations Collection zu laden
+        let tier: 'STARTER' | 'BUSINESS' | 'AGENTUR' | undefined;
         try {
           const orgDoc = await getDoc(doc(db, 'organizations', m.organizationId));
-          if (orgDoc.exists() && orgDoc.data().name) {
-            orgName = orgDoc.data().name;
+          if (orgDoc.exists()) {
+            const data = orgDoc.data();
+            if (data.name) {
+              orgName = data.name;
+            }
+            if (data.tier) {
+              tier = data.tier;
+            }
           }
         } catch (error) {
           // Fallback auf generischen Namen bei Fehler
@@ -129,7 +137,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         return {
           id: m.organizationId,
           name: orgName,
-          role: m.role
+          role: m.role,
+          tier
         };
       })
     );

@@ -490,13 +490,11 @@ export default function TeamSettingsPage() {
   const pendingMembers = activeMembers.filter(m => m.status === 'invited');
   const activeMembersOnly = activeMembers.filter(m => m.status === 'active');
 
-  // Team Member Limit aus Subscription Tier
-  // Property 'tier' existiert möglicherweise nicht im Organization Type, deshalb type assertion
-  const orgWithTier = currentOrganization as any;
-  const tierValue = orgWithTier?.tier;
-  // Default auf STARTER wenn kein Tier gefunden wird (anstatt -1/Unlimited)
-  const subscriptionLimits = tierValue && SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
-    ? SUBSCRIPTION_LIMITS[tierValue as keyof typeof SUBSCRIPTION_LIMITS]
+  // Team Member Limit aus Subscription Tier (kommt jetzt direkt aus OrganizationContext)
+  const tierValue = currentOrganization?.tier;
+  // Default auf STARTER wenn kein Tier gefunden wird
+  const subscriptionLimits = tierValue && SUBSCRIPTION_LIMITS[tierValue]
+    ? SUBSCRIPTION_LIMITS[tierValue]
     : SUBSCRIPTION_LIMITS.STARTER;
   const teamLimit = subscriptionLimits.users;
   const isLimitReached = teamLimit !== -1 && activeMembers.length >= teamLimit;
