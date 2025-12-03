@@ -227,7 +227,9 @@ export default function DashboardLayout({
       name: "Templates",
       href: "/dashboard/settings/templates",
       icon: DocumentTextIcon,
-      description: "PDF-Layout-Vorlagen verwalten"
+      description: "PDF-Layout-Vorlagen verwalten",
+      badge: "PREMIUM",
+      superAdminOnly: true
     },
     {
       name: "Domains",
@@ -235,7 +237,7 @@ export default function DashboardLayout({
       icon: EnvelopeIcon,
       description: "Eigene E-Mail-Domain einrichten"
     },
-        {
+    {
       name: "E-Mail",
       href: "/dashboard/settings/email",
       icon: EnvelopeIcon,
@@ -368,16 +370,41 @@ export default function DashboardLayout({
                 Einstellungen
               </div>
               <div className="ml-7 space-y-1">
-                {settingsItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </a>
-                ))}
+                {settingsItems.map((item) => {
+                  const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+
+                  if (isRestricted) {
+                    return (
+                      <div
+                        key={item.name}
+                        className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+                      >
+                        <span className="flex items-center gap-2 text-zinc-400">
+                          {item.name}
+                          {(item as any).badge && (
+                            <Badge color="pink">{(item as any).badge}</Badge>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="flex items-center gap-2">
+                        {item.name}
+                        {(item as any).badge && (
+                          <Badge color="pink">{(item as any).badge}</Badge>
+                        )}
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             </div>
             <div className="py-6 space-y-2">
