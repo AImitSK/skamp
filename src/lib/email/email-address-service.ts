@@ -423,10 +423,11 @@ export class EmailAddressService {
         isDefault: false,
         aliasType: data.aliasType,
         inboxEnabled: data.inboxEnabled,
-        assignedUserIds: data.assignedUserIds,
+        assignedUserIds: data.availableToAll ? [] : data.assignedUserIds,
+        availableToAll: data.availableToAll || false,
         permissions: {
-          read: [...data.assignedUserIds, userId],
-          write: [...data.assignedUserIds, userId],
+          read: [...(data.availableToAll ? [] : data.assignedUserIds), userId],
+          write: [...(data.availableToAll ? [] : data.assignedUserIds), userId],
           manage: [userId]
         },
         organizationId,
@@ -509,7 +510,17 @@ export class EmailAddressService {
       if (data.displayName !== undefined) updateData.displayName = data.displayName;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
       if (data.inboxEnabled !== undefined) updateData.inboxEnabled = data.inboxEnabled;
-      if (data.assignedUserIds !== undefined) {
+
+      // availableToAll Feld aktualisieren
+      if (data.availableToAll !== undefined) {
+        updateData.availableToAll = data.availableToAll;
+        // Wenn availableToAll aktiv ist, leere die assignedUserIds
+        if (data.availableToAll) {
+          updateData.assignedUserIds = [];
+        }
+      }
+
+      if (data.assignedUserIds !== undefined && !data.availableToAll) {
         updateData.assignedUserIds = data.assignedUserIds;
         const uniqueReadUsers = new Set([...data.assignedUserIds, ...currentData.permissions.manage]);
         const uniqueWriteUsers = new Set([...data.assignedUserIds, ...currentData.permissions.manage]);
