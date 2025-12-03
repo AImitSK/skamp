@@ -28,7 +28,6 @@ import {
   TrashIcon,
   EnvelopeIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   UserGroupIcon,
   EllipsisVerticalIcon,
   CheckCircleIcon,
@@ -626,54 +625,7 @@ export default function EmailSettingsPage() {
                   placeholder="z.B. Pressestelle ABC GmbH"
                 />
               </Field>
-              <Field className="mt-4">
-                <Label>Client (optional)</Label>
-                <Input
-                  value={formData.clientName}
-                  onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                  placeholder="z.B. ABC GmbH"
-                />
-              </Field>
             </div>
-
-            {/* Alias Configuration - nur bei neuen Adressen */}
-            {showAddModal && (
-              <div>
-                <Subheading>Alias-Typ</Subheading>
-                <div className="space-y-2 mt-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="specific"
-                      checked={formData.aliasType === 'specific'}
-                      onChange={(e) => setFormData({ ...formData, aliasType: 'specific' })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Spezifische Adresse</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="catch-all"
-                      checked={formData.aliasType === 'catch-all'}
-                      onChange={(e) => setFormData({ ...formData, aliasType: 'catch-all' })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Catch-All (alle E-Mails an diese Domain)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="pattern"
-                      checked={formData.aliasType === 'pattern'}
-                      onChange={(e) => setFormData({ ...formData, aliasType: 'pattern' })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Pattern (z.B. pr-* für pr-2024@, pr-sommer@)</span>
-                  </label>
-                </div>
-              </div>
-            )}
 
             {/* Team Assignment */}
             <div>
@@ -755,7 +707,7 @@ export default function EmailSettingsPage() {
 
             {/* Features */}
             <div>
-              <Subheading>Features</Subheading>
+              <Subheading>Einstellungen</Subheading>
               <div className="space-y-3 mt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">Aktiv</span>
@@ -771,50 +723,6 @@ export default function EmailSettingsPage() {
                     onChange={(checked) => setFormData({ ...formData, inboxEnabled: checked })}
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* AI Settings */}
-            <div>
-              <Subheading>KI-Einstellungen (Gemini)</Subheading>
-              <div className="space-y-3 mt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">KI-Unterstützung aktivieren</span>
-                  <SimpleSwitch
-                    checked={formData.aiEnabled}
-                    onChange={(checked) => setFormData({ ...formData, aiEnabled: checked })}
-                  />
-                </div>
-                {formData.aiEnabled && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Automatische Antwort-Vorschläge</span>
-                      <SimpleSwitch
-                        checked={formData.autoSuggest}
-                        onChange={(checked) => setFormData({ ...formData, autoSuggest: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Automatische Kategorisierung</span>
-                      <SimpleSwitch
-                        checked={formData.autoCategorize}
-                        onChange={(checked) => setFormData({ ...formData, autoCategorize: checked })}
-                      />
-                    </div>
-                    <Field>
-                      <Label>Bevorzugter Ton</Label>
-                      <Select
-                        value={formData.preferredTone}
-                        onChange={(e) => setFormData({ ...formData, preferredTone: e.target.value as any })}
-                      >
-                        <option value="formal">Förmlich</option>
-                        <option value="modern">Modern</option>
-                        <option value="technical">Technisch</option>
-                        <option value="startup">Startup</option>
-                      </Select>
-                    </Field>
-                  </>
-                )}
               </div>
             </div>
           </div>
