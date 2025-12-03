@@ -16,7 +16,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { spamPatternService } from '@/lib/firebase/spam-pattern-service';
 import { SpamPattern } from '@/types/monitoring';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 
 export default function SpamBlocklistPage() {
   const { user } = useAuth();
@@ -46,9 +46,8 @@ export default function SpamBlocklistPage() {
         'global'
       );
       setPatterns(data);
-    } catch (error) {
-      console.error('Error loading patterns:', error);
-      toast.error('Fehler beim Laden der Spam-Patterns');
+    } catch {
+      toastService.error('Fehler beim Laden der Spam-Patterns');
     } finally {
       setLoading(false);
     }
@@ -58,7 +57,7 @@ export default function SpamBlocklistPage() {
     if (!user?.uid || !currentOrganization?.id) return;
 
     if (!formData.pattern.trim()) {
-      toast.error('Bitte geben Sie ein Pattern ein');
+      toastService.error('Bitte geben Sie ein Pattern ein');
       return;
     }
 
@@ -73,7 +72,7 @@ export default function SpamBlocklistPage() {
         description: formData.description.trim() || undefined
       }, { userId: user.uid });
 
-      toast.success('Pattern erfolgreich hinzugefügt');
+      toastService.success('Pattern erfolgreich hinzugefügt');
       setIsDialogOpen(false);
       setFormData({
         type: 'url_domain',
@@ -82,9 +81,8 @@ export default function SpamBlocklistPage() {
         description: ''
       });
       loadPatterns();
-    } catch (error) {
-      console.error('Error adding pattern:', error);
-      toast.error('Fehler beim Hinzufügen des Patterns');
+    } catch {
+      toastService.error('Fehler beim Hinzufügen des Patterns');
     }
   };
 
@@ -93,11 +91,10 @@ export default function SpamBlocklistPage() {
 
     try {
       await spamPatternService.delete(patternId);
-      toast.success('Pattern erfolgreich gelöscht');
+      toastService.success('Pattern erfolgreich gelöscht');
       loadPatterns();
-    } catch (error) {
-      console.error('Error deleting pattern:', error);
-      toast.error('Fehler beim Löschen des Patterns');
+    } catch {
+      toastService.error('Fehler beim Löschen des Patterns');
     }
   };
 
@@ -107,15 +104,14 @@ export default function SpamBlocklistPage() {
     try {
       if (pattern.isActive) {
         await spamPatternService.deactivate(pattern.id);
-        toast.success('Pattern deaktiviert');
+        toastService.success('Pattern deaktiviert');
       } else {
         await spamPatternService.update(pattern.id, { isActive: true }, { userId: user?.uid || '' });
-        toast.success('Pattern aktiviert');
+        toastService.success('Pattern aktiviert');
       }
       loadPatterns();
-    } catch (error) {
-      console.error('Error toggling pattern:', error);
-      toast.error('Fehler beim Aktivieren/Deaktivieren');
+    } catch {
+      toastService.error('Fehler beim Aktivieren/Deaktivieren');
     }
   };
 
@@ -123,7 +119,6 @@ export default function SpamBlocklistPage() {
     switch (type) {
       case 'url_domain': return 'URL Domain';
       case 'keyword_title': return 'Keyword (Titel)';
-      case 'keyword_content': return 'Keyword (Inhalt)';
       case 'outlet_name': return 'Medium Name';
       default: return type;
     }
@@ -262,7 +257,6 @@ export default function SpamBlocklistPage() {
               >
                 <option value="url_domain">URL Domain</option>
                 <option value="keyword_title">Keyword (Titel)</option>
-                <option value="keyword_content">Keyword (Inhalt)</option>
                 <option value="outlet_name">Medium Name</option>
               </Select>
               <Text className="text-xs text-gray-500 mt-1">
