@@ -30,6 +30,7 @@ import {
   DropdownDivider,
 } from "@/components/ui/dropdown";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import { useInboxCount } from "@/hooks/use-inbox-count";
@@ -70,7 +71,8 @@ import {
   GlobeAltIcon,
   UsersIcon,
   AdjustmentsHorizontalIcon,
-  TicketIcon
+  TicketIcon,
+  CircleStackIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -86,6 +88,8 @@ interface NavigationChild {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   description: string;
   notificationCount?: number;
+  badge?: string;
+  superAdminOnly?: boolean;
 }
 
 interface NavigationItem {
@@ -151,12 +155,6 @@ export default function DashboardLayout({
     current: pathname.startsWith('/dashboard/library'),
     children: [
       {
-        name: "Redakteure",
-        href: "/dashboard/library/editors",
-        icon: UserGroupIcon,
-        description: "Redakteure und ihre Publikationen verwalten"
-      },
-      {
         name: "Publikationen",
         href: "/dashboard/library/publications",
         icon: NewspaperIcon,
@@ -173,6 +171,14 @@ export default function DashboardLayout({
         href: "/dashboard/library/media",
         icon: PhotoIcon,
         description: "Zentrale Verwaltung aller Medieninhalte"
+      },
+      {
+        name: "Datenbank",
+        href: "/dashboard/library/editors",
+        icon: CircleStackIcon,
+        description: "Redakteure und ihre Publikationen verwalten",
+        badge: "PREMIUM",
+        superAdminOnly: true
       },
     ],
   },
@@ -312,23 +318,46 @@ export default function DashboardLayout({
                     {item.name}
                   </div>
                   <div className="ml-7 space-y-1">
-                    {item.children?.map((child) => (
-                      <a
-                        key={child.name}
-                        href={child.href}
-                        className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <span className="flex items-center gap-2">
-                          {child.name}
-                          {(child.notificationCount ?? 0) > 0 && (
-                            <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                              {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
+                    {item.children?.map((child) => {
+                      const isRestricted = child.superAdminOnly && !isSuperAdmin;
+
+                      if (isRestricted) {
+                        return (
+                          <div
+                            key={child.name}
+                            className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+                          >
+                            <span className="flex items-center gap-2 text-zinc-400">
+                              {child.name}
+                              {child.badge && (
+                                <Badge color="pink">{child.badge}</Badge>
+                              )}
                             </span>
-                          )}
-                        </span>
-                      </a>
-                    ))}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <a
+                          key={child.name}
+                          href={child.href}
+                          className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <span className="flex items-center gap-2">
+                            {child.name}
+                            {child.badge && (
+                              <Badge color="pink">{child.badge}</Badge>
+                            )}
+                            {(child.notificationCount ?? 0) > 0 && (
+                              <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
+                              </span>
+                            )}
+                          </span>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -415,23 +444,50 @@ export default function DashboardLayout({
                         <ChevronDownIcon className="size-4" />
                       </DropdownButton>
                       <DropdownMenu>
-                        {item.children.map((child) => (
-                          <DropdownItem 
-                            href={child.href} 
-                            key={child.name} 
-                            icon={child.icon}
-                            description={child.description}
-                          >
-                            <span className="flex items-center gap-2">
-                              {child.name}
-                              {(child.notificationCount ?? 0) > 0 && (
-                                 <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                                   {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
-                                 </span>
-                              )}
-                            </span>
-                          </DropdownItem>
-                        ))}
+                        {item.children.map((child) => {
+                          const isRestricted = child.superAdminOnly && !isSuperAdmin;
+
+                          if (isRestricted) {
+                            return (
+                              <div
+                                key={child.name}
+                                className="flex items-center gap-3 px-3.5 py-2.5 opacity-50 cursor-not-allowed"
+                              >
+                                <child.icon className="size-5 text-zinc-400" />
+                                <div className="flex flex-col">
+                                  <span className="flex items-center gap-2 text-sm text-zinc-400">
+                                    {child.name}
+                                    {child.badge && (
+                                      <Badge color="pink">{child.badge}</Badge>
+                                    )}
+                                  </span>
+                                  <span className="text-xs text-zinc-400">{child.description}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <DropdownItem
+                              href={child.href}
+                              key={child.name}
+                              icon={child.icon}
+                              description={child.description}
+                            >
+                              <span className="flex items-center gap-2">
+                                {child.name}
+                                {child.badge && (
+                                  <Badge color="pink">{child.badge}</Badge>
+                                )}
+                                {(child.notificationCount ?? 0) > 0 && (
+                                   <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                     {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
+                                   </span>
+                                )}
+                              </span>
+                            </DropdownItem>
+                          );
+                        })}
                       </DropdownMenu>
                     </Dropdown>
                   ) : (
@@ -620,23 +676,50 @@ export default function DashboardLayout({
                         <ChevronDownIcon className="size-4" />
                       </DropdownButton>
                       <DropdownMenu>
-                        {item.children.map(child => (
-                          <DropdownItem 
-                            href={child.href} 
-                            key={child.name}
-                            icon={child.icon}
-                            description={child.description}
-                          >
-                            <span className="flex items-center gap-2">
-                              {child.name}
-                              {(child.notificationCount ?? 0) > 0 && (
-                                 <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                                   {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
-                                 </span>
-                              )}
-                            </span>
-                          </DropdownItem>
-                        ))}
+                        {item.children.map(child => {
+                          const isRestricted = child.superAdminOnly && !isSuperAdmin;
+
+                          if (isRestricted) {
+                            return (
+                              <div
+                                key={child.name}
+                                className="flex items-center gap-3 px-3.5 py-2.5 opacity-50 cursor-not-allowed"
+                              >
+                                <child.icon className="size-5 text-zinc-400" />
+                                <div className="flex flex-col">
+                                  <span className="flex items-center gap-2 text-sm text-zinc-400">
+                                    {child.name}
+                                    {child.badge && (
+                                      <Badge color="pink">{child.badge}</Badge>
+                                    )}
+                                  </span>
+                                  <span className="text-xs text-zinc-400">{child.description}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <DropdownItem
+                              href={child.href}
+                              key={child.name}
+                              icon={child.icon}
+                              description={child.description}
+                            >
+                              <span className="flex items-center gap-2">
+                                {child.name}
+                                {child.badge && (
+                                  <Badge color="pink">{child.badge}</Badge>
+                                )}
+                                {(child.notificationCount ?? 0) > 0 && (
+                                   <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                     {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
+                                   </span>
+                                )}
+                              </span>
+                            </DropdownItem>
+                          );
+                        })}
                       </DropdownMenu>
                     </Dropdown>
                   ) : (

@@ -5,26 +5,24 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  UserGroupIcon,
   NewspaperIcon,
   DocumentTextIcon,
-  PhotoIcon
+  PhotoIcon,
+  CircleStackIcon
 } from "@heroicons/react/24/outline";
+import { Badge } from "@/components/ui/badge";
+import { useAutoGlobal } from "@/lib/hooks/useAutoGlobal";
 
 interface Tab {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
+  badge?: string;
+  superAdminOnly?: boolean;
 }
 
 const tabs: Tab[] = [
-  {
-    name: "Redakteure",
-    href: "/dashboard/library/editors",
-    icon: UserGroupIcon,
-    description: ""
-  },
   {
     name: "Publikationen",
     href: "/dashboard/library/publications",
@@ -42,6 +40,14 @@ const tabs: Tab[] = [
     href: "/dashboard/library/media",
     icon: PhotoIcon,
     description: ""
+  },
+  {
+    name: "Datenbank",
+    href: "/dashboard/library/editors",
+    icon: CircleStackIcon,
+    description: "",
+    badge: "PREMIUM",
+    superAdminOnly: true
   }
 ];
 
@@ -56,6 +62,7 @@ export default function LibraryLayout({
 }) {
   const pathname = usePathname();
   const [currentTab, setCurrentTab] = useState<Tab | null>(null);
+  const { isSuperAdmin } = useAutoGlobal();
 
   useEffect(() => {
     // Finde den aktiven Tab basierend auf dem Pfad
@@ -90,13 +97,33 @@ export default function LibraryLayout({
       <div>
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => {
-            const isActive = 
-              tab.href === "/dashboard/library" 
+            const isActive =
+              tab.href === "/dashboard/library"
                 ? pathname === "/dashboard/library"
                 : pathname.startsWith(tab.href);
-            
+
             const Icon = tab.icon;
-            
+            const isRestricted = tab.superAdminOnly && !isSuperAdmin;
+
+            // Ausgegraut und nicht klickbar für Nicht-SuperAdmins
+            if (isRestricted) {
+              return (
+                <div
+                  key={tab.name}
+                  className="group inline-flex items-center whitespace-nowrap border-b-2 border-transparent py-4 px-1 text-sm font-medium opacity-50 cursor-not-allowed"
+                >
+                  <Icon
+                    className="-ml-0.5 mr-2 h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <span className="text-gray-400">{tab.name}</span>
+                  {tab.badge && (
+                    <Badge color="pink" className="ml-2">{tab.badge}</Badge>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={tab.name}
@@ -119,6 +146,9 @@ export default function LibraryLayout({
                   aria-hidden="true"
                 />
                 <span>{tab.name}</span>
+                {tab.badge && (
+                  <Badge color="pink" className="ml-2">{tab.badge}</Badge>
+                )}
               </Link>
             );
           })}
@@ -137,16 +167,25 @@ export default function LibraryLayout({
           value={currentTab?.href}
           onChange={(e) => {
             const tab = tabs.find(t => t.href === e.target.value);
-            if (tab) {
+            // Nicht navigieren wenn restricted
+            if (tab && !(tab.superAdminOnly && !isSuperAdmin)) {
               window.location.href = tab.href;
             }
           }}
         >
-          {tabs.map((tab) => (
-            <option key={tab.name} value={tab.href}>
-              {tab.name}
-            </option>
-          ))}
+          {tabs.map((tab) => {
+            const isRestricted = tab.superAdminOnly && !isSuperAdmin;
+            return (
+              <option
+                key={tab.name}
+                value={tab.href}
+                disabled={isRestricted}
+                className={isRestricted ? "text-gray-400" : ""}
+              >
+                {tab.name}{tab.badge ? ` [${tab.badge}]` : ""}{isRestricted ? " (gesperrt)" : ""}
+              </option>
+            );
+          })}
         </select>
       </div>
 
