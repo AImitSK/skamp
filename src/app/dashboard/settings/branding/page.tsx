@@ -14,53 +14,15 @@ import { brandingService } from "@/lib/firebase/branding-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { BrandingSettings } from "@/types/branding";
 import { teamMemberService } from "@/lib/firebase/organization-service";
-import { SettingsNav } from '@/components/SettingsNav'; // ✨ Hinzugefügt
+import { SettingsNav } from '@/components/SettingsNav';
 import { createEmailLogo } from "@/utils/imageHelpers";
+import { toastService } from "@/lib/utils/toast";
 import {
   BuildingOfficeIcon,
   PhotoIcon,
   TrashIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
   ArrowUpTrayIcon
 } from "@heroicons/react/24/outline";
-
-// Alert Component
-function Alert({
-  type = 'success',
-  title,
-  message
-}: {
-  type?: 'success' | 'error';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    success: 'bg-green-50 text-green-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    success: CheckCircleIcon,
-    error: ExclamationCircleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-green-400'}`} />
-        </div>
-        <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function BrandingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -70,7 +32,6 @@ export default function BrandingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const organizationId = currentOrganization?.id || '';
 
@@ -121,15 +82,10 @@ export default function BrandingPage() {
         });
       }
     } catch (error) {
-      showAlert('error', 'Fehler beim Laden der Einstellungen');
+      toastService.error('Fehler beim Laden der Einstellungen');
     } finally {
       setLoading(false);
     }
-  };
-
-  const showAlert = (type: 'success' | 'error', message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,13 +94,13 @@ export default function BrandingPage() {
 
     // Validiere Dateityp
     if (!file.type.startsWith('image/')) {
-      showAlert('error', 'Bitte wählen Sie eine Bilddatei aus');
+      toastService.error('Bitte wählen Sie eine Bilddatei aus');
       return;
     }
 
     // Validiere Dateigröße (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showAlert('error', 'Die Datei darf maximal 5MB groß sein');
+      toastService.error('Die Datei darf maximal 5MB groß sein');
       return;
     }
 
@@ -244,9 +200,9 @@ export default function BrandingPage() {
         emailLogoAssetId: emailAsset?.id || asset.id
       }));
 
-      showAlert('success', 'Logo erfolgreich hochgeladen und gespeichert');
+      toastService.success('Logo erfolgreich hochgeladen und gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Hochladen des Logos');
+      toastService.error('Fehler beim Hochladen des Logos');
     } finally {
       setUploadingLogo(false);
     }
@@ -255,7 +211,7 @@ export default function BrandingPage() {
   const handleRemoveLogo = async () => {
 
     if (!user || !organizationId) {
-      showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
+      toastService.error('Bitte warten Sie, bis die Daten geladen sind');
       return;
     }
 
@@ -272,9 +228,9 @@ export default function BrandingPage() {
         emailLogoAssetId: undefined
       }));
 
-      showAlert('success', 'Logo erfolgreich entfernt und gespeichert');
+      toastService.success('Logo erfolgreich entfernt und gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Entfernen des Logos');
+      toastService.error('Fehler beim Entfernen des Logos');
     }
   };
 
@@ -282,7 +238,7 @@ export default function BrandingPage() {
     e.preventDefault();
 
     if (!user || !organizationId) {
-      showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
+      toastService.error('Bitte warten Sie, bis die Daten geladen sind');
       return;
     }
 
@@ -297,15 +253,14 @@ export default function BrandingPage() {
     setSaving(true);
 
     try {
-
       await brandingService.updateBrandingSettings(
         formData,
         { organizationId: organizationId, userId: user.uid }
       );
 
-      showAlert('success', 'Branding-Einstellungen erfolgreich gespeichert');
+      toastService.success('Branding-Einstellungen erfolgreich gespeichert');
     } catch (error) {
-      showAlert('error', 'Fehler beim Speichern der Einstellungen');
+      toastService.error('Fehler beim Speichern der Einstellungen');
     } finally {
       setSaving(false);
     }
@@ -337,13 +292,6 @@ export default function BrandingPage() {
                 </Text>
               </div>
             </div>
-
-            {/* Alert */}
-            {alert && (
-              <div className="mb-6">
-                <Alert type={alert.type} message={alert.message} />
-              </div>
-            )}
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="max-w-4xl">
@@ -385,11 +333,11 @@ export default function BrandingPage() {
                         />
                         <Button
                           type="button"
-                          plain
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingLogo}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                         >
-                          <ArrowUpTrayIcon className="h-4 w-4" />
+                          <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
                           {uploadingLogo ? 'Wird hochgeladen...' : 'Logo hochladen'}
                         </Button>
                         <Text className="text-xs text-gray-500 mt-1">
@@ -516,7 +464,7 @@ export default function BrandingPage() {
                       <div>
                         <div className="font-medium text-sm text-gray-900">Copyright-Zeile anzeigen</div>
                         <Text className="text-sm text-gray-600 mt-1">
-                          Zeigt "Copyright © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten." in der Fußzeile
+                          Zeigt "Copyright © {new Date().getFullYear()} {formData.companyName || 'Ihr Firmenname'}. Alle Rechte vorbehalten." in der Fußzeile
                         </Text>
                       </div>
                     </div>
