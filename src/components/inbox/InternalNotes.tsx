@@ -346,66 +346,69 @@ export function InternalNotes({
 
   // Format note content with highlighted mentions - Mit Team-Member-Validierung!
   const formatNoteContent = (content: string) => {
-    // Greedy Regex - matched alles bis Satzzeichen/Ende
-    const mentionRegex = /@([^\s@]+(?:\s+[^\s@,.!?]+)*)(?=\s|[,.!?]|$)/g;
-
     // Get current user's display name for comparison
     const currentUserDisplayName = user?.displayName || user?.email || '';
 
-    // Verwende replace() mit Team-Member-Validierung
+    // Einfachere Strategie: Finde alle Team-Member-Namen im Text
     let parts: (string | JSX.Element)[] = [];
-    let lastIndex = 0;
+    let remainingText = content;
     let matchIndex = 0;
 
-    content.replace(mentionRegex, (match, name, offset) => {
-      const member = membersForMentions.find(m =>
-        name.toLowerCase().startsWith(m.displayName.toLowerCase())
-      );
+    // Sortiere Members nach Namenslänge (längste zuerst) um "Fred Hoffmann" vor "Fred" zu matchen
+    const sortedMembers = [...membersForMentions].sort(
+      (a, b) => b.displayName.length - a.displayName.length
+    );
 
-      if (member) {
-        const actualName = member.displayName;
-        const actualMatch = `@${actualName}`;
+    while (remainingText.length > 0) {
+      let foundMatch = false;
 
-        if (offset > lastIndex) {
-          parts.push(content.substring(lastIndex, offset));
+      // Suche nach @Name für jeden Team-Member
+      for (const member of sortedMembers) {
+        const mentionPattern = `@${member.displayName}`;
+        const mentionIndex = remainingText.toLowerCase().indexOf(mentionPattern.toLowerCase());
+
+        if (mentionIndex !== -1) {
+          // Text vor dem Match hinzufügen
+          if (mentionIndex > 0) {
+            parts.push(remainingText.substring(0, mentionIndex));
+          }
+
+          // Mention als hervorgehobenes Element hinzufügen
+          const isOwnMention = member.displayName.toLowerCase() === currentUserDisplayName.toLowerCase();
+          parts.push(
+            <span
+              key={`mention-${matchIndex}`}
+              className={clsx(
+                "font-medium px-1.5 py-0.5 rounded",
+                isOwnMention
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-blue-100 text-blue-800"
+              )}
+            >
+              @{member.displayName}
+            </span>
+          );
+
+          // Rest des Texts nach dem Match
+          remainingText = remainingText.substring(mentionIndex + mentionPattern.length);
+          matchIndex++;
+          foundMatch = true;
+          break;
         }
-
-        const isOwnMention = actualName.toLowerCase() === currentUserDisplayName.toLowerCase();
-        parts.push(
-          <span
-            key={`mention-${matchIndex}`}
-            className={clsx(
-              "font-medium px-1.5 py-0.5 rounded",
-              isOwnMention
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-blue-100 text-blue-800"
-            )}
-          >
-            @{actualName}
-          </span>
-        );
-
-        const restText = name.substring(actualName.length);
-        if (restText) {
-          parts.push(restText);
-        }
-
-        lastIndex = offset + actualMatch.length;
-        matchIndex++;
-      } else {
-        if (offset > lastIndex) {
-          parts.push(content.substring(lastIndex, offset));
-        }
-        parts.push(match);
-        lastIndex = offset + match.length;
       }
 
-      return match;
-    });
-
-    // Restlicher Text nach dem letzten Match
-    if (lastIndex < content.length) {
-      parts.push(content.substring(lastIndex));
+      // Kein Match gefunden - füge erstes Zeichen hinzu und suche weiter
+      if (!foundMatch) {
+        // Optimierung: Finde das nächste @ oder füge alles hinzu wenn keins mehr da ist
+        const nextAtIndex = remainingText.indexOf('@', 1);
+        if (nextAtIndex === -1) {
+          parts.push(remainingText);
+          break;
+        } else {
+          parts.push(remainingText.substring(0, nextAtIndex));
+          remainingText = remainingText.substring(nextAtIndex);
+        }
+      }
     }
 
     return parts;
