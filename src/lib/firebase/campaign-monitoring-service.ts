@@ -157,10 +157,11 @@ class CampaignMonitoringService {
     const encodedQuery = encodeURIComponent(query);
     const googleNewsUrl = `https://news.google.com/rss/search?q=${encodedQuery}&hl=de&gl=DE&ceid=DE:de`;
 
+    // WICHTIG: Keine undefined-Werte für Firestore!
+    // publicationId wird weggelassen da Google News nicht publication-spezifisch ist
     return {
       id: `google_news_${campaign.id}`,
       type: 'google_news',
-      publicationId: undefined, // Google News ist nicht publication-spezifisch
       publicationName: 'Google News',
       url: googleNewsUrl,
       isActive: true,
