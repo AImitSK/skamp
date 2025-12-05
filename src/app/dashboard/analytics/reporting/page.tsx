@@ -14,15 +14,13 @@ import {
   PauseIcon,
   TrashIcon,
   ClockIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { autoReportingService } from '@/lib/firebase/auto-reporting-service';
 import { toastService } from '@/lib/utils/toast';
-import { formatNextSendDate, formatShortDate, isMonitoringExpired } from '@/lib/utils/reporting-helpers';
+import { formatShortDate, isMonitoringExpired } from '@/lib/utils/reporting-helpers';
 import {
   AutoReporting,
   frequencyLabels,
@@ -170,37 +168,6 @@ export default function ReportingPage() {
     return <Badge color="zinc">Pausiert</Badge>;
   };
 
-  const getLastStatusBadge = (reporting: AutoReporting) => {
-    if (!reporting.lastSendStatus) {
-      return <Text className="text-sm text-zinc-400">Noch nicht gesendet</Text>;
-    }
-
-    const color = sendStatusColors[reporting.lastSendStatus] as 'green' | 'yellow' | 'red';
-    const label = sendStatusLabels[reporting.lastSendStatus];
-
-    return (
-      <div className="flex items-center gap-2">
-        <Badge color={color}>{label}</Badge>
-        {reporting.lastSentAt && (
-          <Text className="text-xs text-zinc-500">
-            {formatShortDate(reporting.lastSentAt)}
-          </Text>
-        )}
-        {reporting.lastSendError && (
-          <span title={reporting.lastSendError}>
-            <ExclamationTriangleIcon className="h-4 w-4 text-red-500 cursor-help" />
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  const getFrequencyLabel = (reporting: AutoReporting) => {
-    if (reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined) {
-      return `${frequencyLabels.weekly} (${dayOfWeekLabels[reporting.dayOfWeek]})`;
-    }
-    return frequencyLabels[reporting.frequency];
-  };
 
   if (isLoading) {
     return (
@@ -250,19 +217,19 @@ export default function ReportingPage() {
           {/* Table Header */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="flex-1 min-w-0 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Kampagne
               </div>
-              <div className="w-[12%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-24 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                 Status
               </div>
-              <div className="w-[18%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-28 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                 Frequenz
               </div>
-              <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-32 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                 Nächster Versand
               </div>
-              <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-32 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
                 Letzter Status
               </div>
               <div className="w-12"></div>
@@ -281,10 +248,10 @@ export default function ReportingPage() {
                 >
                   <div className="flex items-center">
                     {/* Kampagne */}
-                    <div className="w-[30%]">
+                    <div className="flex-1 min-w-0 pr-4">
                       <button
                         onClick={() => router.push(`/dashboard/analytics/monitoring/${reporting.campaignId}`)}
-                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary line-clamp-2 text-left"
                       >
                         {reporting.campaignName}
                       </button>
@@ -294,33 +261,61 @@ export default function ReportingPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-[12%]">
+                    <div className="w-24 text-center">
                       {getStatusBadge(reporting)}
                     </div>
 
-                    {/* Frequenz */}
-                    <div className="w-[18%]">
-                      <Text className="text-sm">
-                        {getFrequencyLabel(reporting)}
+                    {/* Frequenz - zweizeilig */}
+                    <div className="w-28 text-center">
+                      <Text className="text-sm leading-tight">
+                        {frequencyLabels[reporting.frequency]}
                       </Text>
+                      {reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined && (
+                        <Text className="text-xs text-zinc-500">
+                          ({dayOfWeekLabels[reporting.dayOfWeek]})
+                        </Text>
+                      )}
                     </div>
 
-                    {/* Nächster Versand */}
-                    <div className="w-[20%]">
+                    {/* Nächster Versand - zweizeilig */}
+                    <div className="w-32 text-center">
                       {isExpired ? (
                         <Text className="text-sm text-zinc-400">—</Text>
                       ) : reporting.isActive ? (
-                        <Text className="text-sm">
-                          {formatNextSendDate(reporting.nextSendAt)}
-                        </Text>
+                        <div>
+                          <Text className="text-sm leading-tight">
+                            {reporting.nextSendAt?.toDate().toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </Text>
+                          <Text className="text-xs text-zinc-500">
+                            um 07:00 Uhr
+                          </Text>
+                        </div>
                       ) : (
                         <Text className="text-sm text-zinc-400">Pausiert</Text>
                       )}
                     </div>
 
-                    {/* Letzter Status */}
-                    <div className="flex-1">
-                      {getLastStatusBadge(reporting)}
+                    {/* Letzter Status - zweizeilig */}
+                    <div className="w-32 text-center">
+                      {!reporting.lastSendStatus ? (
+                        <Text className="text-xs text-zinc-400">Noch nicht<br />gesendet</Text>
+                      ) : (
+                        <div>
+                          <Badge color={sendStatusColors[reporting.lastSendStatus] as 'green' | 'yellow' | 'red'}>
+                            {sendStatusLabels[reporting.lastSendStatus]}
+                          </Badge>
+                          {reporting.lastSentAt && (
+                            <Text className="text-xs text-zinc-500 mt-0.5 block">
+                              {formatShortDate(reporting.lastSentAt)}
+                            </Text>
+                          )}
+                          {reporting.lastSendError && (
+                            <span title={reporting.lastSendError} className="inline-block mt-0.5">
+                              <ExclamationTriangleIcon className="h-4 w-4 text-red-500 cursor-help" />
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Aktionen */}
