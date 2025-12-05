@@ -104,19 +104,26 @@ export default function ReportingPage() {
   };
 
   const handleSendNow = async (reporting: AutoReporting) => {
-    if (!reporting.id) return;
+    if (!reporting.id || !user) return;
 
     try {
       toastService.loading('Report wird gesendet...');
 
+      // Firebase ID-Token für Authentifizierung holen
+      const token = await user.getIdToken();
+
       const response = await fetch('/api/reporting/send-now', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ autoReportingId: reporting.id })
       });
 
       if (!response.ok) {
-        throw new Error('Versand fehlgeschlagen');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Versand fehlgeschlagen');
       }
 
       toastService.dismiss();
@@ -125,7 +132,7 @@ export default function ReportingPage() {
     } catch (error) {
       toastService.dismiss();
       console.error('Fehler beim Senden:', error);
-      toastService.error('Report konnte nicht gesendet werden');
+      toastService.error(error instanceof Error ? error.message : 'Report konnte nicht gesendet werden');
     }
   };
 

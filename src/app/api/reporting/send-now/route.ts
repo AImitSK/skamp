@@ -30,10 +30,20 @@ export async function POST(request: NextRequest) {
   console.log('[Send-Now] Request erhalten');
 
   try {
-    // Auth: Bearer Token prüfen
+    // Auth prüfen: Bearer Token ODER Session Cookie
     const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      // Fallback: Session Cookie prüfen (für Client-Calls)
+    const auth = getAuth();
+
+    if (authHeader?.startsWith('Bearer ')) {
+      // Verifiziere Firebase ID Token
+      const token = authHeader.split('Bearer ')[1];
+      try {
+        await auth.verifyIdToken(token);
+      } catch {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      }
+    } else {
+      // Fallback: Session Cookie prüfen (für direkte Client-Calls)
       const sessionCookie = request.cookies.get('session')?.value;
       if (!sessionCookie) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -41,7 +51,6 @@ export async function POST(request: NextRequest) {
 
       // Verifiziere Session Cookie
       try {
-        const auth = getAuth();
         await auth.verifySessionCookie(sessionCookie);
       } catch {
         return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
