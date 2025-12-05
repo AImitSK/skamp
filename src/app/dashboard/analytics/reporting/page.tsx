@@ -214,26 +214,24 @@ export default function ReportingPage() {
       ) : (
         /* Table */
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
-          {/* Table Header - 40% + 4x15% + Platz für Dropdown */}
+          {/* Table Header */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="w-[40%] pr-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Kampagne
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="w-[12%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Status
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Frequenz
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="w-[18%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Nächster Versand
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
                 Letzter Status
               </div>
-              {/* Platzhalter für Aktionen-Dropdown */}
-              <div className="ml-auto w-5"></div>
             </div>
           </div>
 
@@ -248,11 +246,11 @@ export default function ReportingPage() {
                   className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
                   <div className="flex items-center">
-                    {/* Kampagne - 40% */}
-                    <div className="w-[40%] pr-4">
+                    {/* Kampagne */}
+                    <div className="w-[30%] min-w-0">
                       <button
                         onClick={() => router.push(`/dashboard/analytics/monitoring/${reporting.campaignId}`)}
-                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary line-clamp-1 text-left"
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
                       >
                         {reporting.campaignName}
                       </button>
@@ -261,13 +259,13 @@ export default function ReportingPage() {
                       </Text>
                     </div>
 
-                    {/* Status - 15% */}
-                    <div className="w-[15%] text-left">
+                    {/* Status */}
+                    <div className="w-[12%]">
                       {getStatusBadge(reporting)}
                     </div>
 
-                    {/* Frequenz - 15%, max 2 Zeilen */}
-                    <div className="w-[15%] text-left">
+                    {/* Frequenz */}
+                    <div className="w-[15%]">
                       <Text className="text-sm">
                         {frequencyLabels[reporting.frequency]}
                       </Text>
@@ -278,8 +276,8 @@ export default function ReportingPage() {
                       )}
                     </div>
 
-                    {/* Nächster Versand - 15%, max 2 Zeilen */}
-                    <div className="w-[15%] text-left">
+                    {/* Nächster Versand */}
+                    <div className="w-[18%]">
                       {isExpired ? (
                         <Text className="text-sm text-zinc-400">—</Text>
                       ) : reporting.isActive ? (
@@ -294,8 +292,8 @@ export default function ReportingPage() {
                       )}
                     </div>
 
-                    {/* Letzter Status - 15%, max 2 Zeilen */}
-                    <div className="w-[15%] text-left">
+                    {/* Letzter Status */}
+                    <div className="flex-1 pr-4">
                       {!reporting.lastSendStatus ? (
                         <Text className="text-sm text-zinc-400">Noch nicht gesendet</Text>
                       ) : (
@@ -320,7 +318,7 @@ export default function ReportingPage() {
                     </div>
 
                     {/* Aktionen - Dropdown */}
-                    <div className="ml-auto">
+                    <div>
                       <Dropdown>
                         <DropdownButton plain>
                           <EllipsisVerticalIcon className="h-5 w-5" />
