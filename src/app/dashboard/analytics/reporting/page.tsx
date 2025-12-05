@@ -214,25 +214,24 @@ export default function ReportingPage() {
       ) : (
         /* Table */
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
-          {/* Table Header */}
+          {/* Table Header - 40% + 4x15% */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="flex-1 min-w-0 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Kampagne
               </div>
-              <div className="w-24 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Status
               </div>
-              <div className="w-28 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Frequenz
               </div>
-              <div className="w-32 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Nächster Versand
               </div>
-              <div className="w-32 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Letzter Status
               </div>
-              <div className="w-12"></div>
             </div>
           </div>
 
@@ -247,79 +246,77 @@ export default function ReportingPage() {
                   className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
                   <div className="flex items-center">
-                    {/* Kampagne */}
-                    <div className="flex-1 min-w-0 pr-4">
+                    {/* Kampagne - 40% */}
+                    <div className="w-[40%] pr-4">
                       <button
                         onClick={() => router.push(`/dashboard/analytics/monitoring/${reporting.campaignId}`)}
-                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary line-clamp-2 text-left"
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary line-clamp-1 text-left"
                       >
                         {reporting.campaignName}
                       </button>
-                      <Text className="text-xs text-zinc-500 mt-0.5">
+                      <Text className="text-xs text-zinc-500">
                         {reporting.recipients.length} Empfänger
                       </Text>
                     </div>
 
-                    {/* Status */}
-                    <div className="w-24 text-center">
+                    {/* Status - 15% */}
+                    <div className="w-[15%] text-left">
                       {getStatusBadge(reporting)}
                     </div>
 
-                    {/* Frequenz - zweizeilig */}
-                    <div className="w-28 text-center">
-                      <Text className="text-sm leading-tight">
+                    {/* Frequenz - 15%, max 2 Zeilen */}
+                    <div className="w-[15%] text-left">
+                      <Text className="text-sm">
                         {frequencyLabels[reporting.frequency]}
+                        {reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined && (
+                          <span className="text-zinc-500"> ({dayOfWeekLabels[reporting.dayOfWeek]})</span>
+                        )}
                       </Text>
-                      {reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined && (
-                        <Text className="text-xs text-zinc-500">
-                          ({dayOfWeekLabels[reporting.dayOfWeek]})
-                        </Text>
-                      )}
                     </div>
 
-                    {/* Nächster Versand - zweizeilig */}
-                    <div className="w-32 text-center">
+                    {/* Nächster Versand - 15%, max 2 Zeilen */}
+                    <div className="w-[15%] text-left">
                       {isExpired ? (
                         <Text className="text-sm text-zinc-400">—</Text>
                       ) : reporting.isActive ? (
-                        <div>
-                          <Text className="text-sm leading-tight">
-                            {reporting.nextSendAt?.toDate().toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        <>
+                          <Text className="text-sm">
+                            {reporting.nextSendAt?.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </Text>
-                          <Text className="text-xs text-zinc-500">
-                            um 07:00 Uhr
-                          </Text>
-                        </div>
+                          <Text className="text-xs text-zinc-500">07:00 Uhr</Text>
+                        </>
                       ) : (
                         <Text className="text-sm text-zinc-400">Pausiert</Text>
                       )}
                     </div>
 
-                    {/* Letzter Status - zweizeilig */}
-                    <div className="w-32 text-center">
+                    {/* Letzter Status - 15%, max 2 Zeilen */}
+                    <div className="w-[15%] text-left">
                       {!reporting.lastSendStatus ? (
-                        <Text className="text-xs text-zinc-400">Noch nicht<br />gesendet</Text>
+                        <Text className="text-sm text-zinc-400">Noch nicht gesendet</Text>
                       ) : (
-                        <div>
-                          <Badge color={sendStatusColors[reporting.lastSendStatus] as 'green' | 'yellow' | 'red'}>
-                            {sendStatusLabels[reporting.lastSendStatus]}
-                          </Badge>
+                        <>
+                          <div className="flex items-center gap-1">
+                            <Badge color={sendStatusColors[reporting.lastSendStatus] as 'green' | 'yellow' | 'red'}>
+                              {sendStatusLabels[reporting.lastSendStatus]}
+                            </Badge>
+                            {reporting.lastSendError && (
+                              <span title={reporting.lastSendError}>
+                                <ExclamationTriangleIcon className="h-4 w-4 text-red-500 cursor-help" />
+                              </span>
+                            )}
+                          </div>
                           {reporting.lastSentAt && (
-                            <Text className="text-xs text-zinc-500 mt-0.5 block">
+                            <Text className="text-xs text-zinc-500">
                               {formatShortDate(reporting.lastSentAt)}
                             </Text>
                           )}
-                          {reporting.lastSendError && (
-                            <span title={reporting.lastSendError} className="inline-block mt-0.5">
-                              <ExclamationTriangleIcon className="h-4 w-4 text-red-500 cursor-help" />
-                            </span>
-                          )}
-                        </div>
+                        </>
                       )}
                     </div>
 
-                    {/* Aktionen */}
-                    <div className="w-12 flex justify-end">
+                    {/* Aktionen - Dropdown */}
+                    <div className="ml-auto">
                       <Dropdown>
                         <DropdownButton plain>
                           <EllipsisVerticalIcon className="h-5 w-5" />
