@@ -214,10 +214,10 @@ export default function ReportingPage() {
       ) : (
         /* Table */
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
-          {/* Table Header - 40% + 4x15% */}
+          {/* Table Header - 40% + 4x15% + Platz für Dropdown */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
+              <div className="w-[40%] pr-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Kampagne
               </div>
               <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
@@ -232,6 +232,8 @@ export default function ReportingPage() {
               <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-left">
                 Letzter Status
               </div>
+              {/* Platzhalter für Aktionen-Dropdown */}
+              <div className="ml-auto w-5"></div>
             </div>
           </div>
 
