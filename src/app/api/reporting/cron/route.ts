@@ -193,17 +193,20 @@ async function processAutoReportings() {
         updatedAt: Timestamp.now()
       });
 
-      // Log schreiben
-      await adminDb.collection('auto_reporting_logs').add({
+      // Log schreiben - WICHTIG: Keine undefined-Werte für Firestore!
+      const logData: Record<string, any> = {
         autoReportingId: doc.id,
         organizationId: reporting.organizationId,
         campaignId: reporting.campaignId,
         sentAt: Timestamp.now(),
         recipients: reporting.recipients.map(r => r.email),
-        status: sendResult.status,
-        errorMessage: sendResult.error,
-        pdfUrl: sendResult.pdfUrl
-      } as Omit<AutoReportingSendLog, 'id'>);
+        status: sendResult.status
+      };
+      // Optionale Felder nur hinzufügen wenn sie einen Wert haben
+      if (sendResult.error) logData.errorMessage = sendResult.error;
+      if (sendResult.pdfUrl) logData.pdfUrl = sendResult.pdfUrl;
+
+      await adminDb.collection('auto_reporting_logs').add(logData);
 
       results.processed++;
       if (sendResult.status === 'success') {
