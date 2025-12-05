@@ -268,10 +268,12 @@ export default function ReportingPage() {
                     <div className="w-[15%] text-left">
                       <Text className="text-sm">
                         {frequencyLabels[reporting.frequency]}
-                        {reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined && (
-                          <span className="text-zinc-500"> ({dayOfWeekLabels[reporting.dayOfWeek]})</span>
-                        )}
                       </Text>
+                      {reporting.frequency === 'weekly' && reporting.dayOfWeek !== undefined && (
+                        <Text className="text-xs text-zinc-500">
+                          ({dayOfWeekLabels[reporting.dayOfWeek]})
+                        </Text>
+                      )}
                     </div>
 
                     {/* Nächster Versand - 15%, max 2 Zeilen */}
