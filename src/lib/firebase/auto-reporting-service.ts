@@ -71,21 +71,31 @@ async function createAutoReporting(
     data.dayOfMonth ?? DEFAULT_DAY_OF_MONTH
   );
 
-  const autoReporting: Omit<AutoReporting, 'id'> = {
+  // WICHTIG: Keine undefined-Werte für Firestore!
+  // Baue das Objekt dynamisch auf, um undefined-Felder zu vermeiden
+  const autoReporting: Record<string, any> = {
     organizationId: context.organizationId,
     campaignId: data.campaignId,
     campaignName: data.campaignName,
     recipients: data.recipients,
     frequency: data.frequency,
-    dayOfWeek: data.frequency === 'weekly' ? (data.dayOfWeek ?? DEFAULT_DAY_OF_WEEK) : undefined,
-    dayOfMonth: data.frequency === 'monthly' ? (data.dayOfMonth ?? DEFAULT_DAY_OF_MONTH) : undefined,
     isActive: true,
     nextSendAt: Timestamp.fromDate(nextSendAt),
     monitoringEndDate: data.monitoringEndDate,
     createdBy: context.userId,
-    createdAt: serverTimestamp() as Timestamp,
-    updatedAt: serverTimestamp() as Timestamp,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   };
+
+  // Füge dayOfWeek nur bei weekly hinzu
+  if (data.frequency === 'weekly') {
+    autoReporting.dayOfWeek = data.dayOfWeek ?? DEFAULT_DAY_OF_WEEK;
+  }
+
+  // Füge dayOfMonth nur bei monthly hinzu
+  if (data.frequency === 'monthly') {
+    autoReporting.dayOfMonth = data.dayOfMonth ?? DEFAULT_DAY_OF_MONTH;
+  }
 
   const docRef = await addDoc(
     collection(db, AUTO_REPORTINGS_COLLECTION),
@@ -119,22 +129,35 @@ async function updateAutoReporting(
 
   // Wenn Frequenz geändert wurde, nächstes Versanddatum neu berechnen
   const frequency = data.frequency ?? existing.frequency;
-  const dayOfWeek = data.frequency === 'weekly'
+  const dayOfWeek = frequency === 'weekly'
     ? (data.dayOfWeek ?? existing.dayOfWeek ?? DEFAULT_DAY_OF_WEEK)
-    : undefined;
-  const dayOfMonth = data.frequency === 'monthly'
+    : null; // null statt undefined für Firestore deleteField
+  const dayOfMonth = frequency === 'monthly'
     ? (data.dayOfMonth ?? existing.dayOfMonth ?? DEFAULT_DAY_OF_MONTH)
-    : undefined;
+    : null;
 
-  const nextSendAt = calculateNextSendDate(frequency, dayOfWeek, dayOfMonth);
+  const nextSendAt = calculateNextSendDate(frequency, dayOfWeek ?? undefined, dayOfMonth ?? undefined);
 
-  const updateData: Partial<AutoReporting> = {
-    ...data,
-    dayOfWeek,
-    dayOfMonth,
+  // WICHTIG: Keine undefined-Werte für Firestore!
+  // Baue das Update-Objekt dynamisch auf
+  const updateData: Record<string, any> = {
+    frequency: data.frequency,
+    recipients: data.recipients,
     nextSendAt: Timestamp.fromDate(nextSendAt),
-    updatedAt: serverTimestamp() as Timestamp,
+    updatedAt: serverTimestamp(),
   };
+
+  // Entferne undefined-Werte aus data
+  if (data.frequency !== undefined) updateData.frequency = data.frequency;
+  if (data.recipients !== undefined) updateData.recipients = data.recipients;
+
+  // Setze dayOfWeek/dayOfMonth nur wenn relevant, sonst lösche sie
+  if (frequency === 'weekly') {
+    updateData.dayOfWeek = dayOfWeek;
+  }
+  if (frequency === 'monthly') {
+    updateData.dayOfMonth = dayOfMonth;
+  }
 
   await updateDoc(docRef, updateData);
 }
