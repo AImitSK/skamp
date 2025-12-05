@@ -405,13 +405,15 @@ export class EmailSenderService {
     metadata: EmailMetadata,
     emailBody: string
   ): Promise<void> {
-    // Variablen vorbereiten (für Signatur)
+    // Variablen vorbereiten (für Signatur und Personalisierung)
     const variables = emailComposerService.prepareVariables(
       {
         firstName: recipient.firstName,
         lastName: recipient.lastName,
         email: recipient.email,
-        companyName: recipient.companyName
+        companyName: recipient.companyName,
+        salutation: recipient.salutation,
+        title: recipient.title
       },
       {
         name: emailAddress.displayName || emailAddress.email,

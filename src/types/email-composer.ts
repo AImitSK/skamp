@@ -206,6 +206,8 @@ export interface EmailVariables {
     fullName: string;
     companyName?: string;
     email: string;
+    salutationFormal?: string; // "Sehr geehrter Herr" / "Sehr geehrte Frau" / "Sehr geehrte Damen und Herren"
+    title?: string; // Akademischer Titel (Dr., Prof., etc.)
   };
 
   // Absender (für Signatur-Variablen)

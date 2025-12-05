@@ -266,7 +266,9 @@ export const emailComposerService = {
         lastName: contact.lastName,
         fullName: `${contact.firstName} ${contact.lastName}`,
         companyName: contact.companyName,
-        email: contact.email
+        email: contact.email,
+        salutationFormal: salutationFormal,
+        title: contact.title || ''
       },
       sender: {
         name: sender.name,
