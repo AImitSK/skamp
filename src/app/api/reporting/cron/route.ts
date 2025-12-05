@@ -4,15 +4,21 @@
  *
  * Wird täglich um 7:00 UTC (8:00/9:00 deutscher Zeit) von Vercel CRON aufgerufen
  * Lädt Auto-Reportings wo nextSendAt <= now und versendet Reports
+ * PDF wird automatisch generiert, nicht von vorhandenem PDF abhängig.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminStorage } from '@/lib/firebase/admin-init';
+import { adminDb } from '@/lib/firebase/admin-init';
 import { Timestamp } from 'firebase-admin/firestore';
 import { Resend } from 'resend';
-import { AutoReporting, AutoReportingSendLog, SendStatus } from '@/types/auto-reporting';
+import { AutoReporting, SendStatus } from '@/types/auto-reporting';
 import { getAutoReportEmailTemplateWithBranding } from '@/lib/email/auto-reporting-email-templates';
 import { calculateNextSendDate, formatReportPeriod, calculateReportPeriod } from '@/lib/utils/reporting-helpers';
+import { generateReportHTML } from '@/lib/monitoring-report/templates/report-template';
+import type { MonitoringReportData, EmailStats, ClippingStats, TimelineData } from '@/lib/monitoring-report/types';
+import type { MediaClipping } from '@/types/monitoring';
+import type { EmailCampaignSend } from '@/types/email';
+import type { BrandingSettings } from '@/types/branding';
 
 const BATCH_SIZE = 20; // Max. Reports pro CRON-Run
 
@@ -204,7 +210,6 @@ async function processAutoReportings() {
       };
       // Optionale Felder nur hinzufügen wenn sie einen Wert haben
       if (sendResult.error) logData.errorMessage = sendResult.error;
-      if (sendResult.pdfUrl) logData.pdfUrl = sendResult.pdfUrl;
 
       await adminDb.collection('auto_reporting_logs').add(logData);
 
@@ -254,16 +259,15 @@ async function processAutoReportings() {
 interface SendResult {
   status: SendStatus;
   error?: string;
-  pdfUrl?: string;
 }
 
 async function sendReportForAutoReporting(reporting: AutoReporting): Promise<SendResult> {
   try {
-    // 1. PDF-Report generieren
-    console.log(`[Auto-Reporting] Generiere PDF für Kampagne: ${reporting.campaignId}`);
+    // 1. PDF-Report generieren (NICHT laden!)
+    console.log(`[Auto-Reporting CRON] Generiere PDF für Kampagne: ${reporting.campaignId}`);
     const pdfResult = await generateReportPDF(reporting);
 
-    if (!pdfResult.success || !pdfResult.pdfBuffer) {
+    if (!pdfResult.success || !pdfResult.pdfBase64) {
       return { status: 'failed', error: pdfResult.error || 'PDF-Generierung fehlgeschlagen' };
     }
 
@@ -273,7 +277,7 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
 
     const emailTemplate = await getAutoReportEmailTemplateWithBranding(
       {
-        recipientName: '', // Wird pro Empfänger gesetzt
+        recipientName: '',
         recipientEmail: '',
         campaignName: reporting.campaignName,
         reportPeriod: periodStr,
@@ -282,14 +286,13 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
       reporting.organizationId
     );
 
-    // 3. E-Mails an alle Empfänger senden
+    // 3. E-Mails senden
     let successCount = 0;
     let failureCount = 0;
     const errors: string[] = [];
 
     for (const recipient of reporting.recipients) {
       try {
-        // Personalisierte Version des Templates
         const personalizedHtml = emailTemplate.html.replace(
           `Hallo ,`,
           `Hallo ${recipient.name},`
@@ -308,22 +311,21 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
           attachments: [
             {
               filename: `Monitoring-Report-${reporting.campaignName.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`,
-              content: pdfResult.pdfBuffer.toString('base64')
+              content: pdfResult.pdfBase64
             }
           ]
         });
 
         successCount++;
-        console.log(`[Auto-Reporting] E-Mail gesendet an: ${recipient.email}`);
+        console.log(`[Auto-Reporting CRON] E-Mail gesendet an: ${recipient.email}`);
       } catch (emailError) {
         failureCount++;
         const errMsg = emailError instanceof Error ? emailError.message : String(emailError);
         errors.push(`${recipient.email}: ${errMsg}`);
-        console.error(`[Auto-Reporting] E-Mail-Fehler für ${recipient.email}:`, emailError);
+        console.error(`[Auto-Reporting CRON] E-Mail-Fehler für ${recipient.email}:`, emailError);
       }
     }
 
-    // Status bestimmen
     let status: SendStatus;
     if (failureCount === 0) {
       status = 'success';
@@ -335,12 +337,11 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
 
     return {
       status,
-      error: errors.length > 0 ? errors.join('; ') : undefined,
-      pdfUrl: pdfResult.pdfUrl
+      error: errors.length > 0 ? errors.join('; ') : undefined
     };
 
   } catch (error) {
-    console.error('[Auto-Reporting] Fehler beim Senden:', error);
+    console.error('[Auto-Reporting CRON] Fehler beim Senden:', error);
     return {
       status: 'failed',
       error: error instanceof Error ? error.message : String(error)
@@ -348,67 +349,235 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
   }
 }
 
+// ========================================
+// PDF GENERATION (mit Admin SDK)
+// ========================================
+
 interface PDFResult {
   success: boolean;
-  pdfBuffer?: Buffer;
-  pdfUrl?: string;
+  pdfBase64?: string;
   error?: string;
 }
 
 async function generateReportPDF(reporting: AutoReporting): Promise<PDFResult> {
   try {
-    // Option 1: Existierenden PDF-Generator nutzen (wenn verfügbar)
-    // Option 2: Letztes generiertes PDF aus Storage laden
-    // Option 3: Neues PDF über interne API generieren
+    // 1. Report-Daten mit Admin SDK sammeln
+    const reportData = await collectReportDataWithAdminSDK(
+      reporting.campaignId,
+      reporting.organizationId
+    );
 
-    // Für MVP: Versuche letztes PDF aus Storage zu laden
-    const bucket = adminStorage.bucket();
-    const prefix = `organizations/${reporting.organizationId}/monitoring/${reporting.campaignId}/reports/`;
+    // 2. HTML generieren
+    const reportHtml = generateReportHTML(reportData);
 
-    const [files] = await bucket.getFiles({ prefix, maxResults: 10 });
+    // 3. PDF via API generieren
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const pdfResponse = await fetch(`${baseUrl}/api/generate-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaignId: reporting.campaignId,
+        organizationId: reporting.organizationId,
+        html: reportHtml,
+        title: `Monitoring Report: ${reporting.campaignName}`,
+        fileName: `Monitoring_Report_${reporting.campaignId}_${Date.now()}.pdf`,
+        mainContent: reportHtml,
+        clientName: reporting.campaignName,
+        userId: 'auto-reporting-cron',
+        options: {
+          format: 'A4',
+          orientation: 'portrait',
+          printBackground: true,
+          waitUntil: 'networkidle0'
+        }
+      })
+    });
 
-    // Neueste PDF-Datei finden
-    const pdfFiles = files
-      .filter(f => f.name.endsWith('.pdf'))
-      .sort((a, b) => {
-        const aTime = a.metadata.updated || a.metadata.timeCreated || '0';
-        const bTime = b.metadata.updated || b.metadata.timeCreated || '0';
-        return bTime.localeCompare(aTime);
-      });
-
-    if (pdfFiles.length > 0) {
-      const latestPdf = pdfFiles[0];
-      const [buffer] = await latestPdf.download();
-
-      // Signed URL für Referenz
-      const [signedUrl] = await latestPdf.getSignedUrl({
-        action: 'read',
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 Tage
-      });
-
-      return {
-        success: true,
-        pdfBuffer: buffer,
-        pdfUrl: signedUrl
-      };
+    if (!pdfResponse.ok) {
+      const errorText = await pdfResponse.text();
+      throw new Error(`PDF-API Fehler: ${errorText}`);
     }
 
-    // Fallback: Generiere neues PDF über internen API-Call
-    // Dies erfordert dass der PDF-Generator als API verfügbar ist
-    console.log('[Auto-Reporting] Kein bestehendes PDF gefunden, versuche Generierung...');
+    const pdfResult = await pdfResponse.json();
 
-    // Für jetzt: Fehler zurückgeben wenn kein PDF existiert
-    // TODO: PDF-Generierung implementieren
+    if (!pdfResult.pdfBase64) {
+      throw new Error('PDF-API hat kein pdfBase64 zurückgegeben');
+    }
+
     return {
-      success: false,
-      error: 'Kein Report-PDF vorhanden. Bitte manuell einen Report generieren.'
+      success: true,
+      pdfBase64: pdfResult.pdfBase64
     };
 
   } catch (error) {
-    console.error('[Auto-Reporting] PDF-Fehler:', error);
+    console.error('[Auto-Reporting CRON] PDF-Generierung fehlgeschlagen:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+// ========================================
+// DATA COLLECTION (mit Admin SDK)
+// ========================================
+
+async function collectReportDataWithAdminSDK(
+  campaignId: string,
+  organizationId: string
+): Promise<MonitoringReportData> {
+  // 1. Campaign laden
+  const campaignDoc = await adminDb.collection('pr_campaigns').doc(campaignId).get();
+  if (!campaignDoc.exists) {
+    throw new Error('Kampagne nicht gefunden');
+  }
+  const campaign = campaignDoc.data()!;
+
+  // 2. Email Sends laden
+  const sendsSnapshot = await adminDb.collection('email_campaign_sends')
+    .where('campaignId', '==', campaignId)
+    .get();
+  const sends: EmailCampaignSend[] = sendsSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as EmailCampaignSend[];
+
+  // 3. Media Clippings laden
+  const clippingsSnapshot = await adminDb.collection('media_clippings')
+    .where('campaignId', '==', campaignId)
+    .get();
+  const clippings: MediaClipping[] = clippingsSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as MediaClipping[];
+
+  // 4. Branding laden
+  let branding: BrandingSettings | null = null;
+  try {
+    const brandingDoc = await adminDb.collection('branding_settings').doc(organizationId).get();
+    if (brandingDoc.exists) {
+      branding = brandingDoc.data() as BrandingSettings;
+    }
+  } catch {
+    // Kein Branding vorhanden ist OK
+  }
+
+  // 5. Statistiken berechnen
+  const emailStats = calculateEmailStats(sends, clippings);
+  const clippingStats = calculateClippingStats(clippings);
+  const timeline = buildTimeline(clippings);
+
+  // 6. Report-Daten zusammenführen
+  const sentAt = campaign.sentAt?.toDate?.() || new Date();
+
+  return {
+    campaignId,
+    organizationId,
+    reportTitle: campaign.title || 'Monitoring Report',
+    reportPeriod: {
+      start: sentAt,
+      end: new Date()
+    },
+    branding,
+    emailStats,
+    clippingStats,
+    timeline,
+    clippings,
+    sends
+  };
+}
+
+function calculateEmailStats(sends: EmailCampaignSend[], clippings: MediaClipping[]): EmailStats {
+  const totalSent = sends.length;
+  const delivered = sends.filter(s => s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length;
+  const opened = sends.filter(s => s.status === 'opened' || s.status === 'clicked').length;
+  const clicked = sends.filter(s => s.status === 'clicked').length;
+  const bounced = sends.filter(s => s.status === 'bounced').length;
+
+  return {
+    totalSent,
+    delivered,
+    opened,
+    clicked,
+    bounced,
+    openRate: totalSent > 0 ? Math.round((opened / totalSent) * 100) : 0,
+    clickRate: opened > 0 ? Math.round((clicked / opened) * 100) : 0,
+    ctr: totalSent > 0 ? Math.round((clicked / totalSent) * 100) : 0,
+    conversionRate: opened > 0 ? Math.round((clippings.length / opened) * 100) : 0
+  };
+}
+
+function calculateClippingStats(clippings: MediaClipping[]): ClippingStats {
+  const totalReach = clippings.reduce((sum, c) => sum + (c.reach || 0), 0);
+  const totalAVE = clippings.reduce((sum, c) => sum + (c.ave || 0), 0);
+
+  // Sentiment Distribution
+  const sentimentDistribution = {
+    positive: clippings.filter(c => c.sentiment === 'positive').length,
+    neutral: clippings.filter(c => c.sentiment === 'neutral').length,
+    negative: clippings.filter(c => c.sentiment === 'negative').length
+  };
+
+  // Top Outlets
+  const outletMap = new Map<string, { reach: number; count: number }>();
+  clippings.forEach(c => {
+    const name = c.outletName || 'Unbekannt';
+    const existing = outletMap.get(name) || { reach: 0, count: 0 };
+    outletMap.set(name, {
+      reach: existing.reach + (c.reach || 0),
+      count: existing.count + 1
+    });
+  });
+
+  const topOutlets = Array.from(outletMap.entries())
+    .map(([name, data]) => ({ name, reach: data.reach, clippingsCount: data.count }))
+    .sort((a, b) => b.reach - a.reach)
+    .slice(0, 5);
+
+  // Outlet Type Distribution
+  const typeMap = new Map<string, { count: number; reach: number }>();
+  clippings.forEach(c => {
+    const type = c.outletType || 'online';
+    const existing = typeMap.get(type) || { count: 0, reach: 0 };
+    typeMap.set(type, {
+      count: existing.count + 1,
+      reach: existing.reach + (c.reach || 0)
+    });
+  });
+
+  const totalCount = clippings.length;
+  const outletTypeDistribution = Array.from(typeMap.entries()).map(([type, data]) => ({
+    type,
+    count: data.count,
+    reach: data.reach,
+    percentage: totalCount > 0 ? Math.round((data.count / totalCount) * 100) : 0
+  }));
+
+  return {
+    totalClippings: clippings.length,
+    totalReach,
+    totalAVE,
+    avgReach: clippings.length > 0 ? Math.round(totalReach / clippings.length) : 0,
+    sentimentDistribution,
+    topOutlets,
+    outletTypeDistribution
+  };
+}
+
+function buildTimeline(clippings: MediaClipping[]): TimelineData[] {
+  const dateMap = new Map<string, { clippings: number; reach: number }>();
+
+  clippings.forEach(c => {
+    const date = c.publishedAt?.toDate?.()?.toISOString().split('T')[0] ||
+                 new Date().toISOString().split('T')[0];
+    const existing = dateMap.get(date) || { clippings: 0, reach: 0 };
+    dateMap.set(date, {
+      clippings: existing.clippings + 1,
+      reach: existing.reach + (c.reach || 0)
+    });
+  });
+
+  return Array.from(dateMap.entries())
+    .map(([date, data]) => ({ date, clippings: data.clippings, reach: data.reach }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
