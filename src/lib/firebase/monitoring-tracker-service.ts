@@ -100,6 +100,32 @@ export const monitoringTrackerService = {
   },
 
   /**
+   * Lädt den Tracker für eine bestimmte Kampagne
+   */
+  async getTrackerByCampaign(
+    campaignId: string,
+    context: ServiceContext
+  ): Promise<CampaignMonitoringTracker | null> {
+    const trackersQuery = query(
+      collection(db, 'campaign_monitoring_trackers'),
+      where('campaignId', '==', campaignId),
+      where('organizationId', '==', context.organizationId)
+    );
+
+    const snapshot = await getDocs(trackersQuery);
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const docSnap = snapshot.docs[0];
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as CampaignMonitoringTracker;
+  },
+
+  /**
    * Lädt Tracker by ID
    */
   async getById(

@@ -71,7 +71,8 @@ import {
   UsersIcon,
   AdjustmentsHorizontalIcon,
   TicketIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  ClockIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -198,6 +199,12 @@ export default function DashboardLayout({
         href: "/dashboard/analytics/monitoring",
         icon: ChartBarIcon,
         description: "E-Mail Tracking und Veröffentlichungs-Monitoring"
+      },
+      {
+        name: "Reporting",
+        href: "/dashboard/analytics/reporting",
+        icon: ClockIcon,
+        description: "Automatische Report-Zustellung verwalten"
       },
     ],
   },

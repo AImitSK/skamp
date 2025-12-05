@@ -181,6 +181,30 @@ service cloud.firestore {
                             && resource.data.organizationId == request.auth.token.organizationId;
     }
 
+    // ========================================
+    // AUTO-REPORTING SYSTEM
+    // ========================================
+
+    // Auto-Reportings - Org-isoliert
+    match /auto_reportings/{reportingId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      allow update, delete: if isAuthenticated()
+                            && resource.data.organizationId == request.auth.token.organizationId;
+    }
+
+    // Auto-Reporting Logs - Org-isoliert (nur lesen, schreiben via Admin SDK)
+    match /auto_reporting_logs/{logId} {
+      allow read: if isAuthenticated()
+                  && resource.data.organizationId == request.auth.token.organizationId;
+      allow create: if isAuthenticated()
+                    && request.resource.data.organizationId == request.auth.token.organizationId;
+      // Logs sollten nicht bearbeitet/gelöscht werden
+      allow update, delete: if false;
+    }
+
     // Email Campaign Sends
     match /email_campaign_sends/{sendId} {
       // Lesen: Authentifizierte User ihrer Org

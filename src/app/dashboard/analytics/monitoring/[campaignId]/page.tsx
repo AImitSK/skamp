@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { MonitoringProvider, useMonitoring } from './context/MonitoringContext';
 import { MonitoringHeader } from './components/MonitoringHeader';
 import { PDFExportButton } from './components/PDFExportButton';
+import { AutoReportingButton } from './components/AutoReportingButton';
 import { TabNavigation } from './components/TabNavigation';
 import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
@@ -154,10 +155,13 @@ function MonitoringContent() {
 
   return (
     <div>
-      {/* Header mit PDF-Export Button */}
+      {/* Header mit PDF-Export und Auto-Reporting Buttons */}
       <div className="flex items-center justify-between mb-6">
         <MonitoringHeader />
-        <PDFExportButton />
+        <div className="flex items-center gap-2">
+          <AutoReportingButton />
+          <PDFExportButton />
+        </div>
       </div>
 
       {/* Tab Navigation + Content */}

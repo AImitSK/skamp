@@ -328,7 +328,7 @@ export const prService = {
       } catch (error) {
       }
     }
-    
+
     // NEU: Lösche auch Enhanced Approval wenn vorhanden
     if (campaign?.approvalData?.shareId && campaign.organizationId) {
       try {
@@ -340,7 +340,7 @@ export const prService = {
       } catch (error) {
       }
     }
-    
+
     // Lösche auch den Legacy Approval Share wenn vorhanden
     if (campaign?.approvalData?.shareId) {
       try {
@@ -356,7 +356,22 @@ export const prService = {
       } catch (error) {
       }
     }
-    
+
+    // NEU: Lösche auch Auto-Reporting wenn vorhanden
+    try {
+      const autoReportingQuery = query(
+        collection(db, 'auto_reportings'),
+        where('campaignId', '==', campaignId),
+        limit(1)
+      );
+      const autoReportingSnapshot = await getDocs(autoReportingQuery);
+      if (!autoReportingSnapshot.empty) {
+        await deleteDoc(autoReportingSnapshot.docs[0].ref);
+      }
+    } catch (error) {
+      // Nicht kritisch - Kampagne wird trotzdem gelöscht
+    }
+
     await deleteDoc(doc(db, 'pr_campaigns', campaignId));
   },
 
@@ -423,6 +438,23 @@ export const prService = {
           await deleteDoc(snapshot.docs[0].ref);
         }
       } catch (error) {
+      }
+    }
+
+    // NEU: Lösche Auto-Reportings für alle gelöschten Kampagnen
+    for (const campaignId of campaignIds) {
+      try {
+        const autoReportingQuery = query(
+          collection(db, 'auto_reportings'),
+          where('campaignId', '==', campaignId),
+          limit(1)
+        );
+        const autoReportingSnapshot = await getDocs(autoReportingQuery);
+        if (!autoReportingSnapshot.empty) {
+          await deleteDoc(autoReportingSnapshot.docs[0].ref);
+        }
+      } catch (error) {
+        // Nicht kritisch
       }
     }
   },

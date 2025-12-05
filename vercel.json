@@ -17,6 +17,12 @@
     },
     "src/app/api/pr/email/cron/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/reporting/cron/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/reporting/send-now/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
@@ -39,6 +45,10 @@
     {
       "path": "/api/pr/email/cron?secret=$CRON_SECRET",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/reporting/cron?secret=$CRON_SECRET",
+      "schedule": "0 7 * * *"
     }
   ],
   "build": {
