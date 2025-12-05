@@ -14,7 +14,17 @@ import { getAutoReportEmailTemplateWithBranding } from '@/lib/email/auto-reporti
 import { formatReportPeriod, calculateReportPeriod } from '@/lib/utils/reporting-helpers';
 import { getAuth } from 'firebase-admin/auth';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-initialisierter Resend-Client
+let resendClient: Resend | null = null;
+function getResendClient(): Resend {
+  if (!resendClient) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY ist nicht konfiguriert');
+    }
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 export async function POST(request: NextRequest) {
   console.log('[Send-Now] Request erhalten');
@@ -152,7 +162,7 @@ async function sendReportNow(reporting: AutoReporting): Promise<SendResult> {
           `Hallo ${recipient.name},`
         );
 
-        await resend.emails.send({
+        await getResendClient().emails.send({
           from: process.env.EMAIL_FROM || 'CeleroPress <noreply@celeropress.com>',
           to: recipient.email,
           subject: emailTemplate.subject,

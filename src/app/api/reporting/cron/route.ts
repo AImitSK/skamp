@@ -14,8 +14,19 @@ import { AutoReporting, AutoReportingSendLog, SendStatus } from '@/types/auto-re
 import { getAutoReportEmailTemplateWithBranding } from '@/lib/email/auto-reporting-email-templates';
 import { calculateNextSendDate, formatReportPeriod, calculateReportPeriod } from '@/lib/utils/reporting-helpers';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const BATCH_SIZE = 20; // Max. Reports pro CRON-Run
+
+// Lazy-initialisierter Resend-Client
+let resendClient: Resend | null = null;
+function getResendClient(): Resend {
+  if (!resendClient) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY ist nicht konfiguriert');
+    }
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 // ========================================
 // CRON HANDLER
@@ -285,7 +296,7 @@ async function sendReportForAutoReporting(reporting: AutoReporting): Promise<Sen
           `Hallo ${recipient.name},`
         );
 
-        await resend.emails.send({
+        await getResendClient().emails.send({
           from: process.env.EMAIL_FROM || 'CeleroPress <noreply@celeropress.com>',
           to: recipient.email,
           subject: emailTemplate.subject,
