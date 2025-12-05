@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin-init';
 import { Timestamp } from 'firebase-admin/firestore';
-import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
 import { AutoReporting, SendStatus } from '@/types/auto-reporting';
 import { getAutoReportEmailTemplateWithBranding } from '@/lib/email/auto-reporting-email-templates';
 import { formatReportPeriod, calculateReportPeriod } from '@/lib/utils/reporting-helpers';
@@ -20,17 +20,8 @@ import type { MediaClipping } from '@/types/monitoring';
 import type { EmailCampaignSend } from '@/types/email';
 import type { BrandingSettings } from '@/types/branding';
 
-// Lazy-initialisierter Resend-Client
-let resendClient: Resend | null = null;
-function getResendClient(): Resend {
-  if (!resendClient) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY ist nicht konfiguriert');
-    }
-    resendClient = new Resend(process.env.RESEND_API_KEY);
-  }
-  return resendClient;
-}
+// SendGrid initialisieren
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export async function POST(request: NextRequest) {
   console.log('[Send-Now] Request erhalten');
@@ -178,16 +169,24 @@ async function sendReportNow(reporting: AutoReporting): Promise<SendResult> {
           `Hallo ${recipient.name},`
         );
 
-        await getResendClient().emails.send({
-          from: process.env.EMAIL_FROM || 'CeleroPress <noreply@celeropress.com>',
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@celeropress.com';
+        const fromName = process.env.SENDGRID_FROM_NAME || 'CeleroPress';
+
+        await sgMail.send({
           to: recipient.email,
+          from: {
+            email: fromEmail,
+            name: fromName
+          },
           subject: emailTemplate.subject,
           html: personalizedHtml,
           text: personalizedText,
           attachments: [
             {
               filename: `Monitoring-Report-${reporting.campaignName.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`,
-              content: pdfResult.pdfBase64
+              content: pdfResult.pdfBase64,
+              type: 'application/pdf',
+              disposition: 'attachment'
             }
           ]
         });
