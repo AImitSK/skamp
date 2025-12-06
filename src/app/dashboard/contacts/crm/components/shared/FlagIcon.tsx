@@ -44,7 +44,7 @@ export function FlagIcon({
       try {
         const code = countryCode.toUpperCase();
         // Dynamic import - only loads the specific flag needed
-        const flagModule = await import(`country-flag-icons/react/3x2/${code}.js`);
+        const flagModule = await import(`country-flag-icons/react/3x2/${code}`);
         setFlag(() => flagModule.default);
       } catch (error) {
         // Flag not found - silently fail
