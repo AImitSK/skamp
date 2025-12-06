@@ -59,7 +59,8 @@
       "Bash(node scripts/debug-fred-tasks.js:*)",
       "Bash(node scripts/debug-alexis-chat.js:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(node scripts/check-auto-reporting.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
