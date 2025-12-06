@@ -493,11 +493,9 @@ describe('EmailSenderService', () => {
       // Assert
       const sentEmailData = mockSgMailSend.mock.calls[0][0];
       const sentEmail = Array.isArray(sentEmailData) ? sentEmailData[0] : sentEmailData;
-      // HINWEIS: sendSingleEmail uebergibt salutation NICHT an prepareVariables
-      // Daher wird immer "Sehr geehrte Damen und Herren" verwendet (Fallback)
-      // Dies ist wahrscheinlich ein Bug im Produktionscode, aber der Test sollte
-      // die aktuelle Implementierung testen
-      expect(sentEmail.html).toContain('Sehr geehrte Damen und Herren');
+      // Die Implementierung generiert jetzt korrekt "Sehr geehrter Herr Dr. Max Mustermann"
+      // basierend auf salutation="Herr", title="Dr.", firstName="Max", lastName="Mustermann"
+      expect(sentEmail.html).toContain('Sehr geehrter Herr Dr. Max Mustermann');
     });
 
     it('sollte PDF als Anhang mitsenden', async () => {

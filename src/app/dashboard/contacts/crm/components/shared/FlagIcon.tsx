@@ -38,5 +38,5 @@ export function FlagIcon({
     return null;
   }
 
-  return <FlagComponent className={className} title={countryCode} aria-label={countryCode} />;
+  return <FlagComponent className={className} aria-label={countryCode} />;
 }

@@ -208,6 +208,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                       formData={formData}
                       onFilterChange={handleFilterChange}
                       onFormDataChange={handleFormDataChange}
+                      organizationId={organizationId}
                     />
 
                     {/* Publication Filters */}

@@ -41,12 +41,16 @@ export interface DistributionList {
 
 // Filter-Definitionen für dynamische Listen
 export interface ListFilters {
-  // Bestehende Filter
+  // Bestehende Filter für Firmen
   companyTypes?: string[];
   industries?: string[];
   countries?: CountryCode[];
-  tagIds?: string[];
+  tagIds?: string[]; // Tags für Firmen (Legacy - für Abwärtskompatibilität)
+
+  // Kontakt-spezifische Filter
+  contactTagIds?: string[]; // Tags für Kontakte
   positions?: string[];
+  contactStatus?: ('active' | 'inactive' | 'unsubscribed' | 'bounced' | 'archived')[];
   hasEmail?: boolean;
   hasPhone?: boolean;
   languages?: LanguageCode[]; // Bevorzugte Sprachen der Kontakte
@@ -54,7 +58,9 @@ export interface ListFilters {
   createdBefore?: Date;
 
   // Medien-spezifische Filter (für Journalisten)
+  onlyJournalists?: boolean; // Nur Kontakte mit mediaProfile.isJournalist = true
   beats?: string[]; // Ressorts/Themengebiete der Journalisten
+  linkedPublicationIds?: string[]; // Kontakte, die mit bestimmten Publikationen verknüpft sind
   
   // NEU: Erweiterte Publikations-Filter
   publications?: {
@@ -83,7 +89,7 @@ export interface ListFilters {
     
     // Status & Qualität
     onlyVerified?: boolean; // Nur verifizierte Publikationen
-    status?: ('active' | 'inactive' | 'discontinued')[];
+    status?: ('active' | 'inactive' | 'discontinued' | 'planned')[];
     
     // Verlage
     publisherIds?: string[]; // Bestimmte Verlage/Medienhäuser
@@ -325,19 +331,27 @@ export function hasPublicationFilters(filters: ListFilters): boolean {
 
 export function getActiveFilterCount(filters: ListFilters): number {
   let count = 0;
-  
-  // Basis-Filter
+
+  // Firmen-Filter
   if (filters.companyTypes?.length) count++;
   if (filters.industries?.length) count++;
   if (filters.countries?.length) count++;
   if (filters.tagIds?.length) count++;
+
+  // Kontakt-Filter
+  if (filters.contactTagIds?.length) count++;
   if (filters.positions?.length) count++;
+  if (filters.contactStatus?.length) count++;
   if (filters.hasEmail !== undefined) count++;
   if (filters.hasPhone !== undefined) count++;
   if (filters.languages?.length) count++;
   if (filters.createdAfter) count++;
   if (filters.createdBefore) count++;
+
+  // Journalisten-Filter
+  if (filters.onlyJournalists) count++;
   if (filters.beats?.length) count++;
+  if (filters.linkedPublicationIds?.length) count++;
   
   // Publikations-Filter
   if (filters.publications) {

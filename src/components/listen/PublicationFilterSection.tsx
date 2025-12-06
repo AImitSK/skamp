@@ -185,9 +185,10 @@ export default function PublicationFilterSection({
               placeholder="Alle Formate"
               options={[
                 { value: 'print', label: 'Print' },
-                { value: 'online', label: 'Online' },
-                { value: 'both', label: 'Print & Online' },
-                { value: 'broadcast', label: 'Broadcast' }
+                { value: 'online', label: 'Digital' },
+                { value: 'both', label: 'Print & Digital' },
+                { value: 'broadcast', label: 'Broadcast' },
+                { value: 'audio', label: 'Audio' }
               ]}
               selectedValues={filters.formats || []}
               onChange={(values) => onChange({ ...filters, formats: values as any })}
@@ -431,7 +432,8 @@ export default function PublicationFilterSection({
               options={[
                 { value: 'active', label: 'Aktiv' },
                 { value: 'inactive', label: 'Inaktiv' },
-                { value: 'discontinued', label: 'Eingestellt' }
+                { value: 'discontinued', label: 'Eingestellt' },
+                { value: 'planned', label: 'Geplant' }
               ]}
               selectedValues={filters.status || []}
               onChange={(values) => onChange({ ...filters, status: values as any })}

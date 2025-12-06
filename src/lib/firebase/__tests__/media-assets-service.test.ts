@@ -67,7 +67,12 @@ describe('Media Assets Service - Phase 4a.4', () => {
 
   describe('getMediaAssets', () => {
     it('sollte Assets für Organization laden', async () => {
-      const mockAssets = [createMockAsset('asset-1'), createMockAsset('asset-2')];
+      // Asset-1 älter als Asset-2, daher wird Asset-2 zuerst zurückgegeben (sortiert nach createdAt DESC)
+      const mockAsset1 = createMockAsset('asset-1');
+      mockAsset1.createdAt = { seconds: 1000, nanoseconds: 0 } as any;
+      const mockAsset2 = createMockAsset('asset-2');
+      mockAsset2.createdAt = { seconds: 2000, nanoseconds: 0 } as any;
+      const mockAssets = [mockAsset1, mockAsset2];
 
       // Mock Firestore getDocs response
       const firestore = require('firebase/firestore');
@@ -82,8 +87,9 @@ describe('Media Assets Service - Phase 4a.4', () => {
       const result = await getMediaAssets('org-1');
 
       expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('asset-1');
-      expect(result[1].id).toBe('asset-2');
+      // Sortiert nach createdAt DESC: asset-2 (2000) kommt vor asset-1 (1000)
+      expect(result[0].id).toBe('asset-2');
+      expect(result[1].id).toBe('asset-1');
     });
 
     it('sollte Assets für spezifischen Folder laden', async () => {

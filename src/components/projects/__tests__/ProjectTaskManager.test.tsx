@@ -600,7 +600,7 @@ describe('ProjectTaskManager', () => {
       });
 
       // Finde Progress Bar und klicke darauf
-      const progressBars = screen.getAllByTitle('Klicken um Fortschritt zu ändern');
+      const progressBars = screen.getAllByTitle(/Klicken um Fortschritt/i);
 
       // Simuliere Klick in die Mitte der Progress Bar (50%)
       const mockBoundingClientRect = {
@@ -762,7 +762,7 @@ describe('ProjectTaskManager', () => {
         expect(screen.getByText('Test Task 1')).toBeInTheDocument();
       });
 
-      const progressBars = screen.getAllByTitle('Klicken um Fortschritt zu ändern');
+      const progressBars = screen.getAllByTitle(/Klicken um Fortschritt/i);
 
       const mockBoundingClientRect = {
         left: 0,
@@ -898,7 +898,7 @@ describe('ProjectTaskManager', () => {
       });
 
       // Progress Bars sollten Title haben
-      const progressBars = screen.getAllByTitle('Klicken um Fortschritt zu ändern');
+      const progressBars = screen.getAllByTitle(/Klicken um Fortschritt/i);
       expect(progressBars.length).toBeGreaterThan(0);
 
       // Buttons sollten accessible sein
