@@ -55,7 +55,9 @@
       "Bash(Select-String -Pattern \"FAIL\")",
       "Bash(Select-Object -First 30)",
       "Bash(node -c:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(node scripts/debug-fred-tasks.js:*)",
+      "Bash(node scripts/debug-alexis-chat.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

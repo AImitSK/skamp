@@ -41,6 +41,7 @@ interface TaskListProps {
   }>;
   onEdit: (task: ProjectTask) => void;
   onComplete: (taskId: string, taskTitle: string) => void;
+  onReopen: (taskId: string, taskTitle: string) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
   onProgressClick: (task: ProjectTask, event: React.MouseEvent) => void;
   onCreateClick: () => void;
@@ -59,6 +60,7 @@ export const TaskList = React.memo(function TaskList({
   teamMembers,
   onEdit,
   onComplete,
+  onReopen,
   onDelete,
   onProgressClick,
   onCreateClick,
@@ -166,6 +168,7 @@ export const TaskList = React.memo(function TaskList({
             assignedMember={getTeamMember(task.assignedUserId || '')}
             onEdit={onEdit}
             onComplete={onComplete}
+            onReopen={onReopen}
             onDelete={onDelete}
             onProgressClick={onProgressClick}
             formatDate={formatDate}

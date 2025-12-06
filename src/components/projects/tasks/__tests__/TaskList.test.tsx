@@ -68,6 +68,7 @@ describe('TaskList Component', () => {
     ],
     onEdit: jest.fn(),
     onComplete: jest.fn(),
+    onReopen: jest.fn(),
     onDelete: jest.fn(),
     onProgressClick: jest.fn(),
     onCreateClick: jest.fn(),

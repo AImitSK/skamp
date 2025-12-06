@@ -173,10 +173,39 @@ export async function POST(request: NextRequest) {
     }
 
     const project = projectDoc.data();
+
+    // Hole TeamMember-Eintrag des Users um die Document ID zu ermitteln
+    // HINTERGRUND: project.assignedTo kann sowohl Firebase Auth UIDs als auch
+    // TeamMember Document IDs enthalten (Inkonsistenz im System)
+    let teamMemberDocId: string | null = null;
+    try {
+      const teamMemberSnapshot = await adminDb
+        .collection('team_members')
+        .where('organizationId', '==', organizationId)
+        .where('userId', '==', userId)
+        .limit(1)
+        .get();
+
+      if (!teamMemberSnapshot.empty) {
+        teamMemberDocId = teamMemberSnapshot.docs[0].id;
+      }
+    } catch (error) {
+      console.warn('Could not fetch team member:', error);
+    }
+
+    // Prüfe Team-Membership mit allen möglichen ID-Varianten
+    const assignedTo = project?.assignedTo || [];
     const isTeamMember =
-      project?.assignedTo?.includes(userId) ||
+      // Check mit Firebase Auth UID
+      assignedTo.includes(userId) ||
+      // Check mit TeamMember Document ID (falls vorhanden)
+      (teamMemberDocId && assignedTo.includes(teamMemberDocId)) ||
+      // Check ob User der Projekt-Ersteller ist
       project?.userId === userId ||
-      project?.projectManager === userId;
+      (teamMemberDocId && project?.userId === teamMemberDocId) ||
+      // Check ob User der Projekt-Manager ist
+      project?.projectManager === userId ||
+      (teamMemberDocId && project?.projectManager === teamMemberDocId);
 
     if (!isTeamMember) {
       await createAuditLog({

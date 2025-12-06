@@ -184,6 +184,18 @@ export function ProjectTaskManager({
     }
   }, [invalidateTasks]);
 
+  // Handle task reopen (wieder öffnen)
+  const handleReopenTask = useCallback(async (taskId: string, taskTitle: string) => {
+    try {
+      await taskService.update(taskId, { status: 'pending', progress: 0 });
+      invalidateTasks();
+      toastService.success(`"${taskTitle}" wieder geöffnet`);
+    } catch (error) {
+      console.error('Error reopening task:', error);
+      toastService.error('Task konnte nicht wieder geöffnet werden');
+    }
+  }, [invalidateTasks]);
+
   // Handle task deletion
   const handleDeleteTask = useCallback((taskId: string, taskTitle: string) => {
     setConfirmDialog({
@@ -205,12 +217,17 @@ export function ProjectTaskManager({
   }, [invalidateTasks]);
 
 
-  // Handle progress click
+  // Handle progress click - in 10%-Schritten
   const handleProgressClick = useCallback(async (task: ProjectTask, event: React.MouseEvent) => {
     event.stopPropagation();
+
+    // Erledigte Tasks können nicht per Klick geändert werden
+    if (task.status === 'completed') return;
+
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const clickPosition = (event.clientX - rect.left) / rect.width;
-    const newProgress = Math.round(clickPosition * 100);
+    // Runde auf nächste 10% (0, 10, 20, ..., 100)
+    const newProgress = Math.round(clickPosition * 10) * 10;
 
     try {
       // Update progress via generic update method
@@ -333,6 +350,7 @@ export function ProjectTaskManager({
         }))}
         onEdit={setEditingTask}
         onComplete={handleCompleteTask}
+        onReopen={handleReopenTask}
         onDelete={handleDeleteTask}
         onProgressClick={handleProgressClick as any}
         onCreateClick={() => setShowCreateModal(true)}

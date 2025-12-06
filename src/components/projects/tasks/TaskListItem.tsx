@@ -26,7 +26,8 @@ import {
   ExclamationTriangleIcon,
   EllipsisVerticalIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { ProjectTask } from '@/types/tasks';
 
@@ -40,6 +41,7 @@ interface TaskListItemProps {
   };
   onEdit: (task: ProjectTask) => void;
   onComplete: (taskId: string, taskTitle: string) => void;
+  onReopen: (taskId: string, taskTitle: string) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
   onProgressClick: (task: ProjectTask, event: React.MouseEvent) => void;
   formatDate: (date: any) => string;
@@ -50,11 +52,13 @@ export const TaskListItem = React.memo(function TaskListItem({
   assignedMember,
   onEdit,
   onComplete,
+  onReopen,
   onDelete,
   onProgressClick,
   formatDate
 }: TaskListItemProps) {
-  const progress = task.progress || 0;
+  // Erledigte Tasks zeigen immer 100% Fortschritt
+  const progress = task.status === 'completed' ? 100 : (task.progress || 0);
 
   // Progress color logic
   const getProgressColor = (percent: number) => {
@@ -123,9 +127,9 @@ export const TaskListItem = React.memo(function TaskListItem({
             <div className="relative flex-1">
               {/* Progress Bar */}
               <div
-                className="bg-gray-200 rounded-full h-3 cursor-pointer"
-                onClick={(e) => onProgressClick(task, e)}
-                title="Klicken um Fortschritt zu ändern"
+                className={`bg-gray-200 rounded-full h-3 ${task.status === 'completed' ? 'cursor-default' : 'cursor-pointer'}`}
+                onClick={(e) => task.status !== 'completed' && onProgressClick(task, e)}
+                title={task.status === 'completed' ? 'Erledigt' : 'Klicken um Fortschritt zu ändern (10%-Schritte)'}
               >
                 <div
                   className={`${progressColor} rounded-full h-3 transition-all duration-500`}
@@ -165,11 +169,16 @@ export const TaskListItem = React.memo(function TaskListItem({
                 Bearbeiten
               </DropdownItem>
 
-              {/* Complete (nur wenn nicht completed) */}
-              {task.status !== 'completed' && (
+              {/* Complete oder Reopen je nach Status */}
+              {task.status !== 'completed' ? (
                 <DropdownItem onClick={() => onComplete(task.id!, task.title)}>
                   <CheckCircleIcon className="h-4 w-4" />
                   Als erledigt markieren
+                </DropdownItem>
+              ) : (
+                <DropdownItem onClick={() => onReopen(task.id!, task.title)}>
+                  <ArrowPathIcon className="h-4 w-4" />
+                  Wieder öffnen
                 </DropdownItem>
               )}
 

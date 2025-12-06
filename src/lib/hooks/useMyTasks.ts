@@ -9,6 +9,7 @@
  * - Auto-Refetch bei Window-Focus
  * - Filter: 'all' | 'today' | 'overdue'
  * - Sortierung nach Fälligkeit
+ * - Unterstützt sowohl Firebase Auth UID als auch TeamMember Document ID
  *
  * @example
  * const { data: tasks, isLoading, error } = useMyTasks('today');
@@ -20,7 +21,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { ProjectTask } from '@/types/tasks';
-import { taskService } from '@/lib/firebase/task-service';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 
 export type MyTasksFilter = 'all' | 'today' | 'overdue';
 
@@ -33,18 +34,50 @@ export function useMyTasks(filter: MyTasksFilter = 'all') {
     queryFn: async () => {
       if (!currentOrganization || !user) return [];
 
-      // Lade alle Tasks die dem User zugewiesen sind
-      const q = query(
-        collection(db, 'tasks'),
-        where('organizationId', '==', currentOrganization.id),
-        where('assignedUserId', '==', user.uid)
-      );
+      // Sammle alle möglichen IDs für den aktuellen User
+      // - Firebase Auth UID (user.uid)
+      // - TeamMember Document ID (kann sich von userId unterscheiden!)
+      //
+      // HINTERGRUND: Manche Tasks wurden mit der TeamMember Document ID
+      // statt der Firebase Auth UID als assignedUserId gespeichert.
+      // Um alle zugewiesenen Tasks zu finden, müssen wir nach beiden IDs suchen.
+      const userIds = new Set<string>();
+      userIds.add(user.uid);
 
-      const snapshot = await getDocs(q);
-      let tasks = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as ProjectTask));
+      // Lade TeamMember-Eintrag um die Document ID zu erhalten
+      try {
+        const teamMember = await teamMemberService.getByUserAndOrg(user.uid, currentOrganization.id);
+        if (teamMember?.id && teamMember.id !== user.uid) {
+          userIds.add(teamMember.id);
+        }
+      } catch (error) {
+        // TeamMember nicht gefunden - kein Problem, suche nur nach user.uid
+      }
+
+      // Firestore unterstützt keine OR zwischen verschiedenen where-Klauseln,
+      // daher führen wir separate Queries aus und mergen die Ergebnisse
+      const taskMap = new Map<string, ProjectTask>();
+
+      for (const userId of userIds) {
+        const q = query(
+          collection(db, 'tasks'),
+          where('organizationId', '==', currentOrganization.id),
+          where('assignedUserId', '==', userId)
+        );
+
+        const snapshot = await getDocs(q);
+        snapshot.docs.forEach(docSnap => {
+          // Verwende Map um Duplikate zu vermeiden
+          if (!taskMap.has(docSnap.id)) {
+            taskMap.set(docSnap.id, {
+              id: docSnap.id,
+              ...docSnap.data()
+            } as ProjectTask);
+          }
+        });
+      }
+
+      let tasks = Array.from(taskMap.values());
 
       // Lade projectTitle für jede Task
       // Berücksichtige sowohl projectId als auch linkedProjectId (Legacy)

@@ -39,6 +39,7 @@ describe('TaskListItem Component', () => {
     },
     onEdit: jest.fn(),
     onComplete: jest.fn(),
+    onReopen: jest.fn(),
     onDelete: jest.fn(),
     onProgressClick: jest.fn(),
     formatDate: jest.fn((date) => '2025-12-31')
