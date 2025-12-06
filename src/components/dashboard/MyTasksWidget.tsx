@@ -252,17 +252,23 @@ export function MyTasksWidget() {
 
                     {/* Fortschritt */}
                     <div className="col-span-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-zinc-200 rounded-full h-2">
-                          <div
-                            className={`${getProgressColor(task.progress || 0)} rounded-full h-2 transition-all duration-500`}
-                            style={{ width: `${task.progress || 0}%` }}
-                          ></div>
-                        </div>
-                        <Text className="text-xs text-zinc-500 w-10 text-right">
-                          {Math.round(task.progress || 0)}%
-                        </Text>
-                      </div>
+                      {(() => {
+                        // Erledigte Tasks zeigen immer 100% Fortschritt
+                        const progress = task.status === 'completed' ? 100 : (task.progress || 0);
+                        return (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-zinc-200 rounded-full h-2">
+                              <div
+                                className={`${getProgressColor(progress)} rounded-full h-2 transition-all duration-500`}
+                                style={{ width: `${progress}%` }}
+                              ></div>
+                            </div>
+                            <Text className="text-xs text-zinc-500 w-10 text-right">
+                              {Math.round(progress)}%
+                            </Text>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
