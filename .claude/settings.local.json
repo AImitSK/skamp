@@ -57,7 +57,9 @@
       "Bash(node -c:*)",
       "Bash(mkdir:*)",
       "Bash(node scripts/debug-fred-tasks.js:*)",
-      "Bash(node scripts/debug-alexis-chat.js:*)"
+      "Bash(node scripts/debug-alexis-chat.js:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm update:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
