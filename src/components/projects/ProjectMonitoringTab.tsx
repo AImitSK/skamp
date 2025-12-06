@@ -185,6 +185,7 @@ export function ProjectMonitoringTab({ projectId }: ProjectMonitoringTabProps) {
           suggestions={allSuggestions}
           sends={allSends}
           campaigns={campaigns}
+          tracker={tracker}
           onViewAllClippings={handleViewAllClippings}
           onViewAllRecipients={handleViewAllRecipients}
           onViewSuggestion={(suggestion) => {

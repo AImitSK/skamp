@@ -36,15 +36,17 @@ import {
   SentimentNeutralIcon,
   SentimentNegativeIcon
 } from '@/components/ui/sentiment-icons';
-import { MediaClipping, MonitoringSuggestion } from '@/types/monitoring';
-import { formatDistanceToNow } from 'date-fns';
+import { MediaClipping, MonitoringSuggestion, CampaignMonitoringTracker, MonitoringChannel } from '@/types/monitoring';
+import { formatDistanceToNow, format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { SignalIcon, RssIcon, GlobeAltIcon, XCircleIcon, CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 
 interface ProjectMonitoringOverviewProps {
   clippings: MediaClipping[];
   suggestions: MonitoringSuggestion[];
   sends: any[];
   campaigns: any[]; // Campaign list for deep linking
+  tracker?: CampaignMonitoringTracker | null; // Crawler-Status
   onViewAllClippings: () => void;
   onViewAllRecipients: () => void;
   onViewSuggestion: (suggestion: MonitoringSuggestion) => void;
@@ -104,6 +106,7 @@ export function ProjectMonitoringOverview({
   suggestions,
   sends,
   campaigns,
+  tracker,
   onViewAllClippings,
   onViewAllRecipients,
   onViewSuggestion,
@@ -114,6 +117,9 @@ export function ProjectMonitoringOverview({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<MonitoringSuggestion | null>(null);
   const [selectedSentiment, setSelectedSentiment] = useState<'positive' | 'neutral' | 'negative'>('neutral');
+
+  // State für Crawler-Status Modal
+  const [crawlerModalOpen, setCrawlerModalOpen] = useState(false);
 
   // Pending Suggestions
   const pendingSuggestions = suggestions.filter(s => s.status === 'pending');
@@ -321,6 +327,38 @@ export function ProjectMonitoringOverview({
           </div>
         </div>
       </div>
+
+      {/* Crawler Status Badge */}
+      {tracker && (
+        <div
+          className="flex items-center justify-between bg-gray-50 rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => setCrawlerModalOpen(true)}
+        >
+          <div className="flex items-center gap-3">
+            <SignalIcon className={`h-5 w-5 ${tracker.isActive ? 'text-green-600' : 'text-gray-400'}`} />
+            <div>
+              <Text className="text-sm font-medium text-gray-900">Automatisches Monitoring</Text>
+              <Text className="text-xs text-gray-500">
+                {tracker.lastCrawlAt
+                  ? `Letzter Crawl: ${format(tracker.lastCrawlAt.toDate(), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr`
+                  : 'Noch kein Crawl durchgeführt'
+                }
+              </Text>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {tracker.isActive ? (
+              <Badge color="green" className="text-xs">
+                <CheckCircleSolidIcon className="h-3 w-3 mr-1" />
+                Aktiv
+              </Badge>
+            ) : (
+              <Badge color="zinc" className="text-xs">Inaktiv</Badge>
+            )}
+            <Text className="text-xs text-gray-400">Klicken für Details</Text>
+          </div>
+        </div>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -682,6 +720,141 @@ export function ProjectMonitoringOverview({
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             Clipping erstellen
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Crawler-Status Modal */}
+      <Dialog open={crawlerModalOpen} onClose={() => setCrawlerModalOpen(false)} size="2xl">
+        <DialogTitle>
+          <div className="flex items-center gap-2">
+            <SignalIcon className={`h-5 w-5 ${tracker?.isActive ? 'text-green-600' : 'text-gray-400'}`} />
+            Crawler-Status
+          </div>
+        </DialogTitle>
+        <DialogBody>
+          {tracker && (
+            <div className="space-y-6">
+              {/* Status-Übersicht */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Text className="text-xs text-gray-500 uppercase">Letzter Crawl</Text>
+                  <Text className="text-lg font-semibold text-gray-900">
+                    {tracker.lastCrawlAt
+                      ? format(tracker.lastCrawlAt.toDate(), 'dd.MM.yyyy \'um\' HH:mm \'Uhr\'', { locale: de })
+                      : 'Noch nicht durchgeführt'
+                    }
+                  </Text>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <Text className="text-xs text-gray-500 uppercase">Nächster Crawl</Text>
+                  <Text className="text-lg font-semibold text-gray-900">
+                    {tracker.nextCrawlAt
+                      ? format(tracker.nextCrawlAt.toDate(), 'dd.MM.yyyy \'um\' HH:mm \'Uhr\'', { locale: de })
+                      : 'Nicht geplant'
+                    }
+                  </Text>
+                </div>
+              </div>
+
+              {/* Statistiken */}
+              <div className="grid grid-cols-4 gap-3">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Text className="text-2xl font-bold text-blue-600">{tracker.channels?.length || 0}</Text>
+                  <Text className="text-xs text-gray-600">Channels</Text>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Text className="text-2xl font-bold text-green-600">{tracker.totalArticlesFound || 0}</Text>
+                  <Text className="text-xs text-gray-600">Funde gesamt</Text>
+                </div>
+                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <Text className="text-2xl font-bold text-purple-600">{tracker.totalAutoConfirmed || 0}</Text>
+                  <Text className="text-xs text-gray-600">Auto-Bestätigt</Text>
+                </div>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <Text className="text-2xl font-bold text-orange-600">{tracker.totalSpamMarked || 0}</Text>
+                  <Text className="text-xs text-gray-600">Als Spam</Text>
+                </div>
+              </div>
+
+              {/* Channel-Tabelle */}
+              <div>
+                <Subheading className="mb-3">Überwachte Channels</Subheading>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Channel</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Typ</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Funde</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Letzter Check</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {tracker.channels && tracker.channels.length > 0 ? (
+                        tracker.channels.map((channel: MonitoringChannel, idx: number) => (
+                          <tr key={channel.id || idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                {channel.type === 'rss_feed' ? (
+                                  <RssIcon className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                                ) : (
+                                  <GlobeAltIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                )}
+                                <Text className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                                  {channel.publicationName}
+                                </Text>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge color={channel.type === 'rss_feed' ? 'orange' : 'blue'} className="text-xs">
+                                {channel.type === 'rss_feed' ? 'RSS Feed' : 'Google News'}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {channel.isActive ? (
+                                <CheckCircleSolidIcon className="h-5 w-5 text-green-500 mx-auto" />
+                              ) : channel.wasFound ? (
+                                <CheckCircleSolidIcon className="h-5 w-5 text-blue-500 mx-auto" title="Fund - deaktiviert" />
+                              ) : channel.errorCount > 0 ? (
+                                <XCircleIcon className="h-5 w-5 text-red-500 mx-auto" title={channel.lastError} />
+                              ) : (
+                                <div className="h-5 w-5 border-2 border-gray-300 rounded-full mx-auto" />
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Text className={`text-sm font-semibold ${channel.articlesFound > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                                {channel.articlesFound}
+                              </Text>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Text className="text-xs text-gray-500">
+                                {channel.lastChecked
+                                  ? formatDistanceToNow(channel.lastChecked.toDate(), { addSuffix: true, locale: de })
+                                  : '-'
+                                }
+                              </Text>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            <Text>Keine Channels konfiguriert</Text>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={() => setCrawlerModalOpen(false)}>
+            Schließen
           </Button>
         </DialogActions>
       </Dialog>

@@ -103,18 +103,217 @@ class CampaignMonitoringService {
   /**
    * Baut Channel-Liste aus Kampagnen-Empfängern
    *
-   * HINWEIS: RSS-Feed-Extraktion aus Publications ist deaktiviert, da dies
-   * Client-SDK Dependencies erfordert. Nur Google News Channel wird erstellt.
-   * TODO: Für Plan 02 RSS-Feed-Logik mit Admin SDK implementieren.
+   * Workflow:
+   * 1. Lade Verteilerlisten der Kampagne
+   * 2. Extrahiere Kontakt-IDs aus den Listen
+   * 3. Lade Kontakte und deren Publikations-Verknüpfungen
+   * 4. Lade Publikationen mit RSS-Feeds
+   * 5. Erstelle RSS-Feed Channels
    */
   private async buildChannelsFromRecipients(
     campaign: PRCampaign,
     organizationId: string
   ): Promise<MonitoringChannel[]> {
-    // Vorerst leer - RSS Feeds werden in Plan 02 implementiert
-    // Google News Channel wird separat in buildGoogleNewsChannel() erstellt
-    console.log(`📧 RSS-Feed-Extraktion übersprungen (wird in Plan 02 implementiert)`);
-    return [];
+    const channels: MonitoringChannel[] = [];
+    const processedPublicationIds = new Set<string>();
+
+    try {
+      // 1. Sammle alle Kontakt-IDs aus Verteilerlisten
+      const contactIds = await this.getContactIdsFromDistributionLists(
+        campaign.distributionListIds || [],
+        organizationId
+      );
+
+      if (contactIds.length === 0) {
+        console.log(`📧 Keine Kontakte in Verteilerlisten gefunden`);
+        return [];
+      }
+
+      console.log(`📧 ${contactIds.length} Kontakte aus Verteilerlisten geladen`);
+
+      // 2. Lade Kontakte und extrahiere Publikations-IDs
+      const publicationIds = await this.getPublicationIdsFromContacts(contactIds, organizationId);
+
+      if (publicationIds.length === 0) {
+        console.log(`📰 Keine Publikationen bei Kontakten gefunden`);
+        return [];
+      }
+
+      console.log(`📰 ${publicationIds.length} Publikationen bei Kontakten gefunden`);
+
+      // 3. Lade Publikationen mit RSS-Feeds
+      for (const publicationId of publicationIds) {
+        // Verhindere Duplikate
+        if (processedPublicationIds.has(publicationId)) continue;
+        processedPublicationIds.add(publicationId);
+
+        const publication = await this.getPublicationWithRssFeeds(publicationId);
+
+        if (!publication) continue;
+
+        // Extrahiere RSS-Feeds aus monitoringConfig oder legacy-Feld
+        const rssFeeds = this.extractRssFeedsFromPublication(publication);
+
+        if (rssFeeds.length === 0) continue;
+
+        // Erstelle Channel für jeden RSS-Feed
+        for (const feedUrl of rssFeeds) {
+          const channelId = this.generateChannelId('rss_feed', publicationId, feedUrl);
+
+          channels.push({
+            id: channelId,
+            type: 'rss_feed',
+            publicationId: publicationId,
+            publicationName: publication.title || 'Unbekannte Publikation',
+            url: feedUrl,
+            isActive: true,
+            wasFound: false,
+            articlesFound: 0,
+            errorCount: 0
+          });
+        }
+      }
+
+      console.log(`📡 ${channels.length} RSS-Feed Channels erstellt`);
+
+    } catch (error) {
+      console.error('❌ Fehler beim Erstellen der RSS-Feed Channels:', error);
+    }
+
+    return channels;
+  }
+
+  /**
+   * Lädt Kontakt-IDs aus Verteilerlisten
+   */
+  private async getContactIdsFromDistributionLists(
+    listIds: string[],
+    organizationId: string
+  ): Promise<string[]> {
+    const allContactIds = new Set<string>();
+
+    for (const listId of listIds) {
+      try {
+        const listDoc = await adminDb.collection('distribution_lists').doc(listId).get();
+
+        if (!listDoc.exists) continue;
+
+        const listData = listDoc.data();
+
+        // Prüfe Organization-Zugehörigkeit
+        if (listData?.organizationId !== organizationId) continue;
+
+        // Statische Listen: direkte contactIds
+        if (listData?.contactIds && Array.isArray(listData.contactIds)) {
+          listData.contactIds.forEach((id: string) => allContactIds.add(id));
+        }
+
+        // Dynamische Listen: Hier müssten wir die Filter auswerten
+        // Für jetzt überspringen wir dynamische Listen
+        if (listData?.type === 'dynamic') {
+          console.log(`⏭️ Dynamische Liste ${listId} übersprungen (TODO: Filter auswerten)`);
+        }
+
+      } catch (error) {
+        console.error(`Fehler beim Laden der Liste ${listId}:`, error);
+      }
+    }
+
+    return Array.from(allContactIds);
+  }
+
+  /**
+   * Extrahiert Publikations-IDs aus Kontakten
+   */
+  private async getPublicationIdsFromContacts(
+    contactIds: string[],
+    organizationId: string
+  ): Promise<string[]> {
+    const publicationIds = new Set<string>();
+
+    // Batch-Lade Kontakte (Firestore erlaubt max 30 IDs pro 'in' Query)
+    const batchSize = 30;
+
+    for (let i = 0; i < contactIds.length; i += batchSize) {
+      const batch = contactIds.slice(i, i + batchSize);
+
+      try {
+        const snapshot = await adminDb
+          .collection('contacts')
+          .where('organizationId', '==', organizationId)
+          .where('__name__', 'in', batch)
+          .get();
+
+        for (const doc of snapshot.docs) {
+          const contact = doc.data();
+
+          // 1. Prüfe mediaInfo.publications (Array von IDs)
+          if (contact.mediaInfo?.publications && Array.isArray(contact.mediaInfo.publications)) {
+            contact.mediaInfo.publications.forEach((id: string) => {
+              if (id && typeof id === 'string') {
+                publicationIds.add(id);
+              }
+            });
+          }
+
+          // 2. Prüfe companyInfo.publications (Array von Objekten)
+          if (contact.companyInfo?.publications && Array.isArray(contact.companyInfo.publications)) {
+            contact.companyInfo.publications.forEach((pub: any) => {
+              if (pub?.id) {
+                publicationIds.add(pub.id);
+              }
+            });
+          }
+        }
+
+      } catch (error) {
+        console.error(`Fehler beim Laden der Kontakte (Batch ${i}):`, error);
+      }
+    }
+
+    return Array.from(publicationIds);
+  }
+
+  /**
+   * Lädt Publikation mit RSS-Feed Informationen
+   */
+  private async getPublicationWithRssFeeds(publicationId: string): Promise<any | null> {
+    try {
+      const doc = await adminDb.collection('publications').doc(publicationId).get();
+
+      if (!doc.exists) return null;
+
+      return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.error(`Fehler beim Laden der Publikation ${publicationId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Extrahiert RSS-Feed URLs aus Publikation
+   * Unterstützt sowohl neue monitoringConfig als auch legacy rssFeedUrl
+   */
+  private extractRssFeedsFromPublication(publication: any): string[] {
+    const feeds: string[] = [];
+
+    // 1. Neue Struktur: monitoringConfig.rssFeedUrls (Array)
+    if (publication.monitoringConfig?.rssFeedUrls && Array.isArray(publication.monitoringConfig.rssFeedUrls)) {
+      publication.monitoringConfig.rssFeedUrls.forEach((url: string) => {
+        if (url && typeof url === 'string' && url.startsWith('http')) {
+          feeds.push(url);
+        }
+      });
+    }
+
+    // 2. Legacy: rssFeedUrl (einzelner String)
+    if (publication.rssFeedUrl && typeof publication.rssFeedUrl === 'string' && publication.rssFeedUrl.startsWith('http')) {
+      if (!feeds.includes(publication.rssFeedUrl)) {
+        feeds.push(publication.rssFeedUrl);
+      }
+    }
+
+    return feeds;
   }
 
   // buildChannelsFromPublication() wurde deaktiviert - wird in Plan 02 mit Admin SDK neu implementiert
