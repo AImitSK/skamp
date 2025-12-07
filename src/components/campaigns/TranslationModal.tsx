@@ -219,7 +219,7 @@ export function TranslationModal({
 
           {/* Zielsprache Auswahl */}
           <div>
-            <Label className="mb-2">Zielsprache</Label>
+            <Text className="text-sm font-medium text-gray-900 mb-2 block">Zielsprache</Text>
             <Select
               value={targetLanguage}
               onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
@@ -278,7 +278,7 @@ export function TranslationModal({
 
           {/* Tonalität Auswahl */}
           <div>
-            <Label className="mb-2">Tonalität</Label>
+            <Text className="text-sm font-medium text-gray-900 mb-2 block">Tonalität</Text>
             <Select
               value={tone}
               onChange={(e) => setTone(e.target.value as "formal" | "professional" | "neutral")}
