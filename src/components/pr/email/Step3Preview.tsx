@@ -909,7 +909,7 @@ export default function Step3Preview({
             <TranslationLanguageSelector
               organizationId={currentOrganization.id}
               projectId={campaign.projectId}
-              sourceLanguage={'de' as LanguageCode} // TODO: Aus Projekt-Metadaten laden
+              sourceLanguage={((currentOrganization as any).contentLanguages?.primary || 'de') as LanguageCode}
               selectedLanguages={selectedLanguages}
               onSelectedLanguagesChange={setSelectedLanguages}
               pdfFormat={pdfFormat}
