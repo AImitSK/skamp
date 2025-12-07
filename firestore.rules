@@ -518,6 +518,26 @@ service cloud.firestore {
     }
 
     // ========================================
+    // PROJECT TRANSLATIONS (i18n Phase 2)
+    // ========================================
+
+    // Projekt-Übersetzungen - Org-isoliert (Sub-Collection unter projects)
+    // Collection: organizations/{orgId}/projects/{projectId}/translations/{translationId}
+    match /organizations/{orgId}/projects/{projectId}/translations/{translationId} {
+      // Lesen: Nur Org-Member oder SuperAdmin
+      allow read: if belongsToOrg(orgId) || isSuperAdmin();
+
+      // Erstellen: Nur Org-Member (für KI-Übersetzungen)
+      allow create: if belongsToOrg(orgId);
+
+      // Update: Nur Org-Member (für Review/Approval)
+      allow update: if belongsToOrg(orgId);
+
+      // Löschen: Nur Org-Member
+      allow delete: if belongsToOrg(orgId);
+    }
+
+    // ========================================
     // DEFAULT FALLBACK
     // ========================================
 
