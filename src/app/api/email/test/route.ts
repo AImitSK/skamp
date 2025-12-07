@@ -432,12 +432,18 @@ export async function POST(request: NextRequest) {
       const testSubject = `[TEST] ${personalizedSubject}`;
 
       // NEU: Generiere PDF der Pressemitteilung - DIREKT über API
+      // Phase 2 i18n: Verwende übersetzte Version wenn vorhanden
       let pdfAttachment;
-      if (campaign?.mainContent || campaign?.contentHtml) {
+      if (campaign?.mainContent || campaign?.contentHtml || data.campaignEmail.pressReleaseHtml) {
         try {
-          console.log('📄 Generiere PDF für Pressemitteilung...');
+          // Wenn targetLanguage angegeben, verwende die übersetzte Version (data.campaignEmail.pressReleaseHtml)
+          // Sonst verwende Original (campaign.mainContent || campaign.contentHtml)
+          const pdfContent = data.targetLanguage
+            ? data.campaignEmail.pressReleaseHtml
+            : (campaign?.mainContent || campaign?.contentHtml || '');
 
-          const pdfContent = campaign.mainContent || campaign.contentHtml || '';
+          const isTranslation = !!data.targetLanguage;
+          console.log(`📄 Generiere PDF für Pressemitteilung... (${isTranslation ? `Übersetzung: ${data.targetLanguage}` : 'Original'})`);
 
           if (!pdfContent.trim()) {
             console.warn('⚠️ Kein Content für PDF vorhanden');
@@ -448,7 +454,7 @@ export async function POST(request: NextRequest) {
           const { pdfTemplateService } = await import('@/lib/firebase/pdf-template-service');
 
           let template;
-          if (campaign.templateId) {
+          if (campaign?.templateId) {
             template = await pdfTemplateService.getTemplateById(campaign.templateId);
           }
           if (!template) {
@@ -457,7 +463,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Konvertiere CampaignBoilerplateSection[] in das erwartete Format für das Template
-          const formattedBoilerplateSections = (campaign.boilerplateSections || []).map(section => ({
+          const formattedBoilerplateSections = (campaign?.boilerplateSections || []).map(section => ({
             id: section.id,
             customTitle: section.customTitle,
             content: section.content || '',
@@ -466,28 +472,35 @@ export async function POST(request: NextRequest) {
             contentHtml: section.content
           }));
 
+          // Titel aus Campaign oder Fallback
+          const pdfTitle = campaign?.title || 'Pressemitteilung';
+
           const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
-            title: campaign.title,
+            title: pdfTitle,
             mainContent: pdfContent,
             boilerplateSections: formattedBoilerplateSections,
-            keyVisual: campaign.keyVisual,
-            clientName: campaign.clientName || 'Test Client',
+            keyVisual: campaign?.keyVisual,
+            clientName: campaign?.clientName || 'Test Client',
             date: new Date().toISOString()
           });
+
+          // Phase 2 i18n: Sprach-Suffix für Dateinamen
+          const languageSuffix = data.targetLanguage ? `_${data.targetLanguage.toUpperCase()}` : '';
+          const pdfFileName = `${pdfTitle.replace(/[^a-zA-Z0-9]/g, '_')}${languageSuffix}_Pressemitteilung.pdf`;
 
           // Direkt PDF-API aufrufen (kein Upload, nur Base64)
           const pdfResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-pdf`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              campaignId: campaign.id || 'temp',
+              campaignId: campaign?.id || 'temp',
               organizationId: auth.organizationId,
               mainContent: pdfContent,
-              clientName: campaign.clientName || 'Test',
+              clientName: campaign?.clientName || 'Test',
               userId: auth.userId,
               html: templateHtml,
-              fileName: `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_Pressemitteilung.pdf`,
-              title: campaign.title,
+              fileName: pdfFileName,
+              title: pdfTitle,
               options: {
                 format: 'A4' as const,
                 orientation: 'portrait' as const,
@@ -503,7 +516,7 @@ export async function POST(request: NextRequest) {
             if (pdfResult.success && pdfResult.pdfBase64) {
               pdfAttachment = {
                 content: pdfResult.pdfBase64,
-                filename: `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_Pressemitteilung.pdf`,
+                filename: pdfFileName,
                 type: 'application/pdf',
                 disposition: 'attachment'
               };
