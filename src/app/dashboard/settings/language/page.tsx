@@ -8,6 +8,8 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Field, Label } from "@/components/ui/fieldset";
 import { SettingsNav } from '@/components/SettingsNav';
 import { toastService } from "@/lib/utils/toast";
 import {
@@ -19,6 +21,7 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { SUPPORTED_UI_LANGUAGES, LANGUAGE_NAMES, UILanguage, DEFAULT_LANGUAGE } from "@/config/i18n";
+import { FlagIcon } from "@/app/dashboard/contacts/crm/components/shared/FlagIcon";
 
 export default function LanguageSettingsPage() {
   const t = useTranslations('settings.language');
@@ -96,6 +99,30 @@ export default function LanguageSettingsPage() {
     toastService.success('Glossar-Modal öffnen (TODO)');
   };
 
+  // Mapping von Sprachcode zu Ländercode für Flaggen
+  const languageToCountry: Record<string, string> = {
+    de: 'DE',
+    en: 'GB',
+    fr: 'FR',
+    es: 'ES',
+    it: 'IT',
+    nl: 'NL',
+    pt: 'PT',
+    pl: 'PL',
+  };
+
+  // Mapping von Sprachcode zu Sprachname
+  const languageNames: Record<string, string> = {
+    de: 'Deutsch',
+    en: 'English',
+    fr: 'Français',
+    es: 'Español',
+    it: 'Italiano',
+    nl: 'Nederlands',
+    pt: 'Português',
+    pl: 'Polski',
+  };
+
   // Alle Content-Sprachen für Glossar-Spalten
   const allContentLanguages = [primaryLanguage, ...additionalLanguages];
 
@@ -138,25 +165,26 @@ export default function LanguageSettingsPage() {
                   </div>
                 </div>
 
-                <select
-                  value={uiLanguage}
-                  onChange={(e) => handleUiLanguageChange(e.target.value as UILanguage)}
-                  disabled={saving}
-                  className="block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-[#005fab] focus:ring-[#005fab] sm:text-sm"
-                >
-                  {SUPPORTED_UI_LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {LANGUAGE_NAMES[lang]}
-                    </option>
-                  ))}
-                </select>
+                <Field className="max-w-xs">
+                  <Select
+                    value={uiLanguage}
+                    onChange={(e) => handleUiLanguageChange(e.target.value as UILanguage)}
+                    disabled={saving}
+                  >
+                    {SUPPORTED_UI_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {LANGUAGE_NAMES[lang]}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
               </div>
 
               {/* Box 2: Content-Sprachen */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-green-50 rounded-lg">
-                    <GlobeAltIcon className="h-5 w-5 text-green-600" />
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <GlobeAltIcon className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">{t('contentLanguages')}</h2>
@@ -169,7 +197,7 @@ export default function LanguageSettingsPage() {
                   <div>
                     <Text className="text-sm font-medium text-gray-700 mb-2">{t('primaryLanguage')}</Text>
                     <div className="inline-flex items-center px-3 py-2 bg-gray-100 rounded-md">
-                      <span className="text-xl mr-2">🇩🇪</span>
+                      <FlagIcon countryCode="DE" className="h-4 w-6 mr-2" />
                       <span className="text-sm font-medium">Deutsch</span>
                     </div>
                   </div>
@@ -185,11 +213,9 @@ export default function LanguageSettingsPage() {
                           key={lang}
                           className="inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-md"
                         >
-                          <span className="text-xl mr-2">
-                            {lang === 'en' ? '🇬🇧' : lang === 'fr' ? '🇫🇷' : lang === 'es' ? '🇪🇸' : '🌐'}
-                          </span>
+                          <FlagIcon countryCode={languageToCountry[lang] || lang.toUpperCase()} className="h-4 w-6 mr-2" />
                           <span className="text-sm font-medium mr-2">
-                            {lang === 'en' ? 'English' : lang === 'fr' ? 'Français' : lang === 'es' ? 'Español' : lang}
+                            {languageNames[lang] || lang}
                           </span>
                           <button
                             onClick={() => handleRemoveLanguage(lang)}
@@ -218,8 +244,8 @@ export default function LanguageSettingsPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-50 rounded-lg">
-                      <BookOpenIcon className="h-5 w-5 text-purple-600" />
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <BookOpenIcon className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{t('glossary')}</h2>
@@ -270,7 +296,7 @@ export default function LanguageSettingsPage() {
                             key={lang}
                             className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
-                            {lang === 'de' ? 'Deutsch' : lang === 'en' ? 'English' : lang === 'fr' ? 'Français' : lang}
+                            {languageNames[lang] || lang}
                           </th>
                         ))}
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
