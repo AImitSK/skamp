@@ -95,20 +95,22 @@
 
 ---
 
-## 4. API Route
+## 4. API Route ✅ ABGESCHLOSSEN
 
-### 4.1 Translation Endpoint
-- [ ] `src/app/api/translate/route.ts` erstellen
-- [ ] POST: Übersetzung starten (async)
-- [ ] Auth-Check (User muss Org-Mitglied sein)
-- [ ] Input-Validierung
-- [ ] Genkit Flow aufrufen
-- [ ] Ergebnis in Firestore speichern
-- [ ] Response mit Translation-ID
+### 4.1 Translation Endpoint ✅
+- [x] `src/app/api/ai/translate/route.ts` erstellt
+- [x] POST: Übersetzung starten
+- [x] Auth-Check (withAuth Middleware)
+- [x] Input-Validierung (projectId, title, content, languages)
+- [x] Genkit Flow aufrufen (translatePressReleaseFlow)
+- [x] Glossar-Einträge laden (glossaryService)
+- [x] Ergebnis in Firestore speichern (translationService)
+- [x] AI-Limit prüfen + Usage tracken
+- [x] Response mit Translation-ID und Stats
 
 ### 4.2 Status Endpoint (optional)
-- [ ] GET: Status einer laufenden Übersetzung prüfen
-- [ ] Für lange Übersetzungen mit Polling
+- [ ] GET: Status einer laufenden Übersetzung prüfen (später bei Bedarf)
+- [ ] Für lange Übersetzungen mit Polling (später bei Bedarf)
 
 ---
 
