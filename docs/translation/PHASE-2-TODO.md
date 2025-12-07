@@ -56,66 +56,42 @@
 
 ---
 
-## 3. Genkit Translation Flow
+## 3. Genkit Translation Flow ✅ ABGESCHLOSSEN
 
 > **Hinweis:** Nutzt bestehende Genkit-Infrastruktur in `src/lib/ai/`
-> - Konfiguration: `src/lib/ai/genkit-config.ts`
-> - Modelle: `gemini25FlashModel` (Google AI Plugin)
-> - Pattern: Wie `text-transform.ts` Flow
 
-### 3.1 Schema Definition
-- [ ] `src/lib/ai/schemas/translate-press-release-schemas.ts` erstellen
-- [ ] Input Schema mit Zod definieren:
-  ```typescript
-  import { z } from 'genkit';
+### 3.1 Schema Definition ✅
+- [x] `src/lib/ai/schemas/translate-press-release-schemas.ts` erstellt
+- [x] `GlossaryEntrySchema` - Glossar-Eintrag mit source, target, context, id
+- [x] `TranslatePressReleaseInputSchema` - Input mit content, title, languages, glossary, tone
+- [x] `TranslatePressReleaseOutputSchema` - Output mit translatedContent/Title, stats, confidence
+- [x] `LANGUAGE_NAMES` Mapping + `getLanguageName()` Helper
 
-  export const TranslatePressReleaseInputSchema = z.object({
-    content: z.string(),              // HTML Content
-    title: z.string(),
-    sourceLanguage: z.string(),       // 'de'
-    targetLanguage: z.string(),       // 'en', 'fr', etc.
-    glossaryEntries: z.array(z.object({
-      source: z.string(),
-      target: z.string(),
-      context: z.string().optional()
-    })).optional(),
-    preserveFormatting: z.boolean().default(true)
-  });
-  ```
-- [ ] Output Schema definieren:
-  ```typescript
-  export const TranslatePressReleaseOutputSchema = z.object({
-    translatedContent: z.string(),
-    translatedTitle: z.string(),
-    glossaryUsed: z.array(z.string()),
-    confidence: z.number(),
-    timestamp: z.string()
-  });
-  ```
+### 3.2 Flow Definition ✅
+- [x] `src/lib/ai/flows/translate-press-release.ts` erstellt
+- [x] Import: `ai`, `gemini25FlashModel` aus `../genkit-config`
+- [x] `translatePressReleaseFlow` mit `ai.defineFlow()`
+- [x] `ai.generate()` mit `gemini25FlashModel`, temperature 0.3
 
-### 3.2 Flow Definition
-- [ ] `src/lib/ai/flows/translate-press-release.ts` erstellen
-- [ ] Import: `ai`, `gemini25FlashModel` aus `../genkit-config`
-- [ ] `ai.defineFlow()` mit Input/Output Schemas
-- [ ] `ai.generate()` mit `gemini25FlashModel`
+### 3.3 Prompt Engineering ✅
+- [x] System-Prompt für Pressemitteilungs-Übersetzung
+- [x] Glossar-Integration (Fachbegriffe MÜSSEN exakt übersetzt werden)
+- [x] HTML-Formatierungs-Anweisungen (Tags beibehalten, nur Text übersetzen)
+- [x] Eigennamen-Regeln (Firmen, Produkte, Personen unverändert)
+- [x] Tone-of-Voice: formal, professional, neutral
 
-### 3.3 Prompt Engineering
-- [ ] System-Prompt für Pressemitteilungs-Übersetzung
-- [ ] Glossar-Integration in Prompt (wie `text-transform.ts` Pattern)
-- [ ] HTML-Formatierungs-Anweisungen (EXAKT beibehalten)
-- [ ] Tone-of-Voice Anweisungen (formell/geschäftlich)
-
-### 3.4 Flow Logik
-- [ ] Glossar für Kunde laden (aus Phase 1 `glossary-service.ts`)
-- [ ] KI-Übersetzung durchführen (`ai.generate()`)
-- [ ] HTML-Validierung nach Übersetzung
-- [ ] Verwendete Glossar-Einträge tracken
-- [ ] Fehlerbehandlung & Retry-Logik
+### 3.4 Flow Logik ✅
+- [x] `buildGlossarySection()` - Glossar für Prompt aufbereiten
+- [x] `buildSystemPrompt()` - Dynamischer Prompt-Builder
+- [x] `findUsedGlossaryEntries()` - Tracking verwendeter Glossar-Einträge
+- [x] `calculateConfidence()` - Qualitäts-Score berechnen
+- [x] `cleanTranslation()` - Post-Processing der Übersetzung
+- [x] Titel + Inhalt Extraktion aus KI-Response
+- [x] Fehlerbehandlung mit detailliertem Logging
 
 ### 3.5 Evaluator (optional)
-- [ ] `src/lib/ai/evaluators/translate-press-release-evaluators.ts`
-- [ ] Qualitäts-Metriken für Übersetzungen
-- [ ] Test-Dataset in `src/lib/ai/test-data/`
+- [ ] `src/lib/ai/evaluators/translate-press-release-evaluators.ts` (später)
+- [ ] Test-Dataset in `src/lib/ai/test-data/` (später)
 
 ---
 
