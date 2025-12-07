@@ -302,6 +302,114 @@ export const organizationService = {
   },
 
   /**
+   * Aktualisiert die Content-Sprachen einer Organization
+   * @param organizationId - Organization ID
+   * @param contentLanguages - Content-Sprachen Konfiguration
+   */
+  async updateContentLanguages(
+    organizationId: string,
+    contentLanguages: {
+      primary: string;
+      additional: string[];
+    }
+  ): Promise<void> {
+    try {
+      // Validierung: Max 3 zusätzliche Sprachen
+      if (contentLanguages.additional.length > 3) {
+        throw new Error('Maximal 3 zusätzliche Sprachen erlaubt');
+      }
+
+      // Validierung: Keine Duplikate
+      const uniqueAdditional = [...new Set(contentLanguages.additional)];
+      if (uniqueAdditional.length !== contentLanguages.additional.length) {
+        throw new Error('Doppelte Sprachen sind nicht erlaubt');
+      }
+
+      // Validierung: Primärsprache nicht in additional
+      if (contentLanguages.additional.includes(contentLanguages.primary)) {
+        throw new Error('Primärsprache darf nicht in zusätzlichen Sprachen sein');
+      }
+
+      const docRef = doc(db, 'organizations', organizationId);
+      await updateDoc(docRef, {
+        contentLanguages: {
+          primary: contentLanguages.primary,
+          additional: uniqueAdditional,
+        },
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating content languages:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Holt die Content-Sprachen einer Organization
+   * @param organizationId - Organization ID
+   * @returns Content-Sprachen oder Default-Werte
+   */
+  async getContentLanguages(
+    organizationId: string
+  ): Promise<{ primary: string; additional: string[] }> {
+    try {
+      const org = await this.getById(organizationId);
+      if (!org) {
+        throw new Error('Organisation nicht gefunden');
+      }
+
+      return org.contentLanguages || {
+        primary: 'de',
+        additional: [],
+      };
+    } catch (error) {
+      console.error('Error getting content languages:', error);
+      return {
+        primary: 'de',
+        additional: [],
+      };
+    }
+  },
+
+  /**
+   * Fügt eine zusätzliche Sprache hinzu
+   */
+  async addContentLanguage(
+    organizationId: string,
+    languageCode: string
+  ): Promise<void> {
+    const current = await this.getContentLanguages(organizationId);
+
+    if (current.additional.includes(languageCode)) {
+      throw new Error('Sprache bereits vorhanden');
+    }
+
+    if (languageCode === current.primary) {
+      throw new Error('Sprache ist bereits Primärsprache');
+    }
+
+    await this.updateContentLanguages(organizationId, {
+      primary: current.primary,
+      additional: [...current.additional, languageCode],
+    });
+  },
+
+  /**
+   * Entfernt eine zusätzliche Sprache
+   */
+  async removeContentLanguage(
+    organizationId: string,
+    languageCode: string
+  ): Promise<void> {
+    const current = await this.getContentLanguages(organizationId);
+
+    await this.updateContentLanguages(organizationId, {
+      primary: current.primary,
+      additional: current.additional.filter((l) => l !== languageCode),
+    });
+  },
+
+  /**
    * Prüft ob Limit erreicht ist
    */
   async checkLimit(

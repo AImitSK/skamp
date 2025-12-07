@@ -74,7 +74,7 @@
 
 ---
 
-## 3. Datenmodell erweitern - IN ARBEIT
+## 3. Datenmodell erweitern ✅ ABGESCHLOSSEN
 
 ### 3.1 Organization erweitern
 - [x] Type `Organization` erweitern in `src/types/organization.ts`:
@@ -104,28 +104,36 @@
 
 ---
 
-## 4. Services erstellen
+## 4. Services erstellen ✅ ABGESCHLOSSEN
 
 ### 4.1 Glossar-Service
-- [ ] `src/lib/services/glossary-service.ts` erstellen
-- [ ] `getByOrganization(orgId)` - Alle Einträge
-- [ ] `getByCustomer(orgId, customerId)` - Gefiltert nach Kunde
-- [ ] `create(entry)` - Neuen Eintrag erstellen
-- [ ] `update(id, entry)` - Eintrag aktualisieren
-- [ ] `delete(id)` - Eintrag löschen
-- [ ] `search(orgId, query)` - Suche in allen Übersetzungen
+- [x] `src/lib/services/glossary-service.ts` erstellt
+- [x] `getByOrganization(orgId)` - Alle Einträge
+- [x] `getByCustomer(orgId, customerId)` - Gefiltert nach Kunde
+- [x] `create(entry)` - Neuen Eintrag erstellen
+- [x] `update(id, entry)` - Eintrag aktualisieren
+- [x] `delete(id)` - Eintrag löschen
+- [x] `search(orgId, query)` - Suche in allen Übersetzungen
+- [x] `count(orgId, customerId?)` - Anzahl Einträge
 
 ### 4.2 React Query Hooks
-- [ ] `src/lib/hooks/useGlossary.ts` erstellen
-- [ ] `useGlossaryEntries(orgId, customerId?)` - Query
-- [ ] `useCreateGlossaryEntry()` - Mutation
-- [ ] `useUpdateGlossaryEntry()` - Mutation
-- [ ] `useDeleteGlossaryEntry()` - Mutation
+- [x] `src/lib/hooks/useGlossary.ts` erstellt
+- [x] `useGlossaryEntries(orgId, filterOptions?)` - Query
+- [x] `useGlossaryEntry(orgId, entryId)` - Einzelner Eintrag
+- [x] `useCreateGlossaryEntry()` - Mutation
+- [x] `useUpdateGlossaryEntry()` - Mutation
+- [x] `useDeleteGlossaryEntry()` - Mutation
+- [x] `useApproveGlossaryEntry()` - Mutation für Freigabe
+- [x] Query Key Factory `glossaryKeys`
 
 ### 4.3 Content-Languages Service
-- [ ] `updateContentLanguages(orgId, languages)` in Organization-Service
-- [ ] Validierung: Max 3 zusätzliche Sprachen
-- [ ] Validierung: Keine Duplikate
+- [x] `updateContentLanguages(orgId, languages)` in Organization-Service
+- [x] `getContentLanguages(orgId)` - Content-Sprachen laden
+- [x] `addContentLanguage(orgId, languageCode)` - Sprache hinzufügen
+- [x] `removeContentLanguage(orgId, languageCode)` - Sprache entfernen
+- [x] Validierung: Max 3 zusätzliche Sprachen
+- [x] Validierung: Keine Duplikate
+- [x] Validierung: Primärsprache nicht in additional
 
 ---
 

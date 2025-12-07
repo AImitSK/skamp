@@ -113,7 +113,13 @@ export interface Organization {
     defaultCountry: string;  // ISO 3166-1 Alpha-2
     timezone: string;
   };
-  
+
+  // Content-Sprachen für Übersetzungen (i18n)
+  contentLanguages?: {
+    primary: string;      // z.B. 'de' - Primärsprache (fest)
+    additional: string[]; // z.B. ['en', 'fr'] - max. 3 zusätzliche Sprachen
+  };
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
