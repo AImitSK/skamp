@@ -4,8 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { translatePressReleaseFlow } from '@/lib/ai/flows/translate-press-release';
-import { glossaryService } from '@/lib/services/glossary-service';
-import { translationService } from '@/lib/services/translation-service';
+import { glossaryAdminService } from '@/lib/firebase-admin/glossary-admin-service';
+import { translationAdminService } from '@/lib/firebase-admin/translation-admin-service';
 import { checkAILimit } from '@/lib/usage/usage-tracker';
 import { estimateAIWords, trackAIUsage } from '@/lib/ai/helpers/usage-tracker';
 import { LanguageCode } from '@/types/international';
@@ -170,27 +170,22 @@ export async function POST(request: NextRequest) {
 
       if (useGlossary && customerId) {
         try {
-          const customerGlossary = await glossaryService.getByCustomer(
+          const customerGlossary = await glossaryAdminService.getApprovedForLanguages(
             auth.organizationId,
-            customerId
+            customerId,
+            sourceLanguage,
+            targetLanguage
           );
 
-          // Konvertiere CustomerGlossaryEntry zu GlossaryEntry für den Flow
-          glossaryEntries = customerGlossary
-            .filter(entry => entry.isApproved) // Nur freigegebene Einträge
-            .filter(entry =>
-              entry.translations[sourceLanguage] &&
-              entry.translations[targetLanguage]
-            ) // Nur Einträge mit beiden Sprachen
-            .map(entry => ({
-              id: entry.id,
-              source: entry.translations[sourceLanguage],
-              target: entry.translations[targetLanguage],
-              context: entry.context || null
-            }));
+          // Konvertiere zu GlossaryEntry für den Flow
+          glossaryEntries = customerGlossary.map(entry => ({
+            id: entry.id,
+            source: entry.translations[sourceLanguage],
+            target: entry.translations[targetLanguage],
+            context: entry.context || null
+          }));
 
           console.log('📚 Glossar geladen', {
-            totalEntries: customerGlossary.length,
             approvedWithBothLanguages: glossaryEntries.length,
             customerId
           });
@@ -231,10 +226,10 @@ export async function POST(request: NextRequest) {
       });
 
       // ══════════════════════════════════════════════════════════════
-      // 5. IN FIRESTORE SPEICHERN
+      // 5. IN FIRESTORE SPEICHERN (Upsert - Update oder Create)
       // ══════════════════════════════════════════════════════════════
 
-      const savedTranslation = await translationService.create(
+      const savedTranslation = await translationAdminService.upsert(
         auth.organizationId,
         {
           projectId,
