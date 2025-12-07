@@ -17,7 +17,7 @@ import { emailLogger } from '@/utils/emailLogger';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { toastService } from '@/lib/utils/toast';
-import { 
+import {
   EyeIcon,
   PaperAirplaneIcon,
   ClockIcon,
@@ -30,6 +30,11 @@ import {
   DocumentTextIcon,
   InformationCircleIcon
 } from '@heroicons/react/20/solid';
+import TranslationLanguageSelector, {
+  SelectedLanguages,
+  PdfFormat
+} from '@/components/pr/email/TranslationLanguageSelector';
+import { LanguageCode } from '@/types/international';
 
 interface Step3PreviewProps {
   draft: EmailDraft;
@@ -120,6 +125,13 @@ export default function Step3Preview({
 
   // State für Alerts
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  // State für Übersetzungs-Sprachen (Phase 2.6)
+  const [selectedLanguages, setSelectedLanguages] = useState<SelectedLanguages>({
+    original: true,
+    translations: []
+  });
+  const [pdfFormat, setPdfFormat] = useState<PdfFormat>('separate');
 
   // Berechne korrekte Empfänger-Zahlen
   const totalRecipients = draft.recipients.totalCount || 0;
@@ -891,6 +903,20 @@ export default function Step3Preview({
               </div>
             </div>
           </div>
+
+          {/* Übersetzungs-Sprachauswahl (Phase 2.6) */}
+          {currentOrganization && campaign.projectId && (
+            <TranslationLanguageSelector
+              organizationId={currentOrganization.id}
+              projectId={campaign.projectId}
+              sourceLanguage={'de' as LanguageCode} // TODO: Aus Projekt-Metadaten laden
+              selectedLanguages={selectedLanguages}
+              onSelectedLanguagesChange={setSelectedLanguages}
+              pdfFormat={pdfFormat}
+              onPdfFormatChange={setPdfFormat}
+              disabled={isDisabled}
+            />
+          )}
 
           {/* E-Mail-Vorschau (volle Breite) */}
           <div>

@@ -142,17 +142,23 @@
 
 ---
 
-## 6. Versand-Modal Erweiterung
+## 6. Versand-Modal Erweiterung ✅ ABGESCHLOSSEN
 
-### 6.1 Sprach-Auswahl
-- [ ] Checkboxen für verfügbare Sprachen
-- [ ] Original (DE) immer vorausgewählt
-- [ ] Nicht verfügbare Sprachen grau/disabled
-- [ ] Status-Info (generiert am, von wem)
+### 6.1 Sprach-Auswahl ✅
+- [x] `TranslationLanguageSelector` Komponente erstellt
+- [x] Checkboxen für verfügbare Sprachen
+- [x] Original (DE) immer vorausgewählt und nicht abwählbar
+- [x] Status-Info (generiert am, aktuell/veraltet)
+- [x] "Alle auswählen / abwählen" Button
 
-### 6.2 PDF-Format Optionen
-- [ ] Radio-Buttons: Separate PDFs / Kombiniertes PDF
-- [ ] Vorschau-Info was generiert wird
+### 6.2 PDF-Format Optionen ✅
+- [x] Radio-Buttons: Separate PDFs / Kombiniertes PDF
+- [x] Vorschau-Info was generiert wird (Anzahl Sprachen)
+
+### 6.3 Integration ✅
+- [x] In `Step3Preview.tsx` integriert
+- [x] State für `selectedLanguages` und `pdfFormat`
+- [x] TypeScript-Check erfolgreich
 
 ---
 
