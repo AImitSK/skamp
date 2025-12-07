@@ -162,15 +162,22 @@
 
 ---
 
-## 7. PDF-Generierung erweitern
+## 7. PDF-Generierung erweitern ✅ ABGESCHLOSSEN
 
-### 7.1 Separate PDFs
-- [ ] Bestehenden PDF-Service nutzen
-- [ ] Pro Sprache ein PDF generieren
-- [ ] Alle PDFs als Attachments anhängen
+### 7.1 Separate PDFs ✅
+- [x] Bestehenden PDF-Service analysiert und verstanden
+- [x] `TranslationPDF` Interface erstellt
+- [x] `generatePDFForTranslation()` Methode in email-sender-service.ts
+- [x] `prepareEmailDataWithTranslations()` für Multi-Language PDFs
+- [x] Übersetzungs-PDFs als separate Attachments anhängen
 
-### 7.2 Kombiniertes PDF (optional)
-- [ ] PDF-Service erweitern für Multi-Language
+### 7.2 API & UI Integration ✅
+- [x] `SendEmailRequest` Type erweitert (projectId, selectedLanguages, pdfFormat)
+- [x] `/api/pr/email/send` Route erweitert für Multi-Language
+- [x] `Step3Preview.tsx` sendet selectedLanguages und pdfFormat mit
+
+### 7.3 Kombiniertes PDF (TODO für später)
+- [ ] PDF-Merge-Funktionalität mit pdf-lib implementieren
 - [ ] Sprachtrennseite einfügen
 - [ ] Header pro Sprachsektion
 

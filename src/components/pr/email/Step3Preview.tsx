@@ -482,7 +482,11 @@ export default function Step3Preview({
             organizationId: currentOrganization?.id,
             draft: draft,
             sendImmediately: false,
-            scheduledDate: scheduledDateTime.toISOString()
+            scheduledDate: scheduledDateTime.toISOString(),
+            // NEU: Multi-Language Optionen (Phase 2.7)
+            projectId: campaign.projectId,
+            selectedLanguages: selectedLanguages,
+            pdfFormat: pdfFormat
           })
         });
 
@@ -542,7 +546,11 @@ export default function Step3Preview({
               campaignId: campaign.id,
               organizationId: currentOrganization?.id,
               draft: draft,
-              sendImmediately: true
+              sendImmediately: true,
+              // NEU: Multi-Language Optionen (Phase 2.7)
+              projectId: campaign.projectId,
+              selectedLanguages: selectedLanguages,
+              pdfFormat: pdfFormat
             })
           });
 

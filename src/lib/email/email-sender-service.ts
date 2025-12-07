@@ -11,9 +11,22 @@ import { emailComposerService } from '@/lib/email/email-composer-service';
 import { PRCampaign, CampaignBoilerplateSection } from '@/types/pr';
 import { EmailDraft, ManualRecipient, EmailMetadata, EmailVariables } from '@/types/email-composer';
 import { EmailAddress } from '@/types/email-enhanced';
+import { ProjectTranslation } from '@/types/translation';
+import { LanguageCode, LANGUAGE_NAMES } from '@/types/international';
 
 // SendGrid konfigurieren
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+
+// Types für Translation-PDF
+export interface TranslationPDF {
+  language: LanguageCode;
+  languageName: string;
+  pdfBase64: string;
+  fileName: string;
+}
+
+// PDF-Format Optionen (separate oder kombiniert)
+export type PdfFormat = 'separate' | 'combined';
 
 // Types für prepared data
 export interface PreparedEmailData {
@@ -21,6 +34,9 @@ export interface PreparedEmailData {
   signatureHtml: string;
   pdfBase64: string;
   mediaShareUrl?: string;
+  // NEU: Multi-Language PDFs
+  translationPDFs?: TranslationPDF[];
+  pdfFormat?: PdfFormat;
 }
 
 export interface SendResult {
@@ -204,6 +220,170 @@ export class EmailSenderService {
     } catch (error) {
       throw new Error(`PDF-Generation fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /**
+   * Generiert PDF für eine Übersetzung
+   * Nutzt den übersetzten Content statt dem Original
+   */
+  private async generatePDFForTranslation(
+    campaign: PRCampaign,
+    translation: ProjectTranslation,
+    userId?: string
+  ): Promise<TranslationPDF> {
+    const translatedContent = translation.content || '';
+
+    if (!translatedContent.trim()) {
+      throw new Error(`Kein Content für Übersetzung (${translation.language}) vorhanden`);
+    }
+
+    const effectiveUserId = userId || campaign.userId;
+
+    if (!effectiveUserId) {
+      throw new Error('userId für PDF-Generation nicht verfügbar');
+    }
+
+    try {
+      // Lade PDF-Template
+      const { pdfTemplateService } = await import('@/lib/firebase/pdf-template-service');
+
+      let template;
+      if (campaign.templateId) {
+        template = await pdfTemplateService.getTemplateById(campaign.templateId);
+      }
+      if (!template) {
+        const systemTemplates = await pdfTemplateService.getSystemTemplates();
+        template = systemTemplates[0];
+      }
+
+      // Titel: Verwende übersetzten Titel oder Original mit Sprach-Suffix
+      const translatedTitle = translation.title ||
+        `${campaign.title} (${LANGUAGE_NAMES[translation.language] || translation.language})`;
+
+      const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
+        title: translatedTitle,
+        mainContent: translatedContent, // Übersetzter Content!
+        boilerplateSections: [], // Boilerplates sind bereits im übersetzten Content enthalten
+        keyVisual: campaign.keyVisual,
+        clientName: campaign.clientName || 'Client',
+        date: new Date().toISOString()
+      });
+
+      // PDF-API aufrufen
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const fileName = `${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_${translation.language.toUpperCase()}.pdf`;
+
+      const pdfResponse = await fetch(`${baseUrl}/api/generate-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: campaign.id || 'temp',
+          organizationId: campaign.organizationId,
+          mainContent: translatedContent,
+          clientName: campaign.clientName || 'Client',
+          userId: effectiveUserId,
+          html: templateHtml,
+          fileName,
+          title: translatedTitle,
+          options: {
+            format: 'A4' as const,
+            orientation: 'portrait' as const,
+            printBackground: true,
+            waitUntil: 'networkidle0' as const,
+            margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+          }
+        })
+      });
+
+      if (!pdfResponse.ok) {
+        const errorText = await pdfResponse.text();
+        throw new Error(`PDF-Generation für ${translation.language} fehlgeschlagen: ${errorText}`);
+      }
+
+      const pdfData = await pdfResponse.json();
+
+      if (!pdfData.pdfBase64) {
+        throw new Error(`PDF-API hat kein pdfBase64 für ${translation.language} zurückgegeben`);
+      }
+
+      return {
+        language: translation.language,
+        languageName: LANGUAGE_NAMES[translation.language] || translation.language,
+        pdfBase64: pdfData.pdfBase64,
+        fileName
+      };
+    } catch (error) {
+      throw new Error(`PDF-Generation für Übersetzung (${translation.language}) fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Bereitet Email-Daten mit Übersetzungs-PDFs vor
+   * Erweiterte Version von prepareEmailData für Multi-Language Support
+   */
+  async prepareEmailDataWithTranslations(
+    campaignId: string,
+    organizationId: string,
+    projectId: string,
+    selectedLanguages: LanguageCode[],
+    pdfFormat: PdfFormat = 'separate',
+    signatureId?: string,
+    userId?: string
+  ): Promise<PreparedEmailData> {
+    // 1. Basis-Daten vorbereiten (Original-PDF)
+    const baseData = await this.prepareEmailData(campaignId, organizationId, signatureId, userId);
+
+    // Wenn keine Übersetzungen ausgewählt, nur Original zurückgeben
+    if (!selectedLanguages || selectedLanguages.length === 0) {
+      return baseData;
+    }
+
+    // 2. Übersetzungen laden
+    const translationPDFs: TranslationPDF[] = [];
+
+    for (const language of selectedLanguages) {
+      try {
+        // Lade Übersetzung aus Firestore
+        const translationSnapshot = await adminDb
+          .collection(`organizations/${organizationId}/projects/${projectId}/translations`)
+          .where('language', '==', language)
+          .limit(1)
+          .get();
+
+        if (translationSnapshot.empty) {
+          console.warn(`⚠️ Keine Übersetzung für Sprache ${language} gefunden`);
+          continue;
+        }
+
+        const translationDoc = translationSnapshot.docs[0];
+        const translation: ProjectTranslation = {
+          id: translationDoc.id,
+          organizationId,
+          projectId,
+          ...translationDoc.data()
+        } as ProjectTranslation;
+
+        // 3. PDF für Übersetzung generieren
+        console.log(`📄 Generiere PDF für Übersetzung: ${language}`);
+        const translationPDF = await this.generatePDFForTranslation(
+          baseData.campaign,
+          translation,
+          userId
+        );
+        translationPDFs.push(translationPDF);
+        console.log(`✅ PDF für ${language} generiert`);
+
+      } catch (error) {
+        console.error(`❌ Fehler beim Generieren des PDFs für ${language}:`, error);
+        // Fehler bei einer Übersetzung sollte nicht den gesamten Versand blockieren
+      }
+    }
+
+    return {
+      ...baseData,
+      translationPDFs,
+      pdfFormat
+    };
   }
 
   /**
@@ -459,6 +639,39 @@ export class EmailSenderService {
       useSystemInbox: metadata.useSystemInbox !== false
     });
 
+    // Attachments vorbereiten: Original-PDF + Übersetzungs-PDFs
+    const attachments: Array<{
+      content: string;
+      filename: string;
+      type: string;
+      disposition: string;
+    }> = [
+      {
+        content: preparedData.pdfBase64,
+        filename: `${preparedData.campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        type: 'application/pdf',
+        disposition: 'attachment'
+      }
+    ];
+
+    // Übersetzungs-PDFs hinzufügen (wenn vorhanden und pdfFormat = 'separate')
+    if (preparedData.translationPDFs && preparedData.translationPDFs.length > 0) {
+      if (preparedData.pdfFormat === 'separate') {
+        // Separate PDFs: Jede Übersetzung als eigenes Attachment
+        for (const translationPDF of preparedData.translationPDFs) {
+          attachments.push({
+            content: translationPDF.pdfBase64,
+            filename: translationPDF.fileName,
+            type: 'application/pdf',
+            disposition: 'attachment'
+          });
+        }
+        console.log(`📎 ${preparedData.translationPDFs.length} Übersetzungs-PDFs als separate Attachments hinzugefügt`);
+      }
+      // TODO: pdfFormat === 'combined' würde hier ein kombiniertes PDF erstellen
+      // Das erfordert PDF-Merge-Funktionalität (z.B. pdf-lib)
+    }
+
     // SendGrid Mail Objekt
     const msg = {
       to: recipient.email,
@@ -469,14 +682,7 @@ export class EmailSenderService {
       replyTo: replyToAddress, // ✅ Reply-To hinzugefügt
       subject: personalizedSubject,
       html: emailHtml,
-      attachments: [
-        {
-          content: preparedData.pdfBase64,
-          filename: `${preparedData.campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }
-      ]
+      attachments
     } as any;
 
     // Senden via SendGrid

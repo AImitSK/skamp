@@ -51,6 +51,19 @@ export interface ScheduledEmail {
 }
 
 /**
+ * PDF-Format für Multi-Language Versand
+ */
+export type PdfFormat = 'separate' | 'combined';
+
+/**
+ * Ausgewählte Sprachen für Versand
+ */
+export interface SelectedLanguages {
+  original: boolean; // Originalsprache immer dabei
+  translations: string[]; // Ausgewählte Übersetzungen (ISO 639-1 Codes)
+}
+
+/**
  * Request Body für /api/email/send
  */
 export interface SendEmailRequest {
@@ -59,6 +72,11 @@ export interface SendEmailRequest {
   draft: EmailDraft;
   sendImmediately: boolean;
   scheduledDate?: string; // ISO String
+
+  // NEU: Multi-Language Optionen (Phase 2.7)
+  projectId?: string; // Benötigt für Übersetzungs-Lookup
+  selectedLanguages?: SelectedLanguages;
+  pdfFormat?: PdfFormat;
 }
 
 /**

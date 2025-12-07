@@ -38,7 +38,17 @@ export async function POST(request: NextRequest) {
 
     // 2. Request-Body parsen
     const body: SendEmailRequest = await request.json();
-    const { campaignId, organizationId, draft, sendImmediately, scheduledDate } = body;
+    const {
+      campaignId,
+      organizationId,
+      draft,
+      sendImmediately,
+      scheduledDate,
+      // NEU: Multi-Language Optionen (Phase 2.7)
+      projectId,
+      selectedLanguages,
+      pdfFormat
+    } = body;
 
     // 3. Validierung
     if (!campaignId) {
@@ -72,12 +82,30 @@ export async function POST(request: NextRequest) {
     // 4a. SOFORT VERSENDEN
     if (sendImmediately) {
       // Email-Daten vorbereiten
-      const preparedData = await emailSenderService.prepareEmailData(
-        campaignId,
-        organizationId,
-        draft.content.signatureId,
-        userId
-      );
+      // NEU: Mit Übersetzungs-PDFs wenn projectId und selectedLanguages vorhanden
+      let preparedData;
+
+      if (projectId && selectedLanguages && selectedLanguages.translations.length > 0) {
+        // Multi-Language Versand: PDFs für ausgewählte Übersetzungen generieren
+        console.log(`🌍 Multi-Language Versand: ${selectedLanguages.translations.length} Übersetzungen`);
+        preparedData = await emailSenderService.prepareEmailDataWithTranslations(
+          campaignId,
+          organizationId,
+          projectId,
+          selectedLanguages.translations as any, // LanguageCode[]
+          pdfFormat || 'separate',
+          draft.content.signatureId,
+          userId
+        );
+      } else {
+        // Standard-Versand: Nur Original-PDF
+        preparedData = await emailSenderService.prepareEmailData(
+          campaignId,
+          organizationId,
+          draft.content.signatureId,
+          userId
+        );
+      }
 
       // Emails versenden
       const result = await emailSenderService.sendToRecipients(
