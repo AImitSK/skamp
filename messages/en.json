@@ -68,7 +68,26 @@
     "subscriptionCanceled": "Subscription successfully canceled",
     "subscriptionUpdated": "Plan successfully changed",
     "organizationUpdated": "Organization successfully updated",
-    "usageSynced": "Usage synchronized"
+    "usageSynced": "Usage synchronized",
+    "settingsSaved": "Settings saved",
+    "settingsError": "Error saving settings",
+    "languageChanged": "Language changed",
+    "languageAdded": "Language added",
+    "languageRemoved": "Language removed",
+    "glossaryCreated": "Glossary entry created",
+    "glossaryUpdated": "Glossary entry updated",
+    "glossaryDeleted": "Glossary entry deleted",
+    "contactsLoaded": "Contacts loaded",
+    "contactsLoadError": "Contacts could not be loaded",
+    "clippingLoadError": "Clipping could not be loaded",
+    "publicationDeleted": "Publication deleted",
+    "publicationDeleteError": "Publication could not be deleted",
+    "listsLoaded": "{count} distribution list(s) loaded",
+    "listsLoadError": "Error loading distribution lists",
+    "recipientAdded": "{name} added",
+    "testEmailSent": "Test email sent to {email}",
+    "emailScheduled": "Email scheduled for {datetime}",
+    "mediumNotFound": "Medium could not be found"
   },
   "settings": {
     "language": {

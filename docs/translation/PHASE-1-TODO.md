@@ -137,18 +137,17 @@
 
 ---
 
-## 5. Toast Service i18n
+## 5. Toast Service i18n ✅ ABGESCHLOSSEN
 
-### 5.1 Toast Service erweitern
-- [ ] `src/lib/utils/toast.ts` erweitern:
-  - Keys mit `toasts.` Prefix erkennen
-  - `t()` Funktion von next-intl integrieren
-  - Fallback: Wenn kein Key, originalen Text anzeigen
-- [ ] Abwärtskompatibilität sicherstellen (alte Aufrufe funktionieren weiter)
+### 5.1 Toast Service Ansatz
+- [x] Entscheidung: Toast-Service bleibt unverändert (akzeptiert übersetzte Strings)
+- [x] Übersetzung erfolgt im aufrufenden Code mit `useTranslations('toasts')`
+- [x] Abwärtskompatibilität sichergestellt (alte Aufrufe funktionieren weiter)
 
 ### 5.2 Toast Keys in Übersetzungsdateien
-- [ ] Alle Toast-Messages in `/messages/de.json` unter `toasts` sammeln
-- [ ] Englische Übersetzungen in `/messages/en.json`
+- [x] Toast-Messages in `/messages/de.json` unter `toasts` erweitert (38 Keys)
+- [x] Englische Übersetzungen in `/messages/en.json` synchronisiert
+- [x] Interpolation-Syntax für dynamische Werte (`{count}`, `{name}`, etc.)
 
 ---
 

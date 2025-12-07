@@ -68,7 +68,26 @@
     "subscriptionCanceled": "Subscription erfolgreich gekündigt",
     "subscriptionUpdated": "Plan erfolgreich geändert",
     "organizationUpdated": "Organization erfolgreich aktualisiert",
-    "usageSynced": "Usage synchronisiert"
+    "usageSynced": "Usage synchronisiert",
+    "settingsSaved": "Einstellungen gespeichert",
+    "settingsError": "Fehler beim Speichern der Einstellungen",
+    "languageChanged": "Sprache geändert",
+    "languageAdded": "Sprache hinzugefügt",
+    "languageRemoved": "Sprache entfernt",
+    "glossaryCreated": "Glossar-Eintrag erstellt",
+    "glossaryUpdated": "Glossar-Eintrag aktualisiert",
+    "glossaryDeleted": "Glossar-Eintrag gelöscht",
+    "contactsLoaded": "Kontakte geladen",
+    "contactsLoadError": "Kontakte konnten nicht geladen werden",
+    "clippingLoadError": "Clipping konnte nicht geladen werden",
+    "publicationDeleted": "Veröffentlichung wurde gelöscht",
+    "publicationDeleteError": "Veröffentlichung konnte nicht gelöscht werden",
+    "listsLoaded": "{count} Verteilerliste(n) geladen",
+    "listsLoadError": "Fehler beim Laden der Verteilerlisten",
+    "recipientAdded": "{name} hinzugefügt",
+    "testEmailSent": "Test-Email an {email} versendet",
+    "emailScheduled": "E-Mail für {datetime} geplant",
+    "mediumNotFound": "Medium konnte nicht gefunden werden"
   },
   "settings": {
     "language": {
