@@ -16,7 +16,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useDeleteProject, useArchiveProject } from '@/lib/hooks/useProjectData';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 import { ProjectCardProps } from './types';
 import { getPriorityColor, getPriorityIcon, getStatusColor, getPriorityLabel, getStatusLabel } from './helpers';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
@@ -104,7 +104,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   const confirmDelete = useCallback(async () => {
     if (!currentOrganization?.id) {
-      toast.error('Keine Organisation gefunden');
+      toastService.error('Keine Organisation gefunden');
       return;
     }
 
@@ -114,14 +114,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         organizationId: currentOrganization.id
       });
 
-      toast.success('Projekt gelöscht');
+      toastService.success('Projekt gelöscht');
       setShowDeleteDialog(false);
 
       if (onProjectDeleted) {
         onProjectDeleted();
       }
     } catch (error) {
-      toast.error('Fehler beim Löschen des Projekts');
+      toastService.error('Fehler beim Löschen des Projekts');
     }
   }, [currentOrganization?.id, deleteProjectMutation, project.id, onProjectDeleted]);
 
@@ -133,7 +133,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
 
   const handleArchiveProject = useCallback(async (projectId: string) => {
     if (!currentOrganization?.id) {
-      toast.error('Keine Organisation gefunden');
+      toastService.error('Keine Organisation gefunden');
       return;
     }
 
@@ -144,13 +144,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         userId: project.userId
       });
 
-      toast.success('Projekt archiviert');
+      toastService.success('Projekt archiviert');
 
       if (onProjectArchived) {
         onProjectArchived();
       }
     } catch (error) {
-      toast.error('Fehler beim Archivieren');
+      toastService.error('Fehler beim Archivieren');
     }
   }, [currentOrganization?.id, project.userId, archiveProjectMutation, onProjectArchived]);
 

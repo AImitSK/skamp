@@ -10,7 +10,7 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { SUBSCRIPTION_LIMITS, SubscriptionTier } from '@/config/subscription-limits';
 import { Button } from '@/components/ui/button';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 
 interface Props {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
 
   const handleChangePlan = async () => {
     if (selectedTier === currentTier) {
-      toast.error('Bitte wähle einen anderen Plan aus');
+      toastService.error('Bitte wähle einen anderen Plan aus');
       return;
     }
 
@@ -59,7 +59,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
         // Check if it's a downgrade violation error
         if (errorData.violations) {
           setViolations(errorData.violations);
-          toast.error('Downgrade nicht möglich - siehe Details unten');
+          toastService.error('Downgrade nicht möglich - siehe Details unten');
           setLoading(false);
           return;
         }
@@ -68,7 +68,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
       }
 
       const data = await response.json();
-      toast.success(`Plan erfolgreich zu ${selectedTier} geändert!`);
+      toastService.success(`Plan erfolgreich zu ${selectedTier} geändert!`);
 
       // Reload page to show updated subscription
       setTimeout(() => {
@@ -76,7 +76,7 @@ export default function ChangePlanModal({ isOpen, onClose, currentTier, stripeSu
       }, 1500);
     } catch (error: any) {
       console.error('Error changing plan:', error);
-      toast.error(error.message || 'Fehler beim Plan-Wechsel');
+      toastService.error(error.message || 'Fehler beim Plan-Wechsel');
       setLoading(false);
     }
   };

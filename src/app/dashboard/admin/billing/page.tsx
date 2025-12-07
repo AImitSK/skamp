@@ -10,7 +10,7 @@ import { Organization } from '@/types/organization';
 import { SUBSCRIPTION_LIMITS } from '@/config/subscription-limits';
 import SubscriptionManagement from '@/components/subscription/SubscriptionManagement';
 import ChangePlanModal from '@/components/subscription/ChangePlanModal';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 import { Popover, Transition } from '@headlessui/react';
 import { EllipsisVerticalIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
@@ -67,13 +67,13 @@ export default function BillingPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Organization erfolgreich aktualisiert!');
+        toastService.success('Organization erfolgreich aktualisiert!');
         fetchOrganization(); // Reload
       } else {
-        toast.error(data.error || 'Fehler beim Aktualisieren');
+        toastService.error(data.error || 'Fehler beim Aktualisieren');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Fehler beim Aktualisieren');
+      toastService.error(error.message || 'Fehler beim Aktualisieren');
     } finally {
       setFixLoading(false);
     }
@@ -96,14 +96,14 @@ export default function BillingPage() {
 
       if (data.success) {
         console.log('[Billing] Usage Sync erfolgreich:', data.usage);
-        toast.success(`Usage synchronisiert: ${data.usage.contacts} Kontakte, ${data.usage.teamMembers} Team-Mitglieder`);
+        toastService.success(`Usage synchronisiert: ${data.usage.contacts} Kontakte, ${data.usage.teamMembers} Team-Mitglieder`);
         fetchOrganization(); // Reload
       } else {
         console.error('[Billing] Usage Sync fehlgeschlagen:', data.error);
-        toast.error(data.error || 'Fehler beim Synchronisieren');
+        toastService.error(data.error || 'Fehler beim Synchronisieren');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Fehler beim Synchronisieren');
+      toastService.error(error.message || 'Fehler beim Synchronisieren');
     } finally {
       setSyncLoading(false);
     }

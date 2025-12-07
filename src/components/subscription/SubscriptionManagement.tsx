@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { SUBSCRIPTION_LIMITS, getUsagePercentage, getUsageColor, isUnlimited } from '@/config/subscription-limits';
 import { Organization, OrganizationUsage } from '@/types/organization';
 import { CheckIcon, PencilSquareIcon, XMarkIcon, EnvelopeIcon, UserGroupIcon, SparklesIcon, UserIcon, CloudIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 import CancelSubscriptionModal from './CancelSubscriptionModal';
 
 interface Props {
@@ -91,7 +91,7 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Error opening customer portal:', error);
-      toast.error(error.message || 'Fehler beim Öffnen des Portals');
+      toastService.error(error.message || 'Fehler beim Öffnen des Portals');
       setPortalLoading(false);
     }
   };
@@ -121,11 +121,11 @@ export default function SubscriptionManagement({ organization, onUpgrade }: Prop
         throw new Error(errorData.error || 'Fehler beim Reaktivieren');
       }
 
-      toast.success('Subscription erfolgreich reaktiviert');
+      toastService.success('Subscription erfolgreich reaktiviert');
       window.location.reload();
     } catch (error: any) {
       console.error('Error reactivating subscription:', error);
-      toast.error(error.message || 'Fehler beim Reaktivieren');
+      toastService.error(error.message || 'Fehler beim Reaktivieren');
       setReactivateLoading(false);
     }
   };

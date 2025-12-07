@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { toastService } from '@/lib/utils/toast';
 
 interface Props {
   isOpen: boolean;
@@ -47,11 +47,11 @@ export default function CancelSubscriptionModal({
         throw new Error(errorData.error || 'Fehler beim Kündigen');
       }
 
-      toast.success('Subscription erfolgreich gekündigt');
+      toastService.success('Subscription erfolgreich gekündigt');
       onSuccess();
     } catch (error: any) {
       console.error('Error canceling subscription:', error);
-      toast.error(error.message || 'Fehler beim Kündigen');
+      toastService.error(error.message || 'Fehler beim Kündigen');
     } finally {
       setLoading(false);
     }
