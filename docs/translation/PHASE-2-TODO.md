@@ -114,28 +114,31 @@
 
 ---
 
-## 5. UI-Komponenten
+## 5. UI-Komponenten ✅ ABGESCHLOSSEN
 
-### 5.1 Übersetzungs-Button
-- [ ] `src/components/campaigns/TranslationButton.tsx`
-- [ ] Anzeige verfügbarer Übersetzungen (Flaggen)
-- [ ] Status-Badges (generiert, veraltet, etc.)
-- [ ] "Neue Übersetzung" Button
-- [ ] Integration in Kampagnen-Ansicht
+### 5.1 Übersetzungs-Button ✅
+- [x] `src/components/campaigns/TranslationButton.tsx` erstellt
+- [x] Anzeige verfügbarer Übersetzungen (Flaggen mit Unicode Emoji)
+- [x] Status-Badges (generiert, geprüft, freigegeben, veraltet)
+- [x] "Neue Übersetzung" Button
+- [x] Hover-Tooltip mit Übersetzungs-Details
+- [x] Kompakte und vollständige Ansicht
 
-### 5.2 Übersetzungs-Modal
-- [ ] `src/components/campaigns/TranslationModal.tsx`
-- [ ] Zielsprache-Dropdown (basierend auf contentLanguages)
-- [ ] Glossar-Checkbox (Anzahl Einträge anzeigen)
-- [ ] Loading-State während Generierung
-- [ ] Erfolgs-/Fehler-Feedback
-- [ ] Vorschau der Übersetzung (optional)
+### 5.2 Übersetzungs-Modal ✅
+- [x] `src/components/campaigns/TranslationModal.tsx` erstellt
+- [x] Zielsprache-Dropdown (basierend auf contentLanguages)
+- [x] Glossar-Checkbox (Anzahl relevanter Einträge anzeigen)
+- [x] Loading-State während Generierung
+- [x] Erfolgs-/Fehler-Feedback
+- [x] Tonalität-Auswahl (formal, professional, neutral)
+- [x] KI-Hinweis mit Gemini-Info
 
-### 5.3 Outdated-Warning
-- [ ] `src/components/campaigns/TranslationOutdatedBanner.tsx`
-- [ ] Warnung wenn Original geändert wurde
-- [ ] "Neu übersetzen" Button
-- [ ] "Als aktuell markieren" Button
+### 5.3 Outdated-Warning ✅
+- [x] `src/components/campaigns/TranslationOutdatedBanner.tsx` erstellt
+- [x] Warnung wenn Original geändert wurde
+- [x] "Neu übersetzen" Button pro Sprache
+- [x] "Alle aktualisieren" Button
+- [x] Dismissible-Option
 
 ---
 
