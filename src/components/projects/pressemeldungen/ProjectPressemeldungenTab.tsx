@@ -11,6 +11,7 @@ import { Popover, Transition } from '@headlessui/react';
 import { useProjectPressData } from '@/lib/hooks/useCampaignData';
 import { projectService } from '@/lib/firebase/project-service';
 import { toastService } from '@/lib/utils/toast';
+import { useAuth } from '@/context/AuthContext';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
 import { TranslationOutdatedBanner } from '@/components/campaigns/TranslationOutdatedBanner';
 import { TranslationModal } from '@/components/campaigns/TranslationModal';
@@ -26,6 +27,7 @@ export default function ProjectPressemeldungenTab({
   organizationId
 }: Props) {
   const router = useRouter();
+  const { user } = useAuth();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showRetranslateModal, setShowRetranslateModal] = useState(false);
@@ -59,9 +61,19 @@ export default function ProjectPressemeldungenTab({
       throw new Error('Keine Kampagne für Übersetzung verfügbar');
     }
 
+    if (!user) {
+      throw new Error('Nicht angemeldet');
+    }
+
+    // Firebase ID Token für Auth holen
+    const idToken = await user.getIdToken();
+
     const response = await fetch('/api/ai/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({
         projectId,
         campaignId: campaign.id,
@@ -82,7 +94,7 @@ export default function ProjectPressemeldungenTab({
 
     toastService.success('Übersetzung erfolgreich aktualisiert');
     refetch();
-  }, [campaigns, projectId, refetch]);
+  }, [campaigns, projectId, refetch, user]);
 
   // Callbacks mit useCallback für Performance
   const handleCreateCampaign = useCallback(async () => {

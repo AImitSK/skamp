@@ -158,9 +158,19 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
       throw new Error('Kampagne hat kein zugeordnetes Projekt');
     }
 
+    if (!user) {
+      throw new Error('Nicht angemeldet');
+    }
+
+    // Firebase ID Token für Auth holen
+    const idToken = await user.getIdToken();
+
     const response = await fetch('/api/ai/translate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({
         projectId: campaign.projectId,
         campaignId: campaign.id,
