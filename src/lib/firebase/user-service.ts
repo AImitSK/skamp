@@ -3,6 +3,14 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { updateProfile, User } from 'firebase/auth';
 import { db } from './client-init';
 
+/**
+ * User Preferences für individuelle Einstellungen
+ */
+export interface UserPreferences {
+  /** UI-Sprache (z.B. 'de', 'en') */
+  language?: string;
+}
+
 export interface UserProfileData {
   uid: string;
   email: string;
@@ -16,11 +24,14 @@ export interface UserProfileData {
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  /** Benutzerpräferenzen (UI-Sprache, etc.) */
+  preferences?: UserPreferences;
 }
 
 export interface UserProfileUpdateData {
   displayName?: string;
   phoneNumber?: string;
+  preferences?: Partial<UserPreferences>;
 }
 
 class UserService {
@@ -185,6 +196,27 @@ class UserService {
       deletedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }, { merge: true });
+  }
+
+  /**
+   * Aktualisiert die UI-Spracheinstellung des Benutzers
+   */
+  async updateLanguagePreference(userId: string, language: string): Promise<void> {
+    const userRef = doc(db, this.collection, userId);
+    await setDoc(userRef, {
+      preferences: {
+        language
+      },
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }
+
+  /**
+   * Holt die UI-Spracheinstellung des Benutzers
+   */
+  async getLanguagePreference(userId: string): Promise<string | null> {
+    const profile = await this.getProfile(userId);
+    return profile?.preferences?.language || null;
   }
 }
 

@@ -32,35 +32,37 @@
 
 ---
 
-## 2. Settings-Seite `/settings/language` - IN ARBEIT
+## 2. Settings-Seite `/settings/language` ✅ UI ABGESCHLOSSEN
 
 ### 2.1 Routing & Page
 - [x] `src/app/dashboard/settings/language/page.tsx` erstellen
 - [x] Navigation-Link in Settings-Sidebar hinzufügen (SettingsNav.tsx)
 - [x] Basis-Layout mit Heading "Sprache"
 - [x] useTranslations() Hook integriert und funktioniert
+- [x] FlagIcon-Komponente statt Emoji-Flaggen
+- [x] Einheitliches blaues Design für alle Icon-Boxen
 
 ### 2.2 Box 1: UI-Sprache
-- [x] UI-Sprache Dropdown (DE/EN)
+- [x] UI-Sprache Dropdown (DE/EN) mit Select-Komponente
 - [ ] Speichern in User-Preferences (`user.preferences.language`) - TODO
 - [ ] Bei Änderung: Locale im Provider aktualisieren - TODO
 
 ### 2.3 Box 2: Content-Sprachen
-- [x] Anzeige Primärsprache (fest, nicht editierbar)
-- [x] Liste zusätzlicher Sprachen (max. 3)
+- [x] Anzeige Primärsprache (fest, nicht editierbar) mit FlagIcon
+- [x] Liste zusätzlicher Sprachen (max. 3) mit FlagIcon
 - [x] UI für Sprachen-Tags mit Remove-Button
+- [x] Entfernen-Button (X) pro zusätzlicher Sprache
 - [ ] "Sprache hinzufügen" Button → CountrySelector Modal - TODO
 - [ ] Bei Ländern mit mehreren Sprachen: Sprach-Auswahl Dropdown - TODO
 - [ ] Speichern in Organization (`organization.contentLanguages`) - TODO
-- [ ] Entfernen-Button (X) pro zusätzlicher Sprache
 
 ### 2.4 Box 3: Glossar-Tabelle
-- [ ] Tabelle mit Spalten: Kunde, Deutsch, [dynamische Sprachen], Aktionen
-- [ ] Spalten basierend auf `contentLanguages` generieren
-- [ ] Filter-Dropdown nach Kunde
-- [ ] Suche über alle Begriffe
-- [ ] Pagination
-- [ ] "Neuer Eintrag" Button → Modal öffnen
+- [x] Tabelle mit Spalten: Kunde, Deutsch, [dynamische Sprachen], Aktionen
+- [x] Spalten basierend auf `contentLanguages` generieren
+- [x] Filter-Dropdown nach Kunde (UI)
+- [x] Suche über alle Begriffe (UI)
+- [ ] Pagination - TODO
+- [ ] "Neuer Eintrag" Button → Modal öffnen - TODO
 
 ### 2.5 Glossar-Modal (Neu/Bearbeiten)
 - [ ] Kunde-Dropdown (alle Companies der Organization)
@@ -72,10 +74,10 @@
 
 ---
 
-## 3. Datenmodell erweitern
+## 3. Datenmodell erweitern - IN ARBEIT
 
 ### 3.1 Organization erweitern
-- [ ] Type `Organization` erweitern in `src/types/organization.ts`:
+- [x] Type `Organization` erweitern in `src/types/organization.ts`:
   ```typescript
   contentLanguages?: {
     primary: string;      // z.B. 'de'
@@ -86,24 +88,17 @@
 - [ ] API-Endpoints für contentLanguages Update
 
 ### 3.2 User Preferences erweitern
-- [ ] `user.preferences.language` Feld prüfen/hinzufügen
-- [ ] Default: 'de'
+- [x] `user.preferences.language` Feld in `UserProfileData` hinzugefügt
+- [x] `UserPreferences` Interface erstellt
+- [x] `updateLanguagePreference()` Methode in user-service
+- [x] `getLanguagePreference()` Methode in user-service
+- [ ] Default: 'de' bei Provider-Integration
 
 ### 3.3 CustomerGlossaryEntry Collection
-- [ ] Type `CustomerGlossaryEntry` in `src/types/glossary.ts` erstellen:
-  ```typescript
-  interface CustomerGlossaryEntry {
-    id: string;
-    organizationId: string;
-    customerId: string;
-    translations: Record<string, string>;
-    context?: string;
-    isApproved: boolean;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-    createdBy: string;
-  }
-  ```
+- [x] Type `CustomerGlossaryEntry` in `src/types/glossary.ts` erstellt
+- [x] `CreateGlossaryEntryInput` Type erstellt
+- [x] `UpdateGlossaryEntryInput` Type erstellt
+- [x] `GlossaryFilterOptions` Type erstellt
 - [ ] Firestore Collection: `organizations/{orgId}/customer_glossary`
 - [ ] Firestore Index: `customerId` + `organizationId`
 
@@ -183,4 +178,4 @@ _Hier können während der Implementierung Notizen, Probleme oder Entscheidungen
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-07
+**Letzte Aktualisierung:** 2025-12-07 (Phase 1.2 UI abgeschlossen)

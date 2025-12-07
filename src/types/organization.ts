@@ -107,4 +107,10 @@ export interface Organization {
 
   // Usage Metriken (optional, wird in Phase 2 vollständig implementiert)
   usage?: OrganizationUsage;
+
+  // Content-Sprachen für Übersetzungen (i18n)
+  contentLanguages?: {
+    primary: string;      // z.B. 'de' - Primärsprache (fest)
+    additional: string[]; // z.B. ['en', 'fr'] - max. 3 zusätzliche Sprachen
+  };
 }
