@@ -12,6 +12,9 @@ import { useProjectPressData } from '@/lib/hooks/useCampaignData';
 import { projectService } from '@/lib/firebase/project-service';
 import { toastService } from '@/lib/utils/toast';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
+import { TranslationOutdatedBanner } from '@/components/campaigns/TranslationOutdatedBanner';
+import { TranslationModal } from '@/components/campaigns/TranslationModal';
+import { LanguageCode } from '@/types/international';
 
 interface Props {
   projectId: string;
@@ -25,6 +28,8 @@ export default function ProjectPressemeldungenTab({
   const router = useRouter();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [showRetranslateModal, setShowRetranslateModal] = useState(false);
+  const [retranslateLanguage, setRetranslateLanguage] = useState<LanguageCode | null>(null);
 
   // React Query Hook für Campaigns + Approvals
   const {
@@ -35,6 +40,49 @@ export default function ProjectPressemeldungenTab({
   } = useProjectPressData(projectId, organizationId);
 
   const hasLinkedCampaign = useMemo(() => campaigns.length > 0, [campaigns.length]);
+
+  // Handler für Neu-Übersetzung aus dem OutdatedBanner
+  const handleRetranslate = useCallback((language: LanguageCode) => {
+    setRetranslateLanguage(language);
+    setShowRetranslateModal(true);
+  }, []);
+
+  // API-Call für Übersetzung
+  const handleTranslateSubmit = useCallback(async (params: {
+    targetLanguage: LanguageCode;
+    useGlossary: boolean;
+    tone: 'formal' | 'professional' | 'neutral';
+  }) => {
+    // Erste Kampagne des Projekts für Übersetzung verwenden
+    const campaign = campaigns[0];
+    if (!campaign?.id) {
+      throw new Error('Keine Kampagne für Übersetzung verfügbar');
+    }
+
+    const response = await fetch('/api/ai/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        campaignId: campaign.id,
+        title: campaign.title,
+        content: campaign.contentHtml || campaign.mainContent || '',
+        sourceLanguage: 'de',
+        targetLanguage: params.targetLanguage,
+        tone: params.tone,
+        useGlossary: params.useGlossary,
+        customerId: campaign.clientId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Übersetzung fehlgeschlagen');
+    }
+
+    toastService.success('Übersetzung erfolgreich aktualisiert');
+    refetch();
+  }, [campaigns, projectId, refetch]);
 
   // Callbacks mit useCallback für Performance
   const handleCreateCampaign = useCallback(async () => {
@@ -142,6 +190,16 @@ export default function ProjectPressemeldungenTab({
         </div>
       </div>
 
+      {/* Outdated-Banner für veraltete Übersetzungen */}
+      {hasLinkedCampaign && (
+        <TranslationOutdatedBanner
+          organizationId={organizationId}
+          projectId={projectId}
+          onRetranslate={handleRetranslate}
+          className="mb-4"
+        />
+      )}
+
       {/* Kampagnen-Tabelle */}
       <PressemeldungCampaignTable
         campaigns={campaigns}
@@ -178,6 +236,22 @@ export default function ProjectPressemeldungenTab({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Retranslate Modal - wird geöffnet wenn aus dem OutdatedBanner eine Sprache gewählt wird */}
+      {hasLinkedCampaign && campaigns[0] && (
+        <TranslationModal
+          isOpen={showRetranslateModal}
+          onClose={() => {
+            setShowRetranslateModal(false);
+            setRetranslateLanguage(null);
+          }}
+          onTranslate={handleTranslateSubmit}
+          organizationId={organizationId}
+          projectId={projectId}
+          customerId={campaigns[0].clientId}
+          sourceLanguage="de"
+        />
+      )}
     </div>
   );
 }

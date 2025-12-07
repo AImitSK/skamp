@@ -222,9 +222,24 @@
 
 ---
 
-## 10. Abschluss Phase 2
+## 10. UI-Integration ✅ ABGESCHLOSSEN
 
-- [ ] Alle obigen Punkte abgehakt
+### 10.1 TranslationButton Integration ✅
+- [x] `TranslationButton` in `CampaignTableRow.tsx` eingebunden
+- [x] Neue Spalte "Sprachen" in Kampagnen-Tabelle
+- [x] `TranslationModal` für Übersetzungs-Workflow
+- [x] API-Aufruf `/api/ai/translate` implementiert
+
+### 10.2 TranslationOutdatedBanner Integration ✅
+- [x] `TranslationOutdatedBanner` in `ProjectPressemeldungenTab.tsx` eingebunden
+- [x] Retranslate-Modal für veraltete Übersetzungen
+- [x] TypeScript-Check erfolgreich
+
+---
+
+## 11. Abschluss Phase 2
+
+- [x] Alle obigen Punkte abgehakt
 - [ ] Code-Review durchgeführt
 - [ ] Dokumentation aktualisiert
 - [ ] Demo/Test mit echten Pressemitteilungen
@@ -280,4 +295,4 @@ _Hier können während der Implementierung Notizen, Probleme oder Entscheidungen
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-07 (Phase 2.9 Testing abgeschlossen)
+**Letzte Aktualisierung:** 2025-12-07 (Phase 2.10 UI-Integration abgeschlossen)
