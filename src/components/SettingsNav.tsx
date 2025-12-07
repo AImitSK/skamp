@@ -8,6 +8,10 @@ import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 // Die Navigationspunkte für die Einstellungen (ohne Icons)
 const settingsItems = [
   {
+    name: "Sprache",
+    href: "/dashboard/settings/language",
+  },
+  {
     name: "Benachrichtigungen",
     href: "/dashboard/settings/notifications",
   },

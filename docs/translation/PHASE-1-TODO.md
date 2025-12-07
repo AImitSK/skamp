@@ -32,24 +32,26 @@
 
 ---
 
-## 2. Settings-Seite `/settings/language`
+## 2. Settings-Seite `/settings/language` - IN ARBEIT
 
 ### 2.1 Routing & Page
-- [ ] `src/app/dashboard/settings/language/page.tsx` erstellen
-- [ ] Navigation-Link in Settings-Sidebar hinzufügen
-- [ ] Basis-Layout mit Heading "Sprache"
+- [x] `src/app/dashboard/settings/language/page.tsx` erstellen
+- [x] Navigation-Link in Settings-Sidebar hinzufügen (SettingsNav.tsx)
+- [x] Basis-Layout mit Heading "Sprache"
+- [x] useTranslations() Hook integriert und funktioniert
 
 ### 2.2 Box 1: UI-Sprache
-- [ ] UI-Sprache Dropdown (DE/EN)
-- [ ] Speichern in User-Preferences (`user.preferences.language`)
-- [ ] Bei Änderung: Locale im Provider aktualisieren
+- [x] UI-Sprache Dropdown (DE/EN)
+- [ ] Speichern in User-Preferences (`user.preferences.language`) - TODO
+- [ ] Bei Änderung: Locale im Provider aktualisieren - TODO
 
 ### 2.3 Box 2: Content-Sprachen
-- [ ] Anzeige Primärsprache (fest, nicht editierbar)
-- [ ] Liste zusätzlicher Sprachen (max. 3)
-- [ ] "Sprache hinzufügen" Button → CountrySelector Modal
-- [ ] Bei Ländern mit mehreren Sprachen: Sprach-Auswahl Dropdown
-- [ ] Speichern in Organization (`organization.contentLanguages`)
+- [x] Anzeige Primärsprache (fest, nicht editierbar)
+- [x] Liste zusätzlicher Sprachen (max. 3)
+- [x] UI für Sprachen-Tags mit Remove-Button
+- [ ] "Sprache hinzufügen" Button → CountrySelector Modal - TODO
+- [ ] Bei Ländern mit mehreren Sprachen: Sprach-Auswahl Dropdown - TODO
+- [ ] Speichern in Organization (`organization.contentLanguages`) - TODO
 - [ ] Entfernen-Button (X) pro zusätzlicher Sprache
 
 ### 2.4 Box 3: Glossar-Tabelle
