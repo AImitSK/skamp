@@ -1,5 +1,6 @@
 // next.config.mjs
 import createMDX from '@next/mdx'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -53,5 +54,8 @@ const withMDX = createMDX({
   // Add markdown plugins here, as desired
 })
 
-// Merge MDX config with Next.js config
-export default withMDX(nextConfig)
+// next-intl Plugin mit Pfad zur Request-Konfiguration
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+
+// Merge MDX config mit Next.js config, dann next-intl
+export default withNextIntl(withMDX(nextConfig))

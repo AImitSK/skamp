@@ -1,42 +1,34 @@
 # Phase 1: Foundation - ToDo-Liste
 
-**Status:** Nicht gestartet
+**Status:** In Arbeit
 **Ziel:** Grundinfrastruktur für Internationalisierung aufbauen
 
 ---
 
-## 1. next-intl Setup
+## 1. next-intl Setup ✅ ABGESCHLOSSEN
 
 ### 1.1 Installation
-- [ ] `npm install next-intl` ausführen
-- [ ] Verify: Package in `package.json` vorhanden
+- [x] `npm install next-intl` ausführen
+- [x] Verify: Package in `package.json` vorhanden
 
 ### 1.2 Konfiguration
-- [ ] `src/config/i18n.ts` erstellen:
-  ```typescript
-  export const SUPPORTED_UI_LANGUAGES = ['de', 'en'] as const;
-  export type UILanguage = typeof SUPPORTED_UI_LANGUAGES[number];
-  export const DEFAULT_LANGUAGE: UILanguage = 'de';
-  export const LANGUAGE_NAMES: Record<UILanguage, string> = {
-    de: 'Deutsch',
-    en: 'English',
-  };
-  ```
-- [ ] `src/i18n/request.ts` erstellen (next-intl Server-Konfiguration)
-- [ ] `next.config.js` erweitern mit next-intl Plugin
+- [x] `src/config/i18n.ts` erstellen
+- [x] `src/i18n/request.ts` erstellen (next-intl Server-Konfiguration)
+- [x] `next.config.mjs` erweitern mit next-intl Plugin
 
 ### 1.3 Übersetzungsdateien
-- [ ] `/messages/de.json` erstellen mit Basis-Struktur:
+- [x] `/messages/de.json` erstellen mit Basis-Struktur:
   - `common` (save, cancel, delete, edit, loading, error, success)
   - `navigation` (dashboard, contacts, campaigns, etc.)
   - `errors` (notFound, unauthorized, serverError)
   - `toasts` (saved, deleted, error, loadError, etc.)
-- [ ] `/messages/en.json` erstellen (Kopie von de.json, übersetzt)
+  - `settings.language` (UI für Spracheinstellungen)
+- [x] `/messages/en.json` erstellen (Kopie von de.json, übersetzt)
 
 ### 1.4 Provider Integration
-- [ ] `NextIntlClientProvider` in Root-Layout einbinden
-- [ ] Locale-Detection implementieren (aus User-Preferences oder Cookie)
-- [ ] Verify: `useTranslations()` Hook funktioniert in Test-Komponente
+- [x] `NextIntlClientProvider` in Root-Layout einbinden
+- [x] Locale aus `getLocale()` dynamisch laden
+- [ ] Verify: `useTranslations()` Hook funktioniert in Test-Komponente (steht aus)
 
 ---
 

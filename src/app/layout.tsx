@@ -5,6 +5,8 @@ import { AuthContextProvider } from "@/context/AuthContext";
 import { OrganizationProvider } from "@/context/OrganizationContext";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Toaster } from "@/lib/utils/toast";
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,21 +20,26 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="de">
+    <html lang={locale}>
       <body className={inter.className}>
-        <QueryProvider>
-          <AuthContextProvider>
-            <OrganizationProvider>
-              {children}
-            </OrganizationProvider>
-          </AuthContextProvider>
-        </QueryProvider>
+        <NextIntlClientProvider messages={messages}>
+          <QueryProvider>
+            <AuthContextProvider>
+              <OrganizationProvider>
+                {children}
+              </OrganizationProvider>
+            </AuthContextProvider>
+          </QueryProvider>
+        </NextIntlClientProvider>
         <Toaster />
       </body>
     </html>

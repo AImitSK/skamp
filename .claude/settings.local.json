@@ -60,7 +60,10 @@
       "Bash(node scripts/debug-alexis-chat.js:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm update:*)",
-      "Bash(node scripts/check-auto-reporting.js:*)"
+      "Bash(node scripts/check-auto-reporting.js:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)"
     ]
   },
   "enableAllProjectMcpServers": true,
