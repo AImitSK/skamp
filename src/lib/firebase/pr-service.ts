@@ -19,11 +19,12 @@ import {
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
-import { ShareLink } from '@/types/media'; 
+import { ShareLink } from '@/types/media';
 import { nanoid } from 'nanoid';
 import { notificationsService } from './notifications-service';
 import { approvalService } from './approval-service';
 import { ApprovalRecipient } from '@/types/approvals';
+import { translationService } from '@/lib/services/translation-service';
 
 // ✅ ZENTRALER ORT FÜR DIE BASIS-URL MIT FALLBACK
 const getBaseUrl = () => {
@@ -305,18 +306,52 @@ export const prService = {
     } as PRCampaign));
   },
 
-  async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<void> {
+  async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<{ outdatedTranslationsCount?: number }> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
-    
-    
+
+    // Prüfe ob Content geändert wurde (Trigger für Outdated-Markierung)
+    const contentChanged = data.contentHtml !== undefined || data.mainContent !== undefined;
+    let outdatedCount = 0;
+
+    // Wenn Content geändert wurde, lade die Kampagne um projectId und organizationId zu bekommen
+    if (contentChanged) {
+      const campaign = await this.getById(campaignId);
+
+      // Markiere Übersetzungen als veraltet wenn Kampagne zu einem Projekt gehört
+      if (campaign?.projectId && campaign?.organizationId) {
+        try {
+          // Inkrementiere Version-Counter für Original-PM
+          const currentVersion = campaign.contentVersion || 1;
+          data = {
+            ...data,
+            contentVersion: currentVersion + 1
+          };
+
+          // Markiere alle Übersetzungen als veraltet
+          outdatedCount = await translationService.markAsOutdated(
+            campaign.organizationId,
+            campaign.projectId
+          );
+
+          if (outdatedCount > 0) {
+            console.log(`📝 ${outdatedCount} Übersetzung(en) als veraltet markiert für Projekt ${campaign.projectId}`);
+          }
+        } catch (error) {
+          console.error('Fehler beim Markieren der Übersetzungen als veraltet:', error);
+          // Nicht blockierend - Campaign-Update soll trotzdem funktionieren
+        }
+      }
+    }
+
     // Bereinige die Update-Daten
     const cleanedData = removeUndefinedValues({
       ...data,
       updatedAt: Timestamp.now(), // FIX: Verwende Timestamp.now() statt serverTimestamp()
     });
-    
-    
+
     await updateDoc(docRef, cleanedData);
+
+    return { outdatedTranslationsCount: outdatedCount };
   },
 
   async delete(campaignId: string): Promise<void> {

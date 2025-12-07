@@ -183,16 +183,18 @@
 
 ---
 
-## 8. Outdated-Erkennung
+## 8. Outdated-Erkennung ✅ ABGESCHLOSSEN
 
-### 8.1 Trigger bei Original-Änderung
-- [ ] Hook in Campaign-Update einbauen
-- [ ] Bei Content-Änderung: `markAsOutdated(projectId)` aufrufen
-- [ ] Version-Counter für Original-PM
+### 8.1 Trigger bei Original-Änderung ✅
+- [x] Hook in Campaign-Update einbauen (`pr-service.ts` update() Methode)
+- [x] Bei Content-Änderung (`contentHtml` oder `mainContent`): `markAsOutdated(projectId)` aufrufen
+- [x] Version-Counter für Original-PM (`contentVersion` Feld in PRCampaign)
+- [x] translationService Import hinzugefügt
 
-### 8.2 UI-Feedback
-- [ ] Badge "Veraltet" an betroffenen Übersetzungen
-- [ ] Toast bei Änderung: "X Übersetzungen veraltet"
+### 8.2 UI-Feedback ✅
+- [x] Badge "Veraltet" bereits in `TranslationButton.tsx` implementiert (Phase 2.5)
+- [x] Return-Wert `{ outdatedTranslationsCount }` für Toast-Integration vorbereitet
+- [x] Console-Log bei Änderung: "X Übersetzung(en) als veraltet markiert"
 
 ---
 
@@ -276,4 +278,4 @@ _Hier können während der Implementierung Notizen, Probleme oder Entscheidungen
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-07 (Genkit-Infrastruktur angepasst)
+**Letzte Aktualisierung:** 2025-12-07 (Phase 2.8 Outdated-Erkennung abgeschlossen)

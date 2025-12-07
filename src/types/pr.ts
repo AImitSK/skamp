@@ -345,6 +345,9 @@ export interface PRCampaign {
   currentPdfVersion?: string; // ID der aktiven PDF-Version
   lastPdfGeneratedAt?: Timestamp;
 
+  // 🆕 ÜBERSETZUNGS-VERSIONIERUNG (Phase 2.8)
+  contentVersion?: number; // Version des Original-Contents (für Übersetzungs-Outdated-Erkennung)
+
   // Timestamps
   createdAt?: Timestamp;
   updatedAt?: Timestamp;

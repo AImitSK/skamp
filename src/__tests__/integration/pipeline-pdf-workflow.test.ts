@@ -128,7 +128,7 @@ describe('Integration Tests - Pipeline-PDF-Workflow (Plan 2/9)', () => {
     mockProjectService.getProjectsByClient.mockResolvedValue([mockProject]);
 
     mockPRService.getById.mockResolvedValue(mockCampaign);
-    mockPRService.update.mockResolvedValue(undefined);
+    mockPRService.update.mockResolvedValue({ outdatedTranslationsCount: 0 });
 
     // Restore real implementations für Integration Test
     jest.requireActual('@/lib/firebase/pdf-versions-service');
