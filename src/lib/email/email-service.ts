@@ -225,6 +225,9 @@ export class EmailService {
         senderInfo,
         campaignId: request.campaignId, // NEU: Campaign ID übergeben
         signatureId: request.draft.content.signatureId, // NEU: Signatur-ID übergeben
+        // Phase 2 i18n: Übersetzungs-Parameter
+        projectId: request.projectId,
+        targetLanguage: request.targetLanguage,
         testMode: true
       });
 

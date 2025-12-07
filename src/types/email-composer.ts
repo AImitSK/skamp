@@ -153,6 +153,10 @@ export interface TestEmailRequest {
   draft: EmailDraft;
   // Optional: Spezifischer Kontakt für Variablen-Preview
   previewContactId?: string;
+  // Optional: Projekt-ID für Übersetzungen (Phase 2 i18n)
+  projectId?: string;
+  // Optional: Zielsprache für Übersetzung (z.B. 'en', 'fr')
+  targetLanguage?: string;
 }
 
 /**

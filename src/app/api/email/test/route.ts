@@ -110,6 +110,9 @@ interface TestEmailRequest {
   };
   campaignId?: string;
   signatureId?: string; // NEU: Signatur-ID für HTML-Signatur
+  // Phase 2 i18n: Übersetzungs-Parameter
+  projectId?: string;
+  targetLanguage?: string;
   testMode: boolean;
 }
 
@@ -301,15 +304,53 @@ export async function POST(request: NextRequest) {
             campaign = convertFirestoreDocument(campaignDoc);
             if (campaign) {
               campaign.id = data.campaignId;
-              
-              // Verwende die echte Pressemitteilung
-              if (campaign.contentHtml) {
-                data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
+
+              // Phase 2 i18n: Lade Übersetzung falls targetLanguage angegeben
+              if (data.targetLanguage && data.projectId) {
+                console.log('🌐 Loading translation for language:', data.targetLanguage);
+                try {
+                  const { translationAdminService } = await import('@/lib/firebase-admin/translation-admin-service');
+                  const translation = await translationAdminService.getByLanguage(
+                    auth.organizationId,
+                    data.projectId,
+                    data.targetLanguage
+                  );
+
+                  if (translation) {
+                    // Übersetzung gefunden - verwende übersetzte Inhalte
+                    data.campaignEmail.pressReleaseHtml = translation.content;
+                    if (translation.title) {
+                      // Optional: Betreff auch übersetzen
+                      console.log('✅ Translation loaded:', {
+                        language: data.targetLanguage,
+                        titleLength: translation.title?.length,
+                        contentLength: translation.content.length
+                      });
+                    }
+                  } else {
+                    console.log('⚠️ No translation found for language:', data.targetLanguage);
+                    // Fallback: Verwende Original
+                    if (campaign.contentHtml) {
+                      data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
+                    }
+                  }
+                } catch (translationError) {
+                  console.error('❌ Error loading translation:', translationError);
+                  // Fallback: Verwende Original
+                  if (campaign.contentHtml) {
+                    data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
+                  }
+                }
+              } else {
+                // Keine Übersetzung angefordert - verwende die echte Pressemitteilung
+                if (campaign.contentHtml) {
+                  data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
+                }
               }
-              
+
               // Verwende die Media Share URL falls vorhanden
               mediaShareUrl = campaign.assetShareUrl;
-              
+
               console.log('✅ Campaign data loaded, using real content');
               console.log('📎 Media share URL:', mediaShareUrl || 'none');
             }

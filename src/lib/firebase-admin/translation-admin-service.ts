@@ -156,6 +156,42 @@ class TranslationAdminService {
   }
 
   /**
+   * Holt eine Übersetzung für eine bestimmte Sprache
+   */
+  async getByLanguage(
+    organizationId: string,
+    projectId: string,
+    language: string
+  ): Promise<SavedTranslation | null> {
+    const collectionRef = adminDb.collection(
+      this.getCollectionPath(organizationId, projectId)
+    );
+
+    const snapshot = await collectionRef
+      .where('language', '==', language)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const doc = snapshot.docs[0];
+    const data = doc.data();
+
+    return {
+      id: doc.id,
+      organizationId,
+      projectId,
+      language: data.language,
+      title: data.title,
+      content: data.content,
+      status: data.status || 'generated',
+      isOutdated: data.isOutdated ?? false,
+    };
+  }
+
+  /**
    * Markiert alle Übersetzungen eines Projekts als veraltet
    */
   async markAsOutdated(
