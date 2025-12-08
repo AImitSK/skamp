@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   LanguageIcon,
-  CheckCircleIcon,
+  SparklesIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations } from "@/lib/hooks/useTranslations";
@@ -135,7 +135,7 @@ export function TranslationLanguageSelector({
                 key={translation.language}
                 className={clsx(
                   "flex items-center justify-between py-2 px-3 rounded-md border",
-                  isSelected ? "bg-green-50 border-green-100" : "bg-white border-gray-100",
+                  isSelected ? "bg-purple-50 border-purple-100" : "bg-white border-gray-100",
                   disabled && "opacity-60"
                 )}
               >
@@ -146,16 +146,9 @@ export function TranslationLanguageSelector({
                     disabled={disabled}
                   />
                   <LanguageFlagIcon languageCode={translation.language} />
-                  <div>
-                    <Text className="text-sm font-medium">
-                      {LANGUAGE_NAMES[translation.language] || translation.language}
-                    </Text>
-                    {translation.generatedAt && (
-                      <Text className="text-xs text-gray-500">
-                        Erstellt: {formatDate(translation.generatedAt)}
-                      </Text>
-                    )}
-                  </div>
+                  <Text className="text-sm font-medium">
+                    {LANGUAGE_NAMES[translation.language] || translation.language}
+                  </Text>
                 </div>
                 <div className="flex items-center gap-2">
                   {isOutdated ? (
@@ -164,9 +157,9 @@ export function TranslationLanguageSelector({
                       Veraltet
                     </Badge>
                   ) : (
-                    <Badge color="green" className="text-xs">
-                      <CheckCircleIcon className="h-3 w-3 mr-1" />
-                      Aktuell
+                    <Badge color="purple" className="text-xs">
+                      <SparklesIcon className="h-3 w-3 mr-1" />
+                      KI Übersetzung
                     </Badge>
                   )}
                 </div>
@@ -203,20 +196,6 @@ export function TranslationLanguageSelector({
       )}
     </div>
   );
-}
-
-// Helper: Datum formatieren
-function formatDate(date: Date | string | { toDate: () => Date }): string {
-  if (date instanceof Date) {
-    return date.toLocaleDateString("de-DE");
-  }
-  if (typeof date === "string") {
-    return new Date(date).toLocaleDateString("de-DE");
-  }
-  if (date && typeof date === "object" && "toDate" in date) {
-    return date.toDate().toLocaleDateString("de-DE");
-  }
-  return "";
 }
 
 export default TranslationLanguageSelector;
