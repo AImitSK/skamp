@@ -482,6 +482,13 @@ export async function POST(request: NextRequest) {
             ? translatedTitle
             : (campaign?.title || 'Pressemitteilung');
 
+          console.log('📝 PDF-Titel Debug:', {
+            isTranslation,
+            translatedTitle,
+            campaignTitle: campaign?.title,
+            finalPdfTitle: pdfTitle
+          });
+
           const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
             title: pdfTitle,
             mainContent: pdfContent,
