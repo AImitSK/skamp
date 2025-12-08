@@ -105,6 +105,8 @@ interface TranslationModalProps {
     primary: string;
     additional: string[];
   };
+  /** Vorausgewählte Sprache (z.B. beim Neu-Übersetzen) */
+  preselectedLanguage?: LanguageCode;
 }
 
 export function TranslationModal({
@@ -116,6 +118,7 @@ export function TranslationModal({
   customerId,
   sourceLanguage,
   contentLanguages,
+  preselectedLanguage,
 }: TranslationModalProps) {
   // State
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("en");
@@ -154,12 +157,17 @@ export function TranslationModal({
       setError(null);
       setSuccess(false);
       setIsTranslating(false);
-      // Erste verfügbare Sprache vorauswählen
-      if (availableLanguages.length > 0 && !availableLanguages.includes(targetLanguage)) {
+
+      // Vorausgewählte Sprache setzen falls vorhanden
+      if (preselectedLanguage && availableLanguages.includes(preselectedLanguage)) {
+        setTargetLanguage(preselectedLanguage);
+      }
+      // Sonst erste verfügbare Sprache vorauswählen
+      else if (availableLanguages.length > 0 && !availableLanguages.includes(targetLanguage)) {
         setTargetLanguage(availableLanguages[0]);
       }
     }
-  }, [isOpen, availableLanguages, targetLanguage]);
+  }, [isOpen, availableLanguages, targetLanguage, preselectedLanguage]);
 
   // Übersetzung starten
   const handleTranslate = async () => {

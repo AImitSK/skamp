@@ -13,9 +13,11 @@ import { projectService } from '@/lib/firebase/project-service';
 import { toastService } from '@/lib/utils/toast';
 import { useAuth } from '@/context/AuthContext';
 import PressemeldungCampaignTable from './PressemeldungCampaignTable';
-import { TranslationOutdatedBanner } from '@/components/campaigns/TranslationOutdatedBanner';
 import { TranslationModal } from '@/components/campaigns/TranslationModal';
+import { TranslationList } from '@/components/campaigns/TranslationList';
 import { LanguageCode } from '@/types/international';
+import { useQueryClient } from '@tanstack/react-query';
+import { translationKeys } from '@/lib/hooks/useTranslations';
 
 interface Props {
   projectId: string;
@@ -28,10 +30,11 @@ export default function ProjectPressemeldungenTab({
 }: Props) {
   const router = useRouter();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [showRetranslateModal, setShowRetranslateModal] = useState(false);
-  const [retranslateLanguage, setRetranslateLanguage] = useState<LanguageCode | null>(null);
+  const [showTranslateModal, setShowTranslateModal] = useState(false);
+  const [preselectedLanguage, setPreselectedLanguage] = useState<LanguageCode | undefined>(undefined);
 
   // React Query Hook für Campaigns + Approvals
   const {
@@ -43,10 +46,10 @@ export default function ProjectPressemeldungenTab({
 
   const hasLinkedCampaign = useMemo(() => campaigns.length > 0, [campaigns.length]);
 
-  // Handler für Neu-Übersetzung aus dem OutdatedBanner
-  const handleRetranslate = useCallback((language: LanguageCode) => {
-    setRetranslateLanguage(language);
-    setShowRetranslateModal(true);
+  // Handler für Übersetzung öffnen (aus TranslationList oder OutdatedBanner)
+  const handleOpenTranslateModal = useCallback((language?: LanguageCode) => {
+    setPreselectedLanguage(language);
+    setShowTranslateModal(true);
   }, []);
 
   // API-Call für Übersetzung
@@ -92,9 +95,16 @@ export default function ProjectPressemeldungenTab({
       throw new Error(error.error || 'Übersetzung fehlgeschlagen');
     }
 
-    toastService.success('Übersetzung erfolgreich aktualisiert');
+    toastService.success('Übersetzung erfolgreich erstellt');
+    // Invalidiere Translation-Queries damit die Liste aktualisiert wird
+    queryClient.invalidateQueries({
+      queryKey: translationKeys.list(organizationId, projectId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: translationKeys.languages(organizationId, projectId),
+    });
     refetch();
-  }, [campaigns, projectId, refetch, user]);
+  }, [campaigns, projectId, organizationId, refetch, user, queryClient]);
 
   // Callbacks mit useCallback für Performance
   const handleCreateCampaign = useCallback(async () => {
@@ -202,16 +212,6 @@ export default function ProjectPressemeldungenTab({
         </div>
       </div>
 
-      {/* Outdated-Banner für veraltete Übersetzungen */}
-      {hasLinkedCampaign && (
-        <TranslationOutdatedBanner
-          organizationId={organizationId}
-          projectId={projectId}
-          onRetranslate={handleRetranslate}
-          className="mb-4"
-        />
-      )}
-
       {/* Kampagnen-Tabelle */}
       <PressemeldungCampaignTable
         campaigns={campaigns}
@@ -219,6 +219,16 @@ export default function ProjectPressemeldungenTab({
         organizationId={organizationId}
         onRefresh={refetch}
       />
+
+      {/* Übersetzungs-Liste (nur wenn Kampagne vorhanden) */}
+      {hasLinkedCampaign && (
+        <TranslationList
+          organizationId={organizationId}
+          projectId={projectId}
+          onTranslate={handleOpenTranslateModal}
+          className="mt-8"
+        />
+      )}
 
       {/* Bestätigungs-Dialog */}
       <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)} size="sm">
@@ -249,19 +259,20 @@ export default function ProjectPressemeldungenTab({
         </DialogActions>
       </Dialog>
 
-      {/* Retranslate Modal - wird geöffnet wenn aus dem OutdatedBanner eine Sprache gewählt wird */}
+      {/* Übersetzungs-Modal */}
       {hasLinkedCampaign && campaigns[0] && (
         <TranslationModal
-          isOpen={showRetranslateModal}
+          isOpen={showTranslateModal}
           onClose={() => {
-            setShowRetranslateModal(false);
-            setRetranslateLanguage(null);
+            setShowTranslateModal(false);
+            setPreselectedLanguage(undefined);
           }}
           onTranslate={handleTranslateSubmit}
           organizationId={organizationId}
           projectId={projectId}
           customerId={campaigns[0].clientId}
           sourceLanguage="de"
+          preselectedLanguage={preselectedLanguage}
         />
       )}
     </div>

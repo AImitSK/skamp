@@ -1,0 +1,203 @@
+[
+  {
+    "testCaseId": "translate-1-golf-press-release-de-en",
+    "description": "Vollständige Golf-Pressemitteilung von Deutsch nach Englisch übersetzen",
+    "input": {
+      "content": "<p><em>Der Golf Club Widukind-Land in Löhne eröffnet am 1. Dezember 2025 eine hochmoderne TrackMan Indoor Golfanlage. Sie ermöglicht Golfern wetterunabhängiges Training, präzise Spielanalyse und eine schnelle Platzreife für die kommende Saison.</em></p>\n<p>Die neue Indoor-Anlage bietet Zugang zu über 300 internationalen Top-Golfplätzen. Modernste TrackMan-Technologie analysiert jeden Schwung präzise und liefert detailliertes Feedback. Golfer erhalten Informationen zu Schlägerkopfgeschwindigkeit, Ballflug und Spin. Dies ermöglicht eine gezielte Verbesserung des eigenen Spiels. Die wetterunabhängige Nutzung ist ein großer Vorteil für alle Mitglieder und Gäste des Golf Clubs Widukind-Land.</p>\n<p>Ein besonderes Highlight ist die Möglichkeit zur kompletten Indoor-Platzreife im Winter. Einsteiger profitieren von einem schnellen und strukturierten Weg in den Golfsport. Das präzise TrackMan-Feedback sichert eine optimale Vorbereitung für die Außensaison. Der GC Widukind-Land fördert damit aktiv die Jugend- und Einsteigergewinnung. Ziel ist es, Golf für alle Generationen zugänglich zu machen und die Wartezeit bis zum Frühling zu überbrücken.</p>\n<p>Die Investition in die TrackMan Indoor Golfanlage unterstreicht die Vision des Golf Clubs Widukind-Land. Der 1986 gegründete Verein strebt danach, die führende Golfanlage in Ostwestfalen zu sein. Er verbindet hohe Platzqualität seiner 18-Loch-Meisterschaftsanlage mit einer modernen, offenen Clubkultur. Dies schließt auch flexible Mitgliedschaftsmodelle für junge Berufstätige und Familien ein.</p>\n<blockquote data-type=\"pr-quote\"><p>\"Mit der TrackMan Anlage bieten wir Golfern in Ostwestfalen ganzjährig erstklassige Trainingsmöglichkeiten und eine einzigartige Indoor-Platzreife. Das ist ein wichtiger Schritt, um unseren Sport noch zugänglicher und attraktiver zu machen – besonders für Neueinsteiger und Familien.\"</p><p>— Jörg Witthus, Präsident des Golf Club Widukind-Land</p></blockquote>\n<p>Erleben Sie die TrackMan Indoor Golfanlage selbst! Informationen zu Buchungen und Platzreife-Kursen finden Sie unter <a href=\"https://widukindland.de/gaeste/indoor-golf/\">https://widukindland.de/gaeste/indoor-golf/</a>.</p>\n<p><span data-type=\"hashtag\">#TrackManGolf</span> <span data-type=\"hashtag\">#IndoorGolf</span> <span data-type=\"hashtag\">#Platzreife</span></p>",
+      "title": "GC Widukind-Land eröffnet TrackMan Indoor Golfanlage",
+      "sourceLanguage": "de",
+      "targetLanguage": "en",
+      "glossaryEntries": [
+        {
+          "source": "Platzreife",
+          "target": "Course Certification",
+          "context": "Offizielle Golfberechtigung nach Einsteigerkurs"
+        },
+        {
+          "source": "TrackMan",
+          "target": "TrackMan",
+          "context": "Markenname - nicht übersetzen"
+        }
+      ],
+      "preserveFormatting": true,
+      "tone": "professional"
+    },
+    "reference": {
+      "expectedTitle": "GC Widukind-Land Opens TrackMan Indoor Golf Facility",
+      "minContentLength": 2000,
+      "maxContentLength": 4000,
+      "mustContain": [
+        "TrackMan",
+        "Golf Club Widukind-Land",
+        "December 1, 2025",
+        "Course Certification",
+        "Jörg Witthus",
+        "#TrackManGolf",
+        "#IndoorGolf"
+      ],
+      "mustPreserveHtmlTags": ["<p>", "</p>", "<em>", "</em>", "<blockquote", "</blockquote>", "<a href=", "</a>", "data-type=\"hashtag\"", "data-type=\"pr-quote\""],
+      "qualityCriteria": {
+        "htmlPreserved": true,
+        "glossaryApplied": true,
+        "quoteAttributionPreserved": true,
+        "allParagraphsTranslated": true,
+        "noContentLost": true
+      }
+    }
+  },
+  {
+    "testCaseId": "translate-2-tech-press-release-de-en",
+    "description": "Tech-Pressemitteilung mit Fachbegriffen von Deutsch nach Englisch",
+    "input": {
+      "content": "<p><em>Die DataFlow GmbH aus Berlin präsentiert heute ihre neue KI-Plattform SmartAnalytics Pro. Die innovative Lösung analysiert Unternehmensdaten bis zu zehnmal schneller als herkömmliche Systeme.</em></p>\n<p>SmartAnalytics Pro nutzt modernste Machine-Learning-Algorithmen für die Datenverarbeitung. Das System erkennt automatisch Muster und Anomalien in großen Datensätzen. Unternehmen können so fundierte Entscheidungen in Echtzeit treffen.</p>\n<p><strong>Hauptfunktionen der Plattform:</strong></p>\n<ul>\n<li>Automatische Datenintegration aus über 200 Quellen</li>\n<li>Echtzeit-Dashboard mit KPI-Überwachung</li>\n<li>Prädiktive Analysen für Geschäftsprognosen</li>\n<li>DSGVO-konforme Datenverarbeitung</li>\n</ul>\n<blockquote data-type=\"pr-quote\"><p>\"SmartAnalytics Pro revolutioniert die Art und Weise, wie Unternehmen ihre Daten nutzen. Unsere KI macht komplexe Analysen für jeden zugänglich.\"</p><p>— Dr. Maria Schmidt, CEO der DataFlow GmbH</p></blockquote>\n<p>Die Plattform ist ab sofort verfügbar. Interessierte Unternehmen können eine kostenlose Demo unter <a href=\"https://dataflow.de/demo\">dataflow.de/demo</a> anfordern.</p>",
+      "title": "DataFlow präsentiert KI-Plattform SmartAnalytics Pro",
+      "sourceLanguage": "de",
+      "targetLanguage": "en",
+      "glossaryEntries": [
+        {
+          "source": "DSGVO",
+          "target": "GDPR",
+          "context": "Datenschutz-Grundverordnung"
+        },
+        {
+          "source": "KI",
+          "target": "AI",
+          "context": "Künstliche Intelligenz"
+        }
+      ],
+      "preserveFormatting": true,
+      "tone": "professional"
+    },
+    "reference": {
+      "expectedTitle": "DataFlow Presents AI Platform SmartAnalytics Pro",
+      "minContentLength": 1000,
+      "maxContentLength": 2500,
+      "mustContain": [
+        "SmartAnalytics Pro",
+        "DataFlow",
+        "AI",
+        "GDPR",
+        "Dr. Maria Schmidt",
+        "CEO"
+      ],
+      "mustPreserveHtmlTags": ["<p>", "</p>", "<em>", "</em>", "<strong>", "</strong>", "<ul>", "</ul>", "<li>", "</li>", "<blockquote", "</blockquote>", "<a href="],
+      "qualityCriteria": {
+        "htmlPreserved": true,
+        "glossaryApplied": true,
+        "listItemsPreserved": true,
+        "allParagraphsTranslated": true
+      }
+    }
+  },
+  {
+    "testCaseId": "translate-3-short-announcement-de-fr",
+    "description": "Kurze Ankündigung von Deutsch nach Französisch",
+    "input": {
+      "content": "<p><em>Die Muster AG erweitert ihr Produktportfolio und bringt ab Januar 2026 eine neue Produktlinie auf den Markt.</em></p>\n<p>Das Unternehmen reagiert damit auf die steigende Nachfrage im europäischen Markt. Die neuen Produkte werden zunächst in Deutschland, Frankreich und den Benelux-Ländern erhältlich sein.</p>\n<blockquote data-type=\"pr-quote\"><p>\"Diese Expansion ist ein wichtiger Meilenstein für unser Wachstum in Europa.\"</p><p>— Thomas Müller, Geschäftsführer</p></blockquote>",
+      "title": "Muster AG erweitert Produktportfolio",
+      "sourceLanguage": "de",
+      "targetLanguage": "fr",
+      "glossaryEntries": [],
+      "preserveFormatting": true,
+      "tone": "formal"
+    },
+    "reference": {
+      "expectedTitle": "Muster AG élargit son portefeuille de produits",
+      "minContentLength": 400,
+      "maxContentLength": 900,
+      "mustContain": [
+        "Muster AG",
+        "janvier 2026",
+        "Thomas Müller",
+        "Europe"
+      ],
+      "mustPreserveHtmlTags": ["<p>", "</p>", "<em>", "</em>", "<blockquote", "</blockquote>"],
+      "qualityCriteria": {
+        "htmlPreserved": true,
+        "dateFormatLocalized": true,
+        "quoteAttributionPreserved": true
+      }
+    }
+  },
+  {
+    "testCaseId": "translate-4-with-boilerplate-de-en",
+    "description": "Pressemitteilung mit Boilerplate komplett übersetzen",
+    "input": {
+      "content": "<p><em>Das Unternehmen XYZ hat heute seinen Jahresbericht 2024 veröffentlicht und verzeichnet ein Umsatzwachstum von 15 Prozent.</em></p>\n<p>Der Erfolg basiert auf der erfolgreichen Expansion in neue Märkte und der Einführung innovativer Produkte. Besonders die Regionen Asien-Pazifik und Nordamerika trugen zum Wachstum bei.</p>\n<h3>Über XYZ GmbH</h3>\n<p>Die XYZ GmbH ist ein führender Anbieter von Industrielösungen mit Hauptsitz in München. Das 1995 gegründete Unternehmen beschäftigt über 2.000 Mitarbeiter weltweit und ist in mehr als 30 Ländern vertreten. XYZ steht für Innovation, Qualität und Nachhaltigkeit.</p>\n<h3>Pressekontakt</h3>\n<p><strong>Anna Weber</strong><br>Leiterin Unternehmenskommunikation<br>Tel: +49 89 123456<br>E-Mail: presse@xyz.de</p>",
+      "title": "XYZ GmbH verzeichnet starkes Wachstum in 2024",
+      "sourceLanguage": "de",
+      "targetLanguage": "en",
+      "glossaryEntries": [],
+      "preserveFormatting": true,
+      "tone": "professional"
+    },
+    "reference": {
+      "expectedTitle": "XYZ GmbH Records Strong Growth in 2024",
+      "minContentLength": 650,
+      "maxContentLength": 1600,
+      "mustContain": [
+        "XYZ",
+        "2024",
+        "15 percent",
+        "Asia-Pacific",
+        "North America",
+        "Munich",
+        "1995",
+        "Anna Weber",
+        "presse@xyz.de"
+      ],
+      "mustPreserveHtmlTags": ["<p>", "</p>", "<em>", "</em>", "<h3>", "</h3>", "<strong>", "</strong>", "<br>"],
+      "qualityCriteria": {
+        "htmlPreserved": true,
+        "boilerplateTranslated": true,
+        "contactDetailsPreserved": true,
+        "headingsTranslated": true
+      }
+    }
+  },
+  {
+    "testCaseId": "translate-5-complex-formatting-de-en",
+    "description": "Komplexe Formatierung mit mehreren Elementen erhalten",
+    "input": {
+      "content": "<p><em>Die neue Software-Version 3.0 bietet zahlreiche Verbesserungen für professionelle Anwender.</em></p>\n<h2>Neue Funktionen</h2>\n<p>Die wichtigsten Neuerungen im Überblick:</p>\n<ul>\n<li><strong>Cloud-Integration:</strong> Nahtlose Anbindung an alle gängigen Cloud-Dienste</li>\n<li><strong>KI-Assistent:</strong> Intelligente Vorschläge basierend auf Nutzerverhalten</li>\n<li><strong>Echtzeit-Kollaboration:</strong> Gemeinsames Arbeiten an Dokumenten</li>\n</ul>\n<h2>Technische Verbesserungen</h2>\n<p>Die Performance wurde um <strong>40%</strong> gesteigert. Der Speicherverbrauch konnte um <strong>25%</strong> reduziert werden.</p>\n<blockquote data-type=\"pr-quote\"><p>\"Version 3.0 markiert einen Quantensprung in der Entwicklung unserer Software.\"</p><p>— Michael Braun, Chief Technology Officer</p></blockquote>\n<p>Weitere Informationen unter: <a href=\"https://example.com/v3\">example.com/v3</a></p>\n<p><span data-type=\"hashtag\">#Software</span> <span data-type=\"hashtag\">#Innovation</span> <span data-type=\"hashtag\">#Tech</span></p>",
+      "title": "Software Version 3.0 mit umfangreichen Neuerungen",
+      "sourceLanguage": "de",
+      "targetLanguage": "en",
+      "glossaryEntries": [
+        {
+          "source": "KI-Assistent",
+          "target": "AI Assistant",
+          "context": "Produktfeature"
+        }
+      ],
+      "preserveFormatting": true,
+      "tone": "professional"
+    },
+    "reference": {
+      "expectedTitle": "Software Version 3.0 with Extensive New Features",
+      "minContentLength": 900,
+      "maxContentLength": 1800,
+      "mustContain": [
+        "Version 3.0",
+        "Cloud",
+        "AI Assistant",
+        "40%",
+        "25%",
+        "Michael Braun",
+        "Chief Technology Officer",
+        "#Software",
+        "#Innovation",
+        "#Tech"
+      ],
+      "mustPreserveHtmlTags": ["<p>", "</p>", "<em>", "</em>", "<h2>", "</h2>", "<ul>", "</ul>", "<li>", "</li>", "<strong>", "</strong>", "<blockquote", "</blockquote>", "<a href=", "data-type=\"hashtag\""],
+      "qualityCriteria": {
+        "htmlPreserved": true,
+        "glossaryApplied": true,
+        "headingsTranslated": true,
+        "listItemsPreserved": true,
+        "percentagesPreserved": true,
+        "hashtagsPreserved": true
+      }
+    }
+  }
+]
