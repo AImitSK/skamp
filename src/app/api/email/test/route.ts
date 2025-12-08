@@ -463,14 +463,17 @@ export async function POST(request: NextRequest) {
           }
 
           // Konvertiere CampaignBoilerplateSection[] in das erwartete Format für das Template
-          const formattedBoilerplateSections = (campaign?.boilerplateSections || []).map(section => ({
-            id: section.id,
-            customTitle: section.customTitle,
-            content: section.content || '',
-            type: section.type === 'boilerplate' ? undefined : section.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
-            boilerplate: section.boilerplateId ? { content: section.content || '' } : undefined,
-            contentHtml: section.content
-          }));
+          // WICHTIG: Bei Übersetzungen sind die Boilerplates bereits im übersetzten Content enthalten!
+          const formattedBoilerplateSections = isTranslation
+            ? [] // Bei Übersetzungen: Keine separaten Boilerplates, da im Content enthalten
+            : (campaign?.boilerplateSections || []).map(section => ({
+                id: section.id,
+                customTitle: section.customTitle,
+                content: section.content || '',
+                type: section.type === 'boilerplate' ? undefined : section.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
+                boilerplate: section.boilerplateId ? { content: section.content || '' } : undefined,
+                contentHtml: section.content
+              }));
 
           // Titel aus Campaign oder Fallback
           const pdfTitle = campaign?.title || 'Pressemitteilung';

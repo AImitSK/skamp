@@ -1,21 +1,16 @@
 // src/components/pr/email/TranslationLanguageSelector.tsx
 "use client";
 
-import { useState, useEffect } from "react";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox, CheckboxField } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/fieldset";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   LanguageIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  DocumentDuplicateIcon,
-  DocumentIcon,
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
-import { ProjectTranslation } from "@/types/translation";
 import clsx from "clsx";
 
 // Flaggen-Mapping (ISO 639-1 -> ISO 3166-1 Alpha-2)
@@ -64,8 +59,8 @@ function FlagIcon({ languageCode, className }: { languageCode: string; className
   );
 }
 
-// PDF-Format Option
-export type PdfFormat = "separate" | "combined";
+// PDF-Format ist immer "separate" - jede Sprache als eigene Datei
+export type PdfFormat = "separate";
 
 // Ausgewählte Sprachen für Versand
 export interface SelectedLanguages {
@@ -79,8 +74,6 @@ interface TranslationLanguageSelectorProps {
   sourceLanguage: LanguageCode;
   selectedLanguages: SelectedLanguages;
   onSelectedLanguagesChange: (selected: SelectedLanguages) => void;
-  pdfFormat: PdfFormat;
-  onPdfFormatChange: (format: PdfFormat) => void;
   disabled?: boolean;
 }
 
@@ -90,8 +83,6 @@ export function TranslationLanguageSelector({
   sourceLanguage,
   selectedLanguages,
   onSelectedLanguagesChange,
-  pdfFormat,
-  onPdfFormatChange,
   disabled = false,
 }: TranslationLanguageSelectorProps) {
   // Lade verfügbare Übersetzungen
@@ -242,68 +233,6 @@ export function TranslationLanguageSelector({
           </button>
         )}
       </div>
-
-      {/* PDF-Format Optionen (nur wenn Übersetzungen ausgewählt) */}
-      {selectedLanguages.translations.length > 0 && (
-        <div className="mt-4 pt-4 border-t">
-          <Text className="font-medium text-sm mb-3">PDF-Format</Text>
-          <div className="space-y-2">
-            <label
-              className={clsx(
-                "flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors",
-                pdfFormat === "separate"
-                  ? "bg-blue-50 border-blue-200"
-                  : "hover:bg-gray-50 border-gray-200",
-                disabled && "cursor-not-allowed opacity-60"
-              )}
-            >
-              <input
-                type="radio"
-                name="pdfFormat"
-                value="separate"
-                checked={pdfFormat === "separate"}
-                onChange={() => onPdfFormatChange("separate")}
-                disabled={disabled}
-                className="h-4 w-4 text-primary-600"
-              />
-              <DocumentDuplicateIcon className="h-5 w-5 text-gray-500" />
-              <div>
-                <Text className="text-sm font-medium">Separate PDFs</Text>
-                <Text className="text-xs text-gray-500">
-                  {selectedCount} separate PDF-Dateien werden angehängt
-                </Text>
-              </div>
-            </label>
-
-            <label
-              className={clsx(
-                "flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors",
-                pdfFormat === "combined"
-                  ? "bg-blue-50 border-blue-200"
-                  : "hover:bg-gray-50 border-gray-200",
-                disabled && "cursor-not-allowed opacity-60"
-              )}
-            >
-              <input
-                type="radio"
-                name="pdfFormat"
-                value="combined"
-                checked={pdfFormat === "combined"}
-                onChange={() => onPdfFormatChange("combined")}
-                disabled={disabled}
-                className="h-4 w-4 text-primary-600"
-              />
-              <DocumentIcon className="h-5 w-5 text-gray-500" />
-              <div>
-                <Text className="text-sm font-medium">Kombiniertes PDF</Text>
-                <Text className="text-xs text-gray-500">
-                  Alle {selectedCount} Sprachen in einem PDF-Dokument
-                </Text>
-              </div>
-            </label>
-          </div>
-        </div>
-      )}
 
       {/* Info-Hinweis bei veralteten Übersetzungen */}
       {translations?.some((t) => t.isOutdated && selectedLanguages.translations.includes(t.language)) && (

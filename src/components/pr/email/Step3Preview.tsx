@@ -31,8 +31,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/20/solid';
 import TranslationLanguageSelector, {
-  SelectedLanguages,
-  PdfFormat
+  SelectedLanguages
 } from '@/components/pr/email/TranslationLanguageSelector';
 import { LanguageCode } from '@/types/international';
 
@@ -131,7 +130,6 @@ export default function Step3Preview({
     original: true,
     translations: []
   });
-  const [pdfFormat, setPdfFormat] = useState<PdfFormat>('separate');
 
   // Berechne korrekte Empfänger-Zahlen
   const totalRecipients = draft.recipients.totalCount || 0;
@@ -494,7 +492,7 @@ export default function Step3Preview({
             // NEU: Multi-Language Optionen (Phase 2.7)
             projectId: campaign.projectId,
             selectedLanguages: selectedLanguages,
-            pdfFormat: pdfFormat
+            pdfFormat: 'separate' // Immer separate PDFs pro Sprache
           })
         });
 
@@ -558,7 +556,7 @@ export default function Step3Preview({
               // NEU: Multi-Language Optionen (Phase 2.7)
               projectId: campaign.projectId,
               selectedLanguages: selectedLanguages,
-              pdfFormat: pdfFormat
+              pdfFormat: 'separate' // Immer separate PDFs pro Sprache
             })
           });
 
@@ -928,8 +926,6 @@ export default function Step3Preview({
               sourceLanguage={((currentOrganization as any).contentLanguages?.primary || 'de') as LanguageCode}
               selectedLanguages={selectedLanguages}
               onSelectedLanguagesChange={setSelectedLanguages}
-              pdfFormat={pdfFormat}
-              onPdfFormatChange={setPdfFormat}
               disabled={isDisabled}
             />
           )}
