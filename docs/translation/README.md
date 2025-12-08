@@ -1,7 +1,7 @@
 # Internationalisierung - Masterplan
 
-**Status:** Konzeptphase
-**Zuletzt aktualisiert:** 2025-12-07
+**Status:** In Implementierung
+**Zuletzt aktualisiert:** 2025-12-08
 
 ---
 
@@ -15,81 +15,77 @@ Dieses Verzeichnis enthält die vollständige Dokumentation zur Internationalisi
 |----------|--------------|--------|
 | [01-CURRENT-STATE.md](./01-CURRENT-STATE.md) | Ist-Analyse der Codebase | ✅ Fertig |
 | [02-UI-INTERNATIONALIZATION.md](./02-UI-INTERNATIONALIZATION.md) | UI-Sprachen (DE/EN) + Settings-Seite | 📝 Konzept |
-| [03-AI-TRANSLATION.md](./03-AI-TRANSLATION.md) | KI-Übersetzung für Projekte | 📝 Konzept |
-| [04-NATIVE-MULTILINGUAL.md](./04-NATIVE-MULTILINGUAL.md) | Native Mehrsprachigkeit (Boilerplates, etc.) | 📝 Konzept |
-| [05-GLOSSARY.md](./05-GLOSSARY.md) | Kunden-spezifisches Fachbegriff-Glossar | 📝 Konzept |
+| [03-AI-TRANSLATION.md](./03-AI-TRANSLATION.md) | KI-Übersetzung für Projekte | ✅ Implementiert |
+| [05-GLOSSARY.md](./05-GLOSSARY.md) | Kunden-spezifisches Fachbegriff-Glossar | ✅ Implementiert |
 | [06-MIGRATION-GUIDE.md](./06-MIGRATION-GUIDE.md) | Refactoring-Template für Seiten | ⏳ Ausstehend |
-| **[PHASE-1-TODO.md](./PHASE-1-TODO.md)** | **Detaillierte Checkliste für Phase 1** | 🚀 **Aktiv** |
+
+> **Hinweis:** `04-NATIVE-MULTILINGUAL.md` wurde entfernt - Boilerplates werden jetzt direkt mit dem Hauptinhalt übersetzt, was eine separate mehrsprachige Boilerplate-Verwaltung überflüssig macht.
 
 ---
 
-## Die drei Säulen
+## Die zwei Säulen
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    INTERNATIONALISIERUNG                            │
-├─────────────────────┬─────────────────────┬─────────────────────────┤
-│                     │                     │                         │
-│   1. UI-SPRACHEN    │  2. KI-ÜBERSETZUNG  │  3. NATIVE MULTILINGUAL │
-│                     │                     │                         │
-│   - DE/EN (Start)   │  - Beliebige Sprache│  - Max 4 Sprachen       │
-│   - Erweiterbar     │  - Pro Projekt      │  - Boilerplates         │
-│   - Settings-basiert│  - Kunden-Glossar   │  - Signaturen           │
-│   - next-intl       │  - Genkit Flow      │  - KI-Vorschläge        │
-│                     │                     │                         │
-│   PRIORITÄT: 1      │  PRIORITÄT: 2       │  PRIORITÄT: 3           │
-│   (Foundation)      │  (Quick Win)        │  (Langfristig)          │
-│                     │                     │                         │
-└─────────────────────┴─────────────────────┴─────────────────────────┘
+├─────────────────────────────────┬───────────────────────────────────┤
+│                                 │                                   │
+│       1. UI-SPRACHEN            │       2. KI-ÜBERSETZUNG           │
+│                                 │                                   │
+│   - DE/EN (Start)               │   - Beliebige Zielsprache         │
+│   - Erweiterbar                 │   - Hauptinhalt + Boilerplates    │
+│   - Settings-basiert            │   - Kunden-Glossar                │
+│   - next-intl                   │   - Genkit Flow                   │
+│                                 │   - Manuell editierbar            │
+│                                 │                                   │
+│   PRIORITÄT: 1                  │   PRIORITÄT: 2                    │
+│   (Foundation)                  │   ✅ IMPLEMENTIERT                │
+│                                 │                                   │
+└─────────────────────────────────┴───────────────────────────────────┘
 ```
 
 ---
 
 ## Settings-Seite: `/settings/language`
 
-Die zentrale Sprachverwaltung erfolgt unter `/settings/language` mit drei Bereichen:
+Die zentrale Sprachverwaltung erfolgt unter `/settings/language` mit zwei Bereichen:
 
-| Bereich | Beschreibung |
-|---------|--------------|
-| **UI-Sprache** | Benutzeroberflächen-Sprache (DE/EN) |
-| **Content-Sprachen** | 1 Primärsprache (fest) + max. 3 zusätzliche via CountrySelector |
-| **Glossar** | Kunden-spezifische Fachbegriffe für KI-Übersetzungen |
+| Bereich | Beschreibung | Status |
+|---------|--------------|--------|
+| **UI-Sprache** | Benutzeroberflächen-Sprache (DE/EN) | ⏳ Konzept |
+| **Glossar** | Kunden-spezifische Fachbegriffe für KI-Übersetzungen | ✅ Implementiert |
 
 ### Wichtige Design-Entscheidungen
 
-1. **Primärsprache ist FEST** - entspricht der UI-Sprache der Organisation
-2. **Zusätzliche Sprachen via CountrySelector** - Nutzt bestehende Infrastruktur
-3. **Glossar ist KUNDEN-spezifisch** - Nicht organisations-weit!
-4. **Vorhandene Infrastruktur:**
-   - `src/components/ui/country-selector.tsx`
-   - `src/lib/validators/iso-validators.ts` → `getLanguagesForCountry()`
+1. **Glossar ist KUNDEN-spezifisch** - Nicht organisations-weit!
+2. **Übersetzungen On-Demand** - Keine vordefinierte Liste von Content-Sprachen nötig
+3. **Boilerplates werden automatisch mit übersetzt** - Keine separate Verwaltung erforderlich
+4. **Übersetzungen sind editierbar** - KI-generierte Texte können manuell angepasst werden
 
 ---
 
 ## Phasenplan
 
-### Phase 1: Foundation
-- [ ] next-intl Setup
-- [ ] Settings-Seite `/settings/language` erstellen
-- [ ] Organization.contentLanguages Feld
-- [ ] CustomerGlossaryEntry Collection anlegen
-- [ ] Refactoring-Template erstellen
+### Phase 1: Foundation ✅ FERTIG
+- [x] next-intl Setup (Basis)
+- [x] Settings-Seite `/settings/language`
+- [x] CustomerGlossaryEntry Collection + CRUD
+- [x] Glossar-UI mit Modal
 
-### Phase 2: KI-Übersetzung (Quick Win)
-- [ ] Genkit Translation Flow mit Kunden-Glossar
-- [ ] Projekt-Übersetzungen Datenmodell
-- [ ] Übersetzungs-UI im Projekt
-- [ ] Versand-Modal Erweiterung
+### Phase 2: KI-Übersetzung ✅ FERTIG
+- [x] Genkit Translation Flow mit Kunden-Glossar
+- [x] Projekt-Übersetzungen Datenmodell
+- [x] TranslationModal im Projekt
+- [x] TranslationList mit Aktionen
+- [x] TranslationEditModal für manuelle Anpassung
+- [x] Boilerplate-Übersetzung integriert
+- [x] Versand-Modal mit Sprachauswahl
+- [x] PDF-Generierung mehrsprachig
 
-### Phase 3: UI-Migration
+### Phase 3: UI-Migration ⏳ AUSSTEHEND
 - [ ] Seiten schrittweise migrieren (nach Template)
 - [ ] Email-Templates internationalisieren
 - [ ] Toast Service i18n (zentral in toast.ts)
-
-### Phase 4: Native Mehrsprachigkeit
-- [ ] Boilerplate-Übersetzungen UI
-- [ ] Signatur-Übersetzungen UI
-- [ ] Mehrsprachige PDF-Generierung
 
 ---
 
@@ -99,17 +95,40 @@ Die zentrale Sprachverwaltung erfolgt unter `/settings/language` mit drei Bereic
 2. **Schrittweise Migration** - Keine Big-Bang-Umstellung
 3. **Erweiterbar** - Neue Sprachen einfach hinzufügbar
 4. **Kunden-Glossar-First** - Fachbegriffe pro Kunde haben Vorrang vor KI-Übersetzung
-5. **Bestehende Infrastruktur nutzen** - CountrySelector, iso-validators
+5. **Editierbare KI-Texte** - Alle Übersetzungen können manuell angepasst werden
 
 ---
 
 ## Technologie-Stack
 
-| Komponente | Technologie | Begründung |
-|------------|-------------|------------|
-| UI i18n | next-intl | Native Next.js App Router Support |
-| KI-Übersetzung | Genkit + Gemini | Bereits im Projekt, Glossar-Kontext möglich |
-| Sprach-Auswahl | CountrySelector | Bereits vorhanden, mit Flaggen |
-| Land→Sprache Mapping | iso-validators.ts | `getLanguagesForCountry()` bereits implementiert |
-| Datenbank | Firestore | Bestehende Infrastruktur |
-| PDF | Bestehender Service | Nur Erweiterung für Sprach-Merge |
+| Komponente | Technologie | Status |
+|------------|-------------|--------|
+| UI i18n | next-intl | ✅ Setup fertig |
+| KI-Übersetzung | Genkit + Gemini 2.0 Flash | ✅ Implementiert |
+| Sprach-Flaggen | LanguageFlagIcon (SVG) | ✅ Implementiert |
+| Datenbank | Firestore | ✅ Collections angelegt |
+| PDF | pdf-service.ts | ✅ Mehrsprachig |
+| Glossar | customer_glossary Collection | ✅ CRUD + UI |
+
+---
+
+## Implementierte Komponenten
+
+### Hooks (src/lib/hooks/)
+- `useGlossary.ts` - CRUD für Glossar-Einträge
+- `useTranslations.ts` - CRUD für Projekt-Übersetzungen
+
+### Services (src/lib/services/)
+- `glossary-service.ts` - Firestore-Operationen für Glossar
+- `translation-service.ts` - Firestore-Operationen für Übersetzungen
+
+### UI-Komponenten
+- `TranslationModal` - Sprache auswählen, Übersetzung starten
+- `TranslationList` - Vorhandene Übersetzungen anzeigen
+- `TranslationEditModal` - KI-Übersetzungen bearbeiten
+- `TranslationLanguageSelector` - Sprachauswahl im Versand-Modal
+- `GlossaryEntryModal` - Glossar-Einträge erstellen/bearbeiten
+- `LanguageFlagIcon` - SVG-Flaggen für Sprachen
+
+### API-Endpunkte
+- `POST /api/ai/translate` - KI-Übersetzung via Genkit
