@@ -153,7 +153,7 @@ class GlossaryService {
       customerId: input.customerId,
       translations: input.translations,
       context: input.context || null,
-      isApproved: false,
+      isApproved: true, // Neue Einträge sind sofort nutzbar
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       createdBy: userId,
@@ -167,7 +167,7 @@ class GlossaryService {
       customerId: input.customerId,
       translations: input.translations,
       context: input.context,
-      isApproved: false,
+      isApproved: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       createdBy: userId,
