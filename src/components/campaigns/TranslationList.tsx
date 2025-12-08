@@ -70,19 +70,28 @@ export function TranslationList({
         content: bp.translatedContent || ''
       }));
 
+      // Dateiname generieren
+      const fileName = `${translation.title.replace(/[^a-zA-Z0-9]/g, '_')}_${translation.language.toUpperCase()}.pdf`;
+
       // PDF via API generieren
-      const response = await fetch('/api/pdf/generate', {
+      const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          campaignId: `translation_${translation.id}`,
+          organizationId,
           title: translation.title,
           mainContent: translation.content,
           boilerplateSections,
-          clientName: '', // Optional
-          returnBase64: false, // Wir wollen eine URL
-          organizationId,
-          projectId,
-          language: translation.language
+          clientName: '',
+          userId: 'preview-user',
+          fileName,
+          options: {
+            format: 'A4',
+            orientation: 'portrait',
+            printBackground: true,
+            waitUntil: 'networkidle0'
+          }
         })
       });
 
@@ -97,8 +106,20 @@ export function TranslationList({
         // PDF in neuem Tab öffnen
         window.open(result.pdfUrl, '_blank');
         toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
+      } else if (result.pdfBase64) {
+        // Fallback: Base64 als Blob öffnen
+        const byteCharacters = atob(result.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
       } else {
-        throw new Error('Keine PDF-URL erhalten');
+        throw new Error('Keine PDF-Daten erhalten');
       }
     } catch (error: any) {
       console.error('PDF-Generierung fehlgeschlagen:', error);
