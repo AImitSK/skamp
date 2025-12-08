@@ -16,34 +16,8 @@ import {
 import { useProjectTranslations, useTranslationSummary } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
 import { TranslationStatus } from "@/types/translation";
+import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import clsx from "clsx";
-
-// Flaggen-Mapping (ISO 639-1 -> ISO 3166-1 Alpha-2)
-const LANGUAGE_TO_COUNTRY: Record<string, string> = {
-  de: "DE",
-  en: "GB",
-  fr: "FR",
-  es: "ES",
-  it: "IT",
-  nl: "NL",
-  pl: "PL",
-  pt: "PT",
-  cs: "CZ",
-  da: "DK",
-  sv: "SE",
-  no: "NO",
-  fi: "FI",
-  hu: "HU",
-  ro: "RO",
-  bg: "BG",
-  el: "GR",
-  tr: "TR",
-  ru: "RU",
-  zh: "CN",
-  ja: "JP",
-  ko: "KR",
-  ar: "SA",
-};
 
 // Status-Badge Komponente
 function TranslationStatusBadge({ status, isOutdated }: { status: TranslationStatus; isOutdated: boolean }) {
@@ -83,25 +57,6 @@ function TranslationStatusBadge({ status, isOutdated }: { status: TranslationSta
   }
 }
 
-// Flaggen-Icon Komponente
-function FlagIcon({ languageCode, className }: { languageCode: string; className?: string }) {
-  const countryCode = LANGUAGE_TO_COUNTRY[languageCode.toLowerCase()] || languageCode.toUpperCase();
-
-  // Verwende Unicode Regional Indicator Symbols für Flaggen
-  const getFlagEmoji = (code: string) => {
-    const codePoints = code
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  return (
-    <span className={clsx("text-lg", className)} title={LANGUAGE_NAMES[languageCode] || languageCode}>
-      {getFlagEmoji(countryCode)}
-    </span>
-  );
-}
 
 // Tooltip für Übersetzungs-Details
 function TranslationTooltip({
@@ -137,7 +92,7 @@ function TranslationTooltip({
           {translations.map((t) => (
             <div key={t.language} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <FlagIcon languageCode={t.language} />
+                <LanguageFlagIcon languageCode={t.language} />
                 <Text className="text-sm">{LANGUAGE_NAMES[t.language] || t.language}</Text>
               </div>
               <TranslationStatusBadge status={t.status} isOutdated={t.isOutdated} />
@@ -225,11 +180,11 @@ export function TranslationButton({
               onMouseLeave={handleMouseLeave}
             >
               {translations.slice(0, 3).map((t) => (
-                <FlagIcon
+                <LanguageFlagIcon
                   key={t.language}
                   languageCode={t.language}
                   className={clsx(
-                    "cursor-pointer hover:scale-110 transition-transform",
+                    "h-4 w-6 cursor-pointer hover:scale-110 transition-transform",
                     t.isOutdated && "opacity-60"
                   )}
                 />
@@ -290,7 +245,7 @@ export function TranslationButton({
               )}
               title={`${LANGUAGE_NAMES[t.language] || t.language}${t.isOutdated ? " (veraltet)" : ""}`}
             >
-              <FlagIcon languageCode={t.language} />
+              <LanguageFlagIcon languageCode={t.language} />
             </button>
           ))}
           {translations.length > 4 && (

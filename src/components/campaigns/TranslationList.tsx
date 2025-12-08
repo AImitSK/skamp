@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
+import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
 
@@ -182,9 +183,7 @@ export function TranslationList({
             {/* Sprache & Status */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 min-w-[140px]">
-                <span className="text-lg">
-                  {getFlagEmoji(translation.language)}
-                </span>
+                <LanguageFlagIcon languageCode={translation.language} className="h-4 w-6" />
                 <Text className="font-medium">
                   {LANGUAGE_NAMES[translation.language] || translation.language}
                 </Text>
@@ -295,38 +294,6 @@ export function TranslationList({
       </Dialog>
     </div>
   );
-}
-
-/**
- * Gibt Flaggen-Emoji für Sprachcode zurück
- */
-function getFlagEmoji(languageCode: LanguageCode): string {
-  const flagMap: Record<string, string> = {
-    de: "🇩🇪",
-    en: "🇬🇧",
-    fr: "🇫🇷",
-    es: "🇪🇸",
-    it: "🇮🇹",
-    nl: "🇳🇱",
-    pl: "🇵🇱",
-    pt: "🇵🇹",
-    cs: "🇨🇿",
-    da: "🇩🇰",
-    sv: "🇸🇪",
-    no: "🇳🇴",
-    fi: "🇫🇮",
-    hu: "🇭🇺",
-    ro: "🇷🇴",
-    bg: "🇧🇬",
-    el: "🇬🇷",
-    tr: "🇹🇷",
-    ru: "🇷🇺",
-    zh: "🇨🇳",
-    ja: "🇯🇵",
-    ko: "🇰🇷",
-    ar: "🇸🇦",
-  };
-  return flagMap[languageCode] || "🌐";
 }
 
 export default TranslationList;

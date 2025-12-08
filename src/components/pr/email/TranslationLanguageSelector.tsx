@@ -11,53 +11,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
+import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import clsx from "clsx";
-
-// Flaggen-Mapping (ISO 639-1 -> ISO 3166-1 Alpha-2)
-const LANGUAGE_TO_COUNTRY: Record<string, string> = {
-  de: "DE",
-  en: "GB",
-  fr: "FR",
-  es: "ES",
-  it: "IT",
-  nl: "NL",
-  pl: "PL",
-  pt: "PT",
-  cs: "CZ",
-  da: "DK",
-  sv: "SE",
-  no: "NO",
-  fi: "FI",
-  hu: "HU",
-  ro: "RO",
-  bg: "BG",
-  el: "GR",
-  tr: "TR",
-  ru: "RU",
-  zh: "CN",
-  ja: "JP",
-  ko: "KR",
-  ar: "SA",
-};
-
-// Flaggen-Icon Komponente
-function FlagIcon({ languageCode, className }: { languageCode: string; className?: string }) {
-  const countryCode = LANGUAGE_TO_COUNTRY[languageCode.toLowerCase()] || languageCode.toUpperCase();
-
-  const getFlagEmoji = (code: string) => {
-    const codePoints = code
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  return (
-    <span className={clsx("text-lg", className)} title={LANGUAGE_NAMES[languageCode] || languageCode}>
-      {getFlagEmoji(countryCode)}
-    </span>
-  );
-}
 
 // PDF-Format ist immer "separate" - jede Sprache als eigene Datei
 export type PdfFormat = "separate";
@@ -129,7 +84,7 @@ export function TranslationLanguageSelector({
           <Text className="font-medium text-gray-600">Sprachen für Versand</Text>
         </div>
         <div className="flex items-center gap-2 py-2">
-          <FlagIcon languageCode={sourceLanguage} />
+          <LanguageFlagIcon languageCode={sourceLanguage} />
           <Text className="text-sm">{LANGUAGE_NAMES[sourceLanguage] || sourceLanguage}</Text>
           <Badge color="blue" className="ml-auto">Original</Badge>
         </div>
@@ -157,7 +112,7 @@ export function TranslationLanguageSelector({
         <div className="flex items-center justify-between py-2 px-3 bg-blue-50 rounded-md border border-blue-100">
           <div className="flex items-center gap-3">
             <Checkbox checked disabled className="opacity-60" />
-            <FlagIcon languageCode={sourceLanguage} />
+            <LanguageFlagIcon languageCode={sourceLanguage} />
             <Text className="text-sm font-medium">
               {LANGUAGE_NAMES[sourceLanguage] || sourceLanguage}
             </Text>
@@ -190,7 +145,7 @@ export function TranslationLanguageSelector({
                     onChange={() => toggleLanguage(translation.language)}
                     disabled={disabled}
                   />
-                  <FlagIcon languageCode={translation.language} />
+                  <LanguageFlagIcon languageCode={translation.language} />
                   <div>
                     <Text className="text-sm font-medium">
                       {LANGUAGE_NAMES[translation.language] || translation.language}

@@ -13,53 +13,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useTranslationSummary, useMarkTranslationCurrent } from "@/lib/hooks/useTranslations";
 import { LanguageCode, LANGUAGE_NAMES } from "@/types/international";
+import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import clsx from "clsx";
-
-// Flaggen-Mapping (ISO 639-1 -> ISO 3166-1 Alpha-2)
-const LANGUAGE_TO_COUNTRY: Record<string, string> = {
-  de: "DE",
-  en: "GB",
-  fr: "FR",
-  es: "ES",
-  it: "IT",
-  nl: "NL",
-  pl: "PL",
-  pt: "PT",
-  cs: "CZ",
-  da: "DK",
-  sv: "SE",
-  no: "NO",
-  fi: "FI",
-  hu: "HU",
-  ro: "RO",
-  bg: "BG",
-  el: "GR",
-  tr: "TR",
-  ru: "RU",
-  zh: "CN",
-  ja: "JP",
-  ko: "KR",
-  ar: "SA",
-};
-
-// Flaggen-Icon Komponente
-function FlagIcon({ languageCode, className }: { languageCode: string; className?: string }) {
-  const countryCode = LANGUAGE_TO_COUNTRY[languageCode.toLowerCase()] || languageCode.toUpperCase();
-
-  const getFlagEmoji = (code: string) => {
-    const codePoints = code
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  return (
-    <span className={clsx("text-base", className)} title={LANGUAGE_NAMES[languageCode] || languageCode}>
-      {getFlagEmoji(countryCode)}
-    </span>
-  );
-}
 
 interface TranslationOutdatedBannerProps {
   organizationId: string;
@@ -139,7 +94,7 @@ export function TranslationOutdatedBanner({
                 className="flex items-center justify-between bg-white rounded-md px-3 py-2 border border-amber-100"
               >
                 <div className="flex items-center gap-2">
-                  <FlagIcon languageCode={translation.code} />
+                  <LanguageFlagIcon languageCode={translation.code} />
                   <Text className="text-sm font-medium">
                     {LANGUAGE_NAMES[translation.code] || translation.code}
                   </Text>
