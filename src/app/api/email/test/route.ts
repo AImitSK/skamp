@@ -287,7 +287,8 @@ export async function POST(request: NextRequest) {
       // NEU: Lade echte Kampagnen-Daten wenn campaignId vorhanden
       let campaign: PRCampaign | null = null;
       let mediaShareUrl: string | undefined;
-      
+      let translatedTitle: string | undefined; // Für Übersetzungen
+
       if (data.campaignId) {
         console.log('📄 Loading campaign data for test email:', data.campaignId);
         
@@ -320,7 +321,8 @@ export async function POST(request: NextRequest) {
                     // Übersetzung gefunden - verwende übersetzte Inhalte
                     data.campaignEmail.pressReleaseHtml = translation.content;
                     if (translation.title) {
-                      // Optional: Betreff auch übersetzen
+                      // Übersetzten Titel speichern für PDF
+                      translatedTitle = translation.title;
                       console.log('✅ Translation loaded:', {
                         language: data.targetLanguage,
                         titleLength: translation.title?.length,
@@ -475,8 +477,10 @@ export async function POST(request: NextRequest) {
                 contentHtml: section.content
               }));
 
-          // Titel aus Campaign oder Fallback
-          const pdfTitle = campaign?.title || 'Pressemitteilung';
+          // Titel: Bei Übersetzung den übersetzten Titel verwenden, sonst Campaign-Titel
+          const pdfTitle = isTranslation && translatedTitle
+            ? translatedTitle
+            : (campaign?.title || 'Pressemitteilung');
 
           const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
             title: pdfTitle,
