@@ -170,9 +170,9 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[40%] min-w-0 pr-4">
+        <div className="w-[40%] min-w-0">
           <div className="flex items-center">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 pr-4">
               <a
                 href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}
                 className="text-sm font-semibold text-gray-900 hover:text-[#005fab] truncate block cursor-pointer transition-colors"
