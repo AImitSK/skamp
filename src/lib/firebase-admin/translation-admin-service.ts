@@ -7,6 +7,15 @@ import { LanguageCode } from '@/types/international';
 import { TranslationStatus } from '@/types/translation';
 
 /**
+ * Übersetzte Boilerplate-Section
+ */
+interface TranslatedBoilerplate {
+  id: string;
+  translatedContent: string;
+  translatedTitle?: string | null;
+}
+
+/**
  * Input für neue Übersetzung
  */
 interface CreateTranslationInput {
@@ -18,6 +27,8 @@ interface CreateTranslationInput {
   modelUsed?: string;
   glossaryEntriesUsed?: string[];
   sourceVersion?: number;
+  /** Übersetzte Boilerplate-Sections */
+  translatedBoilerplates?: TranslatedBoilerplate[] | null;
 }
 
 /**
@@ -32,6 +43,7 @@ interface SavedTranslation {
   content: string;
   status: TranslationStatus;
   isOutdated: boolean;
+  translatedBoilerplates?: TranslatedBoilerplate[] | null;
 }
 
 /**
@@ -63,6 +75,7 @@ class TranslationAdminService {
       language: input.language,
       title: input.title || null,
       content: input.content,
+      translatedBoilerplates: input.translatedBoilerplates || null,
       status: 'generated' as TranslationStatus,
       generatedAt: FieldValue.serverTimestamp(),
       generatedBy: 'ai',
@@ -83,6 +96,7 @@ class TranslationAdminService {
       language: input.language,
       title: input.title,
       content: input.content,
+      translatedBoilerplates: input.translatedBoilerplates,
       status: 'generated',
       isOutdated: false,
     };
@@ -131,6 +145,7 @@ class TranslationAdminService {
       await existingDoc.ref.update({
         title: input.title || null,
         content: input.content,
+        translatedBoilerplates: input.translatedBoilerplates || null,
         modelUsed: input.modelUsed || null,
         glossaryEntriesUsed: input.glossaryEntriesUsed || [],
         sourceVersion: input.sourceVersion || 1,
@@ -146,6 +161,7 @@ class TranslationAdminService {
         language: input.language,
         title: input.title,
         content: input.content,
+        translatedBoilerplates: input.translatedBoilerplates,
         status: 'generated',
         isOutdated: false,
       };

@@ -71,6 +71,15 @@ export default function ProjectPressemeldungenTab({
     // Firebase ID Token für Auth holen
     const idToken = await user.getIdToken();
 
+    // Boilerplate-Sections für Übersetzung vorbereiten
+    const boilerplateSections = campaign.boilerplateSections?.map((section: any) => ({
+      id: section.id,
+      type: section.type,
+      content: section.content || '',
+      customTitle: section.customTitle,
+      metadata: section.metadata
+    })).filter((s: any) => s.content && s.content.trim().length > 0) || [];
+
     const response = await fetch('/api/ai/translate', {
       method: 'POST',
       headers: {
@@ -83,6 +92,7 @@ export default function ProjectPressemeldungenTab({
         title: campaign.title,
         // WICHTIG: mainContent enthält den echten PR-Content, contentHtml kann Boilerplate sein
         content: campaign.mainContent || campaign.contentHtml || '',
+        boilerplateSections,
         sourceLanguage: 'de',
         targetLanguage: params.targetLanguage,
         tone: params.tone,

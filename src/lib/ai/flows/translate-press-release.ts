@@ -8,6 +8,8 @@ import {
   type TranslatePressReleaseInput,
   type TranslatePressReleaseOutput,
   type GlossaryEntry,
+  type BoilerplateSection,
+  type TranslatedBoilerplateSection,
   getLanguageName,
 } from '../schemas/translate-press-release-schemas';
 
@@ -186,6 +188,106 @@ function cleanTranslation(text: string): string {
   return cleaned;
 }
 
+/**
+ * Baut einen System-Prompt für die Boilerplate-Übersetzung
+ */
+function buildBoilerplateSystemPrompt(
+  sourceLanguage: string,
+  targetLanguage: string,
+  glossaryEntries: GlossaryEntry[] | null | undefined,
+  tone: string
+): string {
+  const sourceName = getLanguageName(sourceLanguage);
+  const targetName = getLanguageName(targetLanguage);
+  const glossarySection = buildGlossarySection(glossaryEntries);
+
+  const toneInstructions: Record<string, string> = {
+    formal: 'Verwende formelle, distanzierte Sprache.',
+    professional: 'Verwende professionelle Geschäftssprache.',
+    neutral: 'Verwende neutrale, sachliche Sprache.'
+  };
+
+  return `Du bist ein professioneller Übersetzer für Unternehmenstexte (Boilerplates, Firmenprofile, Zitate).
+
+AUFGABE: Übersetze den folgenden Text von ${sourceName} nach ${targetName}.
+
+${glossarySection}
+
+ÜBERSETZUNGS-REGELN:
+1. ${toneInstructions[tone] || toneInstructions.professional}
+2. Firmennamen UNVERÄNDERT lassen
+3. Personennamen UNVERÄNDERT lassen
+4. HTML-Tags exakt beibehalten
+5. Nur den TEXT zwischen den Tags übersetzen
+
+WICHTIG: Antworte NUR mit der Übersetzung. Keine Erklärungen!`;
+}
+
+/**
+ * Übersetzt eine einzelne Boilerplate-Section
+ */
+async function translateBoilerplateSection(
+  section: BoilerplateSection,
+  sourceLanguage: string,
+  targetLanguage: string,
+  glossaryEntries: GlossaryEntry[] | null | undefined,
+  tone: string
+): Promise<TranslatedBoilerplateSection> {
+  const systemPrompt = buildBoilerplateSystemPrompt(
+    sourceLanguage,
+    targetLanguage,
+    glossaryEntries,
+    tone
+  );
+
+  // Baue den User-Prompt mit optionalem Titel
+  let userPrompt = '';
+  if (section.customTitle) {
+    userPrompt = `TITEL: ${section.customTitle}\n\nINHALT:\n${section.content}\n\nÜbersetze beides. Antworte im Format:\nTITEL: [übersetzter Titel]\nINHALT: [übersetzter Inhalt]`;
+  } else {
+    userPrompt = section.content;
+  }
+
+  const result = await ai.generate({
+    model: gemini25FlashModel,
+    prompt: [
+      { text: systemPrompt },
+      { text: userPrompt }
+    ],
+    config: {
+      temperature: 0.3,
+      maxOutputTokens: 2048
+    }
+  });
+
+  const generatedText = result.message?.content?.[0]?.text || result.text || '';
+
+  // Parsen der Antwort
+  let translatedContent = '';
+  let translatedTitle: string | null = null;
+
+  if (section.customTitle) {
+    const titleMatch = generatedText.match(/TITEL:\s*(.+?)(?=\n|INHALT:|$)/i);
+    const contentMatch = generatedText.match(/INHALT:\s*([\s\S]+)$/i);
+
+    if (titleMatch && contentMatch) {
+      translatedTitle = cleanTranslation(titleMatch[1]);
+      translatedContent = cleanTranslation(contentMatch[1]);
+    } else {
+      // Fallback
+      translatedContent = cleanTranslation(generatedText);
+    }
+  } else {
+    translatedContent = cleanTranslation(generatedText);
+  }
+
+  return {
+    id: section.id,
+    translatedContent,
+    translatedTitle
+  };
+}
+
 // ══════════════════════════════════════════════════════════════
 // GENKIT FLOW DEFINITION
 // ══════════════════════════════════════════════════════════════
@@ -296,11 +398,58 @@ INHALT: [übersetzter Inhalt]`;
     }
 
     // ══════════════════════════════════════════════════════════════
-    // 4. GLOSSAR-TRACKING & METRIKEN
+    // 4. BOILERPLATES ÜBERSETZEN (falls vorhanden)
     // ══════════════════════════════════════════════════════════════
 
+    let translatedBoilerplates: TranslatedBoilerplateSection[] | null = null;
+
+    if (input.boilerplateSections && input.boilerplateSections.length > 0) {
+      console.log('📄 Übersetze Boilerplates', {
+        count: input.boilerplateSections.length
+      });
+
+      translatedBoilerplates = [];
+
+      for (const section of input.boilerplateSections) {
+        try {
+          const translated = await translateBoilerplateSection(
+            section,
+            input.sourceLanguage,
+            input.targetLanguage,
+            input.glossaryEntries,
+            input.tone || 'professional'
+          );
+          translatedBoilerplates.push(translated);
+          console.log(`✅ Boilerplate ${section.id} übersetzt`);
+        } catch (boilerplateError: any) {
+          console.error(`❌ Fehler bei Boilerplate ${section.id}:`, boilerplateError.message);
+          // Fallback: Original-Content verwenden
+          translatedBoilerplates.push({
+            id: section.id,
+            translatedContent: section.content,
+            translatedTitle: section.customTitle || null
+          });
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 5. GLOSSAR-TRACKING & METRIKEN
+    // ══════════════════════════════════════════════════════════════
+
+    // Alle übersetzten Texte für Glossar-Tracking sammeln
+    let allTranslatedText = translatedContent + ' ' + translatedTitle;
+    if (translatedBoilerplates) {
+      for (const bp of translatedBoilerplates) {
+        allTranslatedText += ' ' + bp.translatedContent;
+        if (bp.translatedTitle) {
+          allTranslatedText += ' ' + bp.translatedTitle;
+        }
+      }
+    }
+
     const glossaryUsed = findUsedGlossaryEntries(
-      translatedContent + ' ' + translatedTitle,
+      allTranslatedText,
       input.glossaryEntries
     );
 
@@ -312,31 +461,42 @@ INHALT: [übersetzter Inhalt]`;
 
     const duration = Date.now() - startTime;
 
+    // Gesamte übersetzte Zeichenzahl berechnen
+    let totalTranslatedChars = translatedContent.length;
+    if (translatedBoilerplates) {
+      for (const bp of translatedBoilerplates) {
+        totalTranslatedChars += bp.translatedContent.length;
+      }
+    }
+
     console.log('📊 Übersetzung abgeschlossen', {
       sourceLanguage: input.sourceLanguage,
       targetLanguage: input.targetLanguage,
       originalChars: input.content.length,
       translatedChars: translatedContent.length,
+      boilerplatesTranslated: translatedBoilerplates?.length || 0,
       glossaryUsed: glossaryUsed.length,
       confidence: confidence.toFixed(2),
       durationMs: duration
     });
 
     // ══════════════════════════════════════════════════════════════
-    // 5. OUTPUT
+    // 6. OUTPUT
     // ══════════════════════════════════════════════════════════════
 
     return {
       translatedContent,
       translatedTitle,
+      translatedBoilerplates,
       glossaryUsed,
       confidence,
       sourceLanguage: input.sourceLanguage,
       targetLanguage: input.targetLanguage,
       stats: {
         originalCharCount: input.content.length,
-        translatedCharCount: translatedContent.length,
-        glossaryMatchCount: glossaryUsed.length
+        translatedCharCount: totalTranslatedChars,
+        glossaryMatchCount: glossaryUsed.length,
+        boilerplatesTranslated: translatedBoilerplates?.length || 0
       },
       timestamp: new Date().toISOString(),
       modelUsed: 'gemini-2.5-flash'

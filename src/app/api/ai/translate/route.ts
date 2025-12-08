@@ -12,6 +12,21 @@ import { LanguageCode } from '@/types/international';
 import { GlossaryEntry } from '@/lib/ai/schemas/translate-press-release-schemas';
 
 /**
+ * Boilerplate-Section Interface für API
+ */
+interface BoilerplateSectionInput {
+  id: string;
+  type?: 'boilerplate' | 'lead' | 'main' | 'quote';
+  content: string;
+  customTitle?: string;
+  metadata?: {
+    person?: string;
+    role?: string;
+    company?: string;
+  };
+}
+
+/**
  * Request-Interface für Übersetzungs-Anfragen
  */
 interface TranslateRequest {
@@ -37,6 +52,8 @@ interface TranslateRequest {
   preserveFormatting?: boolean;
   /** Optional: Aktuelle Version des Originals (für Outdated-Tracking) */
   sourceVersion?: number;
+  /** Optional: Boilerplate-Sections zum separaten Übersetzen */
+  boilerplateSections?: BoilerplateSectionInput[];
 }
 
 /**
@@ -80,7 +97,8 @@ export async function POST(request: NextRequest) {
         useGlossary = true,
         tone = 'professional',
         preserveFormatting = true,
-        sourceVersion = 1
+        sourceVersion = 1,
+        boilerplateSections = []
       } = data;
 
       // Pflichtfelder prüfen
@@ -125,6 +143,7 @@ export async function POST(request: NextRequest) {
         targetLanguage,
         contentLength: content.length,
         titleLength: title.length,
+        boilerplateSectionsCount: boilerplateSections.length,
         useGlossary,
         customerId,
         organizationId: auth.organizationId
@@ -207,12 +226,24 @@ export async function POST(request: NextRequest) {
         preserveFormatting
       });
 
+      // Boilerplate-Sections für den Flow vorbereiten (nur Sections mit Content)
+      const boilerplatesForFlow = boilerplateSections
+        .filter((section: BoilerplateSectionInput) => section.content && section.content.trim().length > 0)
+        .map((section: BoilerplateSectionInput) => ({
+          id: section.id,
+          type: section.type,
+          content: section.content,
+          customTitle: section.customTitle || null,
+          metadata: section.metadata || null
+        }));
+
       const translationResult = await translatePressReleaseFlow({
         content,
         title,
         sourceLanguage,
         targetLanguage,
         glossaryEntries: glossaryEntries.length > 0 ? glossaryEntries : null,
+        boilerplateSections: boilerplatesForFlow.length > 0 ? boilerplatesForFlow : null,
         tone,
         preserveFormatting,
         customerId
@@ -221,6 +252,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ Übersetzung erfolgreich', {
         translatedTitleLength: translationResult.translatedTitle.length,
         translatedContentLength: translationResult.translatedContent.length,
+        translatedBoilerplatesCount: translationResult.translatedBoilerplates?.length || 0,
         glossaryUsed: translationResult.glossaryUsed.length,
         confidence: translationResult.confidence
       });
@@ -237,6 +269,7 @@ export async function POST(request: NextRequest) {
           language: targetLanguage,
           title: translationResult.translatedTitle,
           content: translationResult.translatedContent,
+          translatedBoilerplates: translationResult.translatedBoilerplates,
           modelUsed: translationResult.modelUsed,
           glossaryEntriesUsed: translationResult.glossaryUsed,
           sourceVersion
@@ -274,6 +307,7 @@ export async function POST(request: NextRequest) {
           language: targetLanguage,
           title: translationResult.translatedTitle,
           content: translationResult.translatedContent,
+          translatedBoilerplates: translationResult.translatedBoilerplates || null,
           status: 'generated',
           isOutdated: false
         },
@@ -283,6 +317,7 @@ export async function POST(request: NextRequest) {
           originalCharCount: translationResult.stats.originalCharCount,
           translatedCharCount: translationResult.stats.translatedCharCount,
           glossaryMatchCount: translationResult.stats.glossaryMatchCount,
+          boilerplatesTranslated: translationResult.stats.boilerplatesTranslated || 0,
           confidence: translationResult.confidence
         },
         meta: {

@@ -25,6 +25,36 @@ export const GlossaryEntrySchema = z.object({
 });
 
 /**
+ * Boilerplate-Section Schema für Übersetzung
+ * Enthält strukturierte Firmen-Informationen, Zitate, etc.
+ */
+export const BoilerplateSectionSchema = z.object({
+  /** Eindeutige ID der Section */
+  id: z.string()
+    .describe('Eindeutige ID der Boilerplate-Section'),
+
+  /** Typ der Section */
+  type: z.enum(['boilerplate', 'lead', 'main', 'quote']).optional()
+    .describe('Art des Inhalts'),
+
+  /** HTML-Inhalt der Section */
+  content: z.string()
+    .describe('HTML-Inhalt der Boilerplate-Section'),
+
+  /** Optionaler Titel (z.B. "Über die Firma") */
+  customTitle: z.string().nullish()
+    .describe('Optionaler Titel der Section'),
+
+  /** Metadaten für Zitate */
+  metadata: z.object({
+    person: z.string().nullish(),
+    role: z.string().nullish(),
+    company: z.string().nullish()
+  }).nullish()
+    .describe('Metadaten für Zitate (Person, Rolle, Firma)')
+});
+
+/**
  * Input Schema für Pressemitteilungs-Übersetzung
  */
 export const TranslatePressReleaseInputSchema = z.object({
@@ -48,6 +78,10 @@ export const TranslatePressReleaseInputSchema = z.object({
   glossaryEntries: z.array(GlossaryEntrySchema).nullish()
     .describe('Kundenspezifische Fachbegriffe die exakt übersetzt werden müssen'),
 
+  /** Boilerplate-Sections (Firmeninfos, Zitate, etc.) */
+  boilerplateSections: z.array(BoilerplateSectionSchema).nullish()
+    .describe('Strukturierte Boilerplate-Sections die separat übersetzt werden'),
+
   /** HTML-Formatierung beibehalten */
   preserveFormatting: z.boolean().default(true)
     .describe('Ob die HTML-Formatierung exakt beibehalten werden soll'),
@@ -64,6 +98,18 @@ export const TranslatePressReleaseInputSchema = z.object({
 /**
  * Output Schema für Pressemitteilungs-Übersetzung
  */
+/**
+ * Übersetzte Boilerplate-Section
+ */
+export const TranslatedBoilerplateSectionSchema = z.object({
+  /** ID der originalen Section */
+  id: z.string(),
+  /** Übersetzter Inhalt */
+  translatedContent: z.string(),
+  /** Übersetzter Titel (falls vorhanden) */
+  translatedTitle: z.string().nullish()
+});
+
 export const TranslatePressReleaseOutputSchema = z.object({
   /** Übersetzter HTML-Content */
   translatedContent: z.string()
@@ -72,6 +118,10 @@ export const TranslatePressReleaseOutputSchema = z.object({
   /** Übersetzter Titel */
   translatedTitle: z.string()
     .describe('Der übersetzte Titel'),
+
+  /** Übersetzte Boilerplate-Sections */
+  translatedBoilerplates: z.array(TranslatedBoilerplateSectionSchema).nullish()
+    .describe('Die übersetzten Boilerplate-Sections'),
 
   /** IDs der verwendeten Glossar-Einträge */
   glossaryUsed: z.array(z.string())
@@ -96,7 +146,9 @@ export const TranslatePressReleaseOutputSchema = z.object({
     translatedCharCount: z.number()
       .describe('Zeichenanzahl der Übersetzung'),
     glossaryMatchCount: z.number()
-      .describe('Anzahl der Glossar-Treffer')
+      .describe('Anzahl der Glossar-Treffer'),
+    boilerplatesTranslated: z.number().optional()
+      .describe('Anzahl der übersetzten Boilerplates')
   }).describe('Übersetzungs-Statistiken'),
 
   /** Zeitstempel */
@@ -112,6 +164,8 @@ export const TranslatePressReleaseOutputSchema = z.object({
  * Type Exports für TypeScript
  */
 export type GlossaryEntry = z.infer<typeof GlossaryEntrySchema>;
+export type BoilerplateSection = z.infer<typeof BoilerplateSectionSchema>;
+export type TranslatedBoilerplateSection = z.infer<typeof TranslatedBoilerplateSectionSchema>;
 export type TranslatePressReleaseInput = z.infer<typeof TranslatePressReleaseInputSchema>;
 export type TranslatePressReleaseOutput = z.infer<typeof TranslatePressReleaseOutputSchema>;
 
