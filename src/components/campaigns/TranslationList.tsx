@@ -21,8 +21,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
-import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { prService } from "@/lib/firebase/pr-service";
+import { pdfTemplateService } from "@/lib/firebase/pdf-template-service";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
@@ -69,46 +69,107 @@ export function TranslationList({
       const campaigns = await prService.getByProjectId(projectId, { organizationId });
       const campaign = campaigns.length > 0 ? campaigns[0] : null;
 
-      // Boilerplates für PDF vorbereiten (übersetzte Version oder Original von Campaign)
-      let boilerplateSections: any[] = [];
+      // Boilerplates für PDF vorbereiten - GENAU wie im Email-Sender
+      const boilerplatesForPdf = (translation.translatedBoilerplates || []).map(tb => {
+        const originalSection = campaign?.boilerplateSections?.find(
+          (s: any) => s.id === tb.id
+        );
+        // Type-Mapping wie im Email-Sender
+        const typeMap: Record<string, 'lead' | 'main' | 'quote' | 'contact' | undefined> = {
+          'lead': 'lead',
+          'main': 'main',
+          'quote': 'quote',
+          'contact': 'contact',
+          'boilerplate': undefined,
+        };
+        return {
+          id: tb.id,
+          customTitle: tb.translatedTitle || originalSection?.customTitle || '',
+          content: tb.translatedContent,
+          type: typeMap[originalSection?.type || ''] || undefined
+        };
+      });
 
-      if (translation.translatedBoilerplates && translation.translatedBoilerplates.length > 0) {
-        // Übersetzte Boilerplates verwenden
-        boilerplateSections = translation.translatedBoilerplates.map(bp => {
-          const originalSection = campaign?.boilerplateSections?.find(
-            (bs: any) => bs.id === bp.id || bs.boilerplateId === bp.id
-          );
-          return {
-            id: bp.id,
-            customTitle: bp.translatedTitle || originalSection?.customTitle || '',
-            content: bp.translatedContent || '',
-            type: originalSection?.type
-          };
-        });
-      } else if (campaign?.boilerplateSections && campaign.boilerplateSections.length > 0) {
-        // Fallback: Original-Boilerplates von der Campaign verwenden
-        boilerplateSections = campaign.boilerplateSections.map((bs: any) => ({
-          id: bs.id || bs.boilerplateId,
-          customTitle: bs.customTitle || '',
-          content: bs.content || bs.boilerplate?.content || '',
-          type: bs.type
-        }));
+      // Template laden (wie im Email-Sender)
+      const templateId = campaign?.templateId || 'default';
+      let template;
+      try {
+        if (templateId && templateId !== 'default') {
+          template = await pdfTemplateService.getTemplateById(templateId);
+        }
+        if (!template) {
+          template = await pdfTemplateService.getDefaultTemplate(organizationId);
+        }
+      } catch {
+        template = await pdfTemplateService.getDefaultTemplate(organizationId);
       }
 
-      // PDF via pdfVersionsService generieren (wie Kampagnen-Edit-Seite)
-      // createPreviewPDF speichert automatisch in Pressemeldungen/Vorschau/
-      const { pdfUrl } = await pdfVersionsService.createPreviewPDF(
-        {
-          title: translation.title || `Übersetzung_${translation.language.toUpperCase()}`,
+      // Template HTML rendern (wie im Email-Sender)
+      const translatedTitle = translation.title ||
+        `${campaign?.title || 'Übersetzung'} (${LANGUAGE_NAMES[translation.language]})`;
+
+      const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
+        title: translatedTitle,
+        mainContent: translation.content,
+        boilerplateSections: boilerplatesForPdf,
+        keyVisual: campaign?.keyVisual,
+        clientName: campaign?.clientName || 'Vorschau',
+        date: new Date().toISOString(),
+        language: translation.language
+      });
+
+      // PDF via API generieren MIT fertigem HTML (wie im Email-Sender)
+      const fileName = `${translatedTitle.replace(/[^a-zA-Z0-9]/g, '_')}_${translation.language.toUpperCase()}_Vorschau.pdf`;
+
+      const pdfResponse = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: campaign?.id || `translation_${translation.id}`,
+          organizationId,
+          title: translatedTitle,
           mainContent: translation.content,
-          boilerplateSections,
+          boilerplateSections: boilerplatesForPdf,
           keyVisual: campaign?.keyVisual,
           clientName: campaign?.clientName || 'Vorschau',
-          templateId: campaign?.templateId
-        },
-        organizationId,
-        campaign?.id // Campaign-ID für korrekten Ordner-Upload
-      );
+          userId: 'preview-user',
+          html: templateHtml, // FERTIGES HTML mit übersetzten Boilerplates!
+          fileName,
+          options: {
+            format: 'A4',
+            orientation: 'portrait',
+            printBackground: true,
+            waitUntil: 'networkidle0'
+          }
+        })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF-Generierung fehlgeschlagen: ${pdfResponse.status}`);
+      }
+
+      const pdfResult = await pdfResponse.json();
+
+      if (!pdfResult.success) {
+        throw new Error(pdfResult.error || 'PDF-Generierung fehlgeschlagen');
+      }
+
+      // PDF öffnen (Base64 oder URL)
+      let pdfUrl: string;
+      if (pdfResult.pdfUrl) {
+        pdfUrl = pdfResult.pdfUrl;
+      } else if (pdfResult.pdfBase64) {
+        const byteCharacters = atob(pdfResult.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        pdfUrl = URL.createObjectURL(blob);
+      } else {
+        throw new Error('Keine PDF-Daten erhalten');
+      }
 
       // PDF in neuem Tab öffnen
       window.open(pdfUrl, '_blank');
