@@ -14,14 +14,11 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { toastService } from "@/lib/utils/toast";
 import {
   LanguageIcon,
-  GlobeAltIcon,
   BookOpenIcon,
   PlusIcon,
-  XMarkIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { SUPPORTED_UI_LANGUAGES, LANGUAGE_NAMES, UILanguage, DEFAULT_LANGUAGE } from "@/config/i18n";
-import { FlagIcon } from "@/app/dashboard/contacts/crm/components/shared/FlagIcon";
 
 export default function LanguageSettingsPage() {
   const t = useTranslations('settings.language');
@@ -34,10 +31,6 @@ export default function LanguageSettingsPage() {
 
   // UI-Sprache (User-Level)
   const [uiLanguage, setUiLanguage] = useState<UILanguage>(DEFAULT_LANGUAGE);
-
-  // Content-Sprachen (Organization-Level)
-  const [primaryLanguage] = useState<string>('de'); // Fest, nicht änderbar
-  const [additionalLanguages, setAdditionalLanguages] = useState<string[]>([]);
 
   // Glossar-Suche
   const [glossarySearch, setGlossarySearch] = useState('');
@@ -53,12 +46,10 @@ export default function LanguageSettingsPage() {
     try {
       setLoading(true);
       // TODO: Lade UI-Sprache aus User-Preferences
-      // TODO: Lade Content-Sprachen aus Organization
       // TODO: Lade Glossar-Einträge
 
       // Placeholder für jetzt
       setUiLanguage(DEFAULT_LANGUAGE);
-      setAdditionalLanguages(['en']);
     } catch (error) {
       toastService.error('Fehler beim Laden der Einstellungen');
     } finally {
@@ -80,51 +71,10 @@ export default function LanguageSettingsPage() {
     }
   };
 
-  const handleAddLanguage = () => {
-    if (additionalLanguages.length >= 3) {
-      toastService.error(t('maxLanguagesReached'));
-      return;
-    }
-    // TODO: CountrySelector Modal öffnen
-    toastService.success('CountrySelector Modal öffnen (TODO)');
-  };
-
-  const handleRemoveLanguage = (langCode: string) => {
-    setAdditionalLanguages(prev => prev.filter(l => l !== langCode));
-    // TODO: In Organization speichern
-  };
-
   const handleNewGlossaryEntry = () => {
     // TODO: Glossar-Modal öffnen
     toastService.success('Glossar-Modal öffnen (TODO)');
   };
-
-  // Mapping von Sprachcode zu Ländercode für Flaggen
-  const languageToCountry: Record<string, string> = {
-    de: 'DE',
-    en: 'GB',
-    fr: 'FR',
-    es: 'ES',
-    it: 'IT',
-    nl: 'NL',
-    pt: 'PT',
-    pl: 'PL',
-  };
-
-  // Mapping von Sprachcode zu Sprachname
-  const languageNames: Record<string, string> = {
-    de: 'Deutsch',
-    en: 'English',
-    fr: 'Français',
-    es: 'Español',
-    it: 'Italiano',
-    nl: 'Nederlands',
-    pt: 'Português',
-    pl: 'Polski',
-  };
-
-  // Alle Content-Sprachen für Glossar-Spalten
-  const allContentLanguages = [primaryLanguage, ...additionalLanguages];
 
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
@@ -180,67 +130,7 @@ export default function LanguageSettingsPage() {
                 </Field>
               </div>
 
-              {/* Box 2: Content-Sprachen */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <GlobeAltIcon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{t('contentLanguages')}</h2>
-                    <Text className="text-sm text-gray-600">{t('contentLanguagesDescription')}</Text>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Primärsprache (fest) */}
-                  <div>
-                    <Text className="text-sm font-medium text-gray-700 mb-2">{t('primaryLanguage')}</Text>
-                    <div className="inline-flex items-center px-3 py-2 bg-gray-100 rounded-md">
-                      <FlagIcon countryCode="DE" className="h-4 w-6 mr-2" />
-                      <span className="text-sm font-medium">Deutsch</span>
-                    </div>
-                  </div>
-
-                  {/* Zusätzliche Sprachen */}
-                  <div>
-                    <Text className="text-sm font-medium text-gray-700 mb-2">
-                      {t('additionalLanguages')} ({additionalLanguages.length}/3)
-                    </Text>
-                    <div className="flex flex-wrap gap-2">
-                      {additionalLanguages.map((lang) => (
-                        <div
-                          key={lang}
-                          className="inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-md"
-                        >
-                          <FlagIcon countryCode={languageToCountry[lang] || lang.toUpperCase()} className="h-4 w-6 mr-2" />
-                          <span className="text-sm font-medium mr-2">
-                            {languageNames[lang] || lang}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveLanguage(lang)}
-                            className="p-0.5 hover:bg-blue-100 rounded"
-                          >
-                            <XMarkIcon className="h-4 w-4 text-blue-600" />
-                          </button>
-                        </div>
-                      ))}
-
-                      {additionalLanguages.length < 3 && (
-                        <button
-                          onClick={handleAddLanguage}
-                          className="inline-flex items-center px-3 py-2 border-2 border-dashed border-gray-300 rounded-md text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <PlusIcon className="h-4 w-4 mr-1" />
-                          <span className="text-sm">{t('addLanguage')}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Box 3: Glossar */}
+              {/* Box 2: Glossar */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -291,14 +181,12 @@ export default function LanguageSettingsPage() {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {t('customer')}
                         </th>
-                        {allContentLanguages.map((lang) => (
-                          <th
-                            key={lang}
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            {languageNames[lang] || lang}
-                          </th>
-                        ))}
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Begriff (DE)
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Übersetzungen
+                        </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {tCommon('actions')}
                         </th>
@@ -307,7 +195,7 @@ export default function LanguageSettingsPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {/* Placeholder - keine Einträge */}
                       <tr>
-                        <td colSpan={allContentLanguages.length + 2} className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                           <BookOpenIcon className="h-8 w-8 mx-auto text-gray-300 mb-2" />
                           <Text>Noch keine Glossar-Einträge vorhanden</Text>
                           <Text className="text-sm">Klicken Sie auf "{t('newEntry')}" um einen Begriff hinzuzufügen</Text>
@@ -323,11 +211,11 @@ export default function LanguageSettingsPage() {
                 <div className="flex">
                   <LanguageIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Hinweis zur Sprachverwaltung</p>
+                    <p className="font-medium mb-1">Hinweis zum Glossar</p>
                     <p>
-                      Die <strong>UI-Sprache</strong> bestimmt die Sprache der Benutzeroberfläche.
-                      Die <strong>Content-Sprachen</strong> definieren, in welchen Sprachen Ihre Inhalte
-                      (Pressemitteilungen, etc.) erstellt und übersetzt werden können.
+                      Das <strong>Glossar</strong> definiert kundenspezifische Fachbegriffe, die bei
+                      KI-Übersetzungen exakt so übersetzt werden sollen. Jeder Eintrag ist einem
+                      Kunden zugeordnet.
                     </p>
                   </div>
                 </div>
