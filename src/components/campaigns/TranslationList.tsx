@@ -14,12 +14,14 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
   EyeIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
+import { TranslationEditModal } from "./TranslationEditModal";
 
 interface TranslationListProps {
   organizationId: string;
@@ -41,6 +43,7 @@ export function TranslationList({
   className = "",
 }: TranslationListProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
+  const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
 
   // Lade alle Übersetzungen
   const { data: translations, isLoading, refetch } = useProjectTranslations(
@@ -219,6 +222,14 @@ export function TranslationList({
               )}
               <Button
                 plain
+                onClick={() => setEditingTranslation(translation)}
+                title="Bearbeiten"
+                className="text-purple-600 hover:text-purple-800"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                plain
                 onClick={() => onTranslate(translation.language)}
                 title="Neu übersetzen"
                 className="text-blue-600 hover:text-blue-800"
@@ -292,6 +303,19 @@ export function TranslationList({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Edit-Modal */}
+      <TranslationEditModal
+        isOpen={!!editingTranslation}
+        onClose={() => setEditingTranslation(null)}
+        translation={editingTranslation}
+        organizationId={organizationId}
+        projectId={projectId}
+        onSaved={() => {
+          refetch();
+          setEditingTranslation(null);
+        }}
+      />
     </div>
   );
 }

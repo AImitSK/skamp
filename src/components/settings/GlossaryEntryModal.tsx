@@ -196,7 +196,9 @@ export function GlossaryEntryModal({
           {/* Übersetzungen */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label>Übersetzungen</Label>
+              <span className="text-base/6 text-zinc-950 font-medium sm:text-sm/6 dark:text-white">
+                Übersetzungen
+              </span>
               <Badge color="purple" className="text-xs">
                 <SparklesIcon className="h-3 w-3 mr-1" />
                 Für KI-Übersetzung
