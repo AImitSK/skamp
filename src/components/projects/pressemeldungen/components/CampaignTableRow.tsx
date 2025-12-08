@@ -19,14 +19,11 @@ import {
 import { PRCampaign } from '@/types/pr';
 import { TeamMember } from '@/types/international';
 import { ApprovalEnhanced } from '@/types/approvals';
-import { LanguageCode } from '@/types/international';
 import { prService } from '@/lib/firebase/pr-service';
 import { approvalService } from '@/lib/firebase/approval-service';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { toastService } from '@/lib/utils/toast';
-import { TranslationButton } from '@/components/campaigns/TranslationButton';
-import { TranslationModal } from '@/components/campaigns/TranslationModal';
 
 interface CampaignTableRowProps {
   campaign: PRCampaign;
@@ -43,7 +40,6 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [showTranslationModal, setShowTranslationModal] = useState(false);
 
   // Finde die Freigabe für diese Kampagne
   const campaignApproval = useMemo(
@@ -148,54 +144,6 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     }
   };
 
-  // Übersetzungs-Handler
-  const handleTranslate = async (params: {
-    targetLanguage: LanguageCode;
-    useGlossary: boolean;
-    tone: 'formal' | 'professional' | 'neutral';
-  }) => {
-    if (!campaign.projectId || !campaign.id) {
-      throw new Error('Kampagne hat kein zugeordnetes Projekt');
-    }
-
-    if (!user) {
-      throw new Error('Nicht angemeldet');
-    }
-
-    // Firebase ID Token für Auth holen
-    const idToken = await user.getIdToken();
-
-    const response = await fetch('/api/ai/translate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({
-        projectId: campaign.projectId,
-        campaignId: campaign.id,
-        title: campaign.title,
-        content: campaign.contentHtml || campaign.mainContent || '',
-        sourceLanguage: 'de', // Quellsprache immer Deutsch
-        targetLanguage: params.targetLanguage,
-        tone: params.tone,
-        useGlossary: params.useGlossary,
-        customerId: campaign.clientId, // clientId ist die Kunden-Zuordnung in PRCampaign
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Übersetzung fehlgeschlagen');
-    }
-
-    toastService.success('Übersetzung erfolgreich erstellt');
-    onRefresh();
-  };
-
-  // Prüfe ob Übersetzung verfügbar ist (Kampagne muss zu einem Projekt gehören)
-  const canTranslate = !!campaign.projectId;
-
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Unbekannt';
 
@@ -222,7 +170,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[35%] min-w-0 pr-12">
+        <div className="w-[40%] min-w-0 pr-4">
           <div className="flex items-center">
             <div className="min-w-0 flex-1">
               <a
@@ -241,7 +189,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Status */}
-        <div className="w-[15%]">
+        <div className="w-[18%]">
           <Badge
             color={getStatusColor(campaign.status) as any}
             className="text-xs whitespace-nowrap"
@@ -288,25 +236,10 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Erstellt am */}
-        <div className="w-[12%]">
+        <div className="w-[15%]">
           <span className="text-sm text-gray-600">
             {formatDate(campaign.createdAt)}
           </span>
-        </div>
-
-        {/* Übersetzungen */}
-        <div className="w-[10%]">
-          {canTranslate && campaign.projectId ? (
-            <TranslationButton
-              organizationId={organizationId}
-              projectId={campaign.projectId}
-              onTranslate={() => setShowTranslationModal(true)}
-              compact={true}
-              showTooltip={true}
-            />
-          ) : (
-            <span className="text-xs text-gray-400">—</span>
-          )}
         </div>
 
         {/* Kampagne Versenden */}
@@ -383,19 +316,6 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Übersetzungs-Modal */}
-      {canTranslate && campaign.projectId && (
-        <TranslationModal
-          isOpen={showTranslationModal}
-          onClose={() => setShowTranslationModal(false)}
-          onTranslate={handleTranslate}
-          organizationId={organizationId}
-          projectId={campaign.projectId}
-          customerId={campaign.clientId}
-          sourceLanguage="de"
-        />
-      )}
     </div>
   );
 }
