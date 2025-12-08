@@ -69,18 +69,31 @@ export function TranslationList({
       const campaigns = await prService.getByProjectId(projectId, { organizationId });
       const campaign = campaigns.length > 0 ? campaigns[0] : null;
 
-      // Boilerplates für PDF vorbereiten (übersetzte Version)
-      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => {
-        const originalSection = campaign?.boilerplateSections?.find(
-          (bs: any) => bs.id === bp.id || bs.boilerplateId === bp.id
-        );
-        return {
-          id: bp.id,
-          customTitle: bp.translatedTitle || originalSection?.customTitle || '',
-          content: bp.translatedContent || '',
-          type: originalSection?.type
-        };
-      });
+      // Boilerplates für PDF vorbereiten (übersetzte Version oder Original von Campaign)
+      let boilerplateSections: any[] = [];
+
+      if (translation.translatedBoilerplates && translation.translatedBoilerplates.length > 0) {
+        // Übersetzte Boilerplates verwenden
+        boilerplateSections = translation.translatedBoilerplates.map(bp => {
+          const originalSection = campaign?.boilerplateSections?.find(
+            (bs: any) => bs.id === bp.id || bs.boilerplateId === bp.id
+          );
+          return {
+            id: bp.id,
+            customTitle: bp.translatedTitle || originalSection?.customTitle || '',
+            content: bp.translatedContent || '',
+            type: originalSection?.type
+          };
+        });
+      } else if (campaign?.boilerplateSections && campaign.boilerplateSections.length > 0) {
+        // Fallback: Original-Boilerplates von der Campaign verwenden
+        boilerplateSections = campaign.boilerplateSections.map((bs: any) => ({
+          id: bs.id || bs.boilerplateId,
+          customTitle: bs.customTitle || '',
+          content: bs.content || bs.boilerplate?.content || '',
+          type: bs.type
+        }));
+      }
 
       // PDF via pdfVersionsService generieren (wie Kampagnen-Edit-Seite)
       // createPreviewPDF speichert automatisch in Pressemeldungen/Vorschau/
