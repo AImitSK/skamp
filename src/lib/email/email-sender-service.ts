@@ -266,7 +266,8 @@ export class EmailSenderService {
         boilerplateSections: [], // Boilerplates sind bereits im übersetzten Content enthalten
         keyVisual: campaign.keyVisual,
         clientName: campaign.clientName || 'Client',
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        language: translation.language // Sprache für Template-Labels
       });
 
       // PDF-API aufrufen

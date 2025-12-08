@@ -34,7 +34,10 @@ export interface TemplateData {
   };
   clientName: string;
   date: string;
-  
+
+  // Sprache für Template-Labels (de, en, fr, etc.)
+  language?: string;
+
   // Erweiterte Template-Daten (optional)
   subtitle?: string;
   author?: string;

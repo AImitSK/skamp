@@ -807,11 +807,38 @@ class PDFTemplateService {
     templateData: TemplateData,
     template: PDFTemplate
   ): string {
-    const { title, mainContent, boilerplateSections, keyVisual, clientName, date } = templateData;
-    
+    const { title, mainContent, boilerplateSections, keyVisual, clientName, date, language = 'de' } = templateData;
+
+    // Mehrsprachige Labels für PDF-Template
+    const labels: Record<string, { documentTitle: string; footer: string }> = {
+      de: { documentTitle: 'Pressemitteilung', footer: 'Alle Rechte vorbehalten' },
+      en: { documentTitle: 'Press Release', footer: 'All rights reserved' },
+      fr: { documentTitle: 'Communiqué de presse', footer: 'Tous droits réservés' },
+      es: { documentTitle: 'Comunicado de prensa', footer: 'Todos los derechos reservados' },
+      it: { documentTitle: 'Comunicato stampa', footer: 'Tutti i diritti riservati' },
+      nl: { documentTitle: 'Persbericht', footer: 'Alle rechten voorbehouden' },
+      pl: { documentTitle: 'Komunikat prasowy', footer: 'Wszelkie prawa zastrzeżone' },
+      pt: { documentTitle: 'Comunicado de imprensa', footer: 'Todos os direitos reservados' }
+    };
+
+    // Locale für Datumsformatierung
+    const dateLocales: Record<string, string> = {
+      de: 'de-DE',
+      en: 'en-US',
+      fr: 'fr-FR',
+      es: 'es-ES',
+      it: 'it-IT',
+      nl: 'nl-NL',
+      pl: 'pl-PL',
+      pt: 'pt-PT'
+    };
+
+    const currentLabels = labels[language] || labels.de;
+    const dateLocale = dateLocales[language] || 'de-DE';
+
     return `
       <!DOCTYPE html>
-      <html lang="de">
+      <html lang="${language}">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1145,16 +1172,16 @@ class PDFTemplateService {
       <body class="template-${template.id}">
         <div class="document-header">
           ${clientName ? `<div class="company-info">${clientName}</div>` : ''}
-          <div class="document-title">Pressemitteilung</div>
-          <h1 class="press-title">${title || 'Titel der Pressemitteilung'}</h1>
-          <div class="press-date">${date ? new Date(date).toLocaleDateString('de-DE', { 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
-          }) : new Date().toLocaleDateString('de-DE', { 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
+          <div class="document-title">${currentLabels.documentTitle}</div>
+          <h1 class="press-title">${title || currentLabels.documentTitle}</h1>
+          <div class="press-date">${date ? new Date(date).toLocaleDateString(dateLocale, {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+          }) : new Date().toLocaleDateString(dateLocale, {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
           })}</div>
         </div>
         
@@ -1206,7 +1233,7 @@ class PDFTemplateService {
         ` : ''}
         
         <div class="footer">
-          <p>© ${new Date().getFullYear()} ${clientName || 'Unternehmen'} – Alle Rechte vorbehalten</p>
+          <p>© ${new Date().getFullYear()} ${clientName || 'Unternehmen'} – ${currentLabels.footer}</p>
         </div>
       </body>
       </html>

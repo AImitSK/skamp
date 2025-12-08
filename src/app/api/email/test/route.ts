@@ -110,9 +110,12 @@ interface TestEmailRequest {
   };
   campaignId?: string;
   signatureId?: string; // NEU: Signatur-ID für HTML-Signatur
-  // Phase 2 i18n: Übersetzungs-Parameter
+  // Phase 2 i18n: Ausgewählte Sprachen für PDFs
   projectId?: string;
-  targetLanguage?: string;
+  selectedLanguages?: {
+    original: boolean;
+    translations: string[];
+  };
   testMode: boolean;
 }
 
@@ -287,11 +290,10 @@ export async function POST(request: NextRequest) {
       // NEU: Lade echte Kampagnen-Daten wenn campaignId vorhanden
       let campaign: PRCampaign | null = null;
       let mediaShareUrl: string | undefined;
-      let translatedTitle: string | undefined; // Für Übersetzungen
 
       if (data.campaignId) {
         console.log('📄 Loading campaign data for test email:', data.campaignId);
-        
+
         try {
           // Lade Campaign über Firestore REST API
           const campaignDoc = await firestoreRequest(
@@ -300,60 +302,21 @@ export async function POST(request: NextRequest) {
             undefined,
             token
           );
-          
+
           if (campaignDoc.fields) {
             campaign = convertFirestoreDocument(campaignDoc);
             if (campaign) {
               campaign.id = data.campaignId;
 
-              // Phase 2 i18n: Lade Übersetzung falls targetLanguage angegeben
-              if (data.targetLanguage && data.projectId) {
-                console.log('🌐 Loading translation for language:', data.targetLanguage);
-                try {
-                  const { translationAdminService } = await import('@/lib/firebase-admin/translation-admin-service');
-                  const translation = await translationAdminService.getByLanguage(
-                    auth.organizationId,
-                    data.projectId,
-                    data.targetLanguage
-                  );
-
-                  if (translation) {
-                    // Übersetzung gefunden - verwende übersetzte Inhalte
-                    data.campaignEmail.pressReleaseHtml = translation.content;
-                    if (translation.title) {
-                      // Übersetzten Titel speichern für PDF
-                      translatedTitle = translation.title;
-                      console.log('✅ Translation loaded:', {
-                        language: data.targetLanguage,
-                        titleLength: translation.title?.length,
-                        contentLength: translation.content.length
-                      });
-                    }
-                  } else {
-                    console.log('⚠️ No translation found for language:', data.targetLanguage);
-                    // Fallback: Verwende Original
-                    if (campaign.contentHtml) {
-                      data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
-                    }
-                  }
-                } catch (translationError) {
-                  console.error('❌ Error loading translation:', translationError);
-                  // Fallback: Verwende Original
-                  if (campaign.contentHtml) {
-                    data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
-                  }
-                }
-              } else {
-                // Keine Übersetzung angefordert - verwende die echte Pressemitteilung
-                if (campaign.contentHtml) {
-                  data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
-                }
+              // Verwende Original-Content für Email-Body
+              if (campaign.contentHtml) {
+                data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
               }
 
               // Verwende die Media Share URL falls vorhanden
               mediaShareUrl = campaign.assetShareUrl;
 
-              console.log('✅ Campaign data loaded, using real content');
+              console.log('✅ Campaign data loaded');
               console.log('📎 Media share URL:', mediaShareUrl || 'none');
             }
           }
@@ -433,28 +396,20 @@ export async function POST(request: NextRequest) {
       // Test-Email Prefix
       const testSubject = `[TEST] ${personalizedSubject}`;
 
-      // NEU: Generiere PDF der Pressemitteilung - DIREKT über API
-      // Phase 2 i18n: Verwende übersetzte Version wenn vorhanden
-      let pdfAttachment;
-      if (campaign?.mainContent || campaign?.contentHtml || data.campaignEmail.pressReleaseHtml) {
+      // Phase 2 i18n: Generiere PDFs für alle ausgewählten Sprachen
+      const pdfAttachments: Array<{
+        content: string;
+        filename: string;
+        type: string;
+        disposition: string;
+      }> = [];
+
+      if (campaign?.mainContent || campaign?.contentHtml) {
         try {
-          // Wenn targetLanguage angegeben, verwende die übersetzte Version (data.campaignEmail.pressReleaseHtml)
-          // Sonst verwende Original (campaign.mainContent || campaign.contentHtml)
-          const pdfContent = data.targetLanguage
-            ? data.campaignEmail.pressReleaseHtml
-            : (campaign?.mainContent || campaign?.contentHtml || '');
-
-          const isTranslation = !!data.targetLanguage;
-          console.log(`📄 Generiere PDF für Pressemitteilung... (${isTranslation ? `Übersetzung: ${data.targetLanguage}` : 'Original'})`);
-
-          if (!pdfContent.trim()) {
-            console.warn('⚠️ Kein Content für PDF vorhanden');
-            throw new Error('Kein Content für PDF');
-          }
-
-          // Generiere Template-HTML
           const { pdfTemplateService } = await import('@/lib/firebase/pdf-template-service');
+          const { translationAdminService } = await import('@/lib/firebase-admin/translation-admin-service');
 
+          // Template laden
           let template;
           if (campaign?.templateId) {
             template = await pdfTemplateService.getTemplateById(campaign.templateId);
@@ -464,82 +419,124 @@ export async function POST(request: NextRequest) {
             template = systemTemplates[0];
           }
 
-          // Konvertiere CampaignBoilerplateSection[] in das erwartete Format für das Template
-          // WICHTIG: Bei Übersetzungen sind die Boilerplates bereits im übersetzten Content enthalten!
-          const formattedBoilerplateSections = isTranslation
-            ? [] // Bei Übersetzungen: Keine separaten Boilerplates, da im Content enthalten
-            : (campaign?.boilerplateSections || []).map(section => ({
-                id: section.id,
-                customTitle: section.customTitle,
-                content: section.content || '',
-                type: section.type === 'boilerplate' ? undefined : section.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
-                boilerplate: section.boilerplateId ? { content: section.content || '' } : undefined,
-                contentHtml: section.content
-              }));
+          // Boilerplate-Sections für Original formatieren
+          const formattedBoilerplateSections = (campaign?.boilerplateSections || []).map(section => ({
+            id: section.id,
+            customTitle: section.customTitle,
+            content: section.content || '',
+            type: section.type === 'boilerplate' ? undefined : section.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
+            boilerplate: section.boilerplateId ? { content: section.content || '' } : undefined,
+            contentHtml: section.content
+          }));
 
-          // Titel: Bei Übersetzung den übersetzten Titel verwenden, sonst Campaign-Titel
-          const pdfTitle = isTranslation && translatedTitle
-            ? translatedTitle
-            : (campaign?.title || 'Pressemitteilung');
+          // Helper-Funktion für PDF-Generierung
+          const generatePdf = async (
+            content: string,
+            title: string,
+            language: string,
+            isTranslation: boolean
+          ) => {
+            const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
+              title,
+              mainContent: content,
+              boilerplateSections: isTranslation ? [] : formattedBoilerplateSections,
+              keyVisual: campaign?.keyVisual,
+              clientName: campaign?.clientName || 'Test Client',
+              date: new Date().toISOString(),
+              language
+            });
 
-          console.log('📝 PDF-Titel Debug:', {
-            isTranslation,
-            translatedTitle,
-            campaignTitle: campaign?.title,
-            finalPdfTitle: pdfTitle
-          });
+            const languageSuffix = isTranslation ? `_${language.toUpperCase()}` : '';
+            const pdfFileName = `${title.replace(/[^a-zA-Z0-9]/g, '_')}${languageSuffix}_Pressemitteilung.pdf`;
 
-          const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
-            title: pdfTitle,
-            mainContent: pdfContent,
-            boilerplateSections: formattedBoilerplateSections,
-            keyVisual: campaign?.keyVisual,
-            clientName: campaign?.clientName || 'Test Client',
-            date: new Date().toISOString()
-          });
+            const pdfResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-pdf`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                campaignId: campaign?.id || 'temp',
+                organizationId: auth.organizationId,
+                mainContent: content,
+                clientName: campaign?.clientName || 'Test',
+                userId: auth.userId,
+                html: templateHtml,
+                fileName: pdfFileName,
+                title,
+                options: {
+                  format: 'A4' as const,
+                  orientation: 'portrait' as const,
+                  printBackground: true,
+                  waitUntil: 'networkidle0' as const,
+                  margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+                }
+              })
+            });
 
-          // Phase 2 i18n: Sprach-Suffix für Dateinamen
-          const languageSuffix = data.targetLanguage ? `_${data.targetLanguage.toUpperCase()}` : '';
-          const pdfFileName = `${pdfTitle.replace(/[^a-zA-Z0-9]/g, '_')}${languageSuffix}_Pressemitteilung.pdf`;
-
-          // Direkt PDF-API aufrufen (kein Upload, nur Base64)
-          const pdfResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/generate-pdf`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              campaignId: campaign?.id || 'temp',
-              organizationId: auth.organizationId,
-              mainContent: pdfContent,
-              clientName: campaign?.clientName || 'Test',
-              userId: auth.userId,
-              html: templateHtml,
-              fileName: pdfFileName,
-              title: pdfTitle,
-              options: {
-                format: 'A4' as const,
-                orientation: 'portrait' as const,
-                printBackground: true,
-                waitUntil: 'networkidle0' as const,
-                margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+            if (pdfResponse.ok) {
+              const pdfResult = await pdfResponse.json();
+              if (pdfResult.success && pdfResult.pdfBase64) {
+                return {
+                  content: pdfResult.pdfBase64,
+                  filename: pdfFileName,
+                  type: 'application/pdf',
+                  disposition: 'attachment'
+                };
               }
-            })
-          });
+            }
+            return null;
+          };
 
-          if (pdfResponse.ok) {
-            const pdfResult = await pdfResponse.json();
-            if (pdfResult.success && pdfResult.pdfBase64) {
-              pdfAttachment = {
-                content: pdfResult.pdfBase64,
-                filename: pdfFileName,
-                type: 'application/pdf',
-                disposition: 'attachment'
-              };
-              console.log('✅ PDF generiert:', pdfAttachment.filename);
+          // 1. Original-PDF generieren (wenn original: true)
+          if (!data.selectedLanguages || data.selectedLanguages.original !== false) {
+            console.log('📄 Generiere Original-PDF (DE)...');
+            const originalContent = campaign.mainContent || campaign.contentHtml || '';
+            const originalPdf = await generatePdf(
+              originalContent,
+              campaign.title || 'Pressemitteilung',
+              'de',
+              false
+            );
+            if (originalPdf) {
+              pdfAttachments.push(originalPdf);
+              console.log('✅ Original-PDF generiert:', originalPdf.filename);
             }
           }
+
+          // 2. Übersetzungs-PDFs generieren
+          if (data.selectedLanguages?.translations && data.selectedLanguages.translations.length > 0 && data.projectId) {
+            for (const langCode of data.selectedLanguages.translations) {
+              console.log(`📄 Generiere Übersetzungs-PDF (${langCode.toUpperCase()})...`);
+              try {
+                const translation = await translationAdminService.getByLanguage(
+                  auth.organizationId,
+                  data.projectId,
+                  langCode
+                );
+
+                if (translation && translation.content) {
+                  const translationPdf = await generatePdf(
+                    translation.content,
+                    translation.title || `${campaign.title} (${langCode.toUpperCase()})`,
+                    langCode,
+                    true
+                  );
+                  if (translationPdf) {
+                    pdfAttachments.push(translationPdf);
+                    console.log(`✅ Übersetzungs-PDF generiert (${langCode.toUpperCase()}):`, translationPdf.filename);
+                  }
+                } else {
+                  console.warn(`⚠️ Keine Übersetzung gefunden für: ${langCode}`);
+                }
+              } catch (translationError) {
+                console.error(`❌ Fehler beim Laden der Übersetzung ${langCode}:`, translationError);
+              }
+            }
+          }
+
+          console.log(`📎 Insgesamt ${pdfAttachments.length} PDF(s) generiert`);
+
         } catch (pdfError) {
           console.error('⚠️ PDF-Generierung fehlgeschlagen:', pdfError);
-          // Fortfahren ohne PDF - nicht blockierend
+          // Fortfahren ohne PDFs - nicht blockierend
         }
       }
 
@@ -574,9 +571,9 @@ export async function POST(request: NextRequest) {
         }
       };
 
-      // Füge PDF-Anhang hinzu falls vorhanden
-      if (pdfAttachment) {
-        msg.attachments = [pdfAttachment];
+      // Füge alle PDF-Anhänge hinzu falls vorhanden
+      if (pdfAttachments.length > 0) {
+        msg.attachments = pdfAttachments;
       }
 
       const [response] = await sgMail.send(msg);

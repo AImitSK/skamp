@@ -370,20 +370,15 @@ export default function Step3Preview({
         recipientEmail: testEmail
       });
 
-      // Bestimme Zielsprache: Erste ausgewählte Übersetzung, sonst undefined (Original)
-      const targetLanguage = selectedLanguages.translations.length > 0
-        ? selectedLanguages.translations[0]
-        : undefined;
-
-      // API Call für Test-Email mit optionaler Übersetzung
+      // API Call für Test-Email mit allen ausgewählten Sprachen
       const result = await emailService.sendTestEmail({
         campaignId: campaign.id!,
         recipientEmail: testEmail,
         recipientName: 'Test Empfänger',
         draft: draft,
-        // Phase 2 i18n: Projekt-ID und Zielsprache für Übersetzung
+        // Phase 2 i18n: Projekt-ID und ausgewählte Sprachen für PDFs
         projectId: campaign.projectId,
-        targetLanguage: targetLanguage
+        selectedLanguages: selectedLanguages // Alle ausgewählten Sprachen (Original + Übersetzungen)
       });
       
       if (result.success) {

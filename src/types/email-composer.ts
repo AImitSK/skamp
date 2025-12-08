@@ -155,7 +155,12 @@ export interface TestEmailRequest {
   previewContactId?: string;
   // Optional: Projekt-ID für Übersetzungen (Phase 2 i18n)
   projectId?: string;
-  // Optional: Zielsprache für Übersetzung (z.B. 'en', 'fr')
+  // Optional: Ausgewählte Sprachen für PDFs (Original + Übersetzungen)
+  selectedLanguages?: {
+    original: boolean;
+    translations: string[]; // LanguageCode[]
+  };
+  // @deprecated - verwende selectedLanguages stattdessen
   targetLanguage?: string;
 }
 
