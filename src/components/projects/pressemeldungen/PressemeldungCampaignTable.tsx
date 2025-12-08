@@ -89,6 +89,8 @@ export default function PressemeldungCampaignTable({
           <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
             Versenden
           </div>
+          {/* Platzhalter für Aktionen-Dropdown (gleiche Breite wie ml-4 + Button in Row) */}
+          <div className="ml-4 w-[28px]"></div>
         </div>
       </div>
 

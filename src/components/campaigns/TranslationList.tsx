@@ -21,7 +21,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
-import { useAuth } from "@/context/AuthContext";
+import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
+import { prService } from "@/lib/firebase/pr-service";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
@@ -46,7 +47,6 @@ export function TranslationList({
   onPreview,
   className = "",
 }: TranslationListProps) {
-  const { user } = useAuth();
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
   const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
@@ -60,63 +60,47 @@ export function TranslationList({
   // Delete Mutation
   const { mutate: deleteTranslation, isPending: isDeleting } = useDeleteTranslation();
 
-  // PDF-Vorschau generieren und öffnen (nutzt gleiche Logik wie Email-Versand)
+  // PDF-Vorschau generieren und öffnen (nutzt gleiche Logik wie Kampagnen-Edit-Seite)
   const handleGeneratePdf = async (translation: ProjectTranslation) => {
-    if (!user) {
-      toastService.error('Bitte einloggen um PDFs zu generieren');
-      return;
-    }
-
     setGeneratingPdfFor(translation.id);
 
     try {
-      // Firebase Auth Token holen
-      const token = await user.getIdToken();
+      // Finde die zugehörige Campaign für dieses Projekt (für Template, KeyVisual, etc.)
+      const campaigns = await prService.getByProjectId(projectId, { organizationId });
+      const campaign = campaigns.length > 0 ? campaigns[0] : null;
 
-      // PDF via neuen API-Endpoint generieren (wie Email-Versand)
-      const response = await fetch('/api/translation/preview-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          organizationId,
-          projectId,
-          translationId: translation.id
-        })
+      // Boilerplates für PDF vorbereiten (übersetzte Version)
+      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => {
+        const originalSection = campaign?.boilerplateSections?.find(
+          (bs: any) => bs.id === bp.id || bs.boilerplateId === bp.id
+        );
+        return {
+          id: bp.id,
+          customTitle: bp.translatedTitle || originalSection?.customTitle || '',
+          content: bp.translatedContent || '',
+          type: originalSection?.type
+        };
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(errorData.error || `PDF-Generierung fehlgeschlagen: ${response.status}`);
-      }
+      // PDF via pdfVersionsService generieren (wie Kampagnen-Edit-Seite)
+      // createPreviewPDF speichert automatisch in Pressemeldungen/Vorschau/
+      const { pdfUrl } = await pdfVersionsService.createPreviewPDF(
+        {
+          title: translation.title || `Übersetzung_${translation.language.toUpperCase()}`,
+          mainContent: translation.content,
+          boilerplateSections,
+          keyVisual: campaign?.keyVisual,
+          clientName: campaign?.clientName || 'Vorschau',
+          templateId: campaign?.templateId
+        },
+        organizationId,
+        campaign?.id // Campaign-ID für korrekten Ordner-Upload
+      );
 
-      const result = await response.json();
+      // PDF in neuem Tab öffnen
+      window.open(pdfUrl, '_blank');
+      toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
 
-      if (!result.success) {
-        throw new Error(result.error || 'PDF-Generierung fehlgeschlagen');
-      }
-
-      if (result.pdfUrl) {
-        // PDF in neuem Tab öffnen
-        window.open(result.pdfUrl, '_blank');
-        toastService.success(`PDF für ${result.languageName || LANGUAGE_NAMES[translation.language]} geöffnet`);
-      } else if (result.pdfBase64) {
-        // Fallback: Base64 als Blob öffnen
-        const byteCharacters = atob(result.pdfBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-        toastService.success(`PDF für ${result.languageName || LANGUAGE_NAMES[translation.language]} geöffnet`);
-      } else {
-        throw new Error('Keine PDF-Daten erhalten');
-      }
     } catch (error: any) {
       console.error('PDF-Generierung fehlgeschlagen:', error);
       toastService.error(error.message || 'PDF-Generierung fehlgeschlagen');
