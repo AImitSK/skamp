@@ -75,13 +75,13 @@ export function languageToCountryCode(languageCode: string): string | null {
  * @component
  * @example
  * ```tsx
- * <LanguageFlagIcon languageCode="de" className="h-4 w-6" />
- * <LanguageFlagIcon languageCode="en" className="h-3 w-5" />
+ * <LanguageFlagIcon languageCode="de" className="h-3 w-5" />
+ * <LanguageFlagIcon languageCode="en" />
  * ```
  */
 export function LanguageFlagIcon({
   languageCode,
-  className = "h-4 w-6"
+  className = "h-3 w-5"
 }: LanguageFlagIconProps) {
   const countryCode = languageToCountryCode(languageCode);
 

@@ -1,7 +1,7 @@
 // src/components/campaigns/TranslationModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,13 +137,15 @@ export function TranslationModal({
   // Lade bereits vorhandene Übersetzungen
   const { data: existingLanguages } = useAvailableLanguages(organizationId, projectId);
 
-  // Filtere verfügbare Sprachen basierend auf contentLanguages
-  const allowedLanguages = contentLanguages?.additional || AVAILABLE_TARGET_LANGUAGES;
-  const availableLanguages = AVAILABLE_TARGET_LANGUAGES.filter(
-    (lang) =>
-      lang !== sourceLanguage &&
-      (allowedLanguages.includes(lang) || allowedLanguages.length === 0)
-  );
+  // Filtere verfügbare Sprachen basierend auf contentLanguages (memoized)
+  const availableLanguages = useMemo(() => {
+    const allowedLanguages = contentLanguages?.additional || AVAILABLE_TARGET_LANGUAGES;
+    return AVAILABLE_TARGET_LANGUAGES.filter(
+      (lang) =>
+        lang !== sourceLanguage &&
+        (allowedLanguages.includes(lang) || allowedLanguages.length === 0)
+    );
+  }, [sourceLanguage, contentLanguages]);
 
   // Zähle relevante Glossar-Einträge (mit Quell- und Zielsprache)
   const relevantGlossaryCount =
@@ -151,9 +153,14 @@ export function TranslationModal({
       (entry: CustomerGlossaryEntry) => entry.translations[sourceLanguage] && entry.translations[targetLanguage]
     ).length || 0;
 
-  // Reset bei Öffnen
+  // Track ob das Modal gerade geöffnet wurde
+  const wasOpenRef = useRef(false);
+
+  // Reset nur beim initialen Öffnen
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      // Modal wurde gerade geöffnet - Reset
+      wasOpenRef.current = true;
       setError(null);
       setSuccess(false);
       setIsTranslating(false);
@@ -166,6 +173,9 @@ export function TranslationModal({
       else if (availableLanguages.length > 0 && !availableLanguages.includes(targetLanguage)) {
         setTargetLanguage(availableLanguages[0]);
       }
+    } else if (!isOpen) {
+      // Modal wurde geschlossen
+      wasOpenRef.current = false;
     }
   }, [isOpen, availableLanguages, targetLanguage, preselectedLanguage]);
 

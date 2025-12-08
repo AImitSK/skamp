@@ -184,7 +184,7 @@ export function TranslationButton({
                   key={t.language}
                   languageCode={t.language}
                   className={clsx(
-                    "h-4 w-6 cursor-pointer hover:scale-110 transition-transform",
+                    "h-3 w-5 cursor-pointer hover:scale-110 transition-transform",
                     t.isOutdated && "opacity-60"
                   )}
                 />

@@ -183,7 +183,7 @@ export function TranslationList({
             {/* Sprache & Status */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 min-w-[140px]">
-                <LanguageFlagIcon languageCode={translation.language} className="h-4 w-6" />
+                <LanguageFlagIcon languageCode={translation.language} />
                 <Text className="font-medium">
                   {LANGUAGE_NAMES[translation.language] || translation.language}
                 </Text>
