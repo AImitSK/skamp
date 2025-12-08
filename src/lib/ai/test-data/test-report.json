@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-12-08T12:41:23.029Z",
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "results": [
+    {
+      "testCaseId": "translate-1-golf-press-release-de-en",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "inputLength": 2327,
+        "outputLength": 2329,
+        "confidence": 0.9800000000000001,
+        "duration": 15434
+      }
+    },
+    {
+      "testCaseId": "translate-2-tech-press-release-de-en",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "inputLength": 1137,
+        "outputLength": 1072,
+        "confidence": 0.9800000000000001,
+        "duration": 9010
+      }
+    },
+    {
+      "testCaseId": "translate-3-short-announcement-de-fr",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "inputLength": 486,
+        "outputLength": 480,
+        "confidence": 0.9800000000000001,
+        "duration": 5353
+      }
+    },
+    {
+      "testCaseId": "translate-4-with-boilerplate-de-en",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "inputLength": 763,
+        "outputLength": 732,
+        "confidence": 0.9800000000000001,
+        "duration": 6999
+      }
+    },
+    {
+      "testCaseId": "translate-5-complex-formatting-de-en",
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "inputLength": 1039,
+        "outputLength": 999,
+        "confidence": 0.9800000000000001,
+        "duration": 5939
+      }
+    }
+  ]
+}

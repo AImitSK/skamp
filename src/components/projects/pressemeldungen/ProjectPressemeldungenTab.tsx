@@ -81,7 +81,8 @@ export default function ProjectPressemeldungenTab({
         projectId,
         campaignId: campaign.id,
         title: campaign.title,
-        content: campaign.contentHtml || campaign.mainContent || '',
+        // WICHTIG: mainContent enthält den echten PR-Content, contentHtml kann Boilerplate sein
+        content: campaign.mainContent || campaign.contentHtml || '',
         sourceLanguage: 'de',
         targetLanguage: params.targetLanguage,
         tone: params.tone,

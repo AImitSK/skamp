@@ -63,7 +63,8 @@
       "Bash(node scripts/check-auto-reporting.js:*)",
       "Bash(grep:*)",
       "WebFetch(domain:docs.anthropic.com)",
-      "WebFetch(domain:docs.claude.com)"
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(node scripts/find-campaign-for-project.js:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

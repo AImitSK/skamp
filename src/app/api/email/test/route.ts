@@ -309,8 +309,9 @@ export async function POST(request: NextRequest) {
               campaign.id = data.campaignId;
 
               // Verwende Original-Content für Email-Body
-              if (campaign.contentHtml) {
-                data.campaignEmail.pressReleaseHtml = campaign.contentHtml;
+              // WICHTIG: mainContent enthält den echten PR-Content, contentHtml kann Boilerplate sein
+              if (campaign.mainContent || campaign.contentHtml) {
+                data.campaignEmail.pressReleaseHtml = campaign.mainContent || campaign.contentHtml;
               }
 
               // Verwende die Media Share URL falls vorhanden
