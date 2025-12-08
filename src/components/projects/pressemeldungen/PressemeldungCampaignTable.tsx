@@ -74,22 +74,22 @@ export default function PressemeldungCampaignTable({
       {/* Header */}
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center">
-          <div className="w-[40%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[40%] text-xs font-medium text-gray-500 uppercase tracking-wider pr-4">
             Kampagne
           </div>
           <div className="w-[18%] text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
-          <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[12%] text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ marginLeft: '-15px' }}>
             Admin
           </div>
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ marginLeft: '-15px' }}>
             Erstellt am
           </div>
-          <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider" style={{ marginLeft: '-15px' }}>
             Versenden
           </div>
-          {/* Platzhalter für Aktionen-Dropdown (gleiche Breite wie ml-4 + Button in Row) */}
+          {/* Platzhalter für Aktionen-Dropdown */}
           <div className="ml-4 w-[28px]"></div>
         </div>
       </div>
