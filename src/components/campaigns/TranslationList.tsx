@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import {
   LanguageIcon,
   TrashIcon,
@@ -15,6 +16,8 @@ import {
   ClockIcon,
   EyeIcon,
   PencilIcon,
+  EllipsisVerticalIcon,
+  DocumentArrowDownIcon,
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
@@ -44,6 +47,7 @@ export function TranslationList({
 }: TranslationListProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
   const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
+  const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
 
   // Lade alle Übersetzungen
   const { data: translations, isLoading, refetch } = useProjectTranslations(
@@ -53,6 +57,56 @@ export function TranslationList({
 
   // Delete Mutation
   const { mutate: deleteTranslation, isPending: isDeleting } = useDeleteTranslation();
+
+  // PDF-Vorschau generieren und öffnen
+  const handleGeneratePdf = async (translation: ProjectTranslation) => {
+    setGeneratingPdfFor(translation.id);
+
+    try {
+      // Boilerplates für PDF vorbereiten
+      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => ({
+        id: bp.id,
+        customTitle: bp.translatedTitle || '',
+        content: bp.translatedContent || ''
+      }));
+
+      // PDF via API generieren
+      const response = await fetch('/api/pdf/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: translation.title,
+          mainContent: translation.content,
+          boilerplateSections,
+          clientName: '', // Optional
+          returnBase64: false, // Wir wollen eine URL
+          organizationId,
+          projectId,
+          language: translation.language
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`PDF-Generierung fehlgeschlagen: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.pdfUrl) {
+        // PDF in neuem Tab öffnen
+        window.open(result.pdfUrl, '_blank');
+        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
+      } else {
+        throw new Error('Keine PDF-URL erhalten');
+      }
+    } catch (error: any) {
+      console.error('PDF-Generierung fehlgeschlagen:', error);
+      toastService.error(error.message || 'PDF-Generierung fehlgeschlagen');
+    } finally {
+      setGeneratingPdfFor(null);
+    }
+  };
 
   // Löschen bestätigen
   const handleDelete = () => {
@@ -209,41 +263,40 @@ export function TranslationList({
               )}
             </div>
 
-            {/* Aktionen */}
-            <div className="flex items-center gap-2">
-              {onPreview && (
-                <Button
-                  plain
-                  onClick={() => onPreview(translation)}
-                  title="Vorschau"
-                >
-                  <EyeIcon className="h-4 w-4" />
-                </Button>
-              )}
-              <Button
-                plain
-                onClick={() => setEditingTranslation(translation)}
-                title="Bearbeiten"
-                className="text-purple-600 hover:text-purple-800"
-              >
-                <PencilIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                plain
-                onClick={() => onTranslate(translation.language)}
-                title="Neu übersetzen"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                <ArrowPathIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                plain
-                onClick={() => setDeleteConfirm(translation)}
-                title="Löschen"
-                className="text-red-600 hover:text-red-800"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
+            {/* Aktionen - Dropdown-Menü */}
+            <div className="ml-4">
+              <Dropdown>
+                <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
+                  {generatingPdfFor === translation.id ? (
+                    <ArrowPathIcon className="h-4 w-4 text-gray-500 animate-spin" />
+                  ) : (
+                    <EllipsisVerticalIcon className="h-4 w-4 text-gray-500 stroke-[2.5]" />
+                  )}
+                </DropdownButton>
+
+                <DropdownMenu anchor="bottom end">
+                  <DropdownItem
+                    onClick={() => handleGeneratePdf(translation)}
+                    disabled={generatingPdfFor === translation.id}
+                  >
+                    <DocumentArrowDownIcon className="h-4 w-4" />
+                    {generatingPdfFor === translation.id ? 'Generiere PDF...' : 'Vorschau PDF'}
+                  </DropdownItem>
+                  <DropdownItem onClick={() => setEditingTranslation(translation)}>
+                    <PencilIcon className="h-4 w-4" />
+                    Bearbeiten
+                  </DropdownItem>
+                  <DropdownItem onClick={() => onTranslate(translation.language)}>
+                    <ArrowPathIcon className="h-4 w-4" />
+                    Neu übersetzen
+                  </DropdownItem>
+                  <DropdownDivider />
+                  <DropdownItem onClick={() => setDeleteConfirm(translation)}>
+                    <TrashIcon className="h-4 w-4" />
+                    <span className="text-red-600">Löschen</span>
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
           </div>
         ))}
