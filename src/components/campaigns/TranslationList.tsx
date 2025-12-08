@@ -83,7 +83,7 @@ export function TranslationList({
           title: translation.title,
           mainContent: translation.content,
           boilerplateSections,
-          clientName: '',
+          clientName: 'Vorschau',
           userId: 'preview-user',
           fileName,
           options: {
