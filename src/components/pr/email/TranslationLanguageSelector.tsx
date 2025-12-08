@@ -109,7 +109,7 @@ export function TranslationLanguageSelector({
       {/* Sprach-Liste */}
       <div className="space-y-2">
         {/* Original (immer ausgewählt) */}
-        <div className="flex items-center justify-between py-2 px-3 bg-blue-50 rounded-md border border-blue-100">
+        <div className="flex items-center justify-between py-2 px-3 bg-white rounded-md border border-gray-100">
           <div className="flex items-center gap-3">
             <Checkbox checked disabled className="opacity-60" />
             <LanguageFlagIcon languageCode={sourceLanguage} />
@@ -126,46 +126,40 @@ export function TranslationLanguageSelector({
             Lade Übersetzungen...
           </div>
         ) : (
-          translations?.map((translation) => {
-            const isSelected = selectedLanguages.translations.includes(translation.language);
-            const isOutdated = translation.isOutdated;
-
-            return (
-              <div
-                key={translation.language}
-                className={clsx(
-                  "flex items-center justify-between py-2 px-3 rounded-md border",
-                  isSelected ? "bg-purple-50 border-purple-100" : "bg-white border-gray-100",
-                  disabled && "opacity-60"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={isSelected}
-                    onChange={() => toggleLanguage(translation.language)}
-                    disabled={disabled}
-                  />
-                  <LanguageFlagIcon languageCode={translation.language} />
-                  <Text className="text-sm font-medium">
-                    {LANGUAGE_NAMES[translation.language] || translation.language}
-                  </Text>
-                </div>
-                <div className="flex items-center gap-2">
-                  {isOutdated ? (
-                    <Badge color="amber" className="text-xs">
-                      <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                      Veraltet
-                    </Badge>
-                  ) : (
-                    <Badge color="purple" className="text-xs">
-                      <SparklesIcon className="h-3 w-3 mr-1" />
-                      KI Übersetzung
-                    </Badge>
-                  )}
-                </div>
+          translations?.map((translation) => (
+            <div
+              key={translation.language}
+              className={clsx(
+                "flex items-center justify-between py-2 px-3 rounded-md border border-gray-100 bg-white",
+                disabled && "opacity-60"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={selectedLanguages.translations.includes(translation.language)}
+                  onChange={() => toggleLanguage(translation.language)}
+                  disabled={disabled}
+                />
+                <LanguageFlagIcon languageCode={translation.language} />
+                <Text className="text-sm font-medium">
+                  {LANGUAGE_NAMES[translation.language] || translation.language}
+                </Text>
               </div>
-            );
-          })
+              <div className="flex items-center gap-2">
+                {translation.isOutdated ? (
+                  <Badge color="amber" className="text-xs">
+                    <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                    Veraltet
+                  </Badge>
+                ) : (
+                  <Badge color="purple" className="text-xs">
+                    <SparklesIcon className="h-3 w-3 mr-1" />
+                    KI Übersetzung
+                  </Badge>
+                )}
+              </div>
+            </div>
+          ))
         )}
 
         {/* Alle auswählen Button */}
