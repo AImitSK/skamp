@@ -21,6 +21,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
+import { useAuth } from "@/context/AuthContext";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
@@ -45,6 +46,7 @@ export function TranslationList({
   onPreview,
   className = "",
 }: TranslationListProps) {
+  const { user } = useAuth();
   const [deleteConfirm, setDeleteConfirm] = useState<ProjectTranslation | null>(null);
   const [editingTranslation, setEditingTranslation] = useState<ProjectTranslation | null>(null);
   const [generatingPdfFor, setGeneratingPdfFor] = useState<string | null>(null);
@@ -58,54 +60,48 @@ export function TranslationList({
   // Delete Mutation
   const { mutate: deleteTranslation, isPending: isDeleting } = useDeleteTranslation();
 
-  // PDF-Vorschau generieren und öffnen
+  // PDF-Vorschau generieren und öffnen (nutzt gleiche Logik wie Email-Versand)
   const handleGeneratePdf = async (translation: ProjectTranslation) => {
+    if (!user) {
+      toastService.error('Bitte einloggen um PDFs zu generieren');
+      return;
+    }
+
     setGeneratingPdfFor(translation.id);
 
     try {
-      // Boilerplates für PDF vorbereiten
-      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => ({
-        id: bp.id,
-        customTitle: bp.translatedTitle || '',
-        content: bp.translatedContent || ''
-      }));
+      // Firebase Auth Token holen
+      const token = await user.getIdToken();
 
-      // Dateiname generieren
-      const fileName = `${translation.title.replace(/[^a-zA-Z0-9]/g, '_')}_${translation.language.toUpperCase()}.pdf`;
-
-      // PDF via API generieren
-      const response = await fetch('/api/generate-pdf', {
+      // PDF via neuen API-Endpoint generieren (wie Email-Versand)
+      const response = await fetch('/api/translation/preview-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          campaignId: `translation_${translation.id}`,
           organizationId,
-          title: translation.title,
-          mainContent: translation.content,
-          boilerplateSections,
-          clientName: 'Vorschau',
-          userId: 'preview-user',
-          fileName,
-          options: {
-            format: 'A4',
-            orientation: 'portrait',
-            printBackground: true,
-            waitUntil: 'networkidle0'
-          }
+          projectId,
+          translationId: translation.id
         })
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PDF-Generierung fehlgeschlagen: ${errorText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `PDF-Generierung fehlgeschlagen: ${response.status}`);
       }
 
       const result = await response.json();
 
+      if (!result.success) {
+        throw new Error(result.error || 'PDF-Generierung fehlgeschlagen');
+      }
+
       if (result.pdfUrl) {
         // PDF in neuem Tab öffnen
         window.open(result.pdfUrl, '_blank');
-        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
+        toastService.success(`PDF für ${result.languageName || LANGUAGE_NAMES[translation.language]} geöffnet`);
       } else if (result.pdfBase64) {
         // Fallback: Base64 als Blob öffnen
         const byteCharacters = atob(result.pdfBase64);
@@ -117,7 +113,7 @@ export function TranslationList({
         const blob = new Blob([byteArray], { type: 'application/pdf' });
         const blobUrl = URL.createObjectURL(blob);
         window.open(blobUrl, '_blank');
-        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
+        toastService.success(`PDF für ${result.languageName || LANGUAGE_NAMES[translation.language]} geöffnet`);
       } else {
         throw new Error('Keine PDF-Daten erhalten');
       }
