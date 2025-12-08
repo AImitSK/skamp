@@ -202,6 +202,7 @@ class TranslationAdminService {
       language: data.language,
       title: data.title,
       content: data.content,
+      translatedBoilerplates: data.translatedBoilerplates || null,
       status: data.status || 'generated',
       isOutdated: data.isOutdated ?? false,
     };

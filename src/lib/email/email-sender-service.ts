@@ -260,10 +260,42 @@ export class EmailSenderService {
       const translatedTitle = translation.title ||
         `${campaign.title} (${LANGUAGE_NAMES[translation.language] || translation.language})`;
 
+      // Übersetzte Boilerplates für PDF aufbereiten
+      let boilerplatesForPdf: Array<{
+        id?: string;
+        customTitle?: string;
+        content: string;
+        type?: 'lead' | 'main' | 'quote' | 'contact';
+      }> = [];
+
+      if (translation.translatedBoilerplates && translation.translatedBoilerplates.length > 0) {
+        // Verwende übersetzte Boilerplates
+        boilerplatesForPdf = translation.translatedBoilerplates.map(tb => {
+          // Finde Original-Boilerplate für zusätzliche Metadaten
+          const originalSection = (campaign.boilerplateSections || []).find(
+            (s: { id?: string }) => s.id === tb.id
+          );
+          // Mappe type korrekt für TemplateData
+          const typeMap: Record<string, 'lead' | 'main' | 'quote' | 'contact' | undefined> = {
+            'lead': 'lead',
+            'main': 'main',
+            'quote': 'quote',
+            'contact': 'contact',
+            'boilerplate': undefined, // boilerplate wird zu undefined gemappt
+          };
+          return {
+            id: tb.id,
+            customTitle: tb.translatedTitle || originalSection?.customTitle,
+            content: tb.translatedContent,
+            type: typeMap[originalSection?.type || ''] || undefined,
+          };
+        });
+      }
+
       const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
         title: translatedTitle,
         mainContent: translatedContent, // Übersetzter Content!
-        boilerplateSections: [], // Boilerplates sind bereits im übersetzten Content enthalten
+        boilerplateSections: boilerplatesForPdf, // Übersetzte Boilerplates
         keyVisual: campaign.keyVisual,
         clientName: campaign.clientName || 'Client',
         date: new Date().toISOString(),
@@ -365,7 +397,7 @@ export class EmailSenderService {
         } as ProjectTranslation;
 
         // 3. PDF für Übersetzung generieren
-        console.log(`📄 Generiere PDF für Übersetzung: ${language}`);
+        console.log(`📄 Generiere PDF für Übersetzung: ${language}, translatedBoilerplates: ${translation.translatedBoilerplates?.length || 0}`);
         const translationPDF = await this.generatePDFForTranslation(
           baseData.campaign,
           translation,

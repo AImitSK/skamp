@@ -435,12 +435,35 @@ export async function POST(request: NextRequest) {
             content: string,
             title: string,
             language: string,
-            isTranslation: boolean
+            isTranslation: boolean,
+            translatedBoilerplates?: Array<{ id: string; translatedContent: string; translatedTitle?: string | null }> | null
           ) => {
+            // Für Übersetzungen: Übersetzte Boilerplates verwenden (falls vorhanden)
+            let boilerplatesForPdf = formattedBoilerplateSections;
+
+            if (isTranslation && translatedBoilerplates && translatedBoilerplates.length > 0) {
+              // Mappe übersetzte Boilerplates auf das Format für PDF-Generierung
+              boilerplatesForPdf = translatedBoilerplates.map(tb => {
+                // Finde die Original-Section für Metadaten
+                const originalSection = (campaign?.boilerplateSections || []).find((s: any) => s.id === tb.id);
+                return {
+                  id: tb.id,
+                  customTitle: tb.translatedTitle || originalSection?.customTitle,
+                  content: tb.translatedContent,
+                  type: originalSection?.type === 'boilerplate' ? undefined : originalSection?.type as 'lead' | 'contact' | 'main' | 'quote' | undefined,
+                  boilerplate: originalSection?.boilerplateId ? { content: tb.translatedContent } : undefined,
+                  contentHtml: tb.translatedContent
+                };
+              });
+            } else if (isTranslation) {
+              // Keine übersetzten Boilerplates vorhanden - leeres Array
+              boilerplatesForPdf = [];
+            }
+
             const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
               title,
               mainContent: content,
-              boilerplateSections: isTranslation ? [] : formattedBoilerplateSections,
+              boilerplateSections: boilerplatesForPdf,
               keyVisual: campaign?.keyVisual,
               clientName: campaign?.clientName || 'Test Client',
               date: new Date().toISOString(),
@@ -514,15 +537,20 @@ export async function POST(request: NextRequest) {
                 );
 
                 if (translation && translation.content) {
+                  // Übersetzte Boilerplates übergeben (falls vorhanden)
                   const translationPdf = await generatePdf(
                     translation.content,
                     translation.title || `${campaign.title} (${langCode.toUpperCase()})`,
                     langCode,
-                    true
+                    true,
+                    translation.translatedBoilerplates
                   );
                   if (translationPdf) {
                     pdfAttachments.push(translationPdf);
                     console.log(`✅ Übersetzungs-PDF generiert (${langCode.toUpperCase()}):`, translationPdf.filename);
+                    if (translation.translatedBoilerplates?.length) {
+                      console.log(`   📄 Mit ${translation.translatedBoilerplates.length} übersetzten Boilerplates`);
+                    }
                   }
                 } else {
                   console.warn(`⚠️ Keine Übersetzung gefunden für: ${langCode}`);

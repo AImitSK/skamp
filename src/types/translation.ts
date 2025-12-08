@@ -82,6 +82,13 @@ export interface ProjectTranslation {
   /** True wenn Original geändert wurde seit Übersetzung */
   isOutdated: boolean;
 
+  /** Übersetzte Boilerplate-Sections */
+  translatedBoilerplates?: Array<{
+    id: string;
+    translatedContent: string;
+    translatedTitle?: string | null;
+  }> | null;
+
   /** Review-Informationen (optional) */
   reviewedBy?: string;
   reviewedAt?: FlexibleTimestamp;
