@@ -298,18 +298,44 @@ export const listsService = {
 
     // Filter anwenden
     return allContacts.filter(contact => {
+      // Journalisten-Filter
+      if (filters.onlyJournalists && !contact.mediaProfile?.isJournalist) return false;
+
       // E-Mail-Filter - GEÄNDERT: Prüfe emails Array
       if (filters.hasEmail && (!contact.emails || contact.emails.length === 0)) return false;
-      
+
       // Telefon-Filter - GEÄNDERT: Prüfe phones Array
       if (filters.hasPhone && (!contact.phones || contact.phones.length === 0)) return false;
 
-      // Tag-Filter
+      // Tag-Filter (Legacy für Firmen-Tags)
       if (filters.tagIds && filters.tagIds.length > 0) {
-        const hasAnyTag = filters.tagIds.some(tagId => 
+        const hasAnyTag = filters.tagIds.some(tagId =>
           contact.tagIds?.includes(tagId)
         );
         if (!hasAnyTag) return false;
+      }
+
+      // Kontakt-Tag-Filter
+      if (filters.contactTagIds && filters.contactTagIds.length > 0) {
+        const hasAnyContactTag = filters.contactTagIds.some(tagId =>
+          contact.tagIds?.includes(tagId)
+        );
+        if (!hasAnyContactTag) return false;
+      }
+
+      // Kontakt-Status-Filter
+      if (filters.contactStatus && filters.contactStatus.length > 0) {
+        if (!contact.status || !filters.contactStatus.includes(contact.status as any)) {
+          return false;
+        }
+      }
+
+      // Sprachen-Filter (bevorzugte Sprache des Kontakts)
+      if (filters.languages && filters.languages.length > 0) {
+        const preferredLanguage = contact.communicationPreferences?.preferredLanguage;
+        if (!preferredLanguage || !filters.languages.includes(preferredLanguage as any)) {
+          return false;
+        }
       }
 
       // Position-Filter
@@ -326,7 +352,15 @@ export const listsService = {
         );
         if (!hasMatchingBeat) return false;
       }
-      
+
+      // Verknüpfte Publikationen Filter (einfacher Filter über mediaProfile.publicationIds)
+      if (filters.linkedPublicationIds && filters.linkedPublicationIds.length > 0) {
+        const hasLinkedPublication = contact.mediaProfile?.publicationIds?.some(pubId =>
+          filters.linkedPublicationIds!.includes(pubId)
+        );
+        if (!hasLinkedPublication) return false;
+      }
+
       // Publikations-Filter
       if (filters.publications && publications.length > 0) {
         let matchesPublication = false;
