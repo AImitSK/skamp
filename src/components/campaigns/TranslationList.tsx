@@ -71,7 +71,7 @@ export function TranslationList({
       }));
 
       // PDF via API generieren
-      const response = await fetch('/api/pdf/generate', {
+      const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
