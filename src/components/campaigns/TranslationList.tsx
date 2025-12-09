@@ -63,38 +63,24 @@ export function TranslationList({
     setGeneratingPdfFor(translation.id);
 
     try {
-      // Boilerplates für PDF vorbereiten
-      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => ({
-        id: bp.id,
-        customTitle: bp.translatedTitle || '',
-        content: bp.translatedContent || ''
-      }));
-
-      // PDF via API generieren
-      const response = await fetch('/api/generate-pdf', {
+      // API-Aufruf an neuen Endpoint
+      const response = await fetch('/api/translation/preview-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: translation.title,
-          mainContent: translation.content,
-          boilerplateSections,
-          clientName: '', // Optional
-          returnBase64: false, // Wir wollen eine URL
           organizationId,
           projectId,
-          language: translation.language
+          translationId: translation.id
         })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PDF-Generierung fehlgeschlagen: ${errorText}`);
-      }
-
       const result = await response.json();
 
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'PDF-Generierung fehlgeschlagen');
+      }
+
       if (result.pdfUrl) {
-        // PDF in neuem Tab öffnen
         window.open(result.pdfUrl, '_blank');
         toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
       } else {

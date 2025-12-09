@@ -226,7 +226,7 @@ export class EmailSenderService {
    * Generiert PDF für eine Übersetzung
    * Nutzt den übersetzten Content statt dem Original
    */
-  private async generatePDFForTranslation(
+  public async generatePDFForTranslation(
     campaign: PRCampaign,
     translation: ProjectTranslation,
     userId?: string
