@@ -170,22 +170,18 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
     <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
       <div className="flex items-center">
         {/* Kampagne */}
-        <div className="w-[40%] min-w-0">
-          <div className="flex items-center">
-            <div className="min-w-0 flex-1 pr-4">
-              <a
-                href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}
-                className="text-sm font-semibold text-gray-900 hover:text-[#005fab] truncate block cursor-pointer transition-colors"
-              >
-                {campaign.title}
-              </a>
-              {campaign.projectTitle && (
-                <p className="text-xs text-gray-500 truncate mt-1">
-                  Projekt: {campaign.projectTitle}
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="w-[40%] min-w-0 pr-4">
+          <a
+            href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}
+            className="text-sm font-semibold text-gray-900 hover:text-[#005fab] truncate block cursor-pointer transition-colors"
+          >
+            {campaign.title}
+          </a>
+          {campaign.projectTitle && (
+            <p className="text-xs text-gray-500 truncate mt-1">
+              Projekt: {campaign.projectTitle}
+            </p>
+          )}
         </div>
 
         {/* Status */}
@@ -216,23 +212,21 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
 
         {/* Admin */}
         <div className="w-[12%] shrink-0">
-          <div className="flex items-center">
-            {(() => {
-              const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
-              const displayName = campaignAdmin?.displayName || user?.displayName || user?.email || 'Admin';
-              const avatarUrl = campaignAdmin?.photoUrl ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
+          {(() => {
+            const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
+            const displayName = campaignAdmin?.displayName || user?.displayName || user?.email || 'Admin';
+            const avatarUrl = campaignAdmin?.photoUrl ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
 
-              return (
-                <Avatar
-                  src={avatarUrl}
-                  alt={displayName}
-                  title={displayName}
-                  className="h-6 w-6 cursor-help"
-                />
-              );
-            })()}
-          </div>
+            return (
+              <Avatar
+                src={avatarUrl}
+                alt={displayName}
+                title={displayName}
+                className="h-6 w-6 cursor-help"
+              />
+            );
+          })()}
         </div>
 
         {/* Erstellt am */}

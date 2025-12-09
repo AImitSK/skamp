@@ -71,41 +71,15 @@ export default function PressemeldungCampaignTable({
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-      {/* Header - IDENTISCHE Struktur wie CampaignTableRow für perfektes Alignment */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+      {/* Header */}
+      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
         <div className="flex items-center">
-          {/* Kampagne */}
-          <div className="w-[40%] min-w-0">
-            <div className="flex items-center">
-              <div className="min-w-0 flex-1 pr-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kampagne
-              </div>
-            </div>
-          </div>
-          {/* Status */}
-          <div className="w-[18%] shrink-0 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Status
-          </div>
-          {/* Admin */}
-          <div className="w-[12%] shrink-0">
-            <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Admin
-            </div>
-          </div>
-          {/* Erstellt am */}
-          <div className="w-[15%] shrink-0 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Erstellt am
-          </div>
-          {/* Versenden */}
-          <div className="flex-1 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Versenden
-          </div>
-          {/* Aktionen-Platzhalter */}
-          <div className="ml-4">
-            <div className="p-1.5 w-4">
-              {/* Platzhalter für Dropdown-Button Breite */}
-            </div>
-          </div>
+          <div className="w-[40%] min-w-0 pr-4">Kampagne</div>
+          <div className="w-[18%] shrink-0">Status</div>
+          <div className="w-[12%] shrink-0">Admin</div>
+          <div className="w-[15%] shrink-0">Erstellt am</div>
+          <div className="flex-1">Versenden</div>
+          <div className="ml-4 w-7">{/* Aktionen-Platzhalter */}</div>
         </div>
       </div>
 
