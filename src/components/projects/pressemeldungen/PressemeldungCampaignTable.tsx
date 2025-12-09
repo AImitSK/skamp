@@ -83,17 +83,17 @@ export default function PressemeldungCampaignTable({
             </div>
           </div>
           {/* Status */}
-          <div className="w-[18%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[18%] shrink-0 text-xs font-medium text-gray-500 uppercase tracking-wider">
             Status
           </div>
           {/* Admin */}
-          <div className="w-[12%]">
+          <div className="w-[12%] shrink-0">
             <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Admin
             </div>
           </div>
           {/* Erstellt am */}
-          <div className="w-[15%] text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="w-[15%] shrink-0 text-xs font-medium text-gray-500 uppercase tracking-wider">
             Erstellt am
           </div>
           {/* Versenden */}

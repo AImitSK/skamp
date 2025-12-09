@@ -189,7 +189,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Status */}
-        <div className="w-[18%]">
+        <div className="w-[18%] shrink-0">
           <Badge
             color={getStatusColor(campaign.status) as any}
             className="text-xs whitespace-nowrap"
@@ -215,7 +215,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Admin */}
-        <div className="w-[12%]">
+        <div className="w-[12%] shrink-0">
           <div className="flex items-center">
             {(() => {
               const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
@@ -236,7 +236,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Erstellt am */}
-        <div className="w-[15%]">
+        <div className="w-[15%] shrink-0">
           <span className="text-sm text-gray-600">
             {formatDate(campaign.createdAt)}
           </span>
