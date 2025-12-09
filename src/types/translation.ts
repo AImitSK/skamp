@@ -148,6 +148,13 @@ export interface UpdateTranslationInput {
   /** Review-Informationen */
   reviewedBy?: string;
   reviewedAt?: FlexibleTimestamp;
+
+  /** Übersetzte Boilerplate-Sections */
+  translatedBoilerplates?: Array<{
+    id: string;
+    translatedContent: string;
+    translatedTitle?: string | null;
+  }>;
 }
 
 /**

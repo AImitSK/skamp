@@ -8,23 +8,33 @@ import { Text } from "@/components/ui/text";
 import { Field, Label } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import {
   PencilIcon,
   SparklesIcon,
   CheckIcon,
   XMarkIcon,
+  ChevronDownIcon,
+  DocumentTextIcon,
+  UserIcon,
+  ChatBubbleBottomCenterTextIcon,
+  PhoneIcon,
+  DocumentIcon,
 } from "@heroicons/react/24/outline";
 import { ProjectTranslation, UpdateTranslationInput } from "@/types/translation";
-import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
+import { PRCampaign } from "@/types/pr";
+import { LANGUAGE_NAMES } from "@/types/international";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { useUpdateTranslation } from "@/lib/hooks/useTranslations";
 import { toastService } from "@/lib/utils/toast";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/client-init";
 import dynamic from "next/dynamic";
 
-// RichTextEditor dynamisch laden (SSR-kompatibel)
-const RichTextEditor = dynamic(
-  () => import("@/components/RichTextEditor").then((mod) => mod.RichTextEditor),
-  { ssr: false, loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse" /> }
+// TranslationEditor dynamisch laden
+const TranslationEditor = dynamic(
+  () => import("@/components/campaigns/TranslationEditor").then((mod) => mod.TranslationEditor),
+  { ssr: false, loading: () => <div className="h-48 bg-gray-100 rounded-md animate-pulse" /> }
 );
 
 interface TranslationEditModalProps {
@@ -36,9 +46,51 @@ interface TranslationEditModalProps {
   onSaved?: () => void;
 }
 
+/** Angereicherte Boilerplate mit Original-Daten */
+interface EnrichedBoilerplate {
+  id: string;
+  translatedContent: string;
+  translatedTitle?: string | null;
+  originalContent: string;
+  originalTitle?: string;
+  type: string;
+  displayName: string;
+}
+
+/** Icon für Boilerplate-Typ */
+const getBoilerplateIcon = (type: string) => {
+  switch (type) {
+    case 'lead':
+      return <DocumentTextIcon className="h-4 w-4" />;
+    case 'quote':
+      return <ChatBubbleBottomCenterTextIcon className="h-4 w-4" />;
+    case 'contact':
+      return <PhoneIcon className="h-4 w-4" />;
+    case 'boilerplate':
+      return <UserIcon className="h-4 w-4" />;
+    default:
+      return <DocumentIcon className="h-4 w-4" />;
+  }
+};
+
+/** Anzeige-Name für Boilerplate-Typ */
+const getBoilerplateDisplayName = (type?: string, customTitle?: string): string => {
+  if (customTitle) return customTitle;
+
+  const typeNames: Record<string, string> = {
+    'lead': 'Lead/Einleitung',
+    'main': 'Haupttext',
+    'quote': 'Zitat',
+    'contact': 'Kontakt',
+    'boilerplate': 'Unternehmensprofil',
+  };
+
+  return typeNames[type || ''] || 'Textbaustein';
+};
+
 /**
  * Modal zum Bearbeiten einer KI-generierten Übersetzung
- * Ermöglicht das Anpassen von Titel, Content und Boilerplate-Sections
+ * Side-by-Side Ansicht: Original (DE) | Übersetzung (editierbar)
  */
 export function TranslationEditModal({
   isOpen,
@@ -48,35 +100,86 @@ export function TranslationEditModal({
   projectId,
   onSaved,
 }: TranslationEditModalProps) {
+  // Campaign für Original-Daten
+  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
+  const [loadingCampaign, setLoadingCampaign] = useState(false);
+
   // Form State
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [boilerplates, setBoilerplates] = useState<Array<{
-    id: string;
-    translatedContent: string;
-    translatedTitle?: string | null;
-  }>>([]);
+  const [enrichedBoilerplates, setEnrichedBoilerplates] = useState<EnrichedBoilerplate[]>([]);
 
   // Mutation
   const { mutate: updateTranslation, isPending: isSaving } = useUpdateTranslation();
 
-  // Initialisiere Form wenn Modal öffnet
+  // Campaign laden wenn Modal öffnet
+  useEffect(() => {
+    if (isOpen && translation?.campaignId) {
+      loadCampaign(translation.campaignId);
+    }
+  }, [isOpen, translation?.campaignId]);
+
+  // Campaign aus Firestore laden
+  const loadCampaign = async (campaignId: string) => {
+    setLoadingCampaign(true);
+    try {
+      const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
+      if (campaignDoc.exists()) {
+        const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as PRCampaign;
+        setCampaign(campaignData);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Campaign:', error);
+    } finally {
+      setLoadingCampaign(false);
+    }
+  };
+
+  // Initialisiere Form wenn Modal öffnet oder Campaign geladen wurde
   useEffect(() => {
     if (isOpen && translation) {
       setTitle(translation.title || "");
       setContent(translation.content || "");
-      setBoilerplates(translation.translatedBoilerplates || []);
+
+      // Boilerplates anreichern wenn Campaign geladen
+      if (campaign) {
+        const enriched = (translation.translatedBoilerplates || []).map(tb => {
+          const original = campaign.boilerplateSections?.find(s => s.id === tb.id);
+          return {
+            id: tb.id,
+            translatedContent: tb.translatedContent,
+            translatedTitle: tb.translatedTitle,
+            originalContent: original?.content || '',
+            originalTitle: original?.customTitle,
+            type: original?.type || 'boilerplate',
+            displayName: getBoilerplateDisplayName(original?.type, original?.customTitle),
+          };
+        });
+        setEnrichedBoilerplates(enriched);
+      } else {
+        // Fallback ohne Campaign-Daten
+        const basic = (translation.translatedBoilerplates || []).map((tb, idx) => ({
+          id: tb.id,
+          translatedContent: tb.translatedContent,
+          translatedTitle: tb.translatedTitle,
+          originalContent: '',
+          originalTitle: undefined,
+          type: 'boilerplate',
+          displayName: `Textbaustein ${idx + 1}`,
+        }));
+        setEnrichedBoilerplates(basic);
+      }
     }
-  }, [isOpen, translation]);
+  }, [isOpen, translation, campaign]);
 
   // Content-Änderung vom Editor
   const handleContentChange = useCallback((html: string) => {
     setContent(html);
   }, []);
 
-  // Boilerplate-Änderung
-  const handleBoilerplateChange = useCallback((id: string, newContent: string) => {
-    setBoilerplates(prev =>
+  // Boilerplate-Content ändern
+  const handleBoilerplateContentChange = useCallback((id: string, newContent: string) => {
+    setEnrichedBoilerplates(prev =>
       prev.map(bp =>
         bp.id === id ? { ...bp, translatedContent: newContent } : bp
       )
@@ -90,11 +193,13 @@ export function TranslationEditModal({
     const input: UpdateTranslationInput = {
       title: title.trim(),
       content: content,
+      // Boilerplates zurück in das ursprüngliche Format konvertieren
+      translatedBoilerplates: enrichedBoilerplates.map(bp => ({
+        id: bp.id,
+        translatedContent: bp.translatedContent,
+        translatedTitle: bp.translatedTitle,
+      })),
     };
-
-    // Boilerplates nur hinzufügen wenn vorhanden
-    // Note: UpdateTranslationInput hat kein translatedBoilerplates Feld
-    // Das muss eventuell erweitert werden
 
     updateTranslation(
       {
@@ -116,15 +221,10 @@ export function TranslationEditModal({
     );
   };
 
-  // Abbrechen
-  const handleCancel = () => {
-    onClose();
-  };
-
   if (!translation) return null;
 
   return (
-    <Dialog open={isOpen} onClose={handleCancel} size="4xl">
+    <Dialog open={isOpen} onClose={onClose} size="5xl">
       <DialogTitle>
         <div className="flex items-center gap-3">
           <PencilIcon className="h-5 w-5 text-purple-600" />
@@ -142,88 +242,154 @@ export function TranslationEditModal({
         </div>
       </DialogTitle>
 
-      <DialogBody className="space-y-6">
-        {/* Titel */}
-        <Field>
-          <Label>Titel</Label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Übersetzter Titel"
-            disabled={isSaving}
-          />
-        </Field>
-
-        {/* Hauptinhalt */}
-        <Field>
-          <Label>Inhalt</Label>
-          <div className="mt-2">
-            <RichTextEditor
-              content={content}
-              onChange={handleContentChange}
-              placeholder="Übersetzter Inhalt..."
-              minHeight="300px"
-            />
+      <DialogBody className="space-y-6 max-h-[70vh] overflow-y-auto">
+        {loadingCampaign ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
           </div>
-        </Field>
-
-        {/* Boilerplate-Sections (falls vorhanden) */}
-        {boilerplates.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-base/6 text-zinc-950 font-medium sm:text-sm/6 dark:text-white">
-                Boilerplate-Texte
-              </span>
-              <Badge color="zinc" className="text-xs">
-                {boilerplates.length} Abschnitte
-              </Badge>
+        ) : (
+          <>
+            {/* Titel */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <Text className="text-sm font-medium text-gray-700 mb-3">Titel</Text>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Original */}
+                <div>
+                  <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                  <div className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700">
+                    {campaign?.title || '–'}
+                  </div>
+                </div>
+                {/* Übersetzung */}
+                <div>
+                  <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Übersetzter Titel"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
             </div>
 
-            {boilerplates.map((bp, index) => (
-              <div key={bp.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Text className="text-sm font-medium text-gray-700">
-                    Abschnitt {index + 1}
-                    {bp.translatedTitle && (
-                      <span className="ml-2 text-gray-500">
-                        ({bp.translatedTitle})
-                      </span>
-                    )}
-                  </Text>
+            {/* Hauptinhalt */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <Text className="text-sm font-medium text-gray-700 mb-3">Hauptinhalt</Text>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Original */}
+                <div>
+                  <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                  <div
+                    className="bg-white border border-gray-200 rounded-md p-3 text-sm text-gray-700 prose prose-sm max-w-none overflow-y-auto"
+                    style={{ minHeight: '200px', maxHeight: '400px' }}
+                    dangerouslySetInnerHTML={{ __html: campaign?.mainContent || '<p class="text-gray-400">Kein Original-Content verfügbar</p>' }}
+                  />
                 </div>
-                <textarea
-                  value={bp.translatedContent}
-                  onChange={(e) => handleBoilerplateChange(bp.id, e.target.value)}
-                  className="w-full min-h-[100px] p-3 border border-gray-200 rounded-md text-sm focus:border-purple-500 focus:ring-purple-500"
-                  disabled={isSaving}
-                />
+                {/* Übersetzung */}
+                <div>
+                  <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                  <TranslationEditor
+                    content={content}
+                    onChange={handleContentChange}
+                    disabled={isSaving}
+                    minHeight="200px"
+                  />
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
-        {/* Hinweis */}
-        <div className="p-3 bg-purple-50 border border-purple-100 rounded-lg">
-          <div className="flex items-start gap-2">
-            <SparklesIcon className="h-5 w-5 text-purple-500 shrink-0" />
-            <Text className="text-sm text-purple-700">
-              Diese Übersetzung wurde mit KI generiert. Sie können den Text hier
-              manuell anpassen. Änderungen werden beim Versand der Pressemeldung
-              übernommen.
-            </Text>
-          </div>
-        </div>
+            {/* Boilerplates */}
+            {enrichedBoilerplates.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Text className="text-sm font-medium text-gray-700">Textbausteine</Text>
+                  <Badge color="zinc" className="text-xs">
+                    {enrichedBoilerplates.length}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  {enrichedBoilerplates.map((bp, index) => (
+                    <Disclosure key={bp.id} defaultOpen={index === 0}>
+                      {({ open }) => (
+                        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                          <DisclosureButton className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500">
+                                {getBoilerplateIcon(bp.type)}
+                              </span>
+                              <span className="text-sm font-medium text-gray-700">
+                                {bp.displayName}
+                              </span>
+                              <Badge color="zinc" className="text-xs">
+                                {bp.type}
+                              </Badge>
+                            </div>
+                            <ChevronDownIcon
+                              className={`h-4 w-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`}
+                            />
+                          </DisclosureButton>
+
+                          <DisclosurePanel className="px-4 pb-4">
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                              {/* Original */}
+                              <div>
+                                <Text className="text-xs text-gray-500 mb-1">Original (DE)</Text>
+                                <div
+                                  className="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm text-gray-700 prose prose-sm max-w-none overflow-y-auto"
+                                  style={{ minHeight: '120px', maxHeight: '300px' }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: bp.originalContent || '<p class="text-gray-400 italic">Original nicht verfügbar</p>'
+                                  }}
+                                />
+                              </div>
+                              {/* Übersetzung */}
+                              <div>
+                                <Text className="text-xs text-gray-500 mb-1">Übersetzung</Text>
+                                <TranslationEditor
+                                  content={bp.translatedContent}
+                                  onChange={(html) => handleBoilerplateContentChange(bp.id, html)}
+                                  disabled={isSaving}
+                                  minHeight="120px"
+                                />
+                              </div>
+                            </div>
+                          </DisclosurePanel>
+                        </div>
+                      )}
+                    </Disclosure>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Hinweis */}
+            <div className="p-3 bg-purple-50 border border-purple-100 rounded-lg">
+              <div className="flex items-start gap-2">
+                <SparklesIcon className="h-5 w-5 text-purple-500 shrink-0" />
+                <Text className="text-sm text-purple-700">
+                  Diese Übersetzung wurde mit KI generiert. Spezielle Formatierungen wie
+                  <span className="font-bold mx-1">CTA</span>,
+                  <span className="text-blue-600 font-semibold mx-1">#Hashtags</span> und
+                  <span className="italic mx-1">Zitate</span>
+                  bleiben beim Bearbeiten erhalten.
+                </Text>
+              </div>
+            </div>
+          </>
+        )}
       </DialogBody>
 
       <DialogActions>
-        <Button plain onClick={handleCancel} disabled={isSaving}>
+        <Button plain onClick={onClose} disabled={isSaving}>
           <XMarkIcon className="h-4 w-4 mr-1" />
           Abbrechen
         </Button>
         <Button
           color="primary"
           onClick={handleSave}
-          disabled={isSaving || !content.trim()}
+          disabled={isSaving || !content.trim() || loadingCampaign}
           className="!bg-purple-600 hover:!bg-purple-700"
         >
           {isSaving ? (

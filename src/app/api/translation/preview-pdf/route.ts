@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vorschau-Unterordner finden/erstellen
-    let vorschauFolder = allFolders.find((folder: any) =>
+    let vorschauFolder: { id: string } | undefined = allFolders.find((folder: any) =>
       folder.parentFolderId === pressemeldungenFolder.id && folder.name === 'Vorschau'
     );
 
@@ -147,8 +147,11 @@ export async function POST(request: NextRequest) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: 'translation-preview'
       });
-      vorschauFolder = { id: vorschauFolderRef.id, name: 'Vorschau' };
+      vorschauFolder = { id: vorschauFolderRef.id };
     }
+
+    // TypeScript: vorschauFolder ist jetzt garantiert definiert
+    const targetFolderId = vorschauFolder.id;
 
     // 7. PDF in Storage hochladen (Admin SDK)
     console.log(`📤 Lade PDF hoch in: Vorschau/`);
@@ -197,7 +200,7 @@ export async function POST(request: NextRequest) {
       downloadUrl: signedUrl,
       storagePath: storagePath,
 
-      folderId: vorschauFolder.id,
+      folderId: targetFolderId,
       organizationId: organizationId,
       clientId: campaign.clientId || 'unknown',
       createdBy: 'translation-preview',

@@ -61,6 +61,7 @@ class TranslationService {
       glossaryEntriesUsed: data.glossaryEntriesUsed || [],
       sourceVersion: data.sourceVersion || 1,
       isOutdated: data.isOutdated ?? false,
+      translatedBoilerplates: data.translatedBoilerplates || null,
       reviewedBy: data.reviewedBy,
       reviewedAt: data.reviewedAt?.toDate?.(),
       createdAt: data.createdAt?.toDate?.() || new Date(),
@@ -256,6 +257,9 @@ class TranslationService {
     if (input.reviewedBy !== undefined) {
       updateData.reviewedBy = input.reviewedBy;
       updateData.reviewedAt = serverTimestamp();
+    }
+    if (input.translatedBoilerplates !== undefined) {
+      updateData.translatedBoilerplates = input.translatedBoilerplates;
     }
 
     await updateDoc(docRef, updateData);
