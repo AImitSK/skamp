@@ -185,7 +185,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Status */}
-        <div className="w-[18%] shrink-0">
+        <div className="w-[18%] shrink-0 -ml-3">
           <Badge
             color={getStatusColor(campaign.status) as any}
             className="text-xs whitespace-nowrap"
@@ -211,7 +211,7 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Admin */}
-        <div className="w-[12%] shrink-0">
+        <div className="w-[12%] shrink-0 -ml-3">
           {(() => {
             const campaignAdmin = teamMembers?.find(member => member.userId === campaign.userId);
             const displayName = campaignAdmin?.displayName || user?.displayName || user?.email || 'Admin';
@@ -230,14 +230,14 @@ function CampaignTableRow({ campaign, teamMembers, approvals, organizationId, on
         </div>
 
         {/* Erstellt am */}
-        <div className="w-[15%] shrink-0">
+        <div className="w-[15%] shrink-0 -ml-3">
           <span className="text-sm text-gray-600">
             {formatDate(campaign.createdAt)}
           </span>
         </div>
 
         {/* Kampagne Versenden */}
-        <div className="flex-1">
+        <div className="flex-1 -ml-3">
           {campaign.status === 'sent' ? (
             <a
               href={`/dashboard/analytics/monitoring/${campaign.id}`}
