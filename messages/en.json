@@ -23,7 +23,31 @@
     "actions": "Actions",
     "details": "Details",
     "settings": "Settings",
-    "help": "Help"
+    "help": "Help",
+    "widgets": {
+      "myTasks": {
+        "title": "My Tasks",
+        "filters": {
+          "today": "Today",
+          "overdue": "Overdue",
+          "showAll": "Show All"
+        },
+        "loading": "Loading tasks...",
+        "empty": {
+          "today": "No tasks for today",
+          "overdue": "No overdue tasks",
+          "all": "No open tasks"
+        },
+        "table": {
+          "task": "Task",
+          "project": "Project",
+          "progress": "Progress"
+        },
+        "priority": {
+          "urgent": "Urgent"
+        }
+      }
+    }
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -108,6 +132,73 @@
       "german": "German",
       "context": "Context",
       "contextOptional": "Context (optional)"
+    }
+  },
+  "dashboard": {
+    "welcome": {
+      "title": "Welcome to the team!",
+      "message": "You have been successfully added to the team. Your role: {role}"
+    },
+    "noOrganization": {
+      "title": "No organization found",
+      "message": "You are currently not assigned to any organization. Please wait for an invitation or contact your administrator."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Administrator",
+      "member": "Team Member",
+      "client": "Client",
+      "guest": "Guest"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications",
+      "new": "New",
+      "recently": "Recently"
+    },
+    "emailPerformance": {
+      "title": "Email Performance",
+      "selectCampaign": "Select campaign",
+      "loadingCampaigns": "Loading campaigns...",
+      "noCampaigns": "No sent campaigns",
+      "selectPrompt": "Please select a campaign",
+      "loadingData": "Loading performance data...",
+      "noData": "No data available",
+      "openRate": "Open Rate",
+      "clickRate": "Click Rate",
+      "engagement": "Engagement",
+      "bounceRate": "Bounce Rate",
+      "statusDistribution": "Status Distribution",
+      "summary": "Summary",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "opened": "Opened",
+      "clicked": "Clicked",
+      "bounced": "Bounced"
+    },
+    "monitoring": {
+      "title": "PR Monitoring",
+      "publications": "Publications",
+      "autoFinds": "Auto-Finds",
+      "loading": "Loading monitoring data...",
+      "noPublications": "No publications yet",
+      "noAutoFinds": "No auto-finds",
+      "publication": "Publication",
+      "autoFind": "Auto-Find",
+      "unknown": "Unknown",
+      "table": {
+        "type": "Type",
+        "title": "Title",
+        "medium": "Medium",
+        "status": "Status"
+      }
+    },
+    "news": {
+      "title": "News & Updates",
+      "comingSoon": "Coming Soon"
+    },
+    "footer": {
+      "copyright": "© {year} CeleroPress. All rights reserved."
     }
   }
 }

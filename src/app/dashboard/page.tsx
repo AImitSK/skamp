@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   UserGroupIcon,
   ClockIcon,
@@ -70,6 +71,7 @@ function WelcomeCheck({ onWelcome }: { onWelcome: () => void }) {
 }
 
 export default function DashboardHomePage() {
+  const t = useTranslations('dashboard');
   const { user } = useAuth();
   const { currentOrganization, organizations, loading: orgLoading, switchOrganization, userRole } = useOrganization();
 
@@ -98,11 +100,11 @@ export default function DashboardHomePage() {
 
   // Role Labels
   const roleLabels: Record<string, string> = {
-    owner: 'Owner',
-    admin: 'Administrator',
-    member: 'Team-Mitglied',
-    client: 'Kunde',
-    guest: 'Gast'
+    owner: t('roles.owner'),
+    admin: t('roles.admin'),
+    member: t('roles.member'),
+    client: t('roles.client'),
+    guest: t('roles.guest')
   };
 
   // Load tasks when component mounts or organization changes
@@ -232,7 +234,7 @@ export default function DashboardHomePage() {
         locale: de
       });
     } catch {
-      return 'Kürzlich';
+      return t('notifications.recently');
     }
   };
 
@@ -290,10 +292,10 @@ export default function DashboardHomePage() {
   const bounceRate = emailStats.total > 0 ? Math.round((emailStats.bounced / emailStats.total) * 100) : 0;
 
   const pieData = [
-    { name: 'Geklickt', value: emailStats.clicked, color: '#005fab' },
-    { name: 'Geöffnet', value: emailStats.opened - emailStats.clicked, color: '#3397d7' },
-    { name: 'Zugestellt', value: emailStats.notOpened, color: '#add8f0' },
-    { name: 'Bounced', value: emailStats.bounced, color: '#DEDC00' }
+    { name: t('emailPerformance.clicked'), value: emailStats.clicked, color: '#005fab' },
+    { name: t('emailPerformance.opened'), value: emailStats.opened - emailStats.clicked, color: '#3397d7' },
+    { name: t('emailPerformance.delivered'), value: emailStats.notOpened, color: '#add8f0' },
+    { name: t('emailPerformance.bounced'), value: emailStats.bounced, color: '#DEDC00' }
   ].filter(item => item.value > 0);
 
   // PR-Monitoring Filter and Stats
@@ -376,18 +378,18 @@ export default function DashboardHomePage() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-green-800">
-                Willkommen im Team!
+                {t('welcome.title')}
               </h3>
               <div className="mt-2 text-sm text-green-700">
                 <p>
-                  Sie wurden erfolgreich zum Team hinzugefügt. Ihre Rolle: <strong>{roleLabels[userRole || 'member']}</strong>
+                  {t('welcome.message', { role: roleLabels[userRole || 'member'] })}
                 </p>
               </div>
               <button
                 onClick={() => setShowWelcome(false)}
                 className="mt-3 text-sm font-medium text-green-800 hover:text-green-900"
               >
-                Schließen
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -405,11 +407,11 @@ export default function DashboardHomePage() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">
-                Keine Organisation gefunden
+                {t('noOrganization.title')}
               </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  Sie sind derzeit keiner Organisation zugeordnet. Bitte warten Sie auf eine Einladung oder kontaktieren Sie Ihren Administrator.
+                  {t('noOrganization.message')}
                 </p>
               </div>
             </div>
@@ -430,7 +432,7 @@ export default function DashboardHomePage() {
             {/* Header */}
             <div className="mb-4">
               <div className="flex items-center justify-between" style={{ minHeight: '41.19px' }}>
-                <Heading level={2}>Benachrichtigungen</Heading>
+                <Heading level={2}>{t('notifications.title')}</Heading>
                 {unreadCount > 0 && (
                   <Badge color="blue">{unreadCount}</Badge>
                 )}
@@ -444,7 +446,7 @@ export default function DashboardHomePage() {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                      <Text className="text-zinc-600">Laden...</Text>
+                      <Text className="text-zinc-600">{t('common.loading')}</Text>
                     </div>
                   </div>
                   {/* Pagination */}
@@ -471,7 +473,7 @@ export default function DashboardHomePage() {
                     <div className="text-center">
                       <BellIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                       <Text className="text-zinc-600 font-medium">
-                        Keine Benachrichtigungen
+                        {t('notifications.empty')}
                       </Text>
                     </div>
                   </div>
@@ -531,7 +533,7 @@ export default function DashboardHomePage() {
                                 </span>
                                 {!notification.isRead && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    Neu
+                                    {t('notifications.new')}
                                   </span>
                                 )}
                               </div>
@@ -545,7 +547,7 @@ export default function DashboardHomePage() {
                               deleteNotification(notification.id);
                             }}
                             className="p-1 text-zinc-400 hover:text-red-500 transition-colors flex-shrink-0"
-                            title="Löschen"
+                            title={t('common.delete')}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -615,14 +617,14 @@ export default function DashboardHomePage() {
           {/* Header */}
           <div className="mb-4">
             <div className="flex items-center justify-between">
-              <Heading level={2}>E-Mail Performance</Heading>
+              <Heading level={2}>{t('emailPerformance.title')}</Heading>
               {campaigns.length > 0 && (
                 <div className="ml-auto" style={{ width: '400px' }}>
                   <Select
                     value={selectedCampaignId}
                     onChange={(e) => setSelectedCampaignId(e.target.value)}
                   >
-                    <option value="">Kampagne auswählen</option>
+                    <option value="">{t('emailPerformance.selectCampaign')}</option>
                     {campaigns.map((campaign) => (
                       <option key={campaign.id} value={campaign.id}>
                         {campaign.title}
@@ -639,55 +641,55 @@ export default function DashboardHomePage() {
             {loadingCampaigns ? (
               <div className="p-12 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                <Text className="text-zinc-600">Lade Kampagnen...</Text>
+                <Text className="text-zinc-600">{t('emailPerformance.loadingCampaigns')}</Text>
               </div>
             ) : campaigns.length === 0 ? (
               <div className="p-12 text-center">
                 <EnvelopeIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                 <Text className="text-zinc-600 font-medium">
-                  Keine versendeten Kampagnen
+                  {t('emailPerformance.noCampaigns')}
                 </Text>
               </div>
             ) : !selectedCampaignId ? (
               <div className="p-12 text-center">
-                <Text className="text-zinc-600">Bitte wähle eine Kampagne aus</Text>
+                <Text className="text-zinc-600">{t('emailPerformance.selectPrompt')}</Text>
               </div>
             ) : loadingSends ? (
               <div className="p-12 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                <Text className="text-zinc-600">Lade Performance-Daten...</Text>
+                <Text className="text-zinc-600">{t('emailPerformance.loadingData')}</Text>
               </div>
             ) : sends.length === 0 ? (
               <div className="p-12 text-center">
-                <Text className="text-zinc-600">Keine Daten verfügbar</Text>
+                <Text className="text-zinc-600">{t('emailPerformance.noData')}</Text>
               </div>
             ) : (
               <div className="space-y-6">
                 {/* Top Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
-                    <Text className="text-sm text-zinc-600">Öffnungsrate</Text>
+                    <Text className="text-sm text-zinc-600">{t('emailPerformance.openRate')}</Text>
                     <div className="text-2xl font-semibold text-zinc-900 mt-1">
                       {openRate}%
                     </div>
                   </div>
 
                   <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
-                    <Text className="text-sm text-zinc-600">Klickrate</Text>
+                    <Text className="text-sm text-zinc-600">{t('emailPerformance.clickRate')}</Text>
                     <div className="text-2xl font-semibold text-zinc-900 mt-1">
                       {clickRate}%
                     </div>
                   </div>
 
                   <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
-                    <Text className="text-sm text-zinc-600">Engagement</Text>
+                    <Text className="text-sm text-zinc-600">{t('emailPerformance.engagement')}</Text>
                     <div className="text-2xl font-semibold text-zinc-900 mt-1">
                       {emailStats.opened + emailStats.clicked}
                     </div>
                   </div>
 
                   <div className="bg-zinc-50 rounded-lg p-4 border border-zinc-200">
-                    <Text className="text-sm text-zinc-600">Bounce-Rate</Text>
+                    <Text className="text-sm text-zinc-600">{t('emailPerformance.bounceRate')}</Text>
                     <div className="text-2xl font-semibold text-zinc-900 mt-1">
                       {bounceRate}%
                     </div>
@@ -698,7 +700,7 @@ export default function DashboardHomePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Pie Chart */}
                   <div>
-                    <Text className="text-lg font-semibold text-zinc-900 mb-4">Status-Verteilung</Text>
+                    <Text className="text-lg font-semibold text-zinc-900 mb-4">{t('emailPerformance.statusDistribution')}</Text>
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
@@ -729,26 +731,26 @@ export default function DashboardHomePage() {
 
                   {/* Stats Summary */}
                   <div>
-                    <Text className="text-lg font-semibold text-zinc-900 mb-4">Zusammenfassung</Text>
+                    <Text className="text-lg font-semibold text-zinc-900 mb-4">{t('emailPerformance.summary')}</Text>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center p-3 bg-zinc-50 rounded-lg">
-                        <Text className="text-sm text-zinc-600">Versendet</Text>
+                        <Text className="text-sm text-zinc-600">{t('emailPerformance.sent')}</Text>
                         <Text className="text-sm font-semibold text-zinc-900">{emailStats.sent}</Text>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-zinc-50 rounded-lg">
-                        <Text className="text-sm text-zinc-600">Zugestellt</Text>
+                        <Text className="text-sm text-zinc-600">{t('emailPerformance.delivered')}</Text>
                         <Text className="text-sm font-semibold text-zinc-900">{emailStats.delivered}</Text>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                        <Text className="text-sm text-blue-600 font-medium">Geöffnet</Text>
+                        <Text className="text-sm text-blue-600 font-medium">{t('emailPerformance.opened')}</Text>
                         <Text className="text-sm font-semibold text-blue-900">{emailStats.opened}</Text>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                        <Text className="text-sm text-primary font-medium">Geklickt</Text>
+                        <Text className="text-sm text-primary font-medium">{t('emailPerformance.clicked')}</Text>
                         <Text className="text-sm font-semibold text-primary">{emailStats.clicked}</Text>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                        <Text className="text-sm text-yellow-700">Bounced</Text>
+                        <Text className="text-sm text-yellow-700">{t('emailPerformance.bounced')}</Text>
                         <Text className="text-sm font-semibold text-yellow-900">{emailStats.bounced}</Text>
                       </div>
                     </div>
@@ -764,7 +766,7 @@ export default function DashboardHomePage() {
             {/* Header */}
             <div className="mb-4">
               <div className="flex items-center justify-between">
-                <Heading level={2}>PR-Monitoring</Heading>
+                <Heading level={2}>{t('monitoring.title')}</Heading>
 
                 {/* Filter Buttons */}
                 <div className="flex items-center gap-2">
@@ -776,7 +778,7 @@ export default function DashboardHomePage() {
                         : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
-                    Veröffentlichungen
+                    {t('monitoring.publications')}
                     {clippings.length > 0 && (
                       <Badge color="blue" className="ml-2">
                         {clippings.length}
@@ -792,7 +794,7 @@ export default function DashboardHomePage() {
                         : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
-                    Auto-Funde
+                    {t('monitoring.autoFinds')}
                     {pendingSuggestions.length > 0 && (
                       <Badge color="red" className="ml-2">
                         {pendingSuggestions.length}
@@ -810,7 +812,7 @@ export default function DashboardHomePage() {
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                      <Text className="text-zinc-600">Lade Monitoring-Daten...</Text>
+                      <Text className="text-zinc-600">{t('monitoring.loading')}</Text>
                     </div>
                   </div>
                   <div className="px-6 py-3 border-t border-zinc-200 bg-zinc-50">
@@ -830,8 +832,8 @@ export default function DashboardHomePage() {
                     <div className="text-center">
                       <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                       <Text className="text-zinc-600 font-medium">
-                        {monitoringFilter === 'published' && 'Noch keine Veröffentlichungen'}
-                        {monitoringFilter === 'pending' && 'Keine Auto-Funde'}
+                        {monitoringFilter === 'published' && t('monitoring.noPublications')}
+                        {monitoringFilter === 'pending' && t('monitoring.noAutoFinds')}
                       </Text>
                     </div>
                   </div>
@@ -851,10 +853,10 @@ export default function DashboardHomePage() {
                   {/* Table Header */}
                   <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
                     <div className="grid grid-cols-12 gap-4">
-                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider">Typ</div>
-                      <div className="col-span-6 text-xs font-medium text-zinc-500 uppercase tracking-wider">Titel</div>
-                      <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">Medium</div>
-                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</div>
+                      <div className="col-span-1 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.type')}</div>
+                      <div className="col-span-6 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.title')}</div>
+                      <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.medium')}</div>
+                      <div className="col-span-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('monitoring.table.status')}</div>
                     </div>
                   </div>
 
@@ -866,9 +868,9 @@ export default function DashboardHomePage() {
                           {/* Typ Icon */}
                           <div className="col-span-1">
                             {item.type === 'clipping' ? (
-                              <NewspaperIcon className="h-4 w-4 text-zinc-400" title="Veröffentlichung" />
+                              <NewspaperIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.publication')} />
                             ) : (
-                              <SparklesIcon className="h-4 w-4 text-zinc-400" title="Auto-Fund" />
+                              <SparklesIcon className="h-4 w-4 text-zinc-400" title={t('monitoring.autoFind')} />
                             )}
                           </div>
 
@@ -902,7 +904,7 @@ export default function DashboardHomePage() {
                             <Text className="text-sm text-zinc-600 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                               {item.type === 'clipping'
                                 ? (item.data as MediaClipping).outletName
-                                : (item.data as MonitoringSuggestion).sources?.[0]?.sourceName || 'Unbekannt'}
+                                : (item.data as MonitoringSuggestion).sources?.[0]?.sourceName || t('monitoring.unknown')}
                             </Text>
                           </div>
 
@@ -924,7 +926,7 @@ export default function DashboardHomePage() {
                                 onClick={() => handleConfirmSuggestion(item.data as MonitoringSuggestion)}
                                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                               >
-                                Bestätigen
+                                {t('common.confirm')}
                               </button>
                             )}
                           </div>
@@ -993,14 +995,14 @@ export default function DashboardHomePage() {
           <div className="lg:col-span-1 mt-6">
             <div className="mb-4">
               <div className="flex items-center justify-between" style={{ minHeight: '41.19px' }}>
-                <Heading level={2}>News & Updates</Heading>
+                <Heading level={2}>{t('news.title')}</Heading>
               </div>
             </div>
             <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden flex flex-col p-6" style={{ minHeight: '400px' }}>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
                   <NewspaperIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
-                  <Text className="text-zinc-600 font-medium">Coming Soon</Text>
+                  <Text className="text-zinc-600 font-medium">{t('news.comingSoon')}</Text>
                 </div>
               </div>
             </div>
@@ -1011,7 +1013,7 @@ export default function DashboardHomePage() {
       {/* Copyright Footer */}
       <div className="mt-12 pt-6 border-t border-zinc-200">
         <Text className="text-center text-sm text-zinc-500">
-          © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
+          {t('footer.copyright', { year: new Date().getFullYear() })}
         </Text>
       </div>
     </div>

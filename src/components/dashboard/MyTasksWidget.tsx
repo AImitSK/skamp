@@ -15,6 +15,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ import { ProjectTask } from '@/types/tasks';
 const TASKS_PER_PAGE = 5;
 
 export function MyTasksWidget() {
+  const t = useTranslations('common.widgets.myTasks');
   const [filter, setFilter] = useState<MyTasksFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -74,7 +76,7 @@ export function MyTasksWidget() {
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center justify-between">
-          <Heading level={2}>Meine Aufgaben</Heading>
+          <Heading level={2}>{t('title')}</Heading>
 
           {/* Filter Buttons */}
           <div className="flex items-center gap-2">
@@ -86,7 +88,7 @@ export function MyTasksWidget() {
                   : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
               }`}
             >
-              Heute
+              {t('filters.today')}
               {todayCount > 0 && (
                 <Badge color="blue" className="ml-2">
                   {todayCount}
@@ -102,7 +104,7 @@ export function MyTasksWidget() {
                   : 'bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50'
               }`}
             >
-              Überfällig
+              {t('filters.overdue')}
               {overdueCount > 0 && (
                 <Badge color="red" className="ml-2">
                   {overdueCount}
@@ -115,7 +117,7 @@ export function MyTasksWidget() {
                 onClick={() => setFilter('all')}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50 transition-colors"
               >
-                Alle anzeigen
+                {t('filters.showAll')}
               </button>
             )}
           </div>
@@ -130,7 +132,7 @@ export function MyTasksWidget() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                <Text className="text-zinc-600">Tasks werden geladen...</Text>
+                <Text className="text-zinc-600">{t('loading')}</Text>
               </div>
             </div>
             {/* Pagination Placeholder */}
@@ -158,9 +160,9 @@ export function MyTasksWidget() {
               <div className="text-center">
                 <CheckCircleIcon className="h-12 w-12 mx-auto text-zinc-300 mb-3" />
                 <Text className="text-zinc-600 font-medium">
-                  {filter === 'today' && 'Keine Tasks für heute'}
-                  {filter === 'overdue' && 'Keine überfälligen Tasks'}
-                  {filter === 'all' && 'Keine offenen Tasks'}
+                  {filter === 'today' && t('empty.today')}
+                  {filter === 'overdue' && t('empty.overdue')}
+                  {filter === 'all' && t('empty.all')}
                 </Text>
               </div>
             </div>
@@ -188,13 +190,13 @@ export function MyTasksWidget() {
             <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-5 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Task
+                  {t('table.task')}
                 </div>
                 <div className="col-span-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Projekt
+                  {t('table.project')}
                 </div>
                 <div className="col-span-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Fortschritt
+                  {t('table.progress')}
                 </div>
               </div>
             </div>
@@ -229,7 +231,7 @@ export function MyTasksWidget() {
                             </Text>
                           </TaskDescriptionTooltip>
                           {task.priority === 'urgent' && (
-                            <Badge color="red" className="text-xs flex-shrink-0">Dringend</Badge>
+                            <Badge color="red" className="text-xs flex-shrink-0">{t('priority.urgent')}</Badge>
                           )}
                         </div>
                       </div>
