@@ -21,8 +21,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useProjectTranslations, useDeleteTranslation } from "@/lib/hooks/useTranslations";
 import { LANGUAGE_NAMES, LanguageCode } from "@/types/international";
-import { prService } from "@/lib/firebase/pr-service";
-import { pdfTemplateService } from "@/lib/firebase/pdf-template-service";
 import { LanguageFlagIcon } from "@/components/ui/language-flag-icon";
 import { ProjectTranslation } from "@/types/translation";
 import { toastService } from "@/lib/utils/toast";
@@ -60,121 +58,48 @@ export function TranslationList({
   // Delete Mutation
   const { mutate: deleteTranslation, isPending: isDeleting } = useDeleteTranslation();
 
-  // PDF-Vorschau generieren und öffnen (nutzt gleiche Logik wie Kampagnen-Edit-Seite)
+  // PDF-Vorschau generieren und öffnen
   const handleGeneratePdf = async (translation: ProjectTranslation) => {
     setGeneratingPdfFor(translation.id);
 
     try {
-      // Finde die zugehörige Campaign für dieses Projekt (für Template, KeyVisual, etc.)
-      const campaigns = await prService.getByProjectId(projectId, { organizationId });
-      const campaign = campaigns.length > 0 ? campaigns[0] : null;
+      // Boilerplates für PDF vorbereiten
+      const boilerplateSections = (translation.translatedBoilerplates || []).map(bp => ({
+        id: bp.id,
+        customTitle: bp.translatedTitle || '',
+        content: bp.translatedContent || ''
+      }));
 
-      // Boilerplates für PDF vorbereiten - GENAU wie im Email-Sender
-      const boilerplatesForPdf = (translation.translatedBoilerplates || []).map(tb => {
-        const originalSection = campaign?.boilerplateSections?.find(
-          (s: any) => s.id === tb.id
-        );
-        // Type-Mapping wie im Email-Sender
-        const typeMap: Record<string, 'lead' | 'main' | 'quote' | 'contact' | undefined> = {
-          'lead': 'lead',
-          'main': 'main',
-          'quote': 'quote',
-          'contact': 'contact',
-          'boilerplate': undefined,
-        };
-        return {
-          id: tb.id,
-          customTitle: tb.translatedTitle || originalSection?.customTitle || '',
-          content: tb.translatedContent,
-          type: typeMap[originalSection?.type || ''] || undefined
-        };
-      });
-
-      // Template laden (wie im Email-Sender)
-      const templateId = campaign?.templateId || 'default';
-      let template;
-      try {
-        if (templateId && templateId !== 'default') {
-          template = await pdfTemplateService.getTemplateById(templateId);
-        }
-        if (!template) {
-          template = await pdfTemplateService.getDefaultTemplate(organizationId);
-        }
-      } catch {
-        template = await pdfTemplateService.getDefaultTemplate(organizationId);
-      }
-
-      // Template HTML rendern (wie im Email-Sender)
-      const translatedTitle = translation.title ||
-        `${campaign?.title || 'Übersetzung'} (${LANGUAGE_NAMES[translation.language]})`;
-
-      const templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
-        title: translatedTitle,
-        mainContent: translation.content,
-        boilerplateSections: boilerplatesForPdf,
-        keyVisual: campaign?.keyVisual,
-        clientName: campaign?.clientName || 'Vorschau',
-        date: new Date().toISOString(),
-        language: translation.language
-      });
-
-      // PDF via API generieren MIT fertigem HTML (wie im Email-Sender)
-      const fileName = `${translatedTitle.replace(/[^a-zA-Z0-9]/g, '_')}_${translation.language.toUpperCase()}_Vorschau.pdf`;
-
-      const pdfResponse = await fetch('/api/generate-pdf', {
+      // PDF via API generieren
+      const response = await fetch('/api/pdf/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          campaignId: campaign?.id || `translation_${translation.id}`,
-          organizationId,
-          title: translatedTitle,
+          title: translation.title,
           mainContent: translation.content,
-          boilerplateSections: boilerplatesForPdf,
-          keyVisual: campaign?.keyVisual,
-          clientName: campaign?.clientName || 'Vorschau',
-          userId: 'preview-user',
-          html: templateHtml, // FERTIGES HTML mit übersetzten Boilerplates!
-          fileName,
-          options: {
-            format: 'A4',
-            orientation: 'portrait',
-            printBackground: true,
-            waitUntil: 'networkidle0'
-          }
+          boilerplateSections,
+          clientName: '', // Optional
+          returnBase64: false, // Wir wollen eine URL
+          organizationId,
+          projectId,
+          language: translation.language
         })
       });
 
-      if (!pdfResponse.ok) {
-        throw new Error(`PDF-Generierung fehlgeschlagen: ${pdfResponse.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`PDF-Generierung fehlgeschlagen: ${errorText}`);
       }
 
-      const pdfResult = await pdfResponse.json();
+      const result = await response.json();
 
-      if (!pdfResult.success) {
-        throw new Error(pdfResult.error || 'PDF-Generierung fehlgeschlagen');
-      }
-
-      // PDF öffnen (Base64 oder URL)
-      let pdfUrl: string;
-      if (pdfResult.pdfUrl) {
-        pdfUrl = pdfResult.pdfUrl;
-      } else if (pdfResult.pdfBase64) {
-        const byteCharacters = atob(pdfResult.pdfBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        pdfUrl = URL.createObjectURL(blob);
+      if (result.pdfUrl) {
+        // PDF in neuem Tab öffnen
+        window.open(result.pdfUrl, '_blank');
+        toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
       } else {
-        throw new Error('Keine PDF-Daten erhalten');
+        throw new Error('Keine PDF-URL erhalten');
       }
-
-      // PDF in neuem Tab öffnen
-      window.open(pdfUrl, '_blank');
-      toastService.success(`PDF für ${LANGUAGE_NAMES[translation.language]} geöffnet`);
-
     } catch (error: any) {
       console.error('PDF-Generierung fehlgeschlagen:', error);
       toastService.error(error.message || 'PDF-Generierung fehlgeschlagen');
