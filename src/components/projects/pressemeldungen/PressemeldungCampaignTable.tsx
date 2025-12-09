@@ -75,10 +75,10 @@ export default function PressemeldungCampaignTable({
       <div className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
         <div className="flex items-center">
           <div className="w-[40%] min-w-0 pr-4">Kampagne</div>
-          <div className="w-[18%] shrink-0">Status</div>
-          <div className="w-[12%] shrink-0">Admin</div>
-          <div className="w-[15%] shrink-0">Erstellt am</div>
-          <div className="flex-1">Versenden</div>
+          <div className="w-[18%] shrink-0 -ml-3">Status</div>
+          <div className="w-[12%] shrink-0 -ml-3">Admin</div>
+          <div className="w-[15%] shrink-0 -ml-3">Erstellt am</div>
+          <div className="flex-1 -ml-3">Versenden</div>
           <div className="ml-4 w-7">{/* Aktionen-Platzhalter */}</div>
         </div>
       </div>
