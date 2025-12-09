@@ -64,7 +64,8 @@
       "Bash(grep:*)",
       "WebFetch(domain:docs.anthropic.com)",
       "WebFetch(domain:docs.claude.com)",
-      "Bash(node scripts/find-campaign-for-project.js:*)"
+      "Bash(node scripts/find-campaign-for-project.js:*)",
+      "Bash(git pull:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

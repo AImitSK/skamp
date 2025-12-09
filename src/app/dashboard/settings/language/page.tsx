@@ -33,6 +33,10 @@ import {
 } from "@/lib/hooks/useGlossary";
 import { useCompanies } from "@/lib/hooks/useEditorsData";
 import { CustomerGlossaryEntry, CreateGlossaryEntryInput } from "@/types/glossary";
+import { userService } from "@/lib/firebase/user-service";
+
+// Cookie-Name für Locale (wird von request.ts gelesen)
+const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
 
 export default function LanguageSettingsPage() {
   const t = useTranslations('settings.language');
@@ -44,6 +48,24 @@ export default function LanguageSettingsPage() {
 
   // UI-Sprache (User-Level)
   const [uiLanguage, setUiLanguage] = useState<UILanguage>(DEFAULT_LANGUAGE);
+
+  // Gespeicherte Sprache beim Laden holen
+  useEffect(() => {
+    const loadSavedLanguage = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const savedLanguage = await userService.getLanguagePreference(user.uid);
+        if (savedLanguage && SUPPORTED_UI_LANGUAGES.includes(savedLanguage as UILanguage)) {
+          setUiLanguage(savedLanguage as UILanguage);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Spracheinstellung:', error);
+      }
+    };
+
+    loadSavedLanguage();
+  }, [user?.uid]);
 
   // Glossar-Suche & Filter
   const [glossarySearch, setGlossarySearch] = useState('');
@@ -99,12 +121,30 @@ export default function LanguageSettingsPage() {
   };
 
   const handleUiLanguageChange = async (newLanguage: UILanguage) => {
+    if (!user?.uid) {
+      toastService.error('Nicht angemeldet');
+      return;
+    }
+
     setSaving(true);
     try {
-      // TODO: Speichern in User-Preferences
+      // 1. In Firestore speichern (persistiert über Geräte)
+      await userService.updateLanguagePreference(user.uid, newLanguage);
+
+      // 2. Cookie setzen (für Server-Side Rendering in request.ts)
+      document.cookie = `${LOCALE_COOKIE_NAME}=${newLanguage}; path=/; max-age=${60 * 60 * 24 * 365}`; // 1 Jahr
+
+      // 3. State aktualisieren
       setUiLanguage(newLanguage);
-      toastService.success('UI-Sprache geändert');
+
+      toastService.success('UI-Sprache geändert - Seite wird neu geladen');
+
+      // 4. Seite neu laden damit next-intl die neue Sprache verwendet
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
+      console.error('Fehler beim Speichern der Sprache:', error);
       toastService.error('Fehler beim Speichern');
     } finally {
       setSaving(false);
