@@ -64,25 +64,24 @@ class GlossaryService {
   ): Promise<CustomerGlossaryEntry[]> {
     const collectionRef = collection(db, this.getCollectionPath(organizationId));
 
-    let q = query(collectionRef, orderBy('createdAt', 'desc'));
+    // Baue Query mit kombinierten Filtern
+    const constraints: any[] = [];
 
     // Filter nach Kunde
     if (options?.customerId) {
-      q = query(
-        collectionRef,
-        where('customerId', '==', options.customerId),
-        orderBy('createdAt', 'desc')
-      );
+      constraints.push(where('customerId', '==', options.customerId));
     }
 
     // Filter nur freigegebene
     if (options?.approvedOnly) {
-      q = query(
-        collectionRef,
-        where('isApproved', '==', true),
-        orderBy('createdAt', 'desc')
-      );
+      constraints.push(where('isApproved', '==', true));
     }
+
+    // Sortierung
+    constraints.push(orderBy('createdAt', 'desc'));
+
+    // Query mit allen Constraints erstellen
+    const q = query(collectionRef, ...constraints);
 
     const snapshot = await getDocs(q);
     let entries = snapshot.docs.map((doc) => this.docToEntry(doc, organizationId));
