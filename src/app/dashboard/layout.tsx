@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CrmDataProvider } from "@/context/CrmDataContext";
 import { OrganizationProvider } from "@/context/OrganizationContext";
 import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
@@ -83,23 +84,210 @@ import { Toaster } from '@/lib/utils/toast';
 
 // Navigation Interface Definitions
 interface NavigationChild {
-  name: string;
+  nameKey: string;
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  description: string;
+  descriptionKey: string;
   notificationCount?: number;
   badge?: string;
   superAdminOnly?: boolean;
 }
 
 interface NavigationItem {
-  name: string;
+  nameKey: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  current: boolean;
+  pathPrefix: string;
   href?: string;
-  description?: string;
+  descriptionKey?: string;
   children?: NavigationChild[];
 }
+
+interface SettingsItem {
+  nameKey: string;
+  href: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  descriptionKey: string;
+  badge?: string;
+  superAdminOnly?: boolean;
+}
+
+interface UserMenuItem {
+  nameKey: string;
+  href: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  badge?: string;
+  superAdminOnly?: boolean;
+  dividerAfter?: boolean;
+}
+
+// Navigation Items - Keys statt hardcodierter Texte
+const navigationItems: Omit<NavigationItem, 'current'>[] = [
+  {
+    nameKey: "contacts",
+    icon: UserGroupIcon,
+    pathPrefix: '/dashboard/contacts',
+    children: [
+      {
+        nameKey: "companies",
+        href: "/dashboard/contacts/crm?tab=companies",
+        icon: BuildingOfficeIcon,
+        descriptionKey: "companiesDesc"
+      },
+      {
+        nameKey: "persons",
+        href: "/dashboard/contacts/crm?tab=contacts",
+        icon: UserGroupIcon,
+        descriptionKey: "personsDesc"
+      },
+      {
+        nameKey: "lists",
+        href: "/dashboard/contacts/lists",
+        icon: QueueListIcon,
+        descriptionKey: "listsDesc"
+      },
+    ],
+  },
+  {
+    nameKey: "library",
+    icon: ArchiveBoxIcon,
+    pathPrefix: '/dashboard/library',
+    children: [
+      {
+        nameKey: "publications",
+        href: "/dashboard/library/publications",
+        icon: NewspaperIcon,
+        descriptionKey: "publicationsDesc"
+      },
+      {
+        nameKey: "boilerplates",
+        href: "/dashboard/library/boilerplates",
+        icon: DocumentTextIcon,
+        descriptionKey: "boilerplatesDesc"
+      },
+      {
+        nameKey: "media",
+        href: "/dashboard/library/media",
+        icon: PhotoIcon,
+        descriptionKey: "mediaDesc"
+      },
+      {
+        nameKey: "database",
+        href: "/dashboard/library/editors",
+        icon: CircleStackIcon,
+        descriptionKey: "databaseDesc",
+        badge: "PREMIUM",
+        superAdminOnly: true
+      },
+    ],
+  },
+  {
+    nameKey: "projects",
+    icon: BriefcaseIcon,
+    href: "/dashboard/projects",
+    pathPrefix: '/dashboard/projects',
+    descriptionKey: "projectsDesc"
+  },
+  {
+    nameKey: "analytics",
+    icon: ChartBarIcon,
+    pathPrefix: '/dashboard/analytics',
+    children: [
+      {
+        nameKey: "monitoring",
+        href: "/dashboard/analytics/monitoring",
+        icon: ChartBarIcon,
+        descriptionKey: "monitoringDesc"
+      },
+      {
+        nameKey: "reporting",
+        href: "/dashboard/analytics/reporting",
+        icon: ClockIcon,
+        descriptionKey: "reportingDesc"
+      },
+    ],
+  },
+];
+
+const settingsItems: SettingsItem[] = [
+  {
+    nameKey: "subscription",
+    href: "/dashboard/admin/billing",
+    icon: CreditCardIcon,
+    descriptionKey: "subscriptionDesc"
+  },
+  {
+    nameKey: "notifications",
+    href: "/dashboard/settings/notifications",
+    icon: BellAlertIcon,
+    descriptionKey: "notificationsDesc"
+  },
+  {
+    nameKey: "branding",
+    href: "/dashboard/settings/branding",
+    icon: PaintBrushIcon,
+    descriptionKey: "brandingDesc"
+  },
+  {
+    nameKey: "templates",
+    href: "/dashboard/settings/templates",
+    icon: DocumentTextIcon,
+    descriptionKey: "templatesDesc",
+    badge: "PREMIUM",
+    superAdminOnly: true
+  },
+  {
+    nameKey: "domains",
+    href: "/dashboard/settings/domain",
+    icon: EnvelopeIcon,
+    descriptionKey: "domainsDesc"
+  },
+  {
+    nameKey: "email",
+    href: "/dashboard/settings/email",
+    icon: EnvelopeIcon,
+    descriptionKey: "emailDesc"
+  },
+  {
+    nameKey: "importExport",
+    href: "/dashboard/settings/import-export",
+    icon: ArrowDownTrayIcon,
+    descriptionKey: "importExportDesc"
+  },
+  {
+    nameKey: "team",
+    href: "/dashboard/settings/team",
+    icon: UserGroupIcon,
+    descriptionKey: "teamDesc"
+  },
+];
+
+const userMenuItems: UserMenuItem[] = [
+  {
+    nameKey: "billing",
+    href: "/dashboard/admin/billing",
+    icon: CreditCardIcon,
+  },
+  {
+    nameKey: "apiManagement",
+    href: "/dashboard/admin/api",
+    icon: CodeBracketIcon,
+    badge: "PREMIUM",
+    superAdminOnly: true,
+  },
+  {
+    nameKey: "developerPortal",
+    href: "/dashboard/developer",
+    icon: CodeBracketIcon,
+    badge: "PREMIUM",
+    superAdminOnly: true,
+    dividerAfter: true,
+  },
+  {
+    nameKey: "documentation",
+    href: "/dashboard/academy/documentation",
+    icon: BookOpenIcon,
+  },
+];
 
 export default function DashboardLayout({
   children,
@@ -113,6 +301,11 @@ export default function DashboardLayout({
   const { totalUnread: inboxUnread, assignedUnread } = useInboxCount();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isSuperAdmin, autoGlobalMode, globalPermissions } = useAutoGlobal();
+  const t = useTranslations('layout.navigation');
+  const tSettings = useTranslations('layout.settings');
+  const tUser = useTranslations('layout.userMenu');
+  const tMobile = useTranslations('layout.mobile');
+  const tSuperAdmin = useTranslations('layout.superAdmin');
 
   const handleLogout = async () => {
     try {
@@ -122,174 +315,6 @@ export default function DashboardLayout({
       console.error("Fehler beim Logout:", error);
     }
   };
-
-  const navigationItems: NavigationItem[] = [
-  {
-    name: "Kontakte",
-    icon: UserGroupIcon,
-    current: pathname.startsWith('/dashboard/contacts'),
-    children: [
-      { 
-        name: "Unternehmen", 
-        href: "/dashboard/contacts/crm?tab=companies", 
-        icon: BuildingOfficeIcon,
-        description: "Verwalte deine Unternehmenskontakte und Kunden"
-      },
-      { 
-        name: "Personen", 
-        href: "/dashboard/contacts/crm?tab=contacts", 
-        icon: UserGroupIcon,
-        description: "Alle Journalisten und Ansprechpartner im Überblick"
-      },
-      { 
-        name: "Listen", 
-        href: "/dashboard/contacts/lists", 
-        icon: QueueListIcon,
-        description: "Erstelle und verwalte deine Verteilerlisten"
-      },
-    ],
-  },
-  {
-    name: "Bibliothek",
-    icon: ArchiveBoxIcon,
-    current: pathname.startsWith('/dashboard/library'),
-    children: [
-      {
-        name: "Publikationen",
-        href: "/dashboard/library/publications",
-        icon: NewspaperIcon,
-        description: "Alle Publikationen und deren Metriken verwalten"
-      },
-      {
-        name: "Boilerplates",
-        href: "/dashboard/library/boilerplates",
-        icon: DocumentTextIcon,
-        description: "Wiederverwendbare Textbausteine und Vorlagen"
-      },
-      {
-        name: "Mediathek",
-        href: "/dashboard/library/media",
-        icon: PhotoIcon,
-        description: "Zentrale Verwaltung aller Medieninhalte"
-      },
-      {
-        name: "Datenbank",
-        href: "/dashboard/library/editors",
-        icon: CircleStackIcon,
-        description: "Redakteure und ihre Publikationen verwalten",
-        badge: "PREMIUM",
-        superAdminOnly: true
-      },
-    ],
-  },
-  {
-    name: "Projekte",
-    icon: BriefcaseIcon,
-    href: "/dashboard/projects",
-    current: pathname.startsWith('/dashboard/projects'),
-    description: "Projekt-Management mit Kanban-Board und Pipeline-Tracking"
-  },
-  {
-    name: "Analyse",
-    icon: ChartBarIcon,
-    current: pathname.startsWith('/dashboard/analytics'),
-    children: [
-      {
-        name: "Monitoring",
-        href: "/dashboard/analytics/monitoring",
-        icon: ChartBarIcon,
-        description: "E-Mail Tracking und Veröffentlichungs-Monitoring"
-      },
-      {
-        name: "Reporting",
-        href: "/dashboard/analytics/reporting",
-        icon: ClockIcon,
-        description: "Automatische Report-Zustellung verwalten"
-      },
-    ],
-  },
-];
-
-  const settingsItems = [
-    {
-      name: "Subscription",
-      href: "/dashboard/admin/billing",
-      icon: CreditCardIcon,
-      description: "Plan verwalten und upgraden"
-    },
-    {
-      name: "Benachrichtigungen",
-      href: "/dashboard/settings/notifications",
-      icon: BellAlertIcon,
-      description: "E-Mail und Push-Benachrichtigungen verwalten"
-    },
-    {
-      name: "Branding",
-      href: "/dashboard/settings/branding",
-      icon: PaintBrushIcon,
-      description: "Personalisiere CeleroPress mit eigenem Logo"
-    },
-    {
-      name: "Templates",
-      href: "/dashboard/settings/templates",
-      icon: DocumentTextIcon,
-      description: "PDF-Layout-Vorlagen verwalten",
-      badge: "PREMIUM",
-      superAdminOnly: true
-    },
-    {
-      name: "Domains",
-      href: "/dashboard/settings/domain",
-      icon: EnvelopeIcon,
-      description: "Eigene E-Mail-Domain einrichten"
-    },
-    {
-      name: "E-Mail",
-      href: "/dashboard/settings/email",
-      icon: EnvelopeIcon,
-      description: "E-Mail Konfiguration"
-    },
-    {
-      name: "Import / Export",
-      href: "/dashboard/settings/import-export",
-      icon: ArrowDownTrayIcon,
-      description: "Daten importieren oder exportieren"
-    },
-    {
-      name: "Team",
-      href: "/dashboard/settings/team",
-      icon: UserGroupIcon,
-      description: "Team-Mitglieder verwalten"
-    },
-  ];
-
-  const userMenuItems = [
-      {
-        name: "Abrechnung",
-        href: "/dashboard/admin/billing",
-        icon: CreditCardIcon,
-      },
-      {
-        name: "API-Verwaltung",
-        href: "/dashboard/admin/api",
-        icon: CodeBracketIcon,
-        badge: "PREMIUM",
-        superAdminOnly: true,
-      },
-      {
-        name: "Developer Portal",
-        href: "/dashboard/developer",
-        icon: CodeBracketIcon,
-        badge: "PREMIUM",
-        superAdminOnly: true,
-        dividerAfter: true,
-      },
-      {
-        name: "Dokumentation",
-        href: "/dashboard/academy/documentation",
-        icon: BookOpenIcon,
-      },
-  ];
 
   // Mobile Menu Component
   const MobileMenu = () => (
@@ -311,7 +336,7 @@ export default function DashboardLayout({
             className="-m-2.5 rounded-md p-2.5 text-zinc-700 dark:text-zinc-300"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <span className="sr-only">Menü schließen</span>
+            <span className="sr-only">{tMobile('closeMenu')}</span>
             <XMarkIcon className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
@@ -319,10 +344,10 @@ export default function DashboardLayout({
           <div className="-my-6 divide-y divide-zinc-500/10 dark:divide-zinc-700">
             <div className="space-y-2 py-6">
               {navigationItems.map((item) => (
-                <div key={item.name}>
+                <div key={item.nameKey}>
                   <div className="font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
                     <item.icon className="h-5 w-5" />
-                    {item.name}
+                    {t(item.nameKey)}
                   </div>
                   <div className="ml-7 space-y-1">
                     {item.children?.map((child) => {
@@ -331,11 +356,11 @@ export default function DashboardLayout({
                       if (isRestricted) {
                         return (
                           <div
-                            key={child.name}
+                            key={child.nameKey}
                             className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
                           >
                             <span className="flex items-center gap-2 text-zinc-400">
-                              {child.name}
+                              {t(child.nameKey)}
                               {child.badge && (
                                 <Badge color="pink">{child.badge}</Badge>
                               )}
@@ -346,13 +371,13 @@ export default function DashboardLayout({
 
                       return (
                         <a
-                          key={child.name}
+                          key={child.nameKey}
                           href={child.href}
                           className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <span className="flex items-center gap-2">
-                            {child.name}
+                            {t(child.nameKey)}
                             {child.badge && (
                               <Badge color="pink">{child.badge}</Badge>
                             )}
@@ -372,22 +397,22 @@ export default function DashboardLayout({
             <div className="py-6 space-y-2">
               <div className="font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
                 <Cog6ToothIcon className="h-5 w-5" />
-                Einstellungen
+                {tMobile('settings')}
               </div>
               <div className="ml-7 space-y-1">
                 {settingsItems.map((item) => {
-                  const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+                  const isRestricted = item.superAdminOnly && !isSuperAdmin;
 
                   if (isRestricted) {
                     return (
                       <div
-                        key={item.name}
+                        key={item.nameKey}
                         className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
                       >
                         <span className="flex items-center gap-2 text-zinc-400">
-                          {item.name}
-                          {(item as any).badge && (
-                            <Badge color="pink">{(item as any).badge}</Badge>
+                          {tSettings(item.nameKey)}
+                          {item.badge && (
+                            <Badge color="pink">{item.badge}</Badge>
                           )}
                         </span>
                       </div>
@@ -396,15 +421,15 @@ export default function DashboardLayout({
 
                   return (
                     <a
-                      key={item.name}
+                      key={item.nameKey}
                       href={item.href}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <span className="flex items-center gap-2">
-                        {item.name}
-                        {(item as any).badge && (
-                          <Badge color="pink">{(item as any).badge}</Badge>
+                        {tSettings(item.nameKey)}
+                        {item.badge && (
+                          <Badge color="pink">{item.badge}</Badge>
                         )}
                       </span>
                     </a>
@@ -415,7 +440,7 @@ export default function DashboardLayout({
             <div className="py-6 space-y-2">
               <div className="font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-2">
                 <UserIcon className="h-5 w-5" />
-                Account
+                {tMobile('account')}
               </div>
               <div className="ml-7 space-y-1">
                 <div className="px-3 py-2 text-sm">
@@ -423,18 +448,18 @@ export default function DashboardLayout({
                   <div className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</div>
                 </div>
                 {userMenuItems.map((item) => {
-                  const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+                  const isRestricted = item.superAdminOnly && !isSuperAdmin;
 
                   if (isRestricted) {
                     return (
                       <div
-                        key={item.name}
+                        key={item.nameKey}
                         className="block rounded-lg px-3 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
                       >
                         <span className="flex items-center gap-2 text-zinc-400">
-                          {item.name}
-                          {(item as any).badge && (
-                            <Badge color="pink">{(item as any).badge}</Badge>
+                          {tUser(item.nameKey)}
+                          {item.badge && (
+                            <Badge color="pink">{item.badge}</Badge>
                           )}
                         </span>
                       </div>
@@ -443,15 +468,15 @@ export default function DashboardLayout({
 
                   return (
                     <a
-                      key={item.name}
+                      key={item.nameKey}
                       href={item.href}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <span className="flex items-center gap-2">
-                        {item.name}
-                        {(item as any).badge && (
-                          <Badge color="pink">{(item as any).badge}</Badge>
+                        {tUser(item.nameKey)}
+                        {item.badge && (
+                          <Badge color="pink">{item.badge}</Badge>
                         )}
                       </span>
                     </a>
@@ -465,7 +490,7 @@ export default function DashboardLayout({
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-base font-semibold text-zinc-900 hover:bg-zinc-50 dark:text-white dark:hover:bg-zinc-800"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                Abmelden
+                {tMobile('logout')}
               </button>
             </div>
           </div>
@@ -494,10 +519,12 @@ export default function DashboardLayout({
               
               {/* Desktop Navigation */}
               <NavbarSection className="hidden lg:flex ml-4 items-center gap-x-6">
-                {navigationItems.map((item) => (
-                  item.children ? (
-                    <Dropdown key={item.name}>
-                        <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50 rounded-md')}>                        <span>{item.name}</span>
+                {navigationItems.map((item) => {
+                  const isCurrent = pathname.startsWith(item.pathPrefix);
+                  return item.children ? (
+                    <Dropdown key={item.nameKey}>
+                        <DropdownButton as={NavbarItem} className={clsx('!border-transparent', isCurrent && 'bg-zinc-100 dark:bg-zinc-800/50 rounded-md')}>
+                        <span>{t(item.nameKey)}</span>
                         <ChevronDownIcon className="size-4" />
                       </DropdownButton>
                       <DropdownMenu>
@@ -507,18 +534,18 @@ export default function DashboardLayout({
                           if (isRestricted) {
                             return (
                               <div
-                                key={child.name}
+                                key={child.nameKey}
                                 className="flex items-center gap-3 px-3.5 py-2.5 opacity-50 cursor-not-allowed"
                               >
                                 <child.icon className="size-5 text-zinc-400" />
                                 <div className="flex flex-col">
                                   <span className="flex items-center gap-2 text-sm text-zinc-400">
-                                    {child.name}
+                                    {t(child.nameKey)}
                                     {child.badge && (
                                       <Badge color="pink">{child.badge}</Badge>
                                     )}
                                   </span>
-                                  <span className="text-xs text-zinc-400">{child.description}</span>
+                                  <span className="text-xs text-zinc-400">{t(child.descriptionKey)}</span>
                                 </div>
                               </div>
                             );
@@ -527,12 +554,12 @@ export default function DashboardLayout({
                           return (
                             <DropdownItem
                               href={child.href}
-                              key={child.name}
+                              key={child.nameKey}
                               icon={child.icon}
-                              description={child.description}
+                              description={t(child.descriptionKey)}
                             >
                               <span className="flex items-center gap-2">
-                                {child.name}
+                                {t(child.nameKey)}
                                 {child.badge && (
                                   <Badge color="pink">{child.badge}</Badge>
                                 )}
@@ -548,18 +575,18 @@ export default function DashboardLayout({
                       </DropdownMenu>
                     </Dropdown>
                   ) : (
-                    <a 
-                      key={item.name}
+                    <a
+                      key={item.nameKey}
                       href={item.href}
                       className={clsx(
                         'text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white px-3 py-2 rounded-md transition-colors',
-                        item.current && 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
+                        isCurrent && 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
                       )}
                     >
-                      {item.name}
+                      {t(item.nameKey)}
                     </a>
-                  )
-                ))}
+                  );
+                })}
               </NavbarSection>
               
               <NavbarSpacer />
@@ -570,7 +597,7 @@ export default function DashboardLayout({
                 <a
                   href="/dashboard/communication/inbox"
                   className="hidden lg:flex relative p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors"
-                  aria-label="Inbox"
+                  aria-label={t('inbox')}
                 >
                   <InboxIcon className="size-6" />
                   {inboxUnread > 0 && (
@@ -587,7 +614,7 @@ export default function DashboardLayout({
                 <a
                   href="/dashboard/settings/notifications"
                   className="hidden lg:flex p-2 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white transition-colors"
-                  aria-label="Einstellungen"
+                  aria-label={tSettings('title')}
                 >
                   <Cog6ToothIcon className="size-6" />
                 </a>
@@ -600,51 +627,51 @@ export default function DashboardLayout({
                       className="hidden lg:flex items-center gap-1 p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                     >
                       <ShieldCheckIcon className="size-5" />
-                      <span className="text-sm font-medium">Super Admin</span>
+                      <span className="text-sm font-medium">{tSuperAdmin('title')}</span>
                       <ChevronDownIcon className="size-4" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="min-w-60">
                       <DropdownItem
                         href="/dashboard/super-admin/accounts"
                         icon={TicketIcon}
-                        description="Promo-Codes und Special Accounts"
+                        description={tSuperAdmin('accountsDesc')}
                       >
-                        Account Management
+                        {tSuperAdmin('accounts')}
                       </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/organizations"
                         icon={BuildingOfficeIcon}
-                        description="Organizations Overview & Support"
+                        description={tSuperAdmin('organizationsDesc')}
                       >
-                        Organizations
+                        {tSuperAdmin('organizations')}
                       </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/matching/candidates"
                         icon={AdjustmentsHorizontalIcon}
-                        description="Neue Premium-Kandidaten prüfen"
+                        description={tSuperAdmin('matchingCandidatesDesc')}
                       >
-                        Matching-Kandidaten
+                        {tSuperAdmin('matchingCandidates')}
                       </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/matching/analytics"
                         icon={ChartBarIcon}
-                        description="Datenqualität und Statistiken"
+                        description={tSuperAdmin('analyticsDesc')}
                       >
-                        Analytics
+                        {tSuperAdmin('analytics')}
                       </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/monitoring"
                         icon={ChartBarIcon}
-                        description="Monitoring & Crawler Control"
+                        description={tSuperAdmin('monitoringControlDesc')}
                       >
-                        Monitoring Control
+                        {tSuperAdmin('monitoringControl')}
                       </DropdownItem>
                       <DropdownItem
                         href="/dashboard/super-admin/settings"
                         icon={Cog6ToothIcon}
-                        description="Global-System konfigurieren"
+                        description={tSuperAdmin('globalSettingsDesc')}
                       >
-                        Global-Einstellungen
+                        {tSuperAdmin('globalSettings')}
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
@@ -672,36 +699,36 @@ export default function DashboardLayout({
                     </DropdownItem>
                     <DropdownDivider />
                     {userMenuItems.map((item) => {
-                      const isRestricted = (item as any).superAdminOnly && !isSuperAdmin;
+                      const isRestricted = item.superAdminOnly && !isSuperAdmin;
 
                       if (isRestricted) {
                         return (
-                          <React.Fragment key={item.name}>
+                          <React.Fragment key={item.nameKey}>
                             <div className="flex items-center gap-2 px-3.5 py-2 opacity-50 cursor-not-allowed">
                               <item.icon className="size-3.5 flex-shrink-0 text-zinc-400" />
-                              <span className="text-sm text-zinc-400">{item.name}</span>
-                              {(item as any).badge && (
-                                <Badge color="pink" className="ml-auto">{(item as any).badge}</Badge>
+                              <span className="text-sm text-zinc-400">{tUser(item.nameKey)}</span>
+                              {item.badge && (
+                                <Badge color="pink" className="ml-auto">{item.badge}</Badge>
                               )}
                             </div>
-                            {(item as any).dividerAfter && <DropdownDivider />}
+                            {item.dividerAfter && <DropdownDivider />}
                           </React.Fragment>
                         );
                       }
 
                       return (
-                        <React.Fragment key={item.name}>
+                        <React.Fragment key={item.nameKey}>
                           <DropdownItem
                             href={item.href}
                             compact
                           >
                             <item.icon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
-                            <span className="text-sm text-zinc-900 dark:text-white">{item.name}</span>
-                            {(item as any).badge && (
-                              <Badge color="pink" className="ml-auto">{(item as any).badge}</Badge>
+                            <span className="text-sm text-zinc-900 dark:text-white">{tUser(item.nameKey)}</span>
+                            {item.badge && (
+                              <Badge color="pink" className="ml-auto">{item.badge}</Badge>
                             )}
                           </DropdownItem>
-                          {(item as any).dividerAfter && <DropdownDivider />}
+                          {item.dividerAfter && <DropdownDivider />}
                         </React.Fragment>
                       );
                     })}
@@ -711,7 +738,7 @@ export default function DashboardLayout({
                       compact
                     >
                       <ArrowRightOnRectangleIcon className="size-3.5 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
-                      <span className="text-sm text-zinc-900 dark:text-white">Abmelden</span>
+                      <span className="text-sm text-zinc-900 dark:text-white">{tUser('logout')}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>
@@ -722,7 +749,7 @@ export default function DashboardLayout({
                   className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-zinc-700 dark:text-zinc-300 lg:hidden"
                   onClick={() => setMobileMenuOpen(true)}
                 >
-                  <span className="sr-only">Hauptmenü öffnen</span>
+                  <span className="sr-only">{tMobile('openMenu')}</span>
                   <Bars3Icon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </NavbarSection>
@@ -744,14 +771,15 @@ export default function DashboardLayout({
               <SidebarBody>
                 <SidebarItem href="/dashboard" current={pathname === '/dashboard'}>
                   <HomeIcon className="size-5" />
-                  <SidebarLabel>Dashboard</SidebarLabel>
+                  <SidebarLabel>{t('dashboard')}</SidebarLabel>
                 </SidebarItem>
-                {navigationItems.map(item => (
-                  item.children ? (
-                    <Dropdown key={item.name}>
-                      <DropdownButton as={SidebarItem} current={item.current}>
+                {navigationItems.map(item => {
+                  const isCurrent = pathname.startsWith(item.pathPrefix);
+                  return item.children ? (
+                    <Dropdown key={item.nameKey}>
+                      <DropdownButton as={SidebarItem} current={isCurrent}>
                         <item.icon className="size-5" />
-                        <SidebarLabel>{item.name}</SidebarLabel>
+                        <SidebarLabel>{t(item.nameKey)}</SidebarLabel>
                         <ChevronDownIcon className="size-4" />
                       </DropdownButton>
                       <DropdownMenu>
@@ -761,18 +789,18 @@ export default function DashboardLayout({
                           if (isRestricted) {
                             return (
                               <div
-                                key={child.name}
+                                key={child.nameKey}
                                 className="flex items-center gap-3 px-3.5 py-2.5 opacity-50 cursor-not-allowed"
                               >
                                 <child.icon className="size-5 text-zinc-400" />
                                 <div className="flex flex-col">
                                   <span className="flex items-center gap-2 text-sm text-zinc-400">
-                                    {child.name}
+                                    {t(child.nameKey)}
                                     {child.badge && (
                                       <Badge color="pink">{child.badge}</Badge>
                                     )}
                                   </span>
-                                  <span className="text-xs text-zinc-400">{child.description}</span>
+                                  <span className="text-xs text-zinc-400">{t(child.descriptionKey)}</span>
                                 </div>
                               </div>
                             );
@@ -781,12 +809,12 @@ export default function DashboardLayout({
                           return (
                             <DropdownItem
                               href={child.href}
-                              key={child.name}
+                              key={child.nameKey}
                               icon={child.icon}
-                              description={child.description}
+                              description={t(child.descriptionKey)}
                             >
                               <span className="flex items-center gap-2">
-                                {child.name}
+                                {t(child.nameKey)}
                                 {child.badge && (
                                   <Badge color="pink">{child.badge}</Badge>
                                 )}
@@ -802,12 +830,12 @@ export default function DashboardLayout({
                       </DropdownMenu>
                     </Dropdown>
                   ) : (
-                    <SidebarItem key={item.name} href={item.href} current={item.current}>
+                    <SidebarItem key={item.nameKey} href={item.href} current={isCurrent}>
                       <item.icon className="size-5" />
-                      <SidebarLabel>{item.name}</SidebarLabel>
+                      <SidebarLabel>{t(item.nameKey)}</SidebarLabel>
                     </SidebarItem>
-                  )
-                ))}
+                  );
+                })}
               </SidebarBody>
             </Sidebar>
           }

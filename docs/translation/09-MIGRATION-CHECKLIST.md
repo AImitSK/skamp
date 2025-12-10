@@ -1,7 +1,7 @@
 # UI-Migration Checklist
 
 **Status:** In Bearbeitung
-**Zuletzt aktualisiert:** 2025-12-09
+**Zuletzt aktualisiert:** 2025-12-10
 
 ---
 
@@ -26,6 +26,8 @@ Diese werden überall verwendet - Keys landen in `common` Namespace.
 | ⏭️ | `src/components/DashboardNav.tsx` | Haupt-Navigation (existiert nicht) | - |
 | ⬜ | `src/components/Sidebar.tsx` | Sidebar (falls vorhanden) | - |
 | ✅ | `src/components/SettingsNav.tsx` | Settings-Navigation | 2025-12-10 |
+| ✅ | `src/components/AdminNav.tsx` | Admin-Navigation | 2025-12-10 |
+| ✅ | `src/app/dashboard/layout.tsx` | Dashboard-Layout (Navigation, Mobile-Menu, SuperAdmin) | 2025-12-10 |
 | ⬜ | `src/components/ui/dialog.tsx` | Dialog-Komponente | - |
 | ⬜ | `src/components/ui/dropdown.tsx` | Dropdown-Menüs | - |
 
@@ -158,8 +160,8 @@ Kernfunktionalität der App.
 
 ## Statistik
 
-- **Gesamt:** ~55 Seiten
-- **Abgeschlossen:** 19 (Dashboard, Projects, SettingsNav, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting)
+- **Gesamt:** ~57 Seiten
+- **Abgeschlossen:** 21 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0

@@ -1372,5 +1372,90 @@
         "activate": "Activate"
       }
     }
+  },
+  "layout": {
+    "navigation": {
+      "dashboard": "Dashboard",
+      "contacts": "Contacts",
+      "companies": "Companies",
+      "companiesDesc": "Manage your company contacts and customers",
+      "persons": "People",
+      "personsDesc": "All journalists and contacts at a glance",
+      "lists": "Lists",
+      "listsDesc": "Create and manage your distribution lists",
+      "library": "Library",
+      "publications": "Publications",
+      "publicationsDesc": "Manage all publications and their metrics",
+      "boilerplates": "Boilerplates",
+      "boilerplatesDesc": "Reusable text blocks and templates",
+      "media": "Media Library",
+      "mediaDesc": "Central management of all media content",
+      "database": "Database",
+      "databaseDesc": "Manage editors and their publications",
+      "projects": "Projects",
+      "projectsDesc": "Project management with Kanban board and pipeline tracking",
+      "analytics": "Analytics",
+      "monitoring": "Monitoring",
+      "monitoringDesc": "Email tracking and publication monitoring",
+      "reporting": "Reporting",
+      "reportingDesc": "Manage automatic report delivery",
+      "inbox": "Inbox"
+    },
+    "settings": {
+      "title": "Settings",
+      "subscription": "Subscription",
+      "subscriptionDesc": "Manage and upgrade your plan",
+      "notifications": "Notifications",
+      "notificationsDesc": "Manage email and push notifications",
+      "branding": "Branding",
+      "brandingDesc": "Personalize CeleroPress with your own logo",
+      "templates": "Templates",
+      "templatesDesc": "Manage PDF layout templates",
+      "domains": "Domains",
+      "domainsDesc": "Set up your own email domain",
+      "email": "Email",
+      "emailDesc": "Email configuration",
+      "importExport": "Import / Export",
+      "importExportDesc": "Import or export data",
+      "team": "Team",
+      "teamDesc": "Manage team members"
+    },
+    "userMenu": {
+      "billing": "Billing",
+      "apiManagement": "API Management",
+      "developerPortal": "Developer Portal",
+      "documentation": "Documentation",
+      "logout": "Logout"
+    },
+    "mobile": {
+      "closeMenu": "Close menu",
+      "openMenu": "Open main menu",
+      "settings": "Settings",
+      "account": "Account",
+      "logout": "Logout"
+    },
+    "superAdmin": {
+      "title": "Super Admin",
+      "accounts": "Account Management",
+      "accountsDesc": "Promo codes and special accounts",
+      "organizations": "Organizations",
+      "organizationsDesc": "Organizations overview & support",
+      "matchingCandidates": "Matching Candidates",
+      "matchingCandidatesDesc": "Review new premium candidates",
+      "analytics": "Analytics",
+      "analyticsDesc": "Data quality and statistics",
+      "monitoringControl": "Monitoring Control",
+      "monitoringControlDesc": "Monitoring & crawler control",
+      "globalSettings": "Global Settings",
+      "globalSettingsDesc": "Configure global system"
+    }
+  },
+  "admin": {
+    "navigation": {
+      "ariaLabel": "Admin Navigation",
+      "profile": "Profile",
+      "billing": "Billing",
+      "apiManagement": "API Management"
+    }
   }
 }

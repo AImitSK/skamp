@@ -1372,5 +1372,90 @@
         "activate": "Aktivieren"
       }
     }
+  },
+  "layout": {
+    "navigation": {
+      "dashboard": "Dashboard",
+      "contacts": "Kontakte",
+      "companies": "Unternehmen",
+      "companiesDesc": "Verwalte deine Unternehmenskontakte und Kunden",
+      "persons": "Personen",
+      "personsDesc": "Alle Journalisten und Ansprechpartner im Überblick",
+      "lists": "Listen",
+      "listsDesc": "Erstelle und verwalte deine Verteilerlisten",
+      "library": "Bibliothek",
+      "publications": "Publikationen",
+      "publicationsDesc": "Alle Publikationen und deren Metriken verwalten",
+      "boilerplates": "Boilerplates",
+      "boilerplatesDesc": "Wiederverwendbare Textbausteine und Vorlagen",
+      "media": "Mediathek",
+      "mediaDesc": "Zentrale Verwaltung aller Medieninhalte",
+      "database": "Datenbank",
+      "databaseDesc": "Redakteure und ihre Publikationen verwalten",
+      "projects": "Projekte",
+      "projectsDesc": "Projekt-Management mit Kanban-Board und Pipeline-Tracking",
+      "analytics": "Analyse",
+      "monitoring": "Monitoring",
+      "monitoringDesc": "E-Mail Tracking und Veröffentlichungs-Monitoring",
+      "reporting": "Reporting",
+      "reportingDesc": "Automatische Report-Zustellung verwalten",
+      "inbox": "Posteingang"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "subscription": "Subscription",
+      "subscriptionDesc": "Plan verwalten und upgraden",
+      "notifications": "Benachrichtigungen",
+      "notificationsDesc": "E-Mail und Push-Benachrichtigungen verwalten",
+      "branding": "Branding",
+      "brandingDesc": "Personalisiere CeleroPress mit eigenem Logo",
+      "templates": "Templates",
+      "templatesDesc": "PDF-Layout-Vorlagen verwalten",
+      "domains": "Domains",
+      "domainsDesc": "Eigene E-Mail-Domain einrichten",
+      "email": "E-Mail",
+      "emailDesc": "E-Mail Konfiguration",
+      "importExport": "Import / Export",
+      "importExportDesc": "Daten importieren oder exportieren",
+      "team": "Team",
+      "teamDesc": "Team-Mitglieder verwalten"
+    },
+    "userMenu": {
+      "billing": "Abrechnung",
+      "apiManagement": "API-Verwaltung",
+      "developerPortal": "Developer Portal",
+      "documentation": "Dokumentation",
+      "logout": "Abmelden"
+    },
+    "mobile": {
+      "closeMenu": "Menü schließen",
+      "openMenu": "Hauptmenü öffnen",
+      "settings": "Einstellungen",
+      "account": "Account",
+      "logout": "Abmelden"
+    },
+    "superAdmin": {
+      "title": "Super Admin",
+      "accounts": "Account Management",
+      "accountsDesc": "Promo-Codes und Special Accounts",
+      "organizations": "Organizations",
+      "organizationsDesc": "Organizations Overview & Support",
+      "matchingCandidates": "Matching-Kandidaten",
+      "matchingCandidatesDesc": "Neue Premium-Kandidaten prüfen",
+      "analytics": "Analytics",
+      "analyticsDesc": "Datenqualität und Statistiken",
+      "monitoringControl": "Monitoring Control",
+      "monitoringControlDesc": "Monitoring & Crawler Control",
+      "globalSettings": "Global-Einstellungen",
+      "globalSettingsDesc": "Global-System konfigurieren"
+    }
+  },
+  "admin": {
+    "navigation": {
+      "ariaLabel": "Admin Navigation",
+      "profile": "Profil",
+      "billing": "Abrechnung",
+      "apiManagement": "API-Verwaltung"
+    }
   }
 }

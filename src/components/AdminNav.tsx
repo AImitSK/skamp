@@ -2,21 +2,22 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from "@/components/ui/badge";
 import { useAutoGlobal } from "@/lib/hooks/useAutoGlobal";
 
 // Die Navigationspunkte für den Admin-Bereich
 const adminItems = [
   {
-    name: "Profil",
+    nameKey: "profile",
     href: "/dashboard/admin/profile",
   },
   {
-    name: "Abrechnung",
+    nameKey: "billing",
     href: "/dashboard/admin/billing",
   },
   {
-    name: "API-Verwaltung",
+    nameKey: "apiManagement",
     href: "/dashboard/admin/api",
     badge: "PREMIUM",
     superAdminOnly: true,
@@ -31,20 +32,22 @@ function classNames(...classes: string[]) {
 export function AdminNav() {
   const pathname = usePathname();
   const { isSuperAdmin } = useAutoGlobal();
+  const t = useTranslations('admin.navigation');
 
   return (
-    <nav aria-label="Admin Navigation" className="flex flex-col">
+    <nav aria-label={t('ariaLabel')} className="flex flex-col">
       <ul role="list" className="-mx-2 space-y-1">
         {adminItems.map((item) => {
           const isRestricted = item.superAdminOnly && !isSuperAdmin;
+          const itemName = t(item.nameKey);
 
           if (isRestricted) {
             return (
-              <li key={item.name}>
+              <li key={item.nameKey}>
                 <div
                   className="flex items-center justify-between rounded-md p-2 text-sm/6 font-semibold text-gray-400 cursor-not-allowed opacity-50"
                 >
-                  <span>{item.name}</span>
+                  <span>{itemName}</span>
                   {item.badge && (
                     <Badge color="pink">{item.badge}</Badge>
                   )}
@@ -54,7 +57,7 @@ export function AdminNav() {
           }
 
           return (
-            <li key={item.name}>
+            <li key={item.nameKey}>
               <Link
                 href={item.href}
                 className={classNames(
@@ -64,7 +67,7 @@ export function AdminNav() {
                   'flex items-center justify-between rounded-md p-2 text-sm/6 font-semibold'
                 )}
               >
-                <span>{item.name}</span>
+                <span>{itemName}</span>
                 {item.badge && (
                   <Badge color="pink">{item.badge}</Badge>
                 )}
