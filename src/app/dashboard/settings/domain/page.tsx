@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/ui/heading';
@@ -42,6 +43,7 @@ function InfoAlert({ children }: { children: React.ReactNode }) {
 }
 
 export default function DomainsPage() {
+  const t = useTranslations('settings.domain');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const [domains, setDomains] = useState<EmailDomainEnhanced[]>([]);
@@ -168,7 +170,7 @@ export default function DomainsPage() {
   };
 
   const handleDelete = async (domainId: string) => {
-    if (!confirm('Möchten Sie diese Domain wirklich löschen?')) {
+    if (!confirm(t('deleteConfirm'))) {
       return;
     }
 
@@ -194,9 +196,9 @@ export default function DomainsPage() {
 
   const getStatusBadge = (status: DomainStatus) => {
     const colors = {
-      pending: { bg: 'yellow', icon: ClockIcon, text: 'Ausstehend' },
-      verified: { bg: 'green', icon: CheckCircleIcon, text: 'Verifiziert' },
-      failed: { bg: 'red', icon: XCircleIcon, text: 'Fehlgeschlagen' }
+      pending: { bg: 'yellow', icon: ClockIcon, text: t('status.pending') },
+      verified: { bg: 'green', icon: CheckCircleIcon, text: t('status.verified') },
+      failed: { bg: 'red', icon: XCircleIcon, text: t('status.failed') }
     };
 
     const config = colors[status];
@@ -211,12 +213,12 @@ export default function DomainsPage() {
   };
 
   const formatDate = (timestamp: any): string => {
-    if (!timestamp) return 'Unbekannt';
+    if (!timestamp) return t('unknown');
     try {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return formatDistanceToNow(date, { addSuffix: true, locale: de });
     } catch {
-      return 'Unbekannt';
+      return t('unknown');
     }
   };
 
@@ -234,7 +236,7 @@ export default function DomainsPage() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-                <Text className="mt-4">Lade Domains...</Text>
+                <Text className="mt-4">{t('loading')}</Text>
               </div>
             </div>
           ) : (
@@ -242,9 +244,9 @@ export default function DomainsPage() {
               {/* Header */}
               <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="min-w-0 flex-1">
-                  <Heading level={1}>Versand-Domains authentifizieren</Heading>
+                  <Heading level={1}>{t('title')}</Heading>
                   <Text className="mt-2 text-gray-600">
-                    Verbinden Sie Ihre Domain, um E-Mails im Namen Ihrer eigenen Marke zu versenden.
+                    {t('description')}
                   </Text>
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-3">
@@ -253,7 +255,7 @@ export default function DomainsPage() {
                     className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                   >
                     <PlusIcon className="w-4 h-4 mr-2" />
-                    Neue Domain hinzufügen
+                    {t('addDomain')}
                   </Button>
                 </div>
               </div>
@@ -264,11 +266,9 @@ export default function DomainsPage() {
                   <div className="flex gap-3">
                     <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
                     <div>
-                      <Text className="font-semibold text-blue-800">Warum ist das wichtig?</Text>
+                      <Text className="font-semibold text-blue-800">{t('infoAlert.title')}</Text>
                       <Text className="text-sm mt-1 text-blue-700">
-                        Ohne eigene Domain werden Ihre E-Mails von einer fremden Adresse versendet,
-                        was oft im Spam-Ordner landet. Mit Ihrer eigenen Domain erhöhen Sie die
-                        Zustellrate um bis zu 95%.
+                        {t('infoAlert.description')}
                       </Text>
                     </div>
                   </div>
@@ -289,12 +289,12 @@ export default function DomainsPage() {
                             <h3 className="text-lg font-semibold">{domain.domain}</h3>
                             {getStatusBadge(domain.status)}
                             {domain.isDefault && (
-                              <Badge color="blue" className="whitespace-nowrap">Standard</Badge>
+                              <Badge color="blue" className="whitespace-nowrap">{t('badge.default')}</Badge>
                             )}
                           </div>
 
                           <Text className="text-sm text-gray-500 mt-1">
-                            Hinzugefügt {formatDate(domain.createdAt)}
+                            {t('addedAt', { date: formatDate(domain.createdAt) })}
                           </Text>
 
                           {domain.status !== 'verified' && domain.dnsCheckResults && (
@@ -309,7 +309,7 @@ export default function DomainsPage() {
                             <div className="mt-4 flex items-center gap-4">
                               {typeof domain.inboxTestScore === 'number' && (
                                 <div className="flex items-center gap-2">
-                                  <div className="text-sm text-gray-600">Zustellrate:</div>
+                                  <div className="text-sm text-gray-600">{t('deliveryRate')}</div>
                                   <Badge
                                     color={
                                       domain.inboxTestScore >= 90 ? 'green' :
@@ -327,7 +327,7 @@ export default function DomainsPage() {
                           {domain.provider && domain.provider !== 'other' && (
                             <div className="mt-2">
                               <Text className="text-sm text-gray-600">
-                                Provider: <span className="font-medium capitalize">{domain.provider}</span>
+                                {t('provider', { name: domain.provider })}
                               </Text>
                             </div>
                           )}
@@ -339,7 +339,7 @@ export default function DomainsPage() {
                             <>
                               <Button plain onClick={() => setShowInboxTest(domain.id!)}>
                                 <EnvelopeIcon className="w-4 h-4" />
-                                Inbox testen
+                                {t('actions.testInbox')}
                               </Button>
                               {!domain.isDefault && (
                                 <Button
@@ -349,7 +349,7 @@ export default function DomainsPage() {
                                     await loadDomains();
                                   }}
                                 >
-                                  Als Standard
+                                  {t('actions.setDefault')}
                                 </Button>
                               )}
                             </>
@@ -363,7 +363,7 @@ export default function DomainsPage() {
                                 }}
                               >
                                 <InformationCircleIcon className="w-4 h-4" />
-                                DNS-Einträge
+                                {t('actions.dnsRecords')}
                               </Button>
                               <Button
                                 plain
@@ -373,7 +373,7 @@ export default function DomainsPage() {
                                 <ArrowPathIcon
                                   className={`w-4 h-4 ${verifying === domain.id ? 'animate-spin' : ''}`}
                                 />
-                                Prüfen
+                                {t('actions.verify')}
                               </Button>
                             </>
                           )}
@@ -394,14 +394,14 @@ export default function DomainsPage() {
                     <EnvelopeIcon className="h-12 w-12 text-gray-400" />
                   </div>
                   <Text className="text-gray-500 mb-4">
-                    Sie haben noch keine Domains hinzugefügt.
+                    {t('emptyState.message')}
                   </Text>
                   <Button onClick={() => setShowAddModal(true)} className="whitespace-nowrap">
                     <PlusIcon className="w-4 h-4 mr-2" />
-                    Erste Domain hinzufügen
+                    {t('emptyState.action')}
                   </Button>
                   <Text className="text-sm text-gray-500 mt-4">
-                    Keine Sorge, wir führen Sie Schritt für Schritt durch den Prozess.
+                    {t('emptyState.hint')}
                   </Text>
                 </div>
               )}

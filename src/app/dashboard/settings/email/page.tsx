@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -44,6 +45,8 @@ import { TeamMember } from '@/types/international';
 type TabType = 'addresses' | 'signatures';
 
 export default function EmailSettingsPage() {
+  const t = useTranslations('settings.email');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
@@ -333,8 +336,8 @@ export default function EmailSettingsPage() {
   };
 
   const tabs = [
-    { id: 'addresses' as TabType, name: 'E-Mail-Adressen', icon: EnvelopeIcon },
-    { id: 'signatures' as TabType, name: 'Signaturen', icon: PencilSquareIcon }
+    { id: 'addresses' as TabType, name: t('tabs.addresses'), icon: EnvelopeIcon },
+    { id: 'signatures' as TabType, name: t('tabs.signatures'), icon: PencilSquareIcon }
   ];
 
   // Prepare email addresses for signature component
@@ -356,9 +359,9 @@ export default function EmailSettingsPage() {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <Heading>E-Mail Einstellungen</Heading>
+            <Heading>{t('title')}</Heading>
             <Text className="mt-2 text-zinc-500">
-              Verwalten Sie E-Mail-Adressen und Signaturen für Ihre Organisation
+              {t('description')}
             </Text>
           </div>
         </div>
@@ -394,7 +397,7 @@ export default function EmailSettingsPage() {
             <div className="flex justify-end mb-4">
               <Button onClick={handleAdd} className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
                 <PlusIcon className="h-4 w-4 mr-2" />
-                Neue E-Mail-Adresse
+                {t('newAddress')}
               </Button>
             </div>
 
@@ -404,16 +407,16 @@ export default function EmailSettingsPage() {
               <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                 <div className="flex items-center">
                   <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    E-Mail-Adresse
+                    {t('table.emailAddress')}
                   </div>
                   <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Status
+                    {t('table.status')}
                   </div>
                   <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Team
+                    {t('table.team')}
                   </div>
                   <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
-                    Aktionen
+                    {tCommon('actions')}
                   </div>
                 </div>
               </div>
@@ -426,7 +429,7 @@ export default function EmailSettingsPage() {
                   </div>
                 ) : emailAddresses.length === 0 ? (
                   <div className="px-6 py-8 text-center text-gray-500">
-                    Keine E-Mail-Adressen vorhanden
+                    {t('empty')}
                   </div>
                 ) : (
                   emailAddresses.map((address) => (
@@ -451,7 +454,7 @@ export default function EmailSettingsPage() {
                             {getStatusIcon(address)}
                             {address.isDefault && (
                               <Badge color="blue" className="whitespace-nowrap">
-                                Standard
+                                {t('badge.default')}
                               </Badge>
                             )}
                           </div>
@@ -463,7 +466,7 @@ export default function EmailSettingsPage() {
                             {address.availableToAll ? (
                               <Badge color="sky" className="whitespace-nowrap">
                                 <UserGroupIcon className="size-4 mr-1" />
-                                Für alle verfügbar
+                                {t('availableToAll')}
                               </Badge>
                             ) : (
                               <>
@@ -495,7 +498,7 @@ export default function EmailSettingsPage() {
                                   </div>
                                 )}
                                 {(address.assignedUserIds || []).length === 0 && (
-                                  <span className="text-gray-400 text-sm">Nicht zugewiesen</span>
+                                  <span className="text-gray-400 text-sm">{t('notAssigned')}</span>
                                 )}
                               </>
                             )}
@@ -512,12 +515,12 @@ export default function EmailSettingsPage() {
                               {!address.isDefault && (
                                 <DropdownItem onClick={() => handleSetAsDefault(address)}>
                                   <ShieldCheckIcon className="h-4 w-4" />
-                                  Als Standard setzen
+                                  {t('actions.setAsDefault')}
                                 </DropdownItem>
                               )}
                               <DropdownItem onClick={() => handleEdit(address)}>
                                 <PencilIcon className="h-4 w-4" />
-                                Bearbeiten
+                                {tCommon('edit')}
                               </DropdownItem>
                               <DropdownDivider />
                               <DropdownItem
@@ -525,7 +528,7 @@ export default function EmailSettingsPage() {
                                 disabled={address.isDefault}
                               >
                                 <TrashIcon className="h-4 w-4" />
-                                <span className="text-red-600">Löschen</span>
+                                <span className="text-red-600">{tCommon('delete')}</span>
                               </DropdownItem>
                             </DropdownMenu>
                           </Dropdown>
@@ -557,34 +560,34 @@ export default function EmailSettingsPage() {
         setShowEditModal(false);
       }}>
         <DialogTitle className="px-6 py-4">
-          {showAddModal ? 'Neue E-Mail-Adresse hinzufügen' : 'E-Mail-Adresse bearbeiten'}
+          {showAddModal ? t('modal.titleAdd') : t('modal.titleEdit')}
         </DialogTitle>
         <DialogBody className="p-6">
           <p className="text-sm text-gray-500">
-            Konfigurieren Sie die E-Mail-Adresse und deren Einstellungen.
+            {t('modal.description')}
           </p>
           <div className="mt-6 space-y-6">
             {/* Basic Settings */}
             <div>
-              <Subheading>Grundeinstellungen</Subheading>
+              <Subheading>{t('modal.basicSettings')}</Subheading>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <Field>
-                  <Label>Local Part</Label>
+                  <Label>{t('modal.localPart')}</Label>
                   <Input
                     value={formData.localPart}
                     onChange={(e) => setFormData({ ...formData, localPart: e.target.value })}
-                    placeholder="z.B. presse, info, pr-*"
+                    placeholder={t('modal.localPartPlaceholder')}
                     disabled={showEditModal}
                   />
                 </Field>
                 <Field>
-                  <Label>Domain</Label>
+                  <Label>{t('modal.domain')}</Label>
                   <Select
                     value={formData.domainId}
                     onChange={(e) => setFormData({ ...formData, domainId: e.target.value })}
                     disabled={showEditModal || loadingDomains}
                   >
-                    <option value="">Domain wählen...</option>
+                    <option value="">{t('modal.selectDomain')}</option>
                     {domains.map(domain => (
                       <option key={domain.id} value={domain.id}>
                         @{domain.name} ({domain.verified ? 'verified' : 'pending'})
@@ -593,27 +596,27 @@ export default function EmailSettingsPage() {
                   </Select>
                   {domains.length === 0 && !loadingDomains && (
                     <p className="text-sm text-gray-500 mt-1">
-                      Keine verifizierten Domains vorhanden. 
-                      <a href="/dashboard/settings/domain" className="text-[#005fab] hover:underline ml-1">
-                        Domain hinzufügen
+                      {t('modal.noDomains')}{' '}
+                      <a href="/dashboard/settings/domain" className="text-[#005fab] hover:underline">
+                        {t('modal.addDomain')}
                       </a>
                     </p>
                   )}
                 </Field>
               </div>
               <Field className="mt-4">
-                <Label>Anzeigename</Label>
+                <Label>{t('modal.displayName')}</Label>
                 <Input
                   value={formData.displayName}
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  placeholder="z.B. Pressestelle ABC GmbH"
+                  placeholder={t('modal.displayNamePlaceholder')}
                 />
               </Field>
             </div>
 
             {/* Team Assignment */}
             <div>
-              <Subheading>Team-Zuweisungen</Subheading>
+              <Subheading>{t('modal.teamAssignment')}</Subheading>
 
               {/* availableToAll Checkbox */}
               <div className="mt-4">
@@ -630,11 +633,11 @@ export default function EmailSettingsPage() {
                   />
                   <Label>
                     <UserGroupIcon className="size-4 inline mr-1" />
-                    Für alle Teammitglieder verfügbar
+                    {t('modal.availableToAllLabel')}
                   </Label>
                 </CheckboxField>
                 <Text className="mt-1 text-sm text-gray-500">
-                  Wenn aktiviert, kann jedes Teammitglied diese Email-Adresse verwenden
+                  {t('modal.availableToAllDescription')}
                 </Text>
               </div>
 
@@ -647,12 +650,12 @@ export default function EmailSettingsPage() {
                     </div>
                   ) : teamMembers.length === 0 ? (
                     <div className="mt-4 text-sm text-gray-500">
-                      Keine Team-Mitglieder vorhanden.
+                      {t('modal.noTeamMembers')}{' '}
                       <a
                         href="/dashboard/settings/team"
-                        className="text-[#005fab] hover:underline ml-1"
+                        className="text-[#005fab] hover:underline"
                       >
-                        Team verwalten
+                        {t('modal.manageTeam')}
                       </a>
                     </div>
                   ) : (
@@ -691,17 +694,17 @@ export default function EmailSettingsPage() {
 
             {/* Features */}
             <div>
-              <Subheading>Einstellungen</Subheading>
+              <Subheading>{t('modal.settings')}</Subheading>
               <div className="space-y-3 mt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Aktiv</span>
+                  <span className="text-sm font-medium text-gray-700">{t('modal.active')}</span>
                   <SimpleSwitch
                     checked={formData.isActive}
                     onChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Inbox aktiviert</span>
+                  <span className="text-sm font-medium text-gray-700">{t('modal.inboxEnabled')}</span>
                   <SimpleSwitch
                     checked={formData.inboxEnabled}
                     onChange={(checked) => setFormData({ ...formData, inboxEnabled: checked })}
@@ -716,37 +719,36 @@ export default function EmailSettingsPage() {
             setShowAddModal(false);
             setShowEditModal(false);
           }}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
-          <Button 
+          <Button
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
             onClick={handleSaveEmailAddress}
             disabled={saving}
           >
-            {saving ? 'Speichern...' : (showAddModal ? 'Hinzufügen' : 'Speichern')}
+            {saving ? t('modal.saving') : (showAddModal ? tCommon('add') : tCommon('save'))}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
-        <DialogTitle className="px-6 py-4">E-Mail-Adresse löschen</DialogTitle>
+        <DialogTitle className="px-6 py-4">{t('deleteModal.title')}</DialogTitle>
         <DialogBody className="p-6">
           <p className="text-sm text-gray-500">
-            Sind Sie sicher, dass Sie die E-Mail-Adresse <strong>{selectedAddress?.email}</strong> löschen möchten?
-            Diese Aktion kann nicht rückgängig gemacht werden.
+            {t('deleteModal.message', { email: selectedAddress?.email || '' })}
           </p>
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={() => setShowDeleteModal(false)}>
-            Abbrechen
+            {tCommon('cancel')}
           </Button>
-          <Button 
+          <Button
             className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
             onClick={handleDeleteConfirm}
             disabled={saving}
           >
-            {saving ? 'Löschen...' : 'Löschen'}
+            {saving ? t('deleteModal.deleting') : tCommon('delete')}
           </Button>
         </DialogActions>
       </Dialog>

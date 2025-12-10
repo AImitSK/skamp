@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/ui/heading';
@@ -42,10 +43,11 @@ import clsx from 'clsx';
 import { toastService } from '@/lib/utils/toast';
 
 export default function TeamSettingsPage() {
+  const t = useTranslations('settings.team');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const organizationId = currentOrganization?.id || '';
-  
+
   // State
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,8 +154,8 @@ export default function TeamSettingsPage() {
       
       setTeamMembers(processedMembers);
     } catch (error) {
-      
-      setError('Fehler beim Laden der Team-Mitglieder');
+
+      setError(t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -235,8 +237,8 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
       
     } catch (error: any) {
-      
-      setError(error.message || 'Fehler beim Einladen des Team-Mitglieds');
+
+      setError(error.message || t('inviteError'));
     } finally {
       setInviteLoading(false);
     }
@@ -397,35 +399,35 @@ export default function TeamSettingsPage() {
     description: string;
   }> = {
     owner: {
-      label: 'Owner',
+      label: t('roles.owner.label'),
       icon: ShieldCheckIcon,
       color: 'purple',
-      description: 'Vollzugriff auf alle Funktionen und Team-Verwaltung'
+      description: t('roles.owner.description')
     },
     member: {
-      label: 'Mitglied',
+      label: t('roles.member.label'),
       icon: UserIcon,
       color: 'green',
-      description: 'Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)'
+      description: t('roles.member.description')
     },
     // Legacy-Rollen für bestehende Daten (nicht mehr verwendbar)
     admin: {
-      label: 'Admin (Legacy)',
+      label: t('roles.admin.label'),
       icon: UserGroupIcon,
       color: 'blue',
-      description: 'Alte Rolle - wird zu Member konvertiert'
+      description: t('roles.admin.description')
     },
     client: {
-      label: 'Kunde (Legacy)',
+      label: t('roles.client.label'),
       icon: BuildingOfficeIcon,
       color: 'gray',
-      description: 'Alte Rolle - wird zu Member konvertiert'
+      description: t('roles.client.description')
     },
     guest: {
-      label: 'Gast (Legacy)',
+      label: t('roles.guest.label'),
       icon: UserIcon,
       color: 'gray',
-      description: 'Alte Rolle - wird zu Member konvertiert'
+      description: t('roles.guest.description')
     }
   };
   
@@ -436,22 +438,22 @@ export default function TeamSettingsPage() {
     color: string;
   }> = {
     active: {
-      label: 'Aktiv',
+      label: t('status.active'),
       icon: CheckCircleIcon,
       color: 'green'
     },
     invited: {
-      label: 'Eingeladen',
+      label: t('status.invited'),
       icon: EnvelopeIcon,
       color: 'yellow'
     },
     inactive: {
-      label: 'Inaktiv',
+      label: t('status.inactive'),
       icon: XCircleIcon,
       color: 'red'
     },
     suspended: {
-      label: 'Gesperrt',
+      label: t('status.suspended'),
       icon: ExclamationTriangleIcon,
       color: 'red'
     }
@@ -467,21 +469,21 @@ export default function TeamSettingsPage() {
   };
   
   const formatLastActive = (timestamp: Timestamp | undefined) => {
-    if (!timestamp) return 'Nie';
+    if (!timestamp) return t('lastActive.never');
     try {
       const date = timestamp.toDate();
       const now = new Date();
       const diffMs = now.getTime() - date.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) return 'Heute';
-      if (diffDays === 1) return 'Gestern';
-      if (diffDays < 7) return `vor ${diffDays} Tagen`;
-      if (diffDays < 30) return `vor ${Math.floor(diffDays / 7)} Wochen`;
-      
+
+      if (diffDays === 0) return t('lastActive.today');
+      if (diffDays === 1) return t('lastActive.yesterday');
+      if (diffDays < 7) return t('lastActive.daysAgo', { days: diffDays });
+      if (diffDays < 30) return t('lastActive.weeksAgo', { weeks: Math.floor(diffDays / 7) });
+
       return date.toLocaleDateString('de-DE');
     } catch {
-      return 'Nie';
+      return t('lastActive.never');
     }
   };
   
@@ -511,9 +513,9 @@ export default function TeamSettingsPage() {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <Heading>Team-Verwaltung</Heading>
+            <Heading>{t('title')}</Heading>
             <Text className="mt-2 text-zinc-500">
-              Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein
+              {t('description')}
             </Text>
           </div>
           <div className="mt-4 md:mt-0 flex gap-3">
@@ -521,10 +523,10 @@ export default function TeamSettingsPage() {
               onClick={() => setShowInviteModal(true)}
               disabled={isLimitReached}
               className="bg-primary hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
-              title={isLimitReached ? `Limit erreicht: Ihr Plan erlaubt max. ${teamLimit} Mitglieder` : 'Neues Mitglied einladen'}
+              title={isLimitReached ? t('limitReached', { limit: teamLimit }) : t('inviteMember')}
             >
               <UserPlusIcon className="h-4 w-4 mr-2" />
-              Mitglied einladen
+              {t('inviteMember')}
             </Button>
 
             {/* Actions Menu */}
@@ -550,7 +552,7 @@ export default function TeamSettingsPage() {
                       className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 disabled:opacity-50"
                     >
                       <ArrowPathIcon className={clsx("h-4 w-4", refreshing && "animate-spin")} />
-                      Aktualisieren
+                      {t('refresh')}
                     </button>
                   </div>
                 </Popover.Panel>
@@ -577,7 +579,7 @@ export default function TeamSettingsPage() {
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#005fab] transition-colors cursor-pointer">
               <div className="flex items-center gap-2 mb-2">
                 <UserGroupIcon className="h-5 w-5 text-gray-600" />
-                <Text className="text-sm text-gray-600">Aktive Mitglieder</Text>
+                <Text className="text-sm text-gray-600">{t('stats.activeMembers')}</Text>
               </div>
               <div className="text-2xl font-semibold text-gray-900 whitespace-nowrap">
                 <span className={isLimitReached ? 'text-red-600' : ''}>{activeMembersOnly.length} / {teamLimit}</span>
@@ -588,7 +590,7 @@ export default function TeamSettingsPage() {
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <ClockIcon className="h-5 w-5 text-gray-600" />
-              <Text className="text-sm text-gray-600">Ausstehende Einladungen</Text>
+              <Text className="text-sm text-gray-600">{t('stats.pendingInvitations')}</Text>
             </div>
             <div className="text-2xl font-semibold text-gray-900">
               {pendingMembers.length}
@@ -598,7 +600,7 @@ export default function TeamSettingsPage() {
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheckIcon className="h-5 w-5 text-gray-600" />
-              <Text className="text-sm text-gray-600">Rollen-Verteilung</Text>
+              <Text className="text-sm text-gray-600">{t('stats.roleDistribution')}</Text>
             </div>
             <div className="flex items-center gap-2 flex-wrap mt-2">
               {Object.entries(roleConfig).map(([role, config]) => {
@@ -621,13 +623,13 @@ export default function TeamSettingsPage() {
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
               <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Mitglied
+                {t('table.member')}
               </div>
               <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Rolle
+                {t('table.role')}
               </div>
               <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Zuletzt aktiv
+                {t('table.lastActive')}
               </div>
               <div className="w-[15%]"></div>
             </div>
@@ -641,7 +643,7 @@ export default function TeamSettingsPage() {
               </div>
             ) : activeMembers.length === 0 ? (
               <div className="px-6 py-8 text-center text-gray-500">
-                Keine Team-Mitglieder gefunden
+                {t('noMembers')}
               </div>
             ) : (
               activeMembers.map((member) => {
@@ -681,7 +683,7 @@ export default function TeamSettingsPage() {
                               {roleConfig.member.label}
                             </option>
                             <option value="owner">
-                              → Zum Owner machen
+                              {t('makeOwner')}
                             </option>
                           </Select>
                         ) : (
@@ -694,7 +696,7 @@ export default function TeamSettingsPage() {
                         {member.status === 'invited' ? (
                           <div className="flex items-center text-yellow-600">
                             <ClockIcon className="h-4 w-4 mr-1" />
-                            <span>Eingeladen am {formatDate(member.invitedAt)}</span>
+                            <span>{t('invitedOn', { date: formatDate(member.invitedAt) })}</span>
                           </div>
                         ) : (
                           formatLastActive(member.lastActiveAt)
@@ -710,7 +712,7 @@ export default function TeamSettingsPage() {
                               {member.status === 'invited' && (
                                 <DropdownItem onClick={() => handleResendInvite(member)}>
                                   <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                                  Einladung erneut senden
+                                  {t('actions.resendInvite')}
                                 </DropdownItem>
                               )}
                               <DropdownItem
@@ -718,7 +720,7 @@ export default function TeamSettingsPage() {
                                 className="text-red-600"
                               >
                                 <TrashIcon className="h-4 w-4 mr-2" />
-                                {member.status === 'invited' ? 'Einladung löschen' : 'Mitglied entfernen'}
+                                {member.status === 'invited' ? t('actions.deleteInvitation') : t('actions.removeMember')}
                               </DropdownItem>
                             </DropdownMenu>
                           </Dropdown>
@@ -739,41 +741,41 @@ export default function TeamSettingsPage() {
           className="sm:max-w-md"
         >
           <DialogTitle className="px-6 py-4">
-            Neues Team-Mitglied einladen
+            {t('inviteModal.title')}
           </DialogTitle>
-          
+
           <DialogBody className="p-6">
             <p className="text-sm text-gray-500 mb-4">
-              Senden Sie eine Einladung per E-Mail
+              {t('inviteModal.description')}
             </p>
             
             <div className="space-y-4">
               <Field>
-                <Label>E-Mail-Adresse</Label>
+                <Label>{t('inviteModal.email')}</Label>
                 <Input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="kollege@firma.de"
+                  placeholder={t('inviteModal.emailPlaceholder')}
                   required
                 />
               </Field>
-              
+
               <Field>
-                <Label>Rolle</Label>
+                <Label>{t('inviteModal.role')}</Label>
                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2">
                     <UserIcon className="h-5 w-5 text-gray-600" />
                     <div>
-                      <Text className="font-medium text-gray-900">Mitglied</Text>
+                      <Text className="font-medium text-gray-900">{t('inviteModal.memberRole')}</Text>
                       <Text className="text-sm text-gray-600">
-                        Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)
+                        {t('inviteModal.memberDescription')}
                       </Text>
                     </div>
                   </div>
                 </div>
                 <Text className="text-xs text-gray-500 mt-2">
-                  Alle neuen Mitglieder werden als "Mitglied" eingeladen. Der Owner kann später die Rolle übertragen.
+                  {t('inviteModal.roleNote')}
                 </Text>
               </Field>
             </div>
@@ -781,14 +783,14 @@ export default function TeamSettingsPage() {
           
           <DialogActions className="px-6 py-4">
             <Button plain onClick={() => setShowInviteModal(false)}>
-              Abbrechen
+              {t('inviteModal.cancel')}
             </Button>
             <Button
               onClick={handleInvite}
               disabled={!inviteEmail || inviteLoading}
               className="bg-primary hover:bg-primary-hover text-white"
             >
-              {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}
+              {inviteLoading ? t('inviteModal.sending') : t('inviteModal.send')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -800,7 +802,7 @@ export default function TeamSettingsPage() {
           className="sm:max-w-md"
         >
           <DialogTitle className="px-6 py-4">
-            Mitglied entfernen
+            {t('removeDialog.title')}
           </DialogTitle>
 
           <DialogBody className="p-6">
@@ -810,10 +812,10 @@ export default function TeamSettingsPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-900 mb-2">
-                  Möchten Sie <strong>{memberToRemove?.displayName}</strong> wirklich aus dem Team entfernen?
+                  {t('removeDialog.message', { name: memberToRemove?.displayName || '' })}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Diese Aktion kann nicht rückgängig gemacht werden.
+                  {t('removeDialog.warning')}
                 </p>
               </div>
             </div>
@@ -821,13 +823,13 @@ export default function TeamSettingsPage() {
 
           <DialogActions className="px-6 py-4">
             <Button plain onClick={() => setShowConfirmModal(false)}>
-              Abbrechen
+              {t('removeDialog.cancel')}
             </Button>
             <Button
               onClick={confirmRemoveMember}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {memberToRemove?.status === 'invited' ? 'Einladung löschen' : 'Mitglied entfernen'}
+              {memberToRemove?.status === 'invited' ? t('removeDialog.deleteInvitation') : t('removeDialog.removeMember')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -839,7 +841,7 @@ export default function TeamSettingsPage() {
           className="sm:max-w-lg"
         >
           <DialogTitle className="px-6 py-4">
-            ⚠️ Owner-Rolle übertragen
+            {t('transferDialog.title')}
           </DialogTitle>
 
           <DialogBody className="p-6">
@@ -850,26 +852,26 @@ export default function TeamSettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900 mb-2">
-                    Möchtest du <strong>{memberToTransfer?.displayName}</strong> zum neuen Owner machen?
+                    {t('transferDialog.question', { name: memberToTransfer?.displayName || '' })}
                   </p>
                   <div className="text-sm text-gray-700 space-y-1">
-                    <p>• Du wirst automatisch zum <strong>Mitglied</strong></p>
-                    <p>• Du verlierst alle Admin-Rechte (Team-Verwaltung, Abrechnung)</p>
-                    <p>• Diese Aktion kann nur der neue Owner rückgängig machen</p>
+                    <p>{t('transferDialog.consequence1')}</p>
+                    <p>{t('transferDialog.consequence2')}</p>
+                    <p>{t('transferDialog.consequence3')}</p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <Text className="text-sm font-medium text-gray-900 mb-2">Was ändert sich?</Text>
+                <Text className="text-sm font-medium text-gray-900 mb-2">{t('transferDialog.changesTitle')}</Text>
                 <div className="space-y-2 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
                     <ShieldCheckIcon className="h-4 w-4 text-purple-600" />
-                    <span><strong>{memberToTransfer?.displayName}</strong> wird Owner</span>
+                    <span>{t('transferDialog.newOwner', { name: memberToTransfer?.displayName || '' })}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <UserIcon className="h-4 w-4 text-green-600" />
-                    <span><strong>Du</strong> wirst Mitglied</span>
+                    <span>{t('transferDialog.youBecomeMember')}</span>
                   </div>
                 </div>
               </div>
@@ -878,13 +880,13 @@ export default function TeamSettingsPage() {
 
           <DialogActions className="px-6 py-4">
             <Button plain onClick={() => setShowTransferModal(false)}>
-              Abbrechen
+              {t('transferDialog.cancel')}
             </Button>
             <Button
               onClick={confirmOwnerTransfer}
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
-              Ja, Owner-Rolle übertragen
+              {t('transferDialog.confirm')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -89,13 +89,13 @@ Kernfunktionalität der App.
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
 | ✅ | `src/app/dashboard/settings/language/page.tsx` | `settings.language` | (bereits) |
-| ⬜ | `src/app/dashboard/settings/team/page.tsx` | `settings.team` | - |
-| ⬜ | `src/app/dashboard/settings/branding/page.tsx` | `settings.branding` | - |
-| ⬜ | `src/app/dashboard/settings/email/page.tsx` | `settings.email` | - |
-| ⬜ | `src/app/dashboard/settings/notifications/page.tsx` | `settings.notifications` | - |
-| ⬜ | `src/app/dashboard/settings/templates/page.tsx` | `settings.templates` | - |
+| ✅ | `src/app/dashboard/settings/team/page.tsx` | `settings.team` | 2025-12-10 |
+| ✅ | `src/app/dashboard/settings/branding/page.tsx` | `settings.branding` | 2025-12-10 |
+| ✅ | `src/app/dashboard/settings/email/page.tsx` | `settings.email` | 2025-12-10 |
+| ✅ | `src/app/dashboard/settings/notifications/page.tsx` | `settings.notifications` | 2025-12-10 |
+| ✅ | `src/app/dashboard/settings/templates/page.tsx` | `settings.templates` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/settings/monitoring/page.tsx` | `settings.monitoring` | - |
-| ⬜ | `src/app/dashboard/settings/domain/page.tsx` | `settings.domain` | - |
+| ✅ | `src/app/dashboard/settings/domain/page.tsx` | `settings.domain` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/settings/import-export/page.tsx` | `settings.import` | - |
 | ⬜ | `src/app/dashboard/settings/spam-blocklist/page.tsx` | `settings.spam` | - |
 
@@ -105,8 +105,8 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/admin/profile/page.tsx` | `admin.profile` | - |
-| ⬜ | `src/app/dashboard/admin/billing/page.tsx` | `admin.billing` | - |
+| ✅ | `src/app/dashboard/admin/profile/page.tsx` | `admin.profile` | 2025-12-10 |
+| ✅ | `src/app/dashboard/admin/billing/page.tsx` | `admin.billing` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/admin/integrations/page.tsx` | `admin.integrations` | - |
 | ⬜ | `src/app/dashboard/admin/api/page.tsx` | `admin.api` | - |
 
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 21 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting)
+- **Abgeschlossen:** 29 (Dashboard, Projects, SettingsNav, AdminNav, Dashboard-Layout, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting, Settings Team, Settings Branding, Settings Email, Settings Notifications, Settings Templates, Settings Domain, Admin Profile, Admin Billing)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~34
+- **Ausstehend:** ~26
 
 ---
 

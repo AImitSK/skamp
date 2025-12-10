@@ -131,6 +131,158 @@
         "premium": "PREMIUM"
       }
     },
+    "email": {
+      "title": "Email Settings",
+      "description": "Manage email addresses and signatures for your organization",
+      "tabs": {
+        "addresses": "Email Addresses",
+        "signatures": "Signatures"
+      },
+      "newAddress": "New Email Address",
+      "table": {
+        "emailAddress": "Email Address",
+        "status": "Status",
+        "team": "Team"
+      },
+      "empty": "No email addresses available",
+      "badge": {
+        "default": "Default"
+      },
+      "availableToAll": "Available to all",
+      "notAssigned": "Not assigned",
+      "actions": {
+        "setAsDefault": "Set as default"
+      },
+      "modal": {
+        "titleAdd": "Add New Email Address",
+        "titleEdit": "Edit Email Address",
+        "description": "Configure the email address and its settings.",
+        "basicSettings": "Basic Settings",
+        "localPart": "Local Part",
+        "localPartPlaceholder": "e.g. press, info, pr-*",
+        "domain": "Domain",
+        "selectDomain": "Select domain...",
+        "noDomains": "No verified domains available.",
+        "addDomain": "Add domain",
+        "displayName": "Display Name",
+        "displayNamePlaceholder": "e.g. Press Office ABC Ltd.",
+        "teamAssignment": "Team Assignments",
+        "availableToAllLabel": "Available to all team members",
+        "availableToAllDescription": "When enabled, any team member can use this email address",
+        "noTeamMembers": "No team members available.",
+        "manageTeam": "Manage team",
+        "settings": "Settings",
+        "active": "Active",
+        "inboxEnabled": "Inbox enabled",
+        "saving": "Saving..."
+      },
+      "deleteModal": {
+        "title": "Delete Email Address",
+        "message": "Are you sure you want to delete the email address {email}? This action cannot be undone.",
+        "deleting": "Deleting..."
+      }
+    },
+    "branding": {
+      "title": "Branding",
+      "description": "Add your brand information for shared pages and documents",
+      "logo": {
+        "label": "Company Logo",
+        "alt": "Company Logo",
+        "upload": "Upload Logo",
+        "uploading": "Uploading...",
+        "hint": "JPG, PNG or GIF. Max. 5MB."
+      },
+      "fields": {
+        "companyName": "Company Name *",
+        "companyNamePlaceholder": "Your Company Ltd.",
+        "street": "Street Address",
+        "streetPlaceholder": "123 Main Street",
+        "postalCode": "Postal Code",
+        "postalCodePlaceholder": "12345",
+        "city": "City",
+        "cityPlaceholder": "Your City",
+        "phone": "General Phone Number",
+        "phonePlaceholder": "+1 123 456789",
+        "email": "General Email",
+        "emailPlaceholder": "info@company.com",
+        "website": "Website",
+        "websitePlaceholder": "https://www.your-company.com"
+      },
+      "copyright": {
+        "label": "Show Copyright Line",
+        "preview": "Shows \"Copyright © {year} {company}. All rights reserved.\" in the footer",
+        "defaultCompany": "Your Company Name"
+      },
+      "actions": {
+        "saving": "Saving..."
+      },
+      "usage": {
+        "title": "Use of Your Branding Information",
+        "description": "This information will be used on shared pages (approval links, media shares) and in generated PDFs to represent your brand."
+      }
+    },
+    "templates": {
+      "title": "PDF Templates",
+      "description": "Manage your PDF layout templates for press releases",
+      "compare": "Compare",
+      "create": "Create Template",
+      "upload": "Upload Template",
+      "table": {
+        "template": "Template",
+        "type": "Type",
+        "status": "Status",
+        "version": "Version",
+        "actions": "Actions"
+      },
+      "status": {
+        "system": "System",
+        "custom": "Custom"
+      },
+      "empty": {
+        "title": "No templates available yet",
+        "description": "Create your first PDF template to get started.",
+        "action": "Create Template"
+      },
+      "actions": {
+        "preview": "Preview",
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "domain": {
+      "title": "Authenticate Sending Domains",
+      "description": "Connect your domain to send emails on behalf of your own brand.",
+      "addDomain": "Add New Domain",
+      "loading": "Loading domains...",
+      "unknown": "Unknown",
+      "deleteConfirm": "Do you really want to delete this domain?",
+      "status": {
+        "pending": "Pending",
+        "verified": "Verified",
+        "failed": "Failed"
+      },
+      "badge": {
+        "default": "Default"
+      },
+      "addedAt": "Added {date}",
+      "deliveryRate": "Delivery Rate:",
+      "provider": "Provider: {name}",
+      "infoAlert": {
+        "title": "Why is this important?",
+        "description": "Without your own domain, your emails will be sent from a foreign address, which often ends up in the spam folder. With your own domain, you increase the delivery rate by up to 95%."
+      },
+      "actions": {
+        "testInbox": "Test Inbox",
+        "setDefault": "Set as Default",
+        "dnsRecords": "DNS Records",
+        "verify": "Verify"
+      },
+      "emptyState": {
+        "message": "You haven't added any domains yet.",
+        "action": "Add First Domain",
+        "hint": "Don't worry, we'll guide you step by step through the process."
+      }
+    },
     "language": {
       "title": "Language",
       "uiLanguage": "UI Language",
@@ -149,6 +301,151 @@
       "german": "German",
       "context": "Context",
       "contextOptional": "Context (optional)"
+    },
+    "team": {
+      "title": "Team Management",
+      "description": "Manage your team and invite new members",
+      "inviteMember": "Invite Member",
+      "limitReached": "Limit reached: Your plan allows max. {limit} members",
+      "refresh": "Refresh",
+      "loadError": "Error loading team members",
+      "inviteError": "Error inviting team member",
+      "noMembers": "No team members found",
+      "makeOwner": "→ Make Owner",
+      "stats": {
+        "activeMembers": "Active Members",
+        "pendingInvitations": "Pending Invitations",
+        "roleDistribution": "Role Distribution"
+      },
+      "table": {
+        "member": "Member",
+        "role": "Role",
+        "lastActive": "Last Active"
+      },
+      "roles": {
+        "owner": {
+          "label": "Owner",
+          "description": "Full access to all features and team management"
+        },
+        "member": {
+          "label": "Member",
+          "description": "Can use all features (CRM, Campaigns, Library, etc.)"
+        },
+        "admin": {
+          "label": "Admin (Legacy)",
+          "description": "Old role - will be converted to Member"
+        },
+        "client": {
+          "label": "Client (Legacy)",
+          "description": "Old role - will be converted to Member"
+        },
+        "guest": {
+          "label": "Guest (Legacy)",
+          "description": "Old role - will be converted to Member"
+        }
+      },
+      "status": {
+        "active": "Active",
+        "invited": "Invited",
+        "inactive": "Inactive",
+        "suspended": "Suspended"
+      },
+      "lastActive": {
+        "never": "Never",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{days} days ago",
+        "weeksAgo": "{weeks} weeks ago"
+      },
+      "invitedOn": "Invited on {date}",
+      "actions": {
+        "resendInvite": "Resend Invitation",
+        "deleteInvitation": "Delete Invitation",
+        "removeMember": "Remove Member"
+      },
+      "inviteModal": {
+        "title": "Invite New Team Member",
+        "description": "Send an invitation via email",
+        "email": "Email Address",
+        "emailPlaceholder": "colleague@company.com",
+        "role": "Role",
+        "memberRole": "Member",
+        "memberDescription": "Can use all features (CRM, Campaigns, Library, etc.)",
+        "roleNote": "All new members are invited as \"Member\". The owner can transfer the role later.",
+        "cancel": "Cancel",
+        "send": "Send Invitation",
+        "sending": "Sending..."
+      },
+      "removeDialog": {
+        "title": "Remove Member",
+        "message": "Do you really want to remove {name} from the team?",
+        "warning": "This action cannot be undone.",
+        "cancel": "Cancel",
+        "removeMember": "Remove Member",
+        "deleteInvitation": "Delete Invitation"
+      },
+      "transferDialog": {
+        "title": "⚠️ Transfer Owner Role",
+        "question": "Do you want to make {name} the new owner?",
+        "consequence1": "• You will automatically become a Member",
+        "consequence2": "• You will lose all admin rights (team management, billing)",
+        "consequence3": "• Only the new owner can reverse this action",
+        "changesTitle": "What will change?",
+        "newOwner": "{name} becomes Owner",
+        "youBecomeMember": "You become Member",
+        "cancel": "Cancel",
+        "confirm": "Yes, Transfer Owner Role"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage your notification settings",
+      "settingsTitle": "Notification Settings",
+      "settingsDescription": "Choose which events you want to be notified about.",
+      "loadingSettings": "Loading settings...",
+      "loadError": "Error loading settings",
+      "saveSettings": "Save settings",
+      "saving": "Saving...",
+      "days": "days",
+      "groups": {
+        "approvals": {
+          "title": "Approvals",
+          "approvalGranted": "Approval status: Granted",
+          "approvalGrantedDesc": "Notification when approval has been granted",
+          "changesRequested": "Approval status: Changes requested",
+          "changesRequestedDesc": "Notification when changes have been requested",
+          "firstView": "First view of an approval",
+          "firstViewDesc": "Notification when client opens the approval for the first time",
+          "overdueApprovals": "Overdue approval requests",
+          "overdueApprovalsDesc": "Notification about pending approvals",
+          "overdueApprovalDays": "Days until overdue",
+          "overdueApprovalDaysDesc": "After how many days an approval is considered overdue"
+        },
+        "email": {
+          "title": "Scheduled Emails",
+          "emailSentSuccess": "Success notification after sending",
+          "emailSentSuccessDesc": "Notification after successful email delivery",
+          "emailBounced": "Bounce notification",
+          "emailBouncedDesc": "Notification for email bounces"
+        },
+        "tasks": {
+          "title": "Project Tasks",
+          "taskOverdue": "Overdue project tasks",
+          "taskOverdueDesc": "Notification when tasks in projects become overdue"
+        },
+        "media": {
+          "title": "Media Center",
+          "mediaFirstAccess": "First access to a shared link",
+          "mediaFirstAccessDesc": "Notification on first access to shared media",
+          "mediaDownloaded": "Download of shared media",
+          "mediaDownloadedDesc": "Notification when shared media is downloaded"
+        },
+        "team": {
+          "title": "Team",
+          "teamChatMention": "@-Mentions",
+          "teamChatMentionDesc": "Notification when you are mentioned in project chat or email notes"
+        }
+      }
     }
   },
   "dashboard": {
@@ -1456,6 +1753,101 @@
       "profile": "Profile",
       "billing": "Billing",
       "apiManagement": "API Management"
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your personal information and settings",
+      "avatar": {
+        "title": "Profile Picture",
+        "hint": "JPG, PNG or WebP. Maximum 10MB. Will be automatically cropped to square.",
+        "upload": "Upload",
+        "uploading": "Uploading...",
+        "change": "Change",
+        "remove": "Remove",
+        "deleting": "Deleting...",
+        "uploadSuccess": "Profile picture successfully updated!",
+        "deleteSuccess": "Profile picture successfully removed!",
+        "errors": {
+          "invalidType": "Please select an image file.",
+          "tooLarge": "File is too large. Maximum 10MB allowed.",
+          "uploadFailed": "Upload failed",
+          "uploadUnexpected": "Unexpected error during upload",
+          "deleteFailed": "Deletion failed",
+          "deleteUnexpected": "Unexpected error during deletion"
+        }
+      },
+      "personalInfo": {
+        "title": "Personal Information",
+        "email": "Email Address",
+        "emailHint": "Your email address cannot be changed",
+        "displayName": "Display Name",
+        "displayNamePlaceholder": "Your Name",
+        "phoneNumber": "Phone Number",
+        "phoneNumberPlaceholder": "+1 123 456789",
+        "save": "Save Changes",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "saveSuccess": "Profile successfully saved!",
+        "errors": {
+          "saveFailed": "Error saving profile"
+        }
+      },
+      "accountInfo": {
+        "title": "Account Information",
+        "userId": "User ID:",
+        "role": "Role:",
+        "organization": "Organization:",
+        "organizationNone": "None",
+        "roles": {
+          "owner": "Owner",
+          "admin": "Administrator",
+          "member": "Member",
+          "notAssigned": "Not assigned"
+        }
+      }
+    },
+    "billing": {
+      "title": "Billing",
+      "headingWithSubscription": "Billing & Subscription",
+      "description": "Manage your subscription, payment methods, and usage",
+      "pleaseLogin": "Please log in.",
+      "loading": "Loading...",
+      "organizationNotFound": "Organization not found.",
+      "syncButton": "🔧 Subscription Sync",
+      "syncButtonLoading": "Updating...",
+      "usageRefreshButton": "Refresh usage",
+      "specialAccount": {
+        "betaTitle": "Beta Tester Account",
+        "promoTitle": "Promo Account",
+        "internalTitle": "Internal Account",
+        "fullAccess": "Full access to all features without limits",
+        "betaDescription": "As a beta tester, you have full access to all premium features during the test phase. No payment information required.",
+        "promoDescription": "Your promo code grants you full access to all premium features.",
+        "internalDescription": "This is an internal CeleroPress account with unlimited access.",
+        "validUntil": "⏰ Valid until: {date}"
+      },
+      "usage": {
+        "title": "Current Usage",
+        "teamMembers": "Team Members",
+        "contacts": "Contacts",
+        "emailsSent": "Emails Sent",
+        "aiWords": "AI Words",
+        "unlimited": "Unlimited"
+      },
+      "noSubscription": {
+        "title": "No Active Subscription Found",
+        "description": "You currently don't have an active Stripe subscription. If you have already made a payment, click on \"Subscription Sync\" in the top right.",
+        "contactSupport": "Contact support@celeropress.com for a new subscription."
+      },
+      "debug": {
+        "title": "Organization Details (Debug)",
+        "id": "ID",
+        "tier": "Tier",
+        "accountType": "Account Type",
+        "stripeCustomer": "Stripe Customer",
+        "stripeSubscription": "Stripe Subscription",
+        "notAvailable": "Not available"
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslations } from 'next-intl';
 import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import clsx from 'clsx';
 
 export default function BillingPage() {
   const { user } = useAuth();
+  const t = useTranslations('admin.billing');
   const [loading, setLoading] = useState(true);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [fixLoading, setFixLoading] = useState(false);
@@ -112,8 +114,8 @@ export default function BillingPage() {
   if (!user) {
     return (
       <div>
-        <Heading>Abrechnung</Heading>
-        <Text className="mt-2">Bitte melde dich an.</Text>
+        <Heading>{t('title')}</Heading>
+        <Text className="mt-2">{t('pleaseLogin')}</Text>
       </div>
     );
   }
@@ -121,8 +123,8 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div>
-        <Heading>Abrechnung</Heading>
-        <Text className="mt-2">Lädt...</Text>
+        <Heading>{t('title')}</Heading>
+        <Text className="mt-2">{t('loading')}</Text>
       </div>
     );
   }
@@ -130,8 +132,8 @@ export default function BillingPage() {
   if (!organization) {
     return (
       <div>
-        <Heading>Abrechnung</Heading>
-        <Text className="mt-2">Organization nicht gefunden.</Text>
+        <Heading>{t('title')}</Heading>
+        <Text className="mt-2">{t('organizationNotFound')}</Text>
       </div>
     );
   }
@@ -143,15 +145,15 @@ export default function BillingPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <Heading>Abrechnung & Subscription</Heading>
+          <Heading>{t('headingWithSubscription')}</Heading>
           <Text className="mt-2">
-            Verwalte deine Subscription, Zahlungsmethoden und Nutzung
+            {t('description')}
           </Text>
         </div>
         <div className="flex gap-2">
           {!hasSubscription && !isSpecialAccount && (
             <Button color="secondary" onClick={handleFixOrganization} disabled={fixLoading}>
-              {fixLoading ? 'Aktualisiere...' : '🔧 Subscription Sync'}
+              {fixLoading ? t('syncButtonLoading') : t('syncButton')}
             </Button>
           )}
 
@@ -178,7 +180,7 @@ export default function BillingPage() {
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700 disabled:opacity-50"
                   >
                     <ArrowPathIcon className={clsx("h-4 w-4", syncLoading && "animate-spin")} />
-                    Usage aktualisieren
+                    {t('usageRefreshButton')}
                   </button>
                 </div>
               </Popover.Panel>
@@ -213,26 +215,25 @@ export default function BillingPage() {
               </div>
               <div>
                 <Text className="font-semibold text-lg">
-                  {organization.accountType === 'beta' && 'Beta-Tester Account'}
-                  {organization.accountType === 'promo' && 'Promo Account'}
-                  {organization.accountType === 'internal' && 'Interner Account'}
+                  {organization.accountType === 'beta' && t('specialAccount.betaTitle')}
+                  {organization.accountType === 'promo' && t('specialAccount.promoTitle')}
+                  {organization.accountType === 'internal' && t('specialAccount.internalTitle')}
                 </Text>
                 <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Voller Zugang zu allen Features ohne Limits
+                  {t('specialAccount.fullAccess')}
                 </Text>
               </div>
             </div>
             <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-              {organization.accountType === 'beta' &&
-                'Als Beta-Tester hast du vollen Zugang zu allen Premium-Features während der Testphase. Keine Zahlungsinformationen erforderlich.'}
-              {organization.accountType === 'promo' &&
-                'Dein Promo-Code gewährt dir vollen Zugang zu allen Premium-Features.'}
-              {organization.accountType === 'internal' &&
-                'Dies ist ein interner CeleroPress Account mit unbegrenztem Zugang.'}
+              {organization.accountType === 'beta' && t('specialAccount.betaDescription')}
+              {organization.accountType === 'promo' && t('specialAccount.promoDescription')}
+              {organization.accountType === 'internal' && t('specialAccount.internalDescription')}
             </Text>
             {organization.promoDetails?.expiresAt && (
               <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-                ⏰ Gültig bis: {new Date(organization.promoDetails.expiresAt.toString()).toLocaleDateString('de-DE')}
+                {t('specialAccount.validUntil', {
+                  date: new Date(organization.promoDetails.expiresAt.toString()).toLocaleDateString('de-DE')
+                })}
               </Text>
             )}
           </div>
@@ -240,30 +241,30 @@ export default function BillingPage() {
           {/* Current Usage für Special Accounts */}
           {organization.usage && (
             <div className="p-6 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800">
-              <Subheading level={2}>Aktuelle Nutzung</Subheading>
+              <Subheading level={2}>{t('usage.title')}</Subheading>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Text className="text-sm text-zinc-500">Team-Mitglieder</Text>
+                  <Text className="text-sm text-zinc-500">{t('usage.teamMembers')}</Text>
                   <Text className="text-2xl font-semibold">
-                    {organization.usage.teamMembersActive} <span className="text-base font-normal text-blue-600">/ Unlimited</span>
+                    {organization.usage.teamMembersActive} <span className="text-base font-normal text-blue-600">/ {t('usage.unlimited')}</span>
                   </Text>
                 </div>
                 <div>
-                  <Text className="text-sm text-zinc-500">Kontakte</Text>
+                  <Text className="text-sm text-zinc-500">{t('usage.contacts')}</Text>
                   <Text className="text-2xl font-semibold">
-                    {organization.usage.contactsTotal} <span className="text-base font-normal text-blue-600">/ Unlimited</span>
+                    {organization.usage.contactsTotal} <span className="text-base font-normal text-blue-600">/ {t('usage.unlimited')}</span>
                   </Text>
                 </div>
                 <div>
-                  <Text className="text-sm text-zinc-500">E-Mails versendet</Text>
+                  <Text className="text-sm text-zinc-500">{t('usage.emailsSent')}</Text>
                   <Text className="text-2xl font-semibold">
-                    {organization.usage.emailsSent} <span className="text-base font-normal text-blue-600">/ Unlimited</span>
+                    {organization.usage.emailsSent} <span className="text-base font-normal text-blue-600">/ {t('usage.unlimited')}</span>
                   </Text>
                 </div>
                 <div>
-                  <Text className="text-sm text-zinc-500">AI-Wörter</Text>
+                  <Text className="text-sm text-zinc-500">{t('usage.aiWords')}</Text>
                   <Text className="text-2xl font-semibold">
-                    {organization.usage.aiWordsUsed} <span className="text-base font-normal text-blue-600">/ Unlimited</span>
+                    {organization.usage.aiWordsUsed} <span className="text-base font-normal text-blue-600">/ {t('usage.unlimited')}</span>
                   </Text>
                 </div>
               </div>
@@ -274,36 +275,35 @@ export default function BillingPage() {
         <div className="space-y-6">
           {/* Kein Subscription Hinweis (nur für regular accounts ohne subscription) */}
           <div className="p-6 border border-amber-200 dark:border-amber-700 rounded-lg bg-amber-50 dark:bg-amber-950/20">
-            <Text className="font-semibold text-lg">Keine aktive Subscription gefunden</Text>
+            <Text className="font-semibold text-lg">{t('noSubscription.title')}</Text>
             <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-              Du hast derzeit keine aktive Stripe-Subscription. Falls du bereits eine Zahlung getätigt hast,
-              klicke auf "Subscription Sync" oben rechts.
+              {t('noSubscription.description')}
             </Text>
             <Text className="text-sm text-zinc-600 dark:text-zinc-400 mt-2">
-              Kontaktiere support@celeropress.com für eine neue Subscription.
+              {t('noSubscription.contactSupport')}
             </Text>
           </div>
 
           {/* Debug Info */}
           <div className="p-6 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-            <Subheading level={2}>Organization Details (Debug)</Subheading>
+            <Subheading level={2}>{t('debug.title')}</Subheading>
             <div className="mt-4 space-y-2 text-sm font-mono">
               <div>
-                <span className="text-zinc-500">ID:</span> {organization.id}
+                <span className="text-zinc-500">{t('debug.id')}:</span> {organization.id}
               </div>
               <div>
-                <span className="text-zinc-500">Tier:</span> {organization.tier}
+                <span className="text-zinc-500">{t('debug.tier')}:</span> {organization.tier}
               </div>
               <div>
-                <span className="text-zinc-500">Account Type:</span> {organization.accountType}
+                <span className="text-zinc-500">{t('debug.accountType')}:</span> {organization.accountType}
               </div>
               <div>
-                <span className="text-zinc-500">Stripe Customer:</span>{' '}
-                {organization.stripeCustomerId || 'Nicht vorhanden'}
+                <span className="text-zinc-500">{t('debug.stripeCustomer')}:</span>{' '}
+                {organization.stripeCustomerId || t('debug.notAvailable')}
               </div>
               <div>
-                <span className="text-zinc-500">Stripe Subscription:</span>{' '}
-                {organization.stripeSubscriptionId || 'Nicht vorhanden'}
+                <span className="text-zinc-500">{t('debug.stripeSubscription')}:</span>{' '}
+                {organization.stripeSubscriptionId || t('debug.notAvailable')}
               </div>
             </div>
           </div>

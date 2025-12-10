@@ -131,6 +131,146 @@
         "premium": "PREMIUM"
       }
     },
+    "email": {
+      "title": "E-Mail Einstellungen",
+      "description": "Verwalten Sie E-Mail-Adressen und Signaturen für Ihre Organisation",
+      "tabs": {
+        "addresses": "E-Mail-Adressen",
+        "signatures": "Signaturen"
+      },
+      "newAddress": "Neue E-Mail-Adresse",
+      "table": {
+        "emailAddress": "E-Mail-Adresse",
+        "status": "Status",
+        "team": "Team"
+      },
+      "empty": "Keine E-Mail-Adressen vorhanden",
+      "badge": {
+        "default": "Standard"
+      },
+      "availableToAll": "Für alle verfügbar",
+      "notAssigned": "Nicht zugewiesen",
+      "actions": {
+        "setAsDefault": "Als Standard setzen"
+      },
+      "modal": {
+        "titleAdd": "Neue E-Mail-Adresse hinzufügen",
+        "titleEdit": "E-Mail-Adresse bearbeiten",
+        "description": "Konfigurieren Sie die E-Mail-Adresse und deren Einstellungen.",
+        "basicSettings": "Grundeinstellungen",
+        "localPart": "Local Part",
+        "localPartPlaceholder": "z.B. presse, info, pr-*",
+        "domain": "Domain",
+        "selectDomain": "Domain wählen...",
+        "noDomains": "Keine verifizierten Domains vorhanden.",
+        "addDomain": "Domain hinzufügen",
+        "displayName": "Anzeigename",
+        "displayNamePlaceholder": "z.B. Pressestelle ABC GmbH",
+        "teamAssignment": "Team-Zuweisungen",
+        "availableToAllLabel": "Für alle Teammitglieder verfügbar",
+        "availableToAllDescription": "Wenn aktiviert, kann jedes Teammitglied diese Email-Adresse verwenden",
+        "noTeamMembers": "Keine Team-Mitglieder vorhanden.",
+        "manageTeam": "Team verwalten",
+        "settings": "Einstellungen",
+        "active": "Aktiv",
+        "inboxEnabled": "Inbox aktiviert",
+        "saving": "Speichern..."
+      },
+      "deleteModal": {
+        "title": "E-Mail-Adresse löschen",
+        "message": "Sind Sie sicher, dass Sie die E-Mail-Adresse {email} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleting": "Löschen..."
+      }
+    },
+    "branding": {
+      "title": "Branding",
+      "description": "Hinterlegen Sie Ihre Markeninformationen für geteilte Seiten und Dokumente",
+      "logo": {
+        "label": "Firmenlogo",
+        "alt": "Firmenlogo",
+        "upload": "Logo hochladen",
+        "uploading": "Wird hochgeladen...",
+        "hint": "JPG, PNG oder GIF. Max. 5MB."
+      },
+      "fields": {
+        "companyName": "Firmenname *",
+        "companyNamePlaceholder": "Ihre Firma GmbH",
+        "street": "Anschrift",
+        "streetPlaceholder": "Musterstraße 123",
+        "postalCode": "PLZ",
+        "postalCodePlaceholder": "12345",
+        "city": "Ort",
+        "cityPlaceholder": "Musterstadt",
+        "phone": "Allgemeine Telefonnummer",
+        "phonePlaceholder": "+49 123 456789",
+        "email": "Allgemeine E-Mail",
+        "emailPlaceholder": "info@firma.de",
+        "website": "Website",
+        "websitePlaceholder": "https://www.ihre-firma.de"
+      },
+      "copyright": {
+        "label": "Copyright-Zeile anzeigen",
+        "preview": "Zeigt \"Copyright © {year} {company}. Alle Rechte vorbehalten.\" in der Fußzeile",
+        "defaultCompany": "Ihr Firmenname"
+      },
+      "actions": {
+        "saving": "Wird gespeichert..."
+      },
+      "usage": {
+        "title": "Verwendung Ihrer Branding-Informationen",
+        "description": "Diese Informationen werden auf geteilten Seiten (Freigabe-Links, Media-Shares) und in generierten PDFs verwendet, um Ihre Marke zu präsentieren."
+      }
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Verwalten Sie Ihre Benachrichtigungseinstellungen",
+      "settingsTitle": "Benachrichtigungseinstellungen",
+      "settingsDescription": "Wählen Sie aus, über welche Ereignisse Sie benachrichtigt werden möchten.",
+      "loadingSettings": "Einstellungen werden geladen...",
+      "loadError": "Fehler beim Laden der Einstellungen",
+      "saveSettings": "Einstellungen speichern",
+      "saving": "Speichern...",
+      "days": "Tage",
+      "groups": {
+        "approvals": {
+          "title": "Freigaben",
+          "approvalGranted": "Korrekturstatus: Freigabe erteilt",
+          "approvalGrantedDesc": "Benachrichtigung wenn eine Freigabe erteilt wurde",
+          "changesRequested": "Korrekturstatus: Änderungen erbeten",
+          "changesRequestedDesc": "Benachrichtigung wenn Änderungen angefordert wurden",
+          "firstView": "Erstmaliges Ansehen einer Freigabe",
+          "firstViewDesc": "Benachrichtigung wenn der Kunde die Freigabe zum ersten Mal öffnet",
+          "overdueApprovals": "Überfällige Freigabe-Anfragen",
+          "overdueApprovalsDesc": "Benachrichtigung über ausstehende Freigaben",
+          "overdueApprovalDays": "Tage bis zur Überfälligkeit",
+          "overdueApprovalDaysDesc": "Nach wie vielen Tagen eine Freigabe als überfällig gilt"
+        },
+        "email": {
+          "title": "Schedule Mails",
+          "emailSentSuccess": "Erfolgsmeldung nach Versand",
+          "emailSentSuccessDesc": "Benachrichtigung nach erfolgreichem E-Mail-Versand",
+          "emailBounced": "Bounce-Benachrichtigung",
+          "emailBouncedDesc": "Benachrichtigung bei E-Mail-Bounces"
+        },
+        "tasks": {
+          "title": "Projekt-Tasks",
+          "taskOverdue": "Überfällige Projekt-Tasks",
+          "taskOverdueDesc": "Benachrichtigung wenn Aufgaben in Projekten überfällig werden"
+        },
+        "media": {
+          "title": "Mediencenter",
+          "mediaFirstAccess": "Erstmaliger Zugriff auf einen geteilten Link",
+          "mediaFirstAccessDesc": "Benachrichtigung beim ersten Zugriff auf geteilte Medien",
+          "mediaDownloaded": "Download eines geteilten Mediums",
+          "mediaDownloadedDesc": "Benachrichtigung wenn geteilte Medien heruntergeladen werden"
+        },
+        "team": {
+          "title": "Team",
+          "teamChatMention": "@-Erwähnungen",
+          "teamChatMentionDesc": "Benachrichtigung wenn Sie im Projekt-Chat oder in E-Mail-Notizen erwähnt werden"
+        }
+      }
+    },
     "language": {
       "title": "Sprache",
       "uiLanguage": "UI-Sprache",
@@ -149,6 +289,163 @@
       "german": "Deutsch",
       "context": "Kontext",
       "contextOptional": "Kontext (optional)"
+    },
+    "templates": {
+      "title": "PDF Templates",
+      "description": "Verwalte deine PDF-Layout-Vorlagen für Pressemitteilungen",
+      "compare": "Vergleichen",
+      "create": "Template erstellen",
+      "upload": "Template hochladen",
+      "table": {
+        "template": "Template",
+        "type": "Typ",
+        "status": "Status",
+        "version": "Version",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "system": "System",
+        "custom": "Custom"
+      },
+      "empty": {
+        "title": "Noch keine Templates vorhanden",
+        "description": "Erstelle dein erstes PDF-Template um loszulegen.",
+        "action": "Template erstellen"
+      },
+      "actions": {
+        "preview": "Vorschau",
+        "edit": "Bearbeiten",
+        "delete": "Löschen"
+      }
+    },
+    "domain": {
+      "title": "Versand-Domains authentifizieren",
+      "description": "Verbinden Sie Ihre Domain, um E-Mails im Namen Ihrer eigenen Marke zu versenden.",
+      "addDomain": "Neue Domain hinzufügen",
+      "loading": "Lade Domains...",
+      "unknown": "Unbekannt",
+      "deleteConfirm": "Möchten Sie diese Domain wirklich löschen?",
+      "status": {
+        "pending": "Ausstehend",
+        "verified": "Verifiziert",
+        "failed": "Fehlgeschlagen"
+      },
+      "badge": {
+        "default": "Standard"
+      },
+      "addedAt": "Hinzugefügt {date}",
+      "deliveryRate": "Zustellrate:",
+      "provider": "Provider: {name}",
+      "infoAlert": {
+        "title": "Warum ist das wichtig?",
+        "description": "Ohne eigene Domain werden Ihre E-Mails von einer fremden Adresse versendet, was oft im Spam-Ordner landet. Mit Ihrer eigenen Domain erhöhen Sie die Zustellrate um bis zu 95%."
+      },
+      "actions": {
+        "testInbox": "Inbox testen",
+        "setDefault": "Als Standard",
+        "dnsRecords": "DNS-Einträge",
+        "verify": "Prüfen"
+      },
+      "emptyState": {
+        "message": "Sie haben noch keine Domains hinzugefügt.",
+        "action": "Erste Domain hinzufügen",
+        "hint": "Keine Sorge, wir führen Sie Schritt für Schritt durch den Prozess."
+      }
+    },
+    "team": {
+      "title": "Team-Verwaltung",
+      "description": "Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein",
+      "inviteMember": "Mitglied einladen",
+      "limitReached": "Limit erreicht: Ihr Plan erlaubt max. {limit} Mitglieder",
+      "refresh": "Aktualisieren",
+      "loadError": "Fehler beim Laden der Team-Mitglieder",
+      "inviteError": "Fehler beim Einladen des Team-Mitglieds",
+      "noMembers": "Keine Team-Mitglieder gefunden",
+      "makeOwner": "→ Zum Owner machen",
+      "stats": {
+        "activeMembers": "Aktive Mitglieder",
+        "pendingInvitations": "Ausstehende Einladungen",
+        "roleDistribution": "Rollen-Verteilung"
+      },
+      "table": {
+        "member": "Mitglied",
+        "role": "Rolle",
+        "lastActive": "Zuletzt aktiv"
+      },
+      "roles": {
+        "owner": {
+          "label": "Owner",
+          "description": "Vollzugriff auf alle Funktionen und Team-Verwaltung"
+        },
+        "member": {
+          "label": "Mitglied",
+          "description": "Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)"
+        },
+        "admin": {
+          "label": "Admin (Legacy)",
+          "description": "Alte Rolle - wird zu Member konvertiert"
+        },
+        "client": {
+          "label": "Kunde (Legacy)",
+          "description": "Alte Rolle - wird zu Member konvertiert"
+        },
+        "guest": {
+          "label": "Gast (Legacy)",
+          "description": "Alte Rolle - wird zu Member konvertiert"
+        }
+      },
+      "status": {
+        "active": "Aktiv",
+        "invited": "Eingeladen",
+        "inactive": "Inaktiv",
+        "suspended": "Gesperrt"
+      },
+      "lastActive": {
+        "never": "Nie",
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "daysAgo": "vor {days} Tagen",
+        "weeksAgo": "vor {weeks} Wochen"
+      },
+      "invitedOn": "Eingeladen am {date}",
+      "actions": {
+        "resendInvite": "Einladung erneut senden",
+        "deleteInvitation": "Einladung löschen",
+        "removeMember": "Mitglied entfernen"
+      },
+      "inviteModal": {
+        "title": "Neues Team-Mitglied einladen",
+        "description": "Senden Sie eine Einladung per E-Mail",
+        "email": "E-Mail-Adresse",
+        "emailPlaceholder": "kollege@firma.de",
+        "role": "Rolle",
+        "memberRole": "Mitglied",
+        "memberDescription": "Kann alle Features nutzen (CRM, Kampagnen, Bibliothek, etc.)",
+        "roleNote": "Alle neuen Mitglieder werden als \"Mitglied\" eingeladen. Der Owner kann später die Rolle übertragen.",
+        "cancel": "Abbrechen",
+        "send": "Einladung senden",
+        "sending": "Wird gesendet..."
+      },
+      "removeDialog": {
+        "title": "Mitglied entfernen",
+        "message": "Möchten Sie {name} wirklich aus dem Team entfernen?",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+        "cancel": "Abbrechen",
+        "removeMember": "Mitglied entfernen",
+        "deleteInvitation": "Einladung löschen"
+      },
+      "transferDialog": {
+        "title": "⚠️ Owner-Rolle übertragen",
+        "question": "Möchtest du {name} zum neuen Owner machen?",
+        "consequence1": "• Du wirst automatisch zum Mitglied",
+        "consequence2": "• Du verlierst alle Admin-Rechte (Team-Verwaltung, Abrechnung)",
+        "consequence3": "• Diese Aktion kann nur der neue Owner rückgängig machen",
+        "changesTitle": "Was ändert sich?",
+        "newOwner": "{name} wird Owner",
+        "youBecomeMember": "Du wirst Mitglied",
+        "cancel": "Abbrechen",
+        "confirm": "Ja, Owner-Rolle übertragen"
+      }
     }
   },
   "dashboard": {
@@ -1456,6 +1753,101 @@
       "profile": "Profil",
       "billing": "Abrechnung",
       "apiManagement": "API-Verwaltung"
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Verwalte deine persönlichen Informationen und Einstellungen",
+      "avatar": {
+        "title": "Profilbild",
+        "hint": "JPG, PNG oder WebP. Maximal 10MB. Wird automatisch quadratisch zugeschnitten.",
+        "upload": "Hochladen",
+        "uploading": "Lädt hoch...",
+        "change": "Ändern",
+        "remove": "Entfernen",
+        "deleting": "Löscht...",
+        "uploadSuccess": "Profilbild erfolgreich aktualisiert!",
+        "deleteSuccess": "Profilbild erfolgreich entfernt!",
+        "errors": {
+          "invalidType": "Bitte wähle eine Bilddatei aus.",
+          "tooLarge": "Datei ist zu groß. Maximum 10MB erlaubt.",
+          "uploadFailed": "Fehler beim Upload",
+          "uploadUnexpected": "Unerwarteter Fehler beim Upload",
+          "deleteFailed": "Fehler beim Löschen",
+          "deleteUnexpected": "Unerwarteter Fehler beim Löschen"
+        }
+      },
+      "personalInfo": {
+        "title": "Persönliche Informationen",
+        "email": "E-Mail-Adresse",
+        "emailHint": "Deine E-Mail-Adresse kann nicht geändert werden",
+        "displayName": "Anzeigename",
+        "displayNamePlaceholder": "Dein Name",
+        "phoneNumber": "Telefonnummer",
+        "phoneNumberPlaceholder": "+49 123 456789",
+        "save": "Änderungen speichern",
+        "saving": "Speichere...",
+        "cancel": "Abbrechen",
+        "saveSuccess": "Profil erfolgreich gespeichert!",
+        "errors": {
+          "saveFailed": "Fehler beim Speichern des Profils"
+        }
+      },
+      "accountInfo": {
+        "title": "Account-Informationen",
+        "userId": "User ID:",
+        "role": "Rolle:",
+        "organization": "Organisation:",
+        "organizationNone": "Keine",
+        "roles": {
+          "owner": "Inhaber",
+          "admin": "Administrator",
+          "member": "Mitglied",
+          "notAssigned": "Nicht zugewiesen"
+        }
+      }
+    },
+    "billing": {
+      "title": "Abrechnung",
+      "headingWithSubscription": "Abrechnung & Subscription",
+      "description": "Verwalte deine Subscription, Zahlungsmethoden und Nutzung",
+      "pleaseLogin": "Bitte melde dich an.",
+      "loading": "Lädt...",
+      "organizationNotFound": "Organization nicht gefunden.",
+      "syncButton": "🔧 Subscription Sync",
+      "syncButtonLoading": "Aktualisiere...",
+      "usageRefreshButton": "Usage aktualisieren",
+      "specialAccount": {
+        "betaTitle": "Beta-Tester Account",
+        "promoTitle": "Promo Account",
+        "internalTitle": "Interner Account",
+        "fullAccess": "Voller Zugang zu allen Features ohne Limits",
+        "betaDescription": "Als Beta-Tester hast du vollen Zugang zu allen Premium-Features während der Testphase. Keine Zahlungsinformationen erforderlich.",
+        "promoDescription": "Dein Promo-Code gewährt dir vollen Zugang zu allen Premium-Features.",
+        "internalDescription": "Dies ist ein interner CeleroPress Account mit unbegrenztem Zugang.",
+        "validUntil": "⏰ Gültig bis: {date}"
+      },
+      "usage": {
+        "title": "Aktuelle Nutzung",
+        "teamMembers": "Team-Mitglieder",
+        "contacts": "Kontakte",
+        "emailsSent": "E-Mails versendet",
+        "aiWords": "AI-Wörter",
+        "unlimited": "Unlimited"
+      },
+      "noSubscription": {
+        "title": "Keine aktive Subscription gefunden",
+        "description": "Du hast derzeit keine aktive Stripe-Subscription. Falls du bereits eine Zahlung getätigt hast, klicke auf \"Subscription Sync\" oben rechts.",
+        "contactSupport": "Kontaktiere support@celeropress.com für eine neue Subscription."
+      },
+      "debug": {
+        "title": "Organization Details (Debug)",
+        "id": "ID",
+        "tier": "Tier",
+        "accountType": "Account Type",
+        "stripeCustomer": "Stripe Customer",
+        "stripeSubscription": "Stripe Subscription",
+        "notAvailable": "Nicht vorhanden"
+      }
     }
   }
 }

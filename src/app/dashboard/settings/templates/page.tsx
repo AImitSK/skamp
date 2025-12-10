@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
@@ -29,6 +30,7 @@ import TemplateUploadWizard from '@/components/templates/TemplateUploadWizard';
 import TemplateEditor from '@/components/templates/TemplateEditor';
 
 export default function TemplatesPage() {
+  const t = useTranslations('settings.templates');
   const { currentOrganization } = useOrganization();
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,7 @@ export default function TemplatesPage() {
   if (loading) {
     return (
       <div className="animate-pulse">
-        <Heading>PDF Templates</Heading>
+        <Heading>{t('title')}</Heading>
         <div className="mt-4 space-y-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="bg-gray-200 h-24 rounded-lg"></div>
@@ -320,35 +322,35 @@ export default function TemplatesPage() {
       <div className="flex-1 space-y-8">
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <Heading level={1}>PDF Templates</Heading>
+            <Heading level={1}>{t('title')}</Heading>
             <Text className="mt-2 text-gray-600">
-              Verwalte deine PDF-Layout-Vorlagen für Pressemitteilungen
+              {t('description')}
             </Text>
           </div>
           <div className="mt-4 md:mt-0 flex gap-2">
-            <Button 
+            <Button
               onClick={handleShowComparison}
               color="secondary"
               disabled={templates.length < 2}
               className="px-6 py-2"
             >
               <ScaleIcon className="h-4 w-4 mr-2" />
-              Vergleichen
+              {t('compare')}
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowTemplateEditor(true)}
               color="secondary"
               className="px-6 py-2"
             >
               <CodeBracketIcon className="h-4 w-4 mr-2" />
-              Template erstellen
+              {t('create')}
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowUploadWizard(true)}
               className="px-6 py-2"
             >
               <CloudArrowUpIcon className="h-4 w-4 mr-2" />
-              Template hochladen
+              {t('upload')}
             </Button>
           </div>
         </div>
@@ -359,19 +361,19 @@ export default function TemplatesPage() {
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
               <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Template
+                {t('table.template')}
               </div>
               <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Typ
+                {t('table.type')}
               </div>
               <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Status
+                {t('table.status')}
               </div>
               <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Version
+                {t('table.version')}
               </div>
               <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
-                Aktionen
+                {t('table.actions')}
               </div>
             </div>
           </div>
@@ -388,15 +390,15 @@ export default function TemplatesPage() {
                   <DocumentTextIcon className="mx-auto h-16 w-16 text-gray-400" />
                   <div>
                     <Text className="text-lg font-medium text-gray-900 mb-2">
-                      Noch keine Templates vorhanden
+                      {t('empty.title')}
                     </Text>
                     <Text className="text-gray-500">
-                      Erstelle dein erstes PDF-Template um loszulegen.
+                      {t('empty.description')}
                     </Text>
                     <div className="mt-6">
                       <Button className=" px-6 py-2">
                         <PlusIcon className="h-4 w-4 mr-2" />
-                        Template erstellen
+                        {t('empty.action')}
                       </Button>
                     </div>
                   </div>
@@ -427,11 +429,11 @@ export default function TemplatesPage() {
                     <div className="w-[20%]">
                       {template.isSystem ? (
                         <Badge color="blue" className="whitespace-nowrap">
-                          System
+                          {t('status.system')}
                         </Badge>
                       ) : (
                         <Badge color="zinc" className="whitespace-nowrap">
-                          Custom
+                          {t('status.custom')}
                         </Badge>
                       )}
                     </div>
@@ -448,18 +450,18 @@ export default function TemplatesPage() {
                         <DropdownMenu>
                           <DropdownItem onClick={() => handlePreviewTemplate(template)}>
                             <EyeIcon className="h-4 w-4 mr-2" />
-                            Vorschau
+                            {t('actions.preview')}
                           </DropdownItem>
                           {!template.isSystem && (
                             <DropdownItem onClick={() => handleEditTemplate(template)}>
                               <PencilIcon className="h-4 w-4 mr-2" />
-                              Bearbeiten
+                              {t('actions.edit')}
                             </DropdownItem>
                           )}
                           {!template.isSystem && (
                             <DropdownItem color="red" onClick={() => handleDeleteTemplate(template)}>
                               <TrashIcon className="h-4 w-4 mr-2" />
-                              Löschen
+                              {t('actions.delete')}
                             </DropdownItem>
                           )}
                         </DropdownMenu>

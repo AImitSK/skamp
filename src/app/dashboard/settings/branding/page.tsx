@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
@@ -25,6 +26,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function BrandingPage() {
+  const t = useTranslations('settings.branding');
+  const tCommon = useTranslations('common');
   const { user, loading: authLoading } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -278,7 +281,7 @@ export default function BrandingPage() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-              <Text className="mt-4">Lade Einstellungen...</Text>
+              <Text className="mt-4">{tCommon('loading')}</Text>
             </div>
           </div>
         ) : (
@@ -286,9 +289,9 @@ export default function BrandingPage() {
             {/* Header */}
             <div className="md:flex md:items-center md:justify-between mb-8">
               <div className="min-w-0 flex-1">
-                <Heading level={1}>Branding</Heading>
+                <Heading level={1}>{t('title')}</Heading>
                 <Text className="mt-2 text-gray-600">
-                  Hinterlegen Sie Ihre Markeninformationen für geteilte Seiten und Dokumente
+                  {t('description')}
                 </Text>
               </div>
             </div>
@@ -299,13 +302,13 @@ export default function BrandingPage() {
                 <div className="p-6 space-y-6">
                   {/* Logo */}
                   <Field>
-                    <Label>Firmenlogo</Label>
+                    <Label>{t('logo.label')}</Label>
                     <div className="flex items-start gap-6 mt-2">
                       {formData.logoUrl ? (
                         <div className="relative">
                           <img
                             src={formData.logoUrl}
-                            alt="Firmenlogo"
+                            alt={t('logo.alt')}
                             className="h-24 w-auto rounded-lg border border-gray-200"
                           />
                           <Button
@@ -338,10 +341,10 @@ export default function BrandingPage() {
                           disabled={uploadingLogo}
                         >
                           <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-                          {uploadingLogo ? 'Wird hochgeladen...' : 'Logo hochladen'}
+                          {uploadingLogo ? t('logo.uploading') : t('logo.upload')}
                         </Button>
                         <Text className="text-xs text-gray-500 mt-1">
-                          JPG, PNG oder GIF. Max. 5MB.
+                          {t('logo.hint')}
                         </Text>
                       </div>
                     </div>
@@ -350,12 +353,12 @@ export default function BrandingPage() {
                   <FieldGroup>
                     {/* Firmenname */}
                     <Field>
-                      <Label>Firmenname *</Label>
+                      <Label>{t('fields.companyName')}</Label>
                       <Input
                         type="text"
                         value={formData.companyName || ''}
                         onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                        placeholder="Ihre Firma GmbH"
+                        placeholder={t('fields.companyNamePlaceholder')}
                         required
                         className={validationErrors.companyName ? 'border-red-500' : ''}
                       />
@@ -367,7 +370,7 @@ export default function BrandingPage() {
                     {/* Adresse */}
                     <div className="grid grid-cols-1 gap-4">
                       <Field>
-                        <Label>Anschrift</Label>
+                        <Label>{t('fields.street')}</Label>
                         <Input
                           type="text"
                           value={formData.address?.street || ''}
@@ -375,13 +378,13 @@ export default function BrandingPage() {
                             ...formData,
                             address: { ...formData.address!, street: e.target.value }
                           })}
-                          placeholder="Musterstraße 123"
+                          placeholder={t('fields.streetPlaceholder')}
                         />
                       </Field>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Field>
-                          <Label>PLZ</Label>
+                          <Label>{t('fields.postalCode')}</Label>
                           <Input
                             type="text"
                             value={formData.address?.postalCode || ''}
@@ -389,12 +392,12 @@ export default function BrandingPage() {
                               ...formData,
                               address: { ...formData.address!, postalCode: e.target.value }
                             })}
-                            placeholder="12345"
+                            placeholder={t('fields.postalCodePlaceholder')}
                           />
                         </Field>
 
                         <Field className="md:col-span-2">
-                          <Label>Ort</Label>
+                          <Label>{t('fields.city')}</Label>
                           <Input
                             type="text"
                             value={formData.address?.city || ''}
@@ -402,7 +405,7 @@ export default function BrandingPage() {
                               ...formData,
                               address: { ...formData.address!, city: e.target.value }
                             })}
-                            placeholder="Musterstadt"
+                            placeholder={t('fields.cityPlaceholder')}
                           />
                         </Field>
                       </div>
@@ -411,12 +414,12 @@ export default function BrandingPage() {
                     {/* Kontaktdaten */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Field>
-                        <Label>Allgemeine Telefonnummer</Label>
+                        <Label>{t('fields.phone')}</Label>
                         <Input
                           type="tel"
                           value={formData.phone || ''}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="+49 123 456789"
+                          placeholder={t('fields.phonePlaceholder')}
                           className={validationErrors.phone ? 'border-red-500' : ''}
                         />
                         {validationErrors.phone && (
@@ -425,12 +428,12 @@ export default function BrandingPage() {
                       </Field>
 
                       <Field>
-                        <Label>Allgemeine E-Mail</Label>
+                        <Label>{t('fields.email')}</Label>
                         <Input
                           type="email"
                           value={formData.email || ''}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          placeholder="info@firma.de"
+                          placeholder={t('fields.emailPlaceholder')}
                           className={validationErrors.email ? 'border-red-500' : ''}
                         />
                         {validationErrors.email && (
@@ -440,12 +443,12 @@ export default function BrandingPage() {
                     </div>
 
                     <Field>
-                      <Label>Website</Label>
+                      <Label>{t('fields.website')}</Label>
                       <Input
                         type="url"
                         value={formData.website || ''}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        placeholder="https://www.ihre-firma.de"
+                        placeholder={t('fields.websitePlaceholder')}
                         className={validationErrors.website ? 'border-red-500' : ''}
                       />
                       {validationErrors.website && (
@@ -462,9 +465,9 @@ export default function BrandingPage() {
                         onChange={(checked) => setFormData({ ...formData, showCopyright: checked })}
                       />
                       <div>
-                        <div className="font-medium text-sm text-gray-900">Copyright-Zeile anzeigen</div>
+                        <div className="font-medium text-sm text-gray-900">{t('copyright.label')}</div>
                         <Text className="text-sm text-gray-600 mt-1">
-                          Zeigt "Copyright © {new Date().getFullYear()} {formData.companyName || 'Ihr Firmenname'}. Alle Rechte vorbehalten." in der Fußzeile
+                          {t('copyright.preview', { year: new Date().getFullYear(), company: formData.companyName || t('copyright.defaultCompany') })}
                         </Text>
                       </div>
                     </div>
@@ -479,14 +482,14 @@ export default function BrandingPage() {
                     onClick={() => loadBrandingSettings()}
                     disabled={saving}
                   >
-                    Zurücksetzen
+                    {tCommon('reset')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={saving || !organizationId}
                     className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                   >
-                    {saving ? 'Wird gespeichert...' : 'Speichern'}
+                    {saving ? t('actions.saving') : tCommon('save')}
                   </Button>
                 </div>
               </div>
@@ -498,11 +501,8 @@ export default function BrandingPage() {
                 <div className="flex">
                   <BuildingOfficeIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Verwendung Ihrer Branding-Informationen</p>
-                    <p>
-                      Diese Informationen werden auf geteilten Seiten (Freigabe-Links, Media-Shares)
-                      und in generierten PDFs verwendet, um Ihre Marke zu präsentieren.
-                    </p>
+                    <p className="font-medium mb-1">{t('usage.title')}</p>
+                    <p>{t('usage.description')}</p>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 // src/components/notifications/NotificationSettings.tsx
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { SimpleSwitch } from './SimpleSwitch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ interface NotificationSettingsState {
 }
 
 export function NotificationSettings() {
+  const t = useTranslations('settings.notifications');
   const { settings, loading, error, updateSettings } = useNotificationSettings();
   const [localSettings, setLocalSettings] = useState<NotificationSettingsState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -83,88 +85,88 @@ export function NotificationSettings() {
 
   const settingGroups: SettingGroup[] = [
     {
-      title: 'Freigaben',
+      title: t('groups.approvals.title'),
       icon: CheckCircleIcon,
       settings: [
         {
           key: 'approvalGranted',
-          label: 'Korrekturstatus: Freigabe erteilt',
-          description: 'Benachrichtigung wenn eine Freigabe erteilt wurde'
+          label: t('groups.approvals.approvalGranted'),
+          description: t('groups.approvals.approvalGrantedDesc')
         },
         {
           key: 'changesRequested',
-          label: 'Korrekturstatus: Änderungen erbeten',
-          description: 'Benachrichtigung wenn Änderungen angefordert wurden'
+          label: t('groups.approvals.changesRequested'),
+          description: t('groups.approvals.changesRequestedDesc')
         },
         {
           key: 'firstView',
-          label: 'Erstmaliges Ansehen einer Freigabe',
-          description: 'Benachrichtigung wenn der Kunde die Freigabe zum ersten Mal öffnet'
+          label: t('groups.approvals.firstView'),
+          description: t('groups.approvals.firstViewDesc')
         },
         {
           key: 'overdueApprovals',
-          label: 'Überfällige Freigabe-Anfragen',
-          description: 'Benachrichtigung über ausstehende Freigaben'
+          label: t('groups.approvals.overdueApprovals'),
+          description: t('groups.approvals.overdueApprovalsDesc')
         },
         {
           key: 'overdueApprovalDays',
-          label: 'Tage bis zur Überfälligkeit',
+          label: t('groups.approvals.overdueApprovalDays'),
           type: 'number',
-          description: 'Nach wie vielen Tagen eine Freigabe als überfällig gilt'
+          description: t('groups.approvals.overdueApprovalDaysDesc')
         }
       ]
     },
     {
-      title: 'Schedule Mails',
+      title: t('groups.email.title'),
       icon: EnvelopeIcon,
       settings: [
         {
           key: 'emailSentSuccess',
-          label: 'Erfolgsmeldung nach Versand',
-          description: 'Benachrichtigung nach erfolgreichem E-Mail-Versand'
+          label: t('groups.email.emailSentSuccess'),
+          description: t('groups.email.emailSentSuccessDesc')
         },
         {
           key: 'emailBounced',
-          label: 'Bounce-Benachrichtigung',
-          description: 'Benachrichtigung bei E-Mail-Bounces'
+          label: t('groups.email.emailBounced'),
+          description: t('groups.email.emailBouncedDesc')
         }
       ]
     },
     {
-      title: 'Projekt-Tasks',
+      title: t('groups.tasks.title'),
       icon: ClipboardDocumentListIcon,
       settings: [
         {
           key: 'taskOverdue',
-          label: 'Überfällige Projekt-Tasks',
-          description: 'Benachrichtigung wenn Aufgaben in Projekten überfällig werden'
+          label: t('groups.tasks.taskOverdue'),
+          description: t('groups.tasks.taskOverdueDesc')
         }
       ]
     },
     {
-      title: 'Mediencenter',
+      title: t('groups.media.title'),
       icon: LinkIcon,
       settings: [
         {
           key: 'mediaFirstAccess',
-          label: 'Erstmaliger Zugriff auf einen geteilten Link',
-          description: 'Benachrichtigung beim ersten Zugriff auf geteilte Medien'
+          label: t('groups.media.mediaFirstAccess'),
+          description: t('groups.media.mediaFirstAccessDesc')
         },
         {
           key: 'mediaDownloaded',
-          label: 'Download eines geteilten Mediums',
-          description: 'Benachrichtigung wenn geteilte Medien heruntergeladen werden'
+          label: t('groups.media.mediaDownloaded'),
+          description: t('groups.media.mediaDownloadedDesc')
         }
       ]
     },
     {
-      title: 'Team',
+      title: t('groups.team.title'),
       icon: UserGroupIcon,
       settings: [
         {
           key: 'teamChatMention',
-          label: '@-Erwähnungen',
-          description: 'Benachrichtigung wenn Sie im Projekt-Chat oder in E-Mail-Notizen erwähnt werden'
+          label: t('groups.team.teamChatMention'),
+          description: t('groups.team.teamChatMentionDesc')
         }
       ]
     }
@@ -210,7 +212,7 @@ export function NotificationSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">Einstellungen werden geladen...</div>
+        <div className="text-gray-500">{t('loadingSettings')}</div>
       </div>
     );
   }
@@ -222,7 +224,7 @@ export function NotificationSettings() {
           <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-red-800">
-              Fehler beim Laden der Einstellungen
+              {t('loadError')}
             </h3>
             <div className="mt-2 text-sm text-red-700">{error}</div>
           </div>
@@ -238,10 +240,10 @@ export function NotificationSettings() {
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold leading-6 text-gray-900">
-            Benachrichtigungseinstellungen
+            {t('settingsTitle')}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Wählen Sie aus, über welche Ereignisse Sie benachrichtigt werden möchten.
+            {t('settingsDescription')}
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-4 flex items-center gap-3">
@@ -250,7 +252,7 @@ export function NotificationSettings() {
             disabled={!hasChanges || saving}
             className="whitespace-nowrap"
           >
-            {saving ? 'Speichern...' : 'Einstellungen speichern'}
+            {saving ? t('saving') : t('saveSettings')}
           </Button>
         </div>
       </div>
@@ -290,7 +292,7 @@ export function NotificationSettings() {
                           className="w-20"
                           disabled={!localSettings.overdueApprovals && setting.key === 'overdueApprovalDays'}
                         />
-                        <span className="text-sm text-gray-500">Tage</span>
+                        <span className="text-sm text-gray-500">{t('days')}</span>
                       </div>
                     ) : (
                       <SimpleSwitch
