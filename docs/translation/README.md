@@ -24,6 +24,7 @@ Dieses Verzeichnis enthält die vollständige Dokumentation zur Internationalisi
 | [12-SEND-MODAL-LANGUAGE-DEFAULTS.md](./12-SEND-MODAL-LANGUAGE-DEFAULTS.md) | Versand-Modal Sprach-Defaults | 📝 Konzept |
 | [13-SYSTEM-EMAILS-I18N.md](./13-SYSTEM-EMAILS-I18N.md) | System-Emails (Freigabe, Reports) | 📝 Konzept |
 | [14-PUBLIC-PAGES-I18N.md](./14-PUBLIC-PAGES-I18N.md) | Öffentliche Seiten (Freigabe, Share) | 📝 Konzept |
+| [15-TOAST-SERVICE-I18N.md](./15-TOAST-SERVICE-I18N.md) | Toast-Service Migration (91 Dateien) | 📝 Konzept |
 
 > **Hinweis:** `04-NATIVE-MULTILINGUAL.md` wurde entfernt - Boilerplates werden jetzt direkt mit dem Hauptinhalt übersetzt, was eine separate mehrsprachige Boilerplate-Verwaltung überflüssig macht.
 
@@ -89,10 +90,10 @@ Die zentrale Sprachverwaltung erfolgt unter `/settings/language` mit zwei Bereic
 - [x] PDF-Generierung mehrsprachig
 
 ### Phase 3: UI-Migration 🔄 IN ARBEIT
-- [x] Dashboard-Seiten migrieren (29 von 57 fertig)
+- [x] Dashboard-Seiten migrieren (33 von 57 fertig)
 - [x] Navigation (SettingsNav, AdminNav, Dashboard-Layout)
-- [ ] ~28 Seiten noch ausstehend
-- [ ] Toast Service i18n (zentral in toast.ts)
+- [ ] ~22 Seiten noch ausstehend
+- [ ] Toast-Aufrufe migrieren (91 Dateien) - siehe 15-TOAST-SERVICE-I18N.md
 
 ### Phase 4: Erweiterte Internationalisierung 📝 KONZEPT
 - [ ] KI-Assistent mehrsprachig (11-AI-PRESS-RELEASE-I18N.md)
