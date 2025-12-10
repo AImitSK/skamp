@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
@@ -48,6 +49,8 @@ import {
 import { toastService } from '@/lib/utils/toast';
 
 export default function InboxPage() {
+  const t = useTranslations('inbox');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
@@ -811,16 +814,16 @@ export default function InboxPage() {
         <div className="text-center max-w-md">
           <InboxIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Keine E-Mail-Adressen konfiguriert
+            {t('emptyState.noAddresses.title')}
           </h2>
           <p className="text-gray-500 mb-6">
-            Um E-Mails empfangen zu können, müssen Sie zuerst eine E-Mail-Adresse einrichten.
+            {t('emptyState.noAddresses.description')}
           </p>
-          <Button 
+          <Button
             href="/dashboard/settings/email"
             className="bg-primary hover:bg-primary-hover text-white"
           >
-            E-Mail-Adresse einrichten
+            {t('emptyState.noAddresses.action')}
           </Button>
         </div>
       </div>
@@ -839,7 +842,7 @@ export default function InboxPage() {
               plain
               onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
               className="p-2"
-              title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
+              title={organizationSidebarCollapsed ? t('toolbar.toggleFolders.show') : t('toolbar.toggleFolders.hide')}
             >
               <FolderIcon className="h-5 w-5 text-gray-400" />
               {organizationSidebarCollapsed ? (
@@ -854,7 +857,7 @@ export default function InboxPage() {
               plain
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="p-2"
-              title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
+              title={sidebarCollapsed ? t('toolbar.toggleThreads.show') : t('toolbar.toggleThreads.hide')}
             >
               <ListBulletIcon className="h-5 w-5 text-gray-400" />
               {sidebarCollapsed ? (
@@ -871,7 +874,7 @@ export default function InboxPage() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="E-Mails durchsuchen..."
+                placeholder={t('toolbar.search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
@@ -891,7 +894,7 @@ export default function InboxPage() {
               className="bg-primary hover:bg-primary-hover text-white"
             >
               <PencilSquareIcon className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Neue E-Mail</span>
+              <span className="whitespace-nowrap">{t('toolbar.newEmail')}</span>
             </Button>
 
             {/* Refresh Button */}
@@ -900,7 +903,7 @@ export default function InboxPage() {
               onClick={handleRefresh}
               disabled={refreshing}
               className="p-2"
-              title="Aktualisieren"
+              title={t('toolbar.refresh')}
             >
               <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -946,18 +949,18 @@ export default function InboxPage() {
                   </svg>
                 </button>
               ) : (
-                <h3 className="font-medium text-sm text-gray-700">E-Mails</h3>
+                <h3 className="font-medium text-sm text-gray-700">{t('emailList.header.emails')}</h3>
               )}
               {filteredThreads.length > 0 && (
                 <span className="text-gray-500 font-normal text-sm flex-shrink-0">
-                  ({filteredThreads.length})
+                  {t('emailList.header.count', { count: filteredThreads.length })}
                 </span>
               )}
             </div>
             {resolvingThreads && (
               <div className="flex items-center text-xs text-gray-500">
                 <ArrowPathIcon className="h-4 w-4 animate-spin mr-1" />
-                Threads werden erstellt...
+                {t('emailList.header.resolvingThreads')}
               </div>
             )}
           </div>
@@ -1003,12 +1006,12 @@ export default function InboxPage() {
               <div className="text-center">
                 <InboxIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p className="text-lg font-medium">
-                  {loading ? 'E-Mails werden geladen...' : 'Keine E-Mail ausgewählt'}
+                  {loading ? t('emptyState.noEmails.loading') : t('emptyState.noEmails.noSelection')}
                 </p>
                 <p className="text-sm mt-1">
                   {!loading && threads.length === 0
-                    ? 'Keine E-Mails in diesem Ordner'
-                    : 'Wählen Sie eine Konversation aus der Liste'}
+                    ? t('emptyState.noEmails.noInFolder')
+                    : t('emptyState.noEmails.selectFromList')}
                 </p>
               </div>
             </div>

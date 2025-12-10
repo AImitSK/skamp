@@ -48,6 +48,61 @@
           "urgent": "Dringend"
         }
       }
+    },
+    "focusAreasInput": {
+      "placeholder": "Neuen Schwerpunkt hinzufügen...",
+      "addButton": "Hinzufügen",
+      "addCustom": "\"{value}\" hinzufügen",
+      "suggestions": {
+        "tech": [
+          "Künstliche Intelligenz",
+          "Cybersecurity",
+          "Cloud Computing",
+          "Blockchain",
+          "IoT",
+          "Robotik",
+          "Software",
+          "Hardware",
+          "Big Data",
+          "Machine Learning"
+        ],
+        "business": [
+          "Startup",
+          "Mittelstand",
+          "Börse",
+          "Fintech",
+          "E-Commerce",
+          "Handel",
+          "Logistik",
+          "Immobilien",
+          "Marketing",
+          "Vertrieb"
+        ],
+        "industry": [
+          "Automotive",
+          "Gesundheitswesen",
+          "Bildung",
+          "Energie",
+          "Nachhaltigkeit",
+          "Tourismus",
+          "Mode",
+          "Food & Beverage",
+          "Industrie 4.0",
+          "Maschinenbau"
+        ],
+        "general": [
+          "Politik",
+          "Kultur",
+          "Sport",
+          "Lifestyle",
+          "Familie",
+          "Reise",
+          "Entertainment",
+          "Gaming",
+          "Wissenschaft",
+          "Forschung"
+        ]
+      }
     }
   },
   "navigation": {
@@ -697,6 +752,61 @@
     "archiveBanner": {
       "title": "Archivansicht aktiv",
       "description": "Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden."
+    },
+    "detail": {
+      "shared": {
+        "loading": "Projekt wird geladen...",
+        "notFound": "Projekt nicht gefunden",
+        "backToOverview": "Zurück zur Projektübersicht",
+        "errorBoundary": {
+          "title": "Ein Fehler ist aufgetreten",
+          "reload": "Seite neu laden"
+        }
+      },
+      "tabs": {
+        "overview": "Übersicht",
+        "tasks": "Tasks",
+        "strategy": "Strategie",
+        "data": "Daten",
+        "distributionLists": "Verteiler",
+        "pressRelease": "Pressemeldung",
+        "monitoring": "Monitoring"
+      },
+      "header": {
+        "edit": "Bearbeiten",
+        "delete": "Projekt löschen",
+        "created": "Erstellt",
+        "moreMembers": "{count} weitere Mitglieder",
+        "status": {
+          "active": "Aktiv",
+          "on_hold": "Pausiert",
+          "completed": "Abgeschlossen",
+          "cancelled": "Abgebrochen"
+        }
+      },
+      "info": {
+        "description": "Beschreibung",
+        "noDescription": "Keine Beschreibung verfügbar"
+      },
+      "delete": {
+        "title": "Projekt löschen",
+        "message": "Möchten Sie das Projekt \"{title}\" wirklich löschen?",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle verknüpften Daten werden ebenfalls gelöscht.",
+        "cancel": "Abbrechen",
+        "confirm": "Projekt löschen",
+        "success": "Projekt erfolgreich gelöscht",
+        "error": "Fehler beim Löschen des Projekts"
+      },
+      "toast": {
+        "updateSuccess": "Projekt erfolgreich aktualisiert",
+        "noPdf": "Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.",
+        "documentCreated": "Dokument erfolgreich erstellt",
+        "documentError": "Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut."
+      },
+      "errors": {
+        "projectIdMissing": "Projekt-ID nicht gefunden",
+        "loadingFailed": "Projekt konnte nicht geladen werden"
+      }
     }
   },
   "crm": {
@@ -781,6 +891,150 @@
         "status": "Status",
         "yes": "Ja",
         "no": "Nein"
+      }
+    },
+    "detail": {
+      "loading": "Lade Publikation...",
+      "error": "Fehler beim Laden der Daten.",
+      "errorTitle": "Fehler",
+      "notFound": "Publikation konnte nicht gefunden werden.",
+      "backToOverview": "Zurück zur Übersicht",
+      "back": "Zurück",
+      "verify": "Verifizieren",
+      "unverify": "Verifizierung zurücknehmen",
+      "edit": "Bearbeiten",
+      "toasts": {
+        "noteSaved": "Notiz gespeichert",
+        "noteSaveError": "Fehler beim Speichern der Notiz",
+        "verified": "Publikation verifiziert",
+        "unverified": "Verifizierung zurückgenommen",
+        "verifyError": "Fehler beim Verifizieren",
+        "unverifyError": "Fehler beim Zurücknehmen der Verifizierung",
+        "updateSuccess": "Publikation erfolgreich aktualisiert"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "discontinued": "Eingestellt"
+      },
+      "sections": {
+        "generalInfo": "Allgemeine Informationen",
+        "metrics": "Metriken & Zahlen",
+        "notes": "Notizen",
+        "details": "Details",
+        "topicsAndIndustries": "Themenschwerpunkte & Branchen",
+        "monitoring": "Monitoring-Konfiguration",
+        "editions": "Ausgaben & Editionen"
+      },
+      "fields": {
+        "publisher": "Verlag",
+        "onlinePresence": "Online-Präsenz",
+        "rssFeed": "RSS Feed",
+        "socialMedia": "Social Media",
+        "identifiers": "Identifikatoren",
+        "languagesAndCountries": "Sprachen & Zielländer",
+        "languages": "Sprachen ({count})",
+        "targetCountries": "Zielländer ({count})",
+        "frequency": "Erscheinungsfrequenz",
+        "printMetrics": "Print-Metriken",
+        "circulation": "Auflage",
+        "pricePerIssue": "Preis pro Ausgabe",
+        "subscriptionMonthly": "Abo-Preis Monat",
+        "subscriptionAnnual": "Abo-Preis Jahr",
+        "format": "Format",
+        "pageCount": "Seitenanzahl",
+        "onlineMetrics": "Online-Metriken",
+        "monthlyVisitors": "Monatliche Unique Visitors",
+        "monthlyPageViews": "Monatliche Page Views",
+        "avgSessionDuration": "Ø Sitzungsdauer",
+        "bounceRate": "Bounce Rate",
+        "registeredUsers": "Registrierte Nutzer",
+        "paidSubscribers": "Zahlende Abonnenten",
+        "newsletterSubscribers": "Newsletter-Abonnenten",
+        "domainAuthority": "Domain Authority",
+        "paywall": "Paywall",
+        "mobileApp": "Mobile App",
+        "targetAudience": "Zielgruppe",
+        "ageGroup": "Altersgruppe: {group}",
+        "gender": "Geschlecht: {gender}",
+        "created": "Erstellt:",
+        "updated": "Aktualisiert:",
+        "verifiedAt": "Verifiziert",
+        "publicNotes": "Öffentliche Notizen",
+        "internalNotes": "Interne Notizen",
+        "notesPlaceholder": "Interne Notizen hinzufügen...",
+        "noNotes": "Keine Notizen vorhanden",
+        "topics": "Themenschwerpunkte ({count})",
+        "industries": "Zielbranchen ({count})",
+        "monitoringStatus": "Status",
+        "monitoringEnabled": "Aktiviert",
+        "monitoringDisabled": "Deaktiviert",
+        "lastChecked": "Zuletzt geprüft",
+        "rssFeeds": "RSS Feeds ({count})",
+        "keywords": "Keywords ({count})"
+      },
+      "types": {
+        "newspaper": "Zeitung",
+        "magazine": "Magazin",
+        "website": "Website",
+        "blog": "Blog",
+        "newsletter": "Newsletter",
+        "podcast": "Podcast",
+        "tv": "TV",
+        "radio": "Radio",
+        "trade_journal": "Fachzeitschrift",
+        "press_agency": "Nachrichtenagentur",
+        "social_media": "Social Media",
+        "other": "Sonstiges"
+      },
+      "formats": {
+        "print": "Print",
+        "online": "Digital",
+        "both": "Print & Digital",
+        "broadcast": "Broadcast"
+      },
+      "scopes": {
+        "local": "Lokal",
+        "regional": "Regional",
+        "national": "National",
+        "international": "International",
+        "global": "Global"
+      },
+      "frequencies": {
+        "continuous": "Durchgehend",
+        "multiple_daily": "Mehrmals täglich",
+        "daily": "Täglich",
+        "weekly": "Wöchentlich",
+        "biweekly": "14-tägig",
+        "monthly": "Monatlich",
+        "bimonthly": "Zweimonatlich",
+        "quarterly": "Vierteljährlich",
+        "biannual": "Halbjährlich",
+        "annual": "Jährlich",
+        "irregular": "Unregelmäßig"
+      },
+      "circulationTypes": {
+        "distributed": "Verbreitete Auflage",
+        "sold": "Verkaufte Auflage",
+        "printed": "Gedruckte Auflage",
+        "subscribers": "Abonnenten",
+        "ivw": "IVW geprüft"
+      },
+      "genders": {
+        "all": "Alle",
+        "predominantly_male": "Überwiegend männlich",
+        "predominantly_female": "Überwiegend weiblich"
+      },
+      "editionTypes": {
+        "regional": "Regional",
+        "language": "Sprache",
+        "demographic": "Zielgruppe",
+        "thematic": "Thematisch"
+      },
+      "actions": {
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "saving": "Speichern..."
       }
     }
   },
@@ -989,6 +1243,83 @@
       "companySearchPlaceholder": "Firma suchen...",
       "tagsSearchPlaceholder": "Tags suchen...",
       "reset": "Zurücksetzen"
+    },
+    "detail": {
+      "loading": "Lade Kontaktdaten...",
+      "notFound": "Kontakt nicht gefunden",
+      "errorLoading": "Fehler beim Laden der Daten.",
+      "backToOverview": "Zurück zur Übersicht",
+      "back": "Zurück",
+      "editPerson": "Person bearbeiten",
+      "journalist": "Journalist",
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "unsubscribed": "Abgemeldet",
+        "bounced": "Nicht zustellbar",
+        "archived": "Archiviert",
+        "unknown": "Unbekannt"
+      },
+      "emailType": {
+        "business": "Geschäftlich",
+        "private": "Privat",
+        "other": "Sonstige"
+      },
+      "phoneType": {
+        "business": "Geschäftlich",
+        "mobile": "Mobil",
+        "private": "Privat",
+        "fax": "Fax"
+      },
+      "badges": {
+        "primary": "Primär"
+      },
+      "sections": {
+        "general": "Allgemeines",
+        "contactData": "Kontaktdaten",
+        "noContactData": "Keine Kontaktdaten hinterlegt",
+        "professionalInfo": "Berufsinformationen",
+        "mediaInfo": "Informationen",
+        "mediaTypes": "Medientypen",
+        "preferredFormats": "Bevorzugte Formate",
+        "beats": "Ressorts / Themenbereiche",
+        "communicationPreferences": "Kommunikationspräferenzen",
+        "preferredTopics": "Bevorzugte Themen",
+        "excludedTopics": "Ausgeschlossene Themen",
+        "submissionGuidelines": "Einreichungsrichtlinien",
+        "influenceScore": "Einfluss-Score",
+        "reach": "Reichweite",
+        "engagement": "Engagement",
+        "birthday": "Geburtstag",
+        "nationality": "Nationalität",
+        "languages": "Sprachen",
+        "interests": "Interessen",
+        "personalNotes": "Persönliche Notizen",
+        "biography": "Biografie",
+        "education": "Ausbildung",
+        "internalNotes": "Interne Notizen",
+        "details": "Details",
+        "created": "Erstellt:",
+        "updated": "Aktualisiert:",
+        "publications": "Publikationen",
+        "verified": "Verifiziert",
+        "view": "Anzeigen",
+        "inLists": "In Listen enthalten"
+      },
+      "noNotes": "Keine Notizen vorhanden",
+      "editNotes": "Bearbeiten",
+      "notesPlaceholder": "Interne Notizen hinzufügen...",
+      "save": "Speichern",
+      "saving": "Speichern...",
+      "cancel": "Abbrechen",
+      "globalReference": {
+        "title": "Globaler Verweis",
+        "message": "Dieser Kontakt ist ein Verweis auf globale Daten und kann nicht bearbeitet werden."
+      },
+      "listType": {
+        "dynamic": "Dynamisch",
+        "static": "Statisch"
+      }
     }
   },
   "companies": {
@@ -1031,6 +1362,101 @@
       "view": "Anzeigen",
       "edit": "Bearbeiten",
       "delete": "Löschen"
+    },
+    "detail": {
+      "loading": "Lade Firmendaten...",
+      "notFound": "Firma nicht gefunden.",
+      "loadError": "Fehler beim Laden der Daten.",
+      "notFoundMessage": "Firma konnte nicht gefunden werden.",
+      "backToOverview": "Zurück zur Übersicht",
+      "back": "Zurück",
+      "edit": "Firma bearbeiten",
+      "founded": "gegr. {year}",
+      "reference": {
+        "badge": "Globaler Verweis",
+        "message": "Diese Firma ist ein Verweis auf globale Daten und kann nicht bearbeitet werden."
+      },
+      "sections": {
+        "general": "Allgemeine Informationen",
+        "contactData": "Kontaktdaten",
+        "identifiers": "Geschäftliche Kennungen",
+        "financial": "Finanzen",
+        "corporateStructure": "Konzernstruktur",
+        "contacts": "Kontakte",
+        "notes": "Interne Notizen",
+        "details": "Details",
+        "publications": "Publikationen",
+        "inLists": "In Listen enthalten"
+      },
+      "contactData": {
+        "noData": "Keine Kontaktdaten hinterlegt",
+        "emailTypes": {
+          "general": "Allgemein",
+          "support": "Support",
+          "sales": "Vertrieb",
+          "billing": "Buchhaltung",
+          "press": "Presse"
+        },
+        "phoneTypes": {
+          "business": "Geschäftlich",
+          "mobile": "Mobil",
+          "fax": "Fax"
+        },
+        "primary": "Primär"
+      },
+      "identifiers": {
+        "types": {
+          "VAT_EU": "USt-IdNr. (EU)",
+          "EIN_US": "EIN (US)",
+          "COMPANY_REG_DE": "Handelsregister (DE)",
+          "COMPANY_REG_UK": "Companies House (UK)",
+          "UID_CH": "UID (CH)",
+          "SIREN_FR": "SIREN (FR)",
+          "DUNS": "D-U-N-S",
+          "LEI": "LEI"
+        }
+      },
+      "financial": {
+        "annualRevenue": "Jahresumsatz",
+        "employees": "Mitarbeiterzahl",
+        "creditRating": "Kreditrating",
+        "fiscalYearEnd": "Geschäftsjahresende"
+      },
+      "corporateStructure": {
+        "parentCompany": "Muttergesellschaft",
+        "subsidiaries": "Tochtergesellschaften ({count})"
+      },
+      "contacts": {
+        "count": "{count}",
+        "empty": "Keine Kontakte vorhanden",
+        "journalist": "Journalist",
+        "sendEmail": "E-Mail senden",
+        "call": "Anrufen"
+      },
+      "notes": {
+        "edit": "Bearbeiten",
+        "save": "Speichern",
+        "saving": "Speichern...",
+        "cancel": "Abbrechen",
+        "placeholder": "Interne Notizen hinzufügen...",
+        "empty": "Keine Notizen vorhanden",
+        "saved": "Notiz gespeichert",
+        "saveError": "Fehler beim Speichern der Notiz"
+      },
+      "details": {
+        "created": "Erstellt:",
+        "updated": "Aktualisiert:",
+        "lastContact": "Letzter Kontakt:"
+      },
+      "publications": {
+        "view": "Anzeigen",
+        "verified": "Verifiziert",
+        "adCount": "{count} Werbemittel"
+      },
+      "lists": {
+        "dynamic": "Dynamisch",
+        "static": "Statisch"
+      }
     }
   },
   "lists": {
@@ -1123,6 +1549,108 @@
       "filters": {
         "title": "Filter-Kriterien",
         "publications": "Publikations-Filter"
+      }
+    },
+    "detail": {
+      "loading": "Lade Listendetails...",
+      "notFound": "Liste konnte nicht gefunden werden.",
+      "error": "Fehler beim Laden der Listendetails.",
+      "noDescription": "Keine Beschreibung",
+      "buttons": {
+        "back": "Zurück",
+        "backToOverview": "Zurück zur Übersicht",
+        "refresh": "Aktualisieren",
+        "edit": "Liste bearbeiten"
+      },
+      "sections": {
+        "contacts": "Enthaltene Kontakte",
+        "details": "Details",
+        "baseFilters": "Basis-Filter",
+        "publicationFilters": "Publikations-Filter"
+      },
+      "table": {
+        "name": "Name",
+        "position": "Position",
+        "company": "Firma",
+        "noData": "—"
+      },
+      "details": {
+        "type": "Typ",
+        "category": "Kategorie",
+        "created": "Erstellt",
+        "updated": "Aktualisiert"
+      },
+      "listTypes": {
+        "dynamic": "Dynamische Liste",
+        "static": "Statische Liste"
+      },
+      "badges": {
+        "journalist": "Journalist"
+      },
+      "empty": {
+        "noContacts": "Diese Liste enthält keine Kontakte.",
+        "dynamicNoMatch": "Die Filterkriterien ergeben keine Treffer."
+      },
+      "filters": {
+        "companyTypes": "Firmentypen",
+        "industries": "Branchen",
+        "countries": "Länder",
+        "tagIds": "Tags",
+        "positions": "Positionen",
+        "hasEmail": "Mit E-Mail",
+        "hasPhone": "Mit Telefon",
+        "beats": "Ressorts",
+        "publications": "Publikationen"
+      },
+      "publicationFilters": {
+        "publicationIds": "Spezifische Publikationen",
+        "types": "Publikationstypen",
+        "formats": "Formate",
+        "frequencies": "Erscheinungsweise",
+        "countries": "Zielländer",
+        "geographicScopes": "Reichweite",
+        "languages": "Sprachen",
+        "focusAreas": "Themenschwerpunkte",
+        "targetIndustries": "Zielbranchen",
+        "minPrintCirculation": "Min. Druckauflage",
+        "maxPrintCirculation": "Max. Druckauflage",
+        "minOnlineVisitors": "Min. Online-Besucher",
+        "maxOnlineVisitors": "Max. Online-Besucher",
+        "onlyVerified": "Verifizierung",
+        "status": "Status",
+        "publisherIds": "Verlage"
+      },
+      "filterValues": {
+        "yes": "Ja",
+        "no": "Nein",
+        "verified": "Nur verifizierte",
+        "all": "Alle",
+        "notAvailable": "—",
+        "moreItems": "+{count} weitere",
+        "publisherCount": "{count} Verlage"
+      },
+      "geographicScopes": {
+        "local": "Lokal",
+        "regional": "Regional",
+        "national": "National",
+        "international": "International",
+        "global": "Global"
+      },
+      "publicationStatus": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "discontinued": "Eingestellt"
+      },
+      "companyTypes": {
+        "publisher": "Verlag",
+        "media_house": "Medienhaus",
+        "agency": "Agentur"
+      },
+      "toasts": {
+        "refreshSuccess": "Dynamische Liste erfolgreich aktualisiert",
+        "refreshError": "Liste konnte nicht aktualisiert werden",
+        "updateSuccess": "Liste erfolgreich aktualisiert",
+        "updateError": "Liste konnte nicht aktualisiert werden"
       }
     }
   },
@@ -1980,6 +2508,146 @@
         }
       }
     },
+    "api": {
+      "title": "API-Verwaltung",
+      "description": "Verwalte API-Keys und Integrationen für externe Services wie Salesforce, HubSpot und individuelle CRM-Systeme",
+      "keyManager": {
+        "title": "API-Schlüssel",
+        "description": "Erstelle und verwalte API-Keys für externe Integrationen",
+        "createButton": "Neuen API-Key erstellen",
+        "loading": "Lädt...",
+        "errors": {
+          "loadFailed": "Fehler beim Laden der API-Keys",
+          "noAuth": "User not authenticated",
+          "createFailed": "Fehler beim Erstellen des API-Keys",
+          "deleteFailed": "Fehler beim Löschen des API-Keys"
+        },
+        "empty": {
+          "title": "Noch keine API-Keys",
+          "description": "Erstelle deinen ersten API-Key um externe Integrationen zu ermöglichen.",
+          "button": "Ersten API-Key erstellen"
+        },
+        "noOrganization": "Keine Organisation verfügbar. Bitte prüfen Sie Ihre Berechtigung.",
+        "status": {
+          "active": "Aktiv",
+          "inactive": "Inaktiv"
+        },
+        "permissions": "Berechtigungen:",
+        "usage": {
+          "total": "Gesamt",
+          "thisHour": "Diese Stunde",
+          "today": "Heute",
+          "rateLimit": "Rate Limit"
+        },
+        "delete": {
+          "title": "API-Key löschen",
+          "message": "Möchtest du den API-Key \"{name}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+          "confirm": "Löschen",
+          "cancel": "Abbrechen"
+        }
+      },
+      "createModal": {
+        "title": "Neuen API-Key erstellen",
+        "successTitle": "API-Key erfolgreich erstellt",
+        "form": {
+          "name": {
+            "label": "Name des API-Keys",
+            "placeholder": "z.B. Salesforce Integration",
+            "hint": "Eindeutiger Name zur Identifizierung dieses API-Keys"
+          },
+          "rateLimit": {
+            "label": "Anfragen pro Stunde",
+            "hint": "Maximale Anzahl API-Anfragen pro Stunde"
+          },
+          "expiry": {
+            "label": "Ablaufzeit",
+            "options": {
+              "permanent": "Permanent (kein Ablauf)",
+              "30days": "30 Tage",
+              "90days": "90 Tage",
+              "1year": "1 Jahr"
+            }
+          },
+          "allowedIPs": {
+            "label": "Erlaubte IP-Adressen (optional)",
+            "placeholder": "192.168.1.1, 10.0.0.1 (leer für alle IPs)",
+            "hint": "Kommagetrennte Liste von IP-Adressen. Leer lassen für unbegrenzt."
+          },
+          "permissions": {
+            "title": "Berechtigungen",
+            "description": "Wähle die Aktionen aus, die mit diesem API-Key ausgeführt werden dürfen.",
+            "selectAll": "Alle Berechtigungen erlauben",
+            "selectAllCategory": "Alle erlauben",
+            "categories": {
+              "contacts": "Kontakte",
+              "companies": "Firmen",
+              "library": "Bibliothek",
+              "advanced": "Erweitert"
+            },
+            "items": {
+              "contactsRead": "Kontakte lesen",
+              "contactsReadDesc": "Kontaktdaten abrufen und suchen",
+              "contactsWrite": "Kontakte schreiben",
+              "contactsWriteDesc": "Neue Kontakte erstellen und bearbeiten",
+              "contactsDelete": "Kontakte löschen",
+              "contactsDeleteDesc": "Kontakte permanent löschen",
+              "companiesRead": "Firmen lesen",
+              "companiesReadDesc": "Firmendaten abrufen und suchen",
+              "companiesWrite": "Firmen schreiben",
+              "companiesWriteDesc": "Neue Firmen erstellen und bearbeiten",
+              "companiesDelete": "Firmen löschen",
+              "companiesDeleteDesc": "Firmen permanent löschen",
+              "publicationsRead": "Publikationen lesen",
+              "publicationsReadDesc": "Publikationsdaten abrufen und filtern",
+              "publicationsWrite": "Publikationen schreiben",
+              "publicationsWriteDesc": "Neue Publikationen erstellen und bearbeiten",
+              "publicationsDelete": "Publikationen löschen",
+              "publicationsDeleteDesc": "Publikationen permanent löschen",
+              "advertisementsRead": "Werbemittel lesen",
+              "advertisementsReadDesc": "Werbemitteldaten abrufen",
+              "advertisementsWrite": "Werbemittel schreiben",
+              "advertisementsWriteDesc": "Werbemittel erstellen und bearbeiten",
+              "advertisementsDelete": "Werbemittel löschen",
+              "advertisementsDeleteDesc": "Werbemittel permanent löschen",
+              "webhooksManage": "Webhooks verwalten",
+              "webhooksManageDesc": "Webhook-Konfiguration ändern",
+              "analyticsRead": "Analytics lesen",
+              "analyticsReadDesc": "Nutzungsstatistiken abrufen"
+            }
+          },
+          "errors": {
+            "nameRequired": "Name ist erforderlich",
+            "permissionsRequired": "Mindestens eine Berechtigung ist erforderlich",
+            "createFailed": "Fehler beim Erstellen des API-Keys",
+            "noKeyInResponse": "API-Key konnte nicht erstellt werden - kein Key im Response"
+          }
+        },
+        "success": {
+          "warning": "Wichtiger Sicherheitshinweis",
+          "warningText": "Dies ist das einzige Mal, dass der vollständige API-Key angezeigt wird. Bitte kopiere ihn jetzt und bewahre ihn sicher auf.",
+          "keyLabel": "Dein neuer API-Key:",
+          "copied": "In Zwischenablage kopiert!",
+          "nextSteps": "Nächste Schritte:",
+          "steps": {
+            "saveKey": "Sichere den API-Key in deinem Passwort-Manager",
+            "configure": "Konfiguriere deine externe Anwendung mit diesem Key",
+            "test": "Teste die Integration mit einem einfachen API-Aufruf",
+            "monitor": "Überwache die Usage-Statistiken in diesem Dashboard"
+          }
+        },
+        "actions": {
+          "cancel": "Abbrechen",
+          "create": "API-Key erstellen",
+          "creating": "Erstelle...",
+          "understood": "Verstanden"
+        }
+      },
+      "developerPortal": {
+        "title": "Vollständige API-Dokumentation",
+        "description": "Für die komplette API-Dokumentation, Testing-Tools und Integration-Beispiele besuche unser Developer Portal.",
+        "button": "Zum Developer Portal"
+      }
+    },
     "billing": {
       "title": "Abrechnung",
       "headingWithSubscription": "Abrechnung & Subscription",
@@ -2021,6 +2689,122 @@
         "stripeCustomer": "Stripe Customer",
         "stripeSubscription": "Stripe Subscription",
         "notAvailable": "Nicht vorhanden"
+      }
+    }
+  },
+  "inbox": {
+    "title": "Posteingang",
+    "emptyState": {
+      "noAddresses": {
+        "title": "Keine E-Mail-Adressen konfiguriert",
+        "description": "Um E-Mails empfangen zu können, müssen Sie zuerst eine E-Mail-Adresse einrichten.",
+        "action": "E-Mail-Adresse einrichten"
+      },
+      "noEmails": {
+        "loading": "E-Mails werden geladen...",
+        "noSelection": "Keine E-Mail ausgewählt",
+        "noInFolder": "Keine E-Mails in diesem Ordner",
+        "selectFromList": "Wählen Sie eine Konversation aus der Liste"
+      }
+    },
+    "toolbar": {
+      "search": {
+        "placeholder": "E-Mails durchsuchen..."
+      },
+      "newEmail": "Neue E-Mail",
+      "refresh": "Aktualisieren",
+      "toggleFolders": {
+        "show": "Ordner-Sidebar anzeigen",
+        "hide": "Ordner-Sidebar ausblenden"
+      },
+      "toggleThreads": {
+        "show": "Thread-Liste anzeigen",
+        "hide": "Thread-Liste ausblenden"
+      }
+    },
+    "sidebar": {
+      "header": "Posteingang",
+      "searchPlaceholder": "Postfach suchen...",
+      "sections": {
+        "domains": "Domains",
+        "projects": "Projekte"
+      },
+      "emptyStates": {
+        "noDomains": "Keine Domains gefunden",
+        "noProjects": "Keine Projekte gefunden"
+      },
+      "loading": "Wird geladen...",
+      "footer": {
+        "domains": "Domains:",
+        "projects": "Projekte:"
+      },
+      "badges": {
+        "default": "(Standard)"
+      }
+    },
+    "emailList": {
+      "header": {
+        "emails": "E-Mails",
+        "count": "({count})",
+        "resolvingThreads": "Threads werden erstellt..."
+      },
+      "timeAgo": {
+        "justNow": "gerade eben",
+        "minutesAgo": "vor {minutes} Minute{plural}",
+        "hoursAgo": "vor {hours} Stunde{plural}",
+        "daysAgo": "vor {days} Tag{plural}"
+      },
+      "unknown": "Unbekannt"
+    },
+    "emailViewer": {
+      "actions": {
+        "reply": "Antworten",
+        "forward": "Weiterleiten",
+        "star": "Markieren",
+        "delete": "Löschen"
+      },
+      "attachments": {
+        "title": "Anhänge ({count})"
+      },
+      "quickReply": "Schnellantwort...",
+      "to": "an"
+    },
+    "compose": {
+      "title": {
+        "new": "Neue E-Mail",
+        "reply": "Antworten",
+        "forward": "Weiterleiten"
+      },
+      "fields": {
+        "from": "Absender Email",
+        "signature": "Signatur",
+        "noSignature": "Keine Signatur",
+        "to": "An",
+        "subject": "Betreff",
+        "message": "Nachricht"
+      },
+      "loading": {
+        "addresses": "Lade E-Mail-Adressen...",
+        "signatures": "Lade Signaturen..."
+      },
+      "empty": {
+        "noAddresses": "Keine E-Mail-Adressen verfügbar",
+        "noSignatures": "Lade Signaturen..."
+      },
+      "attachments": {
+        "title": "Anhänge:",
+        "count": "{count} Datei{plural}",
+        "add": "Anhänge hinzufügen",
+        "unknown": "Unbekannte Datei"
+      },
+      "signature": {
+        "previewTitle": "Signatur-Vorschau (wird unter der Nachricht eingefügt):",
+        "default": "(Standard)"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "send": "Senden",
+        "sending": "Wird gesendet..."
       }
     }
   }

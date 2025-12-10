@@ -1,17 +1,20 @@
 // src/app/dashboard/admin/api/page.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Divider } from "@/components/ui/divider";
 import { APIKeyManager } from "@/components/admin/api/APIKeyManager";
 
 export default function APIPage() {
+  const t = useTranslations('admin.api');
+
   return (
     <div>
-      <Heading>API-Verwaltung</Heading>
+      <Heading>{t('title')}</Heading>
       <Text className="mt-2">
-        Verwalte API-Keys und Integrationen für externe Services wie Salesforce, HubSpot und individuelle CRM-Systeme
+        {t('description')}
       </Text>
 
       <Divider className="my-8" />
@@ -23,15 +26,15 @@ export default function APIPage() {
 
       {/* Developer Portal Link */}
       <div className="text-center p-8 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Vollständige API-Dokumentation</h3>
+        <h3 className="text-lg font-semibold mb-2">{t('developerPortal.title')}</h3>
         <Text className="mb-4">
-          Für die komplette API-Dokumentation, Testing-Tools und Integration-Beispiele besuche unser Developer Portal.
+          {t('developerPortal.description')}
         </Text>
         <a
           href="/dashboard/developer"
           className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-6 py-3 text-sm font-medium"
         >
-          Zum Developer Portal
+          {t('developerPortal.button')}
         </a>
       </div>
     </div>

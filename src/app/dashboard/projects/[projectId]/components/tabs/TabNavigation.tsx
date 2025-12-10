@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   DocumentTextIcon,
   ClipboardDocumentListIcon,
@@ -19,18 +20,18 @@ type TabType = 'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pre
  */
 interface Tab {
   id: TabType;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const tabs: Tab[] = [
-  { id: 'overview', label: 'Übersicht', icon: DocumentTextIcon },
-  { id: 'tasks', label: 'Tasks', icon: ClipboardDocumentListIcon },
-  { id: 'strategie', label: 'Strategie', icon: DocumentTextIcon },
-  { id: 'daten', label: 'Daten', icon: FolderOpenIcon },
-  { id: 'verteiler', label: 'Verteiler', icon: UsersIcon },
-  { id: 'pressemeldung', label: 'Pressemeldung', icon: DocumentTextIcon },
-  { id: 'monitoring', label: 'Monitoring', icon: ChartBarIcon },
+  { id: 'overview', labelKey: 'overview', icon: DocumentTextIcon },
+  { id: 'tasks', labelKey: 'tasks', icon: ClipboardDocumentListIcon },
+  { id: 'strategie', labelKey: 'strategy', icon: DocumentTextIcon },
+  { id: 'daten', labelKey: 'data', icon: FolderOpenIcon },
+  { id: 'verteiler', labelKey: 'distributionLists', icon: UsersIcon },
+  { id: 'pressemeldung', labelKey: 'pressRelease', icon: DocumentTextIcon },
+  { id: 'monitoring', labelKey: 'monitoring', icon: ChartBarIcon },
 ];
 
 /**
@@ -47,6 +48,8 @@ interface TabNavigationProps {
  * Zeigt 7 Tab-Buttons mit Icons und Active-State Highlighting
  */
 export const TabNavigation = React.memo(function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
+  const t = useTranslations('projects.detail.tabs');
+
   return (
     <div className="border-b border-gray-200">
       <div className="px-6 py-4">
@@ -67,7 +70,7 @@ export const TabNavigation = React.memo(function TabNavigation({ activeTab, onTa
                 }`}
               >
                 <Icon className="w-4 h-4 mr-2" />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}

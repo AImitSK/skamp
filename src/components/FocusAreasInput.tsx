@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/20/solid';
+import { useTranslations } from 'next-intl';
 
 interface FocusAreasInputProps {
   value: string[];
@@ -12,20 +13,24 @@ interface FocusAreasInputProps {
   suggestions?: string[]; // Vordefinierte Vorschläge
 }
 
-// Häufige Themenschwerpunkte als Vorschläge
-const DEFAULT_SUGGESTIONS = [
-  'Künstliche Intelligenz', 'Cybersecurity', 'Cloud Computing', 'Blockchain', 'IoT', 'Robotik', 'Software', 'Hardware', 'Big Data', 'Machine Learning',
-  'Startup', 'Mittelstand', 'Börse', 'Fintech', 'E-Commerce', 'Handel', 'Logistik', 'Immobilien', 'Marketing', 'Vertrieb',
-  'Automotive', 'Gesundheitswesen', 'Bildung', 'Energie', 'Nachhaltigkeit', 'Tourismus', 'Mode', 'Food & Beverage', 'Industrie 4.0', 'Maschinenbau',
-  'Politik', 'Kultur', 'Sport', 'Lifestyle', 'Familie', 'Reise', 'Entertainment', 'Gaming', 'Wissenschaft', 'Forschung'
-];
-
-export function FocusAreasInput({ 
-  value = [], 
-  onChange, 
-  placeholder = "Neuen Schwerpunkt hinzufügen...",
-  suggestions = DEFAULT_SUGGESTIONS 
+export function FocusAreasInput({
+  value = [],
+  onChange,
+  placeholder,
+  suggestions
 }: FocusAreasInputProps) {
+  const t = useTranslations('common.focusAreasInput');
+
+  // Häufige Themenschwerpunkte als Vorschläge
+  const DEFAULT_SUGGESTIONS = [
+    ...t.raw('suggestions.tech') as string[],
+    ...t.raw('suggestions.business') as string[],
+    ...t.raw('suggestions.industry') as string[],
+    ...t.raw('suggestions.general') as string[]
+  ];
+
+  const finalPlaceholder = placeholder || t('placeholder');
+  const finalSuggestions = suggestions || DEFAULT_SUGGESTIONS;
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -34,9 +39,9 @@ export function FocusAreasInput({
 
   // Filtert die Vorschläge basierend auf der Eingabe
   const filteredSuggestions = inputValue.trim()
-    ? suggestions
-        .filter(s => 
-          s.toLowerCase().includes(inputValue.toLowerCase()) && 
+    ? finalSuggestions
+        .filter(s =>
+          s.toLowerCase().includes(inputValue.toLowerCase()) &&
           !value.includes(s)
         )
         .slice(0, 8) // Max. 8 Vorschläge anzeigen
@@ -149,7 +154,7 @@ export function FocusAreasInput({
                 onClick={() => addArea(inputValue)}
                 className="w-full px-3 py-2 text-sm text-left hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none transition-colors border-t"
               >
-                <span className="text-zinc-600">&ldquo;{inputValue.trim()}&rdquo; hinzufügen</span>
+                <span className="text-zinc-600">{t('addCustom', { value: inputValue.trim() })}</span>
               </button>
           )}
         </div>,
@@ -190,17 +195,17 @@ export function FocusAreasInput({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          placeholder={placeholder}
+          placeholder={finalPlaceholder}
           className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         />
-        
+
         {/* Add Button */}
         {inputValue.trim() && (
           <button
             type="button"
             onClick={() => addArea(inputValue)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:text-[#0693e3]"
-            title="Hinzufügen"
+            title={t('addButton')}
           >
             <PlusIcon className="h-5 w-5" />
           </button>

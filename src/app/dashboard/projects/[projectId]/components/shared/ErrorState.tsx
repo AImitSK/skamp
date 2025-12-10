@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { DocumentTextIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 
 /**
  * ErrorState Props
@@ -18,18 +19,20 @@ interface ErrorStateProps {
  *
  * Zeigt eine Error-Message mit Zurück-Button
  */
-export function ErrorState({ message = 'Projekt nicht gefunden' }: ErrorStateProps) {
+export function ErrorState({ message }: ErrorStateProps) {
+  const t = useTranslations('projects.detail.shared');
+
   return (
     <div className="text-center py-12">
       <div className="text-red-600 mb-4">
         <DocumentTextIcon className="h-12 w-12 mx-auto" />
       </div>
-      <Heading>{message}</Heading>
+      <Heading>{message || t('notFound')}</Heading>
       <div className="mt-6">
         <Link href="/dashboard/projects">
           <Button>
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
-            Zurück zur Projektübersicht
+            {t('backToOverview')}
           </Button>
         </Link>
       </div>

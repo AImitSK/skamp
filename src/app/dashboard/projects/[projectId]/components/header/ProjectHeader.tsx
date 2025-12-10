@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Heading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,16 +41,8 @@ const getProjectStatusColor = (status: string) => {
 
 /**
  * Helper: Project Status Label
+ * HINWEIS: Diese Funktion wird jetzt direkt in der Komponente mit useTranslations ersetzt
  */
-const getProjectStatusLabel = (status: string) => {
-  switch (status) {
-    case 'active': return 'Aktiv';
-    case 'on_hold': return 'Pausiert';
-    case 'completed': return 'Abgeschlossen';
-    case 'cancelled': return 'Abgebrochen';
-    default: return status;
-  }
-};
 
 /**
  * Helper: Format Date
@@ -142,8 +135,15 @@ export const ProjectHeader = React.memo(function ProjectHeader({
   onDeleteClick,
 }: ProjectHeaderProps) {
   const { project } = useProject();
+  const t = useTranslations('projects.detail.header');
 
   if (!project) return null;
+
+  // Helper: Get translated status label
+  const getStatusLabel = (status: string) => {
+    const statusKey = status as 'active' | 'on_hold' | 'completed' | 'cancelled';
+    return t.has(`status.${statusKey}`) ? t(`status.${statusKey}`) : status;
+  };
 
   return (
     <div className="mb-6">
@@ -160,11 +160,11 @@ export const ProjectHeader = React.memo(function ProjectHeader({
           {/* Titel und Status */}
           <Heading className="!text-2xl">{project.title}</Heading>
           <Badge color={getProjectStatusColor(project.status)}>
-            {getProjectStatusLabel(project.status)}
+            {getStatusLabel(project.status)}
           </Badge>
           {/* Erstellt-Datum */}
           <span className="text-sm text-gray-500">
-            Erstellt: {formatProjectDate(project.createdAt)}
+            {t('created')}: {formatProjectDate(project.createdAt)}
           </span>
         </div>
 
@@ -213,7 +213,7 @@ export const ProjectHeader = React.memo(function ProjectHeader({
               {project.assignedTo && project.assignedTo.length > 5 && (
                 <div
                   className="size-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium ring-2 ring-gray-50"
-                  title={`${project.assignedTo.length - 5} weitere Mitglieder`}
+                  title={t('moreMembers', { count: project.assignedTo.length - 5 })}
                 >
                   +{project.assignedTo.length - 5}
                 </div>
@@ -224,7 +224,7 @@ export const ProjectHeader = React.memo(function ProjectHeader({
           <div className="flex items-center space-x-2">
             <Button onClick={onEditClick} color="secondary" className="!py-1.5">
               <PencilSquareIcon className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Bearbeiten</span>
+              <span className="hidden sm:inline ml-2">{t('edit')}</span>
             </Button>
 
             {/* Mehr-Optionen Dropdown */}
@@ -235,7 +235,7 @@ export const ProjectHeader = React.memo(function ProjectHeader({
               <DropdownMenu anchor="bottom end">
                 <DropdownItem onClick={onDeleteClick} className="text-red-600">
                   <TrashIcon className="w-4 h-4 mr-2" />
-                  Projekt löschen
+                  {t('delete')}
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

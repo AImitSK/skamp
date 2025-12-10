@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
 import {
@@ -47,6 +48,7 @@ export function TeamFolderSidebar({
   unreadCounts,
   organizationId
 }: TeamFolderSidebarProps) {
+  const t = useTranslations('inbox.sidebar');
   const [domainMailboxes, setDomainMailboxes] = useState<DomainMailbox[]>([]);
   const [projectMailboxes, setProjectMailboxes] = useState<ProjectMailbox[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,12 +141,12 @@ export function TeamFolderSidebar({
     <div className="w-80 border-r bg-gray-50 flex flex-col">
       {/* Header mit Suche */}
       <div className="p-4 border-b bg-white">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Posteingang</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('header')}</h3>
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Postfach suchen..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
@@ -157,7 +159,7 @@ export function TeamFolderSidebar({
         {/* Domain Mailboxes */}
         <div className="px-2 pt-4">
           <h4 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Domains
+            {t('sections.domains')}
           </h4>
 
           {loading ? (
@@ -167,7 +169,7 @@ export function TeamFolderSidebar({
           ) : filteredDomains.length === 0 ? (
             searchQuery ? (
               <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                Keine Domains gefunden
+                {t('emptyStates.noDomains')}
               </div>
             ) : null
           ) : (
@@ -194,7 +196,7 @@ export function TeamFolderSidebar({
                             ? 'text-white/70'
                             : 'text-gray-500'
                         )}>
-                          (Standard)
+                          {t('badges.default')}
                         </span>
                       )}
                     </div>
@@ -223,12 +225,12 @@ export function TeamFolderSidebar({
         {projectMailboxes.length > 0 && (
           <div className="px-2 pt-4">
             <h4 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Projekte
+              {t('sections.projects')}
             </h4>
 
             {filteredProjects.length === 0 ? (
               <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                Keine Projekte gefunden
+                {t('emptyStates.noProjects')}
               </div>
             ) : (
               <div className="space-y-1">
@@ -276,11 +278,11 @@ export function TeamFolderSidebar({
       <div className="p-4 border-t bg-white">
         <div className="text-xs text-gray-600">
           <div className="flex justify-between mb-1">
-            <span>Domains:</span>
+            <span>{t('footer.domains')}</span>
             <span className="font-medium">{domainMailboxes.length}</span>
           </div>
           <div className="flex justify-between">
-            <span>Projekte:</span>
+            <span>{t('footer.projects')}</span>
             <span className="font-medium">{projectMailboxes.length}</span>
           </div>
         </div>

@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
@@ -78,22 +79,22 @@ const COUNTRY_OPTIONS = [
 ];
 
 // Helper functions
-const formatDate = (timestamp: any) => {
-  if (!timestamp) return 'Unbekannt';
+const formatDate = (timestamp: any, locale: string = 'de-DE') => {
+  if (!timestamp) return '';
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'long',
     year: 'numeric'
   });
 };
 
-const formatBirthday = (date: any) => {
+const formatBirthday = (date: any, locale: string = 'de-DE') => {
   if (!date) return '';
 
   // Handle Date object
   if (date instanceof Date) {
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'long'
     });
@@ -101,7 +102,7 @@ const formatBirthday = (date: any) => {
 
   // Handle Firestore Timestamp with toDate method
   if ((date as any).toDate) {
-    return (date as any).toDate().toLocaleDateString('de-DE', {
+    return (date as any).toDate().toLocaleDateString(locale, {
       day: '2-digit',
       month: 'long'
     });
@@ -111,7 +112,7 @@ const formatBirthday = (date: any) => {
   const ts = date as any;
   if (ts.seconds !== undefined) {
     const d = new Date(ts.seconds * 1000);
-    return d.toLocaleDateString('de-DE', {
+    return d.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'long'
     });
@@ -250,6 +251,7 @@ function InfoCard({
 }
 
 export default function ContactDetailPage() {
+  const t = useTranslations('contacts.detail');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -295,9 +297,9 @@ export default function ContactDetailPage() {
 
       setContact({ ...contact, internalNotes: notesValue });
       setEditingNotes(false);
-      toastService.success('Notiz gespeichert');
+      toastService.success(t('save'));
     } catch (error) {
-      toastService.error('Fehler beim Speichern der Notiz');
+      toastService.error(t('errorLoading'));
     } finally {
       setSavingNotes(false);
     }
@@ -363,15 +365,15 @@ export default function ContactDetailPage() {
           setPublications([]);
         }
       } else {
-        setError("Kontakt nicht gefunden.");
+        setError(t('notFound'));
       }
     } catch (err: any) {
-      setError("Fehler beim Laden der Daten.");
+      setError(t('errorLoading'));
       // Error handled via UI feedback
     } finally {
       setLoading(false);
     }
-  }, [user, contactId, currentOrganization?.id]);
+  }, [user, contactId, currentOrganization?.id, t]);
   
   useEffect(() => {
     loadData();
@@ -379,7 +381,9 @@ export default function ContactDetailPage() {
 
   // Helper function to get status label
   const getStatusLabel = (status?: string) => {
-    return CONTACT_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || 'Unbekannt';
+    if (!status) return t('status.unknown');
+    const key = `status.${status}` as any;
+    return t(key);
   };
 
   // Helper function to get status badge color
@@ -411,7 +415,7 @@ export default function ContactDetailPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Kontaktdaten...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -423,30 +427,30 @@ export default function ContactDetailPage() {
       <div className="p-8">
         <Alert type="error" title={error} />
         <div className="mt-4">
-          <Button 
-            onClick={() => router.push('/dashboard/contacts/crm/')} 
+          <Button
+            onClick={() => router.push('/dashboard/contacts/crm/')}
             plain
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
     );
   }
-  
+
   // Not found state
   if (!contact) {
     return (
       <div className="p-8 text-center">
-        <Text>Kontakt konnte nicht gefunden werden.</Text>
+        <Text>{t('notFound')}</Text>
         <div className="mt-4">
-          <Button 
-            onClick={() => router.push('/dashboard/contacts/crm/')} 
+          <Button
+            onClick={() => router.push('/dashboard/contacts/crm/')}
             plain
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
@@ -474,7 +478,7 @@ export default function ContactDetailPage() {
                 </Badge>
                 {contact.mediaProfile?.isJournalist && (
                   <Badge color="purple" className="whitespace-nowrap">
-                    Journalist
+                    {t('journalist')}
                   </Badge>
                 )}
                 {contact.position && (
@@ -494,17 +498,17 @@ export default function ContactDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {t('back')}
               </Button>
 
               {(contact as any)?._isReference ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
                   <div className="flex items-center gap-2 text-amber-800">
                     <span className="text-amber-600">🔗</span>
-                    <span className="font-medium">Globaler Verweis</span>
+                    <span className="font-medium">{t('globalReference.title')}</span>
                   </div>
                   <p className="text-amber-700 mt-1">
-                    Dieser Kontakt ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
+                    {t('globalReference.message')}
                   </p>
                 </div>
               ) : (
@@ -515,7 +519,7 @@ export default function ContactDetailPage() {
                              h-10 px-6 rounded-lg transition-colors inline-flex items-center"
                 >
                   <PencilIcon className="h-4 w-4 mr-2" />
-                  Person bearbeiten
+                  {t('editPerson')}
                 </Button>
               )}
             </div>
@@ -527,11 +531,11 @@ export default function ContactDetailPage() {
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main Information - Consolidated */}
-            <InfoCard title="Allgemeines" icon={UserIcon}>
+            <InfoCard title={t('sections.general')} icon={UserIcon}>
               <div className="space-y-6">
                 {/* Contact Data */}
                 <div>
-                  <Text className="text-sm font-semibold text-zinc-700 mb-3">Kontaktdaten</Text>
+                  <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.contactData')}</Text>
                   <div className="space-y-3">
                     {/* Emails */}
                     {contact.emails && contact.emails.length > 0 && (
@@ -549,10 +553,10 @@ export default function ContactDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge color="zinc" className="text-xs">
-                                {email.type === 'business' ? 'Geschäftlich' :
-                                 email.type === 'private' ? 'Privat' : 'Sonstige'}
+                                {email.type === 'business' ? t('emailType.business') :
+                                 email.type === 'private' ? t('emailType.private') : t('emailType.other')}
                               </Badge>
-                              {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                              {email.isPrimary && <Badge color="green" className="text-xs">{t('badges.primary')}</Badge>}
                             </div>
                           </div>
                         ))}
@@ -575,12 +579,12 @@ export default function ContactDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge color="zinc" className="text-xs">
-                                {phone.type === 'business' ? 'Geschäftlich' :
-                                 phone.type === 'mobile' ? 'Mobil' :
-                                 phone.type === 'private' ? 'Privat' :
-                                 phone.type === 'fax' ? 'Fax' : phone.type}
+                                {phone.type === 'business' ? t('phoneType.business') :
+                                 phone.type === 'mobile' ? t('phoneType.mobile') :
+                                 phone.type === 'private' ? t('phoneType.private') :
+                                 phone.type === 'fax' ? t('phoneType.fax') : phone.type}
                               </Badge>
-                              {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                              {phone.isPrimary && <Badge color="green" className="text-xs">{t('badges.primary')}</Badge>}
                             </div>
                           </div>
                         ))}
@@ -612,7 +616,7 @@ export default function ContactDetailPage() {
                     )}
 
                     {(!contact.emails?.length && !contact.phones?.length && !contact.socialProfiles?.length) && (
-                      <Text className="text-zinc-500">Keine Kontaktdaten hinterlegt</Text>
+                      <Text className="text-zinc-500">{t('sections.noContactData')}</Text>
                     )}
                   </div>
                 </div>
@@ -620,7 +624,7 @@ export default function ContactDetailPage() {
                 {/* Company & Position */}
                 {company && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Berufsinformationen</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.professionalInfo')}</Text>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
                         <BuildingOfficeIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
@@ -651,7 +655,7 @@ export default function ContactDetailPage() {
 
             {/* Media Profile for Journalists */}
             {contact.mediaProfile?.isJournalist && (
-              <InfoCard title="Informationen" icon={NewspaperIcon}>
+              <InfoCard title={t('sections.mediaInfo')} icon={NewspaperIcon}>
                 <div className="space-y-6">
                   {/* Medientypen und Bevorzugte Formate - zweispaltig */}
                   {((contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0) ||
@@ -660,7 +664,7 @@ export default function ContactDetailPage() {
                       {/* Medientypen */}
                       {contact.mediaProfile.mediaTypes && contact.mediaProfile.mediaTypes.length > 0 && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Medientypen</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.mediaTypes')}</Text>
                           <div className="flex flex-wrap gap-2">
                             {contact.mediaProfile.mediaTypes.map((type, index) => {
                               const typeLabel = MEDIA_TYPES.find(t => t.value === type)?.label || type;
@@ -675,7 +679,7 @@ export default function ContactDetailPage() {
                       {/* Bevorzugte Formate */}
                       {contact.mediaProfile.preferredFormats && contact.mediaProfile.preferredFormats.length > 0 && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Formate</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.preferredFormats')}</Text>
                           <div className="flex flex-wrap gap-2">
                             {contact.mediaProfile.preferredFormats.map((format, index) => {
                               const formatLabel = SUBMISSION_FORMATS.find(f => f.value === format)?.label || format;
@@ -696,7 +700,7 @@ export default function ContactDetailPage() {
                       {/* Ressorts */}
                       {contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0 && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Ressorts / Themenbereiche</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.beats')}</Text>
                           <div className="flex flex-wrap gap-2">
                             {contact.mediaProfile.beats.map((beat, index) => (
                               <Badge key={index} color="blue" className="whitespace-nowrap">{beat}</Badge>
@@ -708,7 +712,7 @@ export default function ContactDetailPage() {
                       {/* Kommunikationspräferenzen */}
                       {contact.communicationPreferences && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-3">Kommunikationspräferenzen</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.communicationPreferences')}</Text>
                           <div className="flex flex-wrap gap-2">
                             {contact.communicationPreferences.preferredChannel && (
                               <Badge color="blue">
@@ -729,7 +733,7 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.preferredTopics && contact.mediaProfile.preferredTopics.length > 0 && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Bevorzugte Themen</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.preferredTopics')}</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.preferredTopics.map((topic, index) => (
                           <Badge key={index} color="blue" className="whitespace-nowrap">{topic}</Badge>
@@ -740,7 +744,7 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.excludedTopics && contact.mediaProfile.excludedTopics.length > 0 && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Ausgeschlossene Themen</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.excludedTopics')}</Text>
                       <div className="flex flex-wrap gap-2">
                         {contact.mediaProfile.excludedTopics.map((topic, index) => (
                           <Badge key={index} color="blue" className="whitespace-nowrap">{topic}</Badge>
@@ -753,19 +757,19 @@ export default function ContactDetailPage() {
                     <div className="grid grid-cols-3 gap-4 pt-2">
                       {contact.mediaProfile.influence.score !== undefined && (
                         <div className="text-center">
-                          <Text className="text-sm text-gray-500">Einfluss-Score</Text>
+                          <Text className="text-sm text-gray-500">{t('sections.influenceScore')}</Text>
                           <Text className="text-lg font-semibold">{contact.mediaProfile.influence.score}/100</Text>
                         </div>
                       )}
                       {contact.mediaProfile.influence.reach !== undefined && (
                         <div className="text-center">
-                          <Text className="text-sm text-gray-500">Reichweite</Text>
+                          <Text className="text-sm text-gray-500">{t('sections.reach')}</Text>
                           <Text className="text-lg font-semibold">{contact.mediaProfile.influence.reach.toLocaleString('de-DE')}</Text>
                         </div>
                       )}
                       {contact.mediaProfile.influence.engagement !== undefined && (
                         <div className="text-center">
-                          <Text className="text-sm text-gray-500">Engagement</Text>
+                          <Text className="text-sm text-gray-500">{t('sections.engagement')}</Text>
                           <Text className="text-lg font-semibold">{contact.mediaProfile.influence.engagement}%</Text>
                         </div>
                       )}
@@ -774,7 +778,7 @@ export default function ContactDetailPage() {
 
                   {contact.mediaProfile.submissionGuidelines && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Einreichungsrichtlinien</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.submissionGuidelines')}</Text>
                       <Text className="text-sm text-zinc-700">{contact.mediaProfile.submissionGuidelines}</Text>
                     </div>
                   )}
@@ -789,7 +793,7 @@ export default function ContactDetailPage() {
                             <div>
                               <div className="flex items-center gap-2 mb-1">
                                 <CakeIcon className="h-4 w-4 text-zinc-400" />
-                                <Text className="text-sm font-semibold text-zinc-700">Geburtstag</Text>
+                                <Text className="text-sm font-semibold text-zinc-700">{t('sections.birthday')}</Text>
                               </div>
                               <Text className="text-sm text-zinc-900">{formatBirthday(contact.personalInfo.birthday)}</Text>
                             </div>
@@ -799,7 +803,7 @@ export default function ContactDetailPage() {
                             <div>
                               <div className="flex items-center gap-2 mb-1">
                                 <MapPinIcon className="h-4 w-4 text-zinc-400" />
-                                <Text className="text-sm font-semibold text-zinc-700">Nationalität</Text>
+                                <Text className="text-sm font-semibold text-zinc-700">{t('sections.nationality')}</Text>
                               </div>
                               <Text className="text-sm text-zinc-900">{contact.personalInfo.nationality}</Text>
                             </div>
@@ -811,7 +815,7 @@ export default function ContactDetailPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-2">
                             <LanguageIcon className="h-4 w-4 text-zinc-400" />
-                            <Text className="text-sm font-semibold text-zinc-700">Sprachen</Text>
+                            <Text className="text-sm font-semibold text-zinc-700">{t('sections.languages')}</Text>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {contact.personalInfo.languages.map((lang, index) => (
@@ -823,14 +827,14 @@ export default function ContactDetailPage() {
 
                       {contact.personalInfo.interests && contact.personalInfo.interests.length > 0 && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-1">Interessen</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-1">{t('sections.interests')}</Text>
                           <Text className="text-sm text-zinc-700">{contact.personalInfo.interests.join(', ')}</Text>
                         </div>
                       )}
 
                       {contact.personalInfo.notes && (
                         <div>
-                          <Text className="text-sm font-semibold text-zinc-700 mb-1">Persönliche Notizen</Text>
+                          <Text className="text-sm font-semibold text-zinc-700 mb-1">{t('sections.personalNotes')}</Text>
                           <Text className="text-sm text-zinc-700 whitespace-pre-wrap">{contact.personalInfo.notes}</Text>
                         </div>
                       )}
@@ -842,13 +846,13 @@ export default function ContactDetailPage() {
 
             {/* Professional Info / Biografie */}
             {contact.professionalInfo && (contact.professionalInfo.biography || contact.professionalInfo.education?.length || contact.professionalInfo.certifications?.length) && (
-              <InfoCard title="Biografie" icon={BriefcaseIcon}>
+              <InfoCard title={t('sections.biography')} icon={BriefcaseIcon}>
                 <div className="space-y-4">
                   {contact.professionalInfo.education && contact.professionalInfo.education.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-gray-500 mb-2">
                         <AcademicCapIcon className="h-4 w-4 inline mr-1" />
-                        Ausbildung
+                        {t('sections.education')}
                       </Text>
                       <div className="space-y-2">
                         {contact.professionalInfo.education.map((edu, index) => (
@@ -864,7 +868,7 @@ export default function ContactDetailPage() {
 
                   {contact.professionalInfo.biography && (
                     <div>
-                      <Text className="text-sm font-medium text-gray-500 mb-2">Biografie</Text>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">{t('sections.biography')}</Text>
                       <Text className="text-sm text-gray-700 whitespace-pre-wrap">{contact.professionalInfo.biography}</Text>
                     </div>
                   )}
@@ -874,7 +878,7 @@ export default function ContactDetailPage() {
 
             {/* Notes */}
             <InfoCard
-              title="Interne Notizen"
+              title={t('sections.internalNotes')}
               icon={DocumentTextIcon}
               action={
                 !editingNotes ? (
@@ -886,7 +890,7 @@ export default function ContactDetailPage() {
                                h-8 px-4 rounded-lg inline-flex items-center gap-1.5 text-sm"
                   >
                     <PencilIcon className="h-4 w-4" />
-                    Bearbeiten
+                    {t('editNotes')}
                   </button>
                 ) : null
               }
@@ -897,7 +901,7 @@ export default function ContactDetailPage() {
                     value={notesValue}
                     onChange={(e) => setNotesValue(e.target.value)}
                     rows={6}
-                    placeholder="Interne Notizen hinzufügen..."
+                    placeholder={t('notesPlaceholder')}
                     className="w-full"
                   />
                   <div className="flex items-center gap-2">
@@ -907,7 +911,7 @@ export default function ContactDetailPage() {
                       className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
                     >
                       <CheckIcon className="h-4 w-4 mr-2" />
-                      {savingNotes ? 'Speichern...' : 'Speichern'}
+                      {savingNotes ? t('saving') : t('save')}
                     </Button>
                     <Button
                       onClick={handleCancelEditNotes}
@@ -915,13 +919,13 @@ export default function ContactDetailPage() {
                       className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
                     >
                       <XMarkIcon className="h-4 w-4 mr-2" />
-                      Abbrechen
+                      {t('cancel')}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap text-zinc-700">
-                  {contact.internalNotes || 'Keine Notizen vorhanden'}
+                  {contact.internalNotes || t('noNotes')}
                 </p>
               )}
             </InfoCard>
@@ -930,19 +934,19 @@ export default function ContactDetailPage() {
           {/* Right column - 1/3 width */}
           <div className="space-y-6">
             {/* Details */}
-            <InfoCard title="Details" icon={InformationCircleIcon}>
+            <InfoCard title={t('sections.details')} icon={InformationCircleIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Erstellt:</span>
+                    <span className="text-zinc-600">{t('sections.created')}</span>
                     <span className="ml-2">{formatDate(contact.createdAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Aktualisiert:</span>
+                    <span className="text-zinc-600">{t('sections.updated')}</span>
                     <span className="ml-2">{formatDate(contact.updatedAt)}</span>
                   </div>
                 </div>
@@ -960,7 +964,7 @@ export default function ContactDetailPage() {
 
             {/* Publications for Journalists */}
             {contact.mediaProfile?.isJournalist && publications.length > 0 && (
-              <InfoCard title="Publikationen" icon={NewspaperIcon}>
+              <InfoCard title={t('sections.publications')} icon={NewspaperIcon}>
                 <div className="space-y-3">
                   {publications.map(publication => (
                     <div key={publication.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-50 transition-colors">
@@ -971,7 +975,7 @@ export default function ContactDetailPage() {
                             href={`/dashboard/library/publications/${publication.id}`}
                             className="text-sm text-primary hover:text-primary-hover underline whitespace-nowrap ml-2"
                           >
-                            Anzeigen
+                            {t('sections.view')}
                           </Link>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -980,7 +984,7 @@ export default function ContactDetailPage() {
                           </Badge>
                           {publication.verified && (
                             <Badge color="green" className="text-xs whitespace-nowrap">
-                              Verifiziert
+                              {t('sections.verified')}
                             </Badge>
                           )}
                         </div>
@@ -1024,7 +1028,7 @@ export default function ContactDetailPage() {
                 <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-zinc-900">
-                      In Listen enthalten
+                      {t('sections.inLists')}
                     </h3>
                     <Badge color="blue">{lists.length}</Badge>
                   </div>
@@ -1043,7 +1047,7 @@ export default function ContactDetailPage() {
                           color={list.type === 'dynamic' ? 'green' : 'zinc'}
                           className="text-xs whitespace-nowrap"
                         >
-                          {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                          {list.type === 'dynamic' ? t('listType.dynamic') : t('listType.static')}
                         </Badge>
                       </li>
                     ))}
@@ -1066,7 +1070,6 @@ export default function ContactDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            toastService.success('Kontakt erfolgreich aktualisiert');
           }}
         />
       )}

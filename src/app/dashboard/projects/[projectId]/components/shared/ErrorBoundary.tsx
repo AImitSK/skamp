@@ -11,6 +11,10 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  translations?: {
+    errorTitle: string;
+    reloadButton: string;
+  };
 }
 
 /**
@@ -26,6 +30,9 @@ interface ErrorBoundaryState {
  *
  * React Error Boundary - fängt JavaScript-Fehler in Child-Komponenten
  * Verhindert, dass ein Fehler die ganze Page crasht
+ *
+ * HINWEIS: Class Components können useTranslations nicht nutzen.
+ * Translations werden via Props übergeben (vom Parent).
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -47,15 +54,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
+      const { translations } = this.props;
+      const errorTitle = translations?.errorTitle || 'Ein Fehler ist aufgetreten';
+      const reloadButton = translations?.reloadButton || 'Seite neu laden';
+
       return (
         <div className="text-center py-12">
           <div className="text-red-600 mb-4">
             <ExclamationTriangleIcon className="h-12 w-12 mx-auto" />
           </div>
-          <Heading>Ein Fehler ist aufgetreten</Heading>
+          <Heading>{errorTitle}</Heading>
           <p className="text-gray-500 mt-2">{this.state.error?.message}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
-            Seite neu laden
+            {reloadButton}
           </Button>
         </div>
       );

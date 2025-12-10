@@ -2,6 +2,7 @@
 "use client";
 
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
@@ -232,7 +233,8 @@ export const EmailViewer = memo(function EmailViewer({
   onStatusChange,
   organizationId
 }: EmailViewerProps) {
-  
+  const t = useTranslations('inbox.emailViewer');
+
   // Mark email as read when selected (but only if it's unread and has an ID)
   useEffect(() => {
     if (selectedEmail && selectedEmail.id && !selectedEmail.isRead && onMarkAsRead) {
@@ -268,14 +270,14 @@ export const EmailViewer = memo(function EmailViewer({
             <button
               onClick={() => onReply(latestEmail)}
               className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#005fab]"
-              title="Antworten"
+              title={t('actions.reply')}
             >
               <ArrowUturnLeftIcon className="h-4 w-4" />
             </button>
             <button
               onClick={() => onForward(latestEmail)}
               className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
-              title="Weiterleiten"
+              title={t('actions.forward')}
             >
               <ArrowUturnRightIcon className="h-4 w-4" />
             </button>
@@ -286,14 +288,14 @@ export const EmailViewer = memo(function EmailViewer({
                 'p-1.5 rounded hover:bg-gray-100',
                 latestEmail.isStarred ? 'text-yellow-500' : 'text-gray-400'
               )}
-              title="Markieren"
+              title={t('actions.star')}
             >
               <StarIconSolid className="h-4 w-4" />
             </button>
             <button
               onClick={() => onDelete(latestEmail.id!)}
               className="p-1.5 rounded hover:bg-gray-100 text-gray-400"
-              title="Löschen"
+              title={t('actions.delete')}
             >
               <TrashIcon className="h-4 w-4" />
             </button>
@@ -327,7 +329,7 @@ export const EmailViewer = memo(function EmailViewer({
                     </span>
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
-                    an {email.to.map(t => t.name || t.email).join(', ')}
+                    {t('to')} {email.to.map(t => t.name || t.email).join(', ')}
                   </div>
                 </div>
 
@@ -353,7 +355,7 @@ export const EmailViewer = memo(function EmailViewer({
               {email.attachments && email.attachments.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    Anhänge ({email.attachments.length})
+                    {t('attachments.title', { count: email.attachments.length })}
                   </p>
                   <div className="space-y-2">
                     {email.attachments.map((attachment) => (
@@ -392,7 +394,7 @@ export const EmailViewer = memo(function EmailViewer({
                   onClick={() => onReply(email)}
                   className="text-sm text-[#005fab] hover:text-[#004a8c] font-medium"
                 >
-                  Schnellantwort...
+                  {t('quickReply')}
                 </button>
               </div>
             )}

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Text } from '@/components/ui/text';
+import { useTranslations } from 'next-intl';
 
 /**
  * LoadingState Props
@@ -15,11 +16,13 @@ interface LoadingStateProps {
  *
  * Zeigt einen zentrierten Loading Spinner mit optionaler Nachricht
  */
-export function LoadingState({ message = 'Projekt wird geladen...' }: LoadingStateProps) {
+export function LoadingState({ message }: LoadingStateProps) {
+  const t = useTranslations('projects.detail.shared');
+
   return (
     <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <Text className="ml-3">{message}</Text>
+      <Text className="ml-3">{message || t('loading')}</Text>
     </div>
   );
 }

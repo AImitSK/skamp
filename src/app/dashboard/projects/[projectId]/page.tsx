@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -95,6 +96,7 @@ export default function ProjectDetailPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const projectId = params.projectId as string;
+  const t = useTranslations('projects.detail');
 
   // Tab aus URL lesen (oder 'overview' als default)
   const tabFromUrl = (searchParams.get('tab') as 'overview' | 'tasks' | 'strategie' | 'daten' | 'verteiler' | 'pressemeldung' | 'monitoring') || 'overview';
@@ -235,7 +237,7 @@ export default function ProjectDetailPage() {
   if (!projectId) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Text className="text-red-600">Projekt-ID nicht gefunden</Text>
+        <Text className="text-red-600">{t('errors.projectIdMissing')}</Text>
       </div>
     );
   }
@@ -456,20 +458,20 @@ export default function ProjectDetailPage() {
   // da der Callback bei jedem Re-Render die aktuelle loadProject-Referenz verwendet.
   const handleEditSuccess = useCallback((updatedProject: Project) => {
     setProject(updatedProject);
-    toastService.success('Projekt erfolgreich aktualisiert');
+    toastService.success(t('toast.updateSuccess'));
     // Reload for consistency
     setTimeout(() => {
       loadProject();
     }, 500);
-  }, []);
+  }, [t]);
 
   const handleOpenPDF = useCallback(() => {
     if (currentPdfVersion?.downloadUrl) {
       window.open(currentPdfVersion.downloadUrl, '_blank');
     } else {
-      toastService.warning('Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der verknüpften Kampagne.');
+      toastService.warning(t('toast.noPdf'));
     }
-  }, [currentPdfVersion]);
+  }, [currentPdfVersion, t]);
 
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
@@ -524,14 +526,14 @@ export default function ProjectDetailPage() {
     try {
       await projectService.delete(project.id, { organizationId: currentOrganization.id });
       setShowDeleteDialog(false);
-      toastService.success('Projekt erfolgreich gelöscht');
+      toastService.success(t('delete.success'));
       router.push('/dashboard/projects');
     } catch (error: any) {
       console.error('Fehler beim Löschen:', error);
       setShowDeleteDialog(false);
-      toastService.error(error.message || 'Fehler beim Löschen des Projekts');
+      toastService.error(error.message || t('delete.error'));
     }
-  }, [project?.id, currentOrganization?.id, router]);
+  }, [project?.id, currentOrganization?.id, router, t]);
 
   const handleCreateDocument = useCallback(async (templateType: string, title: string) => {
     if (!currentOrganization?.id || !user?.uid || !project?.id) return;
@@ -616,22 +618,22 @@ export default function ProjectDetailPage() {
 
       // Zur Editor-Seite navigieren
       // HINWEIS: React Query invalidiert automatisch den Cache bei Mutations
-      toastService.success('Dokument erfolgreich erstellt');
+      toastService.success(t('toast.documentCreated'));
       router.push(`/dashboard/strategy-documents/${documentId}`);
     } catch (error) {
       console.error('Fehler beim Erstellen des Strategiedokuments:', error);
-      toastService.error('Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut.');
+      toastService.error(t('toast.documentError'));
     } finally {
       setCreatingDocument(false);
     }
-  }, [currentOrganization?.id, user?.uid, project?.id, router]);
+  }, [currentOrganization?.id, user?.uid, project?.id, router, t]);
 
   if (loading) {
     return <LoadingState />;
   }
 
   if (error || !project) {
-    return <ErrorState message={error || 'Projekt nicht gefunden'} />;
+    return <ErrorState message={error || t('shared.notFound')} />;
   }
 
   return (
@@ -643,7 +645,12 @@ export default function ProjectDetailPage() {
       onTabChange={handleTabChange}
       onReload={loadProject}
     >
-      <ErrorBoundary>
+      <ErrorBoundary
+        translations={{
+          errorTitle: t('shared.errorBoundary.title'),
+          reloadButton: t('shared.errorBoundary.reload')
+        }}
+      >
         <div>
         {/* Header-Komponenten */}
         <ProjectHeader
@@ -745,7 +752,7 @@ export default function ProjectDetailPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>Projekt löschen</DialogTitle>
+        <DialogTitle>{t('delete.title')}</DialogTitle>
         <DialogBody>
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -753,20 +760,20 @@ export default function ProjectDetailPage() {
             </div>
             <div>
               <Text className="text-gray-900">
-                Möchten Sie das Projekt <strong>"{project?.title}"</strong> wirklich löschen?
+                {t('delete.message', { title: project?.title })}
               </Text>
               <Text className="text-gray-500 mt-2">
-                Diese Aktion kann nicht rückgängig gemacht werden. Alle verknüpften Daten werden ebenfalls gelöscht.
+                {t('delete.warning')}
               </Text>
             </div>
           </div>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setShowDeleteDialog(false)}>
-            Abbrechen
+            {t('delete.cancel')}
           </Button>
           <Button onClick={confirmDeleteProject} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
-            Projekt löschen
+            {t('delete.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

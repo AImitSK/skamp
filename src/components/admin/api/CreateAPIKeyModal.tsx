@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,45 +22,8 @@ interface CreateAPIKeyModalProps {
   onCreate: (request: APIKeyCreateRequest) => Promise<any>;
 }
 
-const AVAILABLE_PERMISSIONS: { 
-  value: APIPermission; 
-  label: string; 
-  description: string;
-  category: string;
-}[] = [
-  // Contacts
-  { value: 'contacts:read', label: 'Kontakte lesen', description: 'Kontaktdaten abrufen und suchen', category: 'Kontakte' },
-  { value: 'contacts:write', label: 'Kontakte schreiben', description: 'Neue Kontakte erstellen und bearbeiten', category: 'Kontakte' },
-  { value: 'contacts:delete', label: 'Kontakte löschen', description: 'Kontakte permanent löschen', category: 'Kontakte' },
-  
-  // Companies
-  { value: 'companies:read', label: 'Firmen lesen', description: 'Firmendaten abrufen und suchen', category: 'Firmen' },
-  { value: 'companies:write', label: 'Firmen schreiben', description: 'Neue Firmen erstellen und bearbeiten', category: 'Firmen' },
-  { value: 'companies:delete', label: 'Firmen löschen', description: 'Firmen permanent löschen', category: 'Firmen' },
-  
-  // Publications
-  { value: 'publications:read', label: 'Publikationen lesen', description: 'Publikationsdaten abrufen und filtern', category: 'Bibliothek' },
-  { value: 'publications:write', label: 'Publikationen schreiben', description: 'Neue Publikationen erstellen und bearbeiten', category: 'Bibliothek' },
-  { value: 'publications:delete', label: 'Publikationen löschen', description: 'Publikationen permanent löschen', category: 'Bibliothek' },
-  
-  // Advertisements
-  { value: 'advertisements:read', label: 'Werbemittel lesen', description: 'Werbemitteldaten abrufen', category: 'Bibliothek' },
-  { value: 'advertisements:write', label: 'Werbemittel schreiben', description: 'Werbemittel erstellen und bearbeiten', category: 'Bibliothek' },
-  { value: 'advertisements:delete', label: 'Werbemittel löschen', description: 'Werbemittel permanent löschen', category: 'Bibliothek' },
-  
-  // Advanced
-  { value: 'webhooks:manage', label: 'Webhooks verwalten', description: 'Webhook-Konfiguration ändern', category: 'Erweitert' },
-  { value: 'analytics:read', label: 'Analytics lesen', description: 'Nutzungsstatistiken abrufen', category: 'Erweitert' }
-];
-
-const EXPIRY_OPTIONS = [
-  { value: null, label: 'Permanent (kein Ablauf)' },
-  { value: 30, label: '30 Tage' },
-  { value: 90, label: '90 Tage' },
-  { value: 365, label: '1 Jahr' }
-];
-
 export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps) {
+  const t = useTranslations('admin.api.createModal');
   const [step, setStep] = useState<'config' | 'created'>('config');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +37,45 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
   const [expiresInDays, setExpiresInDays] = useState<number | null>(null);
   const [requestsPerHour, setRequestsPerHour] = useState(1000);
   const [allowedIPs, setAllowedIPs] = useState('');
+
+  // Permission definitions with translations
+  const AVAILABLE_PERMISSIONS: {
+    value: APIPermission;
+    label: string;
+    description: string;
+    category: string;
+  }[] = [
+    // Contacts
+    { value: 'contacts:read', label: t('form.permissions.items.contactsRead'), description: t('form.permissions.items.contactsReadDesc'), category: t('form.permissions.categories.contacts') },
+    { value: 'contacts:write', label: t('form.permissions.items.contactsWrite'), description: t('form.permissions.items.contactsWriteDesc'), category: t('form.permissions.categories.contacts') },
+    { value: 'contacts:delete', label: t('form.permissions.items.contactsDelete'), description: t('form.permissions.items.contactsDeleteDesc'), category: t('form.permissions.categories.contacts') },
+
+    // Companies
+    { value: 'companies:read', label: t('form.permissions.items.companiesRead'), description: t('form.permissions.items.companiesReadDesc'), category: t('form.permissions.categories.companies') },
+    { value: 'companies:write', label: t('form.permissions.items.companiesWrite'), description: t('form.permissions.items.companiesWriteDesc'), category: t('form.permissions.categories.companies') },
+    { value: 'companies:delete', label: t('form.permissions.items.companiesDelete'), description: t('form.permissions.items.companiesDeleteDesc'), category: t('form.permissions.categories.companies') },
+
+    // Publications
+    { value: 'publications:read', label: t('form.permissions.items.publicationsRead'), description: t('form.permissions.items.publicationsReadDesc'), category: t('form.permissions.categories.library') },
+    { value: 'publications:write', label: t('form.permissions.items.publicationsWrite'), description: t('form.permissions.items.publicationsWriteDesc'), category: t('form.permissions.categories.library') },
+    { value: 'publications:delete', label: t('form.permissions.items.publicationsDelete'), description: t('form.permissions.items.publicationsDeleteDesc'), category: t('form.permissions.categories.library') },
+
+    // Advertisements
+    { value: 'advertisements:read', label: t('form.permissions.items.advertisementsRead'), description: t('form.permissions.items.advertisementsReadDesc'), category: t('form.permissions.categories.library') },
+    { value: 'advertisements:write', label: t('form.permissions.items.advertisementsWrite'), description: t('form.permissions.items.advertisementsWriteDesc'), category: t('form.permissions.categories.library') },
+    { value: 'advertisements:delete', label: t('form.permissions.items.advertisementsDelete'), description: t('form.permissions.items.advertisementsDeleteDesc'), category: t('form.permissions.categories.library') },
+
+    // Advanced
+    { value: 'webhooks:manage', label: t('form.permissions.items.webhooksManage'), description: t('form.permissions.items.webhooksManageDesc'), category: t('form.permissions.categories.advanced') },
+    { value: 'analytics:read', label: t('form.permissions.items.analyticsRead'), description: t('form.permissions.items.analyticsReadDesc'), category: t('form.permissions.categories.advanced') }
+  ];
+
+  const EXPIRY_OPTIONS = [
+    { value: null, label: t('form.expiry.options.permanent') },
+    { value: 30, label: t('form.expiry.options.30days') },
+    { value: 90, label: t('form.expiry.options.90days') },
+    { value: 365, label: t('form.expiry.options.1year') }
+  ];
 
   const handlePermissionChange = (permission: APIPermission, checked: boolean) => {
     setSelectedPermissions(prev => {
@@ -138,14 +141,14 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
-      setError('Name ist erforderlich');
+      setError(t('form.errors.nameRequired'));
       return;
     }
-    
+
     if (selectedPermissions.size === 0) {
-      setError('Mindestens eine Berechtigung ist erforderlich');
+      setError(t('form.errors.permissionsRequired'));
       return;
     }
 
@@ -171,11 +174,11 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
         setCreatedKey(newKey.key);
         setStep('created');
       } else {
-        throw new Error('API-Key konnte nicht erstellt werden - kein Key im Response');
+        throw new Error(t('form.errors.noKeyInResponse'));
       }
-      
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des API-Keys');
+      setError(err instanceof Error ? err.message : t('form.errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -209,9 +212,9 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <KeyIcon className="h-6 w-6 text-blue-600" />
-                  <DialogTitle className="text-lg font-semibold">Neuen API-Key erstellen</DialogTitle>
+                  <DialogTitle className="text-lg font-semibold">{t('title')}</DialogTitle>
                 </div>
-                <button 
+                <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-md"
                 >
@@ -232,20 +235,20 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <Field>
-                    <Label>Name des API-Keys</Label>
+                    <Label>{t('form.name.label')}</Label>
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="z.B. Salesforce Integration"
+                      placeholder={t('form.name.placeholder')}
                       required
                     />
                     <Text className="text-sm text-gray-500 break-words">
-                      Eindeutiger Name zur Identifizierung dieses API-Keys
+                      {t('form.name.hint')}
                     </Text>
                   </Field>
 
                   <Field>
-                    <Label>Anfragen pro Stunde</Label>
+                    <Label>{t('form.rateLimit.label')}</Label>
                     <Input
                       type="number"
                       value={requestsPerHour}
@@ -254,12 +257,12 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                       max="10000"
                     />
                     <Text className="text-sm text-gray-500 break-words">
-                      Maximale Anzahl API-Anfragen pro Stunde
+                      {t('form.rateLimit.hint')}
                     </Text>
                   </Field>
 
                   <Field>
-                    <Label>Ablaufzeit</Label>
+                    <Label>{t('form.expiry.label')}</Label>
                     <select
                       value={expiresInDays || ''}
                       onChange={(e) => setExpiresInDays(e.target.value ? parseInt(e.target.value) : null)}
@@ -274,25 +277,25 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                   </Field>
 
                   <Field>
-                    <Label>Erlaubte IP-Adressen (optional)</Label>
+                    <Label>{t('form.allowedIPs.label')}</Label>
                     <Input
                       value={allowedIPs}
                       onChange={(e) => setAllowedIPs(e.target.value)}
-                      placeholder="192.168.1.1, 10.0.0.1 (leer für alle IPs)"
+                      placeholder={t('form.allowedIPs.placeholder')}
                     />
                     <Text className="text-sm text-gray-500 break-words">
-                      Kommagetrennte Liste von IP-Adressen. Leer lassen für unbegrenzt.
+                      {t('form.allowedIPs.hint')}
                     </Text>
                   </Field>
                 </div>
 
                 {/* Permissions */}
                 <div>
-                  <h3 className="text-base font-semibold">Berechtigungen</h3>
+                  <h3 className="text-base font-semibold">{t('form.permissions.title')}</h3>
                   <Text className="text-sm text-gray-500 mt-1 mb-4 break-words">
-                    Wähle die Aktionen aus, die mit diesem API-Key ausgeführt werden dürfen.
+                    {t('form.permissions.description')}
                   </Text>
-                  
+
                   {/* Master Select All */}
                   <div className="mb-4 p-3 bg-gray-50 rounded-md">
                     <label className="flex items-center gap-3 cursor-pointer">
@@ -302,7 +305,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       />
-                      <span className="font-medium">Alle Berechtigungen erlauben</span>
+                      <span className="font-medium">{t('form.permissions.selectAll')}</span>
                     </label>
                   </div>
                   
@@ -318,7 +321,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                               onChange={(e) => handleSelectAllCategory(category, e.target.checked)}
                               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-sm text-gray-600">Alle erlauben</span>
+                            <span className="text-sm text-gray-600">{t('form.permissions.selectAllCategory')}</span>
                           </label>
                         </div>
                         <div className="space-y-2 pl-2">
@@ -344,19 +347,19 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <button 
+                  <button
                     type="button"
                     onClick={onClose}
                     className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
                   >
-                    Abbrechen
+                    {t('actions.cancel')}
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={loading || !name.trim() || selectedPermissions.size === 0}
                     className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Erstelle...' : 'API-Key erstellen'}
+                    {loading ? t('actions.creating') : t('actions.create')}
                   </button>
                 </div>
               </form>
@@ -370,9 +373,9 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <CheckIcon className="h-6 w-6 text-green-600" />
-                  <DialogTitle className="text-lg font-semibold">API-Key erfolgreich erstellt</DialogTitle>
+                  <DialogTitle className="text-lg font-semibold">{t('successTitle')}</DialogTitle>
                 </div>
-                <button 
+                <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-md"
                 >
@@ -383,16 +386,15 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
               {/* Created Key Display */}
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <Text className="text-yellow-800 font-medium mb-2">Wichtiger Sicherheitshinweis</Text>
+                  <Text className="text-yellow-800 font-medium mb-2">{t('success.warning')}</Text>
                   <Text className="text-yellow-700 text-sm break-words">
-                    Dies ist das einzige Mal, dass der vollständige API-Key angezeigt wird. 
-                    Bitte kopiere ihn jetzt und bewahre ihn sicher auf.
+                    {t('success.warningText')}
                   </Text>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium">Dein neuer API-Key:</h4>
+                    <h4 className="font-medium">{t('success.keyLabel')}</h4>
                     <div className="flex items-center gap-2 mt-2">
                       <Input
                         value={createdKey}
@@ -411,30 +413,30 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                       </button>
                     </div>
                     {copied && (
-                      <Text className="text-sm text-green-600 mt-1">In Zwischenablage kopiert!</Text>
+                      <Text className="text-sm text-green-600 mt-1">{t('success.copied')}</Text>
                     )}
                   </div>
 
                   <div>
-                    <Text className="font-medium">Nächste Schritte:</Text>
+                    <Text className="font-medium">{t('success.nextSteps')}</Text>
                     <ul className="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
-                      <li>Sichere den API-Key in deinem Passwort-Manager</li>
-                      <li>Konfiguriere deine externe Anwendung mit diesem Key</li>
-                      <li>Teste die Integration mit einem einfachen API-Aufruf</li>
-                      <li>Überwache die Usage-Statistiken in diesem Dashboard</li>
+                      <li>{t('success.steps.saveKey')}</li>
+                      <li>{t('success.steps.configure')}</li>
+                      <li>{t('success.steps.test')}</li>
+                      <li>{t('success.steps.monitor')}</li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
-                  <button 
+                  <button
                     onClick={() => {
                       // Schließe das Modal und refreshe die API Key Liste
                       onClose();
                     }}
                     className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
                   >
-                    Verstanden
+                    {t('actions.understood')}
                   </button>
                 </div>
               </div>

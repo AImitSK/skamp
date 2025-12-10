@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
@@ -76,8 +77,9 @@ const COUNTRY_OPTIONS = [
 ];
 
 // Helper functions
-const formatDate = (timestamp: any) => {
-  if (!timestamp) return 'Unbekannt';
+// Note: formatDate now returns a formatted date or fallback to common.unknown
+const formatDate = (timestamp: any, fallback: string = '-') => {
+  if (!timestamp) return fallback;
   const date = timestamp.toDate ? timestamp.toDate() : timestamp;
   return new Date(date).toLocaleDateString('de-DE', {
     day: '2-digit',
@@ -190,6 +192,8 @@ function InfoCard({
 }
 
 export default function CompanyDetailPage() {
+  const t = useTranslations('companies.detail');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { autoGlobalMode } = useAutoGlobal();
@@ -237,9 +241,9 @@ export default function CompanyDetailPage() {
 
       setCompany({ ...company, internalNotes: notesValue });
       setEditingNotes(false);
-      toastService.success('Notiz gespeichert');
+      toastService.success(t('notes.saved'));
     } catch (error) {
-      toastService.error('Fehler beim Speichern der Notiz');
+      toastService.error(t('notes.saveError'));
     } finally {
       setSavingNotes(false);
     }
@@ -331,10 +335,10 @@ export default function CompanyDetailPage() {
           }
         }
       } else {
-        setError("Firma nicht gefunden.");
+        setError(t('notFound'));
       }
     } catch (err: any) {
-      setError("Fehler beim Laden der Daten.");
+      setError(t('loadError'));
       // Error handled via UI feedback
     } finally {
       setLoading(false);
@@ -376,7 +380,7 @@ export default function CompanyDetailPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Firmendaten...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -390,7 +394,7 @@ export default function CompanyDetailPage() {
           <div className="flex items-center gap-3">
             <InformationCircleIcon className="h-5 w-5 text-red-600 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-red-900">Fehler</h3>
+              <h3 className="font-semibold text-red-900">{tCommon('error')}</h3>
               <p className="text-sm text-red-700 mt-1">{error}</p>
             </div>
           </div>
@@ -404,7 +408,7 @@ export default function CompanyDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
@@ -415,7 +419,7 @@ export default function CompanyDetailPage() {
   if (!company) {
     return (
       <div className="p-8 text-center">
-        <Text>Firma konnte nicht gefunden werden.</Text>
+        <Text>{t('notFoundMessage')}</Text>
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/contacts/crm/')}
@@ -425,7 +429,7 @@ export default function CompanyDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
@@ -500,7 +504,7 @@ export default function CompanyDetailPage() {
                         }
                         return (
                           <span className="ml-2 text-zinc-500">
-                            (gegr. {year})
+                            ({t('founded', { year })})
                           </span>
                         );
                       } catch (error) {
@@ -522,17 +526,17 @@ export default function CompanyDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {t('back')}
               </Button>
 
               {(company as any)?._isReference ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
                   <div className="flex items-center gap-2 text-amber-800">
                     <span className="text-amber-600">🔗</span>
-                    <span className="font-medium">Globaler Verweis</span>
+                    <span className="font-medium">{t('reference.badge')}</span>
                   </div>
                   <p className="text-amber-700 mt-1">
-                    Diese Firma ist ein Verweis auf globale Daten und kann nicht bearbeitet werden.
+                    {t('reference.message')}
                   </p>
                 </div>
               ) : (
@@ -543,7 +547,7 @@ export default function CompanyDetailPage() {
                              h-10 px-6 rounded-lg transition-colors inline-flex items-center"
                 >
                   <PencilIcon className="h-4 w-4 mr-2" />
-                  Firma bearbeiten
+                  {t('edit')}
                 </Button>
               )}
             </div>
@@ -556,11 +560,11 @@ export default function CompanyDetailPage() {
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
             {/* Main Information - Consolidated */}
-            <InfoCard title="Allgemeine Informationen" icon={BuildingOfficeIcon}>
+            <InfoCard title={t('sections.general')} icon={BuildingOfficeIcon}>
               <div className="space-y-6">
                 {/* Contact Data */}
                 <div>
-                  <Text className="text-sm font-semibold text-zinc-700 mb-3">Kontaktdaten</Text>
+                  <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.contactData')}</Text>
                   <div className="space-y-3">
                     {company.emails && company.emails.length > 0 && (
                       <div>
@@ -577,13 +581,9 @@ export default function CompanyDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge color="zinc" className="text-xs">
-                                {email.type === 'general' ? 'Allgemein' :
-                                 email.type === 'support' ? 'Support' :
-                                 email.type === 'sales' ? 'Vertrieb' :
-                                 email.type === 'billing' ? 'Buchhaltung' :
-                                 email.type === 'press' ? 'Presse' : email.type}
+                                {t(`contactData.emailTypes.${email.type}` as any, { defaultValue: email.type })}
                               </Badge>
-                              {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                              {email.isPrimary && <Badge color="green" className="text-xs">{t('contactData.primary')}</Badge>}
                             </div>
                           </div>
                         ))}
@@ -622,11 +622,9 @@ export default function CompanyDetailPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge color="zinc" className="text-xs">
-                                  {phone.type === 'business' ? 'Geschäftlich' :
-                                   phone.type === 'mobile' ? 'Mobil' :
-                                   phone.type === 'fax' ? 'Fax' : phone.type}
+                                  {t(`contactData.phoneTypes.${phone.type}` as any, { defaultValue: phone.type })}
                                 </Badge>
-                                {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                                {phone.isPrimary && <Badge color="green" className="text-xs">{t('contactData.primary')}</Badge>}
                               </div>
                             </div>
                           );
@@ -673,7 +671,7 @@ export default function CompanyDetailPage() {
                     )}
 
                     {(!company.emails?.length && !company.phones?.length && !company.website && !company.socialMedia?.length) && (
-                      <Text className="text-zinc-500">Keine Kontaktdaten hinterlegt</Text>
+                      <Text className="text-zinc-500">{t('contactData.noData')}</Text>
                     )}
                   </div>
                 </div>
@@ -681,20 +679,13 @@ export default function CompanyDetailPage() {
                 {/* Business Identifiers */}
                 {company.identifiers && company.identifiers.length > 0 && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Geschäftliche Kennungen</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.identifiers')}</Text>
                     <div className="space-y-2">
                       {company.identifiers.map((identifier, index) => (
                         <div key={index} className="flex items-center justify-between">
                           <Text className="text-sm">
                             <span className="font-medium">
-                              {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
-                               identifier.type === 'EIN_US' ? 'EIN (US)' :
-                               identifier.type === 'COMPANY_REG_DE' ? 'Handelsregister (DE)' :
-                               identifier.type === 'COMPANY_REG_UK' ? 'Companies House (UK)' :
-                               identifier.type === 'UID_CH' ? 'UID (CH)' :
-                               identifier.type === 'SIREN_FR' ? 'SIREN (FR)' :
-                               identifier.type === 'DUNS' ? 'D-U-N-S' :
-                               identifier.type === 'LEI' ? 'LEI' : identifier.type}
+                              {t(`identifiers.types.${identifier.type}` as any, { defaultValue: identifier.type })}
                             </span>
                             {': '}
                             <span className="text-zinc-600">{identifier.value}</span>
@@ -711,11 +702,11 @@ export default function CompanyDetailPage() {
                 {/* Financial Information */}
                 {company.financial && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Finanzen</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('sections.financial')}</Text>
                     <div className="grid grid-cols-2 gap-4">
                       {company.financial.annualRevenue && (
                         <div>
-                          <Text className="text-sm font-medium text-zinc-500">Jahresumsatz</Text>
+                          <Text className="text-sm font-medium text-zinc-500">{t('financial.annualRevenue')}</Text>
                           <Text className="text-lg font-semibold">
                             {formatCurrency(
                               company.financial.annualRevenue.amount,
@@ -726,19 +717,19 @@ export default function CompanyDetailPage() {
                       )}
                       {company.financial.employees !== undefined && (
                         <div>
-                          <Text className="text-sm font-medium text-zinc-500">Mitarbeiterzahl</Text>
+                          <Text className="text-sm font-medium text-zinc-500">{t('financial.employees')}</Text>
                           <Text className="text-lg font-semibold">{company.financial.employees.toLocaleString('de-DE')}</Text>
                         </div>
                       )}
                       {company.financial.creditRating && (
                         <div>
-                          <Text className="text-sm font-medium text-zinc-500">Kreditrating</Text>
+                          <Text className="text-sm font-medium text-zinc-500">{t('financial.creditRating')}</Text>
                           <Text className="text-lg font-semibold">{company.financial.creditRating}</Text>
                         </div>
                       )}
                       {company.financial.fiscalYearEnd && (
                         <div>
-                          <Text className="text-sm font-medium text-zinc-500">Geschäftsjahresende</Text>
+                          <Text className="text-sm font-medium text-zinc-500">{t('financial.fiscalYearEnd')}</Text>
                           <Text>{company.financial.fiscalYearEnd}</Text>
                         </div>
                       )}
@@ -750,11 +741,11 @@ export default function CompanyDetailPage() {
 
             {/* Corporate Structure */}
             {(company.parentCompanyId || company.subsidiaryIds?.length) && (
-              <InfoCard title="Konzernstruktur" icon={BuildingOffice2Icon}>
+              <InfoCard title={t('sections.corporateStructure')} icon={BuildingOffice2Icon}>
                 <div className="space-y-4">
                   {parentCompany && (
                     <div>
-                      <Text className="text-sm font-medium text-zinc-500 mb-2">Muttergesellschaft</Text>
+                      <Text className="text-sm font-medium text-zinc-500 mb-2">{t('corporateStructure.parentCompany')}</Text>
                       <Link
                         href={`/dashboard/contacts/crm/companies/${parentCompany.id}`}
                         className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
@@ -768,7 +759,7 @@ export default function CompanyDetailPage() {
                   {subsidiaries.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Tochtergesellschaften ({subsidiaries.length})
+                        {t('corporateStructure.subsidiaries', { count: subsidiaries.length })}
                       </Text>
                       <div className="space-y-1">
                         {subsidiaries.map((sub) => (
@@ -793,9 +784,9 @@ export default function CompanyDetailPage() {
               <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-semibold text-zinc-900">
-                    Kontakte
+                    {t('sections.contacts')}
                   </h3>
-                  <Badge color="blue">{contacts.length}</Badge>
+                  <Badge color="blue">{t('contacts.count', { count: contacts.length })}</Badge>
                 </div>
               </div>
               <div className="p-4">
@@ -814,7 +805,7 @@ export default function CompanyDetailPage() {
                             <span className="text-sm text-zinc-500 ml-2">• {contact.position}</span>
                           )}
                           {contact.mediaProfile?.isJournalist && (
-                            <Badge color="purple" className="text-xs ml-2">Journalist</Badge>
+                            <Badge color="purple" className="text-xs ml-2">{t('contacts.journalist')}</Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2 ml-4">
@@ -822,7 +813,7 @@ export default function CompanyDetailPage() {
                             <a
                               href={`mailto:${getPrimaryEmail(contact.emails)}`}
                               className="text-zinc-400 hover:text-[#005fab] transition-colors"
-                              title="E-Mail senden"
+                              title={t('contacts.sendEmail')}
                             >
                               <EnvelopeIcon className="h-5 w-5" />
                             </a>
@@ -831,7 +822,7 @@ export default function CompanyDetailPage() {
                             <a
                               href={`tel:${getPrimaryPhone(contact.phones)}`}
                               className="text-zinc-400 hover:text-[#005fab] transition-colors"
-                              title="Anrufen"
+                              title={t('contacts.call')}
                             >
                               <PhoneIcon className="h-5 w-5" />
                             </a>
@@ -843,7 +834,7 @@ export default function CompanyDetailPage() {
                 ) : (
                   <div className="text-center py-8">
                     <UsersIcon className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
-                    <Text className="text-zinc-500">Keine Kontakte vorhanden</Text>
+                    <Text className="text-zinc-500">{t('contacts.empty')}</Text>
                   </div>
                 )}
               </div>
@@ -852,7 +843,7 @@ export default function CompanyDetailPage() {
 
             {/* Notes */}
             <InfoCard
-              title="Interne Notizen"
+              title={t('sections.notes')}
               icon={DocumentTextIcon}
               action={
                 !editingNotes ? (
@@ -864,7 +855,7 @@ export default function CompanyDetailPage() {
                                h-8 px-4 rounded-lg inline-flex items-center gap-1.5 text-sm"
                   >
                     <PencilIcon className="h-4 w-4" />
-                    Bearbeiten
+                    {t('notes.edit')}
                   </button>
                 ) : null
               }
@@ -875,7 +866,7 @@ export default function CompanyDetailPage() {
                     value={notesValue}
                     onChange={(e) => setNotesValue(e.target.value)}
                     rows={6}
-                    placeholder="Interne Notizen hinzufügen..."
+                    placeholder={t('notes.placeholder')}
                     className="w-full"
                   />
                   <div className="flex items-center gap-2">
@@ -885,7 +876,7 @@ export default function CompanyDetailPage() {
                       className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
                     >
                       <CheckIcon className="h-4 w-4 mr-2" />
-                      {savingNotes ? 'Speichern...' : 'Speichern'}
+                      {savingNotes ? t('notes.saving') : t('notes.save')}
                     </Button>
                     <Button
                       onClick={handleCancelEditNotes}
@@ -893,13 +884,13 @@ export default function CompanyDetailPage() {
                       className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
                     >
                       <XMarkIcon className="h-4 w-4 mr-2" />
-                      Abbrechen
+                      {t('notes.cancel')}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap text-zinc-700">
-                  {company.internalNotes || 'Keine Notizen vorhanden'}
+                  {company.internalNotes || t('notes.empty')}
                 </p>
               )}
             </InfoCard>
@@ -908,19 +899,19 @@ export default function CompanyDetailPage() {
           {/* Right column - 1/3 width */}
           <div className="space-y-6">
             {/* Details */}
-            <InfoCard title="Details" icon={InformationCircleIcon}>
+            <InfoCard title={t('sections.details')} icon={InformationCircleIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Erstellt:</span>
+                    <span className="text-zinc-600">{t('details.created')}</span>
                     <span className="ml-2">{formatDate(company.createdAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Aktualisiert:</span>
+                    <span className="text-zinc-600">{t('details.updated')}</span>
                     <span className="ml-2">{formatDate(company.updatedAt)}</span>
                   </div>
                 </div>
@@ -928,7 +919,7 @@ export default function CompanyDetailPage() {
                   <div className="flex items-center gap-3">
                     <UsersIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                     <div>
-                      <span className="text-zinc-600">Letzter Kontakt:</span>
+                      <span className="text-zinc-600">{t('details.lastContact')}</span>
                       <span className="ml-2">{formatDate(getLastContactDate())}</span>
                     </div>
                   </div>
@@ -947,7 +938,7 @@ export default function CompanyDetailPage() {
 
             {/* Publications for Media Companies */}
             {isMediaCompany && publications.length > 0 && (
-              <InfoCard title="Publikationen" icon={NewspaperIcon}>
+              <InfoCard title={t('sections.publications')} icon={NewspaperIcon}>
                 <div className="space-y-3">
                   {publications.map(publication => {
                     const adCount = advertisements.filter(ad =>
@@ -963,7 +954,7 @@ export default function CompanyDetailPage() {
                               href={`/dashboard/library/publications/${publication.id}`}
                               className="text-sm text-primary hover:text-primary-hover underline whitespace-nowrap ml-2"
                             >
-                              Anzeigen
+                              {t('publications.view')}
                             </Link>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
@@ -972,12 +963,12 @@ export default function CompanyDetailPage() {
                             </Badge>
                             {publication.verified && (
                               <Badge color="green" className="text-xs whitespace-nowrap">
-                                Verifiziert
+                                {t('publications.verified')}
                               </Badge>
                             )}
                             {adCount > 0 && (
                               <Badge color="purple" className="text-xs whitespace-nowrap">
-                                {adCount} Werbemittel
+                                {t('publications.adCount', { count: adCount })}
                               </Badge>
                             )}
                           </div>
@@ -995,7 +986,7 @@ export default function CompanyDetailPage() {
                 <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-zinc-900">
-                      In Listen enthalten
+                      {t('sections.inLists')}
                     </h3>
                     <Badge color="blue">{lists.length}</Badge>
                   </div>
@@ -1004,17 +995,17 @@ export default function CompanyDetailPage() {
                   <ul className="space-y-2">
                     {lists.map(list => (
                       <li key={list.id} className="flex items-center justify-between">
-                        <Link 
-                          href={`/dashboard/contacts/lists/${list.id}`} 
+                        <Link
+                          href={`/dashboard/contacts/lists/${list.id}`}
                           className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                         >
                           {list.name}
                         </Link>
-                        <Badge 
-                          color={list.type === 'dynamic' ? 'green' : 'zinc'} 
+                        <Badge
+                          color={list.type === 'dynamic' ? 'green' : 'zinc'}
                           className="text-xs whitespace-nowrap"
                         >
-                          {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                          {list.type === 'dynamic' ? t('lists.dynamic') : t('lists.static')}
                         </Badge>
                       </li>
                     ))}
@@ -1037,7 +1028,7 @@ export default function CompanyDetailPage() {
           onSave={() => {
             setShowEditModal(false);
             loadData();
-            toastService.success('Firma erfolgreich aktualisiert');
+            toastService.success(tCommon('updated'));
           }}
         />
       )}

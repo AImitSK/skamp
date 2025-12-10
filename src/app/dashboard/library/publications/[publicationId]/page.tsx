@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { companiesService } from "@/lib/firebase/crm-service";
@@ -43,54 +44,9 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 
-// Type Labels
-const publicationTypeLabels: Record<string, string> = {
-  newspaper: "Zeitung",
-  magazine: "Magazin",
-  website: "Website",
-  blog: "Blog",
-  newsletter: "Newsletter",
-  podcast: "Podcast",
-  tv: "TV",
-  radio: "Radio",
-  trade_journal: "Fachzeitschrift",
-  press_agency: "Nachrichtenagentur",
-  social_media: "Social Media",
-  other: "Sonstiges"
-};
-
-const formatLabels: Record<string, string> = {
-  print: "Print",
-  online: "Digital",
-  both: "Print & Digital",
-  broadcast: "Broadcast"
-};
-
-const scopeLabels: Record<string, string> = {
-  local: "Lokal",
-  regional: "Regional",
-  national: "National",
-  international: "International",
-  global: "Global"
-};
-
-const frequencyLabels: Record<string, string> = {
-  continuous: "Durchgehend",
-  multiple_daily: "Mehrmals täglich",
-  daily: "Täglich",
-  weekly: "Wöchentlich",
-  biweekly: "14-tägig",
-  monthly: "Monatlich",
-  bimonthly: "Zweimonatlich",
-  quarterly: "Vierteljährlich",
-  biannual: "Halbjährlich",
-  annual: "Jährlich",
-  irregular: "Unregelmäßig"
-};
-
-// Helper functions
-const formatDate = (timestamp: any) => {
-  if (!timestamp) return 'Unbekannt';
+// Helper function for date formatting
+const formatDate = (timestamp: any, locale: string, unknownLabel: string) => {
+  if (!timestamp) return unknownLabel;
 
   try {
     let date: Date;
@@ -112,21 +68,21 @@ const formatDate = (timestamp: any) => {
       date = new Date(timestamp.seconds * 1000);
     }
     else {
-      return 'Unbekannt';
+      return unknownLabel;
     }
 
     // Validate date
     if (isNaN(date.getTime())) {
-      return 'Unbekannt';
+      return unknownLabel;
     }
 
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'long',
       year: 'numeric'
     });
   } catch (error) {
-    return 'Unbekannt';
+    return unknownLabel;
   }
 };
 
@@ -162,6 +118,8 @@ function InfoCard({
 }
 
 export default function PublicationDetailPage() {
+  const t = useTranslations('publications.detail');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const params = useParams();
@@ -180,7 +138,7 @@ export default function PublicationDetailPage() {
   const [notesValue, setNotesValue] = useState('');
 
   // Error handling
-  const error = queryError ? 'Fehler beim Laden der Daten.' : null;
+  const error = queryError ? t('error') : null;
 
   // Notes Management
   const handleEditNotes = () => {
@@ -205,9 +163,9 @@ export default function PublicationDetailPage() {
       });
 
       setEditingNotes(false);
-      toastService.success('Notiz gespeichert');
+      toastService.success(t('toasts.noteSaved'));
     } catch (error) {
-      toastService.error('Fehler beim Speichern der Notiz');
+      toastService.error(t('toasts.noteSaveError'));
     }
   };
 
@@ -240,7 +198,7 @@ export default function PublicationDetailPage() {
           userId: user.uid,
           publicationData: { verified: false, verifiedAt: undefined }
         });
-        toastService.success('Verifizierung zurückgenommen');
+        toastService.success(t('toasts.unverified'));
       } else {
         // Verifizieren
         await verifyPublication.mutateAsync({
@@ -248,10 +206,10 @@ export default function PublicationDetailPage() {
           organizationId: currentOrganization.id,
           userId: user.uid
         });
-        toastService.success('Publikation verifiziert');
+        toastService.success(t('toasts.verified'));
       }
     } catch (error) {
-      toastService.error(`Fehler beim ${publication.verified ? 'Zurücknehmen der Verifizierung' : 'Verifizieren'}`);
+      toastService.error(publication.verified ? t('toasts.unverifyError') : t('toasts.verifyError'));
     }
   };
 
@@ -261,7 +219,7 @@ export default function PublicationDetailPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Publikation...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -275,7 +233,7 @@ export default function PublicationDetailPage() {
           <div className="flex items-center gap-3">
             <InformationCircleIcon className="h-5 w-5 text-red-600 flex-shrink-0" />
             <div>
-              <h3 className="font-semibold text-red-900">Fehler</h3>
+              <h3 className="font-semibold text-red-900">{t('errorTitle')}</h3>
               <p className="text-sm text-red-700 mt-1">{error}</p>
             </div>
           </div>
@@ -289,7 +247,7 @@ export default function PublicationDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
@@ -300,7 +258,7 @@ export default function PublicationDetailPage() {
   if (!publication) {
     return (
       <div className="p-8 text-center">
-        <Text>Publikation konnte nicht gefunden werden.</Text>
+        <Text>{t('notFound')}</Text>
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/library/publications')}
@@ -310,7 +268,7 @@ export default function PublicationDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('backToOverview')}
           </Button>
         </div>
       </div>
@@ -329,20 +287,20 @@ export default function PublicationDetailPage() {
                 <Heading>{publication.title}</Heading>
                 <div className="flex items-center gap-2">
                   <Badge color="zinc" className="whitespace-nowrap">
-                    {publicationTypeLabels[publication.type] || publication.type}
+                    {t(`types.${publication.type}`) || publication.type}
                   </Badge>
                   <Badge color="zinc" className="whitespace-nowrap">
-                    {formatLabels[publication.format] || publication.format}
+                    {t(`formats.${publication.format}`) || publication.format}
                   </Badge>
                   <Badge color="zinc" className="whitespace-nowrap">
-                    {scopeLabels[publication.geographicScope]}
+                    {t(`scopes.${publication.geographicScope}`)}
                   </Badge>
                   {publication.status === 'active' ? (
-                    <Badge color="green" className="whitespace-nowrap">Aktiv</Badge>
+                    <Badge color="green" className="whitespace-nowrap">{t('status.active')}</Badge>
                   ) : publication.status === 'inactive' ? (
-                    <Badge color="yellow" className="whitespace-nowrap">Inaktiv</Badge>
+                    <Badge color="yellow" className="whitespace-nowrap">{t('status.inactive')}</Badge>
                   ) : (
-                    <Badge color="red" className="whitespace-nowrap">Eingestellt</Badge>
+                    <Badge color="red" className="whitespace-nowrap">{t('status.discontinued')}</Badge>
                   )}
                 </div>
               </div>
@@ -362,7 +320,7 @@ export default function PublicationDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {t('back')}
               </Button>
 
               <Button
@@ -373,7 +331,7 @@ export default function PublicationDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <CheckBadgeIcon className="h-4 w-4 mr-2" />
-                {publication.verified ? 'Verifizierung zurücknehmen' : 'Verifizieren'}
+                {publication.verified ? t('unverify') : t('verify')}
               </Button>
 
               <Button
@@ -383,7 +341,7 @@ export default function PublicationDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <PencilIcon className="h-4 w-4 mr-2" />
-                Bearbeiten
+                {t('edit')}
               </Button>
             </div>
           </div>
@@ -394,12 +352,12 @@ export default function PublicationDetailPage() {
           {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
             {/* Allgemeine Informationen */}
-            <InfoCard title="Allgemeine Informationen" icon={NewspaperIcon}>
+            <InfoCard title={t('sections.generalInfo')} icon={NewspaperIcon}>
               <div className="space-y-6">
                 {/* Publisher */}
                 {publisher && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Verlag</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.publisher')}</Text>
                     <Link
                       href={`/dashboard/contacts/crm/companies/${publisher.id}`}
                       className="flex items-center gap-2 text-primary hover:text-primary-hover hover:underline"
@@ -413,7 +371,7 @@ export default function PublicationDetailPage() {
                 {/* URLs */}
                 {(publication.websiteUrl || publication.rssFeedUrl) && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Online-Präsenz</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.onlinePresence')}</Text>
                     <div className="space-y-2">
                       {publication.websiteUrl && (
                         <div className="flex items-center gap-3">
@@ -437,7 +395,7 @@ export default function PublicationDetailPage() {
                             rel="noopener noreferrer"
                             className="text-primary hover:text-primary-hover hover:underline"
                           >
-                            RSS Feed
+                            {t('fields.rssFeed')}
                           </a>
                         </div>
                       )}
@@ -448,7 +406,7 @@ export default function PublicationDetailPage() {
                 {/* Social Media */}
                 {publication.socialMediaUrls && publication.socialMediaUrls.length > 0 && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Social Media</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.socialMedia')}</Text>
                     <div className="space-y-1">
                       {publication.socialMediaUrls.map((social, index) => (
                         <a
@@ -469,7 +427,7 @@ export default function PublicationDetailPage() {
                 {/* Identifiers */}
                 {publication.identifiers && publication.identifiers.length > 0 && (
                   <div>
-                    <Text className="text-sm font-semibold text-zinc-700 mb-3">Identifikatoren</Text>
+                    <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.identifiers')}</Text>
                     <div className="space-y-2">
                       {publication.identifiers.map((identifier, index) => (
                         <div key={index} className="flex items-center justify-between">
@@ -486,12 +444,12 @@ export default function PublicationDetailPage() {
 
                 {/* Geography */}
                 <div>
-                  <Text className="text-sm font-semibold text-zinc-700 mb-3">Sprachen & Zielländer</Text>
+                  <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.languagesAndCountries')}</Text>
                   <div className="grid grid-cols-2 gap-4">
                     {publication.languages && publication.languages.length > 0 && (
                       <div>
                         <Text className="text-sm text-zinc-500 mb-1">
-                          Sprachen ({publication.languages.length})
+                          {t('fields.languages', { count: publication.languages.length })}
                         </Text>
                         <div className="flex flex-wrap gap-1">
                           {publication.languages.slice(0, 2).map((lang) => (
@@ -505,7 +463,7 @@ export default function PublicationDetailPage() {
                     {publication.geographicTargets && publication.geographicTargets.length > 0 && (
                       <div>
                         <Text className="text-sm text-zinc-500 mb-1">
-                          Zielländer ({publication.geographicTargets.length})
+                          {t('fields.targetCountries', { count: publication.geographicTargets.length })}
                         </Text>
                         <div className="flex flex-wrap gap-1">
                           {publication.geographicTargets.slice(0, 2).map((country) => (
@@ -523,15 +481,15 @@ export default function PublicationDetailPage() {
 
             {/* Metriken & Zahlen */}
             {publication.metrics && (
-              <InfoCard title="Metriken & Zahlen" icon={ChartBarIcon}>
+              <InfoCard title={t('sections.metrics')} icon={ChartBarIcon}>
                 <div className="space-y-6">
                   {/* Frequency */}
                   {publication.metrics.frequency && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-2">Erscheinungsfrequenz</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-2">{t('fields.frequency')}</Text>
                       <div className="flex items-center gap-2">
                         <ClockIcon className="h-5 w-5 text-zinc-400" />
-                        <Text>{frequencyLabels[publication.metrics.frequency]}</Text>
+                        <Text>{t(`frequencies.${publication.metrics.frequency}`)}</Text>
                       </div>
                     </div>
                   )}
@@ -539,28 +497,24 @@ export default function PublicationDetailPage() {
                   {/* Print Metrics */}
                   {publication.metrics.print && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Print-Metriken</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.printMetrics')}</Text>
                       <div className="grid grid-cols-2 gap-4">
                         {publication.metrics.print.circulation && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Auflage</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.circulation')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.circulation.toLocaleString('de-DE')}
                             </Text>
                             {publication.metrics.print.circulationType && (
                               <Text className="text-sm text-zinc-500">
-                                {publication.metrics.print.circulationType === 'distributed' ? 'Verbreitete Auflage' :
-                                 publication.metrics.print.circulationType === 'sold' ? 'Verkaufte Auflage' :
-                                 publication.metrics.print.circulationType === 'printed' ? 'Gedruckte Auflage' :
-                                 publication.metrics.print.circulationType === 'subscribers' ? 'Abonnenten' :
-                                 'IVW geprüft'}
+                                {t(`circulationTypes.${publication.metrics.print.circulationType}`)}
                               </Text>
                             )}
                           </div>
                         )}
                         {publication.metrics.print.pricePerIssue && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Preis pro Ausgabe</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.pricePerIssue')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.pricePerIssue.amount.toFixed(2)} {publication.metrics.print.pricePerIssue.currency}
                             </Text>
@@ -568,7 +522,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.print.subscriptionPrice?.monthly && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Abo-Preis Monat</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.subscriptionMonthly')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.subscriptionPrice.monthly.amount.toFixed(2)} {publication.metrics.print.subscriptionPrice.monthly.currency}
                             </Text>
@@ -576,7 +530,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.print.subscriptionPrice?.annual && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Abo-Preis Jahr</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.subscriptionAnnual')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.subscriptionPrice.annual.amount.toFixed(2)} {publication.metrics.print.subscriptionPrice.annual.currency}
                             </Text>
@@ -584,7 +538,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.print.paperFormat && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Format</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.format')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.paperFormat}
                             </Text>
@@ -592,7 +546,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.print.pageCount && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Seitenanzahl</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.pageCount')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.print.pageCount}
                             </Text>
@@ -605,11 +559,11 @@ export default function PublicationDetailPage() {
                   {/* Online Metrics */}
                   {publication.metrics.online && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-3">Online-Metriken</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-3">{t('fields.onlineMetrics')}</Text>
                       <div className="grid grid-cols-2 gap-4">
                         {publication.metrics.online.monthlyUniqueVisitors && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Monatliche Unique Visitors</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.monthlyVisitors')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')}
                             </Text>
@@ -617,7 +571,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.monthlyPageViews && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Monatliche Page Views</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.monthlyPageViews')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.monthlyPageViews.toLocaleString('de-DE')}
                             </Text>
@@ -625,7 +579,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.avgSessionDuration && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Ø Sitzungsdauer</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.avgSessionDuration')}</Text>
                             <Text className="text-lg font-semibold">
                               {Math.floor(publication.metrics.online.avgSessionDuration / 60)}:{(publication.metrics.online.avgSessionDuration % 60).toString().padStart(2, '0')} Min
                             </Text>
@@ -633,7 +587,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.bounceRate && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Bounce Rate</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.bounceRate')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.bounceRate}%
                             </Text>
@@ -641,7 +595,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.registeredUsers && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Registrierte Nutzer</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.registeredUsers')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.registeredUsers.toLocaleString('de-DE')}
                             </Text>
@@ -649,7 +603,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.paidSubscribers && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Zahlende Abonnenten</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.paidSubscribers')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.paidSubscribers.toLocaleString('de-DE')}
                             </Text>
@@ -657,7 +611,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.newsletterSubscribers && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Newsletter-Abonnenten</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.newsletterSubscribers')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.newsletterSubscribers.toLocaleString('de-DE')}
                             </Text>
@@ -665,7 +619,7 @@ export default function PublicationDetailPage() {
                         )}
                         {publication.metrics.online.domainAuthority && (
                           <div>
-                            <Text className="text-sm font-medium text-zinc-500">Domain Authority</Text>
+                            <Text className="text-sm font-medium text-zinc-500">{t('fields.domainAuthority')}</Text>
                             <Text className="text-lg font-semibold">
                               {publication.metrics.online.domainAuthority}/100
                             </Text>
@@ -681,7 +635,7 @@ export default function PublicationDetailPage() {
                               ) : (
                                 <XMarkIcon className="h-5 w-5 text-zinc-400" />
                               )}
-                              <Text className="text-sm">Paywall</Text>
+                              <Text className="text-sm">{t('fields.paywall')}</Text>
                             </div>
                           )}
                           {publication.metrics.online.hasMobileApp !== undefined && (
@@ -691,7 +645,7 @@ export default function PublicationDetailPage() {
                               ) : (
                                 <XMarkIcon className="h-5 w-5 text-zinc-400" />
                               )}
-                              <Text className="text-sm">Mobile App</Text>
+                              <Text className="text-sm">{t('fields.mobileApp')}</Text>
                             </div>
                           )}
                         </div>
@@ -702,22 +656,18 @@ export default function PublicationDetailPage() {
                   {/* Target Audience */}
                   {publication.metrics.targetAudience && (
                     <div>
-                      <Text className="text-sm font-semibold text-zinc-700 mb-2">Zielgruppe</Text>
+                      <Text className="text-sm font-semibold text-zinc-700 mb-2">{t('fields.targetAudience')}</Text>
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
                           <UserGroupIcon className="h-5 w-5 text-zinc-400" />
                           <Text>{publication.metrics.targetAudience}</Text>
                         </div>
                         {publication.metrics.targetAgeGroup && (
-                          <Text className="text-sm text-zinc-600">Altersgruppe: {publication.metrics.targetAgeGroup}</Text>
+                          <Text className="text-sm text-zinc-600">{t('fields.ageGroup', { group: publication.metrics.targetAgeGroup })}</Text>
                         )}
                         {publication.metrics.targetGender && (
                           <Text className="text-sm text-zinc-600">
-                            Geschlecht: {
-                              publication.metrics.targetGender === 'all' ? 'Alle' :
-                              publication.metrics.targetGender === 'predominantly_male' ? 'Überwiegend männlich' :
-                              'Überwiegend weiblich'
-                            }
+                            {t('fields.gender', { gender: t(`genders.${publication.metrics.targetGender}`) })}
                           </Text>
                         )}
                       </div>
@@ -729,7 +679,7 @@ export default function PublicationDetailPage() {
 
             {/* Notes */}
             <InfoCard
-              title="Notizen"
+              title={t('sections.notes')}
               icon={DocumentTextIcon}
               action={
                 !editingNotes ? (
@@ -741,7 +691,7 @@ export default function PublicationDetailPage() {
                                h-8 px-4 rounded-lg inline-flex items-center gap-1.5 text-sm"
                   >
                     <PencilIcon className="h-4 w-4" />
-                    Bearbeiten
+                    {t('edit')}
                   </button>
                 ) : null
               }
@@ -752,7 +702,7 @@ export default function PublicationDetailPage() {
                     value={notesValue}
                     onChange={(e) => setNotesValue(e.target.value)}
                     rows={6}
-                    placeholder="Interne Notizen hinzufügen..."
+                    placeholder={t('fields.notesPlaceholder')}
                     className="w-full"
                   />
                   <div className="flex items-center gap-2">
@@ -762,7 +712,7 @@ export default function PublicationDetailPage() {
                       className="bg-primary hover:bg-primary-hover text-white h-9 px-4"
                     >
                       <CheckIcon className="h-4 w-4 mr-2" />
-                      {updatePublication.isPending ? 'Speichern...' : 'Speichern'}
+                      {updatePublication.isPending ? t('actions.saving') : t('actions.save')}
                     </Button>
                     <Button
                       onClick={handleCancelEditNotes}
@@ -770,7 +720,7 @@ export default function PublicationDetailPage() {
                       className="border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 h-9 px-4"
                     >
                       <XMarkIcon className="h-4 w-4 mr-2" />
-                      Abbrechen
+                      {t('actions.cancel')}
                     </Button>
                   </div>
                 </div>
@@ -778,18 +728,18 @@ export default function PublicationDetailPage() {
                 <div className="space-y-3">
                   {publication.publicNotes && (
                     <div>
-                      <Text className="text-sm font-medium text-zinc-700 mb-1">Öffentliche Notizen</Text>
+                      <Text className="text-sm font-medium text-zinc-700 mb-1">{t('fields.publicNotes')}</Text>
                       <p className="whitespace-pre-wrap text-zinc-700 text-sm">{publication.publicNotes}</p>
                     </div>
                   )}
                   {publication.internalNotes && (
                     <div>
-                      <Text className="text-sm font-medium text-zinc-700 mb-1">Interne Notizen</Text>
+                      <Text className="text-sm font-medium text-zinc-700 mb-1">{t('fields.internalNotes')}</Text>
                       <p className="whitespace-pre-wrap text-zinc-600 text-sm">{publication.internalNotes}</p>
                     </div>
                   )}
                   {!publication.publicNotes && !publication.internalNotes && (
-                    <Text className="text-zinc-500">Keine Notizen vorhanden</Text>
+                    <Text className="text-zinc-500">{t('fields.noNotes')}</Text>
                   )}
                 </div>
               )}
@@ -799,20 +749,20 @@ export default function PublicationDetailPage() {
           {/* Right column - 1/3 width */}
           <div className="space-y-6">
             {/* Details */}
-            <InfoCard title="Details" icon={InformationCircleIcon}>
+            <InfoCard title={t('sections.details')} icon={InformationCircleIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Erstellt:</span>
-                    <span className="ml-2">{formatDate(publication.createdAt)}</span>
+                    <span className="text-zinc-600">{t('fields.created')}</span>
+                    <span className="ml-2">{formatDate(publication.createdAt, 'de-DE', tCommon('unknown'))}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-5 w-5 text-zinc-400 flex-shrink-0" />
                   <div>
-                    <span className="text-zinc-600">Aktualisiert:</span>
-                    <span className="ml-2">{formatDate(publication.updatedAt)}</span>
+                    <span className="text-zinc-600">{t('fields.updated')}</span>
+                    <span className="ml-2">{formatDate(publication.updatedAt, 'de-DE', tCommon('unknown'))}</span>
                   </div>
                 </div>
                 {publication.verified && (
@@ -820,9 +770,9 @@ export default function PublicationDetailPage() {
                     <div className="flex items-center gap-3">
                       <CheckBadgeIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
                       <div className="flex items-baseline gap-2">
-                        <Text className="font-medium text-green-700">Verifiziert</Text>
-                        {publication.verifiedAt && formatDate(publication.verifiedAt) !== 'Unbekannt' && (
-                          <Text className="text-sm text-zinc-600">· {formatDate(publication.verifiedAt)}</Text>
+                        <Text className="font-medium text-green-700">{t('fields.verifiedAt')}</Text>
+                        {publication.verifiedAt && formatDate(publication.verifiedAt, 'de-DE', tCommon('unknown')) !== tCommon('unknown') && (
+                          <Text className="text-sm text-zinc-600">· {formatDate(publication.verifiedAt, 'de-DE', tCommon('unknown'))}</Text>
                         )}
                       </div>
                     </div>
@@ -834,12 +784,12 @@ export default function PublicationDetailPage() {
             {/* Themenschwerpunkte & Branchen */}
             {((publication.focusAreas && publication.focusAreas.length > 0) ||
               (publication.targetIndustries && publication.targetIndustries.length > 0)) && (
-              <InfoCard title="Themenschwerpunkte & Branchen" icon={HashtagIcon}>
+              <InfoCard title={t('sections.topicsAndIndustries')} icon={HashtagIcon}>
                 <div className="space-y-4">
                   {publication.focusAreas && publication.focusAreas.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Themenschwerpunkte ({publication.focusAreas.length})
+                        {t('fields.topics', { count: publication.focusAreas.length })}
                       </Text>
                       <div className="flex flex-wrap gap-2">
                         {publication.focusAreas.map((area, index) => (
@@ -853,7 +803,7 @@ export default function PublicationDetailPage() {
                   {publication.targetIndustries && publication.targetIndustries.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Zielbranchen ({publication.targetIndustries.length})
+                        {t('fields.industries', { count: publication.targetIndustries.length })}
                       </Text>
                       <div className="flex flex-wrap gap-2">
                         {publication.targetIndustries.map((industry, index) => (
@@ -870,20 +820,20 @@ export default function PublicationDetailPage() {
 
             {/* Monitoring-Konfiguration */}
             {publication.monitoringConfig && (
-              <InfoCard title="Monitoring-Konfiguration" icon={ClockIcon}>
+              <InfoCard title={t('sections.monitoring')} icon={ClockIcon}>
                 <div className="space-y-4">
                   {/* Status */}
                   <div className="flex items-center justify-between">
-                    <Text className="text-sm font-medium text-zinc-500">Status</Text>
+                    <Text className="text-sm font-medium text-zinc-500">{t('fields.monitoringStatus')}</Text>
                     <Badge color={publication.monitoringConfig.isEnabled ? "green" : "zinc"}>
-                      {publication.monitoringConfig.isEnabled ? 'Aktiviert' : 'Deaktiviert'}
+                      {publication.monitoringConfig.isEnabled ? t('fields.monitoringEnabled') : t('fields.monitoringDisabled')}
                     </Badge>
                   </div>
 
                   {publication.monitoringConfig.lastChecked && (
                     <div className="flex items-center justify-between">
-                      <Text className="text-sm font-medium text-zinc-500">Zuletzt geprüft</Text>
-                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastChecked)}</Text>
+                      <Text className="text-sm font-medium text-zinc-500">{t('fields.lastChecked')}</Text>
+                      <Text className="text-sm">{formatDate(publication.monitoringConfig.lastChecked, 'de-DE', tCommon('unknown'))}</Text>
                     </div>
                   )}
 
@@ -891,7 +841,7 @@ export default function PublicationDetailPage() {
                   {publication.monitoringConfig.rssFeedUrls && publication.monitoringConfig.rssFeedUrls.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        RSS Feeds ({publication.monitoringConfig.rssFeedUrls.length})
+                        {t('fields.rssFeeds', { count: publication.monitoringConfig.rssFeedUrls.length })}
                       </Text>
                       <div className="space-y-1">
                         {publication.monitoringConfig.rssFeedUrls.map((url, index) => (
@@ -913,7 +863,7 @@ export default function PublicationDetailPage() {
                   {publication.monitoringConfig.keywords && publication.monitoringConfig.keywords.length > 0 && (
                     <div>
                       <Text className="text-sm font-medium text-zinc-500 mb-2">
-                        Keywords ({publication.monitoringConfig.keywords.length})
+                        {t('fields.keywords', { count: publication.monitoringConfig.keywords.length })}
                       </Text>
                       <div className="flex flex-wrap gap-2">
                         {publication.monitoringConfig.keywords.map((keyword, index) => (
@@ -930,16 +880,13 @@ export default function PublicationDetailPage() {
 
             {/* Editions */}
             {publication.editions && publication.editions.length > 0 && (
-              <InfoCard title="Ausgaben & Editionen" icon={NewspaperIcon}>
+              <InfoCard title={t('sections.editions')} icon={NewspaperIcon}>
                 <div className="space-y-3">
                   {publication.editions.map((edition, index) => (
                     <div key={index} className="border-l-2 border-zinc-200 pl-3">
                       <Text className="font-medium">{edition.name}</Text>
                       <Text className="text-sm text-zinc-500">
-                        {edition.type === 'regional' ? 'Regional' :
-                         edition.type === 'language' ? 'Sprache' :
-                         edition.type === 'demographic' ? 'Zielgruppe' :
-                         'Thematisch'}
+                        {t(`editionTypes.${edition.type}`)}
                       </Text>
                       {edition.countries && edition.countries.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
@@ -967,7 +914,7 @@ export default function PublicationDetailPage() {
           publication={publication}
           onSuccess={() => {
             setShowEditModal(false);
-            toastService.success('Publikation erfolgreich aktualisiert');
+            toastService.success(t('toasts.updateSuccess'));
           }}
         />
       )}

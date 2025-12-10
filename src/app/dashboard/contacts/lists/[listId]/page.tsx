@@ -1,9 +1,10 @@
 // src/app/dashboard/contacts/lists/[listId]/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { listsService } from "@/lib/firebase/lists-service";
@@ -42,7 +43,6 @@ import {
   NewspaperIcon,
   ChartBarIcon,
   LanguageIcon,
-  SparklesIcon,
   CheckCircleIcon
 } from "@heroicons/react/24/outline";
 
@@ -74,10 +74,10 @@ function InfoCard({
 function formatDate(timestamp: any) {
   if (!timestamp || !timestamp.toDate) return 'N/A';
   return timestamp.toDate().toLocaleString('de-DE', {
-    day: '2-digit', 
-    month: '2-digit', 
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-    hour: '2-digit', 
+    hour: '2-digit',
     minute: '2-digit'
   });
 }
@@ -100,6 +100,8 @@ function formatContactName(contact: Contact | ContactEnhanced): string {
 }
 
 export default function ListDetailPage() {
+  const t = useTranslations('lists.detail');
+  const tCategories = useTranslations('lists.categories');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const params = useParams();
@@ -120,9 +122,9 @@ export default function ListDetailPage() {
   // Extended company type labels
   const extendedCompanyTypeLabels = {
     ...companyTypeLabels,
-    'publisher': 'Verlag',
-    'media_house': 'Medienhaus',
-    'agency': 'Agentur'
+    'publisher': t('companyTypes.publisher'),
+    'media_house': t('companyTypes.media_house'),
+    'agency': t('companyTypes.agency')
   };
 
   // Lade zusätzliche Daten (Tags, Publications, Contacts)
@@ -155,12 +157,12 @@ export default function ListDetailPage() {
     setRefreshing(true);
     try {
       await listsService.refreshDynamicList(list.id!);
-      toastService.success('Dynamische Liste erfolgreich aktualisiert');
+      toastService.success(t('toasts.refreshSuccess'));
       // Invalidiere die Listen-Queries um aktualisierte Daten zu laden
       queryClient.invalidateQueries({ queryKey: ['list', list.id] });
       queryClient.invalidateQueries({ queryKey: ['lists'] });
     } catch (error) {
-      toastService.error('Liste konnte nicht aktualisiert werden');
+      toastService.error(t('toasts.refreshError'));
     } finally {
       setRefreshing(false);
     }
@@ -177,25 +179,19 @@ export default function ListDetailPage() {
       },
       {
         onSuccess: () => {
-          toastService.success('Liste erfolgreich aktualisiert');
+          toastService.success(t('toasts.updateSuccess'));
           setShowEditModal(false);
         },
         onError: () => {
-          toastService.error('Liste konnte nicht aktualisiert werden');
+          toastService.error(t('toasts.updateError'));
         },
       }
     );
   };
 
   const getCategoryLabel = (category?: string) => {
-    const labels: { [key: string]: string } = {
-      press: 'Presse',
-      customers: 'Kunden',
-      partners: 'Partner',
-      leads: 'Leads',
-      custom: 'Benutzerdefiniert'
-    };
-    return labels[category || 'custom'] || category || 'Benutzerdefiniert';
+    if (!category || category === 'custom') return tCategories('custom');
+    return tCategories(category as any);
   };
 
   const renderFilterValue = (key: string, value: any): string => {
@@ -205,36 +201,36 @@ export default function ListDetailPage() {
         const tag = tags.find(t => t.id === tagId);
         return tag ? tag.name : tagId;
       });
-      if (tagNames.length === 0) return '—';
+      if (tagNames.length === 0) return t('table.noData');
       if (tagNames.length <= 3) return tagNames.join(', ');
-      return `${tagNames.slice(0, 3).join(', ')} (+${tagNames.length - 3} weitere)`;
+      return `${tagNames.slice(0, 3).join(', ')} ${t('filterValues.moreItems', { count: tagNames.length - 3 })}`;
     }
-    
+
     // Firmentypen
     if (key === 'companyTypes' && Array.isArray(value)) {
       const typeLabels = value.map(type => extendedCompanyTypeLabels[type as keyof typeof extendedCompanyTypeLabels] || type);
-      if (typeLabels.length === 0) return '—';
+      if (typeLabels.length === 0) return t('table.noData');
       if (typeLabels.length <= 3) return typeLabels.join(', ');
-      return `${typeLabels.slice(0, 3).join(', ')} (+${typeLabels.length - 3} weitere)`;
+      return `${typeLabels.slice(0, 3).join(', ')} ${t('filterValues.moreItems', { count: typeLabels.length - 3 })}`;
     }
 
     // Länder - mit lesbaren Namen
     if (key === 'countries' && Array.isArray(value)) {
       const countryNames = value.map(code => COUNTRY_NAMES[code] || code);
-      if (countryNames.length === 0) return '—';
+      if (countryNames.length === 0) return t('table.noData');
       if (countryNames.length <= 3) return countryNames.join(', ');
-      return `${countryNames.slice(0, 3).join(', ')} (+${countryNames.length - 3} weitere)`;
+      return `${countryNames.slice(0, 3).join(', ')} ${t('filterValues.moreItems', { count: countryNames.length - 3 })}`;
     }
-    
+
     // Arrays
     if (Array.isArray(value)) {
-      if (value.length === 0) return '—';
+      if (value.length === 0) return t('table.noData');
       if (value.length <= 3) return value.join(', ');
-      return `${value.slice(0, 3).join(', ')} (+${value.length - 3} weitere)`;
+      return `${value.slice(0, 3).join(', ')} ${t('filterValues.moreItems', { count: value.length - 3 })}`;
     }
-    
-    if (typeof value === 'boolean') return value ? 'Ja' : 'Nein';
-    return String(value || '—');
+
+    if (typeof value === 'boolean') return value ? t('filterValues.yes') : t('filterValues.no');
+    return String(value || t('table.noData'));
   };
 
   const renderPublicationFilterValue = (key: string, value: any): string => {
@@ -244,9 +240,9 @@ export default function ListDetailPage() {
         const pub = publications.find(p => p.id === pubId);
         return pub ? pub.title : pubId;
       });
-      if (pubNames.length === 0) return '—';
+      if (pubNames.length === 0) return t('table.noData');
       if (pubNames.length <= 2) return pubNames.join(', ');
-      return `${pubNames.slice(0, 2).join(', ')} (+${pubNames.length - 2} weitere)`;
+      return `${pubNames.slice(0, 2).join(', ')} ${t('filterValues.moreItems', { count: pubNames.length - 2 })}`;
     }
 
     // Publikationstypen
@@ -263,14 +259,7 @@ export default function ListDetailPage() {
 
     // Geografische Reichweite
     if (key === 'geographicScopes' && Array.isArray(value)) {
-      const scopeLabels: Record<string, string> = {
-        'local': 'Lokal',
-        'regional': 'Regional',
-        'national': 'National',
-        'international': 'International',
-        'global': 'Global'
-      };
-      return value.map(scope => scopeLabels[scope] || scope).join(', ');
+      return value.map(scope => t(`geographicScopes.${scope}` as any)).join(', ');
     }
 
     // Sprachen
@@ -281,39 +270,33 @@ export default function ListDetailPage() {
 
     // Verlage
     if (key === 'publisherIds' && Array.isArray(value)) {
-      // Hier könnten wir die Verlagsnamen laden, vorerst nur IDs
-      return `${value.length} Verlage`;
+      return t('filterValues.publisherCount', { count: value.length });
     }
 
     // Metriken
-    if (key === 'minPrintCirculation' || key === 'maxPrintCirculation' || 
+    if (key === 'minPrintCirculation' || key === 'maxPrintCirculation' ||
         key === 'minOnlineVisitors' || key === 'maxOnlineVisitors') {
       return value.toLocaleString('de-DE');
     }
 
     // Status
     if (key === 'status' && Array.isArray(value)) {
-      const statusLabels: Record<string, string> = {
-        'active': 'Aktiv',
-        'inactive': 'Inaktiv',
-        'discontinued': 'Eingestellt'
-      };
-      return value.map(s => statusLabels[s] || s).join(', ');
+      return value.map(s => t(`publicationStatus.${s}` as any)).join(', ');
     }
 
     // Boolean
     if (key === 'onlyVerified' && typeof value === 'boolean') {
-      return value ? 'Nur verifizierte' : 'Alle';
+      return value ? t('filterValues.verified') : t('filterValues.all');
     }
 
     // Arrays allgemein
     if (Array.isArray(value)) {
-      if (value.length === 0) return '—';
+      if (value.length === 0) return t('table.noData');
       if (value.length <= 3) return value.join(', ');
-      return `${value.slice(0, 3).join(', ')} (+${value.length - 3})`;
+      return `${value.slice(0, 3).join(', ')} ${t('filterValues.moreItems', { count: value.length - 3 })}`;
     }
 
-    return String(value || '—');
+    return String(value || t('table.noData'));
   };
 
   const getFilterIcon = (key: string) => {
@@ -354,48 +337,19 @@ export default function ListDetailPage() {
   };
 
   const getFilterLabel = (key: string) => {
-    const labelMap: { [key: string]: string } = {
-      companyTypes: 'Firmentypen',
-      industries: 'Branchen',
-      countries: 'Länder',
-      tagIds: 'Tags',
-      positions: 'Positionen',
-      hasEmail: 'Mit E-Mail',
-      hasPhone: 'Mit Telefon',
-      beats: 'Ressorts',
-      publications: 'Publikationen'
-    };
-    return labelMap[key] || key;
+    return t(`filters.${key}` as any);
   };
 
   const getPublicationFilterLabel = (key: string) => {
-    const labelMap: { [key: string]: string } = {
-      publicationIds: 'Spezifische Publikationen',
-      types: 'Publikationstypen',
-      formats: 'Formate',
-      frequencies: 'Erscheinungsweise',
-      countries: 'Zielländer',
-      geographicScopes: 'Reichweite',
-      languages: 'Sprachen',
-      focusAreas: 'Themenschwerpunkte',
-      targetIndustries: 'Zielbranchen',
-      minPrintCirculation: 'Min. Druckauflage',
-      maxPrintCirculation: 'Max. Druckauflage',
-      minOnlineVisitors: 'Min. Online-Besucher',
-      maxOnlineVisitors: 'Max. Online-Besucher',
-      onlyVerified: 'Verifizierung',
-      status: 'Status',
-      publisherIds: 'Verlage'
-    };
-    return labelMap[key] || key;
+    return t(`publicationFilters.${key}` as any);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Listendetails...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -404,7 +358,7 @@ export default function ListDetailPage() {
   if (queryError) {
     return (
       <div className="p-8">
-        <Alert type="error" title="Fehler" message="Fehler beim Laden der Listendetails." />
+        <Alert type="error" title={t('error')} message={t('error')} />
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/contacts/lists')}
@@ -414,7 +368,7 @@ export default function ListDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('buttons.backToOverview')}
           </Button>
         </div>
       </div>
@@ -424,7 +378,7 @@ export default function ListDetailPage() {
   if (!list) {
     return (
       <div className="p-8 text-center">
-        <Text>Liste konnte nicht gefunden werden.</Text>
+        <Text>{t('notFound')}</Text>
         <div className="mt-4">
           <Button
             onClick={() => router.push('/dashboard/contacts/lists')}
@@ -434,7 +388,7 @@ export default function ListDetailPage() {
                        h-10 px-6 rounded-lg transition-colors inline-flex items-center"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Zurück zur Übersicht
+            {t('buttons.backToOverview')}
           </Button>
         </div>
       </div>
@@ -449,7 +403,7 @@ export default function ListDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <Heading>{list.name}</Heading>
-              <Text className="mt-1">{list.description || 'Keine Beschreibung'}</Text>
+              <Text className="mt-1">{list.description || t('noDescription')}</Text>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -460,7 +414,7 @@ export default function ListDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {t('buttons.back')}
               </Button>
               {list.type === 'dynamic' && (
                 <Button
@@ -472,7 +426,7 @@ export default function ListDetailPage() {
                              h-10 px-6 rounded-lg transition-colors inline-flex items-center"
                 >
                   <ArrowPathIcon className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                  Aktualisieren
+                  {t('buttons.refresh')}
                 </Button>
               )}
               <Button
@@ -482,7 +436,7 @@ export default function ListDetailPage() {
                            h-10 px-6 rounded-lg transition-colors inline-flex items-center"
               >
                 <PencilIcon className="h-4 w-4 mr-2" />
-                Liste bearbeiten
+                {t('buttons.edit')}
               </Button>
             </div>
           </div>
@@ -495,19 +449,19 @@ export default function ListDetailPage() {
               <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-semibold text-zinc-900">
-                    Enthaltene Kontakte
+                    {t('sections.contacts')}
                   </h3>
                   <Badge color="blue">{list.contactCount || 0}</Badge>
                 </div>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <Table className="pl-6">
                   <TableHead>
                     <TableRow>
-                      <TableHeader className="pl-6">Name</TableHeader>
-                      <TableHeader>Position</TableHeader>
-                      <TableHeader>Firma</TableHeader>
+                      <TableHeader className="pl-6">{t('table.name')}</TableHeader>
+                      <TableHeader>{t('table.position')}</TableHeader>
+                      <TableHeader>{t('table.company')}</TableHeader>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -515,29 +469,29 @@ export default function ListDetailPage() {
                       contactsInList.map(contact => (
                         <TableRow key={contact.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium pl-6">
-                            <Link 
-                              href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
+                            <Link
+                              href={`/dashboard/contacts/crm/contacts/${contact.id}`}
                               className="text-primary hover:text-primary-hover hover:underline"
                             >
                               {formatContactName(contact)}
                             </Link>
                             {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
                               <Badge color="purple" className="ml-2 text-xs">
-                                Journalist
+                                {t('badges.journalist')}
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell>{contact.position || <Text>—</Text>}</TableCell>
+                          <TableCell>{contact.position || <Text>{t('table.noData')}</Text>}</TableCell>
                           <TableCell>
                             {contact.companyId && contact.companyName ? (
-                              <Link 
-                                href={`/dashboard/contacts/crm/companies/${contact.companyId}`} 
+                              <Link
+                                href={`/dashboard/contacts/crm/companies/${contact.companyId}`}
                                 className="text-primary hover:text-primary-hover hover:underline"
                               >
                                 {contact.companyName}
                               </Link>
                             ) : (
-                              <Text>—</Text>
+                              <Text>{t('table.noData')}</Text>
                             )}
                           </TableCell>
                         </TableRow>
@@ -546,10 +500,10 @@ export default function ListDetailPage() {
                       <TableRow>
                         <TableCell colSpan={3} className="text-center py-12">
                           <UsersIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                          <Text>Diese Liste enthält keine Kontakte.</Text>
+                          <Text>{t('empty.noContacts')}</Text>
                           {list.type === 'dynamic' && (
                             <Text className="mt-2 text-sm">
-                              Die Filterkriterien ergeben keine Treffer.
+                              {t('empty.dynamicNoMatch')}
                             </Text>
                           )}
                         </TableCell>
@@ -564,14 +518,14 @@ export default function ListDetailPage() {
           {/* Sidebar mit Details */}
           <div className="space-y-6">
             {/* Listen-Details */}
-            <InfoCard title="Details" icon={ListBulletIcon}>
+            <InfoCard title={t('sections.details')} icon={ListBulletIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <ListBulletIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Typ:</span>
+                    <span className="text-gray-600">{t('details.type')}:</span>
                     <span className="ml-2">
-                      {list.type === 'dynamic' ? 'Dynamische Liste' : 'Statische Liste'}
+                      {list.type === 'dynamic' ? t('listTypes.dynamic') : t('listTypes.static')}
                     </span>
                   </div>
                 </div>
@@ -579,7 +533,7 @@ export default function ListDetailPage() {
                 <div className="flex items-center gap-3">
                   <HashtagIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Kategorie:</span>
+                    <span className="text-gray-600">{t('details.category')}:</span>
                     <span className="ml-2">{getCategoryLabel(list.category)}</span>
                   </div>
                 </div>
@@ -587,7 +541,7 @@ export default function ListDetailPage() {
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Erstellt:</span>
+                    <span className="text-gray-600">{t('details.created')}:</span>
                     <span className="ml-2">{formatDate(list.createdAt)}</span>
                   </div>
                 </div>
@@ -595,26 +549,26 @@ export default function ListDetailPage() {
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Aktualisiert:</span>
+                    <span className="text-gray-600">{t('details.updated')}:</span>
                     <span className="ml-2">{formatDate(list.lastUpdated || list.updatedAt)}</span>
                   </div>
                 </div>
               </div>
             </InfoCard>
-            
+
             {/* Aktive Filter */}
             {list.type === 'dynamic' && list.filters && (
               <>
                 {/* Basis-Filter */}
-                {Object.entries(list.filters).some(([key, value]) => 
+                {Object.entries(list.filters).some(([key, value]) =>
                   key !== 'publications' && value && (!Array.isArray(value) || value.length > 0)
                 ) && (
-                  <InfoCard title="Basis-Filter" icon={FunnelIcon}>
+                  <InfoCard title={t('sections.baseFilters')} icon={FunnelIcon}>
                     <ul className="space-y-3">
                       {Object.entries(list.filters).map(([key, value]) => {
                         if (key === 'publications') return null;
                         if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                        
+
                         const Icon = getFilterIcon(key);
                         return (
                           <li key={key} className="flex items-start gap-3">
@@ -635,14 +589,14 @@ export default function ListDetailPage() {
                 )}
 
                 {/* Publikations-Filter */}
-                {list.filters.publications && Object.entries(list.filters.publications).some(([_, value]) => 
+                {list.filters.publications && Object.entries(list.filters.publications).some(([_, value]) =>
                   value && (!Array.isArray(value) || value.length > 0)
                 ) && (
-                  <InfoCard title="Publikations-Filter" icon={NewspaperIcon}>
+                  <InfoCard title={t('sections.publicationFilters')} icon={NewspaperIcon}>
                     <ul className="space-y-3">
                       {Object.entries(list.filters.publications).map(([key, value]) => {
                         if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                        
+
                         const Icon = getPublicationFilterIcon(key);
                         return (
                           <li key={key} className="flex items-start gap-3">

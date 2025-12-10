@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,8 @@ export function ComposeEmail({
   onClose,
   onSend
 }: ComposeEmailProps) {
+  const t = useTranslations('inbox.compose');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
@@ -304,9 +307,9 @@ ${responsiveForwardedHtml}`;
         {/* Header */}
         <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-semibold">
-            {mode === 'new' && 'Neue E-Mail'}
-            {mode === 'reply' && 'Antworten'}
-            {mode === 'forward' && 'Weiterleiten'}
+            {mode === 'new' && t('title.new')}
+            {mode === 'reply' && t('title.reply')}
+            {mode === 'forward' && t('title.forward')}
           </h2>
         </div>
 
@@ -316,16 +319,16 @@ ${responsiveForwardedHtml}`;
             {/* Email address selector */}
             <div className="grid grid-cols-2 gap-4">
               <Field>
-                <Label>Absender Email</Label>
+                <Label>{t('fields.from')}</Label>
                 <Select
                   value={selectedEmailAddressId}
                   onChange={(e) => setSelectedEmailAddressId(e.target.value)}
                   disabled={loadingAddresses || emailAddresses.length === 0}
                 >
                   {loadingAddresses ? (
-                    <option>Lade E-Mail-Adressen...</option>
+                    <option>{t('loading.addresses')}</option>
                   ) : emailAddresses.length === 0 ? (
-                    <option>Keine E-Mail-Adressen verfügbar</option>
+                    <option>{t('empty.noAddresses')}</option>
                   ) : (
                     emailAddresses.map(addr => (
                       <option key={addr.id} value={addr.id}>
@@ -337,19 +340,19 @@ ${responsiveForwardedHtml}`;
               </Field>
 
               <Field>
-                <Label>Signatur</Label>
+                <Label>{t('fields.signature')}</Label>
                 <Select
                   value={selectedSignatureId}
                   onChange={(e) => setSelectedSignatureId(e.target.value)}
                   disabled={loadingSignatures || signatures.length === 0}
                 >
-                  <option value="">Keine Signatur</option>
+                  <option value="">{t('fields.noSignature')}</option>
                   {loadingSignatures ? (
-                    <option>Lade Signaturen...</option>
+                    <option>{t('loading.signatures')}</option>
                   ) : (
                     signatures.map(sig => (
                       <option key={sig.id} value={sig.id}>
-                        {sig.name} {sig.isDefault ? '(Standard)' : ''}
+                        {sig.name} {sig.isDefault ? t('signature.default') : ''}
                       </option>
                     ))
                   )}
@@ -362,7 +365,7 @@ ${responsiveForwardedHtml}`;
               type="email"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              placeholder="An"
+              placeholder={t('fields.to')}
               required
             />
 
@@ -371,7 +374,7 @@ ${responsiveForwardedHtml}`;
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Betreff"
+              placeholder={t('fields.subject')}
               required
             />
 
@@ -380,7 +383,7 @@ ${responsiveForwardedHtml}`;
               <EmailEditor
                 content={content}
                 onChange={setContent}
-                placeholder="Nachricht"
+                placeholder={t('fields.message')}
                 minHeight="300px"
               />
 
@@ -388,15 +391,15 @@ ${responsiveForwardedHtml}`;
               {attachments.length > 0 && (
                 <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Anhänge:</span>
-                    <span className="text-xs text-gray-500">{attachments.length} Datei{attachments.length !== 1 ? 'en' : ''}</span>
+                    <span className="text-sm font-medium text-gray-700">{t('attachments.title')}</span>
+                    <span className="text-xs text-gray-500">{t('attachments.count', { count: attachments.length, plural: attachments.length !== 1 ? 'en' : '' })}</span>
                   </div>
                   <div className="space-y-1">
                     {attachments.map((attachment, index) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                         <div className="flex items-center gap-2 min-w-0">
                           <PaperClipIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 truncate">{attachment.metadata?.fileName || 'Unbekannte Datei'}</span>
+                          <span className="text-sm text-gray-700 truncate">{attachment.metadata?.fileName || t('attachments.unknown')}</span>
                         </div>
                         <button
                           type="button"
@@ -414,7 +417,7 @@ ${responsiveForwardedHtml}`;
               {selectedSignatureId && (
                 <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="mb-2">
-                    <span className="text-sm font-medium text-gray-700">Signatur-Vorschau (wird unter der Nachricht eingefügt):</span>
+                    <span className="text-sm font-medium text-gray-700">{t('signature.previewTitle')}</span>
                   </div>
                   <div className="text-sm text-gray-600 border-t pt-2">
                     {(() => {
@@ -444,20 +447,20 @@ ${responsiveForwardedHtml}`;
               type="button"
               onClick={() => setShowAssetModal(true)}
               className="p-2 hover:bg-gray-200 rounded-lg text-gray-600"
-              title="Anhänge hinzufügen"
+              title={t('attachments.add')}
             >
               <PaperClipIcon className="h-5 w-5" />
             </button>
             {attachments.length > 0 && (
               <span className="text-sm text-gray-600">
-                {attachments.length} Anhang{attachments.length !== 1 ? 'e' : ''}
+                {t('attachments.count', { count: attachments.length, plural: attachments.length !== 1 ? 'e' : '' })}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-3">
             <Button plain onClick={onClose}>
-              Abbrechen
+              {t('actions.cancel')}
             </Button>
             <Button
               onClick={handleSend}
@@ -465,7 +468,7 @@ ${responsiveForwardedHtml}`;
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-              {sending ? 'Wird gesendet...' : 'Senden'}
+              {sending ? t('actions.sending') : t('actions.send')}
             </Button>
           </div>
         </div>

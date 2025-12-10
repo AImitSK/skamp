@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Heading, Subheading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface APIKeyManagerProps {
 }
 
 export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
+  const t = useTranslations('admin.api.keyManager');
   const { user } = useAuth();
   const { currentOrganization, loading: orgLoading } = useOrganization();
   const organizationId = currentOrganization?.id;
@@ -77,7 +79,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       setAPIKeys(result.data || result || []);
     } catch (err) {
       console.error('Failed to load API keys:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load API keys');
+      setError(err instanceof Error ? err.message : t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
 
   const handleCreateKey = async (request: APIKeyCreateRequest) => {
     if (!user) {
-      setError('User not authenticated');
+      setError(t('errors.noAuth'));
       return;
     }
 
@@ -115,7 +117,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       return newKey;
     } catch (err) {
       console.error('Failed to create API key:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create API key');
+      setError(err instanceof Error ? err.message : t('errors.createFailed'));
       throw err; // Re-throw to let the modal handle the error
     }
   };
@@ -131,7 +133,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
     setDeleteConfirm(null);
 
     if (!user) {
-      setError('User not authenticated');
+      setError(t('errors.noAuth'));
       return;
     }
 
@@ -154,7 +156,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       await loadAPIKeys();
     } catch (err) {
       console.error('Failed to delete API key:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete API key');
+      setError(err instanceof Error ? err.message : t('errors.deleteFailed'));
     }
   };
 
@@ -189,7 +191,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       <div className={className}>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <Text className="text-yellow-800">
-            Keine Organisation verfügbar. Bitte prüfen Sie Ihre Berechtigung.
+            {t('noOrganization')}
           </Text>
         </div>
       </div>
@@ -201,9 +203,9 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Subheading level={2}>API-Schlüssel</Subheading>
+          <Subheading level={2}>{t('title')}</Subheading>
           <Text className="mt-2 text-zinc-500 dark:text-zinc-400">
-            Erstelle und verwalte API-Keys für externe Integrationen
+            {t('description')}
           </Text>
         </div>
         <button
@@ -211,7 +213,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
           className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-6 py-2 text-sm font-medium"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
-          Neuen API-Key erstellen
+          {t('createButton')}
         </button>
       </div>
 
@@ -224,21 +226,21 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
 
       {/* API Keys List */}
       {apiKeys.length === 0 ? (
-        <div 
+        <div
           className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg"
           style={{ backgroundColor: '#f1f0e2' }}
         >
           <KeyIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <Subheading level={3}>Noch keine API-Keys</Subheading>
+          <Subheading level={3}>{t('empty.title')}</Subheading>
           <Text className="mt-2 text-gray-500">
-            Erstelle deinen ersten API-Key um externe Integrationen zu ermöglichen.
+            {t('empty.description')}
           </Text>
-          <button 
+          <button
             className="mt-4 inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
             onClick={() => setShowCreateModal(true)}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Ersten API-Key erstellen
+            {t('empty.button')}
           </button>
         </div>
       ) : (
@@ -257,7 +259,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
                     <div className="flex items-center gap-3">
                       <Text className="font-semibold text-gray-900">{apiKey.name}</Text>
                       <Badge color={apiKey.isActive ? 'green' : 'red'}>
-                        {apiKey.isActive ? 'Aktiv' : 'Inaktiv'}
+                        {apiKey.isActive ? t('status.active') : t('status.inactive')}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
@@ -277,11 +279,11 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
 
               {/* Permissions */}
               <div className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-2">Berechtigungen:</Text>
+                <Text className="text-sm font-medium text-gray-700 mb-2">{t('permissions')}</Text>
                 <div className="flex flex-wrap gap-2">
                   {apiKey.permissions.map((permission) => (
-                    <Badge 
-                      key={permission} 
+                    <Badge
+                      key={permission}
                       color={getPermissionBadgeColor(permission)}
                       className="text-xs"
                     >
@@ -294,19 +296,19 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
               {/* Usage Statistics */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-300">
                 <div>
-                  <Text className="text-xs text-gray-500">Gesamt</Text>
+                  <Text className="text-xs text-gray-500">{t('usage.total')}</Text>
                   <Text className="font-semibold">{apiKey.usage.totalRequests.toLocaleString()}</Text>
                 </div>
                 <div>
-                  <Text className="text-xs text-gray-500">Diese Stunde</Text>
+                  <Text className="text-xs text-gray-500">{t('usage.thisHour')}</Text>
                   <Text className="font-semibold">{apiKey.usage.requestsThisHour}</Text>
                 </div>
                 <div>
-                  <Text className="text-xs text-gray-500">Heute</Text>
+                  <Text className="text-xs text-gray-500">{t('usage.today')}</Text>
                   <Text className="font-semibold">{apiKey.usage.requestsToday}</Text>
                 </div>
                 <div>
-                  <Text className="text-xs text-gray-500">Rate Limit</Text>
+                  <Text className="text-xs text-gray-500">{t('usage.rateLimit')}</Text>
                   <Text className="font-semibold">{apiKey.rateLimit.requestsPerHour}/h</Text>
                 </div>
               </div>
@@ -331,23 +333,22 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">API-Key löschen</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('delete.title')}</h3>
             <p className="text-gray-600 mb-6">
-              Möchtest du den API-Key <strong>"{deleteConfirm.keyName}"</strong> wirklich löschen? 
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              {t('delete.message', { name: deleteConfirm.keyName })}
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
               >
-                Abbrechen
+                {t('delete.cancel')}
               </button>
               <button
                 onClick={handleDeleteKey}
                 className="inline-flex items-center bg-red-600 hover:bg-red-700 text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
               >
-                Löschen
+                {t('delete.confirm')}
               </button>
             </div>
           </div>

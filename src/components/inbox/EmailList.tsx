@@ -2,6 +2,7 @@
 "use client";
 
 import { EmailThread } from '@/types/inbox-enhanced';
+import { useTranslations } from 'next-intl';
 import clsx from 'clsx';
 
 interface EmailListProps {
@@ -19,7 +20,8 @@ export function EmailList({
   loading = false,
   onStar
 }: EmailListProps) {
-  
+  const t = useTranslations('inbox.emailList');
+
   // Helper function to safely convert Firestore timestamp to Date
   const toDate = (timestamp: any): Date | null => {
     if (!timestamp) return null;
@@ -55,10 +57,10 @@ export function EmailList({
       const diffHours = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHours / 24);
       
-      if (diffSecs < 60) return 'gerade eben';
-      if (diffMins < 60) return `vor ${diffMins} Minute${diffMins !== 1 ? 'n' : ''}`;
-      if (diffHours < 24) return `vor ${diffHours} Stunde${diffHours !== 1 ? 'n' : ''}`;
-      if (diffDays < 7) return `vor ${diffDays} Tag${diffDays !== 1 ? 'en' : ''}`;
+      if (diffSecs < 60) return t('timeAgo.justNow');
+      if (diffMins < 60) return t('timeAgo.minutesAgo', { minutes: diffMins, plural: diffMins !== 1 ? 'n' : '' });
+      if (diffHours < 24) return t('timeAgo.hoursAgo', { hours: diffHours, plural: diffHours !== 1 ? 'n' : '' });
+      if (diffDays < 7) return t('timeAgo.daysAgo', { days: diffDays, plural: diffDays !== 1 ? 'en' : '' });
       
       return date.toLocaleDateString('de-DE');
     } catch (error) {
@@ -87,7 +89,7 @@ export function EmailList({
       {threads.map((thread) => {
         const isSelected = selectedThread?.id === thread.id;
         const hasUnread = thread.unreadCount > 0;
-        const primaryParticipant = thread.participants[0] || { email: 'Unbekannt' };
+        const primaryParticipant = thread.participants[0] || { email: t('unknown') };
         
         return (
           <div
