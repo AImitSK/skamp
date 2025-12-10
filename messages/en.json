@@ -3441,6 +3441,41 @@
         "senderRequired": "Sender email must be selected",
         "subjectRequired": "Subject required"
       }
+    },
+    "recipientManager": {
+      "noListsDefined": "No distribution lists defined for this campaign",
+      "additionalRecipients": "Additional Recipients",
+      "addRecipientButton": "Add Recipient Manually",
+      "removeRecipient": "Remove",
+      "total": "Total",
+      "recipientCount": "{count, plural, =0 {No recipients} one {# recipient} other {# recipients}}",
+      "loadListsError": "Error loading distribution lists",
+      "recipientAdded": "{firstName} {lastName} added",
+      "validation": {
+        "salutationRequired": "Salutation is required",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "emailRequired": "Email is required",
+        "invalidEmail": "Invalid email address"
+      },
+      "modal": {
+        "title": "Add Recipient",
+        "salutationLabel": "Salutation *",
+        "selectPlaceholder": "Please select",
+        "salutation": {
+          "mr": "Mr.",
+          "ms": "Ms.",
+          "diverse": "Other"
+        },
+        "titleLabel": "Title (optional)",
+        "titlePlaceholder": "e.g., Dr., Prof.",
+        "firstNameLabel": "First Name *",
+        "lastNameLabel": "Last Name *",
+        "emailLabel": "Email Address *",
+        "companyLabel": "Company (optional)",
+        "cancelButton": "Cancel",
+        "addButton": "Add"
+      }
     }
   }
 }

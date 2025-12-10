@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ export default function RecipientManager({
   onRemoveManualRecipient,
   recipientCount
 }: RecipientManagerProps) {
+  const t = useTranslations('email.recipientManager');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [campaignLists, setCampaignLists] = useState<DistributionList[]>([]);
@@ -107,7 +109,7 @@ export default function RecipientManager({
         setCampaignLists(loadedLists);
       } catch (error) {
         console.error('❌ RecipientManager: Fehler beim Laden:', error);
-        toastService.error('Fehler beim Laden der Verteilerlisten');
+        toastService.error(t('loadListsError'));
       } finally {
         setLoading(false);
       }
@@ -142,7 +144,7 @@ export default function RecipientManager({
           </div>
         ) : campaignLists.length === 0 ? (
           <div className="p-4 text-center text-gray-500 border border-dashed rounded-lg">
-            Keine Verteilerlisten für diese Kampagne definiert
+            {t('noListsDefined')}
           </div>
         ) : (
           <div className="space-y-2">
@@ -169,7 +171,7 @@ export default function RecipientManager({
       <div>
         <h4 className="font-medium mb-3 flex items-center gap-2">
           <UserPlusIcon className="h-5 w-5 text-gray-500" />
-          Zusätzliche Empfänger
+          {t('additionalRecipients')}
         </h4>
 
         {manualRecipients.length > 0 && (
@@ -195,7 +197,7 @@ export default function RecipientManager({
                 <button
                   onClick={() => onRemoveManualRecipient(recipient.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded flex-shrink-0"
-                  title="Entfernen"
+                  title={t('removeRecipient')}
                 >
                   <XMarkIcon className="h-5 w-5 text-gray-500" />
                 </button>
@@ -210,15 +212,15 @@ export default function RecipientManager({
           className="flex items-center gap-2"
         >
           <UserPlusIcon className="h-4 w-4" />
-          Empfänger manuell hinzufügen
+          {t('addRecipientButton')}
         </Button>
       </div>
 
       {/* Gesamt-Zusammenfassung */}
       {totalRecipientCount > 0 && (
         <div className="bg-blue-50 rounded-lg p-4 flex items-center justify-between">
-          <span className="text-sm font-medium text-blue-900">Gesamt</span>
-          <span className="text-sm font-bold text-blue-900">{totalRecipientCount} Empfänger</span>
+          <span className="text-sm font-medium text-blue-900">{t('total')}</span>
+          <span className="text-sm font-bold text-blue-900">{t('recipientCount', { count: totalRecipientCount })}</span>
         </div>
       )}
 
@@ -242,6 +244,7 @@ function AddRecipientModal({
   onClose: () => void;
   onAdd: (recipient: Omit<ManualRecipient, 'id'>) => void;
 }) {
+  const t = useTranslations('email.recipientManager');
   const [formData, setFormData] = useState({
     salutation: '',
     title: '',
@@ -256,18 +259,18 @@ function AddRecipientModal({
     const newErrors: Record<string, string> = {};
 
     if (!formData.salutation.trim()) {
-      newErrors.salutation = 'Anrede ist erforderlich';
+      newErrors.salutation = t('validation.salutationRequired');
     }
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Vorname ist erforderlich';
+      newErrors.firstName = t('validation.firstNameRequired');
     }
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Nachname ist erforderlich';
+      newErrors.lastName = t('validation.lastNameRequired');
     }
     if (!formData.email.trim()) {
-      newErrors.email = 'E-Mail ist erforderlich';
+      newErrors.email = t('validation.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ungültige E-Mail-Adresse';
+      newErrors.email = t('validation.invalidEmail');
     }
 
     setErrors(newErrors);
@@ -280,7 +283,7 @@ function AddRecipientModal({
         ...formData,
         isValid: true
       });
-      toastService.success(`${formData.firstName} ${formData.lastName} hinzugefügt`);
+      toastService.success(t('recipientAdded', { firstName: formData.firstName, lastName: formData.lastName }));
       onClose();
       // Reset form
       setFormData({
@@ -299,14 +302,14 @@ function AddRecipientModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <DialogTitle className="px-6 pt-6">Empfänger hinzufügen</DialogTitle>
+      <DialogTitle className="px-6 pt-6">{t('modal.title')}</DialogTitle>
       <DialogBody className="px-6 pb-2">
         <div className="space-y-4">
           {/* Anrede und Titel */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="salutation" className="block text-sm font-medium mb-1">
-                Anrede *
+                {t('modal.salutationLabel')}
               </label>
               <select
                 id="salutation"
@@ -316,10 +319,10 @@ function AddRecipientModal({
                   errors.salutation ? 'border-red-300' : 'border-gray-300'
                 }`}
               >
-                <option value="">Bitte wählen</option>
-                <option value="Herr">Herr</option>
-                <option value="Frau">Frau</option>
-                <option value="Divers">Divers</option>
+                <option value="">{t('modal.selectPlaceholder')}</option>
+                <option value="Herr">{t('modal.salutation.mr')}</option>
+                <option value="Frau">{t('modal.salutation.ms')}</option>
+                <option value="Divers">{t('modal.salutation.diverse')}</option>
               </select>
               {errors.salutation && (
                 <p className="text-sm text-red-600 mt-1">{errors.salutation}</p>
@@ -327,13 +330,13 @@ function AddRecipientModal({
             </div>
             <div>
               <label htmlFor="title" className="block text-sm font-medium mb-1">
-                Titel (optional)
+                {t('modal.titleLabel')}
               </label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="z.B. Dr., Prof."
+                placeholder={t('modal.titlePlaceholder')}
               />
             </div>
           </div>
@@ -342,7 +345,7 @@ function AddRecipientModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium mb-1">
-                Vorname *
+                {t('modal.firstNameLabel')}
               </label>
               <Input
                 id="firstName"
@@ -356,7 +359,7 @@ function AddRecipientModal({
             </div>
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium mb-1">
-                Nachname *
+                {t('modal.lastNameLabel')}
               </label>
               <Input
                 id="lastName"
@@ -372,7 +375,7 @@ function AddRecipientModal({
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              E-Mail-Adresse *
+              {t('modal.emailLabel')}
             </label>
             <Input
               id="email"
@@ -388,7 +391,7 @@ function AddRecipientModal({
 
           <div>
             <label htmlFor="companyName" className="block text-sm font-medium mb-1">
-              Firma (optional)
+              {t('modal.companyLabel')}
             </label>
             <Input
               id="companyName"
@@ -399,10 +402,10 @@ function AddRecipientModal({
         </div>
       </DialogBody>
       <DialogActions className="px-6 pb-6">
-        <Button plain onClick={onClose}>Abbrechen</Button>
+        <Button plain onClick={onClose}>{t('modal.cancelButton')}</Button>
         <Button onClick={handleSubmit}>
           <UserPlusIcon />
-          Hinzufügen
+          {t('modal.addButton')}
         </Button>
       </DialogActions>
     </Dialog>

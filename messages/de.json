@@ -3441,6 +3441,41 @@
         "senderRequired": "Absender-Email muss ausgewählt werden",
         "subjectRequired": "Betreff erforderlich"
       }
+    },
+    "recipientManager": {
+      "noListsDefined": "Keine Verteilerlisten für diese Kampagne definiert",
+      "additionalRecipients": "Zusätzliche Empfänger",
+      "addRecipientButton": "Empfänger manuell hinzufügen",
+      "removeRecipient": "Entfernen",
+      "total": "Gesamt",
+      "recipientCount": "{count, plural, =0 {Keine Empfänger} one {# Empfänger} other {# Empfänger}}",
+      "loadListsError": "Fehler beim Laden der Verteilerlisten",
+      "recipientAdded": "{firstName} {lastName} hinzugefügt",
+      "validation": {
+        "salutationRequired": "Anrede ist erforderlich",
+        "firstNameRequired": "Vorname ist erforderlich",
+        "lastNameRequired": "Nachname ist erforderlich",
+        "emailRequired": "E-Mail ist erforderlich",
+        "invalidEmail": "Ungültige E-Mail-Adresse"
+      },
+      "modal": {
+        "title": "Empfänger hinzufügen",
+        "salutationLabel": "Anrede *",
+        "selectPlaceholder": "Bitte wählen",
+        "salutation": {
+          "mr": "Herr",
+          "ms": "Frau",
+          "diverse": "Divers"
+        },
+        "titleLabel": "Titel (optional)",
+        "titlePlaceholder": "z.B. Dr., Prof.",
+        "firstNameLabel": "Vorname *",
+        "lastNameLabel": "Nachname *",
+        "emailLabel": "E-Mail-Adresse *",
+        "companyLabel": "Firma (optional)",
+        "cancelButton": "Abbrechen",
+        "addButton": "Hinzufügen"
+      }
     }
   }
 }
