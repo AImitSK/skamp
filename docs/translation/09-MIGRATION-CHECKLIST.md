@@ -24,12 +24,12 @@ Diese werden überall verwendet - Keys landen in `common` Namespace.
 | Status | Datei | Beschreibung | Agent |
 |--------|-------|--------------|-------|
 | ⏭️ | `src/components/DashboardNav.tsx` | Haupt-Navigation (existiert nicht) | - |
-| ⬜ | `src/components/Sidebar.tsx` | Sidebar (falls vorhanden) | - |
+| ⏭️ | `src/components/Sidebar.tsx` | Sidebar (UI-Primitive, keine Texte) | - |
 | ✅ | `src/components/SettingsNav.tsx` | Settings-Navigation | 2025-12-10 |
 | ✅ | `src/components/AdminNav.tsx` | Admin-Navigation | 2025-12-10 |
 | ✅ | `src/app/dashboard/layout.tsx` | Dashboard-Layout (Navigation, Mobile-Menu, SuperAdmin) | 2025-12-10 |
-| ⬜ | `src/components/ui/dialog.tsx` | Dialog-Komponente | - |
-| ⬜ | `src/components/ui/dropdown.tsx` | Dropdown-Menüs | - |
+| ⏭️ | `src/components/ui/dialog.tsx` | Dialog (nur 1 sr-only Text) | - |
+| ⏭️ | `src/components/ui/dropdown.tsx` | Dropdown (keine Texte) | - |
 
 ---
 
@@ -58,7 +58,7 @@ Kernfunktionalität der App.
 | ✅ | `src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx` | `campaigns` | 2025-12-10 |
 | ✅ | `src/app/dashboard/pr-tools/campaigns/campaigns/[campaignId]/page.tsx` | `campaigns` | 2025-12-10 |
 | ✅ | `src/components/pr/campaign/*.tsx` | `campaigns` | 2025-12-10 |
-| ⬜ | `src/components/pr/email/*.tsx` | `email` | - |
+| 🔄 | `src/components/pr/email/*.tsx` | `email` | 2025-12-10 (4/11) |
 
 ---
 
@@ -80,7 +80,7 @@ Kernfunktionalität der App.
 | ✅ | `src/app/dashboard/analytics/monitoring/page.tsx` | `monitoring` | 2025-12-10 |
 | ✅ | `src/app/dashboard/analytics/monitoring/[campaignId]/page.tsx` | `monitoring` | 2025-12-10 |
 | ✅ | `src/app/dashboard/analytics/reporting/page.tsx` | `reporting` | 2025-12-10 |
-| 🔄 | `src/components/monitoring/*.tsx` | `monitoring` | 2025-12-10 (teilweise) |
+| ✅ | `src/components/monitoring/*.tsx` | `monitoring` | 2025-12-10 |
 
 ---
 
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 48 (Round 11: +Strategy Documents, Super-Admin Monitoring/Settings/Matching komplett)
-- **Teilweise:** 1 (Monitoring Components - Keys angelegt)
-- **Übersprungen:** 1 (DashboardNav existiert nicht)
+- **Abgeschlossen:** 49 (Round 12: +Monitoring Komponenten komplett)
+- **Teilweise:** 1 (PR-Email 4/11)
+- **Übersprungen:** 4 (DashboardNav, Sidebar, UI-Dialog, UI-Dropdown)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~7 (PR-Email-Komponenten, Sidebar, UI-Komponenten)
+- **Ausstehend:** 7 PR-Email Komponenten
 
 ---
 
