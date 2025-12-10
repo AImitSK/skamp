@@ -3389,5 +3389,58 @@
         }
       }
     }
+  },
+  "email": {
+    "stepIndicator": {
+      "steps": {
+        "content": "Content",
+        "details": "Details",
+        "send": "Send"
+      }
+    },
+    "variablesModal": {
+      "title": "Variables for personalized greetings",
+      "exampleLabel": "Example",
+      "insertTooltip": "Insert variable",
+      "copyTooltip": "Copy variable",
+      "copyManually": "Please copy manually: {variable}"
+    },
+    "step1": {
+      "signature": {
+        "title": "Email Signature",
+        "tooltip": "The selected signature will be automatically added at the end of the email.",
+        "loading": "Loading signatures...",
+        "none": "No signature",
+        "default": "Default",
+        "empty": "No signatures available yet. Create signatures in",
+        "settingsLink": "Email Settings"
+      }
+    },
+    "composer": {
+      "header": {
+        "title": "Email Send"
+      },
+      "pipeline": {
+        "title": "Pipeline distribution for project \"{project}\"",
+        "description": "After successful send, the project will automatically transition to the monitoring phase.",
+        "status": {
+          "sent": "Sent",
+          "failed": "Error",
+          "sending": "Sending...",
+          "pending": "Pending"
+        }
+      },
+      "footer": {
+        "cancel": "Cancel",
+        "back": "Back",
+        "next": "Next"
+      },
+      "validation": {
+        "minCharacters": "At least {count} characters required",
+        "recipientsRequired": "At least one recipient required",
+        "senderRequired": "Sender email must be selected",
+        "subjectRequired": "Subject required"
+      }
+    }
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { MonitoringSuggestion, MonitoringSource } from '@/types/monitoring';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +88,9 @@ export function MonitoringSuggestionsTable({
   onMarkSpam,
   loading
 }: Props) {
+  const t = useTranslations('monitoring.suggestions');
+  const tCommon = useTranslations('common');
+
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<MonitoringSuggestion | null>(null);

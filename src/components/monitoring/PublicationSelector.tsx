@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,8 @@ export function PublicationSelector({
   onPublicationSelect,
   onDataLoad
 }: PublicationSelectorProps) {
+  const t = useTranslations('monitoring.publicationSelector');
+
   const [lookupData, setLookupData] = useState<PublicationLookupResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -122,16 +125,16 @@ export function PublicationSelector({
                   <BuildingOfficeIcon className="h-4 w-4 text-gray-500" />
                   <Text className="text-gray-700">{lookupData.company.name}</Text>
                   {lookupData.company.type === 'media_house' && (
-                    <Badge color="blue">Medienhaus</Badge>
+                    <Badge color="blue">{t('mediaHouse')}</Badge>
                   )}
                   {lookupData.company.type === 'publisher' && (
-                    <Badge color="purple">Verlag</Badge>
+                    <Badge color="purple">{t('publisher')}</Badge>
                   )}
                 </div>
               )}
               {lookupData.contact.mediaInfo?.beat && (
                 <Text className="text-sm text-gray-600 mt-1">
-                  Ressort: {lookupData.contact.mediaInfo.beat}
+                  {t('beat')}: {lookupData.contact.mediaInfo.beat}
                 </Text>
               )}
             </div>
@@ -141,12 +144,12 @@ export function PublicationSelector({
         {/* Publikations-Auswahl */}
         {lookupData.publications.length > 0 ? (
           <Field>
-            <Label>Publikation *</Label>
+            <Label>{t('publication')}</Label>
             <Select
               value={manualMode ? 'manual' : (selectedIndex !== null ? selectedIndex.toString() : '')}
               onChange={(e) => handlePublicationChange(e.target.value)}
             >
-              <option value="">Bitte wählen...</option>
+              <option value="">{t('selectPlaceholder')}</option>
               {lookupData.publications.map((pub, idx) => (
                 <option key={idx} value={idx}>
                   {pub.name}
@@ -155,7 +158,7 @@ export function PublicationSelector({
                   {pub.source === 'company' && ' ✓'}
                 </option>
               ))}
-              <option value="manual">Andere Publikation eingeben...</option>
+              <option value="manual">{t('manualEntry')}</option>
             </Select>
 
             {selectedIndex !== null && lookupData.publications[selectedIndex] && (
@@ -163,17 +166,17 @@ export function PublicationSelector({
                 {lookupData.publications[selectedIndex].source === 'company' && (
                   <Text className="text-xs text-green-600 flex items-center gap-1">
                     <CheckCircleIcon className="h-3 w-3" />
-                    Vollständige Daten aus Medienhaus-Profil
+                    {t('completeData')}
                   </Text>
                 )}
                 {lookupData.publications[selectedIndex].source === 'crm' && (
                   <Text className="text-xs text-amber-600">
-                    ⚠️ Basis-Daten aus CRM - Empfehlung: Publikationsdaten vervollständigen
+                    {t('basicData')}
                   </Text>
                 )}
                 {lookupData.publications[selectedIndex].focusAreas && (
                   <Text className="text-xs text-gray-500">
-                    Themenschwerpunkte: {lookupData.publications[selectedIndex].focusAreas?.join(', ')}
+                    {t('focusAreas')}: {lookupData.publications[selectedIndex].focusAreas?.join(', ')}
                   </Text>
                 )}
               </div>
@@ -181,9 +184,9 @@ export function PublicationSelector({
           </Field>
         ) : (
           <Field>
-            <Label>Publikation *</Label>
+            <Label>{t('publication')}</Label>
             <Text className="text-sm text-gray-500 mb-2">
-              Keine Publikationen beim Kontakt hinterlegt
+              {t('noPublications')}
             </Text>
             <Input
               type="text"
@@ -197,12 +200,12 @@ export function PublicationSelector({
         {/* Manuelle Eingabe wenn "Andere" gewählt */}
         {manualMode && (
           <Field>
-            <Label>Publikationsname eingeben</Label>
+            <Label>{t('enterManually')}</Label>
             <Input
               type="text"
               value={manualPublication}
               onChange={(e) => handleManualPublicationChange(e.target.value)}
-              placeholder="z.B. Süddeutsche Zeitung"
+              placeholder={t('manualPlaceholder')}
               autoFocus
             />
           </Field>
@@ -214,18 +217,18 @@ export function PublicationSelector({
   // Kein CRM-Match - Manuelle Eingabe
   return (
     <Field>
-      <Label>Publikation *</Label>
+      <Label>{t('publication')}</Label>
       <Text className="text-sm text-amber-500 mb-2">
-        Kein CRM-Eintrag für {recipientEmail} gefunden
+        {t('noCrmEntry', { email: recipientEmail })}
       </Text>
       <Input
         type="text"
         value={manualPublication}
         onChange={(e) => handleManualPublicationChange(e.target.value)}
-        placeholder="Publikationsname eingeben..."
+        placeholder={t('enterManually')}
       />
       <Text className="text-xs text-gray-500 mt-1">
-        Tipp: Legen Sie einen Kontakt im CRM an für automatische Datenübernahme
+        {t('crmTip')}
       </Text>
     </Field>
   );

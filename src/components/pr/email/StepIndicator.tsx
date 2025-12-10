@@ -1,8 +1,9 @@
 // src/components/pr/email/StepIndicator.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { ComposerStep } from '@/types/email-composer';
-import { 
+import {
   CheckCircleIcon,
   DocumentTextIcon,
   UserGroupIcon,
@@ -18,41 +19,43 @@ interface StepIndicatorProps {
 
 interface Step {
   id: ComposerStep;
-  name: string;
+  nameKey: string;
   icon: any;
 }
 
-const steps: Step[] = [
+const stepDefinitions: Step[] = [
   {
     id: 1,
-    name: 'Anschreiben',
+    nameKey: 'stepIndicator.steps.content',
     icon: DocumentTextIcon
   },
   {
     id: 2,
-    name: 'Details',
+    nameKey: 'stepIndicator.steps.details',
     icon: UserGroupIcon
   },
   {
     id: 3,
-    name: 'Versand',
+    nameKey: 'stepIndicator.steps.send',
     icon: PaperAirplaneIcon
   }
 ];
 
-export default function StepIndicator({ 
-  currentStep, 
-  completedSteps, 
-  onStepClick 
+export default function StepIndicator({
+  currentStep,
+  completedSteps,
+  onStepClick
 }: StepIndicatorProps) {
+  const t = useTranslations('email');
+
   return (
     <div className="px-6 py-3 border-b bg-gray-50">
       <div className="flex items-center justify-center gap-8">
-        {steps.map((step, index) => {
+        {stepDefinitions.map((step, index) => {
           const Icon = step.icon;
           const isActive = step.id === currentStep;
           const isCompleted = completedSteps.has(step.id);
-          const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+          const currentStepIndex = stepDefinitions.findIndex(s => s.id === currentStep);
           const stepIndex = index;
           const isPast = stepIndex < currentStepIndex;
           
@@ -90,11 +93,11 @@ export default function StepIndicator({
                   isCompleted && !isActive && "text-green-600",
                   !isActive && !isCompleted && "text-gray-400"
                 )}>
-                  {step.name}
+                  {t(step.nameKey)}
                 </span>
               </button>
               
-              {index < steps.length - 1 && (
+              {index < stepDefinitions.length - 1 && (
                 <div className={clsx(
                   "w-12 h-0.5 mx-2 transition-colors",
                   isPast || isCompleted ? "bg-green-500" : "bg-gray-200"

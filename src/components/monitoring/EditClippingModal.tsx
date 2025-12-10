@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,8 @@ interface EditClippingModalProps {
 }
 
 export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditClippingModalProps) {
+  const t = useTranslations('monitoring.editClippingModal');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const updateClipping = useUpdateClipping();
@@ -71,12 +74,12 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
-      <DialogTitle>Veröffentlichung bearbeiten</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogBody>
             <div className="space-y-4">
               <Field>
-                <Label>Empfänger</Label>
+                <Label>{t('recipient')}</Label>
                 <Input
                   value={`${send.recipientName} (${send.recipientEmail})`}
                   disabled
@@ -86,7 +89,7 @@ export function EditClippingModal({ send, clipping, onClose, onSuccess }: EditCl
               {/* Artikel-URL und Titel - 2-spaltig */}
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <Label>Artikel-URL *</Label>
+                  <Label>{t('articleUrl')}</Label>
                   <Input
                     type="url"
                     value={formData.articleUrl}

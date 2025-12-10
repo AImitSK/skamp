@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { EMAIL_VARIABLES } from '@/types/email-composer';
 import {
@@ -16,6 +17,7 @@ interface VariablesModalProps {
 }
 
 export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesModalProps) {
+  const t = useTranslations('email.variablesModal');
   const [copiedVariable, setCopiedVariable] = useState<string | null>(null);
 
   const handleCopy = async (variable: string) => {
@@ -41,7 +43,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
           }
         } catch (err) {
           console.error('Fallback copy failed:', err);
-          alert(`Bitte kopieren Sie manuell: ${variable}`);
+          alert(t('copyManually', { variable }));
           return;
         } finally {
           textArea.remove();
@@ -55,7 +57,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
       setTimeout(() => setCopiedVariable(null), 2000);
     } catch (error) {
       console.error('Fehler beim Kopieren:', error);
-      alert(`Bitte kopieren Sie manuell: ${variable}`);
+      alert(t('copyManually', { variable }));
     }
   };
 
@@ -72,7 +74,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
     <Dialog open={isOpen} onClose={onClose} size="lg">
       <div className="flex flex-col p-6">
         <DialogTitle className="-mx-6 -mt-6 px-6 py-4 border-b">
-          Variablen für personalisierte Anrede
+          {t('title')}
         </DialogTitle>
 
         <DialogBody className="-mx-6 px-6 py-4">
@@ -101,7 +103,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
                     )}
 
                     <p className="text-sm text-gray-500 mt-2">
-                      <span className="font-medium">Beispiel:</span>{' '}
+                      <span className="font-medium">{t('exampleLabel')}:</span>{' '}
                       <span className="italic">{variable.example}</span>
                     </p>
                   </div>
@@ -109,7 +111,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
                   <div className="ml-4">
                     <div
                       className="p-2 text-gray-400 hover:text-[#005fab] transition-colors"
-                      title={onInsert ? "Variable einfügen" : "Variable kopieren"}
+                      title={onInsert ? t('insertTooltip') : t('copyTooltip')}
                     >
                       {copiedVariable === variable.key ? (
                         <CheckIcon className="h-5 w-5 text-green-600" />

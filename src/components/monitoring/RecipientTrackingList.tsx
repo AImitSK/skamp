@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailCampaignSend } from '@/types/email';
 import { MediaClipping } from '@/types/monitoring';
 import { Text } from '@/components/ui/text';
@@ -38,6 +39,8 @@ interface RecipientTrackingListProps {
 }
 
 export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: RecipientTrackingListProps) {
+  const t = useTranslations('monitoring.recipientTracking');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -116,32 +119,32 @@ export function RecipientTrackingList({ sends, campaignId, onSendUpdated }: Reci
 
   const getStatusBadge = (send: EmailCampaignSend) => {
     if (send.status === 'bounced') {
-      return <Badge color="red">Bounce</Badge>;
+      return <Badge color="red">{t('statusLabels.bounce')}</Badge>;
     }
     if (send.status === 'failed') {
-      return <Badge color="red">Fehler</Badge>;
+      return <Badge color="red">{t('statusLabels.failed')}</Badge>;
     }
     if (send.status === 'clicked') {
-      return <Badge color="green">Geklickt</Badge>;
+      return <Badge color="green">{t('statusLabels.clicked')}</Badge>;
     }
     if (send.status === 'opened') {
-      return <Badge color="blue">Geöffnet</Badge>;
+      return <Badge color="blue">{t('statusLabels.opened')}</Badge>;
     }
     if (send.status === 'delivered') {
-      return <Badge color="blue">Zugestellt</Badge>;
+      return <Badge color="blue">{t('statusLabels.delivered')}</Badge>;
     }
-    return <Badge color="zinc">Versendet</Badge>;
+    return <Badge color="zinc">{t('statusLabels.sent')}</Badge>;
   };
 
   const getPublishStatusBadge = (send: EmailCampaignSend) => {
     if (send.publishedStatus === 'published') {
-      return <Badge color="green">Veröffentlicht</Badge>;
+      return <Badge color="green">{t('statusLabels.published')}</Badge>;
     }
     if (send.publishedStatus === 'pending') {
-      return <Badge color="yellow">Ausstehend</Badge>;
+      return <Badge color="yellow">{t('statusLabels.pending')}</Badge>;
     }
     if (send.publishedStatus === 'declined') {
-      return <Badge color="red">Abgelehnt</Badge>;
+      return <Badge color="red">{t('statusLabels.declined')}</Badge>;
     }
     return null;
   };

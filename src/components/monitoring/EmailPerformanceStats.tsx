@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { EmailCampaignSend } from '@/types/email';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
@@ -16,6 +17,8 @@ interface EmailPerformanceStatsProps {
 }
 
 export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
+  const t = useTranslations('monitoring.emailPerformance');
+
   const stats = {
     total: sends.length,
     sent: sends.filter(s => s.status === 'sent' || s.status === 'delivered' || s.status === 'opened' || s.status === 'clicked').length,
@@ -32,24 +35,24 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
   const clickRate = stats.total > 0 ? Math.round((stats.clicked / stats.total) * 100) : 0;
 
   const pieData = [
-    { name: 'Geklickt', value: stats.clicked, color: '#005fab' },
-    { name: 'Geöffnet', value: stats.opened - stats.clicked, color: '#3397d7' },
-    { name: 'Zugestellt', value: stats.notOpened, color: '#add8f0' },
-    { name: 'Bounced', value: stats.bounced, color: '#DEDC00' }
+    { name: t('clicked'), value: stats.clicked, color: '#005fab' },
+    { name: t('opened'), value: stats.opened - stats.clicked, color: '#3397d7' },
+    { name: t('delivered'), value: stats.notOpened, color: '#add8f0' },
+    { name: t('bounced'), value: stats.bounced, color: '#DEDC00' }
   ].filter(item => item.value > 0);
 
   const funnelData = [
-    { label: 'Versendet', value: stats.sent, width: 100 },
-    { label: 'Zugestellt', value: stats.delivered, width: stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0 },
-    { label: 'Geöffnet', value: stats.opened, width: stats.sent > 0 ? (stats.opened / stats.sent) * 100 : 0 },
-    { label: 'Geklickt', value: stats.clicked, width: stats.sent > 0 ? (stats.clicked / stats.sent) * 100 : 0 }
+    { label: t('sent'), value: stats.sent, width: 100 },
+    { label: t('delivered'), value: stats.delivered, width: stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0 },
+    { label: t('opened'), value: stats.opened, width: stats.sent > 0 ? (stats.opened / stats.sent) * 100 : 0 },
+    { label: t('clicked'), value: stats.clicked, width: stats.sent > 0 ? (stats.clicked / stats.sent) * 100 : 0 }
   ];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Subheading className="mb-4">Status-Verteilung</Subheading>
+          <Subheading className="mb-4">{t('statusDistribution')}</Subheading>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -79,7 +82,7 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <Subheading className="mb-4">E-Mail Funnel</Subheading>
+          <Subheading className="mb-4">{t('emailFunnel')}</Subheading>
           <div className="space-y-3 mt-8">
             {funnelData.map((item, idx) => {
               const percentage = Math.round(item.width);
@@ -117,28 +120,28 @@ export function EmailPerformanceStats({ sends }: EmailPerformanceStatsProps) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <Text className="text-sm text-gray-600">Öffnungsrate</Text>
+          <Text className="text-sm text-gray-600">{t('openRate')}</Text>
           <div className="text-2xl font-semibold text-gray-900 mt-1">
             {openRate}%
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <Text className="text-sm text-gray-600">Klickrate</Text>
+          <Text className="text-sm text-gray-600">{t('clickRate')}</Text>
           <div className="text-2xl font-semibold text-gray-900 mt-1">
             {clickRate}%
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <Text className="text-sm text-gray-600">Engagement</Text>
+          <Text className="text-sm text-gray-600">{t('engagement')}</Text>
           <div className="text-2xl font-semibold text-gray-900 mt-1">
             {stats.opened + stats.clicked}
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <Text className="text-sm text-gray-600">Bounce-Rate</Text>
+          <Text className="text-sm text-gray-600">{t('bounceRate')}</Text>
           <div className="text-2xl font-semibold text-gray-900 mt-1">
             {stats.total > 0 ? Math.round((stats.bounced / stats.total) * 100) : 0}%
           </div>

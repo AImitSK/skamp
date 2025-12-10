@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation } from '@/types/email-composer';
 import { EmailSignature } from '@/types/email-enhanced';
@@ -25,6 +26,7 @@ export default function Step1Content({
   validation,
   campaign
 }: Step1ContentProps) {
+  const t = useTranslations('email.step1');
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id || '';
 
@@ -102,8 +104,8 @@ ich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen..."
           {/* Email-Signatur Auswahl */}
           <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
             <div className="flex items-center gap-2 mb-3">
-              <h4 className="text-sm font-semibold text-gray-900">E-Mail-Signatur</h4>
-              <InfoTooltip content="Die ausgewählte Signatur wird automatisch am Ende der E-Mail eingefügt." />
+              <h4 className="text-sm font-semibold text-gray-900">{t('signature.title')}</h4>
+              <InfoTooltip content={t('signature.tooltip')} />
             </div>
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
@@ -112,20 +114,20 @@ ich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen..."
               disabled={loadingSignatures}
             >
               <option value="">
-                {loadingSignatures ? 'Signaturen werden geladen...' : 'Keine Signatur verwenden'}
+                {loadingSignatures ? t('signature.loading') : t('signature.none')}
               </option>
               {signatures.map((signature) => (
                 <option key={signature.id} value={signature.id}>
                   {signature.name}
-                  {signature.isDefault ? ' (Standard)' : ''}
+                  {signature.isDefault ? ` (${t('signature.default')})` : ''}
                 </option>
               ))}
             </select>
             {!loadingSignatures && signatures.length === 0 && (
               <p className="text-xs text-gray-500 mt-2">
-                Noch keine Signaturen vorhanden. Erstellen Sie Signaturen in den{' '}
+                {t('signature.empty')}{' '}
                 <a href="/dashboard/settings/email" className="text-[#005fab] hover:underline">
-                  E-Mail-Einstellungen
+                  {t('signature.settingsLink')}
                 </a>.
               </p>
             )}

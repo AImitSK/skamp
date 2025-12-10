@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogBody, DialogActions, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,9 @@ interface MarkPublishedModalProps {
 }
 
 export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: MarkPublishedModalProps) {
+  const t = useTranslations('monitoring.markPublishedModal');
+  const tEdit = useTranslations('monitoring.editClippingModal');
+  const tCommon = useTranslations('common');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const markAsPublished = useMarkAsPublished();
@@ -137,7 +141,7 @@ export function MarkPublishedModal({ send, campaignId, onClose, onSuccess }: Mar
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
-      <DialogTitle>Als veröffentlicht markieren</DialogTitle>
+      <DialogTitle>{t('title')}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogBody>
           <div className="space-y-4">

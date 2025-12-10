@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useReducer } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import {
   EmailComposerState,
@@ -246,13 +247,14 @@ interface EmailComposerProps {
   onPipelineComplete?: (campaignId: string) => void;  // Pipeline-Callback
 }
 
-export default function EmailComposer({ 
-  campaign, 
-  onClose, 
+export default function EmailComposer({
+  campaign,
+  onClose,
   onSent,
   projectMode = false,
   onPipelineComplete
 }: EmailComposerProps) {
+  const t = useTranslations('email.composer');
   const [state, dispatch] = useReducer(
     composerReducer,
     { campaignId: campaign.id!, campaignTitle: campaign.title },
@@ -289,7 +291,7 @@ export default function EmailComposer({
           isValid: bodyLength >= DEFAULT_COMPOSER_CONFIG.validation.minBodyLength,
           errors: {
             body: bodyLength < DEFAULT_COMPOSER_CONFIG.validation.minBodyLength
-              ? `Mindestens ${DEFAULT_COMPOSER_CONFIG.validation.minBodyLength} Zeichen erforderlich`
+              ? t('validation.minCharacters', { count: DEFAULT_COMPOSER_CONFIG.validation.minBodyLength })
               : undefined
           }
         } as StepValidation['step1'];
@@ -303,9 +305,9 @@ export default function EmailComposer({
         return {
           isValid: hasRecipients && hasEmailAddress && hasSubject,
           errors: {
-            recipients: !hasRecipients ? 'Mindestens ein Empfänger erforderlich' : undefined,
-            emailAddress: !hasEmailAddress ? 'Absender-Email muss ausgewählt werden' : undefined,
-            subject: !hasSubject ? 'Betreff erforderlich' : undefined
+            recipients: !hasRecipients ? t('validation.recipientsRequired') : undefined,
+            emailAddress: !hasEmailAddress ? t('validation.senderRequired') : undefined,
+            subject: !hasSubject ? t('validation.subjectRequired') : undefined
           }
         } as StepValidation['step2'];
 
@@ -415,7 +417,7 @@ export default function EmailComposer({
       <div className="border-b px-6 py-4">
         <div className="mb-4">
           <h2 className="text-lg overflow-hidden text-ellipsis whitespace-nowrap">
-            <span className="font-bold">E-Mail-Versand:</span>{' '}
+            <span className="font-bold">{t('header.title')}:</span>{' '}
             <span className="font-normal">{campaign.title}</span>
           </h2>
         </div>
@@ -435,11 +437,11 @@ export default function EmailComposer({
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
             <p className="font-medium text-blue-900">
-              Pipeline-Distribution für Projekt &ldquo;{campaign.projectTitle}&rdquo;
+              {t('pipeline.title', { project: campaign.projectTitle || '' })}
             </p>
           </div>
           <p className="text-sm text-blue-700">
-            Nach erfolgreichem Versand wird das Projekt automatisch zur Monitoring-Phase weitergeleitet.
+            {t('pipeline.description')}
           </p>
           
           {campaign.distributionStatus && (
@@ -447,12 +449,12 @@ export default function EmailComposer({
               <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
                 campaign.distributionStatus.status === 'sent' ? 'bg-green-50 text-green-700 ring-green-600/20' :
                 campaign.distributionStatus.status === 'failed' ? 'bg-red-50 text-red-700 ring-red-600/20' :
-                campaign.distributionStatus.status === 'sending' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 
+                campaign.distributionStatus.status === 'sending' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
                 'bg-gray-50 text-gray-700 ring-gray-600/20'
               }`}>
-                {campaign.distributionStatus.status === 'sent' ? 'Versendet' :
-                 campaign.distributionStatus.status === 'failed' ? 'Fehler' :
-                 campaign.distributionStatus.status === 'sending' ? 'Versende...' : 'Ausstehend'}
+                {campaign.distributionStatus.status === 'sent' ? t('pipeline.status.sent') :
+                 campaign.distributionStatus.status === 'failed' ? t('pipeline.status.failed') :
+                 campaign.distributionStatus.status === 'sending' ? t('pipeline.status.sending') : t('pipeline.status.pending')}
               </span>
               {campaign.distributionStatus.sentAt && (
                 <span className="text-xs text-blue-600">
@@ -478,18 +480,18 @@ export default function EmailComposer({
               onClick={onClose}
               className="px-4 py-2 text-gray-700 hover:text-gray-900"
             >
-              Abbrechen
+              {t('footer.cancel')}
             </button>
-            
+
             {state.currentStep > 1 && (
               <button
                 onClick={() => navigateToStep((state.currentStep - 1) as ComposerStep)}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
-                Zurück
+                {t('footer.back')}
               </button>
             )}
-            
+
             {state.currentStep < 3 && (
               <button
                 onClick={() => {
@@ -497,16 +499,16 @@ export default function EmailComposer({
                   if (validation.isValid) {
                     navigateToStep((state.currentStep + 1) as ComposerStep);
                   } else {
-                    dispatch({ 
-                      type: 'SET_VALIDATION', 
-                      step: state.currentStep, 
-                      validation 
+                    dispatch({
+                      type: 'SET_VALIDATION',
+                      step: state.currentStep,
+                      validation
                     });
                   }
                 }}
                 className="px-4 py-2 bg-[#005fab] text-white rounded-lg hover:bg-[#004a8c]"
               >
-                Weiter
+                {t('footer.next')}
               </button>
             )}
         </div>
