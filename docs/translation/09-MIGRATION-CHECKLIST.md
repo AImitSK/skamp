@@ -131,7 +131,7 @@ Kernfunktionalität der App.
 | ✅ | `src/app/dashboard/communication/inbox/page.tsx` | `inbox` | 2025-12-10 |
 | ✅ | `src/app/dashboard/communication/notifications/page.tsx` | `notifications` | 2025-12-10 |
 | ✅ | `src/app/dashboard/academy/documentation/page.tsx` | `academy` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/strategy-documents/[documentId]/page.tsx` | `strategy` | - |
+| ✅ | `src/app/dashboard/strategy-documents/[documentId]/page.tsx` | `strategy` | 2025-12-10 |
 
 ---
 
@@ -141,9 +141,9 @@ Kernfunktionalität der App.
 |--------|-------|-----------|-------|
 | ✅ | `src/app/dashboard/super-admin/organizations/page.tsx` | `superadmin` | 2025-12-10 |
 | ✅ | `src/app/dashboard/super-admin/accounts/page.tsx` | `superadmin` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/super-admin/monitoring/page.tsx` | `superadmin` | - |
-| ⬜ | `src/app/dashboard/super-admin/settings/page.tsx` | `superadmin` | - |
-| ⬜ | `src/app/dashboard/super-admin/matching/*.tsx` | `superadmin` | - |
+| ✅ | `src/app/dashboard/super-admin/monitoring/page.tsx` | `superadmin.monitoring` | 2025-12-10 |
+| ✅ | `src/app/dashboard/super-admin/settings/page.tsx` | `superadmin.settings` | 2025-12-10 |
+| ✅ | `src/app/dashboard/super-admin/matching/*.tsx` | `superadmin.matching` | 2025-12-10 |
 
 ---
 
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 44 (Round 10: +Notifications, Academy, Super-Admin Orgs/Accounts mit Komponenten)
+- **Abgeschlossen:** 48 (Round 11: +Strategy Documents, Super-Admin Monitoring/Settings/Matching komplett)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~11
+- **Ausstehend:** ~7 (PR-Email-Komponenten, Sidebar, UI-Komponenten)
 
 ---
 
