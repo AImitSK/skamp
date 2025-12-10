@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   DocumentTextIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -27,6 +27,7 @@ import clsx from 'clsx';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { useTranslations } from 'next-intl';
 
 // Vereinfachte Types ohne position
 export interface BoilerplateSection {
@@ -78,6 +79,7 @@ function InlineEditor({
   initialContent?: string;
   initialMetadata?: any;
 }) {
+  const t = useTranslations('campaigns');
   const [content, setContent] = useState(initialContent);
   const [metadata, setMetadata] = useState(initialMetadata || {
     person: '',
@@ -88,19 +90,19 @@ function InlineEditor({
   const getPlaceholder = () => {
     switch (type) {
       case 'lead':
-        return 'Schreibe hier deinen Lead-Absatz. Beantworte die 5 W-Fragen (Wer, Was, Wann, Wo, Warum) in 40-50 Wörtern...';
+        return t('boilerplates.editor.leadPlaceholder');
       case 'main':
-        return 'Schreibe hier den Haupttext deiner Pressemitteilung. Füge Details, Hintergründe und weitere Informationen hinzu...';
+        return t('boilerplates.editor.mainPlaceholder');
       case 'quote':
-        return 'Gib hier das Zitat ein...';
+        return t('boilerplates.editor.quotePlaceholder');
     }
   };
 
   const getTitle = () => {
     switch (type) {
-      case 'lead': return 'Lead-Absatz erstellen';
-      case 'main': return 'Haupttext erstellen';
-      case 'quote': return 'Zitat hinzufügen';
+      case 'lead': return t('boilerplates.editor.leadTitle');
+      case 'main': return t('boilerplates.editor.mainTitle');
+      case 'quote': return t('boilerplates.editor.quoteTitle');
     }
   };
 
@@ -122,7 +124,7 @@ function InlineEditor({
       {type === 'quote' ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Zitat</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('boilerplates.editor.quote')}</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -133,32 +135,32 @@ function InlineEditor({
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Person</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('boilerplates.editor.person')}</label>
               <input
                 type="text"
                 value={metadata.person}
                 onChange={(e) => setMetadata({...metadata, person: e.target.value})}
-                placeholder="Max Mustermann"
+                placeholder={t('boilerplates.editor.personPlaceholder')}
                 className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('boilerplates.editor.position')}</label>
               <input
                 type="text"
                 value={metadata.role}
                 onChange={(e) => setMetadata({...metadata, role: e.target.value})}
-                placeholder="CEO"
+                placeholder={t('boilerplates.editor.positionPlaceholder')}
                 className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unternehmen</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('boilerplates.editor.company')}</label>
               <input
                 type="text"
                 value={metadata.company}
                 onChange={(e) => setMetadata({...metadata, company: e.target.value})}
-                placeholder="Beispiel GmbH"
+                placeholder={t('boilerplates.editor.companyPlaceholder')}
                 className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -175,7 +177,7 @@ function InlineEditor({
 
       <div className="flex justify-end gap-2 mt-4">
         <Button type="button" plain onClick={onCancel}>
-          Abbrechen
+          {t('boilerplates.editor.cancel')}
         </Button>
         <Button
           type="button"
@@ -183,7 +185,7 @@ function InlineEditor({
           disabled={!content.trim()}
           className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
         >
-          Speichern
+          {t('boilerplates.editor.save')}
         </Button>
       </div>
     </div>
@@ -198,6 +200,7 @@ export default function IntelligentBoilerplateSection({
   initialSections = [],
   onStructuredContentFromAI
 }: IntelligentBoilerplateSectionProps) {
+  const t = useTranslations('campaigns');
   const [sections, setSections] = useState<BoilerplateSection[]>(initialSections);
   const [availableBoilerplates, setAvailableBoilerplates] = useState<Boilerplate[]>([]);
   const [showSelector, setShowSelector] = useState(false);
@@ -400,16 +403,16 @@ export default function IntelligentBoilerplateSection({
         order: order++,
         isLocked: false,
         isCollapsed: false,
-        customTitle: 'Lead-Absatz (KI-generiert)'
+        customTitle: t('boilerplates.aiGenerated.lead')
       });
     }
-    
+
     // Haupttext
     if (structured.bodyParagraphs && structured.bodyParagraphs.length > 0) {
       const mainContent = structured.bodyParagraphs
         .map(p => `<p>${p}</p>`)
         .join('\n\n');
-      
+
       newSections.push({
         id: `ai-main-${Date.now() + 1}`,
         type: 'main',
@@ -417,10 +420,10 @@ export default function IntelligentBoilerplateSection({
         order: order++,
         isLocked: false,
         isCollapsed: false,
-        customTitle: 'Haupttext (KI-generiert)'
+        customTitle: t('boilerplates.aiGenerated.main')
       });
     }
-    
+
     // Zitat
     if (structured.quote && structured.quote.text) {
       newSections.push({
@@ -435,7 +438,7 @@ export default function IntelligentBoilerplateSection({
         order: order++,
         isLocked: false,
         isCollapsed: false,
-        customTitle: 'Zitat (KI-generiert)'
+        customTitle: t('boilerplates.aiGenerated.quote')
       });
     }
     
@@ -530,10 +533,10 @@ export default function IntelligentBoilerplateSection({
 
   const getTypeLabel = (type: BoilerplateSection['type']) => {
     switch (type) {
-      case 'lead': return 'Lead';
-      case 'main': return 'Haupttext';
-      case 'quote': return 'Zitat';
-      case 'boilerplate': return 'Baustein';
+      case 'lead': return t('boilerplates.types.lead');
+      case 'main': return t('boilerplates.types.main');
+      case 'quote': return t('boilerplates.types.quote');
+      case 'boilerplate': return t('boilerplates.types.boilerplate');
     }
   };
 
@@ -543,7 +546,7 @@ export default function IntelligentBoilerplateSection({
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold flex items-center gap-2">
           <DocumentTextIcon className="h-5 w-5 text-gray-500" />
-          Textbausteine & Elemente
+          {t('boilerplates.title')}
         </h3>
         <div className="flex gap-2">
           {/* Dropdown für strukturierte Elemente */}
@@ -558,7 +561,7 @@ export default function IntelligentBoilerplateSection({
               className="text-sm whitespace-nowrap"
             >
               <PlusIcon className="h-4 w-4 mr-1" />
-              Element erstellen
+              {t('boilerplates.createElement')}
               <ChevronDownIcon className={`h-4 w-4 ml-1 transition-transform ${showElementDropdown ? 'rotate-180' : ''}`} />
             </Button>
             {showElementDropdown && (
@@ -573,7 +576,7 @@ export default function IntelligentBoilerplateSection({
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
                   <NewspaperIcon className="h-4 w-4 inline mr-2" />
-                  Lead-Absatz
+                  {t('boilerplates.types.leadParagraph')}
                 </button>
                 <button
                   type="button"
@@ -585,7 +588,7 @@ export default function IntelligentBoilerplateSection({
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
                   <DocumentDuplicateIcon className="h-4 w-4 inline mr-2" />
-                  Haupttext
+                  {t('boilerplates.types.mainText')}
                 </button>
                 <button
                   type="button"
@@ -597,7 +600,7 @@ export default function IntelligentBoilerplateSection({
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
                   <ChatBubbleBottomCenterTextIcon className="h-4 w-4 inline mr-2" />
-                  Zitat
+                  {t('boilerplates.types.quoteText')}
                 </button>
               </div>
             )}
@@ -613,7 +616,7 @@ export default function IntelligentBoilerplateSection({
             className="text-sm whitespace-nowrap"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
-            Baustein hinzufügen
+            {t('boilerplates.addBoilerplate')}
           </Button>
         </div>
       </div>
@@ -641,9 +644,9 @@ export default function IntelligentBoilerplateSection({
       {sections.length === 0 && !showInlineEditor ? (
         <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">Keine Textbausteine oder Elemente hinzugefügt</p>
+          <p className="text-gray-600 font-medium">{t('boilerplates.empty.title')}</p>
           <p className="text-sm text-gray-500 mt-1">
-            Erstelle strukturierte Elemente oder füge wiederverwendbare Textbausteine hinzu
+            {t('boilerplates.empty.description')}
           </p>
           <div className="flex gap-2 justify-center mt-4">
             <Button
@@ -651,7 +654,7 @@ export default function IntelligentBoilerplateSection({
               onClick={() => setShowInlineEditor({ type: 'lead' })}
               className="bg-yellow-500 hover:bg-yellow-600 text-white whitespace-nowrap"
             >
-              Lead erstellen
+              {t('boilerplates.empty.createLead')}
             </Button>
             <Button
               type="button"
@@ -659,7 +662,7 @@ export default function IntelligentBoilerplateSection({
               color="secondary"
               className="whitespace-nowrap"
             >
-              Baustein hinzufügen
+              {t('boilerplates.empty.addBoilerplate')}
             </Button>
           </div>
         </div>
@@ -756,14 +759,14 @@ export default function IntelligentBoilerplateSection({
                                   handleEditStructuredElement(section.id);
                                 }}
                                 className="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
-                                title="Bearbeiten"
+                                title={t('boilerplates.actions.edit')}
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               </button>
                             )}
-                            
+
                             <button
                               type="button"
                               onClick={(e: React.MouseEvent) => {
@@ -771,10 +774,10 @@ export default function IntelligentBoilerplateSection({
                                 handleToggleLock(section.id);
                               }}
                               className="p-1.5 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100"
-                              title={section.isLocked ? "Entsperren" : "Sperren"}
+                              title={section.isLocked ? t('boilerplates.actions.unlock') : t('boilerplates.actions.lock')}
                             >
-                              {section.isLocked ? 
-                                <LockClosedIcon className="h-4 w-4" /> : 
+                              {section.isLocked ?
+                                <LockClosedIcon className="h-4 w-4" /> :
                                 <LockOpenIcon className="h-4 w-4" />
                               }
                             </button>
@@ -785,7 +788,7 @@ export default function IntelligentBoilerplateSection({
                                 handleRemoveSection(section.id);
                               }}
                               className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                              title="Entfernen"
+                              title={t('boilerplates.actions.remove')}
                             >
                               <XMarkIcon className="h-4 w-4" />
                             </button>
@@ -830,16 +833,17 @@ function BoilerplateSelectorModal({
   onClose: () => void;
   existingSectionIds: string[];
 }) {
+  const t = useTranslations('campaigns');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories = [
-    { id: 'all', label: 'Alle Kategorien' },
-    { id: 'company', label: 'Unternehmensbeschreibung' },
-    { id: 'contact', label: 'Kontaktinformationen' },
-    { id: 'legal', label: 'Rechtliche Hinweise' },
-    { id: 'product', label: 'Produktbeschreibung' },
-    { id: 'custom', label: 'Sonstige' }
+    { id: 'all', label: t('boilerplates.modal.categories.all') },
+    { id: 'company', label: t('boilerplates.modal.categories.company') },
+    { id: 'contact', label: t('boilerplates.modal.categories.contact') },
+    { id: 'legal', label: t('boilerplates.modal.categories.legal') },
+    { id: 'product', label: t('boilerplates.modal.categories.product') },
+    { id: 'custom', label: t('boilerplates.modal.categories.custom') }
   ];
 
   const filteredBoilerplates = availableBoilerplates.filter(bp => {
@@ -856,7 +860,7 @@ function BoilerplateSelectorModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="3xl">
-      <DialogTitle className="px-6 py-4">Textbaustein hinzufügen</DialogTitle>
+      <DialogTitle className="px-6 py-4">{t('boilerplates.modal.title')}</DialogTitle>
       <DialogBody className="px-6 pb-6">
         {/* Search */}
         <div className="mb-4">
@@ -866,7 +870,7 @@ function BoilerplateSelectorModal({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Textbausteine suchen..."
+              placeholder={t('boilerplates.modal.searchPlaceholder')}
               className="pl-10"
             />
           </div>
@@ -890,7 +894,7 @@ function BoilerplateSelectorModal({
           {filteredBoilerplates.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Keine passenden Textbausteine gefunden</p>
+              <p>{t('boilerplates.modal.noResults')}</p>
             </div>
           ) : (
             <div className="grid gap-3">
@@ -935,7 +939,7 @@ function BoilerplateSelectorModal({
       </DialogBody>
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>
-          Abbrechen
+          {t('boilerplates.modal.cancel')}
         </Button>
       </DialogActions>
     </Dialog>

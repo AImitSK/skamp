@@ -25,12 +25,14 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { useAuth } from '@/context/AuthContext';
 import { aveSettingsService } from '@/lib/firebase/ave-settings-service';
 import { AVESettings } from '@/types/monitoring';
+import { useTranslations } from 'next-intl';
 
 interface ClippingArchiveProps {
   clippings: MediaClipping[];
 }
 
 export function ClippingArchive({ clippings }: ClippingArchiveProps) {
+  const t = useTranslations('monitoring.clippingArchive');
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
   const [aveSettings, setAVESettings] = useState<AVESettings | null>(null);
@@ -86,7 +88,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Text className="text-sm text-gray-600">Gesamtreichweite</Text>
+              <Text className="text-sm text-gray-600">{t('totalReach')}</Text>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {totalReach.toLocaleString('de-DE')}
               </div>
@@ -94,7 +96,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
 
             {totalAVE > 0 && (
               <div>
-                <Text className="text-sm text-gray-600">Gesamt-AVE</Text>
+                <Text className="text-sm text-gray-600">{t('totalAve')}</Text>
                 <div className="text-2xl font-semibold text-gray-900 mt-1">
                   {totalAVE.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                 </div>
@@ -102,7 +104,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
             )}
 
             <div>
-              <Text className="text-sm text-gray-600">Sentiment</Text>
+              <Text className="text-sm text-gray-600">{t('sentiment')}</Text>
               <div className="flex gap-3 mt-1 items-center">
                 <span className="flex items-center gap-1 text-gray-900">
                   <SentimentPositiveIcon className="h-5 w-5" />
@@ -124,19 +126,19 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
 
       {clippings.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <Text className="text-gray-500">Noch keine Veröffentlichungen erfasst</Text>
+          <Text className="text-gray-500">{t('noClippings')}</Text>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Veröffentlichung</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medium</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reichweite</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sentiment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aktionen</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.publication')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.medium')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.reach')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.sentiment')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.date')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
@@ -184,9 +186,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
                     <Badge color={getSentimentColor(clipping.sentiment)}>
                       <span className="flex items-center gap-1">
                         <SentimentIcon sentiment={clipping.sentiment} className="h-4 w-4" />
-                        {clipping.sentiment === 'positive' && 'Positiv'}
-                        {clipping.sentiment === 'neutral' && 'Neutral'}
-                        {clipping.sentiment === 'negative' && 'Negativ'}
+                        {t(`sentimentLabels.${clipping.sentiment}`)}
                       </span>
                     </Badge>
                   </td>
@@ -206,7 +206,7 @@ export function ClippingArchive({ clippings }: ClippingArchiveProps) {
                           onClick={() => window.open(clipping.url, '_blank')}
                         >
                           <LinkIcon className="h-4 w-4" />
-                          Artikel ansehen
+                          {t('viewArticle')}
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>

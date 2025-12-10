@@ -1,6 +1,7 @@
 // src/components/mediathek/EmptyState.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -17,29 +18,28 @@ export default function EmptyState({
   onCreateFolder,
   onUpload
 }: EmptyStateProps) {
+  const t = useTranslations('media.emptyState');
+
   return (
     <div className="text-center py-12 border rounded-lg bg-white">
       <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
       <Heading level={3} className="mt-2">
-        {isInFolder ? 'Dieser Ordner ist leer' : 'Ihre Mediathek ist leer'}
+        {isInFolder ? t('folderEmpty') : t('libraryEmpty')}
       </Heading>
       <Text className="mt-1">
-        {isInFolder
-          ? 'Laden Sie Dateien hoch oder erstellen Sie Unterordner.'
-          : 'Erstellen Sie Ihren ersten Ordner oder laden Sie Dateien hoch.'
-        }
+        {isInFolder ? t('folderEmptyHint') : t('libraryEmptyHint')}
       </Text>
       <div className="mt-6 flex justify-center gap-3">
         <Button plain onClick={onCreateFolder}>
           <FolderPlusIcon className="h-4 w-4" />
-          Ordner erstellen
+          {t('createFolder')}
         </Button>
         <Button
           onClick={onUpload}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
           <PlusIcon className="h-4 w-4" />
-          Dateien hochladen
+          {t('uploadFiles')}
         </Button>
       </div>
     </div>

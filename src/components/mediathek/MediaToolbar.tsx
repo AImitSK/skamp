@@ -1,6 +1,7 @@
 // src/components/mediathek/MediaToolbar.tsx
 "use client";
 
+import { useTranslations } from 'next-intl';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -46,6 +47,8 @@ export default function MediaToolbar({
   onBulkDelete,
   disabled = false,
 }: MediaToolbarProps) {
+  const t = useTranslations('media.toolbar');
+
   return (
     <div>
       {/* Toolbar */}
@@ -60,7 +63,7 @@ export default function MediaToolbar({
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Suchen"
+              placeholder={t('search')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -103,7 +106,7 @@ export default function MediaToolbar({
             disabled={disabled}
           >
             <FolderPlusIcon className="h-4 w-4 mr-2" />
-            Ordner anlegen
+            {t('createFolder')}
           </Button>
 
           {/* Add Files Button */}
@@ -113,7 +116,7 @@ export default function MediaToolbar({
             disabled={disabled}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Dateien hochladen
+            {t('upload')}
           </Button>
         </div>
       </div>
@@ -121,9 +124,9 @@ export default function MediaToolbar({
       {/* Results Info */}
       <div className="mb-2 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {foldersCount} {foldersCount === 1 ? 'Ordner' : 'Ordner'}, {assetsCount} {assetsCount === 1 ? 'Datei' : 'Dateien'}
+          {t('stats', { folders: foldersCount, assets: assetsCount })}
           {selectedAssetsCount > 0 && (
-            <span className="ml-2">· {selectedAssetsCount} ausgewählt</span>
+            <span className="ml-2">· {t('selected', { count: selectedAssetsCount })}</span>
           )}
         </Text>
 
@@ -133,19 +136,19 @@ export default function MediaToolbar({
               onClick={onSelectAll}
               className="text-sm text-primary hover:text-primary-hover underline"
             >
-              Alle auswählen
+              {t('selectAll')}
             </button>
             <button
               onClick={onClearSelection}
               className="text-sm text-zinc-600 hover:text-zinc-700 underline"
             >
-              Auswahl aufheben
+              {t('clearSelection')}
             </button>
             <button
               onClick={onBulkDelete}
               className="text-sm text-red-600 hover:text-red-700 underline"
             >
-              {selectedAssetsCount} Löschen
+              {t('bulkDelete', { count: selectedAssetsCount })}
             </button>
           </div>
         )}

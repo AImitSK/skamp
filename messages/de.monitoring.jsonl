@@ -1,0 +1,208 @@
+{
+  "clippingArchive": {
+    "totalReach": "Gesamtreichweite",
+    "totalAve": "Gesamt-AVE",
+    "sentiment": "Sentiment",
+    "noClippings": "Noch keine Veröffentlichungen erfasst",
+    "table": {
+      "publication": "Veröffentlichung",
+      "medium": "Medium",
+      "reach": "Reichweite",
+      "sentiment": "Sentiment",
+      "date": "Datum",
+      "actions": "Aktionen"
+    },
+    "viewArticle": "Artikel ansehen",
+    "sentimentLabels": {
+      "positive": "Positiv",
+      "neutral": "Neutral",
+      "negative": "Negativ"
+    }
+  },
+  "emailPerformance": {
+    "statusDistribution": "Status-Verteilung",
+    "emailFunnel": "E-Mail Funnel",
+    "sent": "Versendet",
+    "delivered": "Zugestellt",
+    "opened": "Geöffnet",
+    "clicked": "Geklickt",
+    "bounced": "Bounced",
+    "openRate": "Öffnungsrate",
+    "clickRate": "Klickrate",
+    "engagement": "Engagement",
+    "bounceRate": "Bounce-Rate"
+  },
+  "publicationSelector": {
+    "loading": "Wird geladen...",
+    "mediaHouse": "Medienhaus",
+    "publisher": "Verlag",
+    "beat": "Ressort",
+    "publication": "Publikation *",
+    "selectPlaceholder": "Bitte wählen...",
+    "manualEntry": "Andere Publikation eingeben...",
+    "completeData": "Vollständige Daten aus Medienhaus-Profil",
+    "basicData": "⚠️ Basis-Daten aus CRM - Empfehlung: Publikationsdaten vervollständigen",
+    "focusAreas": "Themenschwerpunkte",
+    "noPublications": "Keine Publikationen beim Kontakt hinterlegt",
+    "enterManually": "Publikationsname eingeben",
+    "manualPlaceholder": "z.B. Süddeutsche Zeitung",
+    "noCrmEntry": "Kein CRM-Eintrag für {email} gefunden",
+    "crmTip": "Tipp: Legen Sie einen Kontakt im CRM an für automatische Datenübernahme"
+  },
+  "editClippingModal": {
+    "title": "Veröffentlichung bearbeiten",
+    "recipient": "Empfänger",
+    "articleUrl": "Artikel-URL *",
+    "articleTitle": "Artikel-Titel",
+    "articleTitlePlaceholder": "Optional",
+    "outlet": "Medium/Outlet",
+    "outletPlaceholder": "z.B. Süddeutsche Zeitung",
+    "mediaType": "Medientyp",
+    "mediaTypes": {
+      "print": "📰 Print (Zeitung/Magazin)",
+      "online": "💻 Online",
+      "broadcast": "📺 Broadcast (TV/Radio)",
+      "audio": "🎙️ Podcast"
+    },
+    "publishedAt": "Veröffentlichungsdatum",
+    "reach": "Reichweite (optional)",
+    "reachPlaceholder": "z.B. 2500000",
+    "sentiment": "Sentiment",
+    "sentimentOptions": {
+      "positive": "😊 Positiv",
+      "neutral": "😐 Neutral",
+      "negative": "😞 Negativ"
+    },
+    "estimatedAve": "Voraussichtlicher AVE",
+    "basedOnReach": "Basierend auf {reach} Reichweite",
+    "sentimentScore": "Sentiment-Score (optional)",
+    "sentimentRange": {
+      "veryNegative": "Sehr negativ",
+      "veryPositive": "Sehr positiv"
+    },
+    "saveChanges": "Änderungen speichern",
+    "saving": "Speichern..."
+  },
+  "markPublishedModal": {
+    "title": "Als veröffentlicht markieren",
+    "checkingDuplicates": "Prüfe auf Duplikate...",
+    "duplicateFound": "Mögliches Duplikat gefunden",
+    "duplicateMessage": "Ein Clipping mit dieser URL existiert bereits:",
+    "manualEntry": "Manuell erfasst",
+    "autoFind": "Auto-Fund",
+    "duplicateWarning": "Wenn Sie fortfahren, wird ein zweites Clipping erstellt. Die Reichweite wird dann doppelt gezählt.",
+    "autoSetFromPublication": "Automatisch gesetzt basierend auf {name}",
+    "fromMediaData": "Aus Medienhaus-Daten: {reach}",
+    "save": "Speichern"
+  },
+  "recipientTracking": {
+    "searchPlaceholder": "Empfänger suchen...",
+    "filterAll": "Alle",
+    "filterPublished": "Veröffentlicht",
+    "filterNotPublished": "Nicht veröffentlicht",
+    "noRecipients": "Keine Empfänger gefunden",
+    "table": {
+      "recipient": "Empfänger",
+      "status": "Status",
+      "interaction": "Interaktion",
+      "publication": "Veröffentlichung",
+      "actions": "Aktionen"
+    },
+    "statusLabels": {
+      "bounce": "Bounce",
+      "failed": "Fehler",
+      "clicked": "Geklickt",
+      "opened": "Geöffnet",
+      "delivered": "Zugestellt",
+      "sent": "Versendet",
+      "published": "Veröffentlicht",
+      "pending": "Ausstehend",
+      "declined": "Abgelehnt"
+    },
+    "viewArticle": "Artikel ansehen",
+    "edit": "Bearbeiten",
+    "deletePublication": "Veröffentlichung löschen",
+    "markPublished": "Als veröffentlicht markieren",
+    "deleteDialog": {
+      "title": "Veröffentlichung löschen",
+      "message": "Möchten Sie die Veröffentlichung für {name} wirklich löschen?",
+      "description": "Das Clipping wird dauerhaft gelöscht und der Status wird auf \"Nicht veröffentlicht\" zurückgesetzt.",
+      "deleting": "Löschen..."
+    },
+    "sentimentLabels": {
+      "positive": "Positiv",
+      "neutral": "Neutral",
+      "negative": "Negativ"
+    }
+  },
+  "suggestions": {
+    "loading": "Lade Vorschläge...",
+    "pendingReview": "Zur Überprüfung ({count})",
+    "autoImported": "Automatisch importiert ({count})",
+    "table": {
+      "article": "Artikel",
+      "sources": "Quellen",
+      "confidence": "Confidence",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "confidenceLevels": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "veryHigh": "Sehr Hoch"
+    },
+    "statusLabels": {
+      "pending": "Ausstehend",
+      "autoConfirmed": "Auto-Import",
+      "confirmed": "Bestätigt",
+      "spam": "Spam"
+    },
+    "actions": {
+      "accept": "Übernehmen",
+      "spam": "Spam"
+    },
+    "empty": {
+      "title": "Keine automatisch gefundenen Artikel",
+      "description": "Sobald der Crawler aktiv ist, werden hier Vorschläge angezeigt"
+    },
+    "confirmDialog": {
+      "title": "Clipping übernehmen",
+      "unknownSource": "Unbekannte Quelle",
+      "checkingDuplicates": "Prüfe auf Duplikate...",
+      "sentiment": "Sentiment",
+      "sentimentOptions": {
+        "positive": "Positiv",
+        "neutral": "Neutral",
+        "negative": "Negativ"
+      },
+      "create": "Clipping erstellen"
+    },
+    "spamConfirm": "Als Spam markieren? Optional kann ein Spam-Pattern erstellt werden."
+  },
+  "autoReporting": {
+    "titleEdit": "Auto-Reporting bearbeiten",
+    "titleCreate": "Auto-Reporting einrichten",
+    "campaign": "Kampagne",
+    "loading": "Wird geladen...",
+    "recipients": "Empfänger (max. {max})",
+    "addRecipient": "Kontakt hinzufügen...",
+    "noMoreContacts": "Keine weiteren Kontakte verfügbar",
+    "noEmailWarning": "- Keine E-Mail",
+    "noContactsWarning": "Keine Kontakte im CRM gefunden. Bitte fügen Sie zuerst Kunden-Kontakte hinzu.",
+    "frequency": "Versand-Frequenz",
+    "frequencyWeekly": "Wöchentlich",
+    "frequencyMonthly": "Monatlich",
+    "sendEvery": "Versand jeden",
+    "monthlyInfo": "Der Report wird jeden 1. des Monats um 8:00 Uhr versendet.",
+    "monitoringEndInfo": "Das Reporting endet automatisch am {date}, wenn das Monitoring ausläuft.",
+    "noMonitoringWarning": "Kein aktives Monitoring für diese Kampagne gefunden. Auto-Reporting kann nur für Kampagnen mit aktivem Monitoring eingerichtet werden.",
+    "delete": "Löschen",
+    "deleting": "Löschen...",
+    "save": "Speichern",
+    "saving": "Speichern...",
+    "activate": "Aktivieren",
+    "deleteConfirm": "Auto-Reporting wirklich löschen?",
+    "unknown": "Unbekannt"
+  }
+}

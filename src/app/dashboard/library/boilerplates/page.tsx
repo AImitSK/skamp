@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
@@ -39,23 +40,9 @@ import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import BoilerplateModal from "./BoilerplateModal";
 import clsx from 'clsx';
 
-// Kategorie-Labels
-const CATEGORY_LABELS: Record<string, string> = {
-  company: 'Unternehmensbeschreibung',
-  contact: 'Kontaktinformationen',
-  legal: 'Rechtliche Hinweise',
-  product: 'Produktbeschreibung',
-  custom: 'Sonstige'
-};
-
-// Sprachen-Labels
-const LANGUAGE_LABELS: Record<string, string> = {
-  de: 'Deutsch',
-  en: 'Englisch',
-  fr: 'Französisch',
-  es: 'Spanisch',
-  it: 'Italienisch'
-};
+// Kategorie und Sprachen Keys (werden via i18n uebersetzt)
+const CATEGORY_KEYS = ['company', 'contact', 'legal', 'product', 'custom'] as const;
+const LANGUAGE_KEYS = ['de', 'en', 'fr', 'es', 'it'] as const;
 
 // Debounce Hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -75,6 +62,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function BoilerplatesPage() {
+  const t = useTranslations('boilerplates');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [showModal, setShowModal] = useState(false);
@@ -181,8 +169,8 @@ export default function BoilerplatesPage() {
   const handleDelete = useCallback(async (id: string, name: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Textbaustein löschen',
-      message: `Möchten Sie den Textbaustein "${name}" wirklich unwiderruflich löschen?`,
+      title: t('deleteDialog.title'),
+      message: t('deleteDialog.message', { name }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -219,7 +207,7 @@ export default function BoilerplatesPage() {
   }, [toggleFavoriteMutation, organizationId, user]);
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    if (!timestamp || !timestamp.toDate) return t('unknown');
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
@@ -232,7 +220,7 @@ export default function BoilerplatesPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Textbausteine...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -252,7 +240,7 @@ export default function BoilerplatesPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Suchen..."
+              placeholder={t('searchPlaceholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -298,10 +286,10 @@ export default function BoilerplatesPage() {
                       {/* Kategorie Filter */}
                       <div className="mb-[10px]">
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Kategorie
+                          {t('filters.category')}
                         </label>
                         <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                          {CATEGORY_KEYS.map((value) => (
                             <label key={value} className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -314,7 +302,7 @@ export default function BoilerplatesPage() {
                                 }}
                                 className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                               />
-                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{t(`categories.${value}`)}</span>
                             </label>
                           ))}
                         </div>
@@ -323,10 +311,10 @@ export default function BoilerplatesPage() {
                       {/* Sprachen Filter */}
                       <div className="mb-[10px]">
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Sprache
+                          {t('filters.language')}
                         </label>
                         <div className="space-y-2">
-                          {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
+                          {LANGUAGE_KEYS.map((value) => (
                             <label key={value} className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -339,7 +327,7 @@ export default function BoilerplatesPage() {
                                 }}
                                 className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                               />
-                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                              <span className="text-sm text-zinc-700 dark:text-zinc-300">{t(`languages.${value}`)}</span>
                             </label>
                           ))}
                         </div>
@@ -351,7 +339,7 @@ export default function BoilerplatesPage() {
                       {/* Sichtbarkeit Filter */}
                       <div className="mb-[10px]">
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Sichtbarkeit
+                          {t('filters.visibility')}
                         </label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-2 cursor-pointer">
@@ -366,7 +354,7 @@ export default function BoilerplatesPage() {
                               }}
                               className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Global</span>
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">{t('scope.global')}</span>
                           </label>
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -380,7 +368,7 @@ export default function BoilerplatesPage() {
                               }}
                               className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Kundenspezifisch</span>
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">{t('scope.client')}</span>
                           </label>
                         </div>
                       </div>
@@ -388,7 +376,7 @@ export default function BoilerplatesPage() {
                       {/* Favoriten Filter */}
                       <div className="mb-[10px]">
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Favoriten
+                          {t('filters.favorites')}
                         </label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-2 cursor-pointer">
@@ -398,7 +386,7 @@ export default function BoilerplatesPage() {
                               onChange={(e) => setShowFavoritesOnly(e.target.checked)}
                               className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-sm text-zinc-700 dark:text-zinc-300">Nur Favoriten anzeigen</span>
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">{t('filters.showFavoritesOnly')}</span>
                           </label>
                         </div>
                       </div>
@@ -417,7 +405,7 @@ export default function BoilerplatesPage() {
                         }}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                       >
-                        Alle Filter zurücksetzen
+                        {t('filters.resetAll')}
                       </button>
                     </div>
                   )}
@@ -432,7 +420,7 @@ export default function BoilerplatesPage() {
             onClick={() => setShowModal(true)}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Neu hinzufügen
+            {t('addNew')}
           </Button>
         </div>
       </div>
@@ -440,7 +428,7 @@ export default function BoilerplatesPage() {
       {/* Results Info */}
       <div className="mb-4">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredBoilerplates.length} von {boilerplates.length} Textbausteinen
+          {t('resultsInfo', { filtered: filteredBoilerplates.length, total: boilerplates.length })}
         </Text>
       </div>
 
@@ -449,11 +437,11 @@ export default function BoilerplatesPage() {
         {filteredBoilerplates.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-white dark:bg-zinc-800">
             <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <Heading level={3} className="mt-2">Keine Textbausteine gefunden</Heading>
+            <Heading level={3} className="mt-2">{t('empty.title')}</Heading>
             <Text className="mt-1">
               {searchTerm || activeFiltersCount > 0
-                ? "Versuchen Sie andere Suchkriterien"
-                : "Erstellen Sie Ihren ersten Textbaustein"}
+                ? t('empty.searchHint')
+                : t('empty.createHint')}
             </Text>
             {!searchTerm && activeFiltersCount === 0 && (
               <div className="mt-6">
@@ -462,7 +450,7 @@ export default function BoilerplatesPage() {
                   className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  Ersten Baustein erstellen
+                  {t('empty.createFirstButton')}
                 </Button>
               </div>
             )}
@@ -475,22 +463,22 @@ export default function BoilerplatesPage() {
               <div className="flex items-center">
                 <div className="w-[40%] text-left">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Name
+                    {t('table.name')}
                   </span>
                 </div>
                 <div className="w-[15%] text-left">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Kategorie
+                    {t('table.category')}
                   </span>
                 </div>
                 <div className="w-[10%] text-left">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Sprache
+                    {t('table.language')}
                   </span>
                 </div>
                 <div className="w-[25%] text-left">
                   <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Sichtbarkeit
+                    {t('table.visibility')}
                   </span>
                 </div>
                 <div className="w-[10%] text-right"></div>
@@ -529,14 +517,14 @@ export default function BoilerplatesPage() {
                     {/* Kategorie */}
                     <div className="w-[15%] text-left">
                       <Badge color="zinc" className="text-xs whitespace-nowrap">
-                        {CATEGORY_LABELS[bp.category] || bp.category}
+                        {t(`categories.${bp.category}`)}
                       </Badge>
                     </div>
 
                     {/* Sprache */}
                     <div className="w-[10%] text-left">
                       <Badge color="zinc" className="text-xs whitespace-nowrap">
-                        {LANGUAGE_LABELS[(bp as any).language || 'de'] || 'Deutsch'}
+                        {t(`languages.${(bp as any).language || 'de'}`)}
                       </Badge>
                     </div>
 
@@ -545,12 +533,12 @@ export default function BoilerplatesPage() {
                       {bp.isGlobal ? (
                         <Badge color="blue" className="inline-flex items-center gap-1 text-xs whitespace-nowrap">
                           <GlobeAltIcon className="h-3 w-3" />
-                          Global
+                          {t('scope.global')}
                         </Badge>
                       ) : (
                         <Badge color="orange" className="inline-flex items-center gap-1 text-xs whitespace-nowrap">
                           <BuildingOfficeIcon className="h-3 w-3" />
-                          {bp.clientName || 'Kunde'}
+                          {bp.clientName || t('scope.clientFallback')}
                         </Badge>
                       )}
                     </div>
@@ -564,25 +552,25 @@ export default function BoilerplatesPage() {
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem onClick={() => handleEdit(bp)}>
                             <PencilIcon className="h-4 w-4" />
-                            Bearbeiten
+                            {t('actions.edit')}
                           </DropdownItem>
                           <DropdownItem onClick={() => bp.id && handleToggleFavorite(bp.id)}>
                             {bp.isFavorite ? (
                               <>
                                 <StarIconOutline className="h-4 w-4" />
-                                Favorit entfernen
+                                {t('actions.removeFavorite')}
                               </>
                             ) : (
                               <>
                                 <StarIconSolid className="h-4 w-4" />
-                                Als Favorit
+                                {t('actions.addFavorite')}
                               </>
                             )}
                           </DropdownItem>
                           <DropdownDivider />
                           <DropdownItem onClick={() => bp.id && handleDelete(bp.id!, bp.name)}>
                             <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">Löschen</span>
+                            <span className="text-red-600">{t('actions.delete')}</span>
                           </DropdownItem>
                         </DropdownMenu>
                       </Dropdown>
@@ -606,7 +594,7 @@ export default function BoilerplatesPage() {
               className="whitespace-nowrap"
             >
               <ChevronLeftIcon className="h-4 w-4" />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -643,7 +631,7 @@ export default function BoilerplatesPage() {
               disabled={currentPage === totalPages}
               className="whitespace-nowrap"
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon className="h-4 w-4" />
             </Button>
           </div>
@@ -695,7 +683,7 @@ export default function BoilerplatesPage() {
               onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
               className="whitespace-nowrap"
             >
-              Abbrechen
+              {t('confirmDialog.cancel')}
             </Button>
             <Button
               color={confirmDialog.type === 'danger' ? 'zinc' : 'zinc'}
@@ -705,7 +693,7 @@ export default function BoilerplatesPage() {
               }}
               className={confirmDialog.type === 'danger' ? 'bg-red-600 hover:bg-red-700 text-white whitespace-nowrap' : ''}
             >
-              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
+              {confirmDialog.type === 'danger' ? t('confirmDialog.delete') : t('confirmDialog.confirm')}
             </Button>
           </DialogActions>
         </div>

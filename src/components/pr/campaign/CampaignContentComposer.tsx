@@ -15,6 +15,7 @@ import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
 import FolderSelectorDialog from './shared/FolderSelectorDialog';
 import { usePDFGeneration } from './hooks/usePDFGeneration';
 import { useBoilerplateProcessing } from './hooks/useBoilerplateProcessing';
+import { useTranslations } from 'next-intl';
 
 interface CampaignContentComposerProps {
   organizationId: string;
@@ -56,6 +57,7 @@ export default function CampaignContentComposer({
   onKeywordsChange,
   onSeoScoreChange
 }: CampaignContentComposerProps) {
+  const t = useTranslations('campaigns');
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [showPreview, setShowPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -117,9 +119,9 @@ export default function CampaignContentComposer({
           <Field>
             <div className="flex items-center justify-between mb-2">
               <Label className="flex items-center">
-                Titel der Pressemitteilung
-                <InfoTooltip 
-                  content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
+                {t('content.title')}
+                <InfoTooltip
+                  content={t('content.titleTooltip')}
                   className="ml-1"
                 />
               </Label>
@@ -133,13 +135,13 @@ export default function CampaignContentComposer({
               type="text"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
-              placeholder="z.B. Neue Partnerschaft revolutioniert die Branche"
+              placeholder={t('content.titlePlaceholder')}
               required
             />
           </Field>
         ) : (
           <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">{title || 'Kein Titel vorhanden'}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{title || t('content.noTitle')}</h2>
           </div>
         )}
 
@@ -147,9 +149,9 @@ export default function CampaignContentComposer({
         {!hideMainContentField && (
           <Field className="mt-8">
             <Label className="flex items-center">
-              Hauptinhalt der Pressemitteilung
-              <InfoTooltip 
-                content="Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die minimale Toolbar für professionelle Formatierung."
+              {t('content.mainContent')}
+              <InfoTooltip
+                content={t('content.mainContentTooltip')}
                 className="ml-1"
               />
             </Label>
@@ -203,9 +205,9 @@ export default function CampaignContentComposer({
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
               >
                 <span>{showPreview ? '▼' : '▶'}</span>
-                Vorschau der vollständigen Pressemitteilung
+                {t('content.preview')}
               </button>
-              
+
               {showPreview && (
                 <div className="flex items-center gap-3">
                   {pdfDownloadUrl && (
@@ -215,7 +217,7 @@ export default function CampaignContentComposer({
                       rel="noopener noreferrer"
                       className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
                     >
-                      PDF öffnen
+                      {t('content.openPdf')}
                     </a>
                   )}
                   <Button
@@ -225,20 +227,20 @@ export default function CampaignContentComposer({
                     className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
                   >
                     <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                    {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
+                    {generatingPdf ? t('content.generatingPdf') : t('content.exportPdf')}
                   </Button>
                 </div>
               )}
             </div>
-            
+
             {showPreview && (
               <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
-                <div 
+                <h3 className="text-lg font-semibold mb-4">{t('content.previewTitle')}</h3>
+                <div
                   ref={previewRef}
                   className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
                   style={{ paddingBottom: '20px' }}
-                  dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
+                  dangerouslySetInnerHTML={{ __html: processedContent || `<p class="text-gray-500">${t('content.noContent')}</p>` }}
                 />
               </div>
             )}

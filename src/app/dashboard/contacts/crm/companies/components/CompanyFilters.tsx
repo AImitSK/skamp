@@ -2,6 +2,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { useTranslations } from 'next-intl';
 import { Popover, Transition } from '@headlessui/react';
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,6 +46,7 @@ export function CompanyFilters({
   availableTags,
   companies
 }: CompanyFiltersProps) {
+  const t = useTranslations('companies.filters');
   const activeFiltersCount = selectedTypes.length + selectedTagIds.length;
 
   // Get tags that are actually used in the current filtered data
@@ -107,7 +109,7 @@ export function CompanyFilters({
                   {/* Type Filter */}
                   <div className="mb-[10px]">
                     <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                      Typ
+                      {t('type')}
                     </label>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {typeOptions.map((option) => {
@@ -141,17 +143,17 @@ export function CompanyFilters({
                     {tagOptions.length > 10 ? (
                       // Use SearchableFilter for large datasets
                       <SearchableFilter
-                        label="Tags"
+                        label={t('tags')}
                         options={tagOptions}
                         selectedValues={selectedTagIds}
                         onChange={onTagChange}
-                        placeholder="Tags suchen..."
+                        placeholder={t('tagsSearchPlaceholder')}
                       />
                     ) : (
                       // Keep existing UI for small datasets
                       <>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Tags
+                          {t('tags')}
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {tagOptions.map((option) => {
@@ -189,7 +191,7 @@ export function CompanyFilters({
                       onClick={handleReset}
                       className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
                     >
-                      Zurücksetzen
+                      {t('reset')}
                     </button>
                   </div>
                 )}

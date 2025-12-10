@@ -24,6 +24,7 @@
     "details": "Details",
     "settings": "Settings",
     "help": "Help",
+    "unknown": "Unknown",
     "widgets": {
       "myTasks": {
         "title": "My Tasks",
@@ -114,6 +115,22 @@
     "mediumNotFound": "Medium could not be found"
   },
   "settings": {
+    "navigation": {
+      "ariaLabel": "Settings Navigation",
+      "notifications": "Notifications",
+      "branding": "Branding",
+      "language": "Language",
+      "team": "Team",
+      "domains": "Domains",
+      "email": "Email",
+      "monitoringAve": "Monitoring & AVE",
+      "importExport": "Import / Export",
+      "pdfTemplates": "PDF Templates",
+      "spamBlocklist": "Spam Blocklist",
+      "badges": {
+        "premium": "PREMIUM"
+      }
+    },
     "language": {
       "title": "Language",
       "uiLanguage": "UI Language",
@@ -177,20 +194,40 @@
       "bounced": "Bounced"
     },
     "monitoring": {
-      "title": "PR Monitoring",
+      "title": "PR Monitoring & Sending History",
+      "description": "Monitor all sent press releases and their performance (Email Tracking & Clippings)",
+      "loading": "Loading monitoring data...",
+      "searchPlaceholder": "Search campaigns...",
       "publications": "Publications",
       "autoFinds": "Auto-Finds",
-      "loading": "Loading monitoring data...",
       "noPublications": "No publications yet",
       "noAutoFinds": "No auto-finds",
       "publication": "Publication",
       "autoFind": "Auto-Find",
       "unknown": "Unknown",
+      "empty": {
+        "title": "No sent campaigns yet",
+        "description": "Send your first campaign to use the monitoring feature"
+      },
       "table": {
+        "campaign": "Campaign",
+        "sent": "Sent",
+        "status": "Status",
         "type": "Type",
         "title": "Title",
-        "medium": "Medium",
-        "status": "Status"
+        "medium": "Medium"
+      },
+      "stats": {
+        "opened": "{count} opened ({rate}%)",
+        "bounced": "{count} bounced ({rate}%)"
+      },
+      "actions": {
+        "details": "Details"
+      },
+      "pagination": {
+        "info": "Page {current} of {total} ({count} campaigns)",
+        "previous": "Previous",
+        "next": "Next"
       }
     },
     "news": {
@@ -199,6 +236,1141 @@
     },
     "footer": {
       "copyright": "© {year} CeleroPress. All rights reserved."
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "newProject": "New Project",
+    "searchPlaceholder": "Search projects...",
+    "noOrganization": "No organization selected",
+    "loading": "Loading projects...",
+    "loadError": "Error loading",
+    "viewModes": {
+      "board": "Board view",
+      "list": "List view"
+    },
+    "filters": {
+      "statusFilter": "Status Filter",
+      "active": "Active",
+      "archived": "Archive"
+    },
+    "empty": {
+      "title": "No Projects",
+      "description": "Create your first project with the project creation wizard.",
+      "action": "Create first project"
+    },
+    "results": {
+      "singular": "Project",
+      "plural": "Projects",
+      "filteredFrom": "filtered from {total} total"
+    },
+    "archiveBanner": {
+      "title": "Archive view active",
+      "description": "Archived projects can be reactivated via the 3-dot menu."
+    }
+  },
+  "crm": {
+    "redirecting": "Redirecting..."
+  },
+  "publications": {
+    "loading": "Loading publications...",
+    "searchPlaceholder": "Search",
+    "addButton": "Add Publication",
+    "resultsInfo": "{filtered} of {total} publications",
+    "selected": "{count} selected",
+    "deleteSelected": "Delete {count}",
+    "empty": "No publications found",
+    "filters": {
+      "type": "Type",
+      "languages": "Languages",
+      "noLanguages": "No languages available",
+      "countries": "Countries",
+      "noCountries": "No countries available",
+      "status": "Status",
+      "all": "All",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "reset": "Reset"
+    },
+    "actions": {
+      "import": "Import",
+      "export": "Export",
+      "deleteSelection": "Delete selection ({count})",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "table": {
+      "title": "Title",
+      "publisher": "Publisher",
+      "metric": "Metric",
+      "rss": "RSS",
+      "targetArea": "Target Area"
+    },
+    "badges": {
+      "verified": "Verified",
+      "reference": "Reference",
+      "noPublisher": "No Publisher"
+    },
+    "rss": {
+      "active": "{count} RSS feed(s) active",
+      "inactive": "No RSS feed"
+    },
+    "deleteDialog": {
+      "title": "Delete Publication",
+      "message": "Do you really want to delete \"{title}\"?"
+    },
+    "bulkDeleteDialog": {
+      "title": "Delete {count} Publications",
+      "message": "Do you really want to permanently delete {count} publications?"
+    },
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "export": {
+      "columns": {
+        "title": "Title",
+        "publisher": "Publisher",
+        "type": "Type",
+        "format": "Format",
+        "website": "Website",
+        "languages": "Languages",
+        "countries": "Countries",
+        "circulation": "Circulation",
+        "visitors": "Online Visitors",
+        "focusAreas": "Focus Areas",
+        "frequency": "Frequency",
+        "targetAudience": "Target Audience",
+        "verified": "Verified",
+        "status": "Status",
+        "yes": "Yes",
+        "no": "No"
+      }
+    }
+  },
+  "editors": {
+    "loading": "Loading journalist database...",
+    "search": {
+      "placeholder": "Search..."
+    },
+    "filters": {
+      "topics": "Topics",
+      "qualityScore": "Minimum quality score: {score}",
+      "reset": "Reset"
+    },
+    "results": {
+      "info": "{filtered} of {total} journalists"
+    },
+    "table": {
+      "journalist": "Journalist",
+      "mediaHouse": "Media House",
+      "publications": "Publications",
+      "score": "Score",
+      "topics": "Topics",
+      "contact": "Contact"
+    },
+    "noPublications": "No publications",
+    "topicsPopover": {
+      "title": "Topics ({count})"
+    },
+    "actions": {
+      "inCrm": "In CRM"
+    },
+    "empty": {
+      "title": "No journalists found",
+      "description": "Try different search terms or filters."
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "detail": {
+      "score": "Score: {score}",
+      "contactInfo": "Contact Information",
+      "primary": "Primary",
+      "position": "Position",
+      "department": "Department: {department}",
+      "mediaHouse": "Media House & Employer",
+      "publications": "Publications ({count})",
+      "mainPublication": "Main Publication",
+      "role": "Role: {role}",
+      "frequency": "Frequency: {frequency}",
+      "topicsSection": "Topics ({count})",
+      "socialMedia": "Social Media",
+      "mediaTypes": "Media Types",
+      "close": "Close",
+      "removeReference": "Remove reference",
+      "addReference": "Add as reference"
+    }
+  },
+  "boilerplates": {
+    "loading": "Loading boilerplates...",
+    "unknown": "Unknown",
+    "searchPlaceholder": "Search...",
+    "addNew": "Add new",
+    "resultsInfo": "{filtered} of {total} boilerplates",
+    "categories": {
+      "company": "Company Description",
+      "contact": "Contact Information",
+      "legal": "Legal Notices",
+      "product": "Product Description",
+      "custom": "Other"
+    },
+    "languages": {
+      "de": "German",
+      "en": "English",
+      "fr": "French",
+      "es": "Spanish",
+      "it": "Italian"
+    },
+    "filters": {
+      "category": "Category",
+      "language": "Language",
+      "visibility": "Visibility",
+      "favorites": "Favorites",
+      "showFavoritesOnly": "Show favorites only",
+      "resetAll": "Reset all filters"
+    },
+    "scope": {
+      "global": "Global",
+      "client": "Client-specific",
+      "clientFallback": "Client",
+      "globalVisible": "Globally visible",
+      "clientSpecific": "Client-specific"
+    },
+    "empty": {
+      "title": "No boilerplates found",
+      "searchHint": "Try different search criteria",
+      "createHint": "Create your first boilerplate",
+      "createFirstButton": "Create first boilerplate"
+    },
+    "table": {
+      "name": "Name",
+      "category": "Category",
+      "language": "Language",
+      "visibility": "Visibility"
+    },
+    "actions": {
+      "edit": "Edit",
+      "addFavorite": "Add to favorites",
+      "removeFavorite": "Remove favorite",
+      "delete": "Delete"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "deleteDialog": {
+      "title": "Delete boilerplate",
+      "message": "Do you really want to permanently delete the boilerplate \"{name}\"?"
+    },
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete"
+    },
+    "modal": {
+      "createTitle": "New Boilerplate",
+      "editTitle": "Edit Boilerplate",
+      "contentPlaceholder": "Enter your boilerplate text here...",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "e.g. Company Profile Short",
+        "category": "Category",
+        "content": "Content",
+        "contentDescription": "Full-featured text editor with headings, formatting, and lists - identical to strategy documents.",
+        "client": "Client",
+        "clientTooltip": "Select a client to make this boilerplate visible only to them.",
+        "clientGlobal": "Global (for all clients)",
+        "language": "Language",
+        "languageSelect": "Select language...",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "Brief description of the purpose..."
+      },
+      "toolbar": {
+        "bold": "Bold (Ctrl+B)",
+        "italic": "Italic (Ctrl+I)",
+        "underline": "Underline (Ctrl+U)",
+        "strikethrough": "Strikethrough",
+        "normal": "Normal",
+        "heading1": "Heading 1",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "bulletList": "Bullet List",
+        "orderedList": "Numbered List",
+        "codeBlock": "Code Block",
+        "undo": "Undo (Ctrl+Z)",
+        "redo": "Redo (Ctrl+Y)"
+      },
+      "validation": {
+        "nameAndContentRequired": "Please fill in name and content."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving..."
+      },
+      "categories": {
+        "company": "Company Description",
+        "contact": "Contact Information",
+        "legal": "Legal Notices",
+        "product": "Product Description",
+        "custom": "Other"
+      },
+      "scope": {
+        "globalVisible": "Globally visible",
+        "clientSpecific": "Client-specific"
+      }
+    }
+  },
+  "contacts": {
+    "searchPlaceholder": "Search contacts...",
+    "addNew": "Add new",
+    "loading": "Loading data...",
+    "resultsInfo": "{filtered} of {total} contacts",
+    "selected": "{count} selected",
+    "deleteSelected": "Delete {count}",
+    "deleteContact": {
+      "title": "Delete contact",
+      "message": "Do you really want to delete \"{name}\"?"
+    },
+    "bulkDelete": {
+      "title": "Delete {count} contacts",
+      "message": "Do you really want to permanently delete {count} contacts?"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "bulkActions": {
+      "import": "Import",
+      "export": "Export",
+      "deleteSelection": "Delete selection ({count})"
+    },
+    "filters": {
+      "company": "Company",
+      "tags": "Tags",
+      "companySearchPlaceholder": "Search company...",
+      "tagsSearchPlaceholder": "Search tags...",
+      "reset": "Reset"
+    }
+  },
+  "companies": {
+    "loading": "Loading data...",
+    "searchPlaceholder": "Search companies...",
+    "addNew": "Add new",
+    "resultsInfo": "{filtered} of {total} companies",
+    "selected": "{count} selected",
+    "deleteSelected": "Delete {count}",
+    "deleteDialog": {
+      "title": "Delete company",
+      "message": "Do you really want to delete \"{name}\"?"
+    },
+    "bulkDeleteDialog": {
+      "title": "Delete {count} companies",
+      "message": "Do you really want to permanently delete {count} companies?"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "filters": {
+      "type": "Type",
+      "tags": "Tags",
+      "tagsSearchPlaceholder": "Search tags...",
+      "reset": "Reset"
+    },
+    "bulkActions": {
+      "import": "Import",
+      "export": "Export",
+      "deleteSelection": "Delete selection ({count})"
+    },
+    "table": {
+      "companyNameType": "Company Name / Type",
+      "cityCountry": "City / Country",
+      "website": "Website",
+      "persons": "Persons",
+      "tags": "Tags",
+      "reference": "Reference",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "lists": {
+    "title": "Distribution Lists",
+    "loading": "Loading lists...",
+    "unknown": "Unknown",
+    "searchPlaceholder": "Search lists...",
+    "createButton": "Create list",
+    "resultsInfo": "{filtered} of {total} lists",
+    "selected": "{count} selected",
+    "bulkDeleteLink": "Delete {count}",
+    "categories": {
+      "press": "Press",
+      "customers": "Customers",
+      "partners": "Partners",
+      "leads": "Leads",
+      "custom": "Custom"
+    },
+    "types": {
+      "dynamic": "Dynamic",
+      "static": "Static"
+    },
+    "filters": {
+      "category": "Category",
+      "type": "Type",
+      "reset": "Reset"
+    },
+    "actions": {
+      "refreshAll": "Refresh all",
+      "deleteSelected": "Delete selection ({count})",
+      "view": "View",
+      "edit": "Edit",
+      "refresh": "Refresh",
+      "export": "Export",
+      "delete": "Delete"
+    },
+    "table": {
+      "name": "Name",
+      "category": "Category",
+      "type": "Type",
+      "contacts": "Contacts",
+      "usage": "Usage",
+      "updated": "Updated"
+    },
+    "usage": {
+      "campaigns": "{count} campaigns",
+      "last30Days": "in 30 days",
+      "notUsed": "Not used yet"
+    },
+    "empty": {
+      "title": "No lists found",
+      "searchHint": "Try different search criteria",
+      "createHint": "Create your first distribution list",
+      "createFirstButton": "Create first list"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "deleteDialog": {
+      "title": "Delete list",
+      "message": "Do you really want to permanently delete the list \"{name}\"?"
+    },
+    "bulkDeleteDialog": {
+      "title": "Delete {count} lists",
+      "message": "Do you really want to permanently delete {count} lists?"
+    },
+    "refreshAllDialog": {
+      "title": "Refresh all lists",
+      "message": "Do you really want to recalculate all dynamic lists?"
+    },
+    "confirmDialog": {
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete"
+    },
+    "modal": {
+      "createTitle": "Create new list",
+      "editTitle": "Edit list",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "validation": {
+        "title": "Validation error",
+        "nameRequired": "List name is required",
+        "filterRequired": "At least one filter must be selected for dynamic lists",
+        "contactRequired": "At least one contact must be selected for static lists",
+        "error": "An error occurred. Please try again."
+      },
+      "filters": {
+        "title": "Filter criteria",
+        "publications": "Publication filters"
+      }
+    }
+  },
+  "campaigns": {
+    "recipients": {
+      "title": "Recipients",
+      "campaignListsTitle": "Campaign Distribution Lists",
+      "campaignListsDescription": "The distribution lists defined for this campaign have been automatically pre-selected. You can adjust the selection if needed.",
+      "distributionLists": "Distribution Lists",
+      "searchLists": "Search lists...",
+      "noListsFound": "No lists found",
+      "noListsAvailable": "No distribution lists available",
+      "contactsCount": "{count} contacts",
+      "listsSelected": "{count, plural, =0 {No lists} =1 {1 list} other {# lists}} selected",
+      "recipientsFromLists": "{count} recipients from lists",
+      "additionalRecipients": "Additional Recipients",
+      "addManually": "Add recipient manually",
+      "overview": "Recipients Overview",
+      "fromLists": "From distribution lists:",
+      "manuallyAdded": "Manually added:",
+      "total": "Total:",
+      "totalCount": "{count} recipients",
+      "modal": {
+        "title": "Add Recipient",
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "email": "Email Address *",
+        "company": "Company (optional)",
+        "cancel": "Cancel",
+        "add": "Add",
+        "validation": {
+          "firstNameRequired": "First name is required",
+          "lastNameRequired": "Last name is required",
+          "emailRequired": "Email is required",
+          "emailInvalid": "Invalid email address"
+        }
+      }
+    },
+    "boilerplates": {
+      "title": "Boilerplates & Elements",
+      "createElement": "Create element",
+      "addBoilerplate": "Add boilerplate",
+      "simpleTitle": "Boilerplates",
+      "types": {
+        "lead": "Lead",
+        "main": "Main Text",
+        "quote": "Quote",
+        "boilerplate": "Boilerplate",
+        "leadParagraph": "Lead Paragraph",
+        "mainText": "Main Text",
+        "quoteText": "Quote"
+      },
+      "editor": {
+        "leadTitle": "Create Lead Paragraph",
+        "mainTitle": "Create Main Text",
+        "quoteTitle": "Add Quote",
+        "leadPlaceholder": "Write your lead paragraph here. Answer the 5 W questions (Who, What, When, Where, Why) in 40-50 words...",
+        "mainPlaceholder": "Write the main text of your press release here. Add details, background, and additional information...",
+        "quotePlaceholder": "Enter the quote here...",
+        "quote": "Quote",
+        "person": "Person",
+        "position": "Position",
+        "company": "Company",
+        "personPlaceholder": "John Doe",
+        "positionPlaceholder": "CEO",
+        "companyPlaceholder": "Example Inc.",
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "aiGenerated": {
+        "lead": "Lead Paragraph (AI-generated)",
+        "main": "Main Text (AI-generated)",
+        "quote": "Quote (AI-generated)"
+      },
+      "empty": {
+        "title": "No boilerplates or elements added",
+        "description": "Create structured elements or add reusable boilerplates",
+        "createLead": "Create Lead",
+        "addBoilerplate": "Add Boilerplate"
+      },
+      "actions": {
+        "edit": "Edit",
+        "lock": "Lock",
+        "unlock": "Unlock",
+        "remove": "Remove"
+      },
+      "modal": {
+        "title": "Add Boilerplate",
+        "searchPlaceholder": "Search boilerplates...",
+        "noResults": "No matching boilerplates found",
+        "cancel": "Cancel",
+        "categories": {
+          "all": "All Categories",
+          "company": "Company Description",
+          "contact": "Contact Information",
+          "legal": "Legal Notices",
+          "product": "Product Description",
+          "custom": "Other"
+        }
+      },
+      "simple": {
+        "addButton": "Boilerplate",
+        "selectTitle": "Select Boilerplate",
+        "selectSubtitle": "(Global + {client})",
+        "loading": "Loading boilerplates...",
+        "badgeClient": "Client",
+        "badgeGlobal": "Global",
+        "noBoilerplates": "No boilerplates available",
+        "selectClientHint": "Select a client to see client-specific boilerplates",
+        "defaultName": "Boilerplate",
+        "lock": "Lock",
+        "unlock": "Unlock",
+        "remove": "Remove",
+        "emptyTitle": "Add Boilerplates",
+        "emptyHint": "Click to select"
+      }
+    },
+    "content": {
+      "title": "Press Release Title",
+      "titleTooltip": "Required field: The title should be concise and meaningful. It will be used as the headline in the press release and in the email subject.",
+      "titlePlaceholder": "e.g. New Partnership Revolutionizes the Industry",
+      "noTitle": "No title available",
+      "mainContent": "Main Content of Press Release",
+      "mainContentTooltip": "Write the individual content of your press release here. Use the minimal toolbar for professional formatting.",
+      "preview": "Preview of Complete Press Release",
+      "openPdf": "Open PDF",
+      "exportPdf": "Export as PDF",
+      "generatingPdf": "Generating PDF...",
+      "previewTitle": "Preview",
+      "noContent": "No content available yet"
+    },
+    "new": {
+      "title": "New PR Campaign",
+      "senderProject": "Sender & Project",
+      "aiAssistant": "AI Assistant",
+      "aiTip": {
+        "title": "Tip: Use the AI Assistant!",
+        "description": "The AI Assistant provides you with a complete draft of your press release including title, lead paragraph, main text, and quote. You can then refine it in the editor and extend it with boilerplates."
+      },
+      "steps": {
+        "pressRelease": "Press Release",
+        "attachments": "Attachments",
+        "approvals": "Approvals",
+        "preview": "Preview"
+      },
+      "media": {
+        "title": "Media",
+        "add": "Add media",
+        "selectCustomer": "Select customer first",
+        "selectCustomerFirst": "Please select a customer first to add media",
+        "clickToSelect": "Click to select",
+        "selectCustomerPrompt": "Select a customer"
+      },
+      "approval": {
+        "title": "Approval Settings",
+        "description": "Define who needs to approve the campaign before sending.",
+        "pipelineActive": "Pipeline integration active",
+        "pipelineDescription": "This campaign is linked to project \"{projectTitle}\". If customer approval is enabled, the approval is automatically integrated into the project pipeline and blocks the transition to the distribution phase until approved.",
+        "pipelineActivating": "Project pipeline approval will be activated",
+        "workflowReady": "✅ PDF workflow ready",
+        "workflowDescription": "When saving, a complete approval workflow will be activated automatically:",
+        "workflowTip": "💡 Tip: After saving, you will find all approval links and the current status in Step 4 \"Preview\"."
+      },
+      "pdf": {
+        "preview": "PDF Preview",
+        "generate": "Generate PDF",
+        "generating": "Generating PDF...",
+        "generated": "PDF successfully generated!",
+        "error": "Error generating PDF",
+        "previewPdf": "Preview PDF",
+        "current": "Current",
+        "download": "Download",
+        "noVersion": "No PDF version created yet",
+        "generateHint": "Click on \"Generate PDF\" to create a preview",
+        "status": {
+          "draft": "Draft",
+          "approved": "Approved",
+          "pending": "Approval requested"
+        }
+      },
+      "actions": {
+        "saving": "Saving...",
+        "requestApproval": "Request approval",
+        "saveAsDraft": "Save as draft"
+      }
+    },
+    "loading": {
+      "organization": "Loading organization...",
+      "editStatus": "Checking edit status..."
+    },
+    "seo": {
+      "hints": {
+        "addMoreContent": "Add more content",
+        "useKeywords": "Use meaningful keywords",
+        "titleTooShort": "Title should be at least 30-60 characters",
+        "titleTooLong": "Title is too long (optimal: 30-60 characters)",
+        "addTitle": "Add a meaningful title",
+        "useAllKeywords": "Use all keywords in the text",
+        "useKeywordsInText": "Keywords should be used in the text",
+        "addMinKeywords": "Define at least 3 SEO keywords",
+        "defineKeywords": "Define SEO keywords for better visibility",
+        "structureMinParagraphs": "Structure the text into at least 3 paragraphs",
+        "structureMultipleParagraphs": "Structure the text into multiple paragraphs",
+        "optimalWordCount": "Optimal would be 300-800 words",
+        "minWordCount": "Press release should have at least 200 words",
+        "tooLong": "Very long text - consider shortening to 300-800 words",
+        "tooShort": "Text is too short (at least 200 words recommended)",
+        "useNumbers": "Use concrete numbers and facts",
+        "useQuotes": "Quotes increase credibility",
+        "addCallToAction": "Add call-to-action (Contact, Website, etc.)"
+      }
+    },
+    "validation": {
+      "unknownReason": "unknown",
+      "cannotSave": "This campaign cannot be saved. Reason: {reason}",
+      "selectCustomer": "Please select a customer",
+      "customerRequired": "Please select a customer",
+      "titleRequired": "Title is required",
+      "contentRequired": "Content is required",
+      "fillRequiredFields": "Please fill in all required fields",
+      "requiredFields": "Please fill in all required fields",
+      "campaignIdNotFound": "Campaign ID not found",
+      "userNotAvailable": "User not available"
+    },
+    "success": {
+      "saved": "Campaign successfully saved!",
+      "savedWithApproval": "Campaign saved & customer approval requested! PDF version created and customer notified.",
+      "savedWithProject": "Campaign successfully saved and linked to project \"{projectTitle}\"!"
+    },
+    "error": {
+      "withMessage": "Error: {message}"
+    },
+    "editLock": {
+      "unknownReason": "unknown",
+      "cannotSave": "This campaign cannot be saved. Reason: {reason}",
+      "checking": "Checking edit status...",
+      "userNotAvailable": "User not available",
+      "campaignIdNotFound": "Campaign ID not found",
+      "unknownUser": "Unknown",
+      "unlockRequestSent": "Your unlock request has been sent to the administrators.",
+      "unlockRequestFailed": "The unlock request could not be sent."
+    },
+    "approval": {
+      "noRequestFound": "No approval request found",
+      "grantSuccess": "Approval successfully granted. The campaign can now be edited.",
+      "grantError": "Approval could not be granted.",
+      "changesRequestSuccess": "Changes requested. The campaign can now be edited.",
+      "changesRequestError": "Changes could not be requested.",
+      "status": {
+        "draft": "Draft",
+        "pending": "Pending",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "changesRequested": "Changes Requested"
+      }
+    },
+    "pipeline": {
+      "customerApprovalRequired": "Customer approval required",
+      "approvalDescription": "This campaign is part of a project and requires customer approval before it can be forwarded to distribution.",
+      "creatingApproval": "Creating approval...",
+      "createApproval": "Create approval",
+      "status": "Status",
+      "recipientsApproved": "{approved}/{total} recipients have approved",
+      "openApproval": "Open approval",
+      "customerLink": "Customer link",
+      "approvedAutoTransition": "✓ Approval received. Project will automatically be forwarded to distribution.",
+      "rejectedRevise": "✗ Approval rejected. Please revise the campaign based on customer feedback."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "continue": "Continue",
+      "saving": "Saving...",
+      "requestApproval": "Request Approval",
+      "saveAsDraft": "Save as Draft"
+    },
+    "detail": {
+      "loading": "Loading campaign...",
+      "error": "Error",
+      "backToOverview": "Back to overview",
+      "backToCampaigns": "Back to campaigns",
+      "createdAt": "Created on {date}",
+      "admin": "Admin",
+      "actions": "Actions",
+      "copyTitle": "(Copy)",
+      "newAdmin": "New Admin",
+      "pdfVersionHistory": "PDF Version History",
+      "chatHistory": "Chat History",
+      "showChatHistory": "Show chat history",
+      "downloadTranscript": "Transcript",
+      "attachedMedia": "Attached Media",
+      "folder": "Folder",
+      "file": "File",
+      "mediaLink": "Media Link",
+      "actions": {
+        "send": "Send",
+        "requestApproval": "Request Approval",
+        "resubmit": "Resubmit",
+        "edit": "Edit",
+        "duplicate": "Duplicate",
+        "analytics": "Analytics",
+        "delete": "Delete"
+      },
+      "errors": {
+        "notFound": "Campaign not found",
+        "loadError": "Error loading campaign",
+        "adminChangeError": "Error changing admin",
+        "approvalRequestError": "Error requesting approval",
+        "resubmitError": "Error resubmitting"
+      },
+      "success": {
+        "adminChanged": "Admin changed",
+        "adminChangedDesc": "{name} is now the campaign administrator.",
+        "approvalRequested": "Approval requested",
+        "approvalRequestedDesc": "The approval link has been created.",
+        "resubmitted": "Resubmitted for approval"
+      },
+      "transcript": {
+        "header": "APPROVAL CONVERSATION HISTORY",
+        "campaign": "Campaign",
+        "customer": "Customer",
+        "unknown": "Unknown",
+        "createdAt": "Created on",
+        "end": "End of conversation history",
+        "autoGenerated": "This document was automatically generated."
+      },
+      "dialogs": {
+        "cancel": "Cancel",
+        "close": "Close",
+        "requestApproval": {
+          "title": "Request Approval",
+          "message": "The campaign will be sent to the customer for approval. You will receive a link that you can share via email.",
+          "confirm": "Request Approval"
+        },
+        "delete": {
+          "title": "Delete Campaign",
+          "message": "Do you really want to delete the campaign \"{title}\"? This action cannot be undone.",
+          "confirm": "Delete",
+          "deleting": "Deleting..."
+        },
+        "chatHistory": {
+          "title": "Chat History"
+        }
+      }
+    }
+  },
+  "media": {
+    "title": "Media Library",
+    "loading": "Loading media library...",
+    "noOrganization": "No organization found",
+    "toolbar": {
+      "search": "Search",
+      "createFolder": "Create folder",
+      "upload": "Upload",
+      "selectAll": "Select all",
+      "clearSelection": "Clear selection",
+      "bulkDelete": "Delete {count}",
+      "stats": "{folders, plural, =0 {No folders} =1 {1 folder} other {# folders}}, {assets, plural, =0 {no files} =1 {1 file} other {# files}}",
+      "selected": "{count} selected"
+    },
+    "emptyState": {
+      "libraryEmpty": "Your media library is empty",
+      "folderEmpty": "This folder is empty",
+      "libraryEmptyHint": "Create your first folder or upload files.",
+      "folderEmptyHint": "Upload files or create subfolders.",
+      "createFolder": "Create folder",
+      "uploadFiles": "Upload files"
+    },
+    "moving": {
+      "folder": "Moving folder...",
+      "file": "Moving file...",
+      "files": "Moving {count} files..."
+    },
+    "confirmDialog": {
+      "deleteFile": {
+        "title": "Delete file",
+        "message": "Do you really want to delete the file \"{name}\"?"
+      },
+      "deleteFiles": {
+        "title": "Delete {count, plural, =1 {1 file} other {# files}}",
+        "message": "Do you really want to permanently delete {count, plural, =1 {1 file} other {# files}}?"
+      },
+      "deleteFolder": {
+        "title": "Delete folder",
+        "message": "Do you really want to delete the folder \"{name}\"?"
+      }
+    }
+  },
+  "monitoring": {
+    "loading": "Loading monitoring data...",
+    "loadError": "Error loading",
+    "retryButton": "Try again",
+    "notFound": "Campaign not found",
+    "reports": {
+      "title": "Generated Reports ({count})",
+      "folderLink": "Open Analysis Folder",
+      "download": "Download",
+      "delete": "Delete",
+      "send": "Send (Coming Soon)"
+    },
+    "deleteDialog": {
+      "title": "Delete PDF",
+      "message": "Do you really want to delete the PDF \"{fileName}\"? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "clippingArchive": {
+      "totalReach": "Total Reach",
+      "totalAve": "Total AVE",
+      "sentiment": "Sentiment",
+      "noClippings": "No publications recorded yet",
+      "table": {
+        "publication": "Publication",
+        "medium": "Medium",
+        "reach": "Reach",
+        "sentiment": "Sentiment",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "viewArticle": "View article",
+      "sentimentLabels": {
+        "positive": "Positive",
+        "neutral": "Neutral",
+        "negative": "Negative"
+      }
+    },
+    "emailPerformance": {
+      "statusDistribution": "Status Distribution",
+      "emailFunnel": "Email Funnel",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "opened": "Opened",
+      "clicked": "Clicked",
+      "bounced": "Bounced",
+      "openRate": "Open Rate",
+      "clickRate": "Click Rate",
+      "engagement": "Engagement",
+      "bounceRate": "Bounce Rate"
+    },
+    "publicationSelector": {
+      "loading": "Loading...",
+      "mediaHouse": "Media House",
+      "publisher": "Publisher",
+      "beat": "Beat",
+      "publication": "Publication *",
+      "selectPlaceholder": "Please select...",
+      "manualEntry": "Enter other publication...",
+      "completeData": "Complete data from media house profile",
+      "basicData": "⚠️ Basic data from CRM - Recommendation: Complete publication data",
+      "focusAreas": "Focus areas",
+      "noPublications": "No publications linked to contact",
+      "enterManually": "Enter publication name",
+      "manualPlaceholder": "e.g. New York Times",
+      "noCrmEntry": "No CRM entry for {email} found",
+      "crmTip": "Tip: Create a contact in CRM for automatic data transfer"
+    },
+    "editClippingModal": {
+      "title": "Edit Publication",
+      "recipient": "Recipient",
+      "articleUrl": "Article URL *",
+      "articleTitle": "Article Title",
+      "articleTitlePlaceholder": "Optional",
+      "outlet": "Medium/Outlet",
+      "outletPlaceholder": "e.g. New York Times",
+      "mediaType": "Media Type",
+      "mediaTypes": {
+        "print": "📰 Print (Newspaper/Magazine)",
+        "online": "💻 Online",
+        "broadcast": "📺 Broadcast (TV/Radio)",
+        "audio": "🎙️ Podcast"
+      },
+      "publishedAt": "Publication Date",
+      "reach": "Reach (optional)",
+      "reachPlaceholder": "e.g. 2500000",
+      "sentiment": "Sentiment",
+      "sentimentOptions": {
+        "positive": "😊 Positive",
+        "neutral": "😐 Neutral",
+        "negative": "😞 Negative"
+      },
+      "estimatedAve": "Estimated AVE",
+      "basedOnReach": "Based on {reach} reach",
+      "sentimentScore": "Sentiment Score (optional)",
+      "sentimentRange": {
+        "veryNegative": "Very negative",
+        "veryPositive": "Very positive"
+      },
+      "saveChanges": "Save changes",
+      "saving": "Saving..."
+    },
+    "markPublishedModal": {
+      "title": "Mark as Published",
+      "checkingDuplicates": "Checking for duplicates...",
+      "duplicateFound": "Possible duplicate found",
+      "duplicateMessage": "A clipping with this URL already exists:",
+      "manualEntry": "Manually recorded",
+      "autoFind": "Auto-Find",
+      "duplicateWarning": "If you continue, a second clipping will be created. The reach will then be counted twice.",
+      "autoSetFromPublication": "Automatically set based on {name}",
+      "fromMediaData": "From media house data: {reach}",
+      "save": "Save"
+    },
+    "recipientTracking": {
+      "searchPlaceholder": "Search recipients...",
+      "filterAll": "All",
+      "filterPublished": "Published",
+      "filterNotPublished": "Not published",
+      "noRecipients": "No recipients found",
+      "table": {
+        "recipient": "Recipient",
+        "status": "Status",
+        "interaction": "Interaction",
+        "publication": "Publication",
+        "actions": "Actions"
+      },
+      "statusLabels": {
+        "bounce": "Bounce",
+        "failed": "Failed",
+        "clicked": "Clicked",
+        "opened": "Opened",
+        "delivered": "Delivered",
+        "sent": "Sent",
+        "published": "Published",
+        "pending": "Pending",
+        "declined": "Declined"
+      },
+      "viewArticle": "View article",
+      "edit": "Edit",
+      "deletePublication": "Delete publication",
+      "markPublished": "Mark as published",
+      "deleteDialog": {
+        "title": "Delete Publication",
+        "message": "Do you really want to delete the publication for {name}?",
+        "description": "The clipping will be permanently deleted and the status will be reset to \"Not published\".",
+        "deleting": "Deleting..."
+      },
+      "sentimentLabels": {
+        "positive": "Positive",
+        "neutral": "Neutral",
+        "negative": "Negative"
+      }
+    },
+    "suggestions": {
+      "loading": "Loading suggestions...",
+      "pendingReview": "Pending Review ({count})",
+      "autoImported": "Automatically Imported ({count})",
+      "table": {
+        "article": "Article",
+        "sources": "Sources",
+        "confidence": "Confidence",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "confidenceLevels": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "veryHigh": "Very High"
+      },
+      "statusLabels": {
+        "pending": "Pending",
+        "autoConfirmed": "Auto-Import",
+        "confirmed": "Confirmed",
+        "spam": "Spam"
+      },
+      "actions": {
+        "accept": "Accept",
+        "spam": "Spam"
+      },
+      "empty": {
+        "title": "No automatically found articles",
+        "description": "Suggestions will appear here once the crawler is active"
+      },
+      "confirmDialog": {
+        "title": "Accept Clipping",
+        "unknownSource": "Unknown source",
+        "checkingDuplicates": "Checking for duplicates...",
+        "sentiment": "Sentiment",
+        "sentimentOptions": {
+          "positive": "Positive",
+          "neutral": "Neutral",
+          "negative": "Negative"
+        },
+        "create": "Create clipping"
+      },
+      "spamConfirm": "Mark as spam? A spam pattern can optionally be created."
+    },
+    "autoReporting": {
+      "titleEdit": "Edit Auto-Reporting",
+      "titleCreate": "Set up Auto-Reporting",
+      "campaign": "Campaign",
+      "loading": "Loading...",
+      "recipients": "Recipients (max. {max})",
+      "addRecipient": "Add contact...",
+      "noMoreContacts": "No more contacts available",
+      "noEmailWarning": "- No email",
+      "noContactsWarning": "No contacts found in CRM. Please add customer contacts first.",
+      "frequency": "Sending Frequency",
+      "frequencyWeekly": "Weekly",
+      "frequencyMonthly": "Monthly",
+      "sendEvery": "Send every",
+      "monthlyInfo": "The report will be sent on the 1st of each month at 8:00 AM.",
+      "monitoringEndInfo": "Reporting will automatically end on {date} when monitoring expires.",
+      "noMonitoringWarning": "No active monitoring found for this campaign. Auto-reporting can only be set up for campaigns with active monitoring.",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "save": "Save",
+      "saving": "Saving...",
+      "activate": "Activate",
+      "deleteConfirm": "Really delete auto-reporting?",
+      "unknown": "Unknown"
+    }
+  },
+  "reporting": {
+    "title": "Auto-Reporting",
+    "description": "Manage automatic report delivery to customers",
+    "recipients": "{count, plural, =0 {No recipients} =1 {1 recipient} other {# recipients}}",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "table": {
+      "campaign": "Campaign",
+      "status": "Status",
+      "frequency": "Frequency",
+      "nextSend": "Next Send",
+      "lastStatus": "Last Status"
+    },
+    "nextSend": {
+      "time": "07:00 AM",
+      "paused": "Paused"
+    },
+    "lastStatus": {
+      "notSent": "Not sent yet"
+    },
+    "actions": {
+      "sendNow": "Send now",
+      "edit": "Edit",
+      "pause": "Pause",
+      "resume": "Resume",
+      "delete": "Delete"
+    },
+    "empty": {
+      "title": "No auto-reports configured",
+      "description": "Enable auto-reports in the monitoring area of a campaign to automatically send reports to your customers.",
+      "action": "Go to Monitoring"
+    },
+    "modal": {
+      "titleCreate": "Set up Auto-Reporting",
+      "titleEdit": "Edit Auto-Reporting",
+      "campaign": "Campaign",
+      "recipients": {
+        "label": "Recipients (max. {max})",
+        "addContact": "Add contact...",
+        "noMoreAvailable": "No more contacts available",
+        "unknown": "Unknown",
+        "noEmail": "- No email",
+        "noContactsWarning": "No contacts found in CRM. Please add customer contacts first."
+      },
+      "frequency": {
+        "label": "Sending Frequency",
+        "sendEvery": "Send every",
+        "monthlyInfo": "The report will be sent on the 1st of each month at 8:00 AM."
+      },
+      "monitoring": {
+        "endInfo": "Reporting will automatically end on {date} when monitoring expires.",
+        "noActiveWarning": "No active monitoring found for this campaign. Auto-reporting can only be set up for campaigns with active monitoring."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "delete": "Delete",
+        "deleting": "Deleting...",
+        "activate": "Activate"
+      }
     }
   }
 }

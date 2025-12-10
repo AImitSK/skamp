@@ -1,9 +1,11 @@
 // src/app/dashboard/contacts/lists/components/shared/ConfirmDialog.tsx
+"use client";
 
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { useTranslations } from 'next-intl';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -23,9 +25,10 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   type = 'danger',
-  confirmLabel = 'Bestätigen',
-  cancelLabel = 'Abbrechen'
+  confirmLabel,
+  cancelLabel
 }: ConfirmDialogProps) {
+  const t = useTranslations('lists.confirmDialog');
   return (
     <Dialog open={isOpen} onClose={onCancel}>
       <div className="p-6">
@@ -50,7 +53,7 @@ export function ConfirmDialog({
         </div>
         <DialogActions className="mt-5 sm:mt-4">
           <Button plain onClick={onCancel} className="whitespace-nowrap">
-            {cancelLabel}
+            {cancelLabel || t('cancel')}
           </Button>
           <Button
             color="zinc"
@@ -61,7 +64,7 @@ export function ConfirmDialog({
                 : ''
             }
           >
-            {type === 'danger' && confirmLabel === 'Bestätigen' ? 'Löschen' : confirmLabel}
+            {confirmLabel || (type === 'danger' ? t('delete') : t('confirm'))}
           </Button>
         </DialogActions>
       </div>

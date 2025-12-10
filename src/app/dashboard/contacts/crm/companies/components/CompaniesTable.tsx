@@ -2,6 +2,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
@@ -64,6 +65,7 @@ export function CompaniesTable({
   getContactCount,
   getCountryName
 }: CompaniesTableProps) {
+  const t = useTranslations('companies.table');
   const router = useRouter();
 
   // Defensive: Stelle sicher, dass Arrays nie undefined sind
@@ -84,20 +86,20 @@ export function CompaniesTable({
               onChange={(checked: boolean) => onSelectAll(checked)}
             />
             <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Firmenname / Typ
+              {t('companyNameType')}
             </span>
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Ort / Land
+            {t('cityCountry')}
           </div>
           <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Website
+            {t('website')}
           </div>
           <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            Personen
+            {t('persons')}
           </div>
           <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
-            Tags
+            {t('tags')}
           </div>
         </div>
       </div>
@@ -126,7 +128,7 @@ export function CompaniesTable({
                     </Badge>
                     {(company as any)._isReference && (
                       <Badge color="blue" className="text-xs">
-                        🌐 Verweis
+                        🌐 {t('reference')}
                       </Badge>
                     )}
                   </div>
@@ -212,7 +214,7 @@ export function CompaniesTable({
                   <DropdownMenu anchor="bottom end">
                     <DropdownItem onClick={() => onView(company.id!)}>
                       <EyeIcon className="h-4 w-4" />
-                      Anzeigen
+                      {t('view')}
                     </DropdownItem>
                     <DropdownItem
                       onClick={() => onEdit(company)}
@@ -220,7 +222,7 @@ export function CompaniesTable({
                       className={(company as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <PencilIcon className="h-4 w-4" />
-                      Bearbeiten {(company as any)?._isReference && '(Verweis)'}
+                      {t('edit')} {(company as any)?._isReference && `(${t('reference')})`}
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem
@@ -229,7 +231,7 @@ export function CompaniesTable({
                       className={(company as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                     >
                       <TrashIcon className="h-4 w-4" />
-                      <span className="text-red-600">Löschen {(company as any)?._isReference && '(Verweis)'}</span>
+                      <span className="text-red-600">{t('delete')} {(company as any)?._isReference && `(${t('reference')})`}</span>
                     </DropdownItem>
                   </DropdownMenu>
                 </Dropdown>

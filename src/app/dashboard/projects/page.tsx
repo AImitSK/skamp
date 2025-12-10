@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Text } from '@/components/ui/text';
@@ -71,6 +72,7 @@ export default function ProjectsPage() {
   const { currentOrganization } = useOrganization();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('projects');
 
   // React Query Hook für Projekte
   const { data: allProjects = [], isLoading } = useProjects(currentOrganization?.id);
@@ -274,7 +276,7 @@ export default function ProjectsPage() {
   if (!currentOrganization) {
     return (
       <div className="text-center py-12">
-        <Text>Keine Organisation ausgewählt</Text>
+        <Text>{t('noOrganization')}</Text>
       </div>
     );
   }
@@ -304,7 +306,7 @@ export default function ProjectsPage() {
           {error && (
             <div className="p-6 text-center">
               <div className="rounded-lg bg-red-50 border border-red-200 p-4 inline-block">
-                <h3 className="text-sm font-medium text-red-800 mb-2">Fehler beim Laden</h3>
+                <h3 className="text-sm font-medium text-red-800 mb-2">{t('loadError')}</h3>
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             </div>
@@ -315,7 +317,7 @@ export default function ProjectsPage() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                <p className="text-gray-600">Projekte werden geladen...</p>
+                <p className="text-gray-600">{t('loading')}</p>
               </div>
             </div>
           )}
@@ -325,13 +327,13 @@ export default function ProjectsPage() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Projekte</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('empty.title')}</h3>
                 <p className="text-gray-500 mb-6">
-                  Erstellen Sie Ihr erstes Projekt mit dem Projekt-Anlage-Wizard.
+                  {t('empty.description')}
                 </p>
                 <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
                   <RocketLaunchIcon className="w-4 h-4" />
-                  <span>Erstes Projekt erstellen</span>
+                  <span>{t('empty.action')}</span>
                 </Button>
               </div>
             </div>
@@ -368,7 +370,7 @@ export default function ProjectsPage() {
     <>
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-zinc-900">Projekte</h1>
+        <h1 className="text-3xl font-semibold text-zinc-900">{t('title')}</h1>
       </div>
 
       {/* Toolbar */}
@@ -383,7 +385,7 @@ export default function ProjectsPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Projekte durchsuchen..."
+              placeholder={t('searchPlaceholder')}
               className="block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 h-10"
             />
           </div>
@@ -394,7 +396,7 @@ export default function ProjectsPage() {
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Neues Projekt
+            {t('newProject')}
           </Button>
 
           {/* View Mode Toggle */}
@@ -402,14 +404,14 @@ export default function ProjectsPage() {
             <button
               onClick={() => handleViewModeChange('board')}
               className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-700"
-              title="Board-Ansicht"
+              title={t('viewModes.board')}
             >
               <Squares2X2Icon className="h-4 w-4" />
             </button>
             <button
               onClick={() => handleViewModeChange('list')}
               className="p-2 rounded transition-colors bg-white text-primary"
-              title="Listen-Ansicht"
+              title={t('viewModes.list')}
             >
               <ListBulletIcon className="h-4 w-4" />
             </button>
@@ -421,7 +423,7 @@ export default function ProjectsPage() {
               <button
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                 className={`px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center whitespace-nowrap ${(showActive && showArchived) || (!showActive && !showArchived) ? 'border-zinc-300 text-zinc-700 hover:bg-zinc-50' : showArchived ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-green-500 bg-green-50 text-green-700'}`}
-                title="Status-Filter"
+                title={t('filters.statusFilter')}
               >
                 <FunnelIcon className="h-4 w-4" />
                 {(showActive && showArchived) && (
@@ -446,7 +448,7 @@ export default function ProjectsPage() {
                 <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status Filter
+                      {t('filters.statusFilter')}
                     </p>
                   </div>
                   <div className="py-1">
@@ -457,7 +459,7 @@ export default function ProjectsPage() {
                         onChange={(e) => toggleActive(e.target.checked)}
                         className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                       />
-                      <span>Aktiv</span>
+                      <span>{t('filters.active')}</span>
                       {showActive && (
                         <CheckIcon className="h-4 w-4 text-green-600 ml-auto" />
                       )}
@@ -469,7 +471,7 @@ export default function ProjectsPage() {
                         onChange={(e) => toggleArchived(e.target.checked)}
                         className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                       />
-                      <span>Archiv</span>
+                      <span>{t('filters.archived')}</span>
                       {showArchived && (
                         <CheckIcon className="h-4 w-4 text-blue-600 ml-auto" />
                         )}
@@ -486,7 +488,7 @@ export default function ProjectsPage() {
       {error && viewMode === 'list' && (
         <div className="p-6 text-center">
           <div className="rounded-lg bg-red-50 border border-red-200 p-4 inline-block">
-            <h3 className="text-sm font-medium text-red-800 mb-2">Fehler beim Laden</h3>
+            <h3 className="text-sm font-medium text-red-800 mb-2">{t('loadError')}</h3>
             <p className="text-sm text-red-700">{error}</p>
           </div>
         </div>

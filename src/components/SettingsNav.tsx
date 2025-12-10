@@ -2,51 +2,53 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { useAutoGlobal } from '@/lib/hooks/useAutoGlobal';
 
 // Die Navigationspunkte für die Einstellungen (ohne Icons)
+// nameKey verweist auf den Übersetzungsschlüssel
 const settingsItems = [
   {
-    name: "Benachrichtigungen",
+    nameKey: "notifications",
     href: "/dashboard/settings/notifications",
   },
   {
-    name: "Branding",
+    nameKey: "branding",
     href: "/dashboard/settings/branding",
   },
   {
-    name: "Sprache",
+    nameKey: "language",
     href: "/dashboard/settings/language",
   },
   {
-    name: "Team",
+    nameKey: "team",
     href: "/dashboard/settings/team",
   },
   {
-    name: "Domains",
+    nameKey: "domains",
     href: "/dashboard/settings/domain",
   },
   {
-    name: "E-Mail",
+    nameKey: "email",
     href: "/dashboard/settings/email",
   },
   {
-    name: "Monitoring & AVE",
+    nameKey: "monitoringAve",
     href: "/dashboard/settings/monitoring",
   },
   {
-    name: "Import / Export",
+    nameKey: "importExport",
     href: "/dashboard/settings/import-export",
   },
   {
-    name: "PDF Templates",
+    nameKey: "pdfTemplates",
     href: "/dashboard/settings/templates",
-    badge: "PREMIUM",
+    badgeKey: "premium",
     superAdminOnly: true,
   },
   {
-    name: "Spam-Blocklist",
+    nameKey: "spamBlocklist",
     href: "/dashboard/settings/spam-blocklist",
   },
 ];
@@ -59,22 +61,24 @@ function classNames(...classes: string[]) {
 export function SettingsNav() {
   const pathname = usePathname();
   const { isSuperAdmin } = useAutoGlobal();
+  const t = useTranslations('settings.navigation');
 
   return (
-    <nav aria-label="Sidebar" className="flex flex-col">
+    <nav aria-label={t('ariaLabel')} className="flex flex-col">
       <ul role="list" className="-mx-2 space-y-1">
         {settingsItems.map((item) => {
           const isRestricted = item.superAdminOnly && !isSuperAdmin;
+          const itemName = t(item.nameKey);
 
           if (isRestricted) {
             return (
-              <li key={item.name}>
+              <li key={item.nameKey}>
                 <div
                   className="flex items-center justify-between rounded-md p-2 text-sm/6 font-semibold text-gray-400 cursor-not-allowed opacity-50"
                 >
-                  <span>{item.name}</span>
-                  {item.badge && (
-                    <Badge color="pink">{item.badge}</Badge>
+                  <span>{itemName}</span>
+                  {item.badgeKey && (
+                    <Badge color="pink">{t(`badges.${item.badgeKey}`)}</Badge>
                   )}
                 </div>
               </li>
@@ -82,7 +86,7 @@ export function SettingsNav() {
           }
 
           return (
-            <li key={item.name}>
+            <li key={item.nameKey}>
               <Link
                 href={item.href}
                 className={classNames(
@@ -92,9 +96,9 @@ export function SettingsNav() {
                   'flex items-center justify-between rounded-md p-2 text-sm/6 font-semibold'
                 )}
               >
-                <span>{item.name}</span>
-                {item.badge && (
-                  <Badge color="pink">{item.badge}</Badge>
+                <span>{itemName}</span>
+                {item.badgeKey && (
+                  <Badge color="pink">{t(`badges.${item.badgeKey}`)}</Badge>
                 )}
               </Link>
             </li>

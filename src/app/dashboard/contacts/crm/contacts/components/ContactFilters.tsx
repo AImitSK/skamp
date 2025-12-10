@@ -2,6 +2,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { useTranslations } from 'next-intl';
 import { Popover, Transition } from '@headlessui/react';
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,6 +49,8 @@ export function ContactFilters({
   companyOptions,
   contacts
 }: ContactFiltersProps) {
+  const t = useTranslations('contacts.filters');
+
   // Defensive: Stelle sicher, dass Arrays nie undefined sind
   const safeCompanyOptions = companyOptions || [];
   const safeTags = availableTags || [];
@@ -114,17 +117,17 @@ export function ContactFilters({
                     {safeCompanyOptions.length > 10 ? (
                       // Use SearchableFilter for large datasets
                       <SearchableFilter
-                        label="Firma"
+                        label={t('company')}
                         options={safeCompanyOptions}
                         selectedValues={safeSelectedCompanyIds}
                         onChange={onCompanyChange}
-                        placeholder="Firma suchen..."
+                        placeholder={t('companySearchPlaceholder')}
                       />
                     ) : (
                       // Keep existing UI for small datasets
                       <>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Firma
+                          {t('company')}
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {safeCompanyOptions.map((option) => {
@@ -160,17 +163,17 @@ export function ContactFilters({
                     {tagOptions.length > 10 ? (
                       // Use SearchableFilter for large datasets
                       <SearchableFilter
-                        label="Tags"
+                        label={t('tags')}
                         options={tagOptions}
                         selectedValues={safeSelectedTagIds}
                         onChange={onTagChange}
-                        placeholder="Tags suchen..."
+                        placeholder={t('tagsSearchPlaceholder')}
                       />
                     ) : (
                       // Keep existing UI for small datasets
                       <>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                          Tags
+                          {t('tags')}
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {tagOptions.map((option) => {
@@ -208,7 +211,7 @@ export function ContactFilters({
                       onClick={handleReset}
                       className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
                     >
-                      Zurücksetzen
+                      {t('reset')}
                     </button>
                   </div>
                 )}

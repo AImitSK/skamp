@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 
@@ -10,11 +11,13 @@ interface Props {
 }
 
 export const ErrorState = memo(function ErrorState({ error, onRetry }: Props) {
+  const t = useTranslations('monitoring');
+
   return (
     <div className="text-center py-12">
-      <Text className="text-red-500">Fehler beim Laden: {error.message}</Text>
+      <Text className="text-red-500">{t('loadError')}: {error.message}</Text>
       <Button onClick={onRetry} className="mt-4">
-        Erneut versuchen
+        {t('retryButton')}
       </Button>
     </div>
   );

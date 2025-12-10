@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback, use } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { CampaignProvider, useCampaign } from "./context/CampaignContext";
@@ -98,13 +99,14 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
 export default function EditPRCampaignPage({ params }: { params: Promise<{ campaignId: string }> }) {
   const { campaignId } = use(params);
   const { currentOrganization } = useOrganization();
+  const t = useTranslations('campaigns');
 
   if (!currentOrganization) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-sm text-gray-600">Organisation wird geladen...</p>
+          <p className="mt-2 text-sm text-gray-600">{t('loading.organization')}</p>
         </div>
       </div>
     );
@@ -122,6 +124,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   const { currentOrganization } = useOrganization();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const t = useTranslations('campaigns');
 
   // Campaign Context - Phase 3.5: Alle Campaign-States aus Context
   const {
@@ -331,7 +334,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         updateSeoScore({
           totalScore: 28,
           breakdown: { headline: 20, keywords: 0, structure: 0, relevance: 40, concreteness: 40, engagement: 20, social: 0 },
-          hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'],
+          hints: [t('seo.hints.addMoreContent'), t('seo.hints.useKeywords')],
           keywordMetrics: []
         });
         return;
@@ -359,14 +362,14 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           breakdown.headline = 80;
         } else if (titleLength < 20) {
           breakdown.headline = 40;
-          hints.push('Titel sollte mindestens 30-60 Zeichen haben');
+          hints.push(t('seo.hints.titleTooShort'));
         } else {
           breakdown.headline = 50;
-          hints.push('Titel ist zu lang (optimal: 30-60 Zeichen)');
+          hints.push(t('seo.hints.titleTooLong'));
         }
       } else {
         breakdown.headline = 0;
-        hints.push('Fügen Sie einen aussagekräftigen Titel hinzu');
+        hints.push(t('seo.hints.addTitle'));
       }
 
       // 2. Keywords-Bewertung (0-100)
@@ -381,17 +384,17 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
           breakdown.keywords = 100;
         } else if (keywordsFound.length >= keywords.length * 0.6) {
           breakdown.keywords = 75;
-          hints.push('Verwenden Sie alle Keywords im Text');
+          hints.push(t('seo.hints.useAllKeywords'));
         } else {
           breakdown.keywords = 50;
-          hints.push('Keywords sollten im Text verwendet werden');
+          hints.push(t('seo.hints.useKeywordsInText'));
         }
       } else if (keywords.length > 0) {
         breakdown.keywords = 40;
-        hints.push('Definieren Sie mindestens 3 SEO-Keywords');
+        hints.push(t('seo.hints.addMinKeywords'));
       } else {
         breakdown.keywords = 0;
-        hints.push('Definieren Sie SEO-Keywords für bessere Auffindbarkeit');
+        hints.push(t('seo.hints.defineKeywords'));
       }
 
       // 3. Struktur-Bewertung (0-100)
@@ -405,10 +408,10 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         }
       } else if (paragraphs.length >= 2) {
         breakdown.structure = 50;
-        hints.push('Gliedern Sie den Text in mindestens 3 Absätze');
+        hints.push(t('seo.hints.structureMinParagraphs'));
       } else {
         breakdown.structure = 30;
-        hints.push('Gliedern Sie den Text in mehrere Absätze');
+        hints.push(t('seo.hints.structureMultipleParagraphs'));
       }
 
       // 4. Relevanz-Bewertung (Content-Länge) (0-100)
@@ -417,16 +420,16 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         breakdown.relevance = 100;
       } else if (wordCount >= 200 && wordCount < 300) {
         breakdown.relevance = 75;
-        hints.push('Optimal wären 300-800 Wörter');
+        hints.push(t('seo.hints.optimalWordCount'));
       } else if (wordCount >= 100 && wordCount < 200) {
         breakdown.relevance = 50;
-        hints.push('Pressemitteilung sollte mindestens 200 Wörter haben');
+        hints.push(t('seo.hints.minWordCount'));
       } else if (wordCount > 800) {
         breakdown.relevance = 80;
-        hints.push('Sehr langer Text - erwägen Sie Kürzung auf 300-800 Wörter');
+        hints.push(t('seo.hints.tooLong'));
       } else {
         breakdown.relevance = 30;
-        hints.push('Text ist zu kurz (mindestens 200 Wörter empfohlen)');
+        hints.push(t('seo.hints.tooShort'));
       }
 
       // 5. Konkretheit-Bewertung (Basis-Bewertung) (0-100)
@@ -437,15 +440,15 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       if (hasNumbers) breakdown.concreteness += 20;
       if (hasQuotes) breakdown.concreteness += 20;
 
-      if (!hasNumbers) hints.push('Verwenden Sie konkrete Zahlen und Fakten');
-      if (!hasQuotes) hints.push('Zitate erhöhen die Glaubwürdigkeit');
+      if (!hasNumbers) hints.push(t('seo.hints.useNumbers'));
+      if (!hasQuotes) hints.push(t('seo.hints.useQuotes'));
 
       // 6. Engagement-Bewertung (0-100)
       const hasCallToAction = /kontakt|information|website|besuchen|erfahren/i.test(content);
       breakdown.engagement = hasCallToAction ? 80 : 50;
 
       if (!hasCallToAction) {
-        hints.push('Call-to-Action hinzufügen (Kontakt, Website, etc.)');
+        hints.push(t('seo.hints.addCallToAction'));
       }
 
       // 7. Social-Bewertung (0-100)
@@ -667,13 +670,13 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   const getApprovalStatusText = (status: string): string => {
     switch (status) {
-      case 'draft': return 'Entwurf';
-      case 'pending': return 'Ausstehend';
-      case 'in_review': return 'In Prüfung';
-      case 'approved': return 'Freigegeben';
-      case 'rejected': return 'Abgelehnt';
-      case 'changes_requested': return 'Änderungen angefordert';
-      default: return 'Unbekannt';
+      case 'draft': return t('approval.status.draft');
+      case 'pending': return t('approval.status.pending');
+      case 'in_review': return t('approval.status.inReview');
+      case 'approved': return t('approval.status.approved');
+      case 'rejected': return t('approval.status.rejected');
+      case 'changes_requested': return t('approval.status.changesRequested');
+      default: return t('common.unknown');
     }
   };
 
@@ -720,22 +723,22 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
     
     // 🆕 CRITICAL: Edit-Lock Prüfung vor Speicherung
     if (editLockStatus.isLocked) {
-      const lockReason = editLockStatus.reason || 'unbekannt';
-      toastService.warning(`Diese Kampagne kann nicht gespeichert werden. Grund: ${lockReason}`);
+      const lockReason = editLockStatus.reason || t('validation.unknownReason');
+      toastService.warning(t('validation.cannotSave', { reason: lockReason }));
       return;
     }
-    
+
     // Validierung
     const errors: string[] = [];
     if (!selectedCompanyId) {
-      errors.push('Bitte wählen Sie einen Kunden aus');
+      errors.push(t('validation.selectCustomer'));
     }
     // Verteiler-Auswahl ist jetzt optional - kann vor dem Versand gemacht werden
     if (!campaignTitle.trim()) {
-      errors.push('Titel ist erforderlich');
+      errors.push(t('validation.titleRequired'));
     }
     if (!editorContent.trim() || editorContent === '<p></p>') {
-      errors.push('Inhalt ist erforderlich');
+      errors.push(t('validation.contentRequired'));
     }
     
     if (errors.length > 0) {
@@ -913,29 +916,29 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
 
   const handleGeneratePdf = async (forApproval: boolean = false) => {
     if (!user || !currentOrganization || !campaignTitle.trim()) {
-      toastService.error('Bitte füllen Sie alle erforderlichen Felder aus');
+      toastService.error(t('validation.fillRequiredFields'));
       return;
     }
 
     // Validiere erforderliche Felder bevor PDF erstellt wird
     const errors: string[] = [];
     if (!selectedCompanyId) {
-      errors.push('Bitte wählen Sie einen Kunden aus');
+      errors.push(t('validation.selectCustomer'));
     }
     if (!campaignTitle.trim()) {
-      errors.push('Titel ist erforderlich');
+      errors.push(t('validation.titleRequired'));
     }
     if (!editorContent.trim() || editorContent === '<p></p>') {
-      errors.push('Inhalt ist erforderlich');
+      errors.push(t('validation.contentRequired'));
     }
-    
+
     if (errors.length > 0) {
       toastService.error(errors.join(', '));
       return;
     }
 
     if (!campaignId) {
-      toastService.error('Campaign-ID nicht gefunden');
+      toastService.error(t('validation.campaignIdNotFound'));
       return;
     }
 
@@ -947,11 +950,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   // 🆕 ENHANCED: Manual Approval Handler
   const handleGrantManualApproval = async (reason: string): Promise<void> => {
     if (!user) {
-      throw new Error('User nicht verfügbar');
+      throw new Error(t('validation.userNotAvailable'));
     }
 
     if (!campaignId) {
-      throw new Error('Campaign-ID nicht gefunden');
+      throw new Error(t('validation.campaignIdNotFound'));
     }
 
     try {
@@ -962,7 +965,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       );
 
       if (!approval) {
-        throw new Error('Keine Freigabe-Anfrage gefunden');
+        throw new Error(t('approval.noRequestFound'));
       }
 
       // Erteile manuelle Freigabe
@@ -971,14 +974,14 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {
           organizationId: currentOrganization!.id,
           userId: user.uid,
-          displayName: user.displayName || user.email || 'Unbekannt',
+          displayName: user.displayName || user.email || t('common.unknown'),
           email: user.email || '',
           photoUrl: user.photoURL || undefined
         },
         reason
       );
 
-      toastService.success('Freigabe erfolgreich erteilt. Die Kampagne kann nun bearbeitet werden.');
+      toastService.success(t('approval.grantSuccess'));
 
       // Context neu laden
       await reloadCampaign();
@@ -989,7 +992,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       }
 
     } catch (error: any) {
-      toastService.error(error.message || 'Die Freigabe konnte nicht erteilt werden.');
+      toastService.error(error.message || t('approval.grantError'));
       throw error;
     }
   };
@@ -997,11 +1000,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
   // 🆕 ENHANCED: Request Manual Changes Handler
   const handleRequestManualChanges = async (reason: string): Promise<void> => {
     if (!user) {
-      throw new Error('User nicht verfügbar');
+      throw new Error(t('validation.userNotAvailable'));
     }
 
     if (!campaignId) {
-      throw new Error('Campaign-ID nicht gefunden');
+      throw new Error(t('validation.campaignIdNotFound'));
     }
 
     try {
@@ -1012,7 +1015,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       );
 
       if (!approval) {
-        throw new Error('Keine Freigabe-Anfrage gefunden');
+        throw new Error(t('approval.noRequestFound'));
       }
 
       // Setze Status auf "Änderungen erbeten"
@@ -1021,14 +1024,14 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {
           organizationId: currentOrganization!.id,
           userId: user.uid,
-          displayName: user.displayName || user.email || 'Unbekannt',
+          displayName: user.displayName || user.email || t('common.unknown'),
           email: user.email || '',
           photoUrl: user.photoURL || undefined
         },
         reason
       );
 
-      toastService.success('Änderungen erbeten. Die Kampagne kann nun bearbeitet werden.');
+      toastService.success(t('approval.changesRequestSuccess'));
 
       // Context neu laden
       await reloadCampaign();
@@ -1039,7 +1042,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
       }
 
     } catch (error: any) {
-      toastService.error(error.message || 'Änderungen konnten nicht angefordert werden.');
+      toastService.error(error.message || t('approval.changesRequestError'));
       throw error;
     }
   };
@@ -1091,7 +1094,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             <div className="flex items-center gap-2 mb-3">
               <CheckCircleIcon className="h-5 w-5 text-orange-600" />
               <Text className="font-semibold text-orange-900">
-                Kunden-Freigabe erforderlich
+                {t('pipeline.customerApprovalRequired')}
               </Text>
               {projectApproval && (
                 <Badge color="orange">
@@ -1106,11 +1109,10 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
             {!projectApproval ? (
               <div className="space-y-3">
                 <Text className="text-sm text-orange-700">
-                  Diese Kampagne ist Teil eines Projekts und benötigt eine Kunden-Freigabe 
-                  bevor sie zur Distribution weitergeleitet werden kann.
+                  {t('pipeline.approvalDescription')}
                 </Text>
                 <Button onClick={handleCreateProjectApproval} disabled={approvalLoading}>
-                  {approvalLoading ? 'Erstelle Freigabe...' : 'Freigabe erstellen'}
+                  {approvalLoading ? t('pipeline.creatingApproval') : t('pipeline.createApproval')}
                 </Button>
               </div>
             ) : (
@@ -1118,47 +1120,49 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <Text className="text-sm text-orange-700">
-                      Status: <strong>{getApprovalStatusText(projectApproval.status)}</strong>
+                      {t('pipeline.status')}: <strong>{getApprovalStatusText(projectApproval.status)}</strong>
                     </Text>
                     {projectApproval.recipients?.length > 0 && (
                       <Text className="text-xs text-orange-600">
-                        {projectApproval.recipients.filter((r: any) => r.status === 'approved').length}/
-                        {projectApproval.recipients.length} Empfänger haben freigegeben
+                        {t('pipeline.recipientsApproved', {
+                          approved: projectApproval.recipients.filter((r: any) => r.status === 'approved').length,
+                          total: projectApproval.recipients.length
+                        })}
                       </Text>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      plain 
+                    <Button
+                      plain
                       onClick={() => window.open(`/dashboard/approvals/${projectApproval.id}`)}
                     >
-                      Freigabe öffnen
+                      {t('pipeline.openApproval')}
                     </Button>
                     {projectApproval.shareId && (
-                      <Button 
-                        plain 
+                      <Button
+                        plain
                         onClick={() => window.open(`/freigabe/${projectApproval.shareId}`)}
                       >
                         <LinkIcon className="h-4 w-4 mr-1" />
-                        Kunden-Link
+                        {t('pipeline.customerLink')}
                       </Button>
                     )}
                   </div>
                 </div>
-                
-                {projectApproval.status === 'approved' && 
+
+                {projectApproval.status === 'approved' &&
                  projectApproval.pipelineApproval?.autoTransitionOnApproval && (
                   <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded">
                     <Text className="text-xs text-green-700">
-                      ✓ Freigabe erhalten. Projekt wird automatisch zur Distribution weitergeleitet.
+                      {t('pipeline.approvedAutoTransition')}
                     </Text>
                   </div>
                 )}
-                
+
                 {projectApproval.status === 'rejected' && (
                   <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded">
                     <Text className="text-xs text-red-700">
-                      ✗ Freigabe abgelehnt. Bitte überarbeiten Sie die Kampagne basierend auf dem Kunden-Feedback.
+                      {t('pipeline.rejectedRevise')}
                     </Text>
                   </div>
                 )}
@@ -1173,7 +1177,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2 text-sm text-blue-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-            Prüfe Edit-Status...
+            {t('loading.editStatus')}
           </div>
         </div>
       )}
@@ -1226,8 +1230,8 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
         {/* Navigation Buttons */}
         <div className="mt-6 flex justify-between">
           <div className="flex gap-3">
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onClick={() => {
                 // Zurück zum Projekt oder zur Projekte-Übersicht
                 if (existingCampaign?.projectId) {
@@ -1239,7 +1243,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
               plain
               className="!bg-gray-50 hover:!bg-gray-100 !text-gray-700 !border !border-gray-300"
             >
-              Abbrechen
+              {t('actions.cancel')}
             </Button>
             {currentStep > 1 && (
               <Button
@@ -1248,11 +1252,11 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                 className="bg-gray-50 hover:bg-gray-100 text-gray-900"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {t('actions.back')}
               </Button>
             )}
           </div>
-          
+
           <div className="flex gap-3">
             {currentStep < 4 ? (
               <Button
@@ -1260,7 +1264,7 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                 onClick={() => handleStepTransition((currentStep + 1) as 1 | 2 | 3 | 4)}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
-                Weiter
+                {t('actions.continue')}
                 <ArrowLeftIcon className="h-4 w-4 ml-2 rotate-180" />
               </Button>
             ) : (
@@ -1275,17 +1279,17 @@ function CampaignEditPageContent({ campaignId }: { campaignId: string }) {
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Speichert...
+                    {t('actions.saving')}
                   </>
                 ) : approvalData.customerApprovalRequired ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                    Freigabe anfordern
+                    {t('actions.requestApproval')}
                   </>
                 ) : (
                   <>
                     <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Als Entwurf speichern
+                    {t('actions.saveAsDraft')}
                   </>
                 )}
               </Button>

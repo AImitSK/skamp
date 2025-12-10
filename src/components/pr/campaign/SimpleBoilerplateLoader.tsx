@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
+import {
   DocumentTextIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -19,6 +19,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
 import { Boilerplate } from '@/types/crm-enhanced';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 // Types für Boilerplate Sections - erweitert für Kompatibilität
 export interface BoilerplateSection {
@@ -50,6 +51,7 @@ export default function SimpleBoilerplateLoader({
   onSectionsChange,
   initialSections = []
 }: SimpleBoilerplateLoaderProps) {
+  const t = useTranslations('campaigns');
   // Filtere nur Boilerplate-Sections aus initialSections
   const [sections, setSections] = useState<BoilerplateSection[]>(
     initialSections.filter(s => s.type === 'boilerplate')
@@ -177,7 +179,7 @@ export default function SimpleBoilerplateLoader({
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
       {/* Header mit Add Button und Link */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Textbausteine</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('boilerplates.simpleTitle')}</h3>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -186,7 +188,7 @@ export default function SimpleBoilerplateLoader({
             className="text-sm px-3 py-1.5"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
-            Textbaustein
+            {t('boilerplates.simple.addButton')}
           </Button>
         </div>
       </div>
@@ -196,10 +198,10 @@ export default function SimpleBoilerplateLoader({
         <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-medium text-gray-900">
-              Textbaustein auswählen
+              {t('boilerplates.simple.selectTitle')}
               {clientName && (
                 <span className="ml-2 text-xs text-gray-500">
-                  (Global + {clientName})
+                  {t('boilerplates.simple.selectSubtitle', { client: clientName })}
                 </span>
               )}
             </h4>
@@ -210,11 +212,11 @@ export default function SimpleBoilerplateLoader({
               <XMarkIcon className="h-4 w-4" />
             </button>
           </div>
-          
+
           {loading ? (
             <div className="text-center py-8 text-gray-500">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto mb-2"></div>
-              Lade Textbausteine...
+              {t('boilerplates.simple.loading')}
             </div>
           ) : availableBoilerplates.length > 0 ? (
             <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
@@ -228,9 +230,9 @@ export default function SimpleBoilerplateLoader({
                     <div className="font-medium text-sm text-gray-900 mb-2">{bp.name}</div>
                     <div className="flex items-center gap-2">
                       {bp.clientId ? (
-                        <Badge color="blue" className="text-xs">Kunde</Badge>
+                        <Badge color="blue" className="text-xs">{t('boilerplates.simple.badgeClient')}</Badge>
                       ) : (
-                        <Badge color="zinc" className="text-xs">Global</Badge>
+                        <Badge color="zinc" className="text-xs">{t('boilerplates.simple.badgeGlobal')}</Badge>
                       )}
                       {bp.category && (
                         <Badge color="zinc" className="text-xs capitalize">{bp.category}</Badge>
@@ -243,9 +245,9 @@ export default function SimpleBoilerplateLoader({
           ) : (
             <div className="text-center py-8 text-gray-500">
               <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Keine Textbausteine verfügbar</p>
+              <p>{t('boilerplates.simple.noBoilerplates')}</p>
               {!clientId && (
-                <p className="text-xs mt-2">Wählen Sie einen Kunden aus, um kundenspezifische Bausteine zu sehen</p>
+                <p className="text-xs mt-2">{t('boilerplates.simple.selectClientHint')}</p>
               )}
             </div>
           )}
@@ -305,30 +307,30 @@ export default function SimpleBoilerplateLoader({
                                 )}
                               </button>
                               <span className="font-medium text-sm text-gray-900">
-                                {section.boilerplate?.name || 'Textbaustein'}
+                                {section.boilerplate?.name || t('boilerplates.simple.defaultName')}
                               </span>
                               {section.boilerplate?.clientId ? (
-                                <Badge color="blue" className="text-xs">Kunde</Badge>
+                                <Badge color="blue" className="text-xs">{t('boilerplates.simple.badgeClient')}</Badge>
                               ) : (
-                                <Badge color="zinc" className="text-xs">Global</Badge>
+                                <Badge color="zinc" className="text-xs">{t('boilerplates.simple.badgeGlobal')}</Badge>
                               )}
                             </div>
-                            
+
                             {!section.isCollapsed && section.boilerplate && (
-                              <div 
+                              <div
                                 className="ml-6 prose prose-sm max-w-none text-gray-600"
                                 dangerouslySetInnerHTML={{ __html: section.boilerplate.content }}
                               />
                             )}
                           </div>
-                          
+
                           {/* Actions */}
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => handleToggleLock(section.id)}
                               className="p-1 text-gray-400 hover:text-gray-600"
-                              title={section.isLocked ? 'Entsperren' : 'Sperren'}
+                              title={section.isLocked ? t('boilerplates.simple.unlock') : t('boilerplates.simple.lock')}
                             >
                               {section.isLocked ? (
                                 <LockClosedIcon className="h-4 w-4" />
@@ -341,7 +343,7 @@ export default function SimpleBoilerplateLoader({
                                 type="button"
                                 onClick={() => handleRemoveSection(section.id)}
                                 className="p-1 text-red-600 hover:text-red-500"
-                                title="Entfernen"
+                                title={t('boilerplates.simple.remove')}
                               >
                                 <XMarkIcon className="h-4 w-4" />
                               </button>
@@ -358,14 +360,14 @@ export default function SimpleBoilerplateLoader({
           </Droppable>
         </DragDropContext>
       ) : (
-        <div 
+        <div
           className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-12"
           onClick={() => setShowSelector(true)}
         >
           <div className="flex flex-col items-center justify-center">
             <DocumentTextIcon className="h-12 w-12 text-gray-400 group-hover:text-[#005fab] mb-3" />
-            <p className="text-gray-600 group-hover:text-[#005fab] font-medium">Textbausteine hinzufügen</p>
-            <p className="text-sm text-gray-500 mt-1">Klicken zum Auswählen</p>
+            <p className="text-gray-600 group-hover:text-[#005fab] font-medium">{t('boilerplates.simple.emptyTitle')}</p>
+            <p className="text-sm text-gray-500 mt-1">{t('boilerplates.simple.emptyHint')}</p>
           </div>
         </div>
       )}

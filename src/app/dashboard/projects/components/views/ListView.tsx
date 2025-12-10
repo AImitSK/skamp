@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Text } from '@/components/ui/text';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 import { Project } from '@/types/project';
@@ -44,13 +45,15 @@ export default function ListView({
   onUnarchive,
   onDelete
 }: ListViewProps) {
+  const t = useTranslations('projects');
+
   // Loading State
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-zinc-600">Projekte werden geladen...</p>
+          <p className="text-zinc-600">{t('loading')}</p>
         </div>
       </div>
     );
@@ -61,9 +64,9 @@ export default function ListView({
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
         <Text className="text-sm text-zinc-600">
-          {projects.length} {projects.length === 1 ? 'Projekt' : 'Projekte'}
+          {projects.length} {projects.length === 1 ? t('results.singular') : t('results.plural')}
           {searchTerm && (
-            <span className="ml-2">· gefiltert von {allProjects.length} gesamt</span>
+            <span className="ml-2">· {t('results.filteredFrom', { total: allProjects.length })}</span>
           )}
         </Text>
       </div>
@@ -77,10 +80,10 @@ export default function ListView({
               <FunnelIcon className="h-5 w-5 text-blue-600 mr-2" />
               <div>
                 <h3 className="text-sm font-medium text-blue-900">
-                  Archivansicht aktiv
+                  {t('archiveBanner.title')}
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden.
+                  {t('archiveBanner.description')}
                 </p>
               </div>
             </div>

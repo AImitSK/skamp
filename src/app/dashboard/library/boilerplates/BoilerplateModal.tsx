@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from 'next-intl';
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
@@ -46,13 +47,13 @@ const FlagIcon = ({ countryCode, className = "h-3 w-5" }: { countryCode?: string
   return <Flag className={className} title={countryCode} />;
 };
 
-// Kategorie-Optionen
+// Kategorie Keys
 const CATEGORY_OPTIONS = [
-  { value: 'company', label: 'Unternehmensbeschreibung' },
-  { value: 'contact', label: 'Kontaktinformationen' },
-  { value: 'legal', label: 'Rechtliche Hinweise' },
-  { value: 'product', label: 'Produktbeschreibung' },
-  { value: 'custom', label: 'Sonstige' }
+  { value: 'company' },
+  { value: 'contact' },
+  { value: 'legal' },
+  { value: 'product' },
+  { value: 'custom' }
 ];
 
 interface BoilerplateModalProps {
@@ -70,6 +71,7 @@ export default function BoilerplateModal({
   organizationId,
   userId
 }: BoilerplateModalProps) {
+  const t = useTranslations('boilerplates.modal');
   const [companies, setCompanies] = useState<any[]>([]);
 
   // React Query Mutations
@@ -95,7 +97,7 @@ export default function BoilerplateModal({
         types: ['heading', 'paragraph']
       })
     ],
-    content: '<p>Geben Sie hier Ihren Textbaustein ein...</p>',
+    content: `<p>${t('contentPlaceholder')}</p>`,
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[300px] px-4 py-3 text-gray-900 leading-relaxed'
@@ -137,10 +139,10 @@ export default function BoilerplateModal({
       };
       
       setFormData(newFormData);
-      
+
       // Setze Editor Content
       if (editor) {
-        editor.commands.setContent(boilerplate.content || '<p>Geben Sie hier Ihren Textbaustein ein...</p>');
+        editor.commands.setContent(boilerplate.content || `<p>${t('contentPlaceholder')}</p>`);
       }
     } else {
       // Reset für neuen Boilerplate
@@ -157,10 +159,10 @@ export default function BoilerplateModal({
 
       // Reset Editor Content
       if (editor) {
-        editor.commands.setContent('<p>Geben Sie hier Ihren Textbaustein ein...</p>');
+        editor.commands.setContent(`<p>${t('contentPlaceholder')}</p>`);
       }
     }
-  }, [boilerplate, editor]);
+  }, [boilerplate, editor, t]);
 
   const loadCompanies = async () => {
     if (!organizationId) return;
@@ -187,7 +189,7 @@ export default function BoilerplateModal({
   const handleSubmit = async () => {
     const content = editor?.getHTML() || '';
     if (!formData.name.trim() || !content.trim()) {
-      toastService.warning('Bitte füllen Sie Name und Inhalt aus.');
+      toastService.warning(t('validation.nameAndContentRequired'));
       return;
     }
 
@@ -243,7 +245,7 @@ export default function BoilerplateModal({
       className="sm:max-w-4xl"
     >
       <DialogTitle>
-        {boilerplate ? 'Textbaustein bearbeiten' : 'Neuer Textbaustein'}
+        {boilerplate ? t('editTitle') : t('createTitle')}
       </DialogTitle>
       
       <DialogBody>
@@ -251,23 +253,23 @@ export default function BoilerplateModal({
           {/* Name und Kategorie */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field>
-              <Label>Name</Label>
+              <Label>{t('fields.name')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="z.B. Unternehmensprofil kurz"
+                placeholder={t('fields.namePlaceholder')}
               />
             </Field>
-            
+
             <Field>
-              <Label>Kategorie</Label>
+              <Label>{t('fields.category')}</Label>
               <Select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
               >
                 {CATEGORY_OPTIONS.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`categories.${option.value}`)}
                   </option>
                 ))}
               </Select>
@@ -276,7 +278,7 @@ export default function BoilerplateModal({
 
           {/* Inhalt */}
           <Field>
-            <Label>Inhalt</Label>
+            <Label>{t('fields.content')}</Label>
             <div className="mt-2">
               {/* Vollständige Editor-Toolbar (wie Strategiedokumente) */}
               {editor && (
@@ -287,7 +289,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bold') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Fett (Strg+B)"
+                      title={t('toolbar.bold')}
                     >
                       <BoldIcon className="h-4 w-4" />
                     </button>
@@ -295,7 +297,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('italic') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Kursiv (Strg+I)"
+                      title={t('toolbar.italic')}
                     >
                       <ItalicIcon className="h-4 w-4" />
                     </button>
@@ -303,7 +305,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleUnderline().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('underline') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Unterstrichen (Strg+U)"
+                      title={t('toolbar.underline')}
                     >
                       <UnderlineIcon className="h-4 w-4" />
                     </button>
@@ -311,7 +313,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('strike') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Durchgestrichen"
+                      title={t('toolbar.strikethrough')}
                     >
                       <StrikethroughIcon className="h-4 w-4" />
                     </button>
@@ -335,10 +337,10 @@ export default function BoilerplateModal({
                         editor.isActive('heading', { level: 3 }) ? 3 : 0
                       }
                     >
-                      <option value={0}>Normal</option>
-                      <option value={1}>Überschrift 1</option>
-                      <option value={2}>Überschrift 2</option>
-                      <option value={3}>Überschrift 3</option>
+                      <option value={0}>{t('toolbar.normal')}</option>
+                      <option value={1}>{t('toolbar.heading1')}</option>
+                      <option value={2}>{t('toolbar.heading2')}</option>
+                      <option value={3}>{t('toolbar.heading3')}</option>
                     </select>
                   </div>
 
@@ -348,7 +350,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bulletList') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Aufzählungsliste"
+                      title={t('toolbar.bulletList')}
                     >
                       <ListBulletIcon className="h-4 w-4" />
                     </button>
@@ -356,7 +358,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('orderedList') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Nummerierte Liste"
+                      title={t('toolbar.orderedList')}
                     >
                       <ListOrderedIcon className="h-4 w-4" />
                     </button>
@@ -368,7 +370,7 @@ export default function BoilerplateModal({
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().toggleCodeBlock().run(); }}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('codeBlock') ? 'bg-gray-200 text-blue-600' : ''}`}
-                      title="Code-Block"
+                      title={t('toolbar.codeBlock')}
                     >
                       <CodeBracketIcon className="h-4 w-4" />
                     </button>
@@ -381,7 +383,7 @@ export default function BoilerplateModal({
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().undo().run(); }}
                       disabled={!editor.can().undo()}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${!editor.can().undo() ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title="Rückgängig (Strg+Z)"
+                      title={t('toolbar.undo')}
                     >
                       <ArrowUturnLeftIcon className="h-4 w-4" />
                     </button>
@@ -390,7 +392,7 @@ export default function BoilerplateModal({
                       onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().redo().run(); }}
                       disabled={!editor.can().redo()}
                       className={`p-2 rounded hover:bg-gray-200 transition-colors ${!editor.can().redo() ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title="Wiederholen (Strg+Y)"
+                      title={t('toolbar.redo')}
                     >
                       <ArrowUturnRightIcon className="h-4 w-4" />
                     </button>
@@ -476,7 +478,7 @@ export default function BoilerplateModal({
               </div>
             </div>
             <Description className="mt-2">
-              Vollständiger Texteditor mit Überschriften, Formatierungen und Listen - identisch zu Strategiedokumenten.
+              {t('fields.contentDescription')}
             </Description>
           </Field>
 
@@ -484,14 +486,14 @@ export default function BoilerplateModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field>
               <Label className="flex items-center gap-2">
-                Kunde
-                <InfoTooltip content="Wählen Sie einen Kunden aus, um den Textbaustein nur für diesen sichtbar zu machen." />
+                {t('fields.client')}
+                <InfoTooltip content={t('fields.clientTooltip')} />
               </Label>
               <Select
                 value={formData.clientId || ''}
                 onChange={(e) => handleClientChange(e.target.value)}
               >
-                <option value="">Global (für alle Kunden)</option>
+                <option value="">{t('fields.clientGlobal')}</option>
                 {companies.map(company => (
                   <option key={company.id} value={company.id}>
                     {company.name}
@@ -500,15 +502,15 @@ export default function BoilerplateModal({
               </Select>
               <Description className="mt-2">
                 {formData.isGlobal ? (
-                  <Badge color="blue">Global sichtbar</Badge>
+                  <Badge color="blue">{t('scope.globalVisible')}</Badge>
                 ) : (
-                  <Badge color="green">Kundenspezifisch</Badge>
+                  <Badge color="green">{t('scope.clientSpecific')}</Badge>
                 )}
               </Description>
             </Field>
 
             <Field>
-              <Label>Sprache</Label>
+              <Label>{t('fields.language')}</Label>
               <div className="relative" data-slot="control">
                 {formData.language && (
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
@@ -523,7 +525,7 @@ export default function BoilerplateModal({
                   onChange={(e) => setFormData({ ...formData, language: e.target.value as LanguageCode })}
                   className={formData.language ? 'pl-11' : ''}
                 >
-                  <option value="">Sprache auswählen...</option>
+                  <option value="">{t('fields.languageSelect')}</option>
                   <option value="de">Deutsch</option>
                   <option value="en">English</option>
                   <option value="fr">Français</option>
@@ -541,11 +543,11 @@ export default function BoilerplateModal({
 
           {/* Beschreibung */}
           <Field>
-            <Label>Beschreibung (optional)</Label>
+            <Label>{t('fields.description')}</Label>
             <Input
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Kurze Beschreibung des Verwendungszwecks..."
+              placeholder={t('fields.descriptionPlaceholder')}
             />
           </Field>
 
@@ -555,14 +557,14 @@ export default function BoilerplateModal({
       
       <DialogActions>
         <Button plain onClick={onClose}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           disabled={saving}
           className="bg-[#005fab] hover:bg-[#004a8c] text-white"
         >
-          {saving ? 'Speichern...' : 'Speichern'}
+          {saving ? t('actions.saving') : t('actions.save')}
         </Button>
       </DialogActions>
     </Dialog>

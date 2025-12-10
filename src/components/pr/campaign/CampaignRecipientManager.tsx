@@ -9,9 +9,9 @@ import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { 
-  UserGroupIcon, 
-  UserPlusIcon, 
+import {
+  UserGroupIcon,
+  UserPlusIcon,
   XMarkIcon,
   CheckIcon,
   ExclamationCircleIcon,
@@ -19,6 +19,7 @@ import {
   UsersIcon
 } from '@heroicons/react/24/outline';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslations } from 'next-intl';
 
 interface ManualRecipient {
   id: string;
@@ -58,6 +59,7 @@ export default function CampaignRecipientManager({
   campaignDistributionListNames,
   campaignRecipientCount
 }: CampaignRecipientManagerProps) {
+  const t = useTranslations('campaigns');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [lists, setLists] = useState<DistributionList[]>([]);
@@ -154,9 +156,9 @@ export default function CampaignRecipientManager({
     <div className={`bg-gray-50 rounded-lg p-4 border border-gray-200 ${className}`}>
       <div className="flex items-center gap-2 mb-4">
         <UsersIcon className="h-5 w-5 text-gray-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Verteiler</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('recipients.title')}</h3>
       </div>
-      
+
       {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
       {campaignDistributionListIds && campaignDistributionListIds.length > 0 && (
         <div className="bg-blue-50 rounded-lg p-4 flex items-start gap-3 mb-6">
@@ -164,25 +166,24 @@ export default function CampaignRecipientManager({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="text-sm text-blue-900">
-            <p className="font-medium mb-1">Kampagnen-Verteilerlisten</p>
+            <p className="font-medium mb-1">{t('recipients.campaignListsTitle')}</p>
             <p className="text-blue-800">
-              Die für diese Kampagne definierten Verteilerlisten wurden automatisch vorausgewählt. 
-              Sie können die Auswahl bei Bedarf anpassen.
+              {t('recipients.campaignListsDescription')}
             </p>
           </div>
         </div>
       )}
-      
+
       <div className="space-y-6">
         {/* Verteilerlisten */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">Verteilerlisten</h4>
-          
+          <h4 className="text-base font-medium text-gray-900 mb-3">{t('recipients.distributionLists')}</h4>
+
           <div className="space-y-3">
             {/* Suche */}
             <Input
               type="text"
-              placeholder="Listen durchsuchen..."
+              placeholder={t('recipients.searchLists')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -191,7 +192,7 @@ export default function CampaignRecipientManager({
             <div className="max-h-60 overflow-y-auto border rounded-lg bg-white">
               {filteredLists.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
-                  {searchTerm ? 'Keine Listen gefunden' : 'Keine Verteilerlisten vorhanden'}
+                  {searchTerm ? t('recipients.noListsFound') : t('recipients.noListsAvailable')}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -208,7 +209,7 @@ export default function CampaignRecipientManager({
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-gray-900">{list.name}</span>
                           <span className="text-sm text-gray-500">
-                            {list.contactCount || 0} Kontakte
+                            {t('recipients.contactsCount', { count: list.contactCount || 0 })}
                           </span>
                         </div>
                         {list.description && (
@@ -224,10 +225,10 @@ export default function CampaignRecipientManager({
             {/* Listen-Zusammenfassung */}
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">
-                {selectedListIds.length} {selectedListIds.length === 1 ? 'Liste' : 'Listen'} ausgewählt
+                {t('recipients.listsSelected', { count: selectedListIds.length })}
               </span>
               <span className="font-medium text-gray-900">
-                {listRecipientCount} Empfänger aus Listen
+                {t('recipients.recipientsFromLists', { count: listRecipientCount })}
               </span>
             </div>
           </div>
@@ -235,7 +236,7 @@ export default function CampaignRecipientManager({
 
         {/* Manuelle Empfänger */}
         <div>
-          <h4 className="text-base font-medium text-gray-900 mb-3">Zusätzliche Empfänger</h4>
+          <h4 className="text-base font-medium text-gray-900 mb-3">{t('recipients.additionalRecipients')}</h4>
 
           {manualRecipients.length > 0 && (
             <div className="space-y-2 mb-3">
@@ -277,25 +278,25 @@ export default function CampaignRecipientManager({
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2"
           >
             <UserPlusIcon className="h-4 w-4" />
-            Empfänger manuell hinzufügen
+            {t('recipients.addManually')}
           </Button>
         </div>
 
         {/* Gesamt-Zusammenfassung */}
         <div className="bg-blue-50 rounded-lg p-4 border">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Empfänger-Übersicht</h4>
+          <h4 className="text-sm font-medium text-blue-900 mb-2">{t('recipients.overview')}</h4>
           <dl className="text-sm space-y-1">
             <div className="flex justify-between">
-              <dt className="text-blue-700">Aus Verteilerlisten:</dt>
+              <dt className="text-blue-700">{t('recipients.fromLists')}</dt>
               <dd className="font-medium text-blue-900">{listRecipientCount}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-blue-700">Manuell hinzugefügt:</dt>
+              <dt className="text-blue-700">{t('recipients.manuallyAdded')}</dt>
               <dd className="font-medium text-blue-900">{manualRecipients.length}</dd>
             </div>
             <div className="flex justify-between pt-2 border-t border-blue-200">
-              <dt className="text-blue-700 font-medium">Gesamt:</dt>
-              <dd className="font-bold text-blue-900">{totalRecipientCount} Empfänger</dd>
+              <dt className="text-blue-700 font-medium">{t('recipients.total')}</dt>
+              <dd className="font-bold text-blue-900">{t('recipients.totalCount', { count: totalRecipientCount })}</dd>
             </div>
           </dl>
         </div>
@@ -321,6 +322,7 @@ function AddRecipientModal({
   onClose: () => void;
   onAdd: (recipient: Omit<ManualRecipient, 'id'>) => void;
 }) {
+  const t = useTranslations('campaigns');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -333,15 +335,15 @@ function AddRecipientModal({
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Vorname ist erforderlich';
+      newErrors.firstName = t('recipients.modal.validation.firstNameRequired');
     }
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Nachname ist erforderlich';
+      newErrors.lastName = t('recipients.modal.validation.lastNameRequired');
     }
     if (!formData.email.trim()) {
-      newErrors.email = 'E-Mail ist erforderlich';
+      newErrors.email = t('recipients.modal.validation.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ungültige E-Mail-Adresse';
+      newErrors.email = t('recipients.modal.validation.emailInvalid');
     }
 
     setErrors(newErrors);
@@ -370,13 +372,13 @@ function AddRecipientModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <DialogTitle className="px-6 pt-6">Empfänger hinzufügen</DialogTitle>
+      <DialogTitle className="px-6 pt-6">{t('recipients.modal.title')}</DialogTitle>
       <DialogBody className="px-6 pb-2">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium mb-1">
-                Vorname *
+                {t('recipients.modal.firstName')}
               </label>
               <Input
                 id="firstName"
@@ -390,7 +392,7 @@ function AddRecipientModal({
             </div>
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium mb-1">
-                Nachname *
+                {t('recipients.modal.lastName')}
               </label>
               <Input
                 id="lastName"
@@ -406,7 +408,7 @@ function AddRecipientModal({
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              E-Mail-Adresse *
+              {t('recipients.modal.email')}
             </label>
             <Input
               id="email"
@@ -422,7 +424,7 @@ function AddRecipientModal({
 
           <div>
             <label htmlFor="companyName" className="block text-sm font-medium mb-1">
-              Firma (optional)
+              {t('recipients.modal.company')}
             </label>
             <Input
               id="companyName"
@@ -433,10 +435,10 @@ function AddRecipientModal({
         </div>
       </DialogBody>
       <DialogActions className="px-6 pb-6">
-        <Button plain onClick={onClose}>Abbrechen</Button>
+        <Button plain onClick={onClose}>{t('recipients.modal.cancel')}</Button>
         <Button onClick={handleSubmit}>
           <UserPlusIcon />
-          Hinzufügen
+          {t('recipients.modal.add')}
         </Button>
       </DialogActions>
     </Dialog>

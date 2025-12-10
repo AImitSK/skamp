@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
@@ -96,6 +97,9 @@ function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; mess
 
 
 export default function NewPRCampaignPage() {
+  const t = useTranslations('campaigns');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -399,22 +403,22 @@ export default function NewPRCampaignPage() {
     
     // 🆕 CRITICAL: Edit-Lock Prüfung vor Speicherung
     if (editLockStatus.isLocked) {
-      const lockReason = editLockStatus.reason || 'unbekannt';
-      alert(`Diese Kampagne kann nicht gespeichert werden. Grund: ${lockReason}`); 
+      const lockReason = editLockStatus.reason || t('editLock.unknownReason');
+      alert(t('editLock.cannotSave', { reason: lockReason }));
       return;
     }
-    
+
     // Validierung
     const errors: string[] = [];
     if (!selectedCompanyId) {
-      errors.push('Bitte wählen Sie einen Kunden aus');
+      errors.push(t('validation.customerRequired'));
     }
     // Verteiler-Auswahl ist jetzt optional - kann vor dem Versand gemacht werden
     if (!campaignTitle.trim()) {
-      errors.push('Titel ist erforderlich');
+      errors.push(t('validation.titleRequired'));
     }
     if (!editorContent.trim() || editorContent === '<p></p>') {
-      errors.push('Inhalt ist erforderlich');
+      errors.push(t('validation.contentRequired'));
     }
     
     if (errors.length > 0) {
@@ -546,13 +550,11 @@ export default function NewPRCampaignPage() {
 
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
-        setSuccessMessage(
-          `Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.`
-        );
+        setSuccessMessage(t('success.savedWithApproval'));
       } else if (selectedProject) {
-        setSuccessMessage(`Kampagne erfolgreich gespeichert und mit Projekt "${selectedProject.title}" verknüpft!`);
+        setSuccessMessage(t('success.savedWithProject', { projectTitle: selectedProject.title }));
       } else {
-        setSuccessMessage('Kampagne erfolgreich gespeichert!');
+        setSuccessMessage(t('success.saved'));
       }
       
       // Navigation zurück zum Projekt (nicht mehr zu pr-tools)
@@ -568,9 +570,9 @@ export default function NewPRCampaignPage() {
 
     } catch (error) {
 
-      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      let errorMessage = tErrors('tryAgain');
       if (error instanceof Error) {
-        errorMessage = `Fehler: ${error.message}`;
+        errorMessage = t('error.withMessage', { message: error.message });
       }
 
       setValidationErrors([errorMessage]);
@@ -744,22 +746,22 @@ export default function NewPRCampaignPage() {
 
   const handleGeneratePdf = async (forApproval: boolean = false) => {
     if (!user || !currentOrganization || !campaignTitle.trim()) {
-      setValidationErrors(['Bitte füllen Sie alle erforderlichen Felder aus']);
+      setValidationErrors([t('validation.requiredFields')]);
       return;
     }
 
     // Validiere erforderliche Felder bevor PDF erstellt wird
     const errors: string[] = [];
     if (!selectedCompanyId) {
-      errors.push('Bitte wählen Sie einen Kunden aus');
+      errors.push(t('validation.customerRequired'));
     }
     if (!campaignTitle.trim()) {
-      errors.push('Titel ist erforderlich');
+      errors.push(t('validation.titleRequired'));
     }
     if (!editorContent.trim() || editorContent === '<p></p>') {
-      errors.push('Inhalt ist erforderlich');
+      errors.push(t('validation.contentRequired'));
     }
-    
+
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
@@ -816,8 +818,8 @@ export default function NewPRCampaignPage() {
         const newVersion = await pdfVersionsService.getCurrentVersion(tempCampaignId);
         setCurrentPdfVersion(newVersion);
 
-        setSuccessMessage('PDF erfolgreich generiert!');
-        
+        setSuccessMessage(t('pdf.generated'));
+
       } finally {
         // 5. Temporäre Kampagne IMMER löschen (auch bei Fehlern)
         try {
@@ -825,9 +827,9 @@ export default function NewPRCampaignPage() {
         } catch (deleteError) {
         }
       }
-      
+
     } catch (error) {
-      setValidationErrors(['Fehler bei der PDF-Erstellung']);
+      setValidationErrors([t('pdf.error')]);
     } finally {
       setGeneratingPdf(false);
     }
@@ -836,30 +838,30 @@ export default function NewPRCampaignPage() {
   // 🆕 ENHANCED: Unlock-Request Handler
   const handleUnlockRequest = async (reason: string): Promise<void> => {
     if (!user) {
-      throw new Error('User nicht verfügbar');
+      throw new Error(t('editLock.userNotAvailable'));
     }
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const campaignId = urlParams.get('id');
-    
+
     if (!campaignId) {
-      throw new Error('Campaign-ID nicht gefunden');
+      throw new Error(t('editLock.campaignIdNotFound'));
     }
-    
+
     try {
       await pdfVersionsService.requestUnlock(campaignId, {
         userId: user.uid,
-        displayName: user.displayName || user.email || 'Unbekannt',
+        displayName: user.displayName || user.email || t('editLock.unknownUser'),
         reason
       });
-      
-      alert('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
-      
+
+      alert(t('editLock.unlockRequestSent'));
+
       // Status neu laden
       await loadEditLockStatus(campaignId);
-      
+
     } catch (error) {
-      throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
+      throw new Error(t('editLock.unlockRequestFailed'));
     }
   };
 
@@ -878,7 +880,7 @@ export default function NewPRCampaignPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
-          <Text className="mt-4">Lade Daten...</Text>
+          <Text className="mt-4">{tCommon('loading')}</Text>
         </div>
       </div>
     );
@@ -888,7 +890,7 @@ export default function NewPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Heading>Neue PR-Kampagne</Heading>
+        <Heading>{t('new.title')}</Heading>
       </div>
 
       {/* Step Navigation - FUNKTIONIEREND */}
@@ -908,10 +910,10 @@ export default function NewPRCampaignPage() {
             }`}
           >
             <DocumentTextIcon className="h-4 w-4 mr-2" />
-            Pressemeldung
+            {t('new.steps.pressRelease')}
             {currentStep > 1 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-          
+
           <button
             type="button"
             onClick={() => {
@@ -926,10 +928,10 @@ export default function NewPRCampaignPage() {
             }`}
           >
             <PaperClipIcon className="h-4 w-4 mr-2" />
-            Anhänge
+            {t('new.steps.attachments')}
             {currentStep > 2 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-          
+
           <button
             type="button"
             onClick={() => {
@@ -944,10 +946,10 @@ export default function NewPRCampaignPage() {
             }`}
           >
             <UserGroupIcon className="h-4 w-4 mr-2" />
-            Freigaben
+            {t('new.steps.approvals')}
             {currentStep > 3 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-          
+
           <button
             type="button"
             onClick={() => {
@@ -960,7 +962,7 @@ export default function NewPRCampaignPage() {
             }`}
           >
             <InformationCircleIcon className="h-4 w-4 mr-2" />
-            Vorschau
+            {t('new.steps.preview')}
           </button>
         </nav>
       </div>
@@ -987,7 +989,7 @@ export default function NewPRCampaignPage() {
         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2 text-sm text-blue-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-            Prüfe Edit-Status...
+            {t('editLock.checking')}
           </div>
         </div>
       )}
@@ -1030,7 +1032,7 @@ export default function NewPRCampaignPage() {
               {/* Absender & Projekt */}
               <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender & Projekt</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('new.senderProject')}</h3>
 
                   {/* Kunde */}
                   <div className="mb-4">
@@ -1069,24 +1071,24 @@ export default function NewPRCampaignPage() {
               <div className="mb-8 mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('new.steps.pressRelease')}</h3>
                     <Button
                       type="button"
                       onClick={() => setShowAiModal(true)}
                       className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
                     >
                       <SparklesIcon className="h-4 w-4" />
-                      KI-Assistent
+                      {t('new.aiAssistant')}
                     </Button>
                   </div>
-                
+
                 {/* Info-Box für KI-Nutzung */}
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
                     <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-blue-700">
-                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
-                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
+                      <p className="font-semibold">{t('new.aiTip.title')}</p>
+                      <p className="mt-1">{t('new.aiTip.description')}</p>
                     </div>
                   </div>
                 </div>
@@ -1170,7 +1172,7 @@ export default function NewPRCampaignPage() {
               <div className="mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('new.media.title')}</h3>
                     {selectedCompanyId && (
                       <Button
                         type="button"
@@ -1179,7 +1181,7 @@ export default function NewPRCampaignPage() {
                         className="text-sm px-3 py-1.5"
                       >
                         <PlusIcon className="h-4 w-4 mr-1" />
-                        Medien hinzufügen
+                        {t('new.media.add')}
                       </Button>
                     )}
                   </div>
@@ -1223,24 +1225,24 @@ export default function NewPRCampaignPage() {
                     ))}
                   </div>
                 ) : (
-                  <div 
+                  <div
                     className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
                     onClick={() => {
                       if (selectedCompanyId) {
                         setShowAssetSelector(true);
                       } else {
                         // Zeige Fehlermeldung wenn kein Kunde ausgewählt
-                        setValidationErrors(['Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen']);
+                        setValidationErrors([t('new.media.selectCustomerFirst')]);
                       }
                     }}
                   >
                     <div className="flex flex-col items-center justify-center">
                       <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
                       <p className="text-gray-600 group-hover:text-[#005fab] font-medium">
-                        {selectedCompanyId ? 'Medien hinzufügen' : 'Zuerst Kunden auswählen'}
+                        {selectedCompanyId ? t('new.media.add') : t('new.media.selectCustomer')}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
-                        {selectedCompanyId ? 'Klicken zum Auswählen' : 'Wählen Sie einen Kunden aus'}
+                        {selectedCompanyId ? t('new.media.clickToSelect') : t('new.media.selectCustomerPrompt')}
                       </p>
                     </div>
                   </div>
@@ -1258,9 +1260,9 @@ export default function NewPRCampaignPage() {
               {/* Freigabe-Einstellungen */}
               <div className="mb-6">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('new.approval.title')}</h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.
+                    {t('new.approval.description')}
                   </p>
                 </div>
                 <ApprovalSettings
@@ -1278,17 +1280,15 @@ export default function NewPRCampaignPage() {
                       <InformationCircleIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <Text className="text-sm font-medium text-blue-900">
-                          Pipeline-Integration aktiv
+                          {t('new.approval.pipelineActive')}
                         </Text>
                         <Text className="text-sm text-blue-700 mt-1">
-                          Diese Kampagne ist mit dem Projekt <strong>&quot;{selectedProject.title}&quot;</strong> verknüpft. 
-                          Wenn Kunden-Freigabe aktiviert ist, wird die Freigabe automatisch in die Projekt-Pipeline 
-                          integriert und blockiert den Übergang zur Distribution-Phase bis zur Genehmigung.
+                          {t('new.approval.pipelineDescription', { projectTitle: selectedProject.title })}
                         </Text>
                         {approvalData.customerApprovalRequired && (
                           <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
                             <CheckCircleIcon className="h-4 w-4" />
-                            Projekt-Pipeline-Freigabe wird aktiviert
+                            {t('new.approval.pipelineActivating')}
                           </div>
                         )}
                       </div>
@@ -1304,12 +1304,12 @@ export default function NewPRCampaignPage() {
                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-green-900 mb-2">
-                        ✅ PDF-Workflow bereit
+                        {t('new.approval.workflowReady')}
                       </h4>
                       <Text className="text-sm text-green-700 mb-3">
-                        Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:
+                        {t('new.approval.workflowDescription')}
                       </Text>
-                      
+
                       <div className="space-y-2">
                         {pdfWorkflowPreview.estimatedSteps.map((step, index) => (
                           <div key={index} className="flex items-center gap-2 text-sm text-green-700">
@@ -1318,11 +1318,10 @@ export default function NewPRCampaignPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-3 pt-3 border-t border-green-300">
                         <Text className="text-xs text-green-600">
-                          💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen 
-                          Status in Step 4 &ldquo;Vorschau&rdquo;.
+                          {t('new.approval.workflowTip')}
                         </Text>
                       </div>
                     </div>
@@ -1359,8 +1358,8 @@ export default function NewPRCampaignPage() {
             {/* PDF-Vorschau */}
             <div className="bg-white rounded-lg border p-6 mt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900">{t('new.pdf.preview')}</h3>
+
               <Button
                 type="button"
                 onClick={() => handleGeneratePdf(false)}
@@ -1370,12 +1369,12 @@ export default function NewPRCampaignPage() {
                 {generatingPdf ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                    PDF wird erstellt...
+                    {t('new.pdf.generating')}
                   </>
                 ) : (
                   <>
                     <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    PDF generieren
+                    {t('new.pdf.generate')}
                   </>
                 )}
               </Button>
@@ -1388,22 +1387,22 @@ export default function NewPRCampaignPage() {
                   <div className="flex items-center gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">Vorschau PDF</span>
-                        <Badge color="blue" className="text-xs">Aktuell</Badge>
+                        <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">{t('new.pdf.previewPdf')}</span>
+                        <Badge color="blue" className="text-xs">{t('new.pdf.current')}</Badge>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      color={currentPdfVersion.status === 'draft' ? 'zinc' : 
-                            currentPdfVersion.status === 'approved' ? 'green' : 'amber'} 
+                    <Badge
+                      color={currentPdfVersion.status === 'draft' ? 'zinc' :
+                            currentPdfVersion.status === 'approved' ? 'green' : 'amber'}
                       className="text-xs"
                     >
-                      {currentPdfVersion.status === 'draft' ? 'Entwurf' :
-                       currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
+                      {currentPdfVersion.status === 'draft' ? t('new.pdf.status.draft') :
+                       currentPdfVersion.status === 'approved' ? t('new.pdf.status.approved') : t('new.pdf.status.pending')}
                     </Badge>
-                    
+
                     <Button
                       type="button"
                       plain
@@ -1411,7 +1410,7 @@ export default function NewPRCampaignPage() {
                       className="!text-gray-600 hover:!text-gray-900 text-sm"
                     >
                       <DocumentArrowDownIcon className="h-4 w-4" />
-                      Download
+                      {t('new.pdf.download')}
                     </Button>
                   </div>
                 </div>
@@ -1422,8 +1421,8 @@ export default function NewPRCampaignPage() {
             {!currentPdfVersion && (
               <div className="text-center py-6 text-gray-500">
                 <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p>Noch keine PDF-Version erstellt</p>
-                <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
+                <p>{t('new.pdf.noVersion')}</p>
+                <p className="text-sm">{t('new.pdf.generateHint')}</p>
               </div>
             )}
             </div>
@@ -1433,8 +1432,8 @@ export default function NewPRCampaignPage() {
         {/* Navigation Buttons */}
         <div className="mt-6 flex justify-between">
           <div className="flex gap-3">
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onClick={() => {
                 // Zurück zum Projekt oder zur Projekte-Übersicht
                 if (selectedProjectId) {
@@ -1446,7 +1445,7 @@ export default function NewPRCampaignPage() {
               plain
               className="!bg-gray-50 hover:!bg-gray-100 !text-gray-700 !border !border-gray-300"
             >
-              Abbrechen
+              {tCommon('cancel')}
             </Button>
             {currentStep > 1 && (
               <Button
@@ -1455,11 +1454,11 @@ export default function NewPRCampaignPage() {
                 className="bg-gray-50 hover:bg-gray-100 text-gray-900"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Zurück
+                {tCommon('back')}
               </Button>
             )}
           </div>
-          
+
           <div className="flex gap-3">
             {currentStep < 4 ? (
               <Button
@@ -1467,7 +1466,7 @@ export default function NewPRCampaignPage() {
                 onClick={() => handleStepTransition((currentStep + 1) as 1 | 2 | 3 | 4)}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
-                Weiter
+                {tCommon('next')}
                 <ArrowLeftIcon className="h-4 w-4 ml-2 rotate-180" />
               </Button>
             ) : (
@@ -1482,17 +1481,17 @@ export default function NewPRCampaignPage() {
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Speichert...
+                    {t('new.actions.saving')}
                   </>
                 ) : approvalData.customerApprovalRequired ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                    Freigabe anfordern
+                    {t('new.actions.requestApproval')}
                   </>
                 ) : (
                   <>
                     <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Als Entwurf speichern
+                    {t('new.actions.saveAsDraft')}
                   </>
                 )}
               </Button>

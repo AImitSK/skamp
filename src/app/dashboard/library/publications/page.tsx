@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import type { Publication } from "@/types/library";
@@ -55,6 +56,7 @@ import type { ConfirmDialogState } from '@/types/library-publications-ui';
 import { toastService } from '@/lib/utils/toast';
 
 export default function PublicationsPage() {
+  const t = useTranslations('publications');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -155,8 +157,8 @@ export default function PublicationsPage() {
   const handleDelete = async (id: string, title: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Publikation löschen',
-      message: `Möchten Sie "${title}" wirklich löschen?`,
+      title: t('deleteDialog.title'),
+      message: t('deleteDialog.message', { title }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -179,8 +181,8 @@ export default function PublicationsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: `${count} Publikationen löschen`,
-      message: `Möchten Sie wirklich ${count} Publikationen unwiderruflich löschen?`,
+      title: t('bulkDeleteDialog.title', { count }),
+      message: t('bulkDeleteDialog.message', { count }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -209,20 +211,20 @@ export default function PublicationsPage() {
 
     try {
       const exportData = filteredPublications.map(pub => ({
-        "Titel": pub.title,
-        "Verlag": pub.publisherName || '',
-        "Typ": PUBLICATION_TYPE_LABELS[pub.type] || pub.type,
-        "Format": pub.format || '',
-        "Website": pub.websiteUrl || '',
-        "Sprachen": pub.languages?.join(', ') || '',
-        "Länder": pub.geographicTargets?.join(', ') || '',
-        "Auflage": pub.metrics?.print?.circulation || '',
-        "Online Besucher": pub.metrics?.online?.monthlyUniqueVisitors || '',
-        "Themenschwerpunkte": pub.focusAreas?.join(', ') || '',
-        "Frequenz": pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : '',
-        "Zielgruppe": pub.metrics?.targetAudience || '',
-        "Verifiziert": pub.verified ? 'Ja' : 'Nein',
-        "Status": pub.status
+        [t('export.columns.title')]: pub.title,
+        [t('export.columns.publisher')]: pub.publisherName || '',
+        [t('export.columns.type')]: PUBLICATION_TYPE_LABELS[pub.type] || pub.type,
+        [t('export.columns.format')]: pub.format || '',
+        [t('export.columns.website')]: pub.websiteUrl || '',
+        [t('export.columns.languages')]: pub.languages?.join(', ') || '',
+        [t('export.columns.countries')]: pub.geographicTargets?.join(', ') || '',
+        [t('export.columns.circulation')]: pub.metrics?.print?.circulation || '',
+        [t('export.columns.visitors')]: pub.metrics?.online?.monthlyUniqueVisitors || '',
+        [t('export.columns.focusAreas')]: pub.focusAreas?.join(', ') || '',
+        [t('export.columns.frequency')]: pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : '',
+        [t('export.columns.targetAudience')]: pub.metrics?.targetAudience || '',
+        [t('export.columns.verified')]: pub.verified ? t('export.columns.yes') : t('export.columns.no'),
+        [t('export.columns.status')]: pub.status
       }));
 
       const csv = Papa.unparse(exportData);
@@ -307,7 +309,7 @@ export default function PublicationsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-500">Lade Publikationen...</p>
+          <p className="mt-4 text-gray-500">{t('loading')}</p>
         </div>
       </div>
     );
@@ -329,7 +331,7 @@ export default function PublicationsPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Suchen"
+              placeholder={t('searchPlaceholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -379,7 +381,7 @@ export default function PublicationsPage() {
                           {/* Type Filter */}
                           <div className="mb-[10px]">
                             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                              Typ
+                              {t('filters.type')}
                             </label>
                             <div className="space-y-2 max-h-60 overflow-y-auto">
                               {Object.entries(PUBLICATION_TYPE_LABELS).map(([value, label]) => (
@@ -403,7 +405,7 @@ export default function PublicationsPage() {
                           {/* Language Filter */}
                           <div className="mb-[10px]">
                             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                              Sprachen
+                              {t('filters.languages')}
                             </label>
                             <div className="space-y-2 max-h-60 overflow-y-auto">
                               {availableLanguages.length > 0 ? (
@@ -423,7 +425,7 @@ export default function PublicationsPage() {
                                   </label>
                                 ))
                               ) : (
-                                <span className="text-sm text-zinc-500">Keine Sprachen verfügbar</span>
+                                <span className="text-sm text-zinc-500">{t('filters.noLanguages')}</span>
                               )}
                             </div>
                           </div>
@@ -431,7 +433,7 @@ export default function PublicationsPage() {
                           {/* Country Filter */}
                           <div className="mb-[10px]">
                             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                              Länder
+                              {t('filters.countries')}
                             </label>
                             <div className="space-y-2 max-h-60 overflow-y-auto">
                               {availableCountries.length > 0 ? (
@@ -451,7 +453,7 @@ export default function PublicationsPage() {
                                   </label>
                                 ))
                               ) : (
-                                <span className="text-sm text-zinc-500">Keine Länder verfügbar</span>
+                                <span className="text-sm text-zinc-500">{t('filters.noCountries')}</span>
                               )}
                             </div>
                           </div>
@@ -459,16 +461,16 @@ export default function PublicationsPage() {
                           {/* Verified Filter */}
                           <div className="mb-[10px]">
                             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                              Status
+                              {t('filters.status')}
                             </label>
                             <select
                               value={selectedVerified}
                               onChange={(e) => setSelectedVerified(e.target.value)}
                               className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
                             >
-                              <option value="all">Alle</option>
-                              <option value="verified">Verifiziert</option>
-                              <option value="unverified">Nicht verifiziert</option>
+                              <option value="all">{t('filters.all')}</option>
+                              <option value="verified">{t('filters.verified')}</option>
+                              <option value="unverified">{t('filters.unverified')}</option>
                             </select>
                           </div>
                         </div>
@@ -484,7 +486,7 @@ export default function PublicationsPage() {
                               }}
                               className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
                             >
-                              Zurücksetzen
+                              {t('filters.reset')}
                             </button>
                           </div>
                         )}
@@ -497,7 +499,7 @@ export default function PublicationsPage() {
           </Popover>
 
           {/* Add Button */}
-          <Button 
+          <Button
             className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary px-6 py-2"
             onClick={() => {
               setSelectedPublication(null);
@@ -505,7 +507,7 @@ export default function PublicationsPage() {
             }}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Publikation hinzufügen
+            {t('addButton')}
           </Button>
 
           {/* Actions Button */}
@@ -530,14 +532,14 @@ export default function PublicationsPage() {
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     <ArrowUpTrayIcon className="h-5 w-5" />
-                    Import
+                    {t('actions.import')}
                   </button>
                   <button
                     onClick={handleExport}
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     <ArrowDownTrayIcon className="h-5 w-5" />
-                    Export
+                    {t('actions.export')}
                   </button>
                   {selectedPubIds.size > 0 && (
                     <>
@@ -547,7 +549,7 @@ export default function PublicationsPage() {
                         className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <TrashIcon className="h-5 w-5" />
-                        Auswahl löschen ({selectedPubIds.size})
+                        {t('actions.deleteSelection', { count: selectedPubIds.size })}
                       </button>
                     </>
                   )}
@@ -561,18 +563,18 @@ export default function PublicationsPage() {
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredPublications.length} von {publications.length} Publikationen
+          {t('resultsInfo', { filtered: filteredPublications.length, total: publications.length })}
           {selectedPubIds.size > 0 && (
-            <span className="ml-2">· {selectedPubIds.size} ausgewählt</span>
+            <span className="ml-2">· {t('selected', { count: selectedPubIds.size })}</span>
           )}
         </Text>
-        
+
         {selectedPubIds.size > 0 && (
           <button
             onClick={handleBulkDelete}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            {selectedPubIds.size} Löschen
+            {t('deleteSelected', { count: selectedPubIds.size })}
           </button>
         )}
       </div>
@@ -589,20 +591,20 @@ export default function PublicationsPage() {
                 onChange={handleSelectAll}
               />
               <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Titel
+                {t('table.title')}
               </span>
             </div>
             <div className="hidden md:block w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Verlag
+              {t('table.publisher')}
             </div>
             <div className="hidden lg:block w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Metrik
+              {t('table.metric')}
             </div>
             <div className="hidden xl:block w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
-              RSS
+              {t('table.rss')}
             </div>
             <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Zielgebiet
+              {t('table.targetArea')}
             </div>
           </div>
         </div>
@@ -611,7 +613,7 @@ export default function PublicationsPage() {
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {paginatedPublications.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-zinc-500">
-              Keine Publikationen gefunden
+              {t('empty')}
             </div>
           ) : (
             paginatedPublications.map((pub) => (
@@ -642,12 +644,12 @@ export default function PublicationsPage() {
                         {pub.verified && (
                           <Badge color="green" className="text-xs inline-flex items-center gap-1">
                             <CheckBadgeIcon className="h-3 w-3" />
-                            Verifiziert
+                            {t('badges.verified')}
                           </Badge>
                         )}
                         {(pub as any)._isReference && (
                           <Badge color="blue" className="text-xs">
-                            🌐 Verweis
+                            🌐 {t('badges.reference')}
                           </Badge>
                         )}
                       </div>
@@ -670,7 +672,7 @@ export default function PublicationsPage() {
                         </span>
                       ) : (
                         <Badge color="amber" className="text-xs">
-                          Kein Verlag
+                          {t('badges.noPublisher')}
                         </Badge>
                       )}
                     </div>
@@ -690,11 +692,11 @@ export default function PublicationsPage() {
                   <div className="hidden xl:block w-[10%] text-center">
                     {pub.monitoringConfig?.isEnabled && pub.monitoringConfig?.rssFeedUrls && pub.monitoringConfig.rssFeedUrls.length > 0 ? (
                       <div className="inline-flex items-center justify-center">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" title={`${pub.monitoringConfig.rssFeedUrls.length} RSS Feed(s) aktiv`}></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full" title={t('rss.active', { count: pub.monitoringConfig.rssFeedUrls.length })}></div>
                       </div>
                     ) : (
                       <div className="inline-flex items-center justify-center">
-                        <div className="w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full" title="Kein RSS Feed"></div>
+                        <div className="w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full" title={t('rss.inactive')}></div>
                       </div>
                     )}
                   </div>
@@ -719,7 +721,7 @@ export default function PublicationsPage() {
                       <DropdownMenu anchor="bottom end">
                         <DropdownItem href={`/dashboard/library/publications/${pub.id}`}>
                           <EyeIcon className="h-4 w-4 mr-2" />
-                          Anzeigen
+                          {t('actions.view')}
                         </DropdownItem>
                         <DropdownItem
                           onClick={() => {
@@ -730,7 +732,7 @@ export default function PublicationsPage() {
                           className={(pub as any)?._isReference ? 'opacity-50 cursor-not-allowed' : ''}
                         >
                           <PencilIcon className="h-4 w-4 mr-2" />
-                          Bearbeiten {(pub as any)?._isReference && '(Verweis)'}
+                          {t('actions.edit')} {(pub as any)?._isReference && `(${t('badges.reference')})`}
                         </DropdownItem>
                         <DropdownDivider />
                         <DropdownItem
@@ -740,7 +742,7 @@ export default function PublicationsPage() {
                         >
                           <TrashIcon className="h-4 w-4 mr-2" />
                           <span className={(pub as any)?._isReference ? 'text-gray-400' : 'text-red-600'}>
-                            Löschen {(pub as any)?._isReference && '(Verweis)'}
+                            {t('actions.delete')} {(pub as any)?._isReference && `(${t('badges.reference')})`}
                           </span>
                         </DropdownItem>
                       </DropdownMenu>
@@ -763,7 +765,7 @@ export default function PublicationsPage() {
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon className="h-4 w-4 mr-2" />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -772,11 +774,11 @@ export default function PublicationsPage() {
               const maxVisible = 7;
               let start = Math.max(1, currentPage - 3);
               let end = Math.min(totalPages, start + maxVisible - 1);
-              
+
               if (end - start < maxVisible - 1) {
                 start = Math.max(1, end - maxVisible + 1);
               }
-              
+
               for (let i = start; i <= end; i++) {
                 pages.push(
                   <Button
@@ -789,7 +791,7 @@ export default function PublicationsPage() {
                   </Button>
                 );
               }
-              
+
               return pages;
             })()}
           </div>
@@ -799,7 +801,7 @@ export default function PublicationsPage() {
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -860,7 +862,7 @@ export default function PublicationsPage() {
               plain
               onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
             >
-              Abbrechen
+              {t('confirmDialog.cancel')}
             </Button>
             <Button
               color="zinc"
@@ -869,7 +871,7 @@ export default function PublicationsPage() {
                 setConfirmDialog(prev => ({ ...prev, isOpen: false }));
               }}
             >
-              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
+              {confirmDialog.type === 'danger' ? t('confirmDialog.delete') : t('confirmDialog.confirm')}
             </Button>
           </DialogActions>
         </div>

@@ -23,9 +23,9 @@ Diese werden überall verwendet - Keys landen in `common` Namespace.
 
 | Status | Datei | Beschreibung | Agent |
 |--------|-------|--------------|-------|
-| ⬜ | `src/components/DashboardNav.tsx` | Haupt-Navigation | - |
+| ⏭️ | `src/components/DashboardNav.tsx` | Haupt-Navigation (existiert nicht) | - |
 | ⬜ | `src/components/Sidebar.tsx` | Sidebar (falls vorhanden) | - |
-| ⬜ | `src/components/SettingsNav.tsx` | Settings-Navigation | - |
+| ✅ | `src/components/SettingsNav.tsx` | Settings-Navigation | 2025-12-10 |
 | ⬜ | `src/components/ui/dialog.tsx` | Dialog-Komponente | - |
 | ⬜ | `src/components/ui/dropdown.tsx` | Dropdown-Menüs | - |
 
@@ -37,12 +37,12 @@ Häufig genutzte Einstiegsseiten.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/page.tsx` | `dashboard` | - |
-| ⬜ | `src/app/dashboard/projects/page.tsx` | `projects` | - |
-| ⬜ | `src/app/dashboard/contacts/crm/page.tsx` | `crm` | - |
-| ⬜ | `src/app/dashboard/contacts/crm/contacts/page.tsx` | `contacts` | - |
-| ⬜ | `src/app/dashboard/contacts/crm/companies/page.tsx` | `companies` | - |
-| ⬜ | `src/app/dashboard/contacts/lists/page.tsx` | `lists` | - |
+| ✅ | `src/app/dashboard/page.tsx` | `dashboard` | 2025-12-09 |
+| ✅ | `src/app/dashboard/projects/page.tsx` | `projects` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/crm/page.tsx` | `crm` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/crm/contacts/page.tsx` | `contacts` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/crm/companies/page.tsx` | `companies` | 2025-12-10 |
+| ✅ | `src/app/dashboard/contacts/lists/page.tsx` | `lists` | 2025-12-10 |
 
 ---
 
@@ -52,10 +52,10 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/pr-tools/campaigns/campaigns/new/page.tsx` | `campaigns` | - |
-| ⬜ | `src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx` | `campaigns` | - |
-| ⬜ | `src/app/dashboard/pr-tools/campaigns/campaigns/[campaignId]/page.tsx` | `campaigns` | - |
-| ⬜ | `src/components/pr/campaign/*.tsx` | `campaigns` | - |
+| ✅ | `src/app/dashboard/pr-tools/campaigns/campaigns/new/page.tsx` | `campaigns` | 2025-12-10 |
+| ✅ | `src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx` | `campaigns` | 2025-12-10 |
+| ✅ | `src/app/dashboard/pr-tools/campaigns/campaigns/[campaignId]/page.tsx` | `campaigns` | 2025-12-10 |
+| ✅ | `src/components/pr/campaign/*.tsx` | `campaigns` | 2025-12-10 |
 | ⬜ | `src/components/pr/email/*.tsx` | `email` | - |
 
 ---
@@ -64,10 +64,10 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/library/media/page.tsx` | `media` | - |
-| ⬜ | `src/app/dashboard/library/publications/page.tsx` | `publications` | - |
-| ⬜ | `src/app/dashboard/library/boilerplates/page.tsx` | `boilerplates` | - |
-| ⬜ | `src/app/dashboard/library/editors/page.tsx` | `editors` | - |
+| ✅ | `src/app/dashboard/library/media/page.tsx` | `media` | 2025-12-10 |
+| ✅ | `src/app/dashboard/library/publications/page.tsx` | `publications` | 2025-12-10 |
+| ✅ | `src/app/dashboard/library/boilerplates/page.tsx` | `boilerplates` | 2025-12-10 |
+| ✅ | `src/app/dashboard/library/editors/page.tsx` | `editors` | 2025-12-10 |
 
 ---
 
@@ -75,10 +75,10 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/analytics/monitoring/page.tsx` | `monitoring` | - |
-| ⬜ | `src/app/dashboard/analytics/monitoring/[campaignId]/page.tsx` | `monitoring` | - |
-| ⬜ | `src/app/dashboard/analytics/reporting/page.tsx` | `reporting` | - |
-| ⬜ | `src/components/monitoring/*.tsx` | `monitoring` | - |
+| ✅ | `src/app/dashboard/analytics/monitoring/page.tsx` | `monitoring` | 2025-12-10 |
+| ✅ | `src/app/dashboard/analytics/monitoring/[campaignId]/page.tsx` | `monitoring` | 2025-12-10 |
+| ✅ | `src/app/dashboard/analytics/reporting/page.tsx` | `reporting` | 2025-12-10 |
+| 🔄 | `src/components/monitoring/*.tsx` | `monitoring` | 2025-12-10 (teilweise) |
 
 ---
 
@@ -159,9 +159,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~55 Seiten
-- **Abgeschlossen:** 1
+- **Abgeschlossen:** 19 (Dashboard, Projects, SettingsNav, Language, CRM, Contacts, Companies, Lists, Campaigns, Campaign Components, Media, Publications, Boilerplates, Editors, Monitoring, Monitoring Detail, Reporting)
+- **Teilweise:** 1 (Monitoring Components - Keys angelegt)
+- **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~54
+- **Ausstehend:** ~34
 
 ---
 

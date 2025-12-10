@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, Fragment, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { JournalistImportDialog } from "@/components/journalist/JournalistImportDialog";
@@ -289,6 +290,7 @@ interface JournalistDatabaseEntry {
 
 // Main Component
 export default function EditorsPage() {
+  const t = useTranslations('editors');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -747,7 +749,7 @@ export default function EditorsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Journalisten-Datenbank...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -767,7 +769,7 @@ export default function EditorsPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Suchen..."
+              placeholder={t('search.placeholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -813,7 +815,7 @@ export default function EditorsPage() {
                         {/* Topics Filter */}
                         <div className="mb-[10px]">
                           <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                            Themen
+                            {t('filters.topics')}
                           </label>
                           <div className="space-y-2 max-h-60 overflow-y-auto">
                             {(availableTopics || []).slice(0, 8).map((topic) => (
@@ -834,7 +836,7 @@ export default function EditorsPage() {
                       {/* Quality Score Filter - volle Breite */}
                       <div className="mb-4">
                         <label className="block text-sm font-semibold text-zinc-700 mb-1">
-                          Mindest-Qualitätsscore: {minQualityScore}
+                          {t('filters.qualityScore', { score: minQualityScore })}
                         </label>
                         <input
                           type="range"
@@ -854,7 +856,7 @@ export default function EditorsPage() {
                             onClick={handleResetFilters}
                             className="text-sm text-zinc-500 hover:text-zinc-700 underline"
                           >
-                            Zurücksetzen
+                            {t('filters.reset')}
                           </button>
                         </div>
                       )}
@@ -870,7 +872,7 @@ export default function EditorsPage() {
       {/* Results Info */}
       <div className="mb-4">
         <Text className="text-sm text-zinc-600">
-          {filteredJournalists.length} von {(journalists || []).length} Journalisten
+          {t('results.info', { filtered: filteredJournalists.length, total: (journalists || []).length })}
         </Text>
       </div>
 
@@ -882,22 +884,22 @@ export default function EditorsPage() {
             <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
               <div className="flex items-center">
                 <div className="flex-1 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Journalist
+                  {t('table.journalist')}
                 </div>
                 <div className="w-48 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Medienhaus
+                  {t('table.mediaHouse')}
                 </div>
                 <div className="w-48 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Publikationen
+                  {t('table.publications')}
                 </div>
                 <div className="w-24 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
-                  Score
+                  {t('table.score')}
                 </div>
                 <div className="w-16 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider text-center">
-                  Themen
+                  {t('table.topics')}
                 </div>
                 <div className="w-40 px-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  Kontakt
+                  {t('table.contact')}
                 </div>
                 <div className="w-24 text-center"></div>
               </div>
@@ -960,7 +962,7 @@ export default function EditorsPage() {
                           </div>
                         ) : (
                           <span className="text-xs text-zinc-400">
-                            Keine Publikationen
+                            {t('noPublications')}
                           </span>
                         )}
                       </div>
@@ -996,7 +998,7 @@ export default function EditorsPage() {
                                 <Popover.Panel className="absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-zinc-200 p-3 min-w-[200px] left-1/2 transform -translate-x-1/2">
                                   <div className="space-y-1">
                                     <div className="text-xs font-medium text-zinc-700 mb-2">
-                                      Themen ({(journalist.professionalData.expertise.primaryTopics || []).length})
+                                      {t('topicsPopover.title', { count: (journalist.professionalData.expertise.primaryTopics || []).length })}
                                     </div>
                                     <div className="flex flex-wrap gap-1">
                                       {(journalist.professionalData.expertise.primaryTopics || []).map((topic, index) => (
@@ -1065,7 +1067,7 @@ export default function EditorsPage() {
                             disabled
                             className="!bg-zinc-100 !border !border-zinc-200 !text-zinc-400 text-xs px-3 py-1.5 cursor-not-allowed"
                           >
-                            Im CRM
+                            {t('actions.inCrm')}
                           </Button>
                         ) : (
                           <Button
@@ -1084,8 +1086,8 @@ export default function EditorsPage() {
         </div>
       ) : (
         <EmptyState
-          title="Keine Journalisten gefunden"
-          description="Versuchen Sie andere Suchbegriffe oder Filter."
+          title={t('empty.title')}
+          description={t('empty.description')}
         />
       )}
 
@@ -1099,7 +1101,7 @@ export default function EditorsPage() {
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -1135,7 +1137,7 @@ export default function EditorsPage() {
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon />
             </Button>
           </div>
@@ -1175,7 +1177,7 @@ export default function EditorsPage() {
                     {detailJournalist.professionalData.employment?.position || detailJournalist.personalData.name.firstName + ' ' + detailJournalist.personalData.name.lastName}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    Score: {detailJournalist.metadata?.dataQuality?.overallScore || 0}
+                    {t('detail.score', { score: detailJournalist.metadata?.dataQuality?.overallScore || 0 })}
                   </p>
                 </div>
               </div>
@@ -1187,7 +1189,7 @@ export default function EditorsPage() {
               {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Kontaktinformationen</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t('detail.contactInfo')}</h4>
                   <div className="space-y-2">
                     {(detailJournalist.personalData.emails || []).map((email, index) => (
                       <div key={index} className="flex items-center space-x-2">
@@ -1196,7 +1198,7 @@ export default function EditorsPage() {
                           {email.email}
                         </a>
                         {email.isPrimary && (
-                          <Badge color="zinc" className="text-xs">Primär</Badge>
+                          <Badge color="zinc" className="text-xs">{t('detail.primary')}</Badge>
                         )}
                       </div>
                     ))}
@@ -1211,7 +1213,7 @@ export default function EditorsPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Position</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t('detail.position')}</h4>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <UserIcon className="h-4 w-4 text-zinc-400" />
@@ -1222,7 +1224,7 @@ export default function EditorsPage() {
                     </div>
                     {detailJournalist.professionalData.currentEmployment?.department && (
                       <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Abteilung: {detailJournalist.professionalData.currentEmployment.department}
+                        {t('detail.department', { department: detailJournalist.professionalData.currentEmployment.department })}
                       </div>
                     )}
                   </div>
@@ -1234,7 +1236,7 @@ export default function EditorsPage() {
                 <div className="border-t pt-6">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                     <NewspaperIcon className="h-4 w-4 mr-2 text-zinc-500" />
-                    Medienhaus & Arbeitgeber
+                    {t('detail.mediaHouse')}
                   </h4>
                   <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -1265,7 +1267,7 @@ export default function EditorsPage() {
                 <div className="border-t pt-6">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                     <GlobeAltIcon className="h-4 w-4 mr-2 text-zinc-500" />
-                    Publikationen ({detailJournalist.professionalData.publicationAssignments.length})
+                    {t('detail.publications', { count: detailJournalist.professionalData.publicationAssignments.length })}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {detailJournalist.professionalData.publicationAssignments.map((assignment, index) => (
@@ -1286,7 +1288,7 @@ export default function EditorsPage() {
                               )}
                               {assignment.isMainPublication && (
                                 <Badge color="yellow" className="text-xs">
-                                  Haupt-Publikation
+                                  {t('detail.mainPublication')}
                                 </Badge>
                               )}
                             </div>
@@ -1295,11 +1297,11 @@ export default function EditorsPage() {
 
                         <div className="space-y-1">
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Rolle: <span className="font-medium">{roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role}</span>
+                            {t('detail.role', { role: roleTranslations[assignment.role as keyof typeof roleTranslations] || assignment.role })}
                           </div>
                           {assignment.publication.frequency && (
                             <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                              Erscheinung: {frequencyTranslations[assignment.publication.frequency as keyof typeof frequencyTranslations] || assignment.publication.frequency}
+                              {t('detail.frequency', { frequency: frequencyTranslations[assignment.publication.frequency as keyof typeof frequencyTranslations] || assignment.publication.frequency })}
                             </div>
                           )}
                         </div>
@@ -1313,7 +1315,7 @@ export default function EditorsPage() {
               {/* Topics */}
               <div>
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                  Themen ({(detailJournalist.professionalData.expertise.primaryTopics || []).length})
+                  {t('detail.topicsSection', { count: (detailJournalist.professionalData.expertise.primaryTopics || []).length })}
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {(detailJournalist.professionalData.expertise.primaryTopics || []).map((topic, index) => (
@@ -1327,7 +1329,7 @@ export default function EditorsPage() {
               {/* Social Media */}
               {(detailJournalist.socialMedia?.profiles || []).length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Social Media</h4>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t('detail.socialMedia')}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(detailJournalist.socialMedia?.profiles || []).map((profile, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg">
@@ -1355,7 +1357,7 @@ export default function EditorsPage() {
 
               {/* Media Types */}
               <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Medientypen</h4>
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t('detail.mediaTypes')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {(detailJournalist.professionalData.mediaTypes || []).map((type, index) => (
                     <Badge key={index} color="blue" className="text-sm capitalize">
@@ -1369,7 +1371,7 @@ export default function EditorsPage() {
 
           <DialogActions className="px-6 py-4">
             <Button plain onClick={() => setDetailJournalist(null)}>
-              Schließen
+              {t('detail.close')}
             </Button>
             <Button
               onClick={() => {
@@ -1396,7 +1398,7 @@ export default function EditorsPage() {
                 importedIds?.has(detailJournalist?.id) ? 'text-black' : 'text-gray-500'
               }`}
               fill={importedIds?.has(detailJournalist?.id) ? 'currentColor' : 'none'} />
-              {importedIds?.has(detailJournalist?.id) ? 'Verweis entfernen' : 'Als Verweis hinzufügen'}
+              {importedIds?.has(detailJournalist?.id) ? t('detail.removeReference') : t('detail.addReference')}
             </Button>
           </DialogActions>
         </Dialog>

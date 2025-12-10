@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FunnelIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
@@ -27,6 +28,7 @@ interface ListModalProps {
 }
 
 export default function ListModal({ list, onClose, onSave, userId, organizationId }: ListModalProps) {
+  const t = useTranslations('lists.modal');
   const [formData, setFormData] = useState<Partial<DistributionList>>({
     name: '',
     description: '',
@@ -117,15 +119,15 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
     // Validierung
     const errors: string[] = [];
     if (!formData.name?.trim()) {
-      errors.push('Listenname ist erforderlich');
+      errors.push(t('validation.nameRequired'));
     }
 
     if (formData.type === 'dynamic' && (!formData.filters || Object.keys(formData.filters).length === 0)) {
-      errors.push('Mindestens ein Filter muss für dynamische Listen ausgewählt werden');
+      errors.push(t('validation.filterRequired'));
     }
 
     if (formData.type === 'static' && (!formData.contactIds || formData.contactIds.length === 0)) {
-      errors.push('Mindestens ein Kontakt muss für statische Listen ausgewählt werden');
+      errors.push(t('validation.contactRequired'));
     }
 
     if (errors.length > 0) {
@@ -150,24 +152,24 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
       await onSave(dataToSave);
       onClose();
     } catch (error) {
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      setValidationErrors([t('validation.error')]);
     } finally {
       setLoading(false);
     }
-  }, [formData, userId, organizationId, onSave, onClose]);
+  }, [formData, userId, organizationId, onSave, onClose, t]);
 
   return (
     <>
       <Dialog open={true} onClose={onClose} size="5xl">
         <form ref={formRef} onSubmit={handleSubmit}>
           <DialogTitle>
-            {list ? 'Liste bearbeiten' : 'Neue Liste erstellen'}
+            {list ? t('editTitle') : t('createTitle')}
           </DialogTitle>
 
           <DialogBody className="px-6 py-6 h-[500px] overflow-y-auto overflow-x-hidden">
             {validationErrors.length > 0 && (
               <div className="mb-4">
-                <Alert type="error" title="Validierungsfehler" message={validationErrors[0]} />
+                <Alert type="error" title={t('validation.title')} message={validationErrors[0]} />
               </div>
             )}
 
@@ -185,7 +187,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-medium text-gray-900 flex items-center gap-2">
                         <FunnelIcon className="h-4 w-4" />
-                        Filter-Kriterien
+                        {t('filters.title')}
                       </h3>
                     </div>
 
@@ -215,7 +217,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                     <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                         <DocumentTextIcon className="h-4 w-4 text-gray-400" />
-                        Publikations-Filter
+                        {t('filters.publications')}
                       </div>
 
                       <PublicationFilterSection
@@ -258,7 +260,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
                          h-10 px-6 rounded-lg transition-colors"
             >
-              Abbrechen
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -267,7 +269,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
                          h-10 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Speichern...' : 'Speichern'}
+              {loading ? t('saving') : t('save')}
             </Button>
           </DialogActions>
         </form>

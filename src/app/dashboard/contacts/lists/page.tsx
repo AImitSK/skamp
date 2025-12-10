@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
@@ -36,6 +37,7 @@ import { ConfirmDialog } from './components/shared/ConfirmDialog';
 import { toastService } from '@/lib/utils/toast';
 
 export default function ListsPage() {
+  const t = useTranslations('lists');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
@@ -135,8 +137,8 @@ export default function ListsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: 'Liste löschen',
-      message: `Möchten Sie die Liste "${listName}" wirklich unwiderruflich löschen?`,
+      title: t('deleteDialog.title'),
+      message: t('deleteDialog.message', { name: listName }),
       type: 'danger',
       onConfirm: () => {
         deleteList(
@@ -163,8 +165,8 @@ export default function ListsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: `${count} Listen löschen`,
-      message: `Möchten Sie wirklich ${count} Listen unwiderruflich löschen?`,
+      title: t('bulkDeleteDialog.title', { count }),
+      message: t('bulkDeleteDialog.message', { count }),
       type: 'danger',
       onConfirm: () => {
         bulkDeleteLists(
@@ -204,8 +206,8 @@ export default function ListsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: 'Alle Listen aktualisieren',
-      message: 'Möchten Sie wirklich alle dynamischen Listen neu berechnen lassen?',
+      title: t('refreshAllDialog.title'),
+      message: t('refreshAllDialog.message'),
       type: 'warning',
       onConfirm: async () => {
         try {
@@ -255,16 +257,16 @@ export default function ListsPage() {
 
   // Filter Options
   const categoryOptions = [
-    { value: 'press', label: 'Presse' },
-    { value: 'customers', label: 'Kunden' },
-    { value: 'partners', label: 'Partner' },
-    { value: 'leads', label: 'Leads' },
-    { value: 'custom', label: 'Benutzerdefiniert' }
+    { value: 'press', label: t('categories.press') },
+    { value: 'customers', label: t('categories.customers') },
+    { value: 'partners', label: t('categories.partners') },
+    { value: 'leads', label: t('categories.leads') },
+    { value: 'custom', label: t('categories.custom') }
   ];
 
   const typeOptions = [
-    { value: 'dynamic', label: 'Dynamisch' },
-    { value: 'static', label: 'Statisch' }
+    { value: 'dynamic', label: t('types.dynamic') },
+    { value: 'static', label: t('types.static') }
   ];
 
   const filteredLists = useMemo(() => {
@@ -304,7 +306,7 @@ export default function ListsPage() {
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return 'Unbekannt';
+    if (!timestamp || !timestamp.toDate) return t('unknown');
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
       month: 'short',
@@ -325,7 +327,7 @@ export default function ListsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Listen...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -337,7 +339,7 @@ export default function ListsPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">Verteilerlisten</h1>
+        <h1 className="text-3xl font-semibold text-zinc-950 dark:text-white">{t('title')}</h1>
       </div>
 
       {/* Compact Toolbar */}
@@ -352,7 +354,7 @@ export default function ListsPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Listen durchsuchen..."
+              placeholder={t('searchPlaceholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -396,7 +398,7 @@ export default function ListsPage() {
                     {/* Category Filter */}
                     <div className="mb-[10px]">
                       <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Kategorie
+                        {t('filters.category')}
                       </label>
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {categoryOptions.map((option) => {
@@ -427,7 +429,7 @@ export default function ListsPage() {
                     {/* Type Filter */}
                     <div className="mb-[10px]">
                       <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Typ
+                        {t('filters.type')}
                       </label>
                       <div className="space-y-2 max-h-60 overflow-y-auto">
                         {typeOptions.map((option) => {
@@ -465,7 +467,7 @@ export default function ListsPage() {
                         }}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"
                       >
-                        Zurücksetzen
+                        {t('filters.reset')}
                       </button>
                     </div>
                   )}
@@ -480,7 +482,7 @@ export default function ListsPage() {
             onClick={() => setShowCreateModal(true)}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Liste erstellen
+            {t('createButton')}
           </Button>
 
           {/* Actions Button */}
@@ -505,7 +507,7 @@ export default function ListsPage() {
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
                     <ArrowPathIcon className="h-4 w-4" />
-                    Alle aktualisieren
+                    {t('actions.refreshAll')}
                   </button>
                   {selectedListIds.size > 0 && (
                     <>
@@ -515,7 +517,7 @@ export default function ListsPage() {
                         className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <TrashIcon className="h-4 w-4" />
-                        Auswahl löschen ({selectedListIds.size})
+                        {t('actions.deleteSelected', { count: selectedListIds.size })}
                       </button>
                     </>
                   )}
@@ -529,21 +531,21 @@ export default function ListsPage() {
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredLists.length} von {lists.length} Listen
+          {t('resultsInfo', { filtered: filteredLists.length, total: lists.length })}
           {selectedListIds.size > 0 && (
             <span className="ml-2">
-              • {selectedListIds.size} ausgewählt
+              • {t('selected', { count: selectedListIds.size })}
             </span>
           )}
         </Text>
-        
+
         {/* Bulk Delete Link */}
         {selectedListIds.size > 0 && (
           <button
             onClick={handleBulkDelete}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            {selectedListIds.size} Löschen
+            {t('bulkDeleteLink', { count: selectedListIds.size })}
           </button>
         )}
       </div>
@@ -553,11 +555,11 @@ export default function ListsPage() {
         {filteredLists.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-white dark:bg-zinc-800">
             <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mt-2">Keine Listen gefunden</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mt-2">{t('empty.title')}</h3>
             <Text className="mt-1">
               {searchTerm || selectedCategory.length > 0 || selectedTypes.length > 0
-                ? "Versuchen Sie andere Suchkriterien"
-                : "Erstellen Sie Ihre erste Verteilerliste"}
+                ? t('empty.searchHint')
+                : t('empty.createHint')}
             </Text>
             {!searchTerm && selectedCategory.length === 0 && selectedTypes.length === 0 && (
               <div className="mt-6">
@@ -566,7 +568,7 @@ export default function ListsPage() {
                   color="primary"
                 >
                   <PlusIcon />
-                  Erste Liste erstellen
+                  {t('empty.createFirstButton')}
                 </Button>
               </div>
             )}
@@ -584,23 +586,23 @@ export default function ListsPage() {
                     onChange={(checked: boolean) => handleSelectAll(checked)}
                   />
                   <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Name
+                    {t('table.name')}
                   </span>
                 </div>
                 <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Kategorie
+                  {t('table.category')}
                 </div>
                 <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Typ
+                  {t('table.type')}
                 </div>
                 <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Kontakte
+                  {t('table.contacts')}
                 </div>
                 <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Verwendung
+                  {t('table.usage')}
                 </div>
                 <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
-                  Aktualisiert
+                  {t('table.updated')}
                 </div>
               </div>
             </div>
@@ -648,7 +650,7 @@ export default function ListsPage() {
                       {/* Type */}
                       <div className="w-[10%]">
                         <Badge color={list.type === 'dynamic' ? 'green' : 'blue'} className="text-xs whitespace-nowrap">
-                          {list.type === 'dynamic' ? 'Dynamisch' : 'Statisch'}
+                          {list.type === 'dynamic' ? t('types.dynamic') : t('types.static')}
                         </Badge>
                       </div>
 
@@ -662,7 +664,7 @@ export default function ListsPage() {
                             <button
                               onClick={() => handleRefreshList(list.id!)}
                               className="text-blue-600 hover:text-blue-800"
-                              title="Liste aktualisieren"
+                              title={t('actions.refresh')}
                             >
                               <ArrowPathIcon className="h-4 w-4" />
                             </button>
@@ -675,14 +677,14 @@ export default function ListsPage() {
                         {listMetrics ? (
                           <div className="text-sm">
                             <div className="font-medium text-zinc-700 dark:text-zinc-300">
-                              {listMetrics.last30DaysCampaigns} Kampagnen
+                              {t('usage.campaigns', { count: listMetrics.last30DaysCampaigns })}
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              in 30 Tagen
+                              {t('usage.last30Days')}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-zinc-400">Noch nicht verwendet</span>
+                          <span className="text-sm text-zinc-400">{t('usage.notUsed')}</span>
                         )}
                       </div>
 
@@ -702,29 +704,29 @@ export default function ListsPage() {
                           <DropdownMenu anchor="bottom end">
   <DropdownItem href={`/dashboard/contacts/lists/${list.id}`}>
     <EyeIcon className="h-4 w-4" />
-    Anzeigen
+    {t('actions.view')}
   </DropdownItem>
   <DropdownItem onClick={() => {
     setEditingList(list);
     setShowCreateModal(true);
   }}>
     <PencilIcon className="h-4 w-4" />
-    Bearbeiten
+    {t('actions.edit')}
   </DropdownItem>
   {list.type === 'dynamic' && (
     <DropdownItem onClick={() => handleRefreshList(list.id!)}>
       <ArrowPathIcon className="h-4 w-4" />
-      Aktualisieren
+      {t('actions.refresh')}
     </DropdownItem>
   )}
   <DropdownItem onClick={() => handleExportList(list)}>
     <ArrowDownTrayIcon className="h-4 w-4" />
-    Exportieren
+    {t('actions.export')}
   </DropdownItem>
   <DropdownDivider />
   <DropdownItem onClick={() => handleDeleteList(list.id!, list.name)}>
     <TrashIcon className="h-4 w-4" />
-    <span className="text-red-600">Löschen</span>
+    <span className="text-red-600">{t('actions.delete')}</span>
   </DropdownItem>
 </DropdownMenu>
 
@@ -750,7 +752,7 @@ export default function ListsPage() {
               className="whitespace-nowrap"
             >
               <ChevronLeftIcon />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -787,7 +789,7 @@ export default function ListsPage() {
               disabled={currentPage === totalPages}
               className="whitespace-nowrap"
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon />
             </Button>
           </div>

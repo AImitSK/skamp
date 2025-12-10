@@ -2,6 +2,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { useTranslations } from 'next-intl';
 import { Popover, Transition } from '@headlessui/react';
 import {
   EllipsisVerticalIcon,
@@ -39,6 +40,8 @@ export function CompanyBulkActions({
   onExport,
   onBulkDelete
 }: CompanyBulkActionsProps) {
+  const t = useTranslations('companies.bulkActions');
+
   return (
     <Popover className="relative">
       <Popover.Button className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white p-2.5 text-zinc-700 hover:bg-zinc-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 h-10 w-10">
@@ -61,14 +64,14 @@ export function CompanyBulkActions({
               className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
             >
               <ArrowUpTrayIcon className="h-5 w-5" />
-              Import
+              {t('import')}
             </button>
             <button
               onClick={onExport}
               className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
             >
               <ArrowDownTrayIcon className="h-5 w-5" />
-              Export
+              {t('export')}
             </button>
             {selectedCount > 0 && (
               <>
@@ -78,7 +81,7 @@ export function CompanyBulkActions({
                   className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <TrashIcon className="h-5 w-5" />
-                  Auswahl löschen ({selectedCount})
+                  {t('deleteSelection', { count: selectedCount })}
                 </button>
               </>
             )}

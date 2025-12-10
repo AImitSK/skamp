@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -17,6 +18,7 @@ import { prService } from '@/lib/firebase/pr-service';
 import { clippingService } from '@/lib/firebase/clipping-service';
 
 export default function MonitoringPage() {
+  const t = useTranslations('monitoring');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -115,7 +117,7 @@ export default function MonitoringPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Text>Lade Monitoring-Daten...</Text>
+        <Text>{t('loading')}</Text>
       </div>
     );
   }
@@ -125,33 +127,33 @@ export default function MonitoringPage() {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <ChartBarIcon className="h-8 w-8 text-primary" />
-          <Heading>PR-Monitoring & Versandhistorie</Heading>
+          <Heading>{t('title')}</Heading>
         </div>
-        <Text>Überwache alle versendeten Pressemeldungen und deren Performance (E-Mail Tracking & Clippings)</Text>
+        <Text>{t('description')}</Text>
       </div>
 
       <div>
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Kampagnen durchsuchen..."
+          placeholder={t('searchPlaceholder')}
         />
       </div>
 
       {filteredCampaigns.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <Subheading>Noch keine versendeten Kampagnen</Subheading>
-          <Text className="text-gray-500">Versende deine erste Kampagne, um das Monitoring zu nutzen</Text>
+          <Subheading>{t('empty.title')}</Subheading>
+          <Text className="text-gray-500">{t('empty.description')}</Text>
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kampagne</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Versendet</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.campaign')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.sent')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('table.status')}</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th>
               </tr>
             </thead>
@@ -176,12 +178,12 @@ export default function MonitoringPage() {
                         <div className="flex gap-4 mt-1 text-sm items-center">
                           <span className="text-gray-600 flex items-center gap-1">
                             <EyeIcon className="h-4 w-4" />
-                            {campaign.stats.opened} geöffnet ({openRate}%)
+                            {t('stats.opened', { count: campaign.stats.opened, rate: openRate })}
                           </span>
                           {campaign.stats.bounced > 0 && (
                             <span className={`${getBounceRateColor(bounceRate)} flex items-center gap-1`}>
                               <ExclamationCircleIcon className="h-4 w-4" />
-                              {campaign.stats.bounced} bounced ({bounceRate}%)
+                              {t('stats.bounced', { count: campaign.stats.bounced, rate: bounceRate })}
                             </span>
                           )}
                         </div>
@@ -216,7 +218,7 @@ export default function MonitoringPage() {
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem onClick={() => router.push(`/dashboard/analytics/monitoring/${campaign.id}`)}>
                             <ChartBarIcon className="h-4 w-4" />
-                            Details
+                            {t('actions.details')}
                           </DropdownItem>
                         </DropdownMenu>
                       </Dropdown>
@@ -232,7 +234,7 @@ export default function MonitoringPage() {
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Text className="text-sm text-gray-600">
-                  Seite {currentPage} von {totalPages} ({filteredCampaigns.length} Kampagnen)
+                  {t('pagination.info', { current: currentPage, total: totalPages, count: filteredCampaigns.length })}
                 </Text>
               </div>
               <div className="flex items-center gap-2">
@@ -243,7 +245,7 @@ export default function MonitoringPage() {
                   className="flex items-center gap-1"
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
-                  Zurück
+                  {t('pagination.previous')}
                 </Button>
                 <Button
                   plain
@@ -251,7 +253,7 @@ export default function MonitoringPage() {
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   className="flex items-center gap-1"
                 >
-                  Weiter
+                  {t('pagination.next')}
                   <ChevronRightIcon className="h-4 w-4" />
                 </Button>
               </div>

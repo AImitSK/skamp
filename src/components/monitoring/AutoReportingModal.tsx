@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -55,6 +56,7 @@ export function AutoReportingModal({
   onDeleted
 }: AutoReportingModalProps) {
   const { user } = useAuth();
+  const t = useTranslations('reporting.modal');
 
   // Form State
   const [selectedRecipients, setSelectedRecipients] = useState<AutoReportingRecipient[]>([]);
@@ -266,13 +268,13 @@ export function AutoReportingModal({
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
       <DialogTitle>
-        {isEditing ? 'Auto-Reporting bearbeiten' : 'Auto-Reporting einrichten'}
+        {isEditing ? t('titleEdit') : t('titleCreate')}
       </DialogTitle>
 
       <DialogBody className="space-y-6">
         {/* Kampagnen-Info */}
         <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-          <Text className="text-sm text-zinc-600 dark:text-zinc-400">Kampagne</Text>
+          <Text className="text-sm text-zinc-600 dark:text-zinc-400">{t('campaign')}</Text>
           <Text className="font-medium">{campaignName}</Text>
         </div>
 
@@ -285,7 +287,7 @@ export function AutoReportingModal({
             {/* Empfänger-Auswahl */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Empfänger (max. {MAX_RECIPIENTS})
+                {t('recipients.label', { max: MAX_RECIPIENTS })}
               </label>
 
               {/* Ausgewählte Empfänger als Chips */}
@@ -320,15 +322,15 @@ export function AutoReportingModal({
                 >
                   <option value="">
                     {availableContacts.length === 0
-                      ? 'Keine weiteren Kontakte verfügbar'
-                      : 'Kontakt hinzufügen...'}
+                      ? t('recipients.noMoreAvailable')
+                      : t('recipients.addContact')}
                   </option>
                   {availableContacts.map(contact => {
                     const email = contact.emails?.find(e => e.isPrimary)?.email || contact.emails?.[0]?.email;
                     const name = `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim();
                     return (
                       <option key={contact.id} value={contact.id} disabled={!email}>
-                        {name || 'Unbekannt'} {email ? `(${email})` : '- Keine E-Mail'}
+                        {name || t('recipients.unknown')} {email ? `(${email})` : t('recipients.noEmail')}
                       </option>
                     );
                   })}
@@ -340,7 +342,7 @@ export function AutoReportingModal({
                   <div className="flex items-start gap-2">
                     <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
                     <Text className="text-sm text-yellow-800">
-                      Keine Kontakte im CRM gefunden. Bitte fügen Sie zuerst Kunden-Kontakte hinzu.
+                      {t('recipients.noContactsWarning')}
                     </Text>
                   </div>
                 </div>
@@ -350,7 +352,7 @@ export function AutoReportingModal({
             {/* Frequenz-Auswahl */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Versand-Frequenz
+                {t('frequency.label')}
               </label>
 
               <div className="flex gap-4">
@@ -383,7 +385,7 @@ export function AutoReportingModal({
               {frequency === 'weekly' && (
                 <div className="mt-3">
                   <label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">
-                    Versand jeden
+                    {t('frequency.sendEvery')}
                   </label>
                   <Select
                     value={dayOfWeek.toString()}
@@ -400,7 +402,7 @@ export function AutoReportingModal({
               {/* Info bei monthly */}
               {frequency === 'monthly' && (
                 <Text className="text-sm text-zinc-500">
-                  Der Report wird jeden 1. des Monats um 8:00 Uhr versendet.
+                  {t('frequency.monthlyInfo')}
                 </Text>
               )}
             </div>
@@ -411,8 +413,7 @@ export function AutoReportingModal({
                 <div className="flex items-start gap-2">
                   <InformationCircleIcon className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <Text className="text-sm text-blue-800">
-                    Das Reporting endet automatisch am <strong>{formatShortDate(monitoringEndDate)}</strong>,
-                    wenn das Monitoring ausläuft.
+                    {t('monitoring.endInfo', { date: formatShortDate(monitoringEndDate) })}
                   </Text>
                 </div>
               </div>
@@ -423,8 +424,7 @@ export function AutoReportingModal({
                 <div className="flex items-start gap-2">
                   <ExclamationTriangleIcon className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                   <Text className="text-sm text-red-800">
-                    Kein aktives Monitoring für diese Kampagne gefunden.
-                    Auto-Reporting kann nur für Kampagnen mit aktivem Monitoring eingerichtet werden.
+                    {t('monitoring.noActiveWarning')}
                   </Text>
                 </div>
               </div>
@@ -443,12 +443,12 @@ export function AutoReportingModal({
             className="mr-auto text-red-600 hover:text-red-700"
           >
             <TrashIcon className="h-4 w-4 mr-1" />
-            {isDeleting ? 'Löschen...' : 'Löschen'}
+            {isDeleting ? t('actions.deleting') : t('actions.delete')}
           </Button>
         )}
 
         <Button plain onClick={onClose} disabled={isSaving || isDeleting}>
-          Abbrechen
+          {t('actions.cancel')}
         </Button>
 
         <Button
@@ -463,10 +463,10 @@ export function AutoReportingModal({
           }
         >
           {isSaving
-            ? 'Speichern...'
+            ? t('actions.saving')
             : isEditing
-              ? 'Speichern'
-              : 'Aktivieren'}
+              ? t('actions.save')
+              : t('actions.activate')}
         </Button>
       </DialogActions>
     </Dialog>

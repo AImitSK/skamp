@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useCompanies, useContacts, useTags, useBulkDeleteCompanies } from '@/lib/hooks/useCRMData';
@@ -28,6 +29,7 @@ import clsx from 'clsx';
  * @component
  */
 export default function CompaniesPage() {
+  const t = useTranslations('companies');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -111,8 +113,8 @@ export default function CompaniesPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: 'Firma löschen',
-      message: `Möchten Sie "${name}" wirklich löschen?`,
+      title: t('deleteDialog.title'),
+      message: t('deleteDialog.message', { name }),
       type: 'danger',
       onConfirm: async () => {
         bulkDeleteCompanies(
@@ -135,8 +137,8 @@ export default function CompaniesPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: `${selectedIds.size} Firmen löschen`,
-      message: `Möchten Sie wirklich ${selectedIds.size} Firmen unwiderruflich löschen?`,
+      title: t('bulkDeleteDialog.title', { count: selectedIds.size }),
+      message: t('bulkDeleteDialog.message', { count: selectedIds.size }),
       type: 'danger',
       onConfirm: async () => {
         const ids = Array.from(selectedIds);
@@ -181,7 +183,7 @@ export default function CompaniesPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Daten...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -201,7 +203,7 @@ export default function CompaniesPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Firmen durchsuchen..."
+              placeholder={t('searchPlaceholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -220,7 +222,7 @@ export default function CompaniesPage() {
             }}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Neu hinzufügen
+            {t('addNew')}
           </Button>
 
           {/* Filters */}
@@ -246,9 +248,9 @@ export default function CompaniesPage() {
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredCompanies.length} von {companies.length} Firmen
+          {t('resultsInfo', { filtered: filteredCompanies.length, total: companies.length })}
           {selectedIds.size > 0 && (
-            <span className="ml-2">· {selectedIds.size} ausgewählt</span>
+            <span className="ml-2">· {t('selected', { count: selectedIds.size })}</span>
           )}
         </Text>
 
@@ -257,7 +259,7 @@ export default function CompaniesPage() {
             onClick={handleBulkDelete}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            {selectedIds.size} Löschen
+            {t('deleteSelected', { count: selectedIds.size })}
           </button>
         )}
       </div>
@@ -287,7 +289,7 @@ export default function CompaniesPage() {
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -323,7 +325,7 @@ export default function CompaniesPage() {
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon />
             </Button>
           </div>

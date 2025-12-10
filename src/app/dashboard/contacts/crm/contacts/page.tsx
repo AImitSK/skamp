@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useContacts, useCompanies, useTags, useBulkDeleteContacts } from '@/lib/hooks/useCRMData';
@@ -28,6 +29,7 @@ import clsx from 'clsx';
  * @component
  */
 export default function ContactsPage() {
+  const t = useTranslations('contacts');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const router = useRouter();
@@ -151,8 +153,8 @@ export default function ContactsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: 'Kontakt löschen',
-      message: `Möchten Sie "${name}" wirklich löschen?`,
+      title: t('deleteContact.title'),
+      message: t('deleteContact.message', { name }),
       type: 'danger',
       onConfirm: async () => {
         bulkDeleteContacts(
@@ -175,8 +177,8 @@ export default function ContactsPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: `${selectedIds.size} Kontakte löschen`,
-      message: `Möchten Sie wirklich ${selectedIds.size} Kontakte unwiderruflich löschen?`,
+      title: t('bulkDelete.title', { count: selectedIds.size }),
+      message: t('bulkDelete.message', { count: selectedIds.size }),
       type: 'danger',
       onConfirm: async () => {
         const ids = Array.from(selectedIds);
@@ -221,7 +223,7 @@ export default function ContactsPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <Text className="mt-4">Lade Daten...</Text>
+          <Text className="mt-4">{t('loading')}</Text>
         </div>
       </div>
     );
@@ -241,7 +243,7 @@ export default function ContactsPage() {
               type="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Kontakte durchsuchen..."
+              placeholder={t('searchPlaceholder')}
               className={clsx(
                 'block w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm',
                 'placeholder:text-zinc-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
@@ -260,7 +262,7 @@ export default function ContactsPage() {
             }}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
-            Neu hinzufügen
+            {t('addNew')}
           </Button>
 
           {/* Filters */}
@@ -289,9 +291,9 @@ export default function ContactsPage() {
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
         <Text className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredContacts.length} von {contacts.length} Kontakten
+          {t('resultsInfo', { filtered: filteredContacts.length, total: contacts.length })}
           {selectedIds.size > 0 && (
-            <span className="ml-2">· {selectedIds.size} ausgewählt</span>
+            <span className="ml-2">· {t('selected', { count: selectedIds.size })}</span>
           )}
         </Text>
 
@@ -300,7 +302,7 @@ export default function ContactsPage() {
             onClick={handleBulkDelete}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            {selectedIds.size} Löschen
+            {t('deleteSelected', { count: selectedIds.size })}
           </button>
         )}
       </div>
@@ -330,7 +332,7 @@ export default function ContactsPage() {
               disabled={currentPage === 1}
             >
               <ChevronLeftIcon />
-              Zurück
+              {t('pagination.previous')}
             </Button>
           </div>
           <div className="hidden md:-mt-px md:flex">
@@ -366,7 +368,7 @@ export default function ContactsPage() {
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
-              Weiter
+              {t('pagination.next')}
               <ChevronRightIcon />
             </Button>
           </div>

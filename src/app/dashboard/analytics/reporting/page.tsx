@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
@@ -34,6 +35,7 @@ export default function ReportingPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const t = useTranslations('reporting');
 
   const [reportings, setReportings] = useState<AutoReporting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,12 +162,12 @@ export default function ReportingPage() {
     const isExpired = isMonitoringExpired(reporting.monitoringEndDate);
 
     if (isExpired) {
-      return <Badge color="red">Beendet</Badge>;
+      return <Badge color="red">{t('status.ended')}</Badge>;
     }
     if (reporting.isActive) {
-      return <Badge color="green">Aktiv</Badge>;
+      return <Badge color="green">{t('status.active')}</Badge>;
     }
-    return <Badge color="zinc">Pausiert</Badge>;
+    return <Badge color="zinc">{t('status.paused')}</Badge>;
   };
 
 
@@ -184,10 +186,10 @@ export default function ReportingPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-          Auto-Reporting
+          {t('title')}
         </h1>
         <Text className="mt-1 text-zinc-600 dark:text-zinc-400">
-          Automatische Report-Zustellung an Kunden verwalten
+          {t('description')}
         </Text>
       </div>
 
@@ -196,18 +198,17 @@ export default function ReportingPage() {
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-12 text-center">
           <ClockIcon className="mx-auto h-12 w-12 text-zinc-400" />
           <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-white">
-            Keine Auto-Reports konfiguriert
+            {t('empty.title')}
           </h3>
           <Text className="mt-2 text-zinc-500">
-            Aktiviere Auto-Reports im Monitoring-Bereich einer Kampagne,
-            um automatisch Reports an deine Kunden zu senden.
+            {t('empty.description')}
           </Text>
           <div className="mt-6">
             <Button
               color="primary"
               onClick={() => router.push('/dashboard/analytics/monitoring')}
             >
-              Zum Monitoring
+              {t('empty.action')}
             </Button>
           </div>
         </div>
@@ -218,19 +219,19 @@ export default function ReportingPage() {
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
               <div className="w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Kampagne
+                {t('table.campaign')}
               </div>
               <div className="w-[12%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Status
+                {t('table.status')}
               </div>
               <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Frequenz
+                {t('table.frequency')}
               </div>
               <div className="w-[18%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Nächster Versand
+                {t('table.nextSend')}
               </div>
               <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider pr-14">
-                Letzter Status
+                {t('table.lastStatus')}
               </div>
             </div>
           </div>
@@ -255,7 +256,7 @@ export default function ReportingPage() {
                         {reporting.campaignName}
                       </button>
                       <Text className="text-xs text-zinc-500">
-                        {reporting.recipients.length} Empfänger
+                        {t('recipients', { count: reporting.recipients.length })}
                       </Text>
                     </div>
 
@@ -285,17 +286,17 @@ export default function ReportingPage() {
                           <Text className="text-sm">
                             {reporting.nextSendAt?.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </Text>
-                          <Text className="text-xs text-zinc-500">07:00 Uhr</Text>
+                          <Text className="text-xs text-zinc-500">{t('nextSend.time')}</Text>
                         </>
                       ) : (
-                        <Text className="text-sm text-zinc-400">Pausiert</Text>
+                        <Text className="text-sm text-zinc-400">{t('nextSend.paused')}</Text>
                       )}
                     </div>
 
                     {/* Letzter Status */}
                     <div className="flex-1 pr-4">
                       {!reporting.lastSendStatus ? (
-                        <Text className="text-sm text-zinc-400">Noch nicht gesendet</Text>
+                        <Text className="text-sm text-zinc-400">{t('lastStatus.notSent')}</Text>
                       ) : (
                         <>
                           <div className="flex items-center gap-1">
@@ -326,11 +327,11 @@ export default function ReportingPage() {
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem onClick={() => handleSendNow(reporting)}>
                             <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                            Jetzt senden
+                            {t('actions.sendNow')}
                           </DropdownItem>
                           <DropdownItem onClick={() => handleEdit(reporting)}>
                             <PencilIcon className="h-4 w-4 mr-2" />
-                            Bearbeiten
+                            {t('actions.edit')}
                           </DropdownItem>
                           <DropdownDivider />
                           {!isExpired && (
@@ -338,19 +339,19 @@ export default function ReportingPage() {
                               {reporting.isActive ? (
                                 <>
                                   <PauseIcon className="h-4 w-4 mr-2" />
-                                  Pausieren
+                                  {t('actions.pause')}
                                 </>
                               ) : (
                                 <>
                                   <PlayIcon className="h-4 w-4 mr-2" />
-                                  Fortsetzen
+                                  {t('actions.resume')}
                                 </>
                               )}
                             </DropdownItem>
                           )}
                           <DropdownItem onClick={() => handleDelete(reporting)}>
                             <TrashIcon className="h-4 w-4 mr-2 text-red-500" />
-                            <span className="text-red-500">Löschen</span>
+                            <span className="text-red-500">{t('actions.delete')}</span>
                           </DropdownItem>
                         </DropdownMenu>
                       </Dropdown>

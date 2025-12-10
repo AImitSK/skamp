@@ -1,3 +1,5 @@
+'use client';
+
 import { UserIcon } from "@heroicons/react/24/outline";
 
 interface EmptyStateProps {

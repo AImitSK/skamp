@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -43,6 +44,7 @@ import LoadingSpinner from "@/components/mediathek/LoadingSpinner";
 type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
+  const t = useTranslations('media');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
@@ -231,8 +233,8 @@ export default function MediathekPage() {
 
     setConfirmDialog({
       isOpen: true,
-      title: `${count} ${count === 1 ? 'Datei' : 'Dateien'} löschen`,
-      message: `Möchten Sie wirklich ${count} ${count === 1 ? 'Datei' : 'Dateien'} unwiderruflich löschen?`,
+      title: t('confirmDialog.deleteFiles.title', { count }),
+      message: t('confirmDialog.deleteFiles.message', { count }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -254,7 +256,7 @@ export default function MediathekPage() {
         }
       }
     });
-  }, [selectedAssets, mediaAssets, bulkDeleteAssetsMutation, organizationId, clearSelection]);
+  }, [selectedAssets, mediaAssets, bulkDeleteAssetsMutation, organizationId, clearSelection, t]);
 
   const handleBulkMove = useCallback(async (targetFolderId?: string) => {
     if (selectedAssets.size === 0 || !organizationId) return;
@@ -600,8 +602,8 @@ export default function MediathekPage() {
   const handleDeleteFolder = useCallback(async (folder: MediaFolder) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Ordner löschen',
-      message: `Möchten Sie den Ordner "${folder.name}" wirklich löschen?`,
+      title: t('confirmDialog.deleteFolder.title'),
+      message: t('confirmDialog.deleteFolder.message', { name: folder.name }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -616,7 +618,7 @@ export default function MediathekPage() {
         }
       }
     });
-  }, [deleteFolderMutation, organizationId]);
+  }, [deleteFolderMutation, organizationId, t]);
 
   const handleOpenFolder = useCallback((folder: MediaFolder) => {
     setCurrentFolderId(folder.id);
@@ -646,8 +648,8 @@ export default function MediathekPage() {
   const handleDeleteAsset = useCallback(async (asset: MediaAsset) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Datei löschen',
-      message: `Möchten Sie die Datei "${asset.fileName}" wirklich löschen?`,
+      title: t('confirmDialog.deleteFile.title'),
+      message: t('confirmDialog.deleteFile.message', { name: asset.fileName }),
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -662,7 +664,7 @@ export default function MediathekPage() {
         }
       }
     });
-  }, [deleteAssetMutation, organizationId]);
+  }, [deleteAssetMutation, organizationId, t]);
 
   // Asset-Details Handlers
   const handleEditAsset = useCallback((asset: MediaAsset) => {
@@ -734,7 +736,7 @@ export default function MediathekPage() {
   const totalItems = useMemo(() => filteredFolders.length + filteredAssets.length, [filteredFolders, filteredAssets]);
 
   if (loading) {
-    return <LoadingSpinner message="Lade Mediathek..." />;
+    return <LoadingSpinner message={t('loading')} />;
   }
 
   if (!organizationId) {
@@ -742,7 +744,7 @@ export default function MediathekPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <ExclamationTriangleIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <Text className="text-gray-600">Keine Organisation gefunden</Text>
+          <Text className="text-gray-600">{t('noOrganization')}</Text>
         </div>
       </div>
     );
@@ -753,7 +755,12 @@ export default function MediathekPage() {
       {/* Moving Indicator */}
       {moving && (
         <div className="fixed top-4 right-4 bg-[#005fab] text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          {draggedFolder ? 'Ordner wird' : selectedAssets.size > 1 ? `${selectedAssets.size} Dateien werden` : 'Datei wird'} verschoben...
+          {draggedFolder
+            ? t('moving.folder')
+            : selectedAssets.size > 1
+              ? t('moving.files', { count: selectedAssets.size })
+              : t('moving.file')
+          }
         </div>
       )}
 

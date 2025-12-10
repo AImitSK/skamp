@@ -3,6 +3,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 /**
  * CRM Root Redirect Component
@@ -17,6 +18,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 export default function CRMRootPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('crm');
 
   useEffect(() => {
     // Check for legacy tab parameter
@@ -35,7 +37,7 @@ export default function CRMRootPage() {
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Weiterleitung...</p>
+        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{t('redirecting')}</p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Subheading } from '@/components/ui/heading';
@@ -28,6 +29,7 @@ import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
 
 function MonitoringContent() {
+  const t = useTranslations('monitoring');
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -148,7 +150,7 @@ function MonitoringContent() {
   if (!campaign) {
     return (
       <div className="text-center py-12">
-        <Text className="text-gray-500">Kampagne nicht gefunden</Text>
+        <Text className="text-gray-500">{t('notFound')}</Text>
       </div>
     );
   }
@@ -184,7 +186,7 @@ function MonitoringContent() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <DocumentArrowDownIcon className="h-5 w-5 text-gray-600 mr-2" />
-                      <Subheading>Generierte Reports ({analysisPDFs.length})</Subheading>
+                      <Subheading>{t('reports.title', { count: analysisPDFs.length })}</Subheading>
                     </div>
                     {analysenFolderLink && (
                       <Link
@@ -192,7 +194,7 @@ function MonitoringContent() {
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                       >
                         <LinkIcon className="h-4 w-4" />
-                        Zum Analysen-Ordner
+                        {t('reports.folderLink')}
                       </Link>
                     )}
                   </div>
@@ -220,15 +222,15 @@ function MonitoringContent() {
                           <DropdownMenu anchor="bottom end">
                             <DropdownItem onClick={() => window.open(pdf.downloadUrl, '_blank')}>
                               <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-                              Download
+                              {t('reports.download')}
                             </DropdownItem>
                             <DropdownItem onClick={() => handleDeletePDF(pdf)}>
                               <TrashIcon className="h-4 w-4 mr-2 text-red-600" />
-                              <span className="text-red-600">Löschen</span>
+                              <span className="text-red-600">{t('reports.delete')}</span>
                             </DropdownItem>
                             <DropdownItem disabled>
                               <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                              Versenden (Coming Soon)
+                              {t('reports.send')}
                             </DropdownItem>
                           </DropdownMenu>
                         </Dropdown>
@@ -271,18 +273,18 @@ function MonitoringContent() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>PDF löschen</DialogTitle>
+        <DialogTitle>{t('deleteDialog.title')}</DialogTitle>
         <DialogBody>
           <Text>
-            Möchten Sie das PDF &quot;{pdfToDelete?.fileName}&quot; wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            {t('deleteDialog.message', { fileName: pdfToDelete?.fileName })}
           </Text>
         </DialogBody>
         <DialogActions>
           <Button plain onClick={() => setShowDeleteDialog(false)}>
-            Abbrechen
+            {t('deleteDialog.cancel')}
           </Button>
           <Button onClick={confirmDeletePDF}>
-            Löschen
+            {t('deleteDialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
