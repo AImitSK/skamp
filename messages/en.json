@@ -260,27 +260,28 @@
         },
         "finalSend": {
           "title": "Final Send",
-          "sendTime": "Send Time",
+          "timing": "Send Timing",
           "sendNow": "Send Now",
-          "sendScheduled": "Schedule Send",
-          "date": "Date",
-          "time": "Time",
-          "minScheduleNote": "Sending must be at least 15 minutes in the future.",
-          "sendToRecipients": "Send now to {count} recipients",
-          "scheduleSend": "Schedule Send"
+          "schedule": "Schedule Send",
+          "dateLabel": "Date",
+          "timeLabel": "Time",
+          "minTimeHint": "Sending must be at least 15 minutes in the future.",
+          "sendNowButton": "Send now to {count} recipients",
+          "scheduleButton": "Schedule Send"
         },
         "preview": {
           "title": "Email Preview",
           "desktopView": "Desktop View",
           "mobileView": "Mobile View",
-          "from": "From:",
-          "to": "To:",
-          "subject": "Subject:",
-          "preheader": "Preview:",
-          "attachments": "Attachments:",
+          "from": "From",
+          "to": "To",
+          "subject": "Subject",
+          "preheader": "Preview",
+          "attachments": "Attachments",
           "notSelected": "Not selected",
-          "recipients": "{count} recipients",
-          "files": "{count, plural, one {# file} other {# files}}",
+          "recipients": "Recipients",
+          "file": "file",
+          "files": "files",
           "iframeTitle": "Email Preview"
         },
         "status": {
@@ -288,18 +289,36 @@
           "alreadyScheduled": "This campaign is already scheduled for sending.",
           "sending": "This campaign is currently being sent."
         },
-        "confirmDialog": {
-          "titleSendNow": "Send email now?",
-          "titleSchedule": "Schedule email send?",
+        "errors": {
+          "noAuthentication": "No authentication available",
+          "sendFailed": "Send failed: {reason}",
+          "schedulingFailed": "Scheduling failed",
+          "unknownError": "Unknown error"
+        },
+        "sending": {
+          "sent": "Email successfully sent to {count} recipients",
+          "sentAlert": "Email was successfully sent to {count} recipients!",
+          "sentPipelineTransition": "Email sent to {count} recipients - Project forwarded to monitoring phase",
+          "sentWithPipelineAlert": "Email was successfully sent to {count} recipients! Project was forwarded to monitoring phase."
+        },
+        "scheduling": {
+          "scheduled": "Email scheduled for {dateTime}!",
+          "scheduledToast": "Email scheduled for {dateTime}"
+        },
+        "dialog": {
+          "titleNow": "Send email now?",
+          "titleScheduled": "Schedule email send?",
           "messageSendNow": "You are about to send this email to {count} recipients.",
-          "messageSchedule": "You are scheduling this email to {count} recipients.",
+          "messageScheduled": "You are scheduling this email to {count} recipients.",
           "attachmentInfo": "The email contains {count, plural, one {# attachment} other {# attachments}}.",
-          "scheduledFor": "Scheduled for: <strong>{datetime}</strong>",
-          "cannotUndo": "This action cannot be undone.",
-          "cancel": "Cancel",
+          "scheduledTime": "Scheduled for: <strong>{dateTime}</strong>",
+          "irreversible": "This action cannot be undone.",
           "processing": "Processing...",
-          "confirmSendNow": "Send Now",
-          "confirmSchedule": "Schedule Send"
+          "confirmNow": "Send Now",
+          "confirmScheduled": "Schedule Send"
+        },
+        "common": {
+          "cancel": "Cancel"
         }
       }
     },
@@ -3506,6 +3525,27 @@
         "recipientsRequired": "At least one recipient required",
         "senderRequired": "Sender email must be selected",
         "subjectRequired": "Subject required"
+      }
+    },
+    "addressSelector": {
+      "label": "Sender Email",
+      "labelRequired": "Sender Email *",
+      "loading": "Loading email addresses...",
+      "selectPlaceholder": "Please select...",
+      "errors": {
+        "notLoggedIn": "Not logged in",
+        "loadFailed": "Error loading email addresses",
+        "noAddresses": "No verified email addresses found.",
+        "noAddressesDescription": "Please first add an email address under <link>Settings → Email</link> and verify it.",
+        "settingsLink": "Settings → Email"
+      },
+      "selectedInfo": "Replies will be automatically forwarded to the generated Reply-To address.",
+      "tips": {
+        "setDefault": "Tip: You can set a default sender address in the <link>Email Settings</link>.",
+        "emailSettingsLink": "Email Settings"
+      },
+      "badges": {
+        "default": "[Default]"
       }
     },
     "recipientManager": {

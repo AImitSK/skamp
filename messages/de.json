@@ -260,27 +260,28 @@
         },
         "finalSend": {
           "title": "Finaler Versand",
-          "sendTime": "Versand-Zeitpunkt",
+          "timing": "Versand-Zeitpunkt",
           "sendNow": "Jetzt senden",
-          "sendScheduled": "Versand planen",
-          "date": "Datum",
-          "time": "Uhrzeit",
-          "minScheduleNote": "Der Versand muss mindestens 15 Minuten in der Zukunft liegen.",
-          "sendToRecipients": "Jetzt an {count} Empfänger senden",
-          "scheduleSend": "Versand planen"
+          "schedule": "Versand planen",
+          "dateLabel": "Datum",
+          "timeLabel": "Uhrzeit",
+          "minTimeHint": "Der Versand muss mindestens 15 Minuten in der Zukunft liegen.",
+          "sendNowButton": "Jetzt an {count} Empfänger senden",
+          "scheduleButton": "Versand planen"
         },
         "preview": {
           "title": "E-Mail-Vorschau",
           "desktopView": "Desktop-Ansicht",
           "mobileView": "Mobile Ansicht",
-          "from": "Von:",
-          "to": "An:",
-          "subject": "Betreff:",
-          "preheader": "Vorschau:",
-          "attachments": "Anhänge:",
+          "from": "Von",
+          "to": "An",
+          "subject": "Betreff",
+          "preheader": "Vorschau",
+          "attachments": "Anhänge",
           "notSelected": "Nicht ausgewählt",
-          "recipients": "{count} Empfänger",
-          "files": "{count, plural, one {# Datei} other {# Dateien}}",
+          "recipients": "Empfänger",
+          "file": "Datei",
+          "files": "Dateien",
           "iframeTitle": "E-Mail Vorschau"
         },
         "status": {
@@ -288,18 +289,36 @@
           "alreadyScheduled": "Diese Kampagne ist bereits für den Versand geplant.",
           "sending": "Diese Kampagne wird gerade versendet."
         },
-        "confirmDialog": {
-          "titleSendNow": "E-Mail jetzt versenden?",
-          "titleSchedule": "E-Mail-Versand planen?",
+        "errors": {
+          "noAuthentication": "Keine Authentifizierung vorhanden",
+          "sendFailed": "Versand fehlgeschlagen: {reason}",
+          "schedulingFailed": "Planung fehlgeschlagen",
+          "unknownError": "Unbekannter Fehler"
+        },
+        "sending": {
+          "sent": "E-Mail erfolgreich an {count} Empfänger gesendet",
+          "sentAlert": "E-Mail wurde erfolgreich an {count} Empfänger gesendet!",
+          "sentPipelineTransition": "E-Mail an {count} Empfänger gesendet - Projekt zur Monitoring-Phase weitergeleitet",
+          "sentWithPipelineAlert": "E-Mail wurde erfolgreich an {count} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet."
+        },
+        "scheduling": {
+          "scheduled": "E-Mail wurde für {dateTime} geplant!",
+          "scheduledToast": "E-Mail für {dateTime} geplant"
+        },
+        "dialog": {
+          "titleNow": "E-Mail jetzt versenden?",
+          "titleScheduled": "E-Mail-Versand planen?",
           "messageSendNow": "Sie sind dabei, diese E-Mail an {count} Empfänger zu versenden.",
-          "messageSchedule": "Sie planen den Versand dieser E-Mail an {count} Empfänger.",
+          "messageScheduled": "Sie planen den Versand dieser E-Mail an {count} Empfänger.",
           "attachmentInfo": "Die E-Mail enthält {count, plural, one {# Anhang} other {# Anhänge}}.",
-          "scheduledFor": "Geplanter Versand: <strong>{datetime}</strong>",
-          "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
-          "cancel": "Abbrechen",
+          "scheduledTime": "Geplanter Versand: <strong>{dateTime}</strong>",
+          "irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
           "processing": "Wird verarbeitet...",
-          "confirmSendNow": "Jetzt senden",
-          "confirmSchedule": "Versand planen"
+          "confirmNow": "Jetzt senden",
+          "confirmScheduled": "Versand planen"
+        },
+        "common": {
+          "cancel": "Abbrechen"
         }
       }
     },
@@ -3517,12 +3536,12 @@
         "notLoggedIn": "Nicht eingeloggt",
         "loadFailed": "Fehler beim Laden der Email-Adressen",
         "noAddresses": "Keine verifizierten Email-Adressen gefunden.",
-        "noAddressesDescription": "Bitte fügen Sie zuerst eine Email-Adresse unter {link} hinzu und verifizieren Sie diese.",
+        "noAddressesDescription": "Bitte fügen Sie zuerst eine Email-Adresse unter <link>Einstellungen → Email</link> hinzu und verifizieren Sie diese.",
         "settingsLink": "Einstellungen → Email"
       },
       "selectedInfo": "Antworten werden automatisch an die generierte Reply-To-Adresse weitergeleitet.",
       "tips": {
-        "setDefault": "Tipp: Sie können in den {link} eine Standard-Absender-Adresse festlegen.",
+        "setDefault": "Tipp: Sie können in den <link>Email-Einstellungen</link> eine Standard-Absender-Adresse festlegen.",
         "emailSettingsLink": "Email-Einstellungen"
       },
       "badges": {

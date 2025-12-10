@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,8 @@ interface AlertProps {
 }
 
 function Alert({ type, message, onClose }: AlertProps) {
+  const t = useTranslations('email.step3');
+
   const styles = {
     success: 'bg-green-50 text-green-800 border-green-200',
     error: 'bg-red-50 text-red-800 border-red-200',
@@ -80,17 +83,23 @@ function Alert({ type, message, onClose }: AlertProps) {
         <p className="text-sm font-medium">{message}</p>
       </div>
       {onClose && (
-        <button
-          onClick={onClose}
-          className="ml-3 inline-flex text-gray-400 hover:text-gray-500"
-        >
-          <span className="sr-only">Schließen</span>
-          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
+        <AlertCloseButton onClose={onClose} t={t} />
       )}
     </div>
+  );
+}
+
+function AlertCloseButton({ onClose, t }: { onClose: () => void; t: ReturnType<typeof useTranslations> }) {
+  return (
+    <button
+      onClick={onClose}
+      className="ml-3 inline-flex text-gray-400 hover:text-gray-500"
+    >
+      <span className="sr-only">{t('close')}</span>
+      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+      </svg>
+    </button>
   );
 }
 
@@ -105,6 +114,7 @@ export default function Step3Preview({
   autoTransitionAfterSend = false,
   onPipelineComplete
 }: Step3PreviewProps) {
+  const t = useTranslations('email.step3');
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
@@ -279,7 +289,7 @@ export default function Step3Preview({
         // Zeige Info-Alert
         setAlert({
           type: 'info',
-          message: `Medien-Link generiert: ${campaign.attachedAssets.length} ${campaign.attachedAssets.length === 1 ? 'Datei' : 'Dateien'} verfügbar`
+          message: t('assetLinkGenerated', { count: campaign.attachedAssets.length })
         });
 
         // Auto-hide alert after 3 seconds
@@ -346,11 +356,11 @@ export default function Step3Preview({
   // Test-Email validieren
   const validateTestEmail = (email: string): boolean => {
     if (!email.trim()) {
-      setTestEmailError('E-Mail-Adresse ist erforderlich');
+      setTestEmailError(t('validation.emailRequired'));
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setTestEmailError('Ungültige E-Mail-Adresse');
+      setTestEmailError(t('validation.emailInvalid'));
       return false;
     }
     setTestEmailError('');
@@ -438,7 +448,7 @@ export default function Step3Preview({
   // Finaler Versand mit API
   const handleFinalSend = async () => {
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
-      setAlert({ type: 'error', message: 'Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand' });
+      setAlert({ type: 'error', message: t('scheduling.dateTimeRequired') });
       return;
     }
 
@@ -453,7 +463,7 @@ export default function Step3Preview({
       const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
 
       if (!draft.emailAddressId) {
-        throw new Error('Keine Absender-Email ausgewählt');
+        throw new Error(t('errors.noSenderEmail'));
       }
 
       if (sendMode === 'scheduled') {
@@ -468,7 +478,7 @@ export default function Step3Preview({
         // Firebase ID Token für Auth
         const idToken = await user?.getIdToken();
         if (!idToken) {
-          throw new Error('Keine Authentifizierung vorhanden');
+          throw new Error(t('errors.noAuthentication'));
         }
 
         // API Call zum neuen Endpoint
@@ -508,15 +518,15 @@ export default function Step3Preview({
 
           setAlert({
             type: 'success',
-            message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!`
+            message: t('scheduling.scheduled', { dateTime: scheduledDateTime.toLocaleString('de-DE') })
           });
-          toastService.success(`E-Mail für ${scheduledDateTime.toLocaleString('de-DE')} geplant`);
+          toastService.success(t('scheduling.scheduledToast', { dateTime: scheduledDateTime.toLocaleString('de-DE') }));
           setShowConfirmDialog(false);
           if (onSent) {
             setTimeout(() => onSent(), 2000);
           }
         } else {
-          throw new Error(result.error || 'Planung fehlgeschlagen');
+          throw new Error(result.error || t('errors.schedulingFailed'));
         }
       } else {
         // Sofortiger Versand via neuer API
@@ -529,7 +539,7 @@ export default function Step3Preview({
         // Firebase ID Token für Auth
         const idToken = await user?.getIdToken();
         if (!idToken) {
-          throw new Error('Keine Authentifizierung vorhanden');
+          throw new Error(t('errors.noAuthentication'));
         }
 
         // WICHTIG: Update Campaign Status auf "sending" VOR dem Versand
@@ -627,14 +637,14 @@ export default function Step3Preview({
           }
 
           const successMsg = pipelineMode && autoTransitionAfterSend && successCount > 0
-            ? `E-Mail an ${successCount} Empfänger gesendet - Projekt zur Monitoring-Phase weitergeleitet`
-            : `E-Mail erfolgreich an ${successCount} Empfänger gesendet`;
+            ? t('sending.sentPipelineTransition', { count: successCount })
+            : t('sending.sent', { count: successCount });
 
           setAlert({
             type: 'success',
             message: pipelineMode && autoTransitionAfterSend && successCount > 0
-              ? `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet.`
-              : `E-Mail wurde erfolgreich an ${successCount} Empfänger gesendet!`
+              ? t('sending.sentWithPipelineAlert', { count: successCount })
+              : t('sending.sentAlert', { count: successCount })
           });
           toastService.success(successMsg);
           setShowConfirmDialog(false);
@@ -653,7 +663,7 @@ export default function Step3Preview({
         error: error.message,
         sendMode
       });
-      const errorMsg = `Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`;
+      const errorMsg = t('errors.sendFailed', { reason: error.message || t('errors.unknownError') });
       setAlert({
         type: 'error',
         message: errorMsg
@@ -741,15 +751,15 @@ export default function Step3Preview({
         {/* Status-Warnung wenn bereits versendet/geplant */}
         {isDisabled && (
           <div className="mb-6">
-            <Alert 
-              type="info" 
+            <Alert
+              type="info"
               message={
-                campaign.status === 'sent' 
-                  ? 'Diese Kampagne wurde bereits versendet.' 
+                campaign.status === 'sent'
+                  ? t('status.alreadySent')
                   : campaign.status === 'scheduled'
-                  ? 'Diese Kampagne ist bereits für den Versand geplant.'
-                  : 'Diese Kampagne wird gerade versendet.'
-              } 
+                  ? t('status.alreadyScheduled')
+                  : t('status.sending')
+              }
             />
           </div>
         )}
@@ -761,13 +771,13 @@ export default function Step3Preview({
             <div className="border rounded-lg p-6">
               <h4 className="font-medium mb-4 flex items-center gap-2">
                 <PaperAirplaneIcon className="h-5 w-5 text-gray-500" />
-                Test-Versand
+                {t('testSend.title')}
               </h4>
-              
+
               <div className="space-y-4">
                 <div>
                   <label htmlFor="test-email" className="block text-sm font-medium mb-1">
-                    Test-E-Mail senden an:
+                    {t('testSend.label')}
                   </label>
                   <div className="flex gap-2">
                     <Input
@@ -778,7 +788,7 @@ export default function Step3Preview({
                         setTestEmail(e.target.value);
                         setTestEmailError('');
                       }}
-                      placeholder="test@example.com"
+                      placeholder={t('testSend.placeholder')}
                       className={testEmailError ? 'border-red-300' : ''}
                       disabled={isDisabled}
                     />
@@ -793,10 +803,10 @@ export default function Step3Preview({
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          Sende...
+                          {t('testSend.sending')}
                         </>
                       ) : (
-                        'Test senden'
+                        t('testSend.send')
                       )}
                     </Button>
                   </div>
@@ -806,14 +816,13 @@ export default function Step3Preview({
                   {testSent && (
                     <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
                       <CheckCircleIcon className="h-4 w-4" />
-                      Test-E-Mail wurde erfolgreich versendet
+                      {t('testSend.success')}
                     </p>
                   )}
                 </div>
-                
+
                 <p className="text-sm text-gray-600">
-                  Senden Sie eine Test-E-Mail um die Formatierung und Variablen zu überprüfen.
-                  Die Test-E-Mail enthält alle Anhänge.
+                  {t('testSend.description')}
                 </p>
               </div>
             </div>
@@ -822,13 +831,13 @@ export default function Step3Preview({
             <div className="border rounded-lg p-6">
               <h4 className="font-medium mb-4 flex items-center gap-2">
                 <PaperAirplaneIcon className="h-5 w-5 text-gray-500" />
-                Finaler Versand
+                {t('finalSend.title')}
               </h4>
 
               <div className="space-y-4">
                 {/* Versand-Modus */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Versand-Zeitpunkt</label>
+                  <label className="block text-sm font-medium mb-2">{t('finalSend.sendTime')}</label>
                   <div className="space-y-2">
                     <label className="flex items-center">
                       <input
@@ -839,7 +848,7 @@ export default function Step3Preview({
                         className="h-4 w-4 text-[#005fab] border-gray-300 focus:ring-[#005fab]"
                         disabled={isDisabled}
                       />
-                      <span className="ml-2">Jetzt senden</span>
+                      <span className="ml-2">{t('finalSend.sendNow')}</span>
                     </label>
                     <label className="flex items-center">
                       <input
@@ -850,7 +859,7 @@ export default function Step3Preview({
                         className="h-4 w-4 text-[#005fab] border-gray-300 focus:ring-[#005fab]"
                         disabled={isDisabled}
                       />
-                      <span className="ml-2">Versand planen</span>
+                      <span className="ml-2">{t('finalSend.sendScheduled')}</span>
                     </label>
                   </div>
                 </div>
@@ -860,7 +869,7 @@ export default function Step3Preview({
                   <div className="pl-6 space-y-3">
                     <div>
                       <label htmlFor="schedule-date" className="block text-sm font-medium mb-1">
-                        Datum
+                        {t('finalSend.date')}
                       </label>
                       <Input
                         id="schedule-date"
@@ -873,7 +882,7 @@ export default function Step3Preview({
                     </div>
                     <div>
                       <label htmlFor="schedule-time" className="block text-sm font-medium mb-1">
-                        Uhrzeit
+                        {t('finalSend.time')}
                       </label>
                       <Input
                         id="schedule-time"
@@ -884,7 +893,7 @@ export default function Step3Preview({
                       />
                     </div>
                     <p className="text-xs text-gray-500">
-                      Der Versand muss mindestens 15 Minuten in der Zukunft liegen.
+                      {t('finalSend.minScheduleNote')}
                     </p>
                   </div>
                 )}
@@ -899,12 +908,12 @@ export default function Step3Preview({
                     {sendMode === 'now' ? (
                       <>
                         <PaperAirplaneIcon className="-ml-1 mr-2 h-4 w-4" />
-                        Jetzt an {totalRecipients} Empfänger senden
+                        {t('finalSend.sendToRecipients', { count: totalRecipients })}
                       </>
                     ) : (
                       <>
                         <ClockIcon className="-ml-1 mr-2 h-4 w-4" />
-                        Versand planen
+                        {t('finalSend.scheduleSend')}
                       </>
                     )}
                   </Button>
@@ -932,20 +941,20 @@ export default function Step3Preview({
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium flex items-center gap-2">
                   <EyeIcon className="h-5 w-5 text-gray-500" />
-                  E-Mail-Vorschau
+                  {t('preview.title')}
                 </h4>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPreviewMode('desktop')}
                     className={`p-2 rounded ${previewMode === 'desktop' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                    title="Desktop-Ansicht"
+                    title={t('preview.desktopView')}
                   >
                     <ComputerDesktopIcon className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setPreviewMode('mobile')}
                     className={`p-2 rounded ${previewMode === 'mobile' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-                    title="Mobile Ansicht"
+                    title={t('preview.mobileView')}
                   >
                     <DevicePhoneMobileIcon className="h-5 w-5" />
                   </button>
@@ -954,18 +963,18 @@ export default function Step3Preview({
 
               {/* Email-Metadaten */}
               <div className="mb-4 p-3 bg-gray-50 rounded text-sm space-y-1">
-                <div><strong>Von:</strong> {draft.emailAddressId ? `Email ID: ${draft.emailAddressId.substring(0, 8)}...` : 'Nicht ausgewählt'}</div>
-                <div><strong>An:</strong> {totalRecipients} Empfänger</div>
-                <div><strong>Betreff:</strong> {draft.metadata.subject}</div>
+                <div><strong>{t('preview.from')}</strong> {draft.emailAddressId ? `Email ID: ${draft.emailAddressId.substring(0, 8)}...` : t('preview.notSelected')}</div>
+                <div><strong>{t('preview.to')}</strong> {t('preview.recipients', { count: totalRecipients })}</div>
+                <div><strong>{t('preview.subject')}</strong> {draft.metadata.subject}</div>
                 {draft.metadata.preheader && (
-                  <div><strong>Vorschau:</strong> {draft.metadata.preheader}</div>
+                  <div><strong>{t('preview.preheader')}</strong> {draft.metadata.preheader}</div>
                 )}
                 {attachments.length > 0 && (
                   <div className="flex items-center gap-2">
-                    <strong>Anhänge:</strong>
+                    <strong>{t('preview.attachments')}</strong>
                     <span className="flex items-center gap-1">
                       <PaperClipIcon className="h-4 w-4 text-gray-500" />
-                      {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
+                      {t('preview.files', { count: attachments.length })}
                     </span>
                   </div>
                 )}
@@ -980,7 +989,7 @@ export default function Step3Preview({
                   className="w-full"
                   style={{ height: 'auto', minHeight: '400px', border: 'none' }}
                   scrolling="no"
-                  title="E-Mail Vorschau"
+                  title={t('preview.iframeTitle')}
                   onLoad={(e) => {
                     // Auto-resize iframe to content height
                     const iframe = e.target as HTMLIFrameElement;
@@ -1031,12 +1040,14 @@ function ConfirmSendDialog({
   sending: boolean;
   attachmentCount: number;
 }) {
+  const t = useTranslations('email.step3');
+
   if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
       <DialogTitle className="px-6 pt-6">
-        {sendMode === 'now' ? 'E-Mail jetzt versenden?' : 'E-Mail-Versand planen?'}
+        {sendMode === 'now' ? t('dialog.titleNow') : t('dialog.titleScheduled')}
       </DialogTitle>
       <DialogBody className="px-6 pb-2">
         <div className="space-y-4">
@@ -1044,23 +1055,23 @@ function ConfirmSendDialog({
             <ExclamationCircleIcon className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-gray-900">
-                {sendMode === 'now' 
-                  ? `Sie sind dabei, diese E-Mail an ${recipientCount} Empfänger zu versenden.`
-                  : `Sie planen den Versand dieser E-Mail an ${recipientCount} Empfänger.`
+                {sendMode === 'now'
+                  ? t('dialog.messageSendNow', { count: recipientCount })
+                  : t('dialog.messageScheduled', { count: recipientCount })
                 }
               </p>
               {attachmentCount > 0 && (
                 <p className="text-sm text-gray-600 mt-2">
-                  Die E-Mail enthält {attachmentCount} {attachmentCount === 1 ? 'Anhang' : 'Anhänge'}.
+                  {t('dialog.attachmentInfo', { count: attachmentCount })}
                 </p>
               )}
               {sendMode === 'scheduled' && (
                 <p className="text-sm text-gray-600 mt-2">
-                  Geplanter Versand: <strong>{scheduledDateTime}</strong>
+                  {t('dialog.scheduledTime', { dateTime: scheduledDateTime })}
                 </p>
               )}
               <p className="text-sm text-gray-600 mt-2">
-                Diese Aktion kann nicht rückgängig gemacht werden.
+                {t('dialog.irreversible')}
               </p>
             </div>
           </div>
@@ -1068,10 +1079,10 @@ function ConfirmSendDialog({
       </DialogBody>
       <DialogActions className="px-6 pb-6">
         <Button plain onClick={onClose} disabled={sending}>
-          Abbrechen
+          {t('common.cancel')}
         </Button>
-        <Button 
-          onClick={onConfirm} 
+        <Button
+          onClick={onConfirm}
           disabled={sending}
         >
           {sending ? (
@@ -1080,11 +1091,11 @@ function ConfirmSendDialog({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Wird verarbeitet...
+              {t('dialog.processing')}
             </>
           ) : (
             <>
-              {sendMode === 'now' ? 'Jetzt senden' : 'Versand planen'}
+              {sendMode === 'now' ? t('dialog.confirmNow') : t('dialog.confirmScheduled')}
             </>
           )}
         </Button>

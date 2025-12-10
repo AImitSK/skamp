@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmailAddress } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +18,7 @@ export default function EmailAddressSelector({
   onChange,
   organizationId
 }: EmailAddressSelectorProps) {
+  const t = useTranslations('email.addressSelector');
   const { user } = useAuth();
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function EmailAddressSelector({
 
   const loadEmailAddresses = async () => {
     if (!user) {
-      setError('Nicht eingeloggt');
+      setError(t('errors.notLoggedIn'));
       setIsLoading(false);
       return;
     }
@@ -73,7 +75,7 @@ export default function EmailAddressSelector({
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Fehler beim Laden der Email-Adressen';
+      const errorMessage = err instanceof Error ? err.message : t('errors.loadFailed');
       setError(errorMessage);
       toastService.error(errorMessage);
     } finally {
@@ -88,11 +90,11 @@ export default function EmailAddressSelector({
     return (
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
-          Absender-Email
+          {t('label')}
         </label>
         <div className="flex items-center justify-center h-10 px-4 bg-gray-50 border border-gray-300 rounded-md">
           <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-600 border-t-transparent"></div>
-          <span className="ml-2 text-sm text-gray-500">Lade Email-Adressen...</span>
+          <span className="ml-2 text-sm text-gray-500">{t('loading')}</span>
         </div>
       </div>
     );
@@ -102,7 +104,7 @@ export default function EmailAddressSelector({
     return (
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
-          Absender-Email
+          {t('label')}
         </label>
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">{error}</p>
@@ -115,18 +117,20 @@ export default function EmailAddressSelector({
     return (
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
-          Absender-Email
+          {t('label')}
         </label>
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <p className="text-sm text-yellow-800">
-            <strong>Keine verifizierten Email-Adressen gefunden.</strong>
+            <strong>{t('errors.noAddresses')}</strong>
           </p>
           <p className="text-sm text-yellow-700 mt-1">
-            Bitte fügen Sie zuerst eine Email-Adresse unter{' '}
-            <a href="/settings/email" className="underline font-medium">
-              Einstellungen → Email
-            </a>{' '}
-            hinzu und verifizieren Sie diese.
+            {t.rich('errors.noAddressesDescription', {
+              link: (chunks) => (
+                <a href="/settings/email" className="underline font-medium">
+                  {chunks}
+                </a>
+              )
+            })}
           </p>
         </div>
       </div>
@@ -136,7 +140,7 @@ export default function EmailAddressSelector({
   return (
     <div className="space-y-2">
       <label htmlFor="emailAddressSelector" className="block text-sm font-medium text-gray-700">
-        Absender-Email *
+        {t('labelRequired')}
       </label>
 
       <select
@@ -146,12 +150,12 @@ export default function EmailAddressSelector({
         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         required
       >
-        <option value="">Bitte wählen...</option>
+        <option value="">{t('selectPlaceholder')}</option>
         {emailAddresses.map((emailAddress) => (
           <option key={emailAddress.id} value={emailAddress.id}>
             {emailAddress.email}
             {emailAddress.domain?.name && ` (${emailAddress.domain.name})`}
-            {emailAddress.isDefault && ' [Standard]'}
+            {emailAddress.isDefault && ` ${t('badges.default')}`}
           </option>
         ))}
       </select>
@@ -178,7 +182,7 @@ export default function EmailAddressSelector({
                 {selectedEmail.email}
               </p>
               <p className="text-blue-700 mt-1">
-                Antworten werden automatisch an die generierte Reply-To-Adresse weitergeleitet.
+                {t('selectedInfo')}
               </p>
             </div>
           </div>
@@ -188,11 +192,13 @@ export default function EmailAddressSelector({
       {/* Hinweis wenn keine Default-Email gesetzt */}
       {emailAddresses.length > 0 && !emailAddresses.some((addr) => addr.isDefault) && (
         <p className="text-xs text-gray-500 mt-1">
-          Tipp: Sie können in den{' '}
-          <a href="/settings/email" className="text-primary-600 hover:underline">
-            Email-Einstellungen
-          </a>{' '}
-          eine Standard-Absender-Adresse festlegen.
+          {t.rich('tips.setDefault', {
+            link: (chunks) => (
+              <a href="/settings/email" className="text-primary-600 hover:underline">
+                {chunks}
+              </a>
+            )
+          })}
         </p>
       )}
     </div>
