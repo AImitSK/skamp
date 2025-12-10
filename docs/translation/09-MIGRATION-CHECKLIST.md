@@ -129,8 +129,8 @@ Kernfunktionalität der App.
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
 | ✅ | `src/app/dashboard/communication/inbox/page.tsx` | `inbox` | 2025-12-10 |
-| ⬜ | `src/app/dashboard/communication/notifications/page.tsx` | `notifications` | - |
-| ⬜ | `src/app/dashboard/academy/documentation/page.tsx` | `academy` | - |
+| ✅ | `src/app/dashboard/communication/notifications/page.tsx` | `notifications` | 2025-12-10 |
+| ✅ | `src/app/dashboard/academy/documentation/page.tsx` | `academy` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/strategy-documents/[documentId]/page.tsx` | `strategy` | - |
 
 ---
@@ -139,8 +139,8 @@ Kernfunktionalität der App.
 
 | Status | Datei | Namespace | Agent |
 |--------|-------|-----------|-------|
-| ⬜ | `src/app/dashboard/super-admin/organizations/page.tsx` | `superadmin` | - |
-| ⬜ | `src/app/dashboard/super-admin/accounts/page.tsx` | `superadmin` | - |
+| ✅ | `src/app/dashboard/super-admin/organizations/page.tsx` | `superadmin` | 2025-12-10 |
+| ✅ | `src/app/dashboard/super-admin/accounts/page.tsx` | `superadmin` | 2025-12-10 |
 | ⬜ | `src/app/dashboard/super-admin/monitoring/page.tsx` | `superadmin` | - |
 | ⬜ | `src/app/dashboard/super-admin/settings/page.tsx` | `superadmin` | - |
 | ⬜ | `src/app/dashboard/super-admin/matching/*.tsx` | `superadmin` | - |
@@ -161,11 +161,11 @@ Kernfunktionalität der App.
 ## Statistik
 
 - **Gesamt:** ~57 Seiten
-- **Abgeschlossen:** 40 (+ Admin API, Project Detail, Contact Detail, Company Detail, Lists Detail, Publications Detail, Inbox mit Komponenten)
+- **Abgeschlossen:** 44 (Round 10: +Notifications, Academy, Super-Admin Orgs/Accounts mit Komponenten)
 - **Teilweise:** 1 (Monitoring Components - Keys angelegt)
 - **Übersprungen:** 1 (DashboardNav existiert nicht)
 - **In Bearbeitung:** 0
-- **Ausstehend:** ~15
+- **Ausstehend:** ~11
 
 ---
 
